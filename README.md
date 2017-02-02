@@ -40,7 +40,7 @@ Installation Instructions <a name="Installation"></a>
 
 today:
 The python source files of the plug-in have to be placed in the AiiDA source code in certain places. 
-You might use the copy_plugin_files.py script to do so.
+You might use the copy_plugin_files.sh script to do so.
 
 in the near future:
 pip install aiida_fleur
@@ -49,7 +49,7 @@ pip install aiida_fleur
 Files
 -----
 
-fleurinpData : aiida.orm.data.fleurinp.__init__.py   
+fleurinpData : aiida.orm.data.fleurinp.fleurinp.py   
 fleurinpModifier : aiida.orm.data.fleurinp.fleurinpmodifier.py
 
 fleurinpgen calculation: aiida.orm.calculation.job.fleur_inp.fleurinputgen.py  
@@ -58,7 +58,7 @@ fleurinpgen output parser: aiida.parsers.plugins.fleur_inp.fleur_inputgen.py
 fleur calculation: aiida.orm.calculation.job.fleur_inp.fleur.py  
 fleur output parser: aiida.parsers.plugins.fleur_inp.fleur.py   
 
-The Fleur code needs a XMLSchema file, place them under:  
+The Fleur code needs a XMLSchema file, place them under, the plugin searches them in your pythonpath, it assumes also that your aiida_core code is in your pythonpath. Checkout search_path in fleurinp.py, in case need ad your path there:  
 aiida.orm.calculation.job.fleur_inp.fleur_schema
 
 Also some common routines '/aiida_fleur/tools/' used by some classes have to be placed currently under:
