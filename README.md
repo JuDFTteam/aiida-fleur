@@ -35,6 +35,17 @@ one for the Fleur inputgenerator (inpgen) and one for a Fleur calculation itself
 
 Every plug-in has an input part and an output parser, see the AiiDA documentation for general info.
 
+Further there is also some useful utility found under 'aiida_fleur/tools'
+
+Structure_util.py : constains some methods to handle AiiDA structures 
+(some of them might now be methods of the AiiDA structureData, if so use them from there!)
+
+merge_parameter.py : methods to handle parameterData nodes, i.e merge them. Which is very useful for all-electron codes, because instead of pseudo potentialsfamilies you can create now families of parameter nodes for the periodic table.
+
+xml_util.py : all xml functions that are used, by parsers and other tools are in here. Some are 'general' some a very specific to Fleur.
+
+read_cif.py : this can be used as stand-alone to create StructureData nodes from .cif files from an directory tree. 
+
 Installation Instructions <a name="Installation"></a>
 =====================================================
 
@@ -63,6 +74,13 @@ aiida.orm.calculation.job.fleur_inp.fleur_schema
 
 Also some common routines '/aiida_fleur/tools/' used by some classes have to be placed currently under:
 aiida.tools.codespecific.fleur 
+
+Utility:
+
+Structure_util.py
+merge_parameter.py
+read_cif.py
+...
 
 
 Code Dependencies <a name="Dependencies"></a>
