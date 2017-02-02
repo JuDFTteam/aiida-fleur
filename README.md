@@ -68,7 +68,7 @@ aiida.tools.codespecific.fleur
 Code Dependencies <a name="Dependencies"></a>
 =============================================
 
-Requirements are listed in 'fleur_plugin_requirements.txt'.
+Requirements are listed in 'requirements.txt'.
 
 Further Information <a name="FurtherInfo"></a>
 =============================================
