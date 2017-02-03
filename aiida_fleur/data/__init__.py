@@ -277,8 +277,8 @@ class FleurinpData(Data):
                     "I need this file to validate your input and to know the structure "
                     "of the current inp.xml file, sorry.".format(inp_version_number,
                                                           self._search_paths, schemafile_paths))
-            print 'self._schema_file_path: {}'.format(self._schema_file_path)
-            print 'self._has_schema: {}'.format(self._has_schema)
+            #print 'self._schema_file_path: {}'.format(self._schema_file_path)
+            #print 'self._has_schema: {}'.format(self._has_schema)
             # set inp dict of Fleurinpdata
             self._set_inp_dict()
 

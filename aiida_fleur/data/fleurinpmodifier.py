@@ -151,7 +151,7 @@ class FleurinpModifier(object):
                                 It works like dict.update(), adding new keys and
                                 overwriting existing keys.
             """
-            print 'in set_inpchanges'
+            #print 'in set_inpchanges'
             from aiida.tools.codespecific.fleur.xml_util import write_new_fleur_xmlinp_file, get_inpxml_file_structure
             
             #TODO if we still want tracking that way, have to get fleurinp in argument
@@ -195,7 +195,7 @@ class FleurinpModifier(object):
             
             tree = fleurinp_tree_copy 
             new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
-            print new_kpo
+            #print new_kpo
             new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
     
             return new_tree
@@ -256,7 +256,8 @@ class FleurinpModifier(object):
                     # TODO maybe even delete wrong task
                     print 'change not valid: {}'.format(task[1:])
                 else:
-                    print 'change validated'
+                    pass
+                    #print 'change validated'
         return workingtree
     '''
     def set_inpchanges(self, change_dict):
