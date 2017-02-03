@@ -196,12 +196,9 @@ class fleur_convergence(WorkChain):
     def run_fleurinpgen(self):
         """
         run the inpgen
-        """
-        
-        inputs = {}
-        if self.inputs.calc_parameters:
-            inputs = self.get_inputs_inpgen()
-
+        """        
+        inputs = {}        
+        inputs = self.get_inputs_inpgen()
         print 'run inpgen'
         future = submit(FleurinpProcess, **inputs)
 
@@ -215,8 +212,8 @@ class fleur_convergence(WorkChain):
         inputs = FleurinpProcess.get_inputs_template()
         inputs.structure = self.inputs.structure
         inputs.code = self.inputs.inpgen
-        inputs.parameters = self.inputs.calc_parameters
-        
+        if 'calc_parameters' in self.inputs:
+            inputs.parameters = self.inputs.calc_parameters
         inputs._options.resources = {"num_machines": 1}
         inputs._options.max_wallclock_seconds = 360
         inputs._options.withmpi = False
