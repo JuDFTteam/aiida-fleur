@@ -22,11 +22,12 @@ from aiida.orm import DataFactory
 #from aiida.workflows2.wf import wf
 from aiida.work.workfunction import workfunction as wf
 
+FleurinpData = DataFactory("fleurinp")
 
 class FleurinpModifier(object):
 
     def __init__(self, original):
-        assert isinstance(original, DataFactory("fleurinp.fleurinp")), "Wrong AiiDA data type"
+        assert isinstance(original, FleurinpData), "Wrong AiiDA data type"
         
         self._original = original
         self._tasks = []
@@ -286,7 +287,7 @@ class FleurinpModifier(object):
 
 if __name__ == "__main__":
 
-    P = DataFactory("fleurinp.fleurinp")
+    P = FleurinpData
     '''
     orig = P(dict={'a': 1, 'b': True, 'c': "aaa"}).store()
 
