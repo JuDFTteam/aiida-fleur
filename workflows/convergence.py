@@ -18,7 +18,7 @@ from aiida.orm import Code, DataFactory
 from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
-from aiida.work.run import run, submit
+#from aiida.work.run import run, submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
@@ -420,22 +420,30 @@ class fleur_convergence(WorkChain):
 
 if __name__ == "__main__":
     import argparse
-    #This is TODO, and test this
 
     parser = argparse.ArgumentParser(description='SCF with FLEUR. workflow to'
                  ' converge the chargedensity and optional the total energy.')
     parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
                         help='The pseudopotential family', required=False)
+    parser.add_argument('--structure', type=StructureData, dest='structure',
+                        help='The crystal structure node', required=False)
+    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+                        help='Parameters for the FLEUR calculation', required=False)    
+    parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
+                        help='FleurinpData from which to run the FLEUR calculation', required=False)
+    parser.add_argument('--remote', type=RemoteData, dest='remote_data',
+                        help=('Remote Data of older FLEUR calculation, '
+                        'from which files will be copied (broyd ...)'), required=False)
     parser.add_argument('--inpgen', type=Code, dest='inpgen',
-                        help='The inpgen code node to use', required=True)
+                        help='The inpgen code node to use', required=False)
     parser.add_argument('--fleur', type=Code, dest='fleur',
                         help='The FLEUR code node to use', required=True)
-    parser.add_argument('--structure', type=StructureData, dest='structure',
-                        help='The crystal structure node', required=True)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
-                        help='Parameters for the FLEUR calculation', required=False)
+   
     args = parser.parse_args()
-    res = run(fleur_convergence, wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
-
-
-
+    res = fleur_convergence.run(wf_parameters=args.wf_parameters, 
+                                structure=args.structure, 
+                                calc_parameters=args.calc_parameters,
+                                fleurinp=args.fleurinp,
+                                remote_data=args.remote_data,
+                                inpgen = args.inpgen, 
+                                fleur=args.fleur)
