@@ -3,6 +3,10 @@
 In this module is the FleurinpData class, and useful methods for FLEUR input
 manipulation.
 """
+# TODO: this needs to be cleaned up and redocumented
+# TODO: all methods to change now in fleurinpmodifier, do we still want to
+# store the userchanges, or rather delete them? depends how well one can see things
+# from fleurinpmodifier...
 # TODO: inpxml to dict: maybe kpts should not be writen to the dict? same with symmetry
 # TODO: test for large input files, I believe the recursion is still quite slow..
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
@@ -16,17 +20,17 @@ __contributors__ = "Jens Broeder"
 import os
 import re
 from lxml import etree
-from lxml.etree import XMLSyntaxError
+#from lxml.etree import XMLSyntaxError
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 
 from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
-from aiida.common.exceptions import UniquenessError
-from aiida.common.utils import get_repository_folder
-from aiida.common.links import LinkType
-from aiida.common.lang import override
+#from aiida.common.exceptions import UniquenessError
+#from aiida.common.utils import get_repository_folder
+#from aiida.common.links import LinkType
+#from aiida.common.lang import override
 from aiida.tools.codespecific.fleur.xml_util import xml_set_attribv_occ, xml_set_first_attribv, xml_set_all_attribv, xml_set_text
 from aiida.work.workfunction import workfunction as wf
 
@@ -73,13 +77,13 @@ class FleurinpData(Data):
     #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
     #                 str(get_repository_folder())]
 
-
     @property
     def _has_schema(self):
         """
         Boolean property, which stores if a schema file is already known
         """
         return self.get_attr('_has_schema', False)
+    
     @property
     def _schema_file_path(self):
         """
@@ -177,7 +181,7 @@ class FleurinpData(Data):
         # user changed version number, or no file yet known.
         # TODO test if this still does the right thing if user adds one
         #inp.xml and then an inp.xml with different version.
-        # or after copying and readd
+        # or after copying and read
         schemafile_paths = []
         #print 'searching schema file'
         for path in self._search_paths:#paths:
@@ -330,7 +334,7 @@ class FleurinpData(Data):
         or is stored in the database.
         """
         return self.get_attr('inp_dict', {})
-
+    '''
     def set_inpchanges(self, change_dict):
         """
         Does changes directly on the inp.xml file. Afterwards
@@ -446,7 +450,7 @@ class FleurinpData(Data):
         else:
             pass
             # DO nothing
-
+    '''
 
 
     '''
@@ -719,7 +723,7 @@ class FleurinpData(Data):
 
 
         #get species for atom kinds
-        species = root.xpath(species_xpath)
+        #species = root.xpath(species_xpath)
         species_name = root.xpath(species_xpath + '/@' + species_attrib_name)
         species_element = root.xpath(species_xpath + '/@' + species_attrib_element)
         # alternativ: loop over species and species.get(species_attrib_name)
@@ -811,7 +815,7 @@ class FleurinpData(Data):
             #TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a wf instead
         #struc.add_link_from(fleurinp, label='fleurinp.structure', link_type=LinkType.CREATE)
-        label='fleurinp.structure'
+        #label='fleurinp.structure'
         #return {label : struc}
         return struc
 
@@ -1044,7 +1048,7 @@ class FleurinpData(Data):
         os.remove(inpxmlfile)
 
         return fleurinp
-
+    '''
     def get_tag(self, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
@@ -1085,7 +1089,8 @@ class FleurinpData(Data):
             return return_value
         else:
             return return_value
-
+    '''
+'''
 # TODO write xml util and put all these functions there, parse as option a logger,
 # that parser can use these methods too.
 
@@ -1165,3 +1170,4 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
                 'because node is not an element of etree.'
                 ''.format(attributename, node))
         return None
+'''
