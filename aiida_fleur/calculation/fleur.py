@@ -19,7 +19,8 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 #from aiida.orm.data.structure import StructureData
 #from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.remote import RemoteData
-from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+from aiida.orm.data.fleurinp import FleurinpData
 #from aiida.orm.data.array.kpoints import KpointsData
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError, ValidationError

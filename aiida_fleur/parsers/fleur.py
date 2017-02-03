@@ -18,7 +18,8 @@ from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.parsers.plugins.fleur_inp import FleurOutputParsingError
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser#, ParserParamManager
-from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+from aiida.orm.data.fleurinp import FleurinpData
 from aiida.orm.data.array.bands import BandsData
 
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation

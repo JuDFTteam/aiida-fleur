@@ -16,7 +16,8 @@ if not is_dbenv_loaded():
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.parsers.plugins.fleur_inp import FleurOutputParsingError
 from aiida.parsers.parser import Parser
-from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+from aiida.orm.data.fleurinp import FleurinpData
 #from aiida.orm.data.fleurinp import get_inpxml_file_structure
 #from aiida.orm.data.parameter import ParameterData
 #from aiida.common.exceptions import InputValidationError,ValidationError,

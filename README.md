@@ -60,7 +60,8 @@ pip install aiida_fleur
 Files
 -----
 
-fleurinpData : aiida.orm.data.fleurinp.fleurinp.py   
+#fleurinpData : aiida.orm.data.fleurinp.fleurinp.py   
+fleurinpData : aiida.orm.data.fleurinp.__init__.py
 fleurinpModifier : aiida.orm.data.fleurinp.fleurinpmodifier.py
 
 fleurinpgen calculation: aiida.orm.calculation.job.fleur_inp.fleurinputgen.py  
