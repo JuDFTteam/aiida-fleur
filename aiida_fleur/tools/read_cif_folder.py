@@ -83,10 +83,17 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
 
     #2. read all the files and store stuff.
     saved_count = 0
+    filenames2 = []
+    structuredatas2 = []
     for i in range(nfiles):
+        try:
+            asecell = list(cif.read_cif(filepaths[i], index=slice(None)))[-1]
+        except:
+            print 'invalid cif file'
+            continue
         structuredatas.append(DataFactory('structure'))
-        asecell = list(cif.read_cif(filepaths[i], index=slice(None)))[-1]
-        struc = structuredatas[i](ase=asecell)
+        filenames2.append(filenames[i])
+        struc = structuredatas[-1](ase=asecell)
         formula = struc.get_formula()
         if store_db:
             struc.store()
@@ -102,6 +109,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
                 else:
                     struc.set_extra('specification', extra)
             struc.set_extra('formula', formula)
+            structuredatas2.append(struc)
         if write_log:
             # This file is a logfile/info file created by 'read_cif_folder'
             # Structure Formula, structuredata pk, Structure Data uuid,
@@ -122,6 +130,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         os.write(file1, infofilestring)
         os.close(file1)
     print '{} cif-files were saved in the database'.format(saved_count)
+    return structuredatas2, filenames2
 
 if __name__ == "__main__":
     import argparse
