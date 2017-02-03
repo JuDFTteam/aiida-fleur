@@ -15,6 +15,7 @@ ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 #FleurinpData = DataFactory('fleurinp.fleurinp')
 FleurinpData = DataFactory('fleurinp')
+
 ###############################
 # Set your values here
 codename = 'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
