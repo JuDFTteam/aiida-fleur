@@ -18,7 +18,7 @@ from aiida.orm import Code, DataFactory
 from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
-#from aiida.work.run import run, submit
+from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
