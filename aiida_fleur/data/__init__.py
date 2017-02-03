@@ -947,6 +947,45 @@ class FleurinpData(Data):
         else: # TODO parser other kpoints formats, if they fit in an AiiDA node
             print 'No kpoint list in inp.xml'
             return None
+    '''
+    def set_nkpts(fleurinp, count, gamma='F'):#_orgi
+
+        kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
+        kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
+        #fleurinp = fleurinp_orgi.copy()
+        if 'inp.xml' in fleurinp.files:
+            # read in inpxml
+            inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
+
+            if fleurinp._schema_file_path: # Schema there, parse with schema
+                xmlschema_doc = etree.parse(fleurinp._schema_file_path)
+                xmlschema = etree.XMLSchema(xmlschema_doc)
+                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+                tree = etree.parse(inpxmlfile, parser)
+            else: #schema not there, parse without
+                print 'parsing inp.xml without XMLSchema'
+                tree = etree.parse(inpxmlfile)
+
+            root = tree.getroot()
+        else:
+            raise InputValidationError(
+                      "No inp.xml file yet specified, to add kpoints to.")        
+
+        new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
+        print new_kpo
+        new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
+        inpxmlfile = os.path.join(
+                         fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
+
+        new_tree.write(inpxmlfile)
+        print 'wrote tree to' + str(inpxmlfile)
+        fleurinp.del_file('inp.xml')
+        fleurinp._add_path(str(inpxmlfile), 'inp.xml')
+        os.remove(inpxmlfile)
+
+        return fleurinp 
+    '''
+    
     @wf
     def set_kpointsdata(fleurinp_orgi, KpointsDataNode):
         """
