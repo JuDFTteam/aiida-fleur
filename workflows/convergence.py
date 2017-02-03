@@ -14,17 +14,7 @@ cylce of a FLEUR calculation with AiiDA.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-import sys,os
-from ase import *
-from ase.lattice.surface import *
-from ase.io import *
-from aiida.orm import Code, CalculationFactory, DataFactory
-#from aiida.orm import Computer
-from aiida.orm import load_node
-from aiida.orm.data.singlefile import SinglefileData
-
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida.orm import Code, DataFactory
 from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
@@ -32,6 +22,8 @@ from aiida.work.run import run, submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
+from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
+from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -43,8 +35,8 @@ __contributors__ = "Jens Broeder"
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
-FleurInpData = DataFactory('fleurinp.fleurinp')
-
+#FleurInpData = DataFactory('fleurinp.fleurinp')
+FleurInpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
 
@@ -252,7 +244,6 @@ class fleur_convergence(WorkChain):
         """
 
         inputs = FleurProcess.get_inputs_template()
-
         if 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
         else:
@@ -266,17 +257,22 @@ class fleur_convergence(WorkChain):
         inputs.code = self.inputs.fleur
         inputs.fleurinpdata = fleurin
         
-        
         core=12 # get from computer nodes per machine
                 
         # this should be done by fleur in my opinion
-        nkpoints = fleurin.inp_dict.get('calculationSetup', {}).get('bzIntegration',
-                                               {}).get('kPointList', {}).get('count', None)
+        nkpoints = fleurin.inp_dict.get(
+                       'calculationSetup', {}).get(
+                       'bzIntegration', {}).get(
+                       'kPointList', {}).get(
+                       'count', None)
         
         if not nkpoints:
             pass # get KpointCount, KpointMesh
-            nkpoints = fleurin.inp_dict.get('calculationSetup', {}).get('bzIntegration',
-                                               {}).get('kPointCount', {}).get('count', None)     
+            nkpoints = fleurin.inp_dict.get(
+                            'calculationSetup', {}).get(
+                            'bzIntegration', {}).get(
+                            'kPointCount', {}).get(
+                            'count', None)     
              
                                                
         if nkpoints:
@@ -328,7 +324,7 @@ class fleur_convergence(WorkChain):
         # or if complexer output node exists take from there.
         from aiida.tools.codespecific.fleur.xml_util import eval_xpath2
         from lxml import etree
-        from lxml.etree import XMLSyntaxError
+        #from lxml.etree import XMLSyntaxError
         
         xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance' # be aware of magnetism
