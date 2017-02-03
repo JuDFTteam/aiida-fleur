@@ -34,6 +34,9 @@ print new_fleurinpData.get_file_abs_path('inp.xml')
 #new_fleurinpData= load_node(6)
 
 fleurmode = FleurinpModifier(new_fleurinpData)
+
+
+#fleurmode.set_switch({'dos': True})
 '''
 fleurmode.set_inpchanges({})
 fleurmode.set_inpchanges({'dos': True})
@@ -41,7 +44,7 @@ fleurmode.set_species('W-1', {'radius' : 3.5})
 fleurmode.change_atom('forces', True, position=(0.0, 0.0, 0.0))
 fleurmode.set_xpath('/fleurinput/@dos', True)
 '''
-
+'''
 name = 'Na-1'
 xpathn = '/fleurInput/atomSpecies/species[@name = "{}"]/mtSphere'.format(name)# 'radius':
 attributename = 'radius'
@@ -88,8 +91,8 @@ new_e.set('type', "SCLO")
 
 #fleurmode.set_species('W-2', {'lo': [{'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 2}]}, True)
 #fleurmode.set_species('W-2', {'lo': [{'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 3}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 4}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 5}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 6}]}, True)
-
 '''
+
 #fleurmode.changes()
 fleurmode.show(validate=True)#, display=False)
 
@@ -100,4 +103,3 @@ out=''#fleurmode.freeze()
 print 'out: {}'.format(out)
 print 'in: {}'.format(new_fleurinpData)
 
-'''
