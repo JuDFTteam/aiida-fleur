@@ -86,6 +86,8 @@ class FleurCalculation(JobCalculation):
         self._PLOT_INP_FILE_NAME = 'plot_inp'
         self._BROYD_FILE_NAME = 'broyd*'
         self._POT_FILE_NAME = 'pot*'
+        self._POT1_FILE_NAME = 'pottot'
+        self._POT2_FILE_NAME = 'potcoul'
         self._STRUCTURE_FILE_NAME = 'struct.xcf'
         self._STARS_FILE_NAME = 'stars'
         self._WKF2_FILE_NAME = 'wkf2'
@@ -423,6 +425,7 @@ class FleurCalculation(JobCalculation):
             # add files to mode_retrieved_filelist
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
             if modes['forces']:
@@ -443,12 +446,12 @@ class FleurCalculation(JobCalculation):
             if fleurinpgen and (not has_fleurinp):
                 for file in self._copy_filelist_inpgen:
                     local_copy_list.append((
-                        os.path.join(outfolderpath + '/path/'+ file),
+                        os.path.join(outfolderpath, 'path', file),
                         os.path.join(file)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
                 for file in self._copy_filelist_scf:
                     local_copy_list.append((
-                        os.path.join(outfolderpath+ '/path/'+ file),
+                        os.path.join(outfolderpath, 'path', file),
                         os.path.join(file)))
                 filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
@@ -459,21 +462,23 @@ class FleurCalculation(JobCalculation):
                 # input file is already taken care of
                 for file in self._copy_filelist_scf1:
                     local_copy_list.append((
-                        os.path.join(outfolderpath+ '/path/'+ file),
+                        os.path.join(outfolderpath, 'path', file),
                         os.path.join(file)))
                 filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,
             # if they are not there, throw error
             if copy_remotely: # on same computer.
+                print('copy files remotely')
                 if modes['pot8']:
-                    filelist_tocopy_remote.append(self._POT_FILE_NAME)
+                    filelist_tocopy_remote.append(self._POT1_FILE_NAME)
+                    filelist_tocopy_remote.append(self._POT2_FILE_NAME)
                 for file in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
                         os.path.join(parent_calc_folder.get_remote_path(),
-                        '/'+ file), self._OUTPUT_FOLDER))
-
+                        file), self._OUTPUT_FOLDER))
+                print remote_copy_list
         ########## MAKE CALCINFO ###########
 
         calcinfo = CalcInfo()
