@@ -7,6 +7,7 @@ cylce of a FLEUR calculation with AiiDA.
 
 #TODO: more info in output, log warnings
 #TODO: make smarter, ggf delete broyd or restart with more or less iterations
+# you can use the pattern of the density convergence for this
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs
@@ -139,12 +140,12 @@ class fleur_convergence(WorkChain):
         #queue = wf_dict.get('queue', '')
         self.ctx.resources = ''
         self.ctx.walltime_sec = ''
-        queue = wf_dict.get('queue', None)
+        self.ctx.queue = wf_dict.get('queue', None)
 
         computer = self.inputs.fleur.get_computer()
         
-        if queue:
-            qres = queue_defaults(queue, computer)
+        if self.ctx.queue:
+            qres = queue_defaults(self.ctx.queue, computer)
 
         res = wf_dict.get('resources', {"num_machines": 1})
         
@@ -217,6 +218,9 @@ class fleur_convergence(WorkChain):
         inputs._options.resources = {"num_machines": 1}
         inputs._options.max_wallclock_seconds = 360
         inputs._options.withmpi = False
+        if self.ctx.queue:
+            inputs._options.queue_name = self.ctx.queue
+            print self.ctx.queue
         #inputs._options.computer = computer
         '''
                 "max_wallclock_seconds": int,
@@ -281,6 +285,9 @@ class fleur_convergence(WorkChain):
             self.ctx.warnings.append(warning)
         inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
         inputs._options.max_wallclock_seconds = 30 * 60
+        if self.ctx.queue:
+            inputs._options.queue_name = self.ctx.queue
+            print self.ctx.queue
         # if code local use
         #if self.inputs.fleur.is_local():
         #    inputs._options.computer = computer

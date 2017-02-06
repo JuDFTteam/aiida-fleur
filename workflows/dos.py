@@ -179,7 +179,8 @@ class dos(WorkChain):
             self.ctx.successful = True
         else:
             dosfilepath = None
-        
+            print '!NO DOS.1 file was found, something went wrong!'
+            
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__

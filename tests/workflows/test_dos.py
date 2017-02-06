@@ -24,8 +24,8 @@ codename2 = 'fleur_iff@local_iff'#'fleur_iff003_v0_27@iff003'
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
-fleurinp = load_node(1510)
-fleur_calc = load_node(1523)
+fleurinp = load_node(1684)
+fleur_calc = load_node(1693)
 remote = fleur_calc.out.remote_folder
 #wf_para = ParameterData(dict={})
 
