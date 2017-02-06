@@ -12,12 +12,12 @@ if not is_dbenv_loaded():
     
 import os.path
 from aiida.orm import Code, DataFactory
-#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
+from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
+from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
@@ -48,10 +48,10 @@ class band(WorkChain):
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                          'kpath' : 'auto', 
-                                         'nkpts' : 500, 
+                                         'nkpts' : 800, 
                                          'sigma' : 0.005,
-                                         'emin' : -0.30, 
-                                         'emax' :  0.80}))
+                                         'emin' : -0.50, 
+                                         'emax' :  0.90}))
         spec.input("remote", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)

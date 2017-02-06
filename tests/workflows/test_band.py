@@ -29,5 +29,5 @@ remote = fleur_calc.out.remote_folder
 wf_para = ParameterData(dict={'queue' : 'th123_node'})
 
 
-res = band.run(fleurinp=fleurinp, remote=remote, fleur=code2)
-#res = band.run(wf_parameters=wf_para, fleurinp=fleurinp, fleur_calc=remote, fleur=code2)
+#res = band.run(fleurinp=fleurinp, remote=remote, fleur=code2)
+res = band.run(wf_parameters=wf_para, fleurinp=fleurinp, remote=remote, fleur=code2)
