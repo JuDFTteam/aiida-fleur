@@ -24,6 +24,7 @@ if not is_dbenv_loaded():
 from aiida.orm import DataFactory
 from ase.io import cif
 
+cifdata = DataFactory('cif')
 structuredata = DataFactory('structure')
 
 def read_cif_folder(path=os.getcwd(), rekursive=True,
@@ -83,19 +84,28 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
 
     #2. read all the files and store stuff.
     saved_count = 0
+    saved_count_cif = 0    
     filenames2 = []
     structuredatas2 = []
     for i in range(nfiles):
         try:
-            asecell = list(cif.read_cif(filepaths[i], index=slice(None)))[-1]
+            new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
         except:
             print 'invalid cif file'
             continue
+        #print new_cif
+        if new_cif[1]:
+            saved_count_cif = saved_count_cif + 1
+        # do we want to save the structures again, or do we also continue
+        #else:
+        #    continue
+        asecell = new_cif[0].get_ase()
         structuredatas.append(DataFactory('structure'))
         filenames2.append(filenames[i])
         struc = structuredatas[-1](ase=asecell)
         formula = struc.get_formula()
         if store_db:
+            #new_cif.store()
             struc.store()
             saved_count = saved_count + 1
 
@@ -129,7 +139,8 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         file1 = os.open(logfile_name, os.O_RDWR|os.O_CREAT)
         os.write(file1, infofilestring)
         os.close(file1)
-    print '{} cif-files were saved in the database'.format(saved_count)
+    print '{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count)
+    
     return structuredatas2, filenames2
 
 if __name__ == "__main__":
