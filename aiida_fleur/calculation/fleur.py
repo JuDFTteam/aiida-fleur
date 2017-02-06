@@ -471,14 +471,15 @@ class FleurCalculation(JobCalculation):
             if copy_remotely: # on same computer.
                 print('copy files remotely')
                 if modes['pot8']:
-                    filelist_tocopy_remote.append(self._POT1_FILE_NAME)
-                    filelist_tocopy_remote.append(self._POT2_FILE_NAME)
-                for file in filelist_tocopy_remote:
+                    filelist_tocopy_remote.append(self._POT_FILE_NAME)
+                    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
+                for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
-                        os.path.join(parent_calc_folder.get_remote_path(),
-                        file), self._OUTPUT_FOLDER))
-                print remote_copy_list
+                        os.path.join(parent_calc_folder.get_remote_path(), file1),
+                        self._OUTPUT_FOLDER))
+                #print remote_copy_list
+                #self.logger.info("remote copy file list {}".format(remote_copy_list))
         ########## MAKE CALCINFO ###########
 
         calcinfo = CalcInfo()
