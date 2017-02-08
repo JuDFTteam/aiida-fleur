@@ -1,0 +1,12 @@
+
+
+
+# for support of the xml files and parsers
+lxml >= 3.6.4
+aiida>=0.7.0
+aiida_fleur
+aiida_fleur_basewf
+
+# for utilities
+ase
+
