@@ -65,6 +65,7 @@ class FleurinputgenCalculation(JobCalculation):
         self._SHELLOUT_FILE_NAME = 'shell.out'
         self._OUTPUT_FILE_NAME = 'out'
         self._ERROR_FILE_NAME = 'out.error'
+        self._STRUCT_FILE_NAME = 'struct.xsf'
     # TODO switch these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -153,8 +154,8 @@ class FleurinputgenCalculation(JobCalculation):
                 be returned by get_inputdata_dict (without the Code!)
         """
 
-        from aiida.common.utils import get_unique_filename, get_suggestion
-        import re
+        #from aiida.common.utils import get_unique_filename, get_suggestion
+        #import re
 
         # Get the connection between coordination number and element symbol
         # maybe do in a differnt way
@@ -508,6 +509,7 @@ class FleurinputgenCalculation(JobCalculation):
         calcinfo.retrieve_list.append(self._SHELLOUT_FILE_NAME)
         calcinfo.retrieve_list.append(self._ERROR_FILE_NAME)
         calcinfo.retrieve_list.append(self._INPUT_FILE_NAME)
+        calcinfo.retrieve_list.append(self._STRUCT_FILE_NAME)
         #calcinfo.retrieve_list += settings_retrieve_list
         #calcinfo.retrieve_list += self._internal_retrieve_list
 

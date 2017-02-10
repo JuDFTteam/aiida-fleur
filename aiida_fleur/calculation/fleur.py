@@ -470,9 +470,9 @@ class FleurCalculation(JobCalculation):
             # if they are not there, throw error
             if copy_remotely: # on same computer.
                 print('copy files remotely')
-                if modes['pot8']:
+                #if modes['pot8']:
                     filelist_tocopy_remote.append(self._POT_FILE_NAME)
-                    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
+                #    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
