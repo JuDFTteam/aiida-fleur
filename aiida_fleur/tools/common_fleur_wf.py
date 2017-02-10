@@ -6,14 +6,14 @@ In here we put all things (methods) that are common to workflows
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-from aiida.orm import Code, DataFactory
-from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
-from aiida.work.workchain import WorkChain
-from aiida.work.workchain import while_, if_
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext
-from aiida.work.process_registry import ProcessRegistry
-from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
+from aiida.orm import Code, DataFactory, load_node
+#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
+#from aiida.work.workchain import WorkChain
+#from aiida.work.workchain import while_, if_
+#from aiida.work.run import submit
+#from aiida.work.workchain import ToContext
+#from aiida.work.process_registry import ProcessRegistry
+#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 
@@ -61,7 +61,7 @@ def is_code(code):
     except:
         pass
     if codestring:
-        code = Code.get_from_string(codename)
+        code = Code.get_from_string(codestring)
         return code      
     #Test if uuid, if yes, is the corresponding node Code
     # TODO: test for uuids not for string (guess is ok for now)
@@ -80,75 +80,44 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur():
+def get_inputs_fleur(code, remote, fleurinp, options, serial=False):
     '''
     get the input for a FLEUR calc
     '''
     inputs = FleurProcess.get_inputs_template()
-
-    fleurin = self.ctx.fleurinp1
-    #print fleurin
-    remote = self.inputs.remote
-    inputs.parent_folder = remote
-    inputs.code = self.inputs.fleur
-    inputs.fleurinpdata = fleurin
+    if remote:
+        inputs.parent_folder = remote
+    if code:
+        inputs.code = code
+    if fleurinp:
+        inputs.fleurinpdata = fleurinp
     
-    # TODO nkpoints decide n core
-
-    core = 12 # get from computer nodes per machine
-    inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
-    inputs._options.max_wallclock_seconds = 30 * 60
+    for key, val in options.iteritems():
+        inputs._options[key] = val
       
-    if self.ctx.serial:
-        inputs._options.withmpi = False # for now
-        inputs._options.resources = {"num_machines": 1}
-    
-    if self.ctx.queue:
-        inputs._options.queue_name = self.ctx.queue
-        print self.ctx.queue
-    # if code local use
-    #if self.inputs.fleur.is_local():
-    #    inputs._options.computer = computer
-    #    #else use computer from code.
-    #else:
-    #    inputs._options.queue_name = 'th1'
-    
-    if self.ctx.serial:
+    if serial:
         inputs._options.withmpi = False # for now
         inputs._options.resources = {"num_machines": 1}
     
     return inputs
 
 
-def get_inputs_inpgen(structure, params=None, inpgencode, options):
+def get_inputs_inpgen(structure, inpgencode, options, params=None):
     """
     get the input for a inpgen calc
     """
     inputs = FleurinpProcess.get_inputs_template()
-    inputs.structure = structure
-    inputs.code = inpgen
+    if structure:
+        inputs.structure = structure
+    if inpgencode:
+        inputs.code = inpgencode
     if params:
-        inputs.parameters = self.inputs.calc_parameters
+        inputs.parameters = params
+    for key, val in options.iteritems():
+        inputs._options[key] = val
+    
+    #inpgen run always serial
+    inputs._options.withmpi = False # for now
     inputs._options.resources = {"num_machines": 1}
-    inputs._options.max_wallclock_seconds = 360
-    inputs._options.withmpi = False
-    if self.ctx.queue:
-        inputs._options.queue_name = self.ctx.queue
-        print self.ctx.queue
-    #inputs._options.computer = computer
-    '''
-            "max_wallclock_seconds": int,
-            "resources": dict,
-            "custom_scheduler_commands": unicode,
-            "queue_name": basestring,
-            "computer": Computer,
-            "withmpi": bool,
-            "mpirun_extra_params": Any(list, tuple),
-            "import_sys_environment": bool,
-            "environment_variables": dict,
-            "priority": unicode,
-            "max_memory_kb": int,
-            "prepend_text": unicode,
-            "append_text": unicode,
-    '''
+                    
     return inputs

@@ -10,12 +10,12 @@ from aiida.orm import Code, DataFactory, load_node
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 #from aiida.work.workchain import WorkChain
 #from aiida.work.workchain import while_, if_
-#from aiida.work.run import submit
+from aiida.work.run import submit
 #from aiida.work.workchain import ToContext
 #from aiida.work.process_registry import ProcessRegistry
 #from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-#from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
+from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 
 from aiida.tools.codespecific.fleur.common_fleur_wf import is_code, get_inputs_fleur, get_inputs_inpgen
 
@@ -25,22 +25,57 @@ __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
+FleurProcess = FleurCalculation.process()
+InpgenProcess = FleurinputgenCalculation.process()
 # difference between local and remote codes?
 codename = 'fleur_iff@local_iff'
 codepk = 1
 codeuuid = 'ba86d8f3-fd47-4776-ac75-bad7009dfa67'
 codeNode = load_node(1)
 nocode = load_node(2254)
-print is_code(Code)
+
 print is_code(codeNode)
 print is_code(codename)
 print is_code(codepk)
-print is_code(codeuuid)
+#print is_code(codeuuid)
 print is_code(nocode)
+#print is_code(Code)
 
 # test get_inputs_inpgen
 
+remote = load_node(2357)
+fleurinp = load_node(2351)
+options = { "max_wallclock_seconds": 360,
+            "resources": {"num_machines": 1},
+            "custom_scheduler_commands": 'bla',
+            "queue_name": 'th1',
+            #"computer": Computer,
+            "withmpi": True,
+            #"mpirun_extra_params": Any(list, tuple),
+            "import_sys_environment": False,
+            "environment_variables": {},
+            "priority": 'High',
+            "max_memory_kb": 62,
+            "prepend_text": 'this is a test',
+            "append_text": 'this was a test'}
+inp = get_inputs_fleur(codeNode, remote, fleurinp, options, serial=False)
+print inp
 
+inputs = {}
+options2 = {"max_wallclock_seconds": 360,
+            "resources": {"num_machines": 1}}
+inputs = get_inputs_fleur(codeNode, remote, fleurinp, options2, serial=True)
+#print inputs
+#future = submit(FleurProcess, **inputs)
+print 'run Fleur'
 
 
 # test get inputs_fleur
+inputs = {}
+structure =load_node(2469)
+inpgencode = is_code(2)
+options2 = {"max_wallclock_seconds": 360,
+            "resources": {"num_machines": 1}}
+inputs = get_inputs_inpgen(structure, inpgencode, options2, params=None)
+future = submit(InpgenProcess, **inputs)
+print 'run inpgen'
