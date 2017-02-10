@@ -5,8 +5,6 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
-
-#import os
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -14,10 +12,7 @@ from aiida.orm.calculation.job import JobCalculation
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
-from aiida.orm.data.structure import StructureData
-from aiida.orm.data.parameter import ParameterData
-#from aiida.orm.data.array.kpoints import KpointsData
-#from aiida.orm import DataFactory
+from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 from aiida.tools.codespecific.fleur.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida.tools.codespecific.fleur.xml_util import convert_to_fortran_bool, convert_to_fortran_string
@@ -27,7 +22,9 @@ __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
-bohr_a = 0.52917721092#A
+bohr_a = 0.52917721092#A # TODO import from somewhere
+StructureData = DataFactory('structure')
+ParameterData = DataFactory('parameter')
 
 class FleurinputgenCalculation(JobCalculation):
     """
@@ -42,59 +39,51 @@ class FleurinputgenCalculation(JobCalculation):
         # Default fleur output parser
         self._default_parser = 'fleur_inp.fleur_inputgen'
 
-        # write here some default namelists
-        #self._automatic_namelists = ['input', 'comp', 'kpt']
-        self._use_kpoints = False
-
         # Default input and output files
         self._DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
         self._DEFAULT_OUTPUT_FILE = 'out' #'shell.out' #will be shown with outputcat
 
         # created file names, some needed for Fleur calc
-        # TODO: complete this list.
-        '''
-        self._INP_FILE_NAME = 'inp'
-        self._ENPARA_FILE_NAME = 'enpara'
-        self._SYMOUT_FILE_NAME = 'sym.out'
-        self._FORT_FILE_NAME = 'fort93'
-        self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
-        self._STRUCT_FILE_NAME = 'struct.xsf'
-        '''
         self._INPXML_FILE_NAME = 'inp.xml'
         self._INPUT_FILE_NAME = 'aiida.in'
         self._SHELLOUT_FILE_NAME = 'shell.out'
         self._OUTPUT_FILE_NAME = 'out'
         self._ERROR_FILE_NAME = 'out.error'
         self._STRUCT_FILE_NAME = 'struct.xsf'
-    # TODO switch these to init_interal_params?
+        '''
+        self._INP_FILE_NAME = 'inp'
+        self._ENPARA_FILE_NAME = 'enpara'
+        self._SYMOUT_FILE_NAME = 'sym.out'
+        self._FORT_FILE_NAME = 'fort93'
+        self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
+        '''
+    # TODO switch all these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
-
 
     # Additional files that should always be retrieved for the specific plugin
     _internal_retrieve_list = []
     _automatic_namelists = {}
-
     # Specify here what namelist and parameters the inpgen takes
     #TODO: complete?
     _possible_namelists = ['title', 'input', 'lattice', 'gen', 'shift', 'factor', 'qss',
                            'soc', 'atom', 'comp', 'exco', 'film', 'kpt', 'end']
                            # this order is important!
-    _possible_params = {'input':{'film', 'cartesian', 'cal_symm', 'checkinp',
-                                 'symor', 'oldfleur'},
-                        'lattice':{'latsys', 'a0', 'a', 'b', 'c', 'alpha',
-                                   'beta', 'gamma'},
-                        'atom':{'id', 'z', 'rmt', 'dx', 'jri', 'lmax',
+    _possible_params = {'input':['film', 'cartesian', 'cal_symm', 'checkinp',
+                                 'symor', 'oldfleur'],
+                        'lattice':['latsys', 'a0', 'a', 'b', 'c', 'alpha',
+                                   'beta', 'gamma'],
+                        'atom':['id', 'z', 'rmt', 'dx', 'jri', 'lmax',
                                 'lnonsph', 'ncst', 'econfig', 'bmu', 'lo',
-                                'element'},
-                        'comp' : {'jspins', 'frcor', 'ctail', 'kcrel', 'gmax',
-                                  'gmaxxc', 'kmax'},
-                        'exco' : {'xctyp', 'relxc'},
-                        'film' : {'dvac', 'dtild'},
-                        'soc' : {'theta', 'phi'},
-                        'qss' : {'x', 'y', 'z'},
-                        'kpt' : {'nkpt', 'kpts', 'div1', 'div2', 'div3',
-                                 'tkb', 'tria'},
+                                'element'],
+                        'comp' : ['jspins', 'frcor', 'ctail', 'kcrel', 'gmax',
+                                  'gmaxxc', 'kmax'],
+                        'exco' : ['xctyp', 'relxc'],
+                        'film' : ['dvac', 'dtild'],
+                        'soc' : ['theta', 'phi'],
+                        'qss' : ['x', 'y', 'z'],
+                        'kpt' : ['nkpt', 'kpts', 'div1', 'div2', 'div3',
+                                 'tkb', 'tria'],
                         'title' : {}
                        }
 
@@ -103,7 +92,7 @@ class FleurinputgenCalculation(JobCalculation):
     # or not at all (lattice ?, shift, scale)
     _blocked_keywords = []
 
-    # TODO different kpt mody? (use kpointNode)?
+    # TODO different kpt mody? (use kpointNode)? FleurinpdData can do it.
     _use_kpoints = False
 
     # If two lattices are given, via the input &lattice
@@ -113,7 +102,6 @@ class FleurinputgenCalculation(JobCalculation):
 
     # Default title
     _inp_title = 'A Fleur input generator calulation with aiida'
-
 
 
     @classproperty
@@ -170,17 +158,16 @@ class FleurinputgenCalculation(JobCalculation):
         bulk = True
         film = False
 
-        # convert them to the inpgen format.
+        # convert these 'booleans' to the inpgen format.
         replacer_values_bool = [True, False, 'True', 'False', 't', 'T',
                                 'F', 'f']
-        # some keywords require a string around them in the input file.
+        # some keywords require a string " around them in the input file.
         string_replace = ['econfig', 'lo', 'element']
 
-        # of some keys only the values are writen to the file.
+        # of some keys only the values are writen to the file, specify them here.
         val_only_namelist = ['soc', 'qss']
 
-
-        # Scaling comesfrom the Structure
+        # Scaling comes from the Structure
         # but we have to convert from Angstroem to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0] #
         scaling_lat = 1.#/bohr_a
@@ -208,16 +195,12 @@ class FleurinputgenCalculation(JobCalculation):
         if False in pbc:
             bulk = False
             film = True
-        #print film
-
 
         # check existence of parameters (optional)
         parameters = inputdict.pop(self.get_linkname('parameters'), None)
         if parameters is None:
             # use default
             parameters_dict = {}
-
-
         else:
             if not isinstance(parameters, ParameterData):
                 raise InputValidationError("parameters, if specified, must be of "
@@ -238,21 +221,13 @@ class FleurinputgenCalculation(JobCalculation):
             elif film:
                 parameters_dict['input'] = {'cartesian' : False, 'film' : True}
 
-        '''
-        try:
-            parameters = inputdict.pop(self.get_linkname('parameters'))
-        except KeyError:
-            raise InputValidationError("No parameters specified for this"
-                                       "calculation")
-        if not isinstance(parameters, ParameterData):
-            raise InputValidationError("parameters is not of type"
-                                       " ParameterData")
-        '''
         namelists_toprint = possible_namelists
 
         # check parameters keys TODO: values needed, or keep plug-in as stupid as possible?
         #if parameters_dict:# TODO remove, unnesseary now?
-        input_params = parameters_dict#_lowercase_dict(parameters.get_dict(),
+        input_params = parameters_dict
+        #TODO:?make everything lowercase in the database, and change it to inpgen format?
+        #_lowercase_dict(parameters.get_dict(),
                                          #dict_name='parameters')
         #input_params = {k: _lowercase_dict(val, dict_name=k)
         #                   for k, val in input_params.iteritems()}
@@ -262,14 +237,11 @@ class FleurinputgenCalculation(JobCalculation):
             self._inp_title = input_params.pop('title')
         #TODO validate type of values of the input parameter keys ?
 
-
-
         #check input_parameters
         for namelist, paramdic in input_params.iteritems():
-            #print paramdic
-            if 'atom' in namelist: # this namelist can be specified for often
+            if 'atom' in namelist: # this namelist can be specified more often
                 # special atom namelist needs to be set for writing,
-                #  but insert it in the right spot!
+                #  but insert it in the right spot! 
                 index = namelists_toprint.index('atom') + 1
                 namelists_toprint.insert(index, namelist)
                 namelist = 'atom'
@@ -285,7 +257,6 @@ class FleurinputgenCalculation(JobCalculation):
                         "namelist '{}'. "
                         "Check the fleur website, or if it really is,"
                         " update _possible_params. ".format(para, namelist))
-                #print paramdic[para]
                 if paramdic[para] in replacer_values_bool:
                     # because 1/1.0 == True, and 0/0.0 == False
                     # maybe change in convert_to_fortran that no error occurs
@@ -297,9 +268,9 @@ class FleurinputgenCalculation(JobCalculation):
 
                 if para in string_replace:
                     #TODO check if its in the parameter dict
-                    print para
+                    #print para
                     paramdic[para] = convert_to_fortran_string(paramdic[para])
-                    print "{}".format(paramdic[para])
+                    #print "{}".format(paramdic[para])
             #in fleur it is possible to give a lattice namelist
             if 'lattice' in input_params.keys():
                 own_lattice = True
@@ -342,29 +313,21 @@ class FleurinputgenCalculation(JobCalculation):
                 "The following input data nodes are "
                 "unrecognized: {}".format(inputdict.keys()))
 
-        # Check structure, get species  # might not be used
-        # kindnames = [k.name for k in structure.kinds]
-
         ##############################
         # END OF INITIAL INPUT CHECK #
 
         #######################################################
         ######### PREPARE PARAMETERS FOR INPUT FILE ###########
 
-        # Set some variables (look out at the case! NAMELISTS should be
-
         #### STRUCTURE_PARAMETERS ####
-
-
 
         scaling_factor_card = ""
         cell_parameters_card = ""
-        #print structure.cell
+        
         if not own_lattice:
             cell = structure.cell
             for vector in cell:
-                scaled = [a*1./bohr_a for a  in vector]
-
+                scaled = [a*scaling_pos for a  in vector]#scaling_pos=1./bohr_a
                 cell_parameters_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
                                          "\n".format(scaled[0], scaled[1], scaled[2]))
             scaling_factor_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
@@ -422,8 +385,8 @@ class FleurinputgenCalculation(JobCalculation):
                 #TODO check format
 
         else:
-        # TODO with own lattice atomic positions have to come from somewhere
-        # else.... User input?
+            # TODO with own lattice atomic positions have to come from somewhere
+            # else.... User input?
             raise InputValidationError("fleur lattice needs also the atom "
                                        " position as input,"
                                        " not implemented yet, sorry!")
@@ -473,7 +436,6 @@ class FleurinputgenCalculation(JobCalculation):
                         namels_name = 'atom'
                     infile.write("&{0}\n".format(namels_name))
                     if namels_name in val_only_namelist:
-                        #infile.write('{} {}'.format(namels_name['theta'], namels_name['phi']))
                         for k, val in sorted(namelist.iteritems()):
                             infile.write(get_input_data_text(k, val, True, mapping=None))
                     else:
@@ -540,7 +502,7 @@ class FleurinputgenCalculation(JobCalculation):
         '''
         return calcinfo
 
-def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur
+def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur/ delete unnessesariy parts
     """
     Given a key and a value, return a string (possibly multiline for arrays)
     with the text to be added to the input file.
