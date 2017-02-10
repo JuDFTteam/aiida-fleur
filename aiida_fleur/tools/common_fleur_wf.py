@@ -25,7 +25,6 @@ __contributors__ = "Jens Broeder"
 
 
 RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleurinp')
@@ -39,38 +38,46 @@ def is_code(code):
     if yes returns a Code node in all cases
     if no returns None
     """
-    StructureData = DataFactory('structure')
-
-    #Test if StructureData
-    if isinstance(structure, StructureData):
-        return structure
-    #Test if pk, if yes, is the corresponding node StructureData
+    
+    #Test if Code
+    if isinstance(code, Code):
+        return code
+    #Test if pk, if yes, is the corresponding node Code
     pk = None
     try:
-        pk=int(structure)
+        pk=int(code)
     except:
         pass
     if pk:
-        structure = load_node(pk)
-        if isinstance(structure, StructureData):
-            return structure
+        code = load_node(pk)
+        if isinstance(code, Code):
+            return code
         else:
             return None
-    #Test if uuid, if yes, is the corresponding node StructureData
+    #given as string
+    codestring = None
+    try:
+        codestring = str(code)
+    except:
+        pass
+    if codestring:
+        code = Code.get_from_string(codename)
+        return code      
+    #Test if uuid, if yes, is the corresponding node Code
     # TODO: test for uuids not for string (guess is ok for now)
+    '''
     uuid = None
     try:
-        uuid = str(structure)
+        uuid = str(code)
     except:
         pass
     if uuid:
-        structure = load_node(uuid)
-        if isinstance(structure, StructureData):
-            return structure
+        code = load_node(uuid)
+        if isinstance(code, Code):
+            return code
         else:
             return None
-    #Else throw error? or rather return None
-
+    '''
     return None
 
 def get_inputs_fleur():
