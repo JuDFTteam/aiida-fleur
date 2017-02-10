@@ -118,8 +118,8 @@ class fleur_convergence(WorkChain):
         init context and some parameters
         """
         
-        print 'started convergence workflow version {}'.format(self._workflowversion)
-        print "Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node)
+        print('started convergence workflow version {}'.format(self._workflowversion))
+        print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         
         # init
         self.ctx.last_calc = None
