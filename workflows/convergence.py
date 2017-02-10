@@ -25,6 +25,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -137,24 +138,9 @@ class fleur_convergence(WorkChain):
 
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        #queue = wf_dict.get('queue', '')
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
         self.ctx.queue = wf_dict.get('queue', None)
-
-        #computer = self.inputs.fleur.get_computer()
-        
-        #if self.ctx.queue:
-        #    qres = queue_defaults(self.ctx.queue, computer)
-
-        #res = wf_dict.get('resources', {"num_machines": 1})
-        
-        #if res:
-        #    self.ctx.resources = res
-        #wt = wf_dict.get('walltime_sec', 10*30)
-        #if wt:
-        #    self.ctx.walltime_sec = wt
-        #print wt, res
 
 
     def validate_input(self):
@@ -198,14 +184,24 @@ class fleur_convergence(WorkChain):
         """
         run the inpgen
         """        
-        inputs = {}        
-        inputs = self.get_inputs_inpgen()
+        structure = self.inputs.structure
+        inpgencode = self.inputs.inpgen
+        if 'calc_parameters' in self.inputs:
+            params = self.inputs.calc_parameters
+        else:
+            params = None
+        
+        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
+                   "resources": self.ctx.resources,
+                   "queue_name" : self.ctx.queue}
+        
+        inputs = get_inputs_inpgen(structure, inpgencode, options, params=params)        
         print 'run inpgen'
         future = submit(FleurinpProcess, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
 
-
+    '''
     def get_inputs_inpgen(self):
         """
         get the input for a inpgen calc
@@ -222,7 +218,7 @@ class fleur_convergence(WorkChain):
             inputs._options.queue_name = self.ctx.queue
             print self.ctx.queue
         #inputs._options.computer = computer
-        '''
+        
                 "max_wallclock_seconds": int,
                 "resources": dict,
                 "custom_scheduler_commands": unicode,
@@ -236,7 +232,7 @@ class fleur_convergence(WorkChain):
                 "max_memory_kb": int,
                 "prepend_text": unicode,
                 "append_text": unicode,
-        '''
+        
         return inputs
 
     def get_inputs_fleur(self):
@@ -258,7 +254,8 @@ class fleur_convergence(WorkChain):
         inputs.code = self.inputs.fleur
         inputs.fleurinpdata = fleurin
         
-        '''
+    '''
+    '''
         core=12 # get from computer nodes per machine
                 
         # this should be done by fleur in my opinion
@@ -284,7 +281,8 @@ class fleur_convergence(WorkChain):
             warning = 'WARNING: nkpoints not know, parallelisation might be wrong'
             print(warning)
             self.ctx.warnings.append(warning)
-        '''
+    '''
+    '''
         inputs._options.resources = self.ctx.resources
         #{"num_machines": 1, "num_mpiprocs_per_machine" : core}
         inputs._options.max_wallclock_seconds = self.ctx.walltime_sec
@@ -304,16 +302,27 @@ class fleur_convergence(WorkChain):
         #inputs._label = 'Fleur'
         
         return inputs
-
+    '''
     def run_fleur(self):
         """
         run a FLEUR calculation
         """
         #print 'run fleur'
-
-        inputs = {}
-        inputs = self.get_inputs_fleur()
-        #print inputs
+        if 'fleurinp' in self.inputs:
+            fleurin = self.inputs.fleurinp
+        else:
+            fleurin = self.ctx['inpgen'].out.fleurinpData
+        
+        if self.ctx['last_calc']:
+            remote = self.ctx['last_calc'].out.remote_folder
+        elif 'remote_data' in self.inputs:
+            remote = self.inputs.remote_data
+        code = self.inputs.fleur
+        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
+                   "resources": self.ctx.resources,
+                   "queue_name" : self.ctx.queue}
+      
+        inputs = get_inputs_fleur(code, remote, fleurin, options)
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
