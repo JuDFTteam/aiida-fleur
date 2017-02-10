@@ -21,6 +21,7 @@ from aiida.work.process_registry import ProcessRegistry
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
+from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur
 
 
 StructureData = DataFactory('structure')
@@ -77,14 +78,19 @@ class dos(WorkChain):
         
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
-        
         self.ctx.successful = False #TODO
         self.ctx.warnings = []
-        # if MPI in code name, execute parallel
-        self.ctx.serial = True
         
         wf_dict = self.inputs.wf_parameters.get_dict()
         
+        # if MPI in code name, execute parallel
+        self.ctx.serial = wf_dict.get('serial', False)
+
+        # set values, or defaults
+        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
+        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
+        self.ctx.queue = wf_dict.get('queue', None)          
         
         
     def create_new_fleurinp(self):
@@ -120,11 +126,11 @@ class dos(WorkChain):
         self.ctx.fleurinp1 = fleurinp_new
         #print(fleurinp_new)
         #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
-
+    '''
     def get_inputs_fleur(self):
-        '''
+        """
         get the input for a FLEUR calc
-        '''
+        """
         inputs = FleurProcess.get_inputs_template()
 
         fleurin = self.ctx.fleurinp1
@@ -147,9 +153,9 @@ class dos(WorkChain):
         return inputs
         
     def run_fleur(self):
-        '''
+        """
         run a fleur calculation
-        '''
+        """
         FleurProcess = FleurCalculation.process()
         inputs = {}
         inputs = self.get_inputs_fleur()
@@ -158,7 +164,29 @@ class dos(WorkChain):
         print 'run Fleur in dos workflow'
 
         return ToContext(last_calc=future)
+    '''
+    
+    def run_fleur(self):
+        """
+        run a FLEUR calculation
+        """
+        fleurin = self.ctx.fleurinp1
+        remote = self.inputs.remote
+        code = self.inputs.fleur
 
+        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
+                   "resources": self.ctx.resources,
+                   "queue_name" : self.ctx.queue}
+      
+        inputs = get_inputs_fleur(code, remote, fleurin, options)
+        future = submit(FleurProcess, **inputs)
+        self.ctx.loop_count = self.ctx.loop_count + 1
+        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
+        self.ctx.calcs.append(future)
+
+        return ToContext(last_calc=future) #calcs.append(future),
+
+        
     def return_results(self):
         '''
         return the results of the calculations
