@@ -133,27 +133,27 @@ class fleur_convergence(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         
         # if MPI in code name, execute parallel
-        self.ctx.serial = True
+        self.ctx.serial = wf_dict.get('serial', False)#True
 
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         #queue = wf_dict.get('queue', '')
-        self.ctx.resources = ''
-        self.ctx.walltime_sec = ''
+        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
         self.ctx.queue = wf_dict.get('queue', None)
 
-        computer = self.inputs.fleur.get_computer()
+        #computer = self.inputs.fleur.get_computer()
         
-        if self.ctx.queue:
-            qres = queue_defaults(self.ctx.queue, computer)
+        #if self.ctx.queue:
+        #    qres = queue_defaults(self.ctx.queue, computer)
 
-        res = wf_dict.get('resources', {"num_machines": 1})
+        #res = wf_dict.get('resources', {"num_machines": 1})
         
-        if res:
-            self.ctx.resources = res
-        wt = wf_dict.get('walltime_sec', 10*30)
-        if wt:
-            self.ctx.walltime_sec = wt
+        #if res:
+        #    self.ctx.resources = res
+        #wt = wf_dict.get('walltime_sec', 10*30)
+        #if wt:
+        #    self.ctx.walltime_sec = wt
         #print wt, res
 
 
@@ -258,6 +258,7 @@ class fleur_convergence(WorkChain):
         inputs.code = self.inputs.fleur
         inputs.fleurinpdata = fleurin
         
+        '''
         core=12 # get from computer nodes per machine
                 
         # this should be done by fleur in my opinion
@@ -283,8 +284,10 @@ class fleur_convergence(WorkChain):
             warning = 'WARNING: nkpoints not know, parallelisation might be wrong'
             print(warning)
             self.ctx.warnings.append(warning)
-        inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
-        inputs._options.max_wallclock_seconds = 30 * 60
+        '''
+        inputs._options.resources = self.ctx.resources
+        #{"num_machines": 1, "num_mpiprocs_per_machine" : core}
+        inputs._options.max_wallclock_seconds = self.ctx.walltime_sec
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
             print self.ctx.queue
@@ -307,7 +310,6 @@ class fleur_convergence(WorkChain):
         run a FLEUR calculation
         """
         #print 'run fleur'
-
 
         inputs = {}
         inputs = self.get_inputs_fleur()
@@ -411,6 +413,7 @@ class fleur_convergence(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['Warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
+        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid            
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 

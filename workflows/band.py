@@ -21,7 +21,7 @@ from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
-
+from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -77,31 +77,19 @@ class band(WorkChain):
         
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
-        
-        self.ctx.successful = False #TODO
+        self.ctx.successful = False 
         self.ctx.warnings = []
-        # if MPI in code name, execute parallel
-        self.ctx.serial = True
         
         wf_dict = self.inputs.wf_parameters.get_dict()
-        self.ctx.resources = ''
-        self.ctx.walltime_sec = ''
-        self.ctx.queue = wf_dict.get('queue', None)
+        
+        # if MPI in code name, execute parallel
+        self.ctx.serial = wf_dict.get('serial', False)
 
-        computer = self.inputs.fleur.get_computer()
-        
-        if self.ctx.queue:
-            qres = queue_defaults(self.ctx.queue, computer)
-
-        res = wf_dict.get('resources', {"num_machines": 1})
-        
-        if res:
-            self.ctx.resources = res
-        wt = wf_dict.get('walltime_sec', 10*30)
-        if wt:
-            self.ctx.walltime_sec = wt
-        #print wt, res        
-        
+        # set values, or defaults
+        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
+        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
+        self.ctx.queue = wf_dict.get('queue', None)        
         
     def create_new_fleurinp(self):
         """
@@ -120,8 +108,8 @@ class band(WorkChain):
         #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000), 
         #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'), 
         #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
-        change_dict = {'band': True, 'ndir' : 1, 'minEnergy' : emin,
-                       'maxEnergy' : emax, 'sigma' : sigma, 'pot8' : True}
+        change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
+                       'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
         
         fleurmode.set_inpchanges(change_dict)
 
@@ -132,13 +120,13 @@ class band(WorkChain):
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp1 = fleurinp_new
-        print(fleurinp_new)
+        #print(fleurinp_new)
         #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
-
+    '''
     def get_inputs_fleur(self):
-        '''
+        """
         get the input for a FLEUR calc
-        '''
+        """
         inputs = FleurProcess.get_inputs_template()
 
         fleurin = self.ctx.fleurinp1
@@ -175,9 +163,9 @@ class band(WorkChain):
         return inputs
         
     def run_fleur(self):
-        '''
+        """
         run a fleur calculation
-        '''
+        """
         FleurProcess = FleurCalculation.process()
         inputs = {}
         inputs = self.get_inputs_fleur()
@@ -186,7 +174,30 @@ class band(WorkChain):
         print 'run Fleur in band workflow'
 
         return ToContext(last_calc=future)
+    '''
+    
+    def run_fleur(self):
+        """
+        run a FLEUR calculation
+        """
+        fleurin = self.ctx.fleurinp1
+        remote = self.inputs.remote
+        code = self.inputs.fleur
 
+        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
+                   "resources": self.ctx.resources,
+                   "queue_name" : self.ctx.queue}
+      
+        inputs = get_inputs_fleur(code, remote, fleurin, options)
+        future = submit(FleurProcess, **inputs)
+        self.ctx.loop_count = self.ctx.loop_count + 1
+        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
+        self.ctx.calcs.append(future)
+
+        return ToContext(last_calc=future) #calcs.append(future),
+
+    
+    
     def return_results(self):
         '''
         return the results of the calculations
@@ -198,8 +209,10 @@ class band(WorkChain):
         
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
+
         bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
         # TODO this should be easier...
+        last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
         bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
         print bandfilepath
         #bandfilepath = "path to bandfile" # Array?
@@ -208,16 +221,27 @@ class band(WorkChain):
         else:
             bandfilepath = None
             print '!NO bandstructure file was found, something went wrong!'
+        #TODO corret efermi:
+        # get efermi from last calculation
+        efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
+        #get efermi from this caclulation
+        efermi2 = self.ctx.last_calc.res.fermi_energy
+        diff_efermi = efermi1 - efermi2
+        # store difference in output node
+        # adjust difference in band.gnu
+        #filename = 'gnutest2'
         
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['Warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
+        outputnode_dict['diff_efermi'] = diff_efermi               
         #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
         #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['bandfile'] = bandfilepath
-        
+        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid 
+        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved 
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
