@@ -470,8 +470,8 @@ class FleurinputgenCalculation(JobCalculation):
         calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
         calcinfo.retrieve_list.append(self._SHELLOUT_FILE_NAME)
         calcinfo.retrieve_list.append(self._ERROR_FILE_NAME)
-        calcinfo.retrieve_list.append(self._INPUT_FILE_NAME)
         calcinfo.retrieve_list.append(self._STRUCT_FILE_NAME)
+        calcinfo.retrieve_list.append(self._INPUT_FILE_NAME)
         #calcinfo.retrieve_list += settings_retrieve_list
         #calcinfo.retrieve_list += self._internal_retrieve_list
 

@@ -453,7 +453,7 @@ class FleurCalculation(JobCalculation):
                     local_copy_list.append((
                         os.path.join(outfolderpath, 'path', file),
                         os.path.join(file)))
-                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
             elif fleurinpgen and has_fleurinp:
                     # everything is taken care of
@@ -464,15 +464,22 @@ class FleurCalculation(JobCalculation):
                     local_copy_list.append((
                         os.path.join(outfolderpath, 'path', file),
                         os.path.join(file)))
-                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,
             # if they are not there, throw error
             if copy_remotely: # on same computer.
                 print('copy files remotely')
                 if modes['pot8']:
+                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                     filelist_tocopy_remote.append(self._POT_FILE_NAME)
                 #    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
+                elif modes['dos']:
+                    pass
+                elif modes['band']: 
+                    pass
+                else:
+                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
