@@ -42,7 +42,7 @@ class inital_state_CLS(WorkChain):
     'Bes' : [W4f, Be1s]
     'CLS' : [W4f, Be1s]
     'atoms' : ['all', 'postions' : []]
-    'references' : ['calculate', or 
+    'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
     'scf_para' : {...}, 'default' 
     'relax' : True
     'relax_mode': ['Fleur', 'QE Fleur', 'QE']
@@ -65,23 +65,27 @@ class inital_state_CLS(WorkChain):
     '''
     
     _workflowversion = "0.0.1"
-    
+    _default_wf_para = {'references' : {'calculate' : 'all'}, 
+                        'calculate_doses' : False,
+                        'relax' : True,
+                        'relax_mode': 'QE Fleur',
+                        'relax_para' : 'default',
+                        'scf_para' : 'default',
+                        'dos_para' : 'default',
+                        'same_para' : True,
+                        'resources' : {"num_machines": 1},
+                        'walltime_sec' : 10*30,
+                        'queue' : None,
+                        'serial' : False}
+
     @classmethod
     def define(cls, spec):
         super(inital_state_CLS, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                                            'method' : 'initial',
-                                            'atoms' : 'all',
-                                            'references' : 'calculate', 
-                                            'calculate_doses' : False,
-                                            'relax' : True,
-                                            'relax_mode': 'QE Fleur',
-                                            'relax_para' : 'default',
-                                            'scf_para' : 'default',
-                                            'dos_para' : 'default'}))
+                   default=ParameterData(dict=self._default_wf_para))
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
+        spec.input("inpgen", valid_type=Code, required=False)        
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.outline(
@@ -92,6 +96,8 @@ class inital_state_CLS(WorkChain):
                 cls.relax),
             cls.find_parameters,
             cls.run_fleur_scfs,
+            if_(cls.calculate_dos)(
+                cls.dos),
             cls.collect_results,
             cls.return_results
         )
@@ -103,35 +109,71 @@ class inital_state_CLS(WorkChain):
         check what input is given if it makes sence
         """
         ### input check ### ? or done automaticly, how optional?
-        # check if fleuinp corresponds to fleur_calc
         print('Started inital_state_CLS workflow version {}'.format(self._workflowversion))
         print("Workchain node identifiers: {}"
               "".format(ProcessRegistry().current_calc_node))
-        '''
-        outputnode_dict['Warnings'] = self.ctx.warnings               
-        outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['Corelevelshifts'] = self.ctx.CLS   
+        
         # init
         self.ctx.last_calc = None
-        self.ctx.loop_count = 0
+        self.ctx.eximated_jobs = 0
+        self.ctx.run_jobs = 0
         self.ctx.calcs = []
+        self.ctx.calcs_torun = []
+        self.ctx.dos_to_calc = []
+        self.ctx.struc_to_relax = []
         self.ctx.successful = False
-        self.ctx.distance = []
-        self.ctx.total_energy = []
-        self.energydiff = 1000
         self.ctx.warnings = []
         self.ctx.errors = []
-        wf_dict = self.inputs.wf_parameters.get_dict()
+        self.ctx.CLS = {}
         
-        # if MPI in code name, execute parallel
-        self.ctx.serial = wf_dict.get('serial', False)#True
-
         # set values, or defaults
-        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        self.ctx.queue = wf_dict.get('queue', None)
-        '''
+        wf_dict = self.inputs.wf_parameters.get_dict()
+        default = self._default_wf_para
+
+        self.ctx.serial = wf_dict.get('serial', default.get('serial'))
+        self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
+        self.ctx.dos = wf_dict.get('calculate_doses', default.get('calculate_doses'))
+        self.ctx.dos_para = wf_dict.get('dos_para', default.get('dos_para'))
+        self.ctx.relax = wf_dict.get('relax', default.get('relax'))
+        self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
+        self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
+        self.ctx.resources = wf_dict.get('resources', default.get('resources'))
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
+        self.ctx.queue = wf_dict.get('queue', default.get('queue'))
+        
+        
+        inputs = self.inputs        
+        if 'fleurinp' in inputs:
+            structure = inputs.fleurinp.get_structuredata(inputs.fleurinp)
+            self.ctx.elements = list(structure.get_composition().keys())
+            self.calcs_torun.append(inputs.get('fleurinp'))
+            if 'structure' in inputs:
+                warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
+                print(warning)
+                self.ctx.warnings.append(warning)
+            if 'calc_parameters' in inputs:
+                warning = 'WARNING: Ignoring parameter input, because Fleurinp was given'
+                print(warning)
+                self.ctx.warnings.append(warning)
+        elif 'structure' in inputs:
+            self.ctx.elements = list(inputs.structure.get_composition().keys())
+            if not 'inpgen' in inputs:
+                error = 'ERROR: StructureData was provided, but no inpgen code was provided'
+                print(error)
+                self.ctx.errors.append(error)
+                #kill workflow
+            if 'calc_parameters' in inputs:
+                self.calcs_torun.append((inputs.get('calc_parameters'), inputs.get('structure')))
+            else:
+                self.calcs_torun.append(inputs.get('structure'))
+        else:
+            error = 'ERROR: No StructureData nor FleurinpData was provided'
+            print(error)
+            self.ctx.errors.append(error)
+            #kill workflow          
+        print('elements in structure: {}'.format(self.ctx.elements))
+        
+        
     def get_refernces(self):
         """
         To calculate a CLS in inital state approx, we need reference calculations
@@ -142,24 +184,148 @@ class inital_state_CLS(WorkChain):
         Are there already calculation of these 'references'.
         Put these calculation in the queue
         """
-        print('In Get_references inital_state_CLS workflow')        
-        pass
-    
+        print('In Get_references inital_state_CLS workflow')   
+        references = self.inputs.wf_parameters.get_dict().get('references', {'calculate' : 'all'})
+        
+        to_calc = {}
+        results_ref = {}
+        calculate = references.get('calculate', 'all')
+        
+        for elem in self.ctx.elements:
+            to_calc[elem] = 'find' 
+        if calculate != 'all':
+            pass
+            # remove some calcs from to_calc and check if 
+            
+        if references.get('use', {}): # if reference results are given in some form
+            #as {'element' : float, or 'element': FleurCalculation} don't calculate them anew
+            for elm, source in references.get('use').iteritems():
+                re = to_calc.pop('elm') # no calc needed
+                # convert results into {'W' : [float]} # TODO: be careful about atom types
+                #if source float add
+                #elif source int, load and check if calculation, if yes get correlevel from results.
+                #elif source calc, as above
+                results_ref[elem] = source
+        '''                  
+        for key, val in references.iteritems():
+            if key == 'calculate':
+                if val == 'all':
+                    pass
+                    # for element in self.ctx.elements:
+                    # look in 'given'    
+                    # querry db for structures, cif files
+                    # if not found querry online?
+                else:
+                    for element, pk in val.iteritems():
+                        pass
+                        # if element not in self elements, ignore, print,log warning?
+            elif key == 'use':
+                
+            else:
+                print('This key: {} with value: {} is not supported'.format(key, val))
+                #TODO warning
+        '''
+    '''        
+    def find_references(search_dict):
+        """
+        This methods finds
+        """
+        #TODO write this routine
+        from aiida.orm import QueryBuilder
+        results = []
+        structures_pks = []
+        structures_formulae = []
+
+        #query db
+        structures_pks = []
+        q = QueryBuilder()
+        q.append(StructureData,
+            #filters = {'extras.specification.project' : {'==' : 'Fusion'}}
+            filters = {'extras.type' : {'==' : 'simple bulk'}}
+            #or filters = {'extras.type' : {'==' : 'element'}}
+            )
+        structures = q.all()
+        
+        
+        return results         
+    '''        
     def relaxation_needed(self):
         """
         If the structures should be relaxed, check if their Forces are below a certain 
         threshold, otherwise throw them in the relaxation wf.
         """
         print('In relaxation inital_state_CLS workflow')
-        pass
+        if self.ctx.relax:
+            # TODO check all forces of calculations
+            forces_fine = True
+            if forces_fine:
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+    
+    def relax(self):
+        """
+        Do structural relaxation for certain structures.
+        """
+        print('In relax inital_state_CLS workflow')        
+        for calc in self.ctx.dos_to_calc:
+            pass 
+            # TODO run relax workflow
+        
+
+    
+    def calculate_dos(self):
+        """
+        Run SCF-cycles for all structures, calculations given in certain workflow arrays.
+        """
+        print('In calculate_dos? inital_state_CLS workflow')        
+        if self.ctx.dos:
+            return True
+        else:
+            return False   
+
+    def dos(self):
+        """
+        Calculate a density of states for certain calculations.
+        """
+        print('In dos inital_state_CLS workflow')        
+        for calc in self.ctx.dos_to_calc:
+            pass 
+            # TODO run dos workflow
+        
     
     def run_fleur_scfs(self):
         """
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
         print('In run_fleur_scfs inital_state_CLS workflow')        
-        pass
-
+        #from aiida.work import run, async, 
+        from aiida.tools.codespecific.fleur.convergence import fleur_convergence
+        res_all = []
+        # for each calulation in self.ctx.calcs_torun
+        for node in calcs_torun:
+            if isinstance(node, structureData):
+                res = fleur_convergence.submit(structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, fleurinpData):
+                res = fleur_convergence.submit(structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = fleur_convergence.submit(wf_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            res_all.append(res)
+         return ToContext(last_calc=future) #calcs.append(future)
+        '''    
+        inputs = get_inputs_fleur(code, remote, fleurin, options)
+        future = submit(FleurProcess, **inputs)
+        self.ctx.loop_count = self.ctx.loop_count + 1
+        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
+        self.ctx.calcs.append(future)
+        '''
+        return ToContext(last_calc=future) #calcs.append(future),            
     def collect_results(self):
         """
         Collect results from certain calculation, check if everything is fine, 
