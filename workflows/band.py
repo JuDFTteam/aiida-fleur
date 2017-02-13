@@ -190,9 +190,6 @@ class band(WorkChain):
       
         inputs = get_inputs_fleur(code, remote, fleurin, options)
         future = submit(FleurProcess, **inputs)
-        self.ctx.loop_count = self.ctx.loop_count + 1
-        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
-        self.ctx.calcs.append(future)
 
         return ToContext(last_calc=future) #calcs.append(future),
 
