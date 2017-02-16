@@ -1,0 +1,37 @@
+Tests for Basic Workflows
+=========================
+
+Tests Convergence
++++++++++++++++++
+
+.. automodule:: tests.workflows.test_convergence
+   :members:
+
+.. automodule:: tests.workflows.test_convergence2
+   :members:
+
+
+Test Band
++++++++++
+
+.. automodule:: tests.workflows.test_band
+   :members:
+
+Test Dos
+++++++++
+
+.. automodule:: tests.workflows.test_dos
+   :members:
+
+Test EOS
+++++++++
+
+.. automodule:: tests.workflows.test_calculate_lattice_con
+   :members:
+
+Test Relax
+++++++++++
+
+.. automodule:: tests.workflows.test_realaxation
+   :members:
+
