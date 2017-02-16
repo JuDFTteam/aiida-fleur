@@ -126,45 +126,6 @@ class dos(WorkChain):
         self.ctx.fleurinp1 = fleurinp_new
         #print(fleurinp_new)
         #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
-    '''
-    def get_inputs_fleur(self):
-        """
-        get the input for a FLEUR calc
-        """
-        inputs = FleurProcess.get_inputs_template()
-
-        fleurin = self.ctx.fleurinp1
-        #print fleurin
-        remote = self.inputs.remote
-        inputs.parent_folder = remote
-        inputs.code = self.inputs.fleur
-        inputs.fleurinpdata = fleurin
-        
-        # TODO nkpoints decide n core
-
-        core = 12 # get from computer nodes per machine
-        inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
-        inputs._options.max_wallclock_seconds = 30 * 60
-          
-        if self.ctx.serial:
-            inputs._options.withmpi = False # for now
-            inputs._options.resources = {"num_machines": 1}
-        
-        return inputs
-        
-    def run_fleur(self):
-        """
-        run a fleur calculation
-        """
-        FleurProcess = FleurCalculation.process()
-        inputs = {}
-        inputs = self.get_inputs_fleur()
-        #print inputs
-        future = submit(FleurProcess, **inputs)
-        print 'run Fleur in dos workflow'
-
-        return ToContext(last_calc=future)
-    '''
     
     def run_fleur(self):
         """
@@ -178,7 +139,7 @@ class dos(WorkChain):
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
       
-        inputs = get_inputs_fleur(code, remote, fleurin, options)
+        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)
 
         return ToContext(last_calc=future) #calcs.append(future),

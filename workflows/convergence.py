@@ -11,18 +11,19 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs
-
+#TODO: Idea pass structure extras, save them in outputnode? no
+#TODO: get density for magnetic structures
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import Code, DataFactory
-from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
+#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
+#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
@@ -201,108 +202,6 @@ class fleur_convergence(WorkChain):
 
         return ToContext(inpgen=future, last_calc=future)
 
-    '''
-    def get_inputs_inpgen(self):
-        """
-        get the input for a inpgen calc
-        """
-        inputs = FleurinpProcess.get_inputs_template()
-        inputs.structure = self.inputs.structure
-        inputs.code = self.inputs.inpgen
-        if 'calc_parameters' in self.inputs:
-            inputs.parameters = self.inputs.calc_parameters
-        inputs._options.resources = {"num_machines": 1}
-        inputs._options.max_wallclock_seconds = 360
-        inputs._options.withmpi = False
-        if self.ctx.queue:
-            inputs._options.queue_name = self.ctx.queue
-            print self.ctx.queue
-        #inputs._options.computer = computer
-        
-                "max_wallclock_seconds": int,
-                "resources": dict,
-                "custom_scheduler_commands": unicode,
-                "queue_name": basestring,
-                "computer": Computer,
-                "withmpi": bool,
-                "mpirun_extra_params": Any(list, tuple),
-                "import_sys_environment": bool,
-                "environment_variables": dict,
-                "priority": unicode,
-                "max_memory_kb": int,
-                "prepend_text": unicode,
-                "append_text": unicode,
-        
-        return inputs
-
-    def get_inputs_fleur(self):
-        """
-        get the input for a FLEUR calc
-        """
-
-        inputs = FleurProcess.get_inputs_template()
-        if 'fleurinp' in self.inputs:
-            fleurin = self.inputs.fleurinp
-        else:
-            fleurin = self.ctx['inpgen'].out.fleurinpData
-        
-        if self.ctx['last_calc']:
-            remote = self.ctx['last_calc'].out.remote_folder
-            inputs.parent_folder = remote
-        elif 'remote_data' in self.inputs:
-            inputs.parent_folder = self.inputs.remote_data
-        inputs.code = self.inputs.fleur
-        inputs.fleurinpdata = fleurin
-        
-    '''
-    '''
-        core=12 # get from computer nodes per machine
-                
-        # this should be done by fleur in my opinion
-        nkpoints = fleurin.inp_dict.get(
-                       'calculationSetup', {}).get(
-                       'bzIntegration', {}).get(
-                       'kPointList', {}).get(
-                       'count', None)
-        
-        if not nkpoints:
-            pass # get KpointCount, KpointMesh
-            nkpoints = fleurin.inp_dict.get(
-                            'calculationSetup', {}).get(
-                            'bzIntegration', {}).get(
-                            'kPointCount', {}).get(
-                            'count', None)     
-             
-                                               
-        if nkpoints:
-            core = decide_ncore(nkpoints, core)
-            print('using {} cores'.format(core))
-        else:
-            warning = 'WARNING: nkpoints not know, parallelisation might be wrong'
-            print(warning)
-            self.ctx.warnings.append(warning)
-    '''
-    '''
-        inputs._options.resources = self.ctx.resources
-        #{"num_machines": 1, "num_mpiprocs_per_machine" : core}
-        inputs._options.max_wallclock_seconds = self.ctx.walltime_sec
-        if self.ctx.queue:
-            inputs._options.queue_name = self.ctx.queue
-            print self.ctx.queue
-        # if code local use
-        #if self.inputs.fleur.is_local():
-        #    inputs._options.computer = computer
-        #    #else use computer from code.
-        #else:
-        #    inputs._options.queue_name = 'th1'
-        
-        if self.ctx.serial:
-            inputs._options.withmpi = False # for now
-            inputs._options.resources = {"num_machines": 1}
-        #inputs._label = 'Fleur'
-        
-        return inputs
-    '''
     def run_fleur(self):
         """
         run a FLEUR calculation
@@ -321,8 +220,8 @@ class fleur_convergence(WorkChain):
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
-      
-        inputs = get_inputs_fleur(code, remote, fleurin, options)
+
+        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
@@ -345,6 +244,12 @@ class fleur_convergence(WorkChain):
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance' # be aware of magnetism
         
         last_calc = self.ctx.last_calc
+        # TODO check calculation state:
+        calc_state = 'FINISHED'
+        if calc_state != 'FINISHED':
+            #kill workflow in a controled way, call return results, or write a end_routine
+            #TODO
+            pass
         outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
         tree = etree.parse(outxmlfile)
         root = tree.getroot()
@@ -403,13 +308,13 @@ class fleur_convergence(WorkChain):
             print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
                   '"me/bohr^3"'.format(self.ctx.loop_count, self.ctx.last_calc.out.output_parameters.dict.number_of_iterations_total,
                                        self.ctx.last_calc.out.output_parameters.dict.charge_density))
-            print('The total energy difference of the last two interations is {} htr'.format(self.energydiff))
+            print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
         else:
             print('Done, the maximum number of runs was reached or something failed.')
             print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
                   ''.format(self.ctx.loop_count, self.ctx.last_calc.out.output_parameters.dict.number_of_iterations_total,
                             self.ctx.last_calc.out.output_parameters.dict.charge_density))
-            print('The total energy difference of the last two interations is {} htr'.format(self.energydiff))
+            print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
 
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
         outputnode_dict['loop_count'] = self.ctx.loop_count
@@ -433,7 +338,7 @@ class fleur_convergence(WorkChain):
         else:
             outdict['fleurinp'] = self.ctx['inpgen'].out.fleurinpData
         outdict['outputnode'] = outputnode
-        print outdict
+        #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
 
