@@ -94,7 +94,8 @@ def get_inputs_fleur(code, remote, fleurinp, options, serial=False):
     
     for key, val in options.iteritems():
         inputs._options[key] = val
-      
+    
+    #TODO check  if code is parallel version?
     if serial:
         inputs._options.withmpi = False # for now
         inputs._options.resources = {"num_machines": 1}

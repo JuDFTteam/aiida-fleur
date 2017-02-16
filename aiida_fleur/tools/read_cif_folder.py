@@ -22,7 +22,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import DataFactory
-from ase.io import cif
+#from ase.io import cif
 
 cifdata = DataFactory('cif')
 structuredata = DataFactory('structure')
@@ -91,7 +91,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
         except:
-            print 'invalid cif file'
+            print('invalid cif file: {}'.format(filepaths[i]))
             continue
         #print new_cif
         if new_cif[1]:
