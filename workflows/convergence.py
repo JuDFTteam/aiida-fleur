@@ -337,7 +337,7 @@ class fleur_convergence(WorkChain):
             outdict['fleurinp'] = self.inputs.fleurinp
         else:
             outdict['fleurinp'] = self.ctx['inpgen'].out.fleurinpData
-        outdict['outputnode'] = outputnode
+        outdict['output_scf_wf_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)

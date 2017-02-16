@@ -189,7 +189,13 @@ class band(WorkChain):
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
-        outdict['band_out'] = outputnode
+        #TODO parse Bandstructure
+        #bandstructurenode = ''
+        #outdict['output_band'] = bandstructurenode
+        #or if spin =2
+        #outdict['output_band1'] = bandstructurenode1
+        #outdict['output_band2'] = bandstructurenode1
+        outdict['output_band_wf_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)

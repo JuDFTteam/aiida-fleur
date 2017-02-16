@@ -179,7 +179,13 @@ class dos(WorkChain):
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
-        outdict['dos_out'] = outputnode
+        #TODO parse dos to dosnode
+        #dosnode = ''
+        #outdict['output_band'] = dosnode
+        #or if spin =2
+        #outdict['output_band1'] = dosnode1
+        #outdict['output_band2'] = dosnode2      
+        outdict['output_dos_wf_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
