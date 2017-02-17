@@ -93,7 +93,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, serial=False):
         inputs.fleurinpdata = fleurinp
     
     for key, val in options.iteritems():
-        inputs._options[key] = val
+        if val==None:
+            continue
+        else:
+            inputs._options[key] = val
     
     #TODO check  if code is parallel version?
     if serial:
@@ -115,7 +118,12 @@ def get_inputs_inpgen(structure, inpgencode, options, params=None):
     if params:
         inputs.parameters = params
     for key, val in options.iteritems():
-        inputs._options[key] = val
+        if val==None:
+            #leave them out, otherwise the dict schema won't validate
+            continue
+        else:
+            inputs._options[key] = val
+    
     
     #inpgen run always serial
     inputs._options.withmpi = False # for now
