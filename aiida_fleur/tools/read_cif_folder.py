@@ -5,8 +5,8 @@ In this module you find a method (read_cif_folder) to read in all .cif files
 from a folder and store the structures in the database.
 """
 
-# TODO maybe also save the cif files in the AiiDA repository
-# and set the source to there. Might make a difference for
+# TODO: links to the structures created in the db from the cif files have to be 
+# set. Might make a difference for
 # structure visualization, because cif file has more information
 # also keep connection to ICSD id number
 
@@ -143,6 +143,13 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     
     return structuredatas2, filenames2
 
+'''
+@wf
+def wf_struc_from_cif(cif):
+    pass
+'''    
+    
+    
 if __name__ == "__main__":
     import argparse
     import json

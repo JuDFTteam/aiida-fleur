@@ -13,9 +13,14 @@ __contributors__ = "Jens Broeder"
 # TODO FEHLER meldungen, currently if a xpath expression is valid, but does not exists
 # xpath returns []. Do we want this behavior?
 # TODO finish implementation of create=False
+# TODO: no aiida imports
+from aiida import load_dbenv, is_dbenv_loaded
+if not is_dbenv_loaded():
+    load_dbenv()
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
+from aiida.common.exceptions import InputValidationError
 
 def is_sequence(arg):
     return (not hasattr(arg, "strip") and
@@ -491,6 +496,25 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
 
 ####### XML GETTERS #########
+def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
+    """
+    Tries to evalutate an xpath expression. If it fails it logs it.
+    
+    :param root node of an etree and an xpath expression (relative, or absolute)
+    :returns either nodes, or attributes, or text
+    """
+    try:
+        return_value = node.xpath(xpath)
+    except etree.XPathEvalError:
+        parser_info['parser_warnings'].append('There was a XpathEvalError on the xpath: {} \n'
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
+        # TODO maybe raise an error again to catch in upper routine, to know where exactly
+        return []
+    if len(return_value) == 1:
+        return return_value[0]
+    else:
+        return return_value
+
 
 def eval_xpath2(node, xpath):
     """
@@ -588,6 +612,8 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
                 'because node is not an element of etree.'
                 ''.format(attributename, node))
         return None
+
+
 
 
 # TODO this has to be done better. be able to write tags and
