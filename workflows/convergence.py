@@ -13,6 +13,7 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: maybe write dict schema for wf_parameter inputs
 #TODO: Idea pass structure extras, save them in outputnode? no
 #TODO: get density for magnetic structures
+#TODO: set minDistance
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -85,7 +86,12 @@ class fleur_convergence(WorkChain):
     """
 
     _workflowversion = "0.1.0"
-     
+    _wf_default = {'fleur_runmax': 4, 
+                   'density_criterion' : 0.00002, 
+                   'energy_criterion' : 0.002, 
+                   'converge_density' : True, 
+                   'converge_energy' : True,
+                   'queue_name' : ''}
     @classmethod
     def define(cls, spec):
         super(fleur_convergence, cls).define(spec)
@@ -97,6 +103,7 @@ class fleur_convergence(WorkChain):
                                                'converge_energy' : True}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        #spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -129,10 +136,13 @@ class fleur_convergence(WorkChain):
         self.ctx.successful = False
         self.ctx.distance = []
         self.ctx.total_energy = []
-        self.energydiff = 1000
+        self.energydiff = 10000
         self.ctx.warnings = []
         self.ctx.errors = []
         wf_dict = self.inputs.wf_parameters.get_dict()
+        
+        if wf_dict == {}:
+            wf_dict = self._wf_default
         
         # if MPI in code name, execute parallel
         self.ctx.serial = wf_dict.get('serial', False)#True
@@ -140,8 +150,8 @@ class fleur_convergence(WorkChain):
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        self.ctx.queue = wf_dict.get('queue', None)
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
+        self.ctx.queue = wf_dict.get('queue_name', '')
 
 
     def validate_input(self):
@@ -212,6 +222,14 @@ class fleur_convergence(WorkChain):
         else:
             fleurin = self.ctx['inpgen'].out.fleurinpData
         
+        '''
+        if 'settings' in self.inputs:
+            settings = self.input.settings
+        else:
+            settings = ParameterData(dict={'files_to_retrieve' : [], 'files_not_to_retrieve': [], 
+                               'files_copy_remotely': [], 'files_not_copy_remotely': [],
+                               'commandline_options': ["-wtime", "{}".format(self.ctx.walltime_sec)], 'blaha' : ['bla']})
+        '''
         if self.ctx['last_calc']:
             remote = self.ctx['last_calc'].out.remote_folder
         elif 'remote_data' in self.inputs:
@@ -220,7 +238,8 @@ class fleur_convergence(WorkChain):
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
-
+        
+        #inputs = get_inputs_fleur(code, remote, fleurin, options, settings=settings, serial=self.ctx.serial)
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
@@ -325,7 +344,7 @@ class fleur_convergence(WorkChain):
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = ''
         outputnode_dict['total_energy_units'] = 'Htr'
-        outputnode_dict['Warnings'] = self.ctx.warnings               
+        outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid            
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 

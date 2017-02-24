@@ -32,15 +32,19 @@ s = load_node(138)
 
 parameters = ParameterData(dict={})
 
+settings = ParameterData(dict={'files_to_retrieve' : [], 'files_not_to_retrieve': [], 
+                               'files_copy_remotely': [], 'files_not_copy_remotely': [],
+                               'commandline_options': ["-wtime", "30"], 'blaha' : ['bla']})
+    
 wf_para = ParameterData(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000001,#})
-                              'queue' : 'th1',
+                              'queue_name' : 'th123_node',
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
-                              'walltime':  10*30})
+                              'walltime_sec':  10*30})
 
 res = fleur_convergence.run(wf_parameters=wf_para, structure=s, 
                             #calc_parameters=parameters, 
-                            inpgen = code, fleur=code2)# 
+                            inpgen = code, fleur=code2)#, settings=settings)# 
 
 '''
 code = Code.get_from_string('inpgen_mac_25_10_2016')

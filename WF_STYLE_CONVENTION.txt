@@ -1,0 +1,33 @@
+Here are some guidlines form writting FLEUR workflows and AiiDA in general.
+
+general:
+
+1. Every Workflow needs a clear documentation of input, output structures o
+2. reuse as much of previous workflows as possible.
+3. If you think somthing processing is common or might be useful for something else,
+make it modular, and import the method
+4. Try to keep the context clean
+
+5. ggf one has to think about resource managment.
+i.e if a big system needs to be calculated and the user says use x hundred cores,
+and in the workflow simulations on very small systems need to be done, it makes no
+sense to submit a job with the same huge amoun
+
+Fleur Specific:
+
+1. Output of a workflow has the nameing convention 'output_wfname_description'
+   i.e 'output_scf_wf_para'
+   
+2. Every workflow should give back one parameter output node named 'output_wfname_para'
+   which contains all the 'physical results' the workflow is designd to provide,
+   or at least information to acces these results direclty (if stored in files and so on)
+   further the node should contain valuable information to make sense/judge the quality of the data.
+   
+   Try to design this node in a way that if you take a look at it, you understand
+   the following questions:
+   
+   which workflow was run, what version?
+   what came out?  What was put in, how can I see what was put in?
+   Is this valueable or garbage?
+   
+   
