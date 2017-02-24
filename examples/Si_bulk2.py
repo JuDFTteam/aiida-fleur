@@ -81,8 +81,9 @@ code = Code.get_from_string(codename2)
 JobCalc = FleurCalculation.process()
 
 attrs ={'max_wallclock_seconds' : 180, 'resources' : {"num_machines": 1}, 'queue_name' : 'th123_node', 'withmpi' : False}
-inp1 = {'code' : code, 'fleurinpdata' : fleurinpd}#'parent' : parent_calc,
-f1 = run(JobCalc, _options=attrs, **inp1)
+inp1 = {'options': attrs, 'code' : code, 'fleurinpdata' : fleurinpd}#'parent' : parent_calc,
+#f1 = run(JobCalc, _options=attrs, **inp1)
+f1 = run(JobCalc, **inp1)
 
 '''
 # You can also run Fleur from a Fleur calculation and apply some changes to the input file.

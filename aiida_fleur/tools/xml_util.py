@@ -21,6 +21,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from aiida.common.exceptions import InputValidationError
+#from somewhere import ValidationError
 
 def is_sequence(arg):
     return (not hasattr(arg, "strip") and

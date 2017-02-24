@@ -80,7 +80,7 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, serial=False):
+def get_inputs_fleur(code, remote, fleurinp, options, settings=None, serial=False):
     '''
     get the input for a FLEUR calc
     '''
@@ -103,6 +103,9 @@ def get_inputs_fleur(code, remote, fleurinp, options, serial=False):
         inputs._options.withmpi = False # for now
         inputs._options.resources = {"num_machines": 1}
     
+    if settings:
+        inputs.settings = settings
+        
     return inputs
 
 

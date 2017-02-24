@@ -10,7 +10,8 @@ manipulation.
 # TODO: inpxml to dict: maybe kpts should not be writen to the dict? same with symmetry
 # TODO: test for large input files, I believe the recursion is still quite slow..
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
-
+#TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
+# because otherwise return this node instead of creating a new one!
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
