@@ -21,8 +21,8 @@ Fleur input Data structure
 ++++++++++++++++++++++++++
 
 
-FleurinpData
-------------
+Fleur input Datastructure
+-------------------------
 .. automodule:: aiida_fleur.data.fleurinp
    :members:
    :special-members: __init__
@@ -30,8 +30,8 @@ FleurinpData
 .. automodule:: aiida_fleur.data.fleurinpmodefier
 
 
-Fleur plug-in
-+++++++++++++
+Fleur-code plugin
++++++++++++++++++
 
 Fleur Calculation
 -----------------

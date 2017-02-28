@@ -52,7 +52,7 @@ Other packages (in addition to all requirements of AiiDA):
 
 * lxml
 
-Acknowlegments:
+Acknowledgments:
 ...............
 
 We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
