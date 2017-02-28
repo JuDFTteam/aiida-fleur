@@ -209,9 +209,9 @@ class FleurCalculation(JobCalculation):
         self._copy_filelist_jij = []
 
         #possible settings_dict keys
-        self._settings_keys = ['files_to_retrieve', 'files_not_to_retrieve', 
-                               'files_copy_remotely', 'files_not_copy_remotely'
-                               'commandline_options']
+        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 
+                               'additional_remotecopy_list', 'remove_from_remotecopy_list'
+                               'cmdline']
         #possible modes?
         self._fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
                              'latticeCo', 'scf']
@@ -520,10 +520,10 @@ class FleurCalculation(JobCalculation):
                     filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 # from settings, user specified
                 #TODO check if list? 
-                for file1 in settings_dict.get('files_copy_remotely', []):
+                for file1 in settings_dict.get('additional_remotecopy_list', []):
                     filelist_tocopy_remote.append(file1)
  
-                for file1 in settings_dict.get('files_not_copy_remotely', []):
+                for file1 in settings_dict.get('remove_from_remotecopy_list', []):
                     if file1 in filelist_tocopy_remote:
                         filelist_tocopy_remote.remove(file1)             
                 
@@ -575,10 +575,12 @@ class FleurCalculation(JobCalculation):
             retrieve_list.append(mode_file)
         
         # user specific retrieve
-        for file1 in settings_dict.get('files_to_retrieve', []):
+        add_retrieve = settings_dict.get('additional_retrieve_list', [])
+        for file1 in add_retrieve:
             retrieve_list.append(file1)
- 
-        for file1 in settings_dict.get('files_not_to_retrieve', []):
+        
+        remove_retrieve = settings_dict.get('remove_from_retrieve_list', [])
+        for file1 in remove_retrieve:
             if file1 in retrieve_list:
                 retrieve_list.remove(file1)             
         
@@ -593,14 +595,14 @@ class FleurCalculation(JobCalculation):
         #                         "".format(walltime_sec))
         cmdline_params = ["-xmlInput"]#, "-wtime", "{}".format(walltime_sec)]
         #walltime_sec = self.get_max_wallclock_seconds()
-        print walltime_sec
+        #print walltime_sec
         if walltime_sec:
             walltime_min = max(1, walltime_sec/60)      
             cmdline_params.append("-wtime")
             cmdline_params.append("{}".format(walltime_min))
         
         # user specific commandline_options
-        for command in settings_dict.get('commandline_options', []):
+        for command in settings_dict.get('cmdline', []):
             cmdline_params.append(command)
             
         codeinfo.cmdline_params = list(cmdline_params)

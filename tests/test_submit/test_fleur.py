@@ -28,7 +28,7 @@ calc.description = "Si fleur input test. A much longer description1"
 
 calc.use_fleurinpdata(fleurinpd)
 calc.use_code(code)
-
+calc.set_withmpi(False)
 calc.set_queue_name('th123_node')
 calc.submit_test()
 #calc.store_all()

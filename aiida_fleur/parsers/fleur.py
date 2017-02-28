@@ -6,7 +6,9 @@ different files produced by FLEUR.
 Please implement file parsing routines that they can be executed from outside
 the parser. Makes testing and portability easier.
 """
-
+# TODO: cleanup
+# TODO: move methods to utils, xml or other
+# TODO: warnings
 import os
 #import numpy
 
@@ -352,6 +354,8 @@ def parse_xmlout_file(outxmlfile):
         spin_orbit_calculation = 'calculationSetup/soc'
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
+        
+        
 
         ###########
 
@@ -389,6 +393,10 @@ def parse_xmlout_file(outxmlfile):
             simple_data = parse_simple_outnode(iteration_to_parse, Fleurmode)
         else:
             simple_data = {}
+        
+        
+        warnings={'info': {}, 'debug' : {}, 'warning' : {}, 'error' : {}}
+        
         simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath)) +
                                           len(eval_xpath2(root, absPos_xpath)) +
                                           len(eval_xpath2(root, filmPos_xpath)))
@@ -407,7 +415,12 @@ def parse_xmlout_file(outxmlfile):
         simple_data['creator_target_architecture'] = eval_xpath(root, creator_target_architecture_xpath)
         simple_data['creator_target_structure'] = eval_xpath(root, creator_target_structure_xpath)
         simple_data['output_file_version'] = eval_xpath(root, output_version_xpath)
-
+        
+        warnings['info'] = {}#TODO
+        warnings['debug'] = {} #TODO
+        warnings['warning'] = {}#TODO
+        warnings['error'] = {}#TODO
+        simple_data['warnings'] = warnings
 
         return simple_data
 
