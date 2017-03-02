@@ -57,6 +57,8 @@ class FleurinputgenCalculation(JobCalculation):
         self._FORT_FILE_NAME = 'fort93'
         self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
         '''
+        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 
+                               'cmdline']
     # TODO switch all these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -126,8 +128,17 @@ class FleurinputgenCalculation(JobCalculation):
                 'linkname': 'parameters',
                 'docstring': ("Use a node that specifies the input parameters "
                               "for the namelists"),
-                }
-            })
+                },
+            "settings": {
+                'valid_types': ParameterData,
+                'additional_parameter': None,
+                'linkname': 'settings',
+                'docstring': (
+                    "This parameter data node is used to specify for some "
+                    "advanced features how the plugin behaves. You can add files"
+                    "the retrieve list, or add command line switches, "
+                    "for all available features here check the documentation."),
+            }})
         return retdict
 
 
@@ -307,6 +318,25 @@ class FleurinputgenCalculation(JobCalculation):
             raise InputValidationError("No code specified for this "
                                        "calculation")
 
+        # check existence of settings (optional)
+        settings = inputdict.pop(self.get_linkname('settings'), None)
+        print('settings: {}'.format(settings))
+        if settings is None:
+            settings_dict = {}            
+        else:
+            if not isinstance(settings, ParameterData):
+                raise InputValidationError("settings, if specified, must be of "
+                                           "type ParameterData")
+            else:
+                settings_dict = settings.get_dict()
+        #check for for allowed keys, ignor unknown keys but warn.
+        for key in settings_dict.keys():
+            if key not in self._settings_keys:
+                #TODO warrning
+                self.logger.info("settings dict key {} for Fleur calculation"
+                                 "not reconized, only {} are allowed."
+                                 "".format(key, self._settings_keys))
+
         # Here, there should be no more parameters...
         if inputdict:
             raise InputValidationError(
@@ -461,22 +491,41 @@ class FleurinputgenCalculation(JobCalculation):
         calcinfo.remote_symlink_list = remote_symlink_list
 
         # Retrieve per default only out file and inp.xml file?
-        calcinfo.retrieve_list = []
+        retrieve_list = []
 
         # TODO: let the user specify?
         #settings_retrieve_list = settings_dict.pop(
         #                             'ADDITIONAL_RETRIEVE_LIST', [])
-        calcinfo.retrieve_list.append(self._INPXML_FILE_NAME)
-        calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
-        calcinfo.retrieve_list.append(self._SHELLOUT_FILE_NAME)
-        calcinfo.retrieve_list.append(self._ERROR_FILE_NAME)
-        calcinfo.retrieve_list.append(self._STRUCT_FILE_NAME)
-        calcinfo.retrieve_list.append(self._INPUT_FILE_NAME)
+        retrieve_list.append(self._INPXML_FILE_NAME)
+        retrieve_list.append(self._OUTPUT_FILE_NAME)
+        retrieve_list.append(self._SHELLOUT_FILE_NAME)
+        retrieve_list.append(self._ERROR_FILE_NAME)
+        retrieve_list.append(self._STRUCT_FILE_NAME)
+        retrieve_list.append(self._INPUT_FILE_NAME)
         #calcinfo.retrieve_list += settings_retrieve_list
         #calcinfo.retrieve_list += self._internal_retrieve_list
 
+        # user specific retrieve
+        add_retrieve = settings_dict.get('additional_retrieve_list', [])
+        print('add_retrieve: {}'.format(add_retrieve))
+        for file1 in add_retrieve:
+            retrieve_list.append(file1)
+        
+        remove_retrieve = settings_dict.get('remove_from_retrieve_list', [])
+        for file1 in remove_retrieve:
+            if file1 in retrieve_list:
+                retrieve_list.remove(file1)  
+
+        calcinfo.retrieve_list = []
+        for file1 in retrieve_list:
+            calcinfo.retrieve_list.append(file1)
+
         codeinfo = CodeInfo()
         cmdline_params = ["-explicit"] # TODO? let the user decide
+        
+        # user specific commandline_options
+        for command in settings_dict.get('cmdline', []):
+            cmdline_params.append(command)                         
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
