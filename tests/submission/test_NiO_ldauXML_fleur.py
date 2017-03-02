@@ -47,7 +47,7 @@ except IndexError:
 
 queue = None
 # queue = "th1_small"
-settings = ParameterData(dict={'additional_retrieve_list' : 'n_mmp_mat'})
+settings = ParameterData(dict={'additional_retrieve_list' : ['n_mmp_mat']})
 #####
 
 code = test_and_get_code(codename, expected_code_type='fleur_inp.fleur')

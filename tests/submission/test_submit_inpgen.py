@@ -49,32 +49,21 @@ settings = None
 
 code = test_and_get_code(codename, expected_code_type='fleur_inp.fleurinputgen')
 
-alat = 4.  # angstrom
-cell = [[alat, 0., 0., ],
-        [0., alat, 0., ],
-        [0., 0., alat, ],
-]
-
-# W bcc structure (not smallest cell)
-bohr_a_0= 0.52917721092
-alat = 6.0222920671498184#* bohr_a_0 # angstrom
-
-cell = [[alat, 0., 0.,],
-        [0., alat, 0.,],
-        [0., 0., alat,],
-       ]
+# W bcc structure 
+bohr_a_0= 0.52917721092 # A
+a = 3.013812049196*bohr_a_0
+cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 s = StructureData(cell=cell)
 s.append_atom(position=(0.,0.,0.), symbols='W')
-s.append_atom(position=(alat/2.,alat/2.,alat/2.), symbols='W')
 parameters = ParameterData(dict={
                   'atom':{
-                        'element' : '"W"',
+                        'element' : 'W',
                         'jri' : 833,
                         'rmt' : 2.3,
                         'dx' : 0.015,
                         'lmax' : 8,
-                        'lo' : '"5p"',
-                        'econfig': '"[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2"',
+                        'lo' : '5p',
+                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
                         },
                   'comp': {
                         'kmax': 3.5,
