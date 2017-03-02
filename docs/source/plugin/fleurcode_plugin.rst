@@ -144,6 +144,9 @@ Not supported code features
 
 * sparning multiple fleur calculation with on execution of fleur in a certain subdir structure
 (on can parse the commandline switches, but it will fail.)
+* 1D, not supported by the plugin, but currently also not testest in Fleur 0.27
+(in principal possible, some plugin functionalities have to be updated.)
+
 
 partially supported yet
 .......................
@@ -151,5 +154,5 @@ partially supported yet
 * LDA+U, not tested yet, in principal possible, but user has to take care of copying the files, nothing parsed to output
 * Noncolinear Magnetism, not tested yet, in principal possible, but user has to take care of copying the extra files, not all information is parsed.
 * Jijs same as nonco.
-* 1D, not supported by the plugin, but currently also not testest in Fleur 0.27
-(in principal possible, some plugin functionalities have to be updated.)
+* Hybrid functionals same as noco
+* Wannier 90 same as noco

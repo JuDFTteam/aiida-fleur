@@ -25,7 +25,7 @@ import FleurinpData
 F = FleurinpData('path_to_inp.xml_file')
 or F = FleurinpData(files=['path_to_inp.xml_file', (some other files)])
 
-Also be aware that the inp.xml file name has to be 'inp.xml', i.e. no file names are changed,
+Also be aware that the inp.xml file name has to be named 'inp.xml', i.e. no file names are changed,
 the files will be given with the provided name to Fleur (so far).
 Also if you add an other inp.xml file the first one will be overwritten.
 
@@ -36,7 +36,7 @@ Properties
 inp_dict : Returns the inp_dict (the representation of the inp.xml file) as it will
         or is stored in the database.
 
-files : Returns the files, which were added to FleurinpData.
+files : Returns the files, which were added to FleurinpData. (all files will be copied where Fleur is executed) 
 
 _schema_file_path : Returns the absolute path of the xml schema file used for the current inp.xml file.     
         

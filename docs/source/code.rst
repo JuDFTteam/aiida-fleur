@@ -47,22 +47,25 @@ Fleur Parser
    :members:
 
 Fleur tools/utility
-+++++++++++++++++++
+===================
 
 Structure Data util
--------------------
++++++++++++++++++++
 
 .. automodule:: aiida.tools.codespecific.fleur.StructureData_util
    :members:
 
 XML utility
------------
++++++++++++
 
 .. automodule:: aiida.tools.codespecific.fleur.xml_util
    :members:
 
 Parameter utility
------------------
++++++++++++++++++
+
+Merge Parameter
+---------------
 
 .. automodule:: aiida.tools.codespecific.fleur.merge_parameter
    :members:

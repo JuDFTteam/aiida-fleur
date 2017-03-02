@@ -93,7 +93,7 @@ Further Information <a name="FurtherInfo"></a>
 =============================================
 
 The plug-in source code documentation is here (will be on read_the_docs soon).  
-A full documentation of the plug-in and its usage is found at www.flapw.de.   
+also some documentation of the plug-in, further things can be found at www.flapw.de.   
 Two usage examples are shown in 'examples'.
 
 
