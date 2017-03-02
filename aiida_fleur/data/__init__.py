@@ -7,6 +7,7 @@ manipulation.
 # TODO: all methods to change now in fleurinpmodifier, do we still want to
 # store the userchanges, or rather delete them? depends how well one can see things
 # from fleurinpmodifier...
+# TODO: maybe add a modify method which returns a fleurinpmodifier class
 # TODO: inpxml to dict: maybe kpts should not be writen to the dict? same with symmetry
 # TODO: test for large input files, I believe the recursion is still quite slow..
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
@@ -191,7 +192,7 @@ class FleurinpData(Data):
                     if file1.endswith(".xsd"):
                         if ('Fleur' in file1) or ('fleur' in file1):
                             schemafile_path = os.path.join(root, file1)
-                            print schemafile_path
+                            #print schemafile_path
                             schemafile_paths.append(schemafile_path)
                             i = 0
                             imin = 0
@@ -629,6 +630,8 @@ class FleurinpData(Data):
             fleur_modes['band'] = self.inp_dict['output']['band']
             fleur_modes['pot8'] = self.inp_dict['calculationSetup']['expertModes']['pot8']
             fleur_modes['forces'] = self.inp_dict['calculationSetup']['geometryOptimization']['l_f']
+            ldau = False # TODO test if ldau in inp_dict....
+            fleur_modes['ldau'] = False 
         return fleur_modes
 
     @staticmethod
@@ -1000,7 +1003,9 @@ class FleurinpData(Data):
         """
         from aiida.orm.data.array.kpoints import KpointsData
         #from aiida.common.exceptions import InputValidationError
-
+        
+        #TODO: This is probably broken and should be moved to fleurinpmodifier
+        
         # all hardcoded xpaths used and attributes names:
         fleurinp = fleurinp_orgi.copy()
         kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
