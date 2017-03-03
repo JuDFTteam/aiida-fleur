@@ -40,7 +40,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'density_criterion' : 0.000001,#})
                               'queue_name' : 'th123_node',
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
-                              'walltime_sec':  10*30})
+                              'walltime_sec':  10*60})
 
 res = fleur_convergence.run(wf_parameters=wf_para, structure=s, 
                             #calc_parameters=parameters, 

@@ -13,7 +13,7 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: maybe write dict schema for wf_parameter inputs
 #TODO: Idea pass structure extras, save them in outputnode? no
 #TODO: get density for magnetic structures
-#TODO: set minDistance
+#TODO: set minDistance and higher iteration number, ggf change logic for total energy
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -150,7 +150,7 @@ class fleur_convergence(WorkChain):
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
         self.ctx.queue = wf_dict.get('queue_name', '')
 
 
@@ -241,6 +241,7 @@ class fleur_convergence(WorkChain):
         
         #inputs = get_inputs_fleur(code, remote, fleurin, options, settings=settings, serial=self.ctx.serial)
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
+        #print inputs
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
@@ -261,7 +262,12 @@ class fleur_convergence(WorkChain):
         
         xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance' # be aware of magnetism
-        
+ 
+        #densityconvergence_xpath = 'densityConvergence'
+        #chargedensity_xpath = 'densityConvergence/chargeDensity'
+        #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
+        #spindensity_xpath = 'densityConvergence/spinDensity'
+       
         last_calc = self.ctx.last_calc
         # TODO check calculation state:
         calc_state = 'FINISHED'
@@ -269,6 +275,29 @@ class fleur_convergence(WorkChain):
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
             pass
+        '''
+        spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
+
+            charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
+            charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+            write_simple_outnode(
+                charge_density1, 'float', 'charge_density1', simple_data)
+
+            charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
+            write_simple_outnode(
+                charge_density2, 'float', 'charge_density2', simple_data)
+
+            spin_density = get_xml_attribute(
+                eval_xpath(iteration_node, spindensity_xpath), distance_name)
+            write_simple_outnode(
+                spin_density, 'float', 'spin_density', simple_data)
+
+            overall_charge_density = get_xml_attribute(
+                eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+            write_simple_outnode(
+                overall_charge_density, 'float', 'overall_charge_density', simple_data) 
+       
+        '''
         outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
         tree = etree.parse(outxmlfile)
         root = tree.getroot()
@@ -277,7 +306,8 @@ class fleur_convergence(WorkChain):
             self.ctx.total_energy.append(float(energy))
         
         distances = eval_xpath2(root, xpath_distance)
-        for distance in distances:        
+        #print distances
+        for distance in distances:
             self.ctx.distance.append(float(distance))
         
     def condition(self):
