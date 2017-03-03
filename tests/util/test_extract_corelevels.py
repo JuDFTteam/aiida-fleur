@@ -53,8 +53,8 @@ parser_info = {'parser_warnings': [], 'unparsed' : []}
 
 
 ### call
-test_outxmlfiles = ['./test_outxml/out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml', './test_outxml/outHg.xml',  './test_outxml/outO.xml']
-outxmlfile = test_outxmlfiles[2]
+test_outxmlfiles = ['./test_outxml/outBeCr.xml','./test_outxml/out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml', './test_outxml/outHg.xml',  './test_outxml/outO.xml']
+outxmlfile = test_outxmlfiles[0]
 
 #corelevels = extract_corelevels(outxmlfile)
 #for i in range(0,len(corelevels[0][1]['corestates'])):
@@ -64,10 +64,11 @@ outxmlfile = test_outxmlfiles[2]
 for calc in calcs_pks:
     # get out.xml file of calculation
     outxml = load_node(pk).out.retrieved.folder.get_abs_path('path/out.xml')
-    corelevels = extract_corelevels(outxml)
+    corelevels, atypes = extract_corelevels(outxmlfile)
     #print('corelevels {}'.format(corelevels))
-    pprint(corelevels) 
-    for i in range(0,len(corelevels[0][0]['corestates'])):
-        print corelevels[0][0]['corestates'][i]['energy']
-
+    pprint(corelevels)
+    pprint(atypes)
+    for i in range(0,len(corelevels[3][0]['corestates'])):
+        #print corelevels[3][1]['corestates'][i]['energy']
+        print corelevels[3][0]['corestates'][i]['energy']
 print("--- %s seconds ---" % (time.time() - start_time))

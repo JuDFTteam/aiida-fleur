@@ -56,16 +56,19 @@ for pk in calcs_pks:
     if calc.get_state() != 'FINISHED':
         raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 '''
+def extract_lo_energies(outxmlfile, options=None):
+    pass
+    #TODO: how? out of DOS?
 
 
 
-
-def extract_corelevels(outxmlfile):
+def extract_corelevels(outxmlfile, options=None):
     """ 
     Extras corelevels out of out.xml files
     
     param: outxmlfile path to out.xml file
     
+    param: options, dict: 'iteration' : X/'all'
     return: corelevels, list of the form
              [atomtypes][spin][dict={atomtype : '', corestates : list_of_corestates}] 
              [atomtypeNumber][spin]['corestates'][corestate number][attribute]
@@ -108,8 +111,20 @@ def extract_corelevels(outxmlfile):
     # get last iteration
     # fill corelevel list
     #######################################
-
+    ########################
+    #XPATHS to maintain
+    
+    species_xpath = '/fleurOutput/inputData/atomSpecies'
+    iteration_xpath = '/fleurOutput/scfLoop/iteration'
+    atomgroup_xpath = '/fleurOutput/inputData/atomGroups'
+    relcoreStates_xpath = 'coreStates'
+    
+    #TODO all the attribute names...
+    ######################
+    
+    
     #1. read out.xml in etree
+    # TODO this should be common, moved somewhere else and importet
     parsed_data = {}
     outfile_broken = False
     parse_xml = True
@@ -139,27 +154,27 @@ def extract_corelevels(outxmlfile):
 
     # 2. get all species from input
     # get element, name, coreStates
-    species_nodes = eval_xpath(root, '/fleurOutput/inputData/atomSpecies', parser_info)#/fleurinp/
-    #print('species_nodes {}'.format(species_nodes))
+    species_nodes = eval_xpath(root, species_xpath, parser_info)#/fleurinp/
     species_atts = {}
     species_names = []
     for species in species_nodes:
-        #print species
         species_name = species.get('name')
-        #print species_name
         species_corestates = species.get('coreStates')
-        #print('species_corestates: {}'.format(species_corestates))
         species_element = species.get('element')
         species_atomicnumber = species.get('atomicNumber')
         species_magMom = species.get('magMom')
-        species_atts[species_name] = { 'name' : species_name, 'corestates' : species_corestates, 'element': species_element, 'atomgroups' : [], 'mag_mom' : species_magMom, 'atomic_number' : species_atomicnumber}
+        species_atts[species_name] = {'name' : species_name, 
+                                      'corestates' : species_corestates, 
+                                      'element': species_element, 
+                                      'atomgroups' : [], 
+                                      'mag_mom' : species_magMom, 
+                                      'atomic_number' : species_atomicnumber}
         species_names.append(species_name)
-        #species_atts.append(species_att)
-    nspecies = len(species_nodes)
+    #nspecies = len(species_nodes)
 
     #3. get number of atom types and their species from input
     atomtypes = []
-    atomgroup_nodes = eval_xpath(root, '/fleurOutput/inputData/atomGroups', parser_info)#/fleurinp/
+    atomgroup_nodes = eval_xpath(root, atomgroup_xpath, parser_info)#/fleurinp/
     #print atomgroup_nodes
     #print parser_info
     for atomgroup in atomgroup_nodes:
@@ -167,10 +182,16 @@ def extract_corelevels(outxmlfile):
         group_species = atomgroup.get('species')
         if group_species in species_names:
             species_atts[group_species]['atomgroups'].append(atomgroup)
-        types_dict = {'species' : group_species, 'coresetup': '', 'corelevels' : []}
+            element = species_atts[group_species]['element']
+            atomicnumber = int(species_atts[group_species]['atomic_number'])
+            #TODO get coreconfig,..., usually not in inp.xml...
+            types_dict = {'species' : group_species, 'element' : element, 
+                          'atomic_number' : atomicnumber, 'coreconfig': '', 
+                          'valenceconfig' : '',
+                          'stateOccupation' : []}
         atomtypes.append(types_dict)
     
-    #print atomtypes
+    print atomtypes
     natomgroup = len(atomgroup_nodes)
     #print natomgroup, nspecies
     #print species_names
@@ -178,51 +199,28 @@ def extract_corelevels(outxmlfile):
 
     #4 get corelevel dimension from atoms types.
     #5 init saving arrays:
-
     #6 parse corelevels:
-    #parse last iteration only
-    coreStates_xpath = 'coreStates'
-    iteration_nodes = eval_xpath(root, '/fleurOutput/scfLoop/iteration', parser_info)
+    
+    iteration_nodes = eval_xpath(root, iteration_xpath, parser_info)
     #print iteration_nodes
     nIteration = len(iteration_nodes)
     if nIteration >= 1:
-        iteration_to_parse = iteration_nodes[-1]
+        iteration_to_parse = iteration_nodes[-1]#TODO:Optional all or other
         #print iteration_to_parse
-        corestatescards = eval_xpath(iteration_to_parse, coreStates_xpath, parser_info)
-        print corestatescards
-        # what is the spin.
-        spin = 1
-        #print atomtypes
-        #print corestatescards
-        for type in atomtypes:
-            #corelevels.append([])
-            #TODO spin==2
-            if spin == 1:
-                corelevels.append([])
-            if spin == 2:
-                corelevels.append([[],[]])
-        for corestatescard in corestatescards:
-            #print 'here'
-            #print corelevels
-            corelv = parse_state_card(corestatescard, iteration_to_parse, parser_info)
-            #print corelv
-            corelevels[int(corelv['atomtype'])-1].append(corelv)
-            #corelevels.append(corelv)
+        corestatescards = eval_xpath(iteration_to_parse, relcoreStates_xpath, parser_info)
+
+        for type in atomtypes: # spin=2 is already in there
+            corelevels.append([])
             
-         #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
-        #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
-        #      'W-1_coreconfig' : ['1s','2s',...], 
-        #      'W-2' : [...], 'Be-1': [], ...} #all in eV!
-        self.ctx.CLS = {}
-        self.ctx.cl_energies = {}# same style as CLS only energy <-> shift   
-        
-        #Style: {'Compound' : energy, 'ref_x' : energy , ...}
-        #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!           
+        for corestatescard in corestatescards:
+            corelv = parse_state_card(corestatescard, iteration_to_parse, parser_info)
+            corelevels[int(corelv['atomtype'])-1].append(corelv)# is corelv['atomtype'] always an integer
+            #corelevels.append(corelv)
+                     
     #print parser_info
-    #pprint(corelevels)
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
     #corelevels[atomtypeNumber][spin]['corestates'][corestate number][attribute]
-    return corelevels
+    return corelevels, atomtypes
 
 def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warnings' : []}):
     """
@@ -230,6 +228,8 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
 
     :param iteration_node: an etree element, iteration node
     :param jspin : integer 1 or 2
+    
+    :return a pythondict, {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
     """
     ##### all xpath of density convergence card (maintain) ########
     coreStates_xpath = 'coreStates'

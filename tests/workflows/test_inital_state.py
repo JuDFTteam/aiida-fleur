@@ -19,16 +19,16 @@ FleurinpData = DataFactory('fleurinp')
 ###############################
 # Set your values here
 codename = 'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
-codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
+#codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
 #codename = 'fleur_inpgen_iff003@iff003'#'inpgen_mac_30_11_2016@local_mac'
 #codename2 = 'fleur_iff003_v0_27@iff003'#fleur_iff@iff003'#'fleur_mac_v0_27@local_mac'
-#codename2 = 'fleur_MPI_iff003_v0_27@iff003'
+codename2 = 'fleur_MPI_iff003_v0_27@iff003'
 ###############################
 
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
-resources = {"num_machines": 1}#, "num_mpiprocs_per_machine" : 12}
+resources = {"num_machines": 1, "num_mpiprocs_per_machine" : 12}
 s = load_node(3100) # Be
 
 parameters = ParameterData(dict={})
@@ -37,9 +37,10 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'density_criterion' : 0.000002,#})
                               'queue_name' : 'th123_node',
                               'resources' : resources,
-                              'walltime_sec':  10*60})
+                              'walltime_sec':  10*60,
+                              'serial' : False})
 
-res = initial_state_CLS.run(structure=s, inpgen = code, fleur=code2)# 
+res = initial_state_CLS.run(structure=s, wf_parameters=wf_para, inpgen = code, fleur=code2)# 
 #wf_parameters=wf_para, 
 '''
     _default_wf_para = {'references' : {'calculate' : 'all'}, 

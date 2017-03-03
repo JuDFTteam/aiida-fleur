@@ -31,6 +31,8 @@ FleurinpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
 
+htr_to_eV = 1
+
 class initial_state_CLS(WorkChain):
     '''
     Turn key solution for the calculation of core level shift and Binding energies
@@ -76,7 +78,7 @@ class initial_state_CLS(WorkChain):
                         'same_para' : True,
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 10*30,
-                        'queue' : None,
+                        'queue_name' : None,
                         'serial' : True}    
     
     '''
@@ -97,8 +99,8 @@ class initial_state_CLS(WorkChain):
                         'dos_para' : 'default',
                         'same_para' : True,
                         'resources' : {"num_machines": 1},
-                        'walltime_sec' : 10*30,
-                        'queue' : None,
+                        'walltime_sec' : 10*60,
+                        'queue_name' : None,
                         'serial' : True}))#TODO_default_wf_para out of here#
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
@@ -169,7 +171,7 @@ class initial_state_CLS(WorkChain):
         self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
         self.ctx.resources = wf_dict.get('resources', default.get('resources'))
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
-        self.ctx.queue = wf_dict.get('queue', default.get('queue'))
+        self.ctx.queue = wf_dict.get('queue_name', default.get('queue_name'))
         
         # check if inputs given make sense
         inputs = self.inputs        
@@ -188,6 +190,7 @@ class initial_state_CLS(WorkChain):
                 self.ctx.warnings.append(warning)
         elif 'structure' in inputs:
             self.ctx.elements = list(inputs.structure.get_composition().keys())
+            #self.ctx.elements = list(s.get_symbols_set())  
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 print(error)
@@ -351,9 +354,13 @@ class initial_state_CLS(WorkChain):
         
         para = self.ctx.scf_para
         if para == 'default':
-            wf_parameters = ParameterData(dict={})
+            
+            wf_parameter = {}
         else:
-            wf_parameters = para
+            wf_parameter = para
+        
+        wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         print self.ctx.calcs_torun
@@ -373,6 +380,7 @@ class initial_state_CLS(WorkChain):
                 continue
             res_all.append(res)
             self.ctx.calcs.append(res)
+            self.ctx.calcs_torun.remove(node)
             print res    
         #return ToContext(last_calc=res)
         
@@ -398,6 +406,10 @@ class initial_state_CLS(WorkChain):
             calc_uuids.append(calc['output_scf_wf_para'].get_dict()['last_calc_uuid'])
         print(calc_uuids)
         
+        all_corelevels = {}
+        
+        # more structures way: divide into this calc and reference calcs.
+        # currently the order in calcs is given, but this might change if you submit
         # check if calculation pks belong to successful fleur calculations
         for uuid in calc_uuids:
             calc = load_node(uuid)
@@ -412,13 +424,26 @@ class initial_state_CLS(WorkChain):
             
             # get out.xml file of calculation
             outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
-            corelevels = extract_corelevels(outxml)
-            #print corelevels
-            for i in range(0,len(corelevels[0][0]['corestates'])):
-                print corelevels[0][0]['corestates'][i]['energy']
+            corelevels, atomtypes = extract_corelevels(outxml)
+            #all_corelevels.append(core)
+            print('corelevels: {}'.format(corelevels))
+            print('atomtypes: {}'.format(atomtypes))
+            #for i in range(0,len(corelevels[0][0]['corestates'])):
+            #    print corelevels[0][0]['corestates'][i]['energy']
                 
-                #TODO how to store?
-        
+            #TODO how to store?
+            efermi = calc.res.fermi_energy
+            bandgap = calc.res.bandgap
+            
+            # TODO: maybe different, because it is prob know from before
+            fleurinp = calc.inp.fleurinpdata
+            structure = fleurinp.get_structuredata(fleurinp)            
+            compound = structure.get_formula()
+            
+            self.ctx.fermi_energies[compound] = efermi
+            self.ctx.bandgaps[compound] = bandgap
+            self.ctx.atomtypes[compound] = atomtypes
+            all_corelevels[compound] = corelevels
         #TODO validate results and give some warnings
         
         # check bandgaps, if not all metals, throw warnings:
@@ -426,7 +451,18 @@ class initial_state_CLS(WorkChain):
         
         # check fermi energy differences, correct results for fermi energy diff
         # ggf TODO make a raw core-level and core-level to fermi energy variable
-        
+        #TODO to what reference energy? or better not to fermi, but first unocc? (add bandgap)
+        '''
+        for atomtype in atomtypes:
+            element = atomtype['element']
+            atomtypename
+            ref = all_corelevels[element]
+            corelevel_shifts = []
+            for corelevel in atomtype_corelevels:
+                corelevel_shifts.append(float(corelevel_atomtype) - float(ref)
+            
+            self.ctx.CLS[atomtypename] = corelevel_shifts
+        '''
         #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
         #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
         #      'W-1_coreconfig' : ['1s','2s',...], 
@@ -454,7 +490,8 @@ class initial_state_CLS(WorkChain):
         outputnode_dict['corelevel_energies'] = self.ctx.cl_energies
         outputnode_dict['fermi_energies'] = self.ctx.fermi_energies               
         outputnode_dict['corelevelshifts'] = self.ctx.CLS               
-
+        outputnode_dict['bandgaps'] = self.ctx.bandgaps  
+        outputnode_dict['atomtypes'] = self.ctx.atomtypes
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
@@ -509,3 +546,9 @@ class initial_state_CLS(WorkChain):
         print 'run Fleur in band workflow'
 
         return ToContext(last_calc=future)
+    
+def fleur_calc_get_structure(calc_node):
+    #get fleurinp
+    fleurinp = calc_node.inp.fleurinpdata
+    structure = fleurinp.get_structuredata(fleurinp)
+    return structure
