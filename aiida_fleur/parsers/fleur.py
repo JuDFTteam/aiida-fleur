@@ -579,6 +579,9 @@ def parse_xmlout_file(outxmlfile):
         magnetic_moments_in_mtpheres_xpath = 'magneticMomentsInMTSpheres'
         magneticmoment_xpath = 'magneticMomentsInMTSpheres/magneticMoment'
 
+
+        orbmagnetic_moments_in_mtpheres_xpath = 'orbitalMagneticMomentsInMTSpheres'
+        orbmagneticmoment_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment'
         # energy
         totalenergy_xpath = 'totalEnergy'
         sumofeigenvalues_xpath = 'totalEnergy/sumOfEigenvalues'
@@ -628,6 +631,8 @@ def parse_xmlout_file(outxmlfile):
 
             :param value: value
             """
+            
+            interation_current_number_name = 'numberForCurrentRun'
             suc = False
 
             if value_type == 'float':
@@ -646,7 +651,7 @@ def parse_xmlout_file(outxmlfile):
             else:
                 parser_info_out['unparsed'].append(
                     {value_name : value,
-                     'iteration' : get_xml_attribute(iteration_node, 'number')})
+                     'iteration' : get_xml_attribute(iteration_node, interation_current_number_name)})
 
 
         # total energy
@@ -752,7 +757,8 @@ def parse_xmlout_file(outxmlfile):
             spindown = get_xml_attribute(
                 eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
             write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-
+            
+            #TODO orbMag Moment
         # total iterations
         number_of_iterations_total = get_xml_attribute(
             eval_xpath(iteration_node, iteration_xpath), overall_number_name)
