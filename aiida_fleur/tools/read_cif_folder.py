@@ -22,6 +22,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import DataFactory
+from aiida.work import workfunction as wf
 #from ase.io import cif
 
 cifdata = DataFactory('cif')
@@ -99,14 +100,16 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         # do we want to save the structures again, or do we also continue
         #else:
         #    continue
-        asecell = new_cif[0].get_ase()
-        structuredatas.append(DataFactory('structure'))
-        filenames2.append(filenames[i])
-        struc = structuredatas[-1](ase=asecell)
-        formula = struc.get_formula()
+        #asecell = new_cif[0].get_ase()
+        #structuredatas.append(DataFactory('structure'))
+        #filenames2.append(filenames[i])
+        #struc = structuredatas[-1](ase=asecell)
+        #formula = struc.get_formula()
         if store_db:
+            struc = wf_struc_from_cif(new_cif[0])
+            formula = struc.get_formula()
             #new_cif.store()
-            struc.store()
+            #struc.store()
             saved_count = saved_count + 1
 
             # add comment or extras, only possible after storing
@@ -120,6 +123,10 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
                     struc.set_extra('specification', extra)
             struc.set_extra('formula', formula)
             structuredatas2.append(struc)
+        else:
+            struc = struc_from_cif(new_cif[0])
+            structuredatas.append(struc)
+            formula = struc.get_formula()            
         if write_log:
             # This file is a logfile/info file created by 'read_cif_folder'
             # Structure Formula, structuredata pk, Structure Data uuid,
@@ -143,12 +150,17 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     
     return structuredatas2, filenames2
 
-'''
+
 @wf
 def wf_struc_from_cif(cif):
-    pass
-'''    
-    
+    asecell = cif.get_ase()
+    struc = DataFactory('structure')(ase=asecell)
+    return struc
+
+def struc_from_cif(cif):
+    asecell = cif.get_ase()
+    struc = DataFactory('structure')(ase=asecell)
+    return struc    
     
 if __name__ == "__main__":
     import argparse
