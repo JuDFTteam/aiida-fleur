@@ -641,7 +641,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
     pos_switch_several = xmlinpstructure[1]
     pos_attrib_once = xmlinpstructure[2]
     #pos_int_attributes_once = xmlinpstructure[3]
-    #pos_float_attributes_once = xmlinpstructure[4]
+    pos_float_attributes_once = xmlinpstructure[4]
     #pos_string_attributes_once = xmlinpstructure[5]
     pos_attrib_several = xmlinpstructure[6]
     pos_int_attributes_several = xmlinpstructure[7]
@@ -673,7 +673,11 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             # TODO: same here, check existance and plausiblility of xpath
             xpath_set = pos_xpaths[key]
             #print xmltree_new, xpath_set, key, fleur_change_dic[key]
-            xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
+            if key in pos_float_attributes_once:
+                newfloat = '{:.10f}'.format(fleur_change_dic[key])
+                xml_set_first_attribv(xmltree_new, xpath_set, key, newfloat)                
+            else:
+                xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
         elif key in pos_attrib_several:
             # TODO What attribute shall be set? all, one or several specific onces?
             pass
