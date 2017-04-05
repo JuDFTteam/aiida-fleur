@@ -14,6 +14,7 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: Idea pass structure extras, save them in outputnode? no
 #TODO: get density for magnetic structures
 #TODO: set minDistance and higher iteration number, ggf change logic for total energy
+#TODO: check if calculation already exists
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -90,7 +91,8 @@ class fleur_convergence(WorkChain):
                    'density_criterion' : 0.00002, 
                    'energy_criterion' : 0.002, 
                    'converge_density' : True, 
-                   'converge_energy' : True,
+                   'converge_energy' : False,
+                   'resue' : True,
                    'queue_name' : ''}
     @classmethod
     def define(cls, spec):
@@ -100,7 +102,8 @@ class fleur_convergence(WorkChain):
                                                'density_criterion' : 0.00002, 
                                                'energy_criterion' : 0.002, 
                                                'converge_density' : True, 
-                                               'converge_energy' : True}))
+                                               'converge_energy' : False,
+                                               'reuse' : True}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         #spec.input("settings", valid_type=ParameterData, required=False)
@@ -139,6 +142,7 @@ class fleur_convergence(WorkChain):
         self.energydiff = 10000
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.fleurinp = None
         wf_dict = self.inputs.wf_parameters.get_dict()
         
         if wf_dict == {}:
@@ -211,17 +215,47 @@ class fleur_convergence(WorkChain):
         future = submit(FleurinpProcess, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
-
-    def run_fleur(self):
+    
+    def change_fleurinp(self):
         """
-        run a FLEUR calculation
+        This routine sets somethings in the fleurinp file before running a fleur
+        calculation.
         """
-        #print 'run fleur'
-        if 'fleurinp' in self.inputs:
+        from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
+        #print('in change_fleurinp')
+        
+        if self.ctx.fleurinp: #something was already changed
+            #print('Fleurinp already exists')
+            return
+        elif 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
         else:
             fleurin = self.ctx['inpgen'].out.fleurinpData
         
+        wf_dict = self.inputs.wf_parameters.get_dict()
+        converge_te = wf_dict.get('converge_energy', False)
+
+        if not converge_te:
+            #if not energy convergence, set mindistance to criterium
+            #itermax to 18 (less jobs needed)   
+            dc = wf_dict.get('density_criterion', 0.00002)
+            fleurmode = FleurinpModifier(fleurin)
+            fleurmode.set_inpchanges({'itmax': 30, 'minDistance' : dc})
+            out = fleurmode.freeze()
+            self.ctx.fleurinp = out
+            return
+        else:
+            self.ctx.fleurinp = fleurin
+            return
+
+    
+    def run_fleur(self):
+        """
+        run a FLEUR calculation
+        """
+        
+        self.change_fleurinp()
+        fleurin = self.ctx.fleurinp
         '''
         if 'settings' in self.inputs:
             settings = self.input.settings
@@ -254,6 +288,7 @@ class fleur_convergence(WorkChain):
         Check how the last Fleur calculation went
         Parse some results.
         """
+        #print('In get_res')
         # TODO maybe do this different 
         # or if complexer output node exists take from there.
         from aiida.tools.codespecific.fleur.xml_util import eval_xpath2
@@ -314,13 +349,15 @@ class fleur_convergence(WorkChain):
         """
         check convergence condition
         """
+        #print('condition')
+        
         density_converged = False
         energy_converged = False
         # TODO do a test first if last_calculation was successful, otherwise,
         # 'output_parameters' wont exist.
         inpwfp_dict = self.inputs.wf_parameters.get_dict()
         last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
-        print last_charge_density
+        #print last_charge_density
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
                 density_converged = True
@@ -331,7 +368,7 @@ class fleur_convergence(WorkChain):
         
         if len(energy) >=2:
             self.energydiff = abs(energy[-1]-energy[-2])
-        print self.energydiff 
+        #print self.energydiff 
         if inpwfp_dict.get('converge_energy', True):
             if inpwfp_dict.get('energy_criterion', 0.002) >= self.energydiff:
                 energy_converged = True
