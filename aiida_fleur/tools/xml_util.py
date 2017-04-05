@@ -21,6 +21,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from aiida.common.exceptions import InputValidationError
+
 #from somewhere import ValidationError
 
 def is_sequence(arg):
@@ -688,7 +689,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             pass
         else:
             # this key is not know to plug-in
-            raise ValidationError(
+            raise InputValidationError(
                 "You try to set the key:'{}' to : '{}', but the key is unknown"
                 " to the fleur plug-in".format(key, fleur_change_dic[key]))
     return xmltree_new
@@ -831,7 +832,7 @@ def get_inpxml_file_structure():
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
                            'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count')
-    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'theta',
+    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
@@ -846,7 +847,8 @@ def get_inpxml_file_structure():
     #print other_attributes_once
     other_attributes_once1 = (
         'isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd',
-        'imix', 'alpha', 'spinf', 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
+        'imix', 'alpha', 'spinf', 'minDistance',
+ 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
         'xa', 'thetad', 'epsdisp', 'epsforce', 'valenceElectrons', 'mode',
         'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz', 'ellow', 'elup',
         'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
@@ -929,6 +931,7 @@ def get_inpxml_file_structure():
         'GmaxXC': '/fleurInput/calculationSetup/cutoffs',
         'numbands': '/fleurInput/calculationSetup/cutoffs',
         'itmax' : '/fleurInput/calculationSetup/scfLoop',
+        'minDistance' : '/fleurInput/calculationSetup/scfLoop',
         'maxIterBroyd': '/fleurInput/calculationSetup/scfLoop',
         'imix': '/fleurInput/calculationSetup/scfLoop',
         'alpha': '/fleurInput/calculationSetup/scfLoop',
