@@ -17,6 +17,7 @@ from aiida.orm import load_node
 from aiida.tools.codespecific.fleur.StructureData_util import eos_structures
 from aiida.tools.codespecific.fleur.convergence import fleur_convergence
 from aiida.tools.codespecific.fleur.calculate_lattice_con import lattice_constant
+from aiida.tools.codespecific.fleur.convergence import fleur_convergence
 
 from aiida.workflows2.run import async, run
 
@@ -61,7 +62,7 @@ wf_para = ParameterData(dict=wf_dict)
 #                calc_parameters=W_para, inpgen = code, fleur=code2)
 
 #print res
-
+'''
 # other tests:
 yfit_all = []
 def func(x, a, b, c):
@@ -124,6 +125,7 @@ pp.legend(bbox_to_anchor=(0.85, 1), loc=2, borderaxespad=0., fancybox=True)#loc=
 if save:
     pp.savefig('Et_la_kpts.pdf', format='pdf')
 '''
+'''
 # plot 2
 
 fig1 = pp.figure()
@@ -159,4 +161,4 @@ pl2 = pp.plot(xnkpts, a2_allc, 's', label = '', linewidth = 2.0, markersize = 4.
 if save:
     pp.savefig('Et_kpts.pdf', format='pdf')
 '''
-pp.show()
+#pp.show()

@@ -333,6 +333,7 @@ class fleur_convergence(WorkChain):
                 overall_charge_density, 'float', 'overall_charge_density', simple_data) 
        
         '''
+        #TODO: dangerous, can fail, error catching
         outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
         tree = etree.parse(outxmlfile)
         root = tree.getroot()
