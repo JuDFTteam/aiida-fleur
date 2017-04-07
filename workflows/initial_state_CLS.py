@@ -37,7 +37,6 @@ class initial_state_CLS(WorkChain):
     '''
     Turn key solution for the calculation of core level shift and Binding energies
     
-
     '''
     # wf_Parameters: ParameterData, 
     '''
@@ -45,7 +44,8 @@ class initial_state_CLS(WorkChain):
     'Bes' : [W4f, Be1s]
     'CLS' : [W4f, Be1s]
     'atoms' : ['all', 'postions' : []]
-    'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
+    #'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
+    'references' : { 'W': [calc/ouputnode or  fleurinp, or structure data or structure data + Parameter  ], 'Be' : }
     'scf_para' : {...}, 'default' 
     'relax' : True
     'relax_mode': ['Fleur', 'QE Fleur', 'QE']
@@ -68,13 +68,12 @@ class initial_state_CLS(WorkChain):
     '''
     
     _workflowversion = "0.0.1"
-    _default_wf_para = {'references' : {'calculate' : 'all'}, 
-                        'calculate_doses' : False,
+    _default_wf_para = {#'references' : {'calculate' : 'all'},
+                        'structure_ref' : {},
                         'relax' : True,
                         'relax_mode': 'QE Fleur',
                         'relax_para' : 'default',
                         'scf_para' : 'default',
-                        'dos_para' : 'default',
                         'same_para' : True,
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 10*30,
@@ -90,13 +89,12 @@ class initial_state_CLS(WorkChain):
         super(initial_state_CLS, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={ 
-                        'references' : {'calculate' : 'all'}, 
-                        'calculate_doses' : False,
+                        #'references' : {'calculate' : 'all'}, 
+                        'references' : {},
                         'relax' : True,
                         'relax_mode': 'QE Fleur',
                         'relax_para' : 'default',
                         'scf_para' : 'default',
-                        'dos_para' : 'default',
                         'same_para' : True,
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 10*60,
@@ -114,10 +112,7 @@ class initial_state_CLS(WorkChain):
             if_(cls.relaxation_needed)(
                 cls.relax),
             cls.find_parameters,
-            cls.run_fleur_scfs,
-            if_(cls.calculate_dos)(
-                cls.dos),
-            cls.collect_results,
+            cls.run_scfs_ref,
             cls.return_results
         )
         #spec.dynamic_output()
@@ -136,13 +131,15 @@ class initial_state_CLS(WorkChain):
         self.ctx.last_calc = None
         self.ctx.eximated_jobs = 0
         self.ctx.run_jobs = 0
-        self.ctx.calcs = []
+        self.ctx.calcs_res = []
         self.ctx.calcs_torun = []
-        self.ctx.dos_to_calc = []
+        self.ctx.ref_calcs_torun = []
+        self.ctx.ref_calcs_res = []
         self.ctx.struc_to_relax = []
         self.ctx.successful = False
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.ref = {}
         
         #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
         #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
@@ -150,12 +147,12 @@ class initial_state_CLS(WorkChain):
         #      'W-2' : [...], 'Be-1': [], ...} #all in eV!
         self.ctx.CLS = {}
         self.ctx.cl_energies = {}# same style as CLS only energy <-> shift   
-        
+        self.ctx.ref_cl_energies = {}
         #Style: {'Compound' : energy, 'ref_x' : energy , ...}
         #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
         self.ctx.fermi_energies = {}
         self.ctx.bandgaps = {}
-        
+        self.ctx.atomtypes = {}
         # set values, or defaults for Wf_para
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
@@ -164,22 +161,20 @@ class initial_state_CLS(WorkChain):
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         
-        self.ctx.dos = wf_dict.get('calculate_doses', default.get('calculate_doses'))
-        self.ctx.dos_para = wf_dict.get('dos_para', default.get('dos_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
         self.ctx.resources = wf_dict.get('resources', default.get('resources'))
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
         self.ctx.queue = wf_dict.get('queue_name', default.get('queue_name'))
-        
         # check if inputs given make sense
         inputs = self.inputs        
         if 'fleurinp' in inputs:
+            #TODO make a check if an extracted structure exists, since get_structuredata is wf
             structure = inputs.fleurinp.get_structuredata(inputs.fleurinp)
             self.ctx.elements = list(structure.get_composition().keys())
             self.ctx.calcs_torun.append(inputs.get('fleurinp'))
-            print('here1')
+            #print('here1')
             if 'structure' in inputs:
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
                 print(warning)
@@ -198,10 +193,10 @@ class initial_state_CLS(WorkChain):
                 #TODO kill workflow
             if 'calc_parameters' in inputs:
                 self.ctx.calcs_torun.append((inputs.get('calc_parameters'), inputs.get('structure')))
-                print('here2')
+                #print('here2')
             else:
                 self.ctx.calcs_torun.append(inputs.get('structure'))
-                print('here3')
+                #print('here3')
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             print(error)
@@ -218,81 +213,135 @@ class initial_state_CLS(WorkChain):
         Third the COD database is searched for the elemental Cystal structures.
         If some referneces are not found stop here.
         Are there already calculation of these 'references', ggf use them.
-        Put these calculation in the queue
+        We do not put these calculation in the calculation queue yet because we
+        need specific parameters for them
         """
         print('In Get_references inital_state_CLS workflow')   
-        references = self.inputs.wf_parameters.get_dict().get('references', {'calculate' : 'all'})
+        #references = self.inputs.wf_parameters.get_dict().get('references', {'calculate' : 'all'})
+        references = self.inputs.wf_parameters.get_dict().get('references', {})
+        # should be of the form of
+        #'references' : { 'W': calc, outputnode of workflow or fleurinp, 
+                         #or structure data or (structure data + Parameter), 
+        #                 'Be' : ...}
         
-        to_calc = {}
-        results_ref = {}
-        calculate = references.get('calculate', 'all')
-        
+        self.ctx.ref = {}
+         
+        #TODO better checks if ref makes sense?
         for elem in self.ctx.elements:
-            to_calc[elem] = 'find' 
-        if calculate != 'all':
-            pass
-            # remove some calcs from to_calc and check if 
-            
-        if references.get('use', {}): # if reference results are given in some form
-            #as {'element' : float, or 'element': FleurCalculation} don't calculate them anew
-            for elm, source in references.get('use').iteritems():
-                re = to_calc.pop(elm) # no calc needed
-                # convert results into {'W' : [float]} # TODO: be careful about atom types
-                #if source float add
-                #elif source int, load and check if calculation, if yes get correlevel from results.
-                #elif source calc, as above
-                results_ref[elem] = source
-        '''                  
-        for key, val in references.iteritems():
-            if key == 'calculate':
-                if val == 'all':
-                    pass
-                    # for element in self.ctx.elements:
-                    # look in 'given'    
-                    # querry db for structures, cif files
-                    # if not found querry online?
+            #to_calc[elem] = 'find' 
+            ref_el = references.get(elem, None)
+            if ref_el:
+                if isinstance(ref_el, (StructureData, ParameterData)):
+                    #self.ctx.ref[elem] = ref_el
+                    #enforced parameters, add directly to run queue
+                    self.ctx.ref_calcs_torun.append(ref_el)
+                elif isinstance(ref_el, FleurCalc):
+                    #extract from fleur calc TODO
+                    self.ctx.ref_cl_energies[elem] = {}
+                elif isinstance(ref_el, ParameterData):
+                    #extract from workflow output TODO
+                    self.ctx.ref_cl_energies[elem] = {}             
+                elif isinstance(ref_el, FleurinpData):
+                    # add to calculations
+                    #enforced parameters, add directly to run queue
+                    self.ctx.ref_calcs_torun.append(ref_el)
+                    #self.ctx.ref[elem] = ref_el
+                elif isinstance(ref_el, StructureData):
+                    self.ctx.ref[elem] = ref_el
+                #elif isinstance(ref_el, initial_state_CLS):
+                #    extract TODO
                 else:
-                    for element, pk in val.iteritems():
-                        pass
-                        # if element not in self elements, ignore, print,log warning?
-            elif key == 'use':
-                
-            else:
-                print('This key: {} with value: {} is not supported'.format(key, val))
-                #TODO warning
-        '''
-    '''        
-    def find_references(search_dict):
-        """
-        This methods finds
-        """
-        #TODO write this routine
-        from aiida.orm import QueryBuilder
-        results = []
-        structures_pks = []
-        structures_formulae = []
+                    error = (" I do not know what to do with this given reference"
+                             "{} for element {}".format(ref_el, elem))
+                    print(error)
+                    self.ctx.errors.append(error)
+                    #TODO log, ggf warning or error
+            else: # no ref given, we have to look for it.
+                structure = querry_for_ref_structure(elem)
+                if structure:
+                    self.ctx.ref[elem] = ref_el
+                else: #not found
+                    error = ("Reference structure for element: {} not found."
+                             "checkout the 'querry_for_ref_structure' method."
+                             "to see what extras are querried for.".format(elem))
+                    print(error)
+                    self.ctx.errors.append(error)
+                    #TODO log, warning or error
+        print('self.ctx.ref: {} '.format(self.ctx.ref))
+        #StructureData 
+        #ParameterData
+        #FleurinpData
+        #FleurCalc
+        
+        # check if a structureData for these elements was given
+        #if yes add to ref_calc to run
+        #was also a prameter node given for the element?
+        #yes run with these
+        #no was on given for the host structure, extract element parameternode
+        
+        #else use parameters extracted from host calculation # TODO
+        
+        #check if there is a structure from this element in the database with extras: 
+        # with extra.type = 'bulk', extra.specific = 'reference', 'extra.elemental' = True, extra.structure = 'W'
+        # check if input parameter node values for the calculation are the same.
+        
+        #if yes, if a calculation exists use that result
+        #else do a calculation on that structure as above
+ 
 
-        #query db
-        structures_pks = []
-        q = QueryBuilder()
-        q.append(StructureData,
-            #filters = {'extras.specification.project' : {'==' : 'Fusion'}}
-            filters = {'extras.type' : {'==' : 'simple bulk'}}
-            #or filters = {'extras.type' : {'==' : 'element'}}
-            )
-        structures = q.all()
-        
-        
-        return results         
-    '''
     
-    def find_parameters(self):
+    def run_fleur_scfs(self):
         """
-        if the same paramerters shall be used in the calculations you have to 
-        find some that match. For low error on CLS
+        Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
-        #TODO
-        pass
+        print('In run_fleur_scfs inital_state_CLS workflow')        
+        #from aiida.work import run, async, 
+        from aiida.tools.codespecific.fleur.convergence import fleur_convergence
+        #TODO if submiting of workdlows work, use that. 
+        #or run them with async (if youy know how to extract results) 
+        
+        para = self.ctx.scf_para
+        if para == 'default': 
+            wf_parameter = {}
+        else:
+            wf_parameter = para
+        
+        wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameters =  ParameterData(dict=wf_parameter)
+        res_all = []
+        # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
+        print self.ctx.calcs_torun
+        for node in self.ctx.calcs_torun:
+            print node
+            if isinstance(node, StructureData):
+                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, FleurinpData):
+                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = fleur_convergence.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            else:
+                print('something in calcs_torun which I do not reconise: {}'.format(node))
+                continue
+            res_all.append(res)
+            print res  
+            self.ctx.calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.calcs_torun = []
+        #return ToContext(last_calc=res)
+        
+        '''    
+        inputs = get_inputs_fleur(code, remote, fleurin, options)
+        future = submit(FleurProcess, **inputs)
+        self.ctx.loop_count = self.ctx.loop_count + 1
+        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
+        self.ctx.calcs.append(future)
+        '''
+        #return ToContext(last_calc=res) #calcs.append(future
+
         
     def relaxation_needed(self):
         """
@@ -319,32 +368,31 @@ class initial_state_CLS(WorkChain):
         for calc in self.ctx.dos_to_calc:
             pass 
             # TODO run relax workflow
-        
 
     
-    def calculate_dos(self):
+    def find_parameters(self):
         """
-        Run SCF-cycles for all structures, calculations given in certain workflow arrays.
+        If the same parameters shall be used in the calculations you have to 
+        find some that match. For low error on CLS. therefore use the ones enforced
+        or extract from the previous Fleur calculation.
         """
-        print('In calculate_dos? inital_state_CLS workflow')        
-        if self.ctx.dos:
-            return True
-        else:
-            return False   
-
-    def dos(self):
-        """
-        Calculate a density of states for certain calculations.
-        """
-        print('In dos inital_state_CLS workflow')        
-        for calc in self.ctx.dos_to_calc:
-            pass 
-            # TODO run dos workflow
+        #self.ctx.ref[elem] = ref_el        
+        #self.ctx.ref_calcs_torun.append(ref_el)
         
-    
-    def run_fleur_scfs(self):
+        # for entry in ref[elem] find parameter node
+        for elm, struc in self.ctx.ref:
+            pass
+            # if parameter node given, extract from there, 
+            #parameter_dict
+            # else
+            #extract parameter out of previous calculation
+            #parameter_dict = fleurinp.extract_para(element)
+            # BE CAREFUL WITH LOs! soc and co
+
+    def run_scfs_ref(self):
         """
-        Run SCF-cycles for all structures, calculations given in certain workflow arrays.
+        Run SCF-cycles for ref structures, calculations given in certain workflow arrays.
+        parameter nodes should be given
         """
         print('In run_fleur_scfs inital_state_CLS workflow')        
         #from aiida.work import run, async, 
@@ -353,8 +401,7 @@ class initial_state_CLS(WorkChain):
         #or run them with async (if youy know how to extract results) 
         
         para = self.ctx.scf_para
-        if para == 'default':
-            
+        if para == 'default': 
             wf_parameter = {}
         else:
             wf_parameter = para
@@ -363,8 +410,8 @@ class initial_state_CLS(WorkChain):
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
-        print self.ctx.calcs_torun
-        for node in self.ctx.calcs_torun:
+        print self.ctx.ref_calcs_torun
+        for node in self.ctx.ref_calcs_torun:
             print node
             if isinstance(node, StructureData):
                 res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
@@ -379,119 +426,111 @@ class initial_state_CLS(WorkChain):
                 print('something in calcs_torun which I do not reconise: {}'.format(node))
                 continue
             res_all.append(res)
-            self.ctx.calcs.append(res)
-            self.ctx.calcs_torun.remove(node)
-            print res    
+            print res  
+            self.ctx.ref_calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.ref_calcs_torun = []
         #return ToContext(last_calc=res)
         
-        '''    
-        inputs = get_inputs_fleur(code, remote, fleurin, options)
-        future = submit(FleurProcess, **inputs)
-        self.ctx.loop_count = self.ctx.loop_count + 1
-        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
-        self.ctx.calcs.append(future)
-        '''
-        #return ToContext(last_calc=res) #calcs.append(future)
 
         
     def collect_results(self):
         """
         Collect results from certain calculation, check if everything is fine, 
-        calculate the wanted quantities.
+        calculate the wanted quantities. currently all energies are in hartree (as provided by Fleur)
         """
-        calc_uuids = []
         print('Collecting results of inital_state_CLS workflow')        
-        for calc in self.ctx.calcs:
-            print(calc)
-            calc_uuids.append(calc['output_scf_wf_para'].get_dict()['last_calc_uuid'])
-        print(calc_uuids)
+        # TODO be very careful with core config?
+        #from pprint import pprint
         
-        all_corelevels = {}
+        #self.ctx.ref_cl_energies
+        all_CLS = {}
+        # get results from calc
+        calcs = self.ctx.calcs_res
+        ref_calcs = self.ctx.ref_calcs_res         
+        fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
+        ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
+
+        ref_cl_energies = {}
+        cl_energies = {}
         
-        # more structures way: divide into this calc and reference calcs.
-        # currently the order in calcs is given, but this might change if you submit
-        # check if calculation pks belong to successful fleur calculations
-        for uuid in calc_uuids:
-            calc = load_node(uuid)
-            if (not isinstance(calc, FleurCalc)):
-                #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
-                # log and continue
-                continue
-            if calc.get_state() != 'FINISHED':
-                # log and continue
-                continue
-                #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
+        #first substract efermi from corelevel of reference structures
+        for compound, atomtypes_list in ref_atomtypes.iteritems():
+            # atomtype_list contains a list of dicts of all atomtypes from compound x 
+            # get corelevels of compound x
+            cls_all_atomtyps = ref_all_corelevel[compound]
+            for i, atomtype in enumerate(atomtypes_list):
+                #atomtype a dict which contains one atomtype
+                elm = atomtype.get('element', None)
+                cls_atomtype = cls_all_atomtyps[i][0]
+                ref_cl_energies[elm] = []
+                ref_cls = []
+                for corelevel in cls_atomtype['corestates']:
+                    ref_cls.append(corelevel['energy']-ref_fermi_energies[compound])
+                ref_cl_energies[elm].append(ref_cls)
+        
+        #pprint(ref_cl_energies)
+        #pprint(all_corelevel)
+        
+        #now substract efermi from corelevel of compound structure
+        #and calculate core level shifts
+        for compound, cls_atomtypes_list in all_corelevel.iteritems():
+            #init, otherwise other types will override
+            for i, atomtype in enumerate(atomtypes[compound]):
+                elm = atomtype.get('element', None)
+                cl_energies[elm] = []
+                all_CLS[elm] = []
             
-            # get out.xml file of calculation
-            outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
-            corelevels, atomtypes = extract_corelevels(outxml)
-            #all_corelevels.append(core)
-            print('corelevels: {}'.format(corelevels))
-            print('atomtypes: {}'.format(atomtypes))
-            #for i in range(0,len(corelevels[0][0]['corestates'])):
-            #    print corelevels[0][0]['corestates'][i]['energy']
+            #now fill
+            for i, atomtype in enumerate(atomtypes[compound]):
+                elm = atomtype.get('element', None)
+                print elm
+                cls_atomtype = cls_atomtypes_list[i]
+                corelevels = []
+                for corelevel in cls_atomtype[0]['corestates']:
+                    correct_cl = corelevel['energy']-fermi_energies[compound]
+                    corelevels.append(correct_cl)
+                cl_energies[elm].append(corelevels)   
                 
-            #TODO how to store?
-            efermi = calc.res.fermi_energy
-            bandgap = calc.res.bandgap
-            
-            # TODO: maybe different, because it is prob know from before
-            fleurinp = calc.inp.fleurinpdata
-            structure = fleurinp.get_structuredata(fleurinp)            
-            compound = structure.get_formula()
-            
-            self.ctx.fermi_energies[compound] = efermi
-            self.ctx.bandgaps[compound] = bandgap
-            self.ctx.atomtypes[compound] = atomtypes
-            all_corelevels[compound] = corelevels
-        #TODO validate results and give some warnings
+                #now calculate CLS
+                ref = ref_cl_energies[elm][-1]# We just use one (last) atomtype
+                #of elemental reference (in general might be more complex,
+                #since certain elemental unit cells could have several atom types (graphene))
+                corelevel_shifts = []
+                #TODO shall we store just one core-level shift per atomtype?
+                for i, corelevel in enumerate(cl_energies[elm][-1]):
+                    corelevel_shifts.append(corelevel - float(ref[i]))
+                all_CLS[elm].append(corelevel_shifts)
         
-        # check bandgaps, if not all metals, throw warnings:
-        # bandgap and efermi prob wrong, which makes some results meaningless
-        
-        # check fermi energy differences, correct results for fermi energy diff
-        # ggf TODO make a raw core-level and core-level to fermi energy variable
-        #TODO to what reference energy? or better not to fermi, but first unocc? (add bandgap)
-        '''
-        for atomtype in atomtypes:
-            element = atomtype['element']
-            atomtypename
-            ref = all_corelevels[element]
-            corelevel_shifts = []
-            for corelevel in atomtype_corelevels:
-                corelevel_shifts.append(float(corelevel_atomtype) - float(ref)
-            
-            self.ctx.CLS[atomtypename] = corelevel_shifts
-        '''
-        #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
-        #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
-        #      'W-1_coreconfig' : ['1s','2s',...], 
-        #      'W-2' : [...], 'Be-1': [], ...} #all in eV!
-        #self.ctx.CLS = {}
-        #self.ctx.cl_energies = {}# same style as CLS only energy <-> shift   
-        
-        #Style: {'Compound' : energy, 'ref_x' : energy , ...}
-        #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
-        #self.ctx.fermi_energies = {}
+        # TODO make simpler format of atomtypes for node
+        # TODO write corelevel explanation/coresetup in a format like 4f7/2 
+        #TODO ? also get total energies?
+        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes
         
     def return_results(self):
         """
         return the results of the calculations
         """
         # TODO more output, info here
-        print('Inital_state_CLS workflow Done')
+        
         #print corelevel shifts were calculated bla bla
+        cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref =  self.collect_results()
         
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['corelevel_energies'] = self.ctx.cl_energies
-        outputnode_dict['fermi_energies'] = self.ctx.fermi_energies               
-        outputnode_dict['corelevelshifts'] = self.ctx.CLS               
-        outputnode_dict['bandgaps'] = self.ctx.bandgaps  
-        outputnode_dict['atomtypes'] = self.ctx.atomtypes
+        outputnode_dict['corelevel_energies'] = cl #self.ctx.cl_energies
+        outputnode_dict['reference_corelevel_energies'] = ref_cl #self.ctx.cl_energies
+        outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies               
+        outputnode_dict['corelevelshifts'] = cls #self.ctx.CLS
+        outputnode_dict['coresetup'] = []#cls
+        outputnode_dict['reference_coresetup'] = []#cls
+        outputnode_dict['bandgap'] = gap#self.ctx.bandgaps
+        outputnode_dict['reference_bandgaps'] = ref_gap#self.ctx.bandgaps
+        outputnode_dict['atomtypes'] = at#self.ctx.atomtypes
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
@@ -499,7 +538,7 @@ class initial_state_CLS(WorkChain):
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
-
+        print('Inital_state_CLS workflow Done')
 
     def create_new_fleurinp(self):
         """
@@ -546,9 +585,120 @@ class initial_state_CLS(WorkChain):
         print 'run Fleur in band workflow'
 
         return ToContext(last_calc=future)
+
+def querry_for_ref_structure(element_string):
+    """
+    This methods finds StructureData nodes with the following extras:
+    extra.type = 'bulk', # Should be done by looking at pbc, but I could not get querry to work.
+    extra.specific = 'reference', 
+    'extra.elemental' = True, 
+    extra.structure = element_string
+    
+    param: element_string: string of an element
+    return: the latest StructureData node that was found
+    
+    """
+    from aiida.orm import QueryBuilder
+
+    #query db
+    q = QueryBuilder()
+    q.append(StructureData,
+        filters = {
+            'extras.type' : {'==' : 'bulk'},
+            'extras.specification' : {'==' : 'reference'},
+            'extras.elemental' : {'==' : True},
+            'extras.element' : {'==' : element_string}
+            }
+        )
+    q.order_by({StructureData : 'ctime'})#always use the most recent
+    structures = q.all()
+    
+    if structures:
+        return structures[-1][0]            
+    else:
+        return None
+
     
 def fleur_calc_get_structure(calc_node):
     #get fleurinp
     fleurinp = calc_node.inp.fleurinpdata
     structure = fleurinp.get_structuredata(fleurinp)
     return structure
+
+def extract_results(calcs):
+    """
+    Collect results from certain calculation, check if everything is fine, 
+    calculate the wanted quantities.
+    """
+    calc_uuids = []
+    for calc in calcs:
+        print(calc)
+        calc_uuids.append(calc['output_scf_wf_para'].get_dict()['last_calc_uuid'])
+    print(calc_uuids)
+    
+    all_corelevels = {}
+    fermi_energies = {}
+    bandgaps = {}
+    all_atomtypes = {}  
+    # more structures way: divide into this calc and reference calcs.
+    # currently the order in calcs is given, but this might change if you submit
+    # check if calculation pks belong to successful fleur calculations
+    for uuid in calc_uuids:
+        calc = load_node(uuid)
+        if (not isinstance(calc, FleurCalc)):
+            #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
+            # log and continue
+            continue
+        if calc.get_state() != 'FINISHED':
+            # log and continue
+            continue
+            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
+        
+        # get out.xml file of calculation
+        outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+        corelevels, atomtypes = extract_corelevels(outxml)
+        #all_corelevels.append(core)
+        #print('corelevels: {}'.format(corelevels))
+        #print('atomtypes: {}'.format(atomtypes))
+        #for i in range(0,len(corelevels[0][0]['corestates'])):
+        #    print corelevels[0][0]['corestates'][i]['energy']
+            
+        #TODO how to store?
+        efermi = calc.res.fermi_energy
+        print efermi
+        bandgap = calc.res.bandgap
+        
+        # TODO: maybe different, because it is prob know from before
+        fleurinp = calc.inp.fleurinpdata
+        structure = fleurinp.get_structuredata(fleurinp)            
+        compound = structure.get_formula()
+        #print compound
+        fermi_energies[compound] = efermi
+        bandgaps[compound] = bandgap
+        all_atomtypes[compound] = atomtypes
+        all_corelevels[compound] = corelevels
+        #fermi_energies = efermi
+        #bandgaps = bandgap
+        #all_atomtypes = atomtypes
+        #all_corelevels = corelevels
+    
+    return fermi_energies, bandgaps, all_atomtypes, all_corelevels
+    #TODO validate results and give some warnings
+    
+    # check bandgaps, if not all metals, throw warnings:
+    # bandgap and efermi prob wrong, which makes some results meaningless
+    
+    # check fermi energy differences, correct results for fermi energy diff
+    # ggf TODO make a raw core-level and core-level to fermi energy variable
+    #TODO to what reference energy? or better not to fermi, but first unocc? (add bandgap)
+
+    #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
+    #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
+    #      'W-1_coreconfig' : ['1s','2s',...], 
+    #      'W-2' : [...], 'Be-1': [], ...} #all in eV!
+    #self.ctx.CLS = {}
+    #self.ctx.cl_energies = {}# same style as CLS only energy <-> shift   
+    
+    #Style: {'Compound' : energy, 'ref_x' : energy , ...}
+    #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
+    #self.ctx.fermi_energies = {}    

@@ -29,8 +29,15 @@ code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
 resources = {"num_machines": 1, "num_mpiprocs_per_machine" : 12}
-s = load_node(3100) # Be
 
+s = load_node(5898) # Be2W
+
+s1 =load_node(5955) #W
+s2 =load_node(3100) #Be
+
+references = {'use' : {'Be' : s2.uuid, 'W' : s1.uuid}}
+print(references)
+parameters = ParameterData(dict={})
 parameters = ParameterData(dict={})
 
 wf_para = ParameterData(dict={'fleur_runmax' : 4, 
@@ -38,7 +45,8 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'queue_name' : 'th123_node',
                               'resources' : resources,
                               'walltime_sec':  10*60,
-                              'serial' : False})
+                              'serial' : False,
+                              'references' : references})
 
 res = initial_state_CLS.run(structure=s, wf_parameters=wf_para, inpgen = code, fleur=code2)# 
 #wf_parameters=wf_para, 

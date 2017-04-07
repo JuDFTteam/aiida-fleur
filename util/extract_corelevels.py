@@ -191,7 +191,7 @@ def extract_corelevels(outxmlfile, options=None):
                           'stateOccupation' : []}
         atomtypes.append(types_dict)
     
-    print atomtypes
+    #print atomtypes
     natomgroup = len(atomgroup_nodes)
     #print natomgroup, nspecies
     #print species_names
