@@ -26,7 +26,7 @@ from aiida.work.workchain import WorkChain
 
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.tools.codespecific.fleur.StructureData_util import eos_structures
+from aiida.tools.codespecific.fleur.StructureData_util import rescale, is_structure
 #from convergence import fleur_convergence
 #from convergence2 import fleur_convergence2
 from aiida.tools.codespecific.fleur.convergence import fleur_convergence
@@ -88,10 +88,12 @@ class fleur_eos_wc(WorkChain):
         print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
-        self.ctx.calcs1 = []
+        self.ctx.calcs = []
         self.ctx.structures = []
+        self.ctx.structurs_uuids = []
         self.ctx.scalelist = []
-        self.ctx.successful2 = True#False # TODO get all succesfull from convergence, if all True this
+        self.ctx.volume = []
+        self.ctx.successful = True#False # TODO get all succesfull from convergence, if all True this
         wf_dict = self.inputs.wf_parameters.get_dict()
         self.ctx.points = wf_dict.get('points', 2)#9
         self.ctx.step = wf_dict.get('step', 0.002)
@@ -121,14 +123,16 @@ class fleur_eos_wc(WorkChain):
         for struc in self.ctx.structurs:
             inputs = self.get_inputs_scf()
             inputs['structure'] = struc
+            self.ctx.volume.append(struc.get_cell_volume())
+            self.ctx.structurs_uuids.append(struc.uuid)
             res = fleur_convergence.run(
                       wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], 
                       calc_parameters=inputs['calc_parameters'], 
                       inpgen = inputs['inpgen'], 
                       fleur=inputs['fleur'])# async
-            self.ctx.calcs1.append(res)
-            #print self.ctx.calcs1
+            self.ctx.calcs.append(res)
+            #print self.ctx.calcs
             #ResultToContext(self.ctx.calcs1.append(res))
             #calcs.append(res)
         #self.ctx.last_calc2 = res#.get('remote_folder', None)
@@ -157,25 +161,6 @@ class fleur_eos_wc(WorkChain):
 
         return inputs
 
-    def fit_latticeconstant(scale, eT):
-        """
-        Extract the lattice constant out of an parabola fit.
-        
-        scale : list of scales, or lattice constants
-        eT: list of total energies
-        """
-        # TODO Fit teh real function Mun... not a parabola
-        import numpy as np
-        # call fitt pol2 # or something else
-        #def func(x, a, b, c):
-        #    return a*x**2 + b*x + c
-        f1 = np.polyfit(scale,eT,2)
-        a0 = f1[0]
-        a1 = f1[1]
-        a2 = f1[2]
-        la = -0.5*a1/a0
-        c = a2 - a1**2/a2
-        return a0,la,c, f1
 
     def return_results(self):
         """
@@ -190,33 +175,62 @@ class fleur_eos_wc(WorkChain):
         t_energylist = []
         latticeconstant = 0
         #print self.ctx.calcs1
-        for calc in self.ctx.calcs1:
-            if calc.get('successful', False) == False:
-                self.ctx.successful2 = False
+        for calc in self.ctx.calcs:
+            if calc.get('successful', False):
+                self.ctx.successful = False
                 # TODO print something
             outpara = calc['output_scf_wf_para'].get_dict()
             #get total_energy, density distance
-            t_e = outpara.get('energy', -1)
-            dis = outpara.get('charge_density', -1)
+            #print outpara
+            t_e = outpara.get('total_energy', -1)
+            e_u = outpara.get('total_energy_units', 'eV')
+            dis = outpara.get('distance_charge', -1)
+            dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
             distancelist.append(dis)
         # fit lattice constant
-        a, latticeconstant, c, fit = self.fit_latticeconstant(self.ctx.scalelist, t_energylist)
-        out = {'scaling': self.ctx.scalelist, 'total_energy': t_energylist,
-               'structures' : self.ctx.structures, 'calculations' : self.ctx.calcs1,#[]
-               'convergence' : distancelist, 'nsteps' : self.ctx.points,
-               'guess' : self.ctx.guess , 'stepsize' : self.ctx.step,
-               'lattice_constant' : latticeconstant,
-               'lattice_constant_units' : 'Angstroem',
-               'fitresults' : [a, latticeconstant, c], 'fit' : fit, 'successful' : self.ctx.successful2}
-        if self.ctx.successful2:
+        a, latticeconstant, c, fit = fit_latticeconstant(self.ctx.scalelist, t_energylist)
+        # somehow problem, that fit is 'array'
+        fit_new = []
+        for val in fit:
+            fit_new.append(val)
+        #TODO optimal volume?
+        out = {
+               'workflow_name' : self.__class__.__name__,
+               'scaling': self.ctx.scalelist,
+               'initial_structure': self.inputs.structure.uuid,
+               'volume' : self.ctx.volume,
+               'volume_units' : 'A^3',
+               'total_energy': t_energylist,
+               'total_energy_units' : e_u,
+               'structures' : self.ctx.structurs_uuids, 
+               'calculations' : [],#self.ctx.calcs1,
+               'scf_wfs' : [],#self.converge_scf_uuids,
+               'distance_charge' : distancelist, 
+               'distance_charge_units' : dis_u,
+               'nsteps' : self.ctx.points,
+               'guess' : self.ctx.guess , 
+               'stepsize' : self.ctx.step,
+               'lattice_constant' : latticeconstant, # miss leading, currently scaling
+               'lattice_constant_units' : '',
+               'fitresults' : [a, latticeconstant, c], 
+               'fit' : fit_new, 
+               'successful' : self.ctx.successful}
+        
+        print out
+        
+        if self.ctx.successful:
             print 'Done, Equation of states calculation complete'
         else:
             print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
-        outdict = out#self.ctx.last_calc2
-        for k, v in outdict.iteritems():
-            self.out(k, v)        # return success, and the last calculation outputs
-        # ouput must be aiida Data types.
+ 
+        # output must be aiida Data types.        
+        outdict = {}
+        outdict['output_eos_wf_para']  = ParameterData(dict=out)
+        print outdict
+        for link_name, node in outdict.iteritems():
+            self.out(link_name, node)        # return success, and the last calculation outputs
+
 
 if __name__ == "__main__":
     import argparse
@@ -233,9 +247,51 @@ if __name__ == "__main__":
     parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     args = parser.parse_args()
-    res = run(lattice_constant, wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
+    res = fleur_eos_wc.run(wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
+
+def eos_structures(inp_structure, scalelist):
+    """
+    Creates many rescalled StrucutureData nodes out of a crystal structure.
+    Keeps the provanance in the database.
+
+    :param StructureData, a StructureData node (pk, sor uuid)
+    :param scalelist, list of floats, scaling factors for the cell
+
+    :returns: list of New StructureData nodes with rescalled structure, which are linked to input Structure
+    """
+    from aiida.orm.data.base import Float
+    #test if structure:
+    structure = is_structure(inp_structure)
+    if not structure:
+        #TODO: log something
+        return None
+    re_structures = []
+
+    for scale in scalelist:
+        s = rescale(structure, Float(scale))
+        re_structures.append(s)
+    return re_structures
 
 
+def fit_latticeconstant(scale, eT):
+    """
+    Extract the lattice constant out of an parabola fit.
+    
+    scale : list of scales, or lattice constants
+    eT: list of total energies
+    """
+    # TODO Fit teh real function Mun... not a parabola
+    import numpy as np
+    # call fitt pol2 # or something else
+    #def func(x, a, b, c):
+    #    return a*x**2 + b*x + c
+    f1 = np.polyfit(scale,eT,2)
+    a0 = f1[0]
+    a1 = f1[1]
+    a2 = f1[2]
+    la = -0.5*a1/a0
+    c = a2 - a1**2/a2
+    return a0,la,c, f1
 
 def parabola(x, a, b, c):
     return a*x**2 + b*x + c

@@ -32,7 +32,7 @@ f = s.get_formula()
 parameters = load_node(139)
 parameters = load_node(121) # Si
 wf_para = ParameterData(dict={'fleur_runmax': 4, 
-                                       'points' : 3, 
+                                       'points' : 7, 
                                        'step' : 0.002, 
                                        'guess' : 1.00,
                                        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
