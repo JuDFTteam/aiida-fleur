@@ -30,7 +30,7 @@ FleurinpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
-class band(WorkChain):
+class fleur_band_wc(WorkChain):
     '''
     This workflow calculated a bandstructure from a Fleur calculation
 
@@ -44,7 +44,7 @@ class band(WorkChain):
     
     @classmethod
     def define(cls, spec):
-        super(band, cls).define(spec)
+        super(fleur_band_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                          'kpath' : 'auto', 
@@ -89,7 +89,7 @@ class band(WorkChain):
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        self.ctx.queue = wf_dict.get('queue', None)        
+        self.ctx.queue = wf_dict.get('queue_name', None)        
         
     def create_new_fleurinp(self):
         """

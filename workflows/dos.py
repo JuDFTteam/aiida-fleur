@@ -31,7 +31,7 @@ FleurinpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
-class dos(WorkChain):
+class fleur_dos_wc(WorkChain):
     '''
     This workflow calculated a DOS from a Fleur calculation
 
@@ -45,7 +45,7 @@ class dos(WorkChain):
     
     @classmethod
     def define(cls, spec):
-        super(dos, cls).define(spec)
+        super(fleur_dos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                          'tria' : True, 
@@ -89,8 +89,8 @@ class dos(WorkChain):
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        self.ctx.queue = wf_dict.get('queue', None)          
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
+        self.ctx.queue = wf_dict.get('queue_name', None)          
         
         
     def create_new_fleurinp(self):

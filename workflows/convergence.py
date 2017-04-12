@@ -426,8 +426,8 @@ class fleur_convergence(WorkChain):
             outdict['fleurinp'] = self.ctx['inpgen'].out.fleurinpData
         outdict['output_scf_wf_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
-            self.out(k, v)
+        for link_name, node in outdict.iteritems():
+            self.out(link_name, node)
 
 if __name__ == "__main__":
     import argparse
