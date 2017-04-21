@@ -72,7 +72,12 @@ class FleurinpData(Data):
     #TODO: dont walk the whole python path, test if dir below is aiida?
     #needs to be imporved, schema file is often after new installation not found...
     #installation with pip should always lead to a schmea file in the python path, or even specific place
-    pythonpath = os.environ['PYTHONPATH'].split(':')
+    
+    #if pythonpath is non existant catch error
+    try:
+        pythonpath = os.environ['PYTHONPATH'].split(':')
+    except:
+        pythonpath = []
     _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/']
     for path in pythonpath[:]:
         _search_paths.append(path)
