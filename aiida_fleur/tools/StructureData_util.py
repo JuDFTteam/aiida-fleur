@@ -14,7 +14,7 @@ from aiida.orm import DataFactory
 from aiida.orm import load_node
 from aiida.orm.data.structure import Site, Kind
 
-#from aiida.workflows2.wf import wf
+from aiida.work.workfunction import workfunction as wf
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -60,7 +60,7 @@ def is_structure(structure):
 
     return None
 
-#@wf
+@wf
 def rescale(inp_structure, scale):
     """
     Rescales a crystal structure. Keeps the provanance in the database.
@@ -167,27 +167,7 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):# be carefull you have to use Aii
 
 #wf
 #prob don't make this a workfuntion, because rescale is already one and scalelist would has to be a ParameterData Node, since AiiDA has no list-datatype
-def eos_structures(inp_structure, scalelist):
-    """
-    Creates many rescalled StrucutureData nodes out of a crystal structure.
-    Keeps the provanance in the database.
 
-    :param StructureData, a StructureData node (pk, sor uuid)
-    :param scalelist, list of floats, scaling factors for the cell
-
-    :returns: list of New StructureData nodes with rescalled structure, which are linked to input Structure
-    """
-    #test if structure:
-    structure = is_structure(inp_structure)
-    if not structure:
-        #TODO: log something
-        return None
-    re_structures = []
-
-    for scale in scalelist:
-        s = rescale(structure, scale)
-        re_structures.append(s)
-    return re_structures
 
 #### Structure util
 # after ths is in plugin code import these in fleurinp.
