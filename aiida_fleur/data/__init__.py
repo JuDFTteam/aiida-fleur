@@ -72,7 +72,12 @@ class FleurinpData(Data):
     #TODO: dont walk the whole python path, test if dir below is aiida?
     #needs to be imporved, schema file is often after new installation not found...
     #installation with pip should always lead to a schmea file in the python path, or even specific place
-    pythonpath = os.environ['PYTHONPATH'].split(':')
+    
+    #if pythonpath is non existant catch error
+    try:
+        pythonpath = os.environ['PYTHONPATH'].split(':')
+    except:
+        pythonpath = []
     _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/']
     for path in pythonpath[:]:
         _search_paths.append(path)
@@ -640,44 +645,44 @@ class FleurinpData(Data):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
         file.
-
+    
         :return: StructureData node
         """
         from aiida.orm.data.structure import StructureData
         from aiida.tools.codespecific.fleur.StructureData_util import rel_to_abs, rel_to_abs_f
-
+    
         #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
         #therefore maintainance might be needed, if you want to circumvent this, you have
         #to get all the paths from somewhere.
-
+    
         #######
         # all hardcoded xpaths used and attributes names:
         bravaismatrix_bulk_xpath = '/fleurInput/cell/bulkLattice/bravaisMatrix/'
         bravaismatrix_film_xpath = 'fleurInput/cell/filmLattice/bravaisMatrix/'
         species_xpath = '/fleurInput/atomSpecies/species'
         all_atom_groups_xpath = '/fleurInput/atomGroups/atomGroup'
-
+    
         species_attrib_name = 'name'
         species_attrib_element = 'element'
-
+    
         row1_tag_name = 'row-1'
         row2_tag_name = 'row-2'
         row3_tag_name = 'row-3'
-
+    
         atom_group_attrib_species = 'species'
         atom_group_tag_abspos = 'absPos'
         atom_group_tag_relpos = 'relPos'
         atom_group_tag_filmpos = 'filmPos'
         ########
-
+    
         if not ('inp.xml' in fleurinp.files):
             print 'cannot get a StructureData because fleurinpdata has no inp.xml file yet'
             # TODO what to do in this case?
             return False
-
+    
         # read in inpxml
         inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
-
+    
         if fleurinp._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -686,13 +691,13 @@ class FleurinpData(Data):
         else: #schema not there, parse without
             print 'parsing inp.xml without XMLSchema'
             tree = etree.parse(inpxmlfile)
-
+    
         root = tree.getroot()
-
+    
         # Fleur uses atomic units, convert to Angstrom
         # get cell matrix from inp.xml
         row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
-
+    
         if row1: #bulk calculation
             #print 'bulk'
             row1 = row1[0].text.split()
@@ -705,12 +710,12 @@ class FleurinpData(Data):
                 row2[i] = float(cor)*bohr_a
             for i, cor in enumerate(row3):
                 row3[i] = float(cor)*bohr_a
-
+    
             cell = [row1, row2, row3]
             # create new structure Node
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, True]
-
+    
         elif root.xpath(bravaismatrix_film_xpath + row1_tag_name): #film calculation
             #print 'film'
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
@@ -724,105 +729,105 @@ class FleurinpData(Data):
             # create new structure Node
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
-
-
+    
+    
         #get species for atom kinds
         #species = root.xpath(species_xpath)
         species_name = root.xpath(species_xpath + '/@' + species_attrib_name)
         species_element = root.xpath(species_xpath + '/@' + species_attrib_element)
         # alternativ: loop over species and species.get(species_attrib_name)
-
+    
         #save species info in a dict
         species_dict = {}
         for i, spec in enumerate(species_name):
             species_dict[spec] = {species_attrib_element: species_element[i]}
-
+    
         # Now we have to get all atomgroups, look what their species is and
         # their positions are.
         # Then we append them to the new structureData
-
+    
         all_atom_groups = root.xpath(all_atom_groups_xpath)
-
+    
         for atom_group in all_atom_groups:
             current_species = atom_group.get(atom_group_attrib_species)
-
+    
             group_atom_positions_abs = atom_group.xpath(atom_group_tag_abspos)
             group_atom_positions_rel = atom_group.xpath(atom_group_tag_relpos)
             group_atom_positions_film = atom_group.xpath(atom_group_tag_filmpos)
-
-        if group_atom_positions_abs: #we have absolut positions
-            for atom in group_atom_positions_abs:
-                postion_a = atom.text.split()
-                # allow for math *, /
-                for i, pos in enumerate(postion_a):
-                    if '/' in pos:
-                        temppos = pos.split('/')
-                        postion_a[i] = float(temppos[0])/float(temppos[1])
-                    elif '*' in pos:
-                        temppos = pos.split('*')
-                        postion_a[i] = float(temppos[0])*float(temppos[1])
-                    else:
-                        postion_a[i] = float(pos)
-                    postion_a[i] = postion_a[i]*bohr_a
-                # append atom to StructureData
-                struc.append_atom(
-                        position=postion_a,
+    
+            if group_atom_positions_abs: #we have absolut positions
+                for atom in group_atom_positions_abs:
+                    postion_a = atom.text.split()
+                    # allow for math *, /
+                    for i, pos in enumerate(postion_a):
+                        if '/' in pos:
+                            temppos = pos.split('/')
+                            postion_a[i] = float(temppos[0])/float(temppos[1])
+                        elif '*' in pos:
+                            temppos = pos.split('*')
+                            postion_a[i] = float(temppos[0])*float(temppos[1])
+                        else:
+                            postion_a[i] = float(pos)
+                        postion_a[i] = postion_a[i]*bohr_a
+                    # append atom to StructureData
+                    struc.append_atom(
+                            position=postion_a,
+                            symbols=species_dict[current_species][species_attrib_element])
+    
+            elif group_atom_positions_rel: #we have relative positions
+                # TODO: check if film or 1D calc, because this is not allowed! I guess
+                for atom in group_atom_positions_rel:
+                    postion_r = atom.text.split()
+                    # allow for math * /
+                    for i, pos in enumerate(postion_r):
+                        if '/' in pos:
+                            temppos = pos.split('/')
+                            postion_r[i] = float(temppos[0])/float(temppos[1])
+                        elif '*' in pos:
+                            temppos = pos.split('*')
+                            postion_r[i] = float(temppos[0])*float(temppos[1])
+                        else:
+                            postion_r[i] = float(pos)
+    
+                    # now transform to absolut Positions
+                    new_abs_pos = rel_to_abs(postion_r, cell)
+    
+                    # append atom to StructureData
+                    struc.append_atom(
+                        position=new_abs_pos,
                         symbols=species_dict[current_species][species_attrib_element])
-
-        elif group_atom_positions_rel: #we have relative positions
-            # TODO: check if film or 1D calc, because this is not allowed! I guess
-            for atom in group_atom_positions_rel:
-                postion_r = atom.text.split()
-                # allow for math * /
-                for i, pos in enumerate(postion_r):
-                    if '/' in pos:
-                        temppos = pos.split('/')
-                        postion_r[i] = float(temppos[0])/float(temppos[1])
-                    elif '*' in pos:
-                        temppos = pos.split('*')
-                        postion_r[i] = float(temppos[0])*float(temppos[1])
-                    else:
-                        postion_r[i] = float(pos)
-
-                # now transform to absolut Positions
-                new_abs_pos = rel_to_abs(postion_r, cell)
-
-                # append atom to StructureData
-                struc.append_atom(
-                    position=new_abs_pos,
-                    symbols=species_dict[current_species][species_attrib_element])
-
-        elif group_atom_positions_film: # Do we support mixture always, or only in film case?
-            #either support or throw error
-            for atom in group_atom_positions_film:
-                # film pos are rel rel abs, therefore only transform first two coordinates
-                postion_f = atom.text.split()
-                # allow for math * /
-                for i, pos in enumerate(postion_f):
-                    if '/' in pos:
-                        temppos = pos.split('/')
-                        postion_f[i] = float(temppos[0])/float(temppos[1])
-                    elif '*' in postion_f[i]:
-                        temppos = pos.split('*')
-                        postion_f[i] = float(temppos[0])*float(temppos[1])
-                    else:
-                        postion_f[i] = float(pos)
-                # now transform to absolut Positions
-                new_abs_pos = rel_to_abs_f(postion_r, cell)
-                # append atom to StructureData
-                struc.append_atom(
-                    position=new_abs_pos,
-                    symbols=species_dict[current_species][species_attrib_element])
-        else:
-            print ('I should never get here, 1D not supported yet, '
-                  'I only know relPos, absPos, filmPos')
-            #TODO throw error
+    
+            elif group_atom_positions_film: # Do we support mixture always, or only in film case?
+                #either support or throw error
+                for atom in group_atom_positions_film:
+                    # film pos are rel rel abs, therefore only transform first two coordinates
+                    postion_f = atom.text.split()
+                    # allow for math * /
+                    for i, pos in enumerate(postion_f):
+                        if '/' in pos:
+                            temppos = pos.split('/')
+                            postion_f[i] = float(temppos[0])/float(temppos[1])
+                        elif '*' in postion_f[i]:
+                            temppos = pos.split('*')
+                            postion_f[i] = float(temppos[0])*float(temppos[1])
+                        else:
+                            postion_f[i] = float(pos)
+                    # now transform to absolut Positions
+                    new_abs_pos = rel_to_abs_f(postion_r, cell)
+                    # append atom to StructureData
+                    struc.append_atom(
+                        position=new_abs_pos,
+                        symbols=species_dict[current_species][species_attrib_element])
+            else:
+                print ('I should never get here, 1D not supported yet, '
+                      'I only know relPos, absPos, filmPos')
+                #TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a wf instead
         #struc.add_link_from(fleurinp, label='fleurinp.structure', link_type=LinkType.CREATE)
         #label='fleurinp.structure'
         #return {label : struc}
         return struc
-
+    
 
 
 
