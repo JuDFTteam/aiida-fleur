@@ -211,16 +211,18 @@ class FleurinpData(Data):
                                     imin = i
                                 if (i > imin) and (i <= imax):
                                     if re.search('enumeration value', line):
-                                        schema_version_number = re.findall(r'\d+.\d+', line)[0]
+                                        schema_version_number = re.findall(r'\d+.\d+', line)#[0]
                                         #print 'schemaversion number: ' + str(schema_version_number)
                                         break
                             schemafile.close()
-                            if schema_version_number == inp_version_number:
-                                #we found the right schemafile for the current inp.xml
-                                self._set_attr('_schema_file_path', schemafile_path)
-                                self._set_attr('_has_schema', True)
-                                #print schemafile_paths
-                                return schemafile_paths, True
+                            #test if schemafiles works with multiple fleur versions
+                            for version_number in schema_version_number:
+                                if version_number == inp_version_number:
+                                    #we found the right schemafile for the current inp.xml
+                                    self._set_attr('_schema_file_path', schemafile_path)
+                                    self._set_attr('_has_schema', True)
+                                    #print schemafile_paths
+                                    return schemafile_paths, True
         #print schemafile_paths
         return schemafile_paths, False
 
