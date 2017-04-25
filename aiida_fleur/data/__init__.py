@@ -76,9 +76,9 @@ class FleurinpData(Data):
     #if pythonpath is non existant catch error
     try:
         pythonpath = os.environ['PYTHONPATH'].split(':')
-    except:
+    except KeyError:
         pythonpath = []
-    _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/']
+    _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/','/home/aiida/code/aiida_core/aiida/']
     for path in pythonpath[:]:
         _search_paths.append(path)
     #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
