@@ -207,16 +207,20 @@ class FleurinpData(Data):
                                 i = i + 1
                                 # This kind of hardcoded
                                 if re.search('name="FleurVersionType"', line):
-                                    imax = i + 3
+                                    imax = i + 10 # maybe make larger or different
                                     imin = i
+                                    schema_version_numbers = []
                                 if (i > imin) and (i <= imax):
                                     if re.search('enumeration value', line):
-                                        schema_version_number = re.findall(r'\d+.\d+', line)#[0]
+                                        schema_version_number = re.findall(r'\d+.\d+', line)[0]
                                         #print 'schemaversion number: ' + str(schema_version_number)
+                                        #break
+                                        schema_version_numbers.append(schema_version_number)
+                                    elif re.search('simpleType>', line):
                                         break
                             schemafile.close()
                             #test if schemafiles works with multiple fleur versions
-                            for version_number in schema_version_number:
+                            for version_number in schema_version_numbers:
                                 if version_number == inp_version_number:
                                     #we found the right schemafile for the current inp.xml
                                     self._set_attr('_schema_file_path', schemafile_path)
