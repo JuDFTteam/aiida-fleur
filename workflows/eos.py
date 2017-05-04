@@ -7,7 +7,7 @@ of a lattice constant"""
 #TODO: print more user info
 #  allow different inputs, make things optional(don't know yet how)
 #  half number of iteration if you are close to be converged. (therefore one can start with 18 iterations, and if thats not enough run agian 9 or something)
-
+#TODO do birch murnaghan equation of states fit
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -35,7 +35,7 @@ from aiida.tools.codespecific.fleur.convergence import fleur_convergence
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
-FleurInpData = DataFactory('fleurinp.fleurinp')
+FleurInpData = DataFactory('fleurinp')
 
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
