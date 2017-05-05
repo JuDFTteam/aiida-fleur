@@ -19,8 +19,8 @@
 
    <xsd:simpleType name="FleurVersionType">
       <xsd:restriction base="xsd:string">
-         <xsd:enumeration value="0.27"/>
          <xsd:enumeration value="0.28"/>
+         <xsd:enumeration value="0.27"/>
       </xsd:restriction>
    </xsd:simpleType>
 
