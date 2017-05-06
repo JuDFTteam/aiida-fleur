@@ -91,7 +91,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     for i in range(nfiles):
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
-        except as emessage:
+        except Exception, emessage:
             print('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage))
             continue
         #print new_cif
