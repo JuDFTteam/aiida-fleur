@@ -364,9 +364,9 @@ class FleurinpModifier(object):
     
     def undo(self, all=False):
         if all:
-            self._task = []
+            self._tasks = []
         else:
-            self._task.pop()
+            self._tasks.pop()
         return self._tasks
 
 if __name__ == "__main__":
