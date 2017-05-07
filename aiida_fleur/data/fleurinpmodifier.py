@@ -302,7 +302,7 @@ class FleurinpModifier(object):
     def set_species(self, species_name, attributedict, create=False):
         self._tasks.append(('set_species', species_name, attributedict, create))
 
-    def set_atomgr_att(self, attributedict, position=None, species=None,create=False):
+    def set_atomgr_att(self, attributedict, position=None, species=None, create=False):
         self._tasks.append(('set_atomgr_att', attributedict, position, species, create))
 
     #for now
@@ -366,7 +366,9 @@ class FleurinpModifier(object):
         if all:
             self._tasks = []
         else:
-            self._tasks.pop()
+            if self._tasks:
+                self._tasks.pop()
+                #del self._tasks[-1]
         return self._tasks
 
 if __name__ == "__main__":
