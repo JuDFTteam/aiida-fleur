@@ -13,9 +13,16 @@ __contributors__ = "Jens Broeder"
 # TODO FEHLER meldungen, currently if a xpath expression is valid, but does not exists
 # xpath returns []. Do we want this behavior?
 # TODO finish implementation of create=False
+# TODO: no aiida imports
+from aiida import load_dbenv, is_dbenv_loaded
+if not is_dbenv_loaded():
+    load_dbenv()
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
+from aiida.common.exceptions import InputValidationError
+
+#from somewhere import ValidationError
 
 def is_sequence(arg):
     return (not hasattr(arg, "strip") and
@@ -491,6 +498,25 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
 
 ####### XML GETTERS #########
+def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
+    """
+    Tries to evalutate an xpath expression. If it fails it logs it.
+    
+    :param root node of an etree and an xpath expression (relative, or absolute)
+    :returns either nodes, or attributes, or text
+    """
+    try:
+        return_value = node.xpath(xpath)
+    except etree.XPathEvalError:
+        parser_info['parser_warnings'].append('There was a XpathEvalError on the xpath: {} \n'
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
+        # TODO maybe raise an error again to catch in upper routine, to know where exactly
+        return []
+    if len(return_value) == 1:
+        return return_value[0]
+    else:
+        return return_value
+
 
 def eval_xpath2(node, xpath):
     """
@@ -590,6 +616,8 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
         return None
 
 
+
+
 # TODO this has to be done better. be able to write tags and
 # certain attributes of attributes that occur possible more then once.
 def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstructure):
@@ -613,7 +641,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
     pos_switch_several = xmlinpstructure[1]
     pos_attrib_once = xmlinpstructure[2]
     #pos_int_attributes_once = xmlinpstructure[3]
-    #pos_float_attributes_once = xmlinpstructure[4]
+    pos_float_attributes_once = xmlinpstructure[4]
     #pos_string_attributes_once = xmlinpstructure[5]
     pos_attrib_several = xmlinpstructure[6]
     pos_int_attributes_several = xmlinpstructure[7]
@@ -645,7 +673,11 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             # TODO: same here, check existance and plausiblility of xpath
             xpath_set = pos_xpaths[key]
             #print xmltree_new, xpath_set, key, fleur_change_dic[key]
-            xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
+            if key in pos_float_attributes_once:
+                newfloat = '{:.10f}'.format(fleur_change_dic[key])
+                xml_set_first_attribv(xmltree_new, xpath_set, key, newfloat)                
+            else:
+                xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
         elif key in pos_attrib_several:
             # TODO What attribute shall be set? all, one or several specific onces?
             pass
@@ -661,7 +693,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             pass
         else:
             # this key is not know to plug-in
-            raise ValidationError(
+            raise InputValidationError(
                 "You try to set the key:'{}' to : '{}', but the key is unknown"
                 " to the fleur plug-in".format(key, fleur_change_dic[key]))
     return xmltree_new
@@ -804,7 +836,7 @@ def get_inpxml_file_structure():
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
                            'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count')
-    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'theta',
+    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
@@ -819,7 +851,8 @@ def get_inpxml_file_structure():
     #print other_attributes_once
     other_attributes_once1 = (
         'isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd',
-        'imix', 'alpha', 'spinf', 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
+        'imix', 'alpha', 'spinf', 'minDistance',
+ 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
         'xa', 'thetad', 'epsdisp', 'epsforce', 'valenceElectrons', 'mode',
         'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz', 'ellow', 'elup',
         'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
@@ -902,6 +935,7 @@ def get_inpxml_file_structure():
         'GmaxXC': '/fleurInput/calculationSetup/cutoffs',
         'numbands': '/fleurInput/calculationSetup/cutoffs',
         'itmax' : '/fleurInput/calculationSetup/scfLoop',
+        'minDistance' : '/fleurInput/calculationSetup/scfLoop',
         'maxIterBroyd': '/fleurInput/calculationSetup/scfLoop',
         'imix': '/fleurInput/calculationSetup/scfLoop',
         'alpha': '/fleurInput/calculationSetup/scfLoop',

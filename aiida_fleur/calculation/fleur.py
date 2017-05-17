@@ -5,6 +5,8 @@ Input plug-in for a FLEUR ciculation. fleur.x
 # TODO:
 # polishing
 # think about exception. warning policy.
+# TODO maybe allow only single file names not *
+# TODO maybe check the settings key values, make a list of all fleur files?
 import os
 #from lxml import etree
 #from lxml.etree import XMLSyntaxError
@@ -17,9 +19,10 @@ from aiida.orm.calculation.job import JobCalculation
 from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida.common.datastructures import CalcInfo, CodeInfo
 #from aiida.orm.data.structure import StructureData
-#from aiida.orm.data.parameter import ParameterData
+from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.remote import RemoteData
-from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+from aiida.orm.data.fleurinp import FleurinpData
 #from aiida.orm.data.array.kpoints import KpointsData
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError, ValidationError
@@ -85,6 +88,8 @@ class FleurCalculation(JobCalculation):
         self._PLOT_INP_FILE_NAME = 'plot_inp'
         self._BROYD_FILE_NAME = 'broyd*'
         self._POT_FILE_NAME = 'pot*'
+        self._POT1_FILE_NAME = 'pottot'
+        self._POT2_FILE_NAME = 'potcoul'
         self._STRUCTURE_FILE_NAME = 'struct.xcf'
         self._STARS_FILE_NAME = 'stars'
         self._WKF2_FILE_NAME = 'wkf2'
@@ -203,7 +208,10 @@ class FleurCalculation(JobCalculation):
         self._copy_filelist_hybrid = []
         self._copy_filelist_jij = []
 
-
+        #possible settings_dict keys
+        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 
+                               'additional_remotecopy_list', 'remove_from_remotecopy_list'
+                               'cmdline']
         #possible modes?
         self._fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
                              'latticeCo', 'scf']
@@ -234,6 +242,17 @@ class FleurCalculation(JobCalculation):
                     "(also for restarts and similar). It should contain all the "
                     "needed files for a Fleur calc, only edited files should be "
                     "uploaded from the repository."),
+                },
+            "settings": {
+                'valid_types': ParameterData,
+                'additional_parameter': None,
+                'linkname': 'settings',
+                'docstring': (
+                    "This parameter data node is used to specify for some "
+                    "advanced features how the plugin behaves. You can add files"
+                    "the retrieve list, or add command line switches, "
+                    "for all available features here check the documentation."),
+            
             }})
             #
             #"parent_calc":{
@@ -306,10 +325,12 @@ class FleurCalculation(JobCalculation):
         remote_symlink_list = []
         mode_retrieved_filelist = []
         #filelocal_copy_list = []
-        filelist_tocopy = []
+        #filelist_tocopy = []
         filelist_tocopy_remote = []
-        fleur_calc = False
-        new_inp_file = False
+        settings_dict = {}
+
+        #fleur_calc = False
+        #new_inp_file = False
         #ignore_mode = False
         has_fleurinp = False
         has_parent = False
@@ -336,7 +357,7 @@ class FleurCalculation(JobCalculation):
 
         fleurinp = inputdict.pop(self.get_linkname('fleurinpdata'), None)
         if fleurinp is None:
-            xml_inp_dict = {}
+            #xml_inp_dict = {}
             has_fleurinp = False
         else:
             if not isinstance(fleurinp, FleurinpData):
@@ -397,6 +418,26 @@ class FleurCalculation(JobCalculation):
                 raise InputValidationError(
                     "parent_calc, must be either an 'inpgen calculation' or"
                     " a 'fleur calculation'.")
+        
+        # check existence of settings (optional)
+        settings = inputdict.pop(self.get_linkname('settings'), None)
+        print('settings: {}'.format(settings))
+        if settings is None:
+            settings_dict = {}            
+        else:
+            if not isinstance(settings, ParameterData):
+                raise InputValidationError("settings, if specified, must be of "
+                                           "type ParameterData")
+            else:
+                settings_dict = settings.get_dict()
+        #check for for allowed keys, ignor unknown keys but warn.
+        for key in settings_dict.keys():
+            if key not in self._settings_keys:
+                #TODO warrning
+                self.logger.info("settings dict key {} for Fleur calculation"
+                                 "not reconized, only {} are allowed."
+                                 "".format(key, self._settings_keys))
+        print settings_dict
         # Here, there should be no other inputs
         if inputdict:
             raise InputValidationError(
@@ -414,20 +455,31 @@ class FleurCalculation(JobCalculation):
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
             self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-            local_copy_list.append((
-                fleurinp.get_file_abs_path(self._INPXML_FILE_NAME),
-                self._INPXML_FILE_NAME))
+            
+            #local_copy_list.append((
+            #    fleurinp.get_file_abs_path(self._INPXML_FILE_NAME),
+            #    self._INPXML_FILE_NAME))
+            #copy ALL files from inp.xml
+            allfiles = fleurinp.files
+            for file1 in allfiles:
+                local_copy_list.append((
+                    fleurinp.get_file_abs_path(file1),
+                    file1))                
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
             if modes['forces']:
                 print 'FORCES!!!'
                 mode_retrieved_filelist.append(self._NEW_XMlINP_FILE_NAME)
                 mode_retrieved_filelist.append(self._FORCE_FILE_NAME)
+            if modes['ldau']:
+                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+            #if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
             # if needed
         #self.logger.info("@@@@@@@@@@@@@@@@@@@@@@@@has_parent {}".format(has_parent))
@@ -440,39 +492,62 @@ class FleurCalculation(JobCalculation):
 
             #print outfolderpath
             if fleurinpgen and (not has_fleurinp):
-                for file in self._copy_filelist_inpgen:
+                for file1 in self._copy_filelist_inpgen:
                     local_copy_list.append((
-                        os.path.join(outfolderpath + '/path/'+ file),
-                        os.path.join(file)))
+                        os.path.join(outfolderpath, 'path', file1),
+                        os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
-                for file in self._copy_filelist_scf:
+                for file1 in self._copy_filelist_scf:
                     local_copy_list.append((
-                        os.path.join(outfolderpath+ '/path/'+ file),
-                        os.path.join(file)))
-                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                        os.path.join(outfolderpath, 'path', file1),
+                        os.path.join(file1)))
+                filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
             elif fleurinpgen and has_fleurinp:
-                    # everything is taken care of
-                    pass
+                # everything is taken care of
+                pass
             elif not fleurinpgen and has_fleurinp:
                 # input file is already taken care of
-                for file in self._copy_filelist_scf1:
+                for file1 in self._copy_filelist_scf1:
                     local_copy_list.append((
-                        os.path.join(outfolderpath+ '/path/'+ file),
-                        os.path.join(file)))
-                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                        os.path.join(outfolderpath, 'path', file1),
+                        os.path.join(file1)))
+                filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,
             # if they are not there, throw error
             if copy_remotely: # on same computer.
+                print('copy files remotely')
+
+                # from fleurmodes
                 if modes['pot8']:
+                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                     filelist_tocopy_remote.append(self._POT_FILE_NAME)
-                for file in filelist_tocopy_remote:
+                #    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
+                elif modes['dos']:
+                    pass
+                elif modes['band']: 
+                    pass
+                else:
+                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                # from settings, user specified
+                #TODO check if list? 
+                for file1 in settings_dict.get('additional_remotecopy_list', []):
+                    filelist_tocopy_remote.append(file1)
+ 
+                for file1 in settings_dict.get('remove_from_remotecopy_list', []):
+                    if file1 in filelist_tocopy_remote:
+                        filelist_tocopy_remote.remove(file1)             
+                
+                for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
-                        os.path.join(parent_calc_folder.get_remote_path(),
-                        '/'+ file), self._OUTPUT_FOLDER))
+                        os.path.join(parent_calc_folder.get_remote_path(), file1),
+                        self._OUTPUT_FOLDER))
+                #print remote_copy_list
+                #self.logger.info("remote copy file list {}".format(remote_copy_list))
 
+        
         ########## MAKE CALCINFO ###########
 
         calcinfo = CalcInfo()
@@ -492,28 +567,59 @@ class FleurCalculation(JobCalculation):
         #calcinfo.stdout_name = self._OUTPUT_FILE_NAME
 
         # Retrieve by default the output file and the xml file
-        calcinfo.retrieve_list = []
-        calcinfo.retrieve_list.append(self._OUTXML_FILE_NAME)
-        calcinfo.retrieve_list.append(self._INPXML_FILE_NAME)
+        retrieve_list = []
+        retrieve_list.append(self._OUTXML_FILE_NAME)
+        retrieve_list.append(self._INPXML_FILE_NAME)
         #calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
-        calcinfo.retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
-        calcinfo.retrieve_list.append(self._CDN1_FILE_NAME)
-        calcinfo.retrieve_list.append(self._ERROR_FILE_NAME)
+        retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
+        retrieve_list.append(self._CDN1_FILE_NAME)
+        retrieve_list.append(self._ERROR_FILE_NAME)
         #calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)
-        calcinfo.retrieve_list.append(self._OUT_FILE_NAME)
+        retrieve_list.append(self._OUT_FILE_NAME)
         #calcinfo.retrieve_list.append(self._INP_FILE_NAME)
         #calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)
         #calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)
         #calcinfo.retrieve_list.append(self._KPTS_FILE_NAME)
+        
         # if certain things are modefied, flags set,
         #other files should be retrieved, example DOS.x...
-
+        print "mode_retrieved_filelist", repr(mode_retrieved_filelist)
         for mode_file in mode_retrieved_filelist:
-            calcinfo.retrieve_list.append(mode_file)
-
+            retrieve_list.append(mode_file)
+        print('retrieve_list: {}'.format(retrieve_list))
+       
+        # user specific retrieve
+        add_retrieve = settings_dict.get('additional_retrieve_list', [])
+        print('add_retrieve: {}'.format(add_retrieve))
+        for file1 in add_retrieve:
+            retrieve_list.append(file1)
+        
+        remove_retrieve = settings_dict.get('remove_from_retrieve_list', [])
+        for file1 in remove_retrieve:
+            if file1 in retrieve_list:
+                retrieve_list.remove(file1)             
+        
+        calcinfo.retrieve_list = []
+        for file1 in retrieve_list:
+            calcinfo.retrieve_list.append(file1)
+        
         codeinfo = CodeInfo()
         # should look like: codepath -xmlInput < inp.xml > shell.out 2>&1
-        cmdline_params = ["-xmlInput"]
+        walltime_sec = self.get_max_wallclock_seconds()
+        #self.logger.info("!!!!!!!!!!!!!!!!!!! walltime_sec : {}"
+        #                         "".format(walltime_sec))
+        cmdline_params = ["-xml"]#, "-wtime", "{}".format(walltime_sec)]
+        #walltime_sec = self.get_max_wallclock_seconds()
+        print('walltime: {}'.format(walltime_sec))
+        if walltime_sec:
+            walltime_min = max(1, walltime_sec/60)      
+            cmdline_params.append("-wtime")
+            cmdline_params.append("{}".format(walltime_min))
+        
+        # user specific commandline_options
+        for command in settings_dict.get('cmdline', []):
+            cmdline_params.append(command)
+            
         codeinfo.cmdline_params = list(cmdline_params)
         # + ["<", self._INPXML_FILE_NAME,
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
@@ -553,12 +659,12 @@ class FleurCalculation(JobCalculation):
         CopyonlyCalculation
         :TODO: maybe assume that CopyonlyCalculation class always exists?
         """
-        from aiida.orm.calculation.job.simpleplugins.copyonly import CopyonlyCalculation
+        #from aiida.orm.calculation.job.simpleplugins.copyonly import CopyonlyCalculation
 
         try:
             if (((not isinstance(calc, FleurCalculation)))
-                            and (not isinstance(calc, FleurinputgenCalculation))
-                            and (not isinstance(calc, CopyonlyCalculation)) ):
+                            and (not isinstance(calc, FleurinputgenCalculation))):
+                            #and (not isinstance(calc, CopyonlyCalculation)) ):
                 raise ValueError("Parent calculation must be a FleurCalculation, a "
                                  "FleurinputgenCalculation or a CopyonlyCalculation")
         except ImportError:

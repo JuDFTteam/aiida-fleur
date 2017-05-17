@@ -2,7 +2,8 @@
 
 #copy plugin files from aiida_fleur into your aiida version
 
-aiida_repo=/usr/users/iff_th1/broeder/aiida/aiida/aiida
+#aiida_repo=/Users/broeder/aiida/my_aiida_version/aiida/
+aiida_repo=/usr/users/iff_th1/broeder/aiida/aiida/aiida/
 aiida_fleur=${PWD}/aiida_fleur
 #'.'
 

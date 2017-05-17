@@ -32,9 +32,9 @@ Framework for computational science
 
 
 This plugin enables the use of the all-electron DFT code Fleur (http://www.flapw.de) with the AiiDA framework (http://www.aiida.net).
-The plugin is all in python, under the MIT license and is availabe under (bitbucket...). It is developed at Forschungszentrum Juelich, (IAS-1/PGI-1), Germany.
+The plugin is all in python, under the MIT license and is available under (https://github.com/broeder-j/aiida_fleur_plugin). It is developed at Forschungszentrum Juelich, (IAS-1/PGI-1), Germany.
 
-.. note:: On these pages is (only) the documentation of the plugin source code. For design description, usuage examples and tutorials of the plugin go to the Fleur website.
+.. note:: On these pages is the documentation of the plugin source code, some design description, usuage examples and tutorials of the plugin. For futher PGI-1 interal hints go to the Fleur website. Basic AiiDA workflows for Fleur are available on https://github.com/broeder-j/aiida_fleur_basewf .
 
 If you use this plugin please cite:
 
@@ -43,6 +43,7 @@ If you use this plugin please cite:
 
 
 Requirements to use this code:
+..............................
 
 * A running AiiDA version
 * Executables of the Fleur code
@@ -51,15 +52,49 @@ Other packages (in addition to all requirements of AiiDA):
 
 * lxml
 
-Acknowlegments:
+Acknowledgments:
+...............
 
 We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
 We also thank the AiiDA team for their help.
 
 Contents:
+.........
 
-Fleur input generator plug-in
-+++++++++++++++++++++++++++++
+The Fleur plug-in
++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 4
+
+   plugin/fleur_plugin
+..
+   examples
+
+Guides
+++++++
+.. toctree::
+   :maxdepth: 4
+
+..
+  installation
+  run inpgen
+  run fleur
+  change fleurinp
+  extract results
+
+
+Tools and utility
++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 4
+
+..
+  plugin/utility
+
+Code documentation
+++++++++++++++++++
 
 .. toctree::
    :maxdepth: 4
@@ -67,10 +102,9 @@ Fleur input generator plug-in
    code
 
 ..   
-   examples
    utility
    workflows
-
+   documentation_fleur_plugin
 
 
 Indices and tables

@@ -6,7 +6,9 @@ different files produced by FLEUR.
 Please implement file parsing routines that they can be executed from outside
 the parser. Makes testing and portability easier.
 """
-
+# TODO: cleanup
+# TODO: move methods to utils, xml or other
+# TODO: warnings
 import os
 #import numpy
 
@@ -18,7 +20,8 @@ from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
 from aiida.parsers.plugins.fleur_inp import FleurOutputParsingError
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser#, ParserParamManager
-from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
+from aiida.orm.data.fleurinp import FleurinpData
 from aiida.orm.data.array.bands import BandsData
 
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
@@ -351,6 +354,14 @@ def parse_xmlout_file(outxmlfile):
         spin_orbit_calculation = 'calculationSetup/soc'
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
+        
+        # timing
+        start_time_xpath  = '/fleurOutput/startDateAndTime/@time'
+        end_time_xpath = '/fleurOutput/endDateAndTime/@time'
+        start_date_xpath  = '/fleurOutput/startDateAndTime/@date'
+        end_date_xpath = '/fleurOutput/endDateAndTime/@date'        
+
+        
 
         ###########
 
@@ -388,6 +399,10 @@ def parse_xmlout_file(outxmlfile):
             simple_data = parse_simple_outnode(iteration_to_parse, Fleurmode)
         else:
             simple_data = {}
+        
+        
+        warnings={'info': {}, 'debug' : {}, 'warning' : {}, 'error' : {}}
+        
         simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath)) +
                                           len(eval_xpath2(root, absPos_xpath)) +
                                           len(eval_xpath2(root, filmPos_xpath)))
@@ -406,8 +421,32 @@ def parse_xmlout_file(outxmlfile):
         simple_data['creator_target_architecture'] = eval_xpath(root, creator_target_architecture_xpath)
         simple_data['creator_target_structure'] = eval_xpath(root, creator_target_structure_xpath)
         simple_data['output_file_version'] = eval_xpath(root, output_version_xpath)
-
-
+        
+        warnings['info'] = {}#TODO
+        warnings['debug'] = {} #TODO
+        warnings['warning'] = {}#TODO
+        warnings['error'] = {}#TODO
+        simple_data['warnings'] = warnings
+        
+                   
+        # time
+        starttime = eval_xpath(root, start_time_xpath)
+        print starttime
+        starttimes = starttime.split(':')
+        endtime = eval_xpath(root, end_time_xpath).split(':')
+        
+        start_date = eval_xpath(root, start_date_xpath)
+        end_date = eval_xpath(root, end_date_xpath)
+        
+        offset = 0
+        if start_date != end_date:
+            pass
+            offset = 0
+        
+        time = offset + (int(endtime[0])-int(starttimes[0]))*60*60 + (int(endtime[1])-int(starttimes[1]))*60 + int(endtime[2]) - int(starttimes[2])
+        simple_data['walltime'] = time
+        simple_data['walltime_units'] = 'seconds'
+        simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
         return simple_data
 
 
@@ -562,9 +601,34 @@ def parse_xmlout_file(outxmlfile):
         bandgap_xpath = 'bandgap'
         fermi_energy_xpath = 'FermiEnergy'
 
+        #magnetic moments
         magnetic_moments_in_mtpheres_xpath = 'magneticMomentsInMTSpheres'
         magneticmoment_xpath = 'magneticMomentsInMTSpheres/magneticMoment'
 
+        magneticmoments_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@moment'        
+        magneticmoments_spinupcharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinUpCharge'        
+        magneticmoments_spindowncharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinDownCharge'  
+        
+        orbmagnetic_moments_in_mtpheres_xpath = 'orbitalMagneticMomentsInMTSpheres'
+        orbmagneticmoment_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment'
+        
+        orbmagneticmoments_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@moment'        
+        orbmagneticmoments_spinupcharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinUpCharge'        
+        orbmagneticmoments_spindowncharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinDownCharge'        
+        
+        
+        spinupcharge_name = 'spinUpCharge'
+        spindowncharge_name = 'spinDownCharge'
+        moment_name = 'moment'
+        
+        
+        # all electron charges
+        
+        allelectronchages_xpath = ''
+        
+        a = 'total'
+        b = 'interstitial'
+        c ='value'
         # energy
         totalenergy_xpath = 'totalEnergy'
         sumofeigenvalues_xpath = 'totalEnergy/sumOfEigenvalues'
@@ -580,13 +644,12 @@ def parse_xmlout_file(outxmlfile):
 
         #
         iteration_xpath = '.'
-        spinupcharge_name = 'spinUpCharge'
-        spindowncharge_name = 'spinDownCharge'
+
 
         units_name = 'units'
         value_name = 'value'
         distance_name = 'distance'
-        moment_name = 'moment'
+
         overall_number_name = 'overallNumber'
         atomtype_name = 'atomType'
 
@@ -614,6 +677,8 @@ def parse_xmlout_file(outxmlfile):
 
             :param value: value
             """
+            
+            interation_current_number_name = 'numberForCurrentRun'
             suc = False
 
             if value_type == 'float':
@@ -624,6 +689,24 @@ def parse_xmlout_file(outxmlfile):
                 suc = True
                 value_to_save = value
                 #value_to_save, suc = convert_to_str(value)
+            elif value_type =='list':
+                suc = True
+                value_to_save = value
+            elif value_type =='list_floats':
+                value_to_save = []
+                for val in value:
+                    value_to_savet, suct = convert_to_float(val)
+                    value_to_save.append(value_to_savet)
+                suc = True # TODO individual or common error message?
+            elif value_type =='list_list_floats':
+                value_to_save = []
+                for val in value:
+                    value_to_savet = []
+                    for val1 in val:
+                        value_to_savet1, suct = convert_to_float(val1)
+                        value_to_savet.append(value_to_savet1)
+                    value_to_save.append(value_to_savet)    
+                suc = True # TODO individual or common error message?                    
             else:
                 print 'I dont know the type you gave me {}'.format(type)
                 # TODO log error
@@ -632,7 +715,7 @@ def parse_xmlout_file(outxmlfile):
             else:
                 parser_info_out['unparsed'].append(
                     {value_name : value,
-                     'iteration' : get_xml_attribute(iteration_node, 'number')})
+                     'iteration' : get_xml_attribute(iteration_node, interation_current_number_name)})
 
 
         # total energy
@@ -720,25 +803,55 @@ def parse_xmlout_file(outxmlfile):
             write_simple_outnode(
                 overall_charge_density, 'float', 'overall_charge_density', simple_data)
 
-            # magnetic moment
+            # magnetic moments            #TODO orbMag Moment
             m_units = get_xml_attribute(
                 eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
             write_simple_outnode(
                 m_units, 'str', 'magnetic_moment_units', simple_data)
+            write_simple_outnode(
+                m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
 
+            moments = eval_xpath(iteration_node, magneticmoments_xpath)
+            write_simple_outnode(
+                moments, 'list_floats', 'magnetic_moments', simple_data)            
+
+            spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)        
+            write_simple_outnode(
+                spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data) 
+
+            spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)        
+            write_simple_outnode(
+                spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data) 
+            
+            #orbital magnetic moments
+            orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)        
+            write_simple_outnode(
+                orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)            
+
+            orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)        
+            write_simple_outnode(
+                orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data) 
+
+            orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)        
+            write_simple_outnode(
+                orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data) 
+            
             # TODO atomtype dependence
-            moment = get_xml_attribute(
-                eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
-            write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
+            #moment = get_xml_attribute(
+            #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
+            #print moment
+            #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
 
-            spinup = get_xml_attribute(
-                eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
-            write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
+            #spinup = get_xml_attribute(
+            #    eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
+            #write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
 
-            spindown = get_xml_attribute(
-                eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
-            write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-
+            #spindown = get_xml_attribute(
+            #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
+            #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
+            
+            #Total charges, total magentic moment
+            
         # total iterations
         number_of_iterations_total = get_xml_attribute(
             eval_xpath(iteration_node, iteration_xpath), overall_number_name)
@@ -808,6 +921,8 @@ def parse_xmlout_file(outxmlfile):
         return simple_out, complex_out, parser_info_out, successful
     else:
         return {}, {}, parser_info_out, successful
+
+
 
 def parse_dos_file(dos_lines):#, number_of_atom_types):
     """
