@@ -8,12 +8,12 @@ Fleur input generator plug-in
 
 Fleurinputgen Calculation
 -------------------------
-.. automodule:: aiida_fleur.calculations.fleurinputgen
+.. automodule:: aiida.orm.calculation.job.fleur_inp.fleurinputgen
    :members:
 
 Fleurinputgen Parser
 --------------------
-.. automodule:: aiida_fleur.parsers.fleur_inputgen
+.. automodule:: aiida.parsers.plugins.fleur_inp.fleur_inputgen
    :members:
 
 
@@ -23,33 +23,44 @@ Fleur input Data structure
 
 FleurinpData
 ------------
-.. automodule:: aiida_fleur.data.fleurinp
+.. automodule:: aiida.orm.data.fleurinp
    :members:
    :special-members: __init__
 
-.. automodule:: aiida_fleur.data.fleurinpmodefier
-
+.. automodule:: aiida.orm.data.fleurinp.fleurinpmodifier
+   :members:
 
 Fleur plug-in
 +++++++++++++
 
 Fleur Calculation
 -----------------
-.. automodule:: aiida_fleur.calculations.fleur
+.. automodule:: aiida.orm.calculation.job.fleur_inp.fleur
    :members:
 
 Fleur Parser
 ------------
-.. automodule:: aiida_fleur.parsers.fleur
+.. automodule:: aiida.parsers.plugins.fleur_inp.fleur
    :members:
 
 Fleur tools/utility
--------------------
+===================
 
-.. automodule:: aiida_fleur.tools.StructureData_util.py
+StructureData utility
++++++++++++++++++++++
 
-.. automodule:: aiida_fleur.tool.xml_util.py
+.. automodule:: aiida.tools.codespecific.fleur.StructureData_util
+   :members:
 
-.. automodule:: aiida_fleur.tools.merge_parameter.py
+XML utility
++++++++++++
+
+.. automodule:: aiida.tools.codespecific.fleur.xml_util
+   :members:
+
+ParameterData utility
++++++++++++++++++++++
+.. automodule:: aiida.tools.codespecific.fleur.merge_parameter
+   :members:
 
 
