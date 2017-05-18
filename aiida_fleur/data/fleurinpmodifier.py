@@ -25,7 +25,7 @@ from aiida.orm import DataFactory
 #from aiida.workflows2.wf import wf
 from aiida.work.workfunction import workfunction as wf
 
-FleurinpData = DataFactory("fleurinp")
+FleurinpData = DataFactory("fleur.fleurinp")
 
 class FleurinpModifier(object):
 

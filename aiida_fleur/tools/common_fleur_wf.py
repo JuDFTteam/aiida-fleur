@@ -27,7 +27,7 @@ __contributors__ = "Jens Broeder"
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
-FleurInpData = DataFactory('fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
 
