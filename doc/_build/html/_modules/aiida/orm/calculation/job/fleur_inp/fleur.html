@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>aiida.orm.calculation.job.fleur_inp.fleur &mdash; Fleur plugin 0.27 beta documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Fleur plugin 0.27 beta documentation" href="../../../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../../../index.html"/> 
+
+  
+  <script src="../../../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../../../index.html" class="icon icon-home"> Fleur plugin
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.27 beta
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../plugin/fleur_plugin.html">Fleur-plugin</a></li>
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../code.html">Plug-in Classes</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../../../index.html">Fleur plugin</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>aiida.orm.calculation.job.fleur_inp.fleur</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aiida.orm.calculation.job.fleur_inp.fleur</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Input plug-in for a FLEUR ciculation. fleur.x</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># TODO:</span>
+<span class="c"># polishing</span>
+<span class="c"># think about exception. warning policy.</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="c">#from lxml import etree</span>
+<span class="c">#from lxml.etree import XMLSyntaxError</span>
+
+<span class="kn">from</span> <span class="nn">aiida</span> <span class="kn">import</span> <span class="n">load_dbenv</span><span class="p">,</span> <span class="n">is_dbenv_loaded</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">is_dbenv_loaded</span><span class="p">():</span>
+    <span class="n">load_dbenv</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">aiida.orm.calculation.job</span> <span class="kn">import</span> <span class="n">JobCalculation</span>
+<span class="kn">from</span> <span class="nn">aiida.orm.calculation.job.fleur_inp.fleurinputgen</span> <span class="kn">import</span> <span class="n">FleurinputgenCalculation</span>
+<span class="kn">from</span> <span class="nn">aiida.common.datastructures</span> <span class="kn">import</span> <span class="n">CalcInfo</span><span class="p">,</span> <span class="n">CodeInfo</span>
+<span class="c">#from aiida.orm.data.structure import StructureData</span>
+<span class="c">#from aiida.orm.data.parameter import ParameterData</span>
+<span class="kn">from</span> <span class="nn">aiida.orm.data.remote</span> <span class="kn">import</span> <span class="n">RemoteData</span>
+<span class="kn">from</span> <span class="nn">aiida.orm.data.fleurinp</span> <span class="kn">import</span> <span class="n">FleurinpData</span>
+<span class="c">#from aiida.orm.data.array.kpoints import KpointsData</span>
+<span class="kn">from</span> <span class="nn">aiida.common.utils</span> <span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span> <span class="nn">aiida.common.exceptions</span> <span class="kn">import</span> <span class="n">InputValidationError</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">aiida.common.exceptions</span> <span class="kn">import</span> <span class="n">UniquenessError</span>
+
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="p">(</span><span class="s">u&quot;Copyright (c), 2016, Forschungszentrum Jülich GmbH, &quot;</span>
+                 <span class="s">&quot;IAS-1/PGI-1, Germany. All rights reserved.&quot;</span><span class="p">)</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;MIT license, see LICENSE.txt file&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;0.27&quot;</span>
+<span class="n">__contributors__</span> <span class="o">=</span> <span class="s">&quot;Jens Broeder&quot;</span>
+
+
+<div class="viewcode-block" id="FleurCalculation"><a class="viewcode-back" href="../../../../../../code.html#aiida.orm.calculation.job.fleur_inp.fleur.FleurCalculation">[docs]</a><span class="k">class</span> <span class="nc">FleurCalculation</span><span class="p">(</span><span class="n">JobCalculation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main DFT code of the FLEUR code</span>
+<span class="sd">    For more information about the FLEUR-code family, go to http://www.flapw.de/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_init_internal_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FleurCalculation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_init_internal_params</span><span class="p">()</span>
+
+        <span class="c">######### Only this should be to be maintained! #########</span>
+
+        <span class="c"># Default fleur output parser</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_parser</span> <span class="o">=</span> <span class="s">&#39;fleur_inp.fleur&#39;</span>
+        <span class="c">#self._default_parser = &#39;fleur.fleur&#39;</span>
+
+        <span class="c"># should a kpt node be used or fleur generate the mesh?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_use_kpoints</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;inp.xml&#39;</span>
+
+        <span class="c"># Default input and output files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_INPUT_FILE</span> <span class="o">=</span> <span class="s">&#39;inp.xml&#39;</span><span class="c">#self._set_INPXML_FILE_PATH()</span>
+        <span class="c">#self._FLEURINPDATA_FOLDER</span>
+        <span class="c">#fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)</span>
+        <span class="c">#&#39;inp.xml&#39; # this has to change the file is under FleurinpData</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_OUTPUT_FILE</span> <span class="o">=</span> <span class="s">&#39;out.xml&#39;</span>
+        <span class="c">#print self._DEFAULT_INPUT_FILE</span>
+
+        <span class="c"># Name of all files in FLEUR</span>
+        <span class="c"># TODO think also to oursource this in a FleurCalc structure, and add</span>
+        <span class="c"># as info when what file has to be copied</span>
+
+        <span class="c"># these will be shown in AiiDA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_OUTPUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;aiida.out&#39;</span> <span class="c"># Shell output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_INPUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;inp.xml&#39;</span>
+        <span class="c">#fleur file names:</span>
+
+        <span class="c"># needed for calc</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_OUTXML_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;out.xml&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_INP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;inp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ENPARA_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;enpara&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_SYMOUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;sym.out&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;cdn1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_SHELLOUTPUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;shell.out&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ERROR_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;out.error&#39;</span>
+         <span class="c"># other</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_OUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;out&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_CDNC_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;cdnc&#39;</span> <span class="c"># core charge density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_TIME_INFO_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;time.info&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_KPTS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;kpts&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QPTS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;qpts&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PLOT_INP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;plot_inp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_BROYD_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;broyd*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_POT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;pot*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_STRUCTURE_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;struct.xcf&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_STARS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;stars&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WKF2_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;wkf2&#39;</span>
+
+        <span class="c"># special out files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DOS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;DOS.*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DOSINP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;dosinp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_BAND_GNU_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;band.gnu&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_BAND_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;bands.*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NEW_XMlINP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;inp_new.xml&#39;</span>
+
+        <span class="c"># helper files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_FLEUR_WARN_ONLY_INFO_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;FLEUR_WARN_ONLY&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_JUDFT_WARN_ONLY_INFO_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;JUDFT_WARN_ONLY&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QFIX_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;qfix&#39;</span>
+
+
+        <span class="c"># forces and relaxation files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_FORCE_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;forces.dat&#39;</span>
+
+        <span class="c"># jij files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_JENERG_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;jenerg&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MCINP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;MCinp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QPTSINFO_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;qptsinfo&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_SHELL_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;shells&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_JCONST_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;jconst&#39;</span>
+
+        <span class="c"># files for lda+U</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NMMPMAT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;n_mmp_mat&#39;</span>
+
+        <span class="c"># files for hybrid functionals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_COULOMB1_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;coulomb1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MIXBAS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;mixbas&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_CMT_FIlE_NAME</span> <span class="o">=</span> <span class="s">&#39;cmt&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_CZ_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;cz&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_OLAP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;olap&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_VR0_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;vr0&#39;</span>
+
+        <span class="c"># files non-collinear calculation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_RHOMAT_INP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;rhomat_inp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_RHOMAT_OUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;rhomat_out&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_CDN_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;cdn&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DIROFMAG_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;dirofmag&#39;</span>
+
+        <span class="c"># files for Wannier 90</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_W90KPTS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;w90kpts&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PROJ_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;proj&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WANN_INP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;wann_inp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_BKPTS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;bkpts&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WFMMN_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF*.mmn&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WFAMN_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF*.amn&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WFWIN_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF*.win&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WFWOUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF*.wout&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_UNK_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;UNK*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_KPTSMAP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;kptsmap&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PROJGEN_INP_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;projgen_inp&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_IONS_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;IONS&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_POLARIZATION_OUT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;polarization_out&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_HOPPING_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;hopping.*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WF1HSOMTX_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF1.hsomtx&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_RSSOCMAT_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;rssocmat.1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_RSNABLA_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;rsnabla.*&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_WFNABL_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;WF*.nabl&#39;</span>
+
+        <span class="c"># copy file lists. I rather dont like this.</span>
+        <span class="c"># Might gives rise to a lot of possible erros, if files or not there,</span>
+        <span class="c">#or Fleur did not created same, or at some point they will not be</span>
+        <span class="c"># deleted remotely.</span>
+
+        <span class="c">########## Policy</span>
+        <span class="c"># we store everything needed for a further run in the local repository</span>
+        <span class="c">#(inp.xml, cdn1), also all important results files.</span>
+        <span class="c"># these will ALWAYS be copied from the local repository to the maschine</span>
+        <span class="c"># If a parent calculation exists, other files will be copied remotely</span>
+        <span class="c">#######</span>
+
+        <span class="c">#all possible files first chargedensity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_INP_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_ENPARA_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_SYMOUT_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_KPTS_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_STARS_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_WKF2_FILE_NAME</span><span class="p">]</span>
+
+        <span class="c">#after inpgen, before first chargedensity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_inpgen</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">]</span>
+
+        <span class="c">#for after fleur SCF</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">]</span>
+        <span class="c">#self._INPXML_FILE_NAME, comes from fleurinpdata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf_remote</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_BROYD_FILE_NAME</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist3</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist3</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_INP_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_ENPARA_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_SYMOUT_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_KPTS_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_STARS_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_WKF2_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_BROYD_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_OUT_FILE_NAME</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_POT_FILE_NAME</span><span class="p">]</span>
+
+        <span class="c">#files need for rerun</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist3</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_dos</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_band</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_POT_FILE_NAME</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">]</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_hybrid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_jij</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+        <span class="c">#possible modes?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fleur_modes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;band&#39;</span><span class="p">,</span> <span class="s">&#39;dos&#39;</span><span class="p">,</span> <span class="s">&#39;forces&#39;</span><span class="p">,</span> <span class="s">&#39;chargeDen&#39;</span><span class="p">,</span>
+                             <span class="s">&#39;latticeCo&#39;</span><span class="p">,</span> <span class="s">&#39;scf&#39;</span><span class="p">]</span>
+    <span class="c">#_DEFAULT_INPUT_FILE = &#39;inp.xml&#39;</span>
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">_use_methods</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extend the parent _use_methods with further keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">retdict</span> <span class="o">=</span> <span class="n">JobCalculation</span><span class="o">.</span><span class="n">_use_methods</span>
+        <span class="n">retdict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s">&quot;fleurinpdata&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&#39;valid_types&#39;</span><span class="p">:</span> <span class="n">FleurinpData</span><span class="p">,</span>
+                <span class="s">&#39;additional_parameter&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="s">&#39;linkname&#39;</span><span class="p">:</span> <span class="s">&#39;fleurinpdata&#39;</span><span class="p">,</span>
+                <span class="s">&#39;docstring&#39;</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s">&quot;Use a FleruinpData node that specifies the input parameters&quot;</span>
+                    <span class="s">&quot;usually copy from the parent calculation, basicly makes&quot;</span>
+                    <span class="s">&quot;the inp.xml file visible in the db and makes sure it has &quot;</span>
+                    <span class="s">&quot;the files needed.&quot;</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="s">&quot;parent_folder&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&#39;valid_types&#39;</span><span class="p">:</span> <span class="n">RemoteData</span><span class="p">,</span>
+                <span class="s">&#39;additional_parameter&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="s">&#39;linkname&#39;</span><span class="p">:</span> <span class="s">&#39;parent_calc_folder&#39;</span><span class="p">,</span>
+                <span class="s">&#39;docstring&#39;</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s">&quot;Use a remote or local repository folder as parent folder &quot;</span>
+                    <span class="s">&quot;(also for restarts and similar). It should contain all the &quot;</span>
+                    <span class="s">&quot;needed files for a Fleur calc, only edited files should be &quot;</span>
+                    <span class="s">&quot;uploaded from the repository.&quot;</span><span class="p">),</span>
+            <span class="p">}})</span>
+            <span class="c">#</span>
+            <span class="c">#&quot;parent_calc&quot;:{</span>
+            <span class="c">#   &#39;valid_types&#39;: (FleurinputgenCalculation, FleurCalculation),</span>
+            <span class="c">#   &#39;additional_parameter&#39;: None,</span>
+            <span class="c">#   &#39;linkname&#39;: &#39;parent_calc&#39;,</span>
+            <span class="c">#   &#39;docstring&#39;: (&quot;Use a parent calculation from which to copy&quot;</span>
+            <span class="c">#                 &quot;files, and so on.&quot;),</span>
+            <span class="c">#</span>
+            <span class="c">#  },</span>
+            <span class="c">#&quot;kpoints&quot; : {</span>
+            <span class="c">#   &#39;valid_types&#39;: KpointsData,</span>
+            <span class="c">#   &#39;additional_parameter&#39;: None,</span>
+            <span class="c">#   &#39;linkname&#39;: &#39;kpoints&#39;,</span>
+            <span class="c">#   &#39;docstring&#39;: &quot;Connect to k-point node from inpgen or other calc.&quot;,</span>
+            <span class="c">#   }</span>
+
+
+        <span class="k">return</span> <span class="n">retdict</span>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">_OUTPUT_FOLDER</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;./&#39;</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    @classproperty</span>
+<span class="sd">    def _set_INPXML_FILE_PATH(self, cls, fleurinp=None):</span>
+<span class="sd">        if fleruinp:</span>
+<span class="sd">            if not isinstance(fleurinp, FleurinpData):</span>
+<span class="sd">                self._DEFAULT_INPUT_FILE = &#39;inp.xml&#39;</span>
+<span class="sd">            else:</span>
+<span class="sd">                self._DEFAULT_INPUT_FILE(</span>
+<span class="sd">                    fleurinp.get_file_abs_path(self._INPXML_FILE_NAME))</span>
+<span class="sd">        else:</span>
+<span class="sd">            self._DEFAULT_INPUT_FILE = &#39;inp.xml&#39;</span>
+
+<span class="sd">    @classproperty</span>
+<span class="sd">    def _FLEURINPDATA_FOLDER(self, cls, inputdict):</span>
+<span class="sd">        try:</span>
+<span class="sd">            fleurinp = inputdict[self.get_linkname(&#39;fleurinpdata&#39;)]</span>
+<span class="sd">        except:</span>
+<span class="sd">            return None</span>
+<span class="sd">        if fleurinp is None:</span>
+<span class="sd">            xml_inp_dict = {}</span>
+<span class="sd">        else:</span>
+<span class="sd">            if not isinstance(fleurinp, FleurinpData):</span>
+<span class="sd">                raise InputValidationError(</span>
+<span class="sd">                    &quot;The FleurinpData node given is not of type FleurinpData.&quot;)</span>
+<span class="sd">        return fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)</span>
+
+<span class="sd">    def set_inppath(cls):</span>
+<span class="sd">        self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(</span>
+<span class="sd">                                                         self._INPXML_FILE_NAME)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">_prepare_for_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tempfolder</span><span class="p">,</span> <span class="n">inputdict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is the routine to be called when you make a fleur calculation</span>
+<span class="sd">        Here should be checked if all the files are there to run fleur.</span>
+<span class="sd">        And input files (inp.xml) can be modified.</span>
+
+<span class="sd">        :param tempfolder: a aiida.common.folders.Folder subclass where</span>
+<span class="sd">                           the plugin should put all its files.</span>
+<span class="sd">        :param inputdict: a dictionary with the input nodes, as they would</span>
+<span class="sd">                be returned by get_inputdata_dict (without the Code!)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c">#   from aiida.common.utils import get_unique_filename, get_suggestion</span>
+
+        <span class="n">local_copy_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">remote_copy_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">remote_symlink_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mode_retrieved_filelist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c">#filelocal_copy_list = []</span>
+        <span class="n">filelist_tocopy</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">filelist_tocopy_remote</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fleur_calc</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">new_inp_file</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c">#ignore_mode = False</span>
+        <span class="n">has_fleurinp</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">has_parent</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c">#restart_flag = False</span>
+        <span class="n">fleurinpgen</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">copy_remotely</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="c">##########################################</span>
+        <span class="c">############# INPUT CHECK ################</span>
+        <span class="c">##########################################</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">inputdict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_linkname</span><span class="p">(</span><span class="s">&#39;code&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span><span class="s">&quot;No code specified for this calculation&quot;</span><span class="p">)</span>
+
+        <span class="c"># a Fleur calc can be created from a fleurinpData alone</span>
+        <span class="c">#(then no parent is needed) all files are in the repo, but usually it is</span>
+        <span class="c"># a child of a inpgen calc or an other fleur calc (some or all files are</span>
+        <span class="c"># in a remote source). if the User has not changed something, the</span>
+        <span class="c">#calculation does not need theoretical a new FleurinpData it could use</span>
+        <span class="c">#the one from the parent, but the plug-in desgin is in a way that it has</span>
+        <span class="c"># to be there and it just copies files if changes occured..</span>
+
+        <span class="n">fleurinp</span> <span class="o">=</span> <span class="n">inputdict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_linkname</span><span class="p">(</span><span class="s">&#39;fleurinpdata&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fleurinp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">xml_inp_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">has_fleurinp</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fleurinp</span><span class="p">,</span> <span class="n">FleurinpData</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span>
+                    <span class="s">&quot;The FleurinpData node given is not of type FleurinpData.&quot;</span><span class="p">)</span>
+            <span class="n">has_fleurinp</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">parent_calc_folder</span> <span class="o">=</span> <span class="n">inputdict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_linkname</span><span class="p">(</span><span class="s">&#39;parent_folder&#39;</span><span class="p">),</span>
+                                           <span class="bp">None</span><span class="p">)</span>
+        <span class="c">#print parent_calc_folder</span>
+        <span class="k">if</span> <span class="n">parent_calc_folder</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">has_parent</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_fleurinp</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span>
+                    <span class="s">&quot;No parent calculation found and no fleurinp data &quot;</span>
+                    <span class="s">&quot;given, need either one or both for a &quot;</span>
+                    <span class="s">&quot;&#39;fleurcalculation&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c">#</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_calc_folder</span><span class="p">,</span> <span class="n">RemoteData</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span><span class="s">&quot;parent_calc_folder, if specified,&quot;</span>
+                                           <span class="s">&quot;must be of type RemoteData&quot;</span><span class="p">)</span>
+
+            <span class="c"># extract parent calculation</span>
+            <span class="n">parent_calcs</span> <span class="o">=</span> <span class="n">parent_calc_folder</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">(</span><span class="n">node_type</span><span class="o">=</span><span class="n">JobCalculation</span><span class="p">)</span>
+            <span class="n">n_parents</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_calcs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_parents</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UniquenessError</span><span class="p">(</span>
+                    <span class="s">&quot;Input RemoteData is child of {} &quot;</span>
+                    <span class="s">&quot;calculation{}, while it should have a single parent&quot;</span>
+                    <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_parents</span><span class="p">,</span> <span class="s">&quot;&quot;</span> <span class="k">if</span> <span class="n">n_parents</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s">&quot;s&quot;</span><span class="p">))</span>
+            <span class="n">parent_calc</span> <span class="o">=</span> <span class="n">parent_calcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">has_parent</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="c">#print parent_calc</span>
+            <span class="c"># check that it is a valid parent</span>
+            <span class="c">#self._check_valid_parent(parent_calc)</span>
+
+
+            <span class="c"># if inpgen calc do</span>
+            <span class="c"># check if folder from db given, or get folder from rep.</span>
+            <span class="c"># Parent calc does not has to be on the same computer.</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_calc</span><span class="p">,</span> <span class="n">FleurCalculation</span><span class="p">):</span>
+                <span class="n">new_comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_computer</span><span class="p">()</span>
+                <span class="n">old_comp</span> <span class="o">=</span> <span class="n">parent_calc</span><span class="o">.</span><span class="n">get_computer</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">new_comp</span><span class="o">.</span><span class="n">uuid</span> <span class="o">!=</span> <span class="n">old_comp</span><span class="o">.</span><span class="n">uuid</span><span class="p">:</span>
+                    <span class="c">#dont copy files, copy files localy</span>
+                    <span class="n">copy_remotely</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="c">#raise InputValidationError(</span>
+                    <span class="c">#    &quot;FleurCalculation must be launched on the same computer&quot;</span>
+                    <span class="c">#    &quot; of the parent: {}&quot;.format(old_comp.get_name()))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_calc</span><span class="p">,</span> <span class="n">FleurinputgenCalculation</span><span class="p">):</span>
+                <span class="n">fleurinpgen</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">new_comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_computer</span><span class="p">()</span>
+                <span class="n">old_comp</span> <span class="o">=</span> <span class="n">parent_calc</span><span class="o">.</span><span class="n">get_computer</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">new_comp</span><span class="o">.</span><span class="n">uuid</span> <span class="o">!=</span> <span class="n">old_comp</span><span class="o">.</span><span class="n">uuid</span><span class="p">:</span>
+                    <span class="c">#dont copy files, copy files localy</span>
+                    <span class="n">copy_remotely</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span>
+                    <span class="s">&quot;parent_calc, must be either an &#39;inpgen calculation&#39; or&quot;</span>
+                    <span class="s">&quot; a &#39;fleur calculation&#39;.&quot;</span><span class="p">)</span>
+        <span class="c"># Here, there should be no other inputs</span>
+        <span class="k">if</span> <span class="n">inputdict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span>
+                <span class="s">&quot;The following input data nodes are &quot;</span>
+                <span class="s">&quot;unrecognized: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inputdict</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="c">#TODO: Detailed check of FleurinpData</span>
+        <span class="c"># if certain files are there in fleurinpData.</span>
+        <span class="c"># from where to copy</span>
+
+        <span class="c">##############################</span>
+        <span class="c"># END OF INITIAL INPUT CHECK #</span>
+
+
+        <span class="c"># file copy stuff TODO check in fleur input</span>
+        <span class="k">if</span> <span class="n">has_fleurinp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_INPUT_FILE</span> <span class="o">=</span> <span class="n">fleurinp</span><span class="o">.</span><span class="n">get_file_abs_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">)</span>
+            <span class="n">local_copy_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">fleurinp</span><span class="o">.</span><span class="n">get_file_abs_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">))</span>
+            <span class="n">modes</span> <span class="o">=</span> <span class="n">fleurinp</span><span class="o">.</span><span class="n">get_fleur_modes</span><span class="p">()</span>
+
+            <span class="c"># add files to mode_retrieved_filelist</span>
+            <span class="k">if</span> <span class="n">modes</span><span class="p">[</span><span class="s">&#39;band&#39;</span><span class="p">]:</span>
+                <span class="n">mode_retrieved_filelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_BAND_FILE_NAME</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">modes</span><span class="p">[</span><span class="s">&#39;dos&#39;</span><span class="p">]:</span>
+                <span class="n">mode_retrieved_filelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_DOS_FILE_NAME</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">modes</span><span class="p">[</span><span class="s">&#39;forces&#39;</span><span class="p">]:</span>
+                <span class="k">print</span> <span class="s">&#39;FORCES!!!&#39;</span>
+                <span class="n">mode_retrieved_filelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_NEW_XMlINP_FILE_NAME</span><span class="p">)</span>
+                <span class="n">mode_retrieved_filelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_FORCE_FILE_NAME</span><span class="p">)</span>
+            <span class="c"># TODO: check from where it was copied, and copy files of its parent</span>
+            <span class="c"># if needed</span>
+        <span class="c">#self.logger.info(&quot;@@@@@@@@@@@@@@@@@@@@@@@@has_parent {}&quot;.format(has_parent))</span>
+
+        <span class="k">if</span> <span class="n">has_parent</span><span class="p">:</span>
+            <span class="c"># copy the right files #TODO check first if file, exist and throw</span>
+            <span class="c"># warning, now this will throw an error</span>
+            <span class="n">outfolderpath</span> <span class="o">=</span> <span class="n">parent_calc</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">retrieved</span><span class="o">.</span><span class="n">folder</span><span class="o">.</span><span class="n">abspath</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;out folder path {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outfolderpath</span><span class="p">))</span>
+
+            <span class="c">#print outfolderpath</span>
+            <span class="k">if</span> <span class="n">fleurinpgen</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_fleurinp</span><span class="p">):</span>
+                <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_inpgen</span><span class="p">:</span>
+                    <span class="n">local_copy_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outfolderpath</span> <span class="o">+</span> <span class="s">&#39;/path/&#39;</span><span class="o">+</span> <span class="nb">file</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">file</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">fleurinpgen</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_fleurinp</span><span class="p">):</span> <span class="c"># fleurCalc</span>
+                <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf</span><span class="p">:</span>
+                    <span class="n">local_copy_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outfolderpath</span><span class="o">+</span> <span class="s">&#39;/path/&#39;</span><span class="o">+</span> <span class="nb">file</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">file</span><span class="p">)))</span>
+                <span class="n">filelist_tocopy_remote</span> <span class="o">=</span> <span class="n">filelist_tocopy_remote</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf_remote</span>
+                <span class="c">#TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo</span>
+            <span class="k">elif</span> <span class="n">fleurinpgen</span> <span class="ow">and</span> <span class="n">has_fleurinp</span><span class="p">:</span>
+                    <span class="c"># everything is taken care of</span>
+                    <span class="k">pass</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">fleurinpgen</span> <span class="ow">and</span> <span class="n">has_fleurinp</span><span class="p">:</span>
+                <span class="c"># input file is already taken care of</span>
+                <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf1</span><span class="p">:</span>
+                    <span class="n">local_copy_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outfolderpath</span><span class="o">+</span> <span class="s">&#39;/path/&#39;</span><span class="o">+</span> <span class="nb">file</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">file</span><span class="p">)))</span>
+                <span class="n">filelist_tocopy_remote</span> <span class="o">=</span> <span class="n">filelist_tocopy_remote</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy_filelist_scf_remote</span>
+
+            <span class="c"># TODO not on same computer -&gt; copy needed files from repository,</span>
+            <span class="c"># if they are not there, throw error</span>
+            <span class="k">if</span> <span class="n">copy_remotely</span><span class="p">:</span> <span class="c"># on same computer.</span>
+                <span class="k">if</span> <span class="n">modes</span><span class="p">[</span><span class="s">&#39;pot8&#39;</span><span class="p">]:</span>
+                    <span class="n">filelist_tocopy_remote</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_POT_FILE_NAME</span><span class="p">)</span>
+                <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="n">filelist_tocopy_remote</span><span class="p">:</span>
+                    <span class="n">remote_copy_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                        <span class="n">parent_calc_folder</span><span class="o">.</span><span class="n">get_computer</span><span class="p">()</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parent_calc_folder</span><span class="o">.</span><span class="n">get_remote_path</span><span class="p">(),</span>
+                        <span class="s">&#39;/&#39;</span><span class="o">+</span> <span class="nb">file</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_OUTPUT_FOLDER</span><span class="p">))</span>
+
+        <span class="c">########## MAKE CALCINFO ###########</span>
+
+        <span class="n">calcinfo</span> <span class="o">=</span> <span class="n">CalcInfo</span><span class="p">()</span>
+
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">uuid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuid</span>
+        <span class="c"># Empty command line by default</span>
+        <span class="c">#cmdline_params = settings_dict.pop(&#39;CMDLINE&#39;, [])</span>
+        <span class="c">#calcinfo.cmdline_params = (list(cmdline_params)</span>
+        <span class="c">#                           + [&quot;-in&quot;, self._INPUT_FILE_NAME])</span>
+        <span class="k">print</span> <span class="n">local_copy_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;local copy file list {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">local_copy_list</span><span class="p">))</span>
+
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">local_copy_list</span> <span class="o">=</span> <span class="n">local_copy_list</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">remote_copy_list</span> <span class="o">=</span> <span class="n">remote_copy_list</span>
+        <span class="c">#(remotemachinename, remoteabspath, relativedestpath)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">remote_symlink_list</span> <span class="o">=</span> <span class="n">remote_symlink_list</span>
+        <span class="c">#calcinfo.stdout_name = self._OUTPUT_FILE_NAME</span>
+
+        <span class="c"># Retrieve by default the output file and the xml file</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_OUTXML_FILE_NAME</span><span class="p">)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SHELLOUTPUT_FILE_NAME</span><span class="p">)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_CDN1_FILE_NAME</span><span class="p">)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ERROR_FILE_NAME</span><span class="p">)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)</span>
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_OUT_FILE_NAME</span><span class="p">)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._INP_FILE_NAME)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)</span>
+        <span class="c">#calcinfo.retrieve_list.append(self._KPTS_FILE_NAME)</span>
+        <span class="c"># if certain things are modefied, flags set,</span>
+        <span class="c">#other files should be retrieved, example DOS.x...</span>
+
+        <span class="k">for</span> <span class="n">mode_file</span> <span class="ow">in</span> <span class="n">mode_retrieved_filelist</span><span class="p">:</span>
+            <span class="n">calcinfo</span><span class="o">.</span><span class="n">retrieve_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mode_file</span><span class="p">)</span>
+
+        <span class="n">codeinfo</span> <span class="o">=</span> <span class="n">CodeInfo</span><span class="p">()</span>
+        <span class="c"># should look like: codepath -xmlInput &lt; inp.xml &gt; shell.out 2&gt;&amp;1</span>
+        <span class="n">cmdline_params</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;-xmlInput&quot;</span><span class="p">]</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">cmdline_params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cmdline_params</span><span class="p">)</span>
+        <span class="c"># + [&quot;&lt;&quot;, self._INPXML_FILE_NAME,</span>
+	    <span class="c"># &quot;&gt;&quot;, self._SHELLOUTPUT_FILE_NAME, &quot;2&gt;&amp;1&quot;]</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">code_uuid</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">uuid</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">withmpi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_withmpi</span><span class="p">()</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">stdin_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_INPUT_FILE_NAME</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">stdout_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SHELLOUTPUT_FILE_NAME</span>
+        <span class="c">#codeinfo.join_files = True</span>
+        <span class="n">codeinfo</span><span class="o">.</span><span class="n">stderr_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ERROR_FILE_NAME</span>
+
+        <span class="n">calcinfo</span><span class="o">.</span><span class="n">codes_info</span> <span class="o">=</span> <span class="p">[</span><span class="n">codeinfo</span><span class="p">]</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        # not needed in new version</span>
+<span class="sd">        if fleurinpgen:# execute twice, as long start density stop</span>
+<span class="sd">            codeinfo1 = CodeInfo()</span>
+<span class="sd">            cmdline_params = [&quot;-xmlInput&quot;]</span>
+<span class="sd">            codeinfo1.cmdline_params = list(cmdline_params)</span>
+<span class="sd">            # + [&quot;&lt;&quot;, self._INPUT_FILE_NAME])#,</span>
+<span class="sd">	        # &quot;&gt;&quot;,self._OUTPUT_FILE_NAME]</span>
+<span class="sd">            codeinfo1.code_uuid = code.uuid</span>
+<span class="sd">            codeinfo1.withmpi = self.get_withmpi()</span>
+<span class="sd">            codeinfo1.stdin_name = self._INPUT_FILE_NAME</span>
+<span class="sd">            codeinfo1.stdout_name = self._SHELLOUTPUT_FILE_NAME</span>
+<span class="sd">            calcinfo.codes_info.append(codeinfo1)</span>
+
+<span class="sd">        if settings_dict:</span>
+<span class="sd">            raise InputValidationError(&quot;The following keys have been found in &quot;</span>
+<span class="sd">                &quot;the settings input node, but were not understood: {}&quot;.format(</span>
+<span class="sd">                &quot;,&quot;.join(settings_dict.keys())))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">calcinfo</span>
+
+    <span class="k">def</span> <span class="nf">_check_valid_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check that calc is a valid parent for a FleurCalculation.</span>
+<span class="sd">        It can be a FleurCalculation, InpgenCalculation, or (if the class exists) a </span>
+<span class="sd">        CopyonlyCalculation</span>
+<span class="sd">        :TODO: maybe assume that CopyonlyCalculation class always exists?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">aiida.orm.calculation.job.simpleplugins.copyonly</span> <span class="kn">import</span> <span class="n">CopyonlyCalculation</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(((</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">FleurCalculation</span><span class="p">)))</span>
+                            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">FleurinputgenCalculation</span><span class="p">))</span>
+                            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">CopyonlyCalculation</span><span class="p">))</span> <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Parent calculation must be a FleurCalculation, a &quot;</span>
+                                 <span class="s">&quot;FleurinputgenCalculation or a CopyonlyCalculation&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">((</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">FleurCalculation</span><span class="p">))</span>
+                            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">FleurinputgenCalculation</span><span class="p">))</span> <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Parent calculation must be a FleurCalculation or &quot;</span>
+                                 <span class="s">&quot;a FleurinputgenCalculation&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FleurCalculation.use_fleurinp"><a class="viewcode-back" href="../../../../../../code.html#aiida.orm.calculation.job.fleur_inp.fleur.FleurCalculation.use_fleurinp">[docs]</a>    <span class="k">def</span> <span class="nf">use_fleurinp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fleurinp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        set fleurinpdata and path to inp.xml file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fleurinp</span><span class="p">,</span> <span class="n">FleurinpData</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">InputValidationError</span><span class="p">(</span><span class="s">&quot;The FleurinpData node given is not of type&quot;</span>
+                                           <span class="s">&quot; FleurinpData.&quot;</span><span class="p">)</span>
+        <span class="c">#print fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)</span>
+        <span class="c">#print self._DEFAULT_INPUT_FILE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_INPUT_FILE</span> <span class="o">=</span> <span class="n">fleurinp</span><span class="o">.</span><span class="n">get_file_abs_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INPXML_FILE_NAME</span><span class="p">)</span>
+        <span class="c"># somehow this is not working...</span>
+        <span class="c">#print self._DEFAULT_INPUT_FILE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_fleurinpdata</span><span class="p">(</span><span class="n">fleurinp</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="FleurCalculation.use_parent_calculation"><a class="viewcode-back" href="../../../../../../code.html#aiida.orm.calculation.job.fleur_inp.fleur.FleurCalculation.use_parent_calculation">[docs]</a>    <span class="k">def</span> <span class="nf">use_parent_calculation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the parent calculation of Fleur, </span>
+<span class="sd">        from which it will inherit the outputsubfolder.</span>
+<span class="sd">        The link will be created from parent RemoteData to FleurCalculation </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">aiida.common.exceptions</span> <span class="kn">import</span> <span class="n">NotExistent</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_valid_parent</span><span class="p">(</span><span class="n">calc</span><span class="p">)</span>
+
+        <span class="n">remotedatas</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">RemoteData</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">remotedatas</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotExistent</span><span class="p">(</span><span class="s">&quot;No output remotedata found in &quot;</span>
+                                  <span class="s">&quot;the parent&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remotedatas</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UniquenessError</span><span class="p">(</span><span class="s">&quot;More than one output remotedata found in &quot;</span>
+                                  <span class="s">&quot;the parent&quot;</span><span class="p">)</span>
+        <span class="n">remotedata</span> <span class="o">=</span> <span class="n">remotedatas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_parent_remotedata</span><span class="p">(</span><span class="n">remotedata</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_set_parent_remotedata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">remotedata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Used to set a parent remotefolder in the restart of fleur.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">remotedata</span><span class="p">,</span><span class="n">RemoteData</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;remotedata must be a RemoteData&#39;</span><span class="p">)</span>
+        
+        <span class="c"># complain if another remotedata is already found</span>
+        <span class="n">input_remote</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">(</span><span class="n">node_type</span><span class="o">=</span><span class="n">RemoteData</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">input_remote</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Cannot set several parent calculation to a &quot;</span>
+                                  <span class="s">&quot;fleur calculation&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_parent_folder</span><span class="p">(</span><span class="n">remotedata</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_warnonly_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">calc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Used to create a WARN_ONLY file in the calculation dir</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Jens Broeder.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../../',
+            VERSION:'0.27 beta',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

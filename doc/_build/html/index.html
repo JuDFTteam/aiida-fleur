@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to Fleur plug-in’s documentation! &mdash; Fleur plugin 0.27 beta documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Fleur plugin 0.27 beta documentation" href="#"/>
+        <link rel="next" title="Fleur-plugin" href="plugin/fleur_plugin.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> Fleur plugin
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.27 beta
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="plugin/fleur_plugin.html">Fleur-plugin</a></li>
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Plug-in Classes</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">Fleur plugin</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>Welcome to Fleur plug-in&#8217;s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="welcome-to-fleur-plug-in-s-documentation">
+<h1>Welcome to Fleur plug-in&#8217;s documentation!<a class="headerlink" href="#welcome-to-fleur-plug-in-s-documentation" title="Permalink to this headline">¶</a></h1>
+<a class="reference internal image-reference" href="_images/fleur.png"><img alt="_images/fleur.png" class="align-left" src="_images/fleur.png" style="width: 20%; height: 60px;" /></a>
+<a class="reference internal image-reference" href="_images/MAX-orizz.jpeg"><img alt="_images/MAX-orizz.jpeg" class="align-right" src="_images/MAX-orizz.jpeg" style="width: 35%; height: 200px;" /></a>
+<a class="reference internal image-reference" href="_images/AiiDA_transparent_logo.png"><img alt="_images/AiiDA_transparent_logo.png" class="align-center" src="_images/AiiDA_transparent_logo.png" style="width: 35%; height: 300px;" /></a>
+<p>Framework for computational science</p>
+<p>This plugin enables the use of the all-electron DFT code Fleur (<a class="reference external" href="http://www.flapw.de">http://www.flapw.de</a>) with the AiiDA framework (<a class="reference external" href="http://www.aiida.net">http://www.aiida.net</a>).
+The plugin is all in python, under the MIT license and is available under (<a class="reference external" href="https://github.com/broeder-j/aiida_fleur_plugin">https://github.com/broeder-j/aiida_fleur_plugin</a>). It is developed at Forschungszentrum Juelich, (IAS-1/PGI-1), Germany.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On these pages is the documentation of the plugin source code, some design description, usuage examples and tutorials of the plugin. For futher PGI-1 interal hints go to the Fleur website. Basic AiiDA workflows for Fleur are available on <a class="reference external" href="https://github.com/broeder-j/aiida_fleur_basewf">https://github.com/broeder-j/aiida_fleur_basewf</a> .</p>
+</div>
+<p>If you use this plugin please cite:</p>
+<ul class="simple">
+<li>for the plugin: (to come)</li>
+<li>for fleur: <a class="reference external" href="http:/www.flapw.de">http:/www.flapw.de</a></li>
+</ul>
+<div class="section" id="requirements-to-use-this-code">
+<h2>Requirements to use this code:<a class="headerlink" href="#requirements-to-use-this-code" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>A running AiiDA version</li>
+<li>Executables of the Fleur code</li>
+</ul>
+<p>Other packages (in addition to all requirements of AiiDA):</p>
+<ul class="simple">
+<li>lxml</li>
+</ul>
+</div>
+<div class="section" id="acknowledgments">
+<h2>Acknowledgments:<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h2>
+<p>We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (<a class="reference external" href="http://www.max-centre.eu">http://www.max-centre.eu</a>). (Horizon 2020 EINFRA-5, Grant No. 676598)
+We also thank the AiiDA team for their help.</p>
+</div>
+<div class="section" id="contents">
+<h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-fleur-plug-in">
+<h3>The Fleur plug-in<a class="headerlink" href="#the-fleur-plug-in" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="plugin/fleur_plugin.html">Fleur-plugin</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plugin/fleur_plugin.html#fleur-inpgen-plugin">Fleur inpgen plugin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html#supported-codes-versions">Supported codes versions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html#sketch-of-nodes">Sketch of nodes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html#inputs">Inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html#outputs">Outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/inpgen_plugin.html#additional-advanced-features">Additional advanced features</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="plugin/inpgen_plugin.html#retrieving-more-files">Retrieving more files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/inpgen_plugin.html#retrieving-less-files">Retrieving less files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugin/fleur_plugin.html#fleur-input-datastructure">Fleur input Datastructure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurinp_data.html">FleurinpData</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#description-features">Description/Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#properties">Properties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#user-methods">User Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#comments">Comments</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurinp_data.html#fleurinpmodifier">Fleurinpmodifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#description">Description</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#usage">Usage:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#id1">User Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurinp_data.html#node-graphs">Node graphs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugin/fleur_plugin.html#fleur-code-plugin">Fleur-code plugin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#supported-codes">Supported codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#sketch-of-nodes">Sketch of nodes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#inputs">Inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#outputs">Outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#errors">Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#additional-advanced-features">Additional advanced features</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#adding-command-line-options">Adding command-line options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#retrieving-more-files">Retrieving more files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#retrieving-less-files">Retrieving less files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#copy-more-files-remotely">Copy more files remotely</a></li>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#copy-less-files-remotely">Copy less files remotely</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="plugin/fleurcode_plugin.html#not-supported-code-features">Not supported code features</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="plugin/fleurcode_plugin.html#partially-supported-yet">partially supported yet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="guides">
+<h3>Guides<a class="headerlink" href="#guides" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+</div>
+<div class="section" id="tools-and-utility">
+<h3>Tools and utility<a class="headerlink" href="#tools-and-utility" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+</div>
+<div class="section" id="code-documentation">
+<h3>Code documentation<a class="headerlink" href="#code-documentation" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Plug-in Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="code.html#fleur-input-generator-plug-in">Fleur input generator plug-in</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="code.html#module-aiida.orm.calculation.job.fleur_inp.fleurinputgen">Fleurinputgen Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code.html#fleurinputgen-parser">Fleurinputgen Parser</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="code.html#fleur-input-data-structure">Fleur input Data structure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="code.html#id1">Fleur input Data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code.html#fleurinp-modifier">Fleurinp modifier</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="code.html#fleur-code-plugin">Fleur-code plugin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="code.html#fleur-calculation">Fleur Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code.html#fleur-parser">Fleur Parser</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="code.html#fleur-tools-utility">Fleur tools/utility</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="code.html#module-aiida.tools.codespecific.fleur.StructureData_util">Structure Data util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code.html#module-aiida.tools.codespecific.fleur.xml_util">XML utility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="code.html#module-aiida.tools.codespecific.fleur.merge_parameter">Parameter utility</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="plugin/fleur_plugin.html" class="btn btn-neutral float-right" title="Fleur-plugin" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Jens Broeder.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.27 beta',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
