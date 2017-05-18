@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 'fleur.inpgen = aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation',
             ],
             'aiida.data': [
-                'fleur.fleurinp = aiida_fleur.data:FleurinpData',
+                'fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData',
                 'fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier',
             ],
             'aiida.parsers': [
