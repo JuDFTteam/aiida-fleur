@@ -26,7 +26,7 @@ run_in_serial_mode = True#False
 
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 try:
     dontsend = sys.argv[1]
     if dontsend == "--dont-send":
@@ -50,7 +50,7 @@ queue = None
 settings = None
 #####
 
-code = test_and_get_code(codename, expected_code_type='fleur_inp.fleur')
+code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 
 #TODO: how to make smart path?
 # get where tests folder is, then relative path

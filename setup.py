@@ -12,7 +12,7 @@ if __name__ == '__main__':
         description='AiiDA Plugin for running the FLEUR-code and its input generator. Plus some utility',
         url='https://github.com/broeder-j/aiida_fleur_plugin',
         author='Jens Broeder',
-        author_email='haeuselm@epfl.ch',
+        author_email='j.broeder@fz-juelich.de',
         license='MIT License, see LICENSE.txt file.',
         classifiers=[
             'Development Status :: 4 - Beta',
@@ -23,7 +23,7 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 2.7',
             'Topic :: Scientific/Engineering :: Physics'
         ],
-        keywords='fleur aiida inpgen workflows',
+        keywords='fleur aiida inpgen workflows flapw juelich dft all-electron',
         packages=find_packages(exclude=['aiida']),
         include_package_data=True,
         setup_requires=[
