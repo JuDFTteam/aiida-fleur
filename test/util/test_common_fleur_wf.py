@@ -14,10 +14,10 @@ from aiida.work.run import submit
 #from aiida.work.workchain import ToContext
 #from aiida.work.process_registry import ProcessRegistry
 #from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
 
-from aiida.tools.codespecific.fleur.common_fleur_wf import is_code, get_inputs_fleur, get_inputs_inpgen
+from aiida_fleur.tools.common_fleur_wf import is_code, get_inputs_fleur, get_inputs_inpgen
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")

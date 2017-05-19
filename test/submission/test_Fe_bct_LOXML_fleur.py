@@ -26,7 +26,7 @@ run_in_serial_mode = True#False
 
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 try:
     dontsend = sys.argv[1]
     if dontsend == "--dont-send":

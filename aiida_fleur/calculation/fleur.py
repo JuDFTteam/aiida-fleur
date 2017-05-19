@@ -46,7 +46,7 @@ class FleurCalculation(JobCalculation):
         ######### Only this should be to be maintained! #########
 
         # Default fleur output parser
-        self._default_parser = 'fleur_inp.fleur'
+        self._default_parser = 'fleur.fleur'
         #self._default_parser = 'fleur.fleur'
 
         # should a kpt node be used or fleur generate the mesh?

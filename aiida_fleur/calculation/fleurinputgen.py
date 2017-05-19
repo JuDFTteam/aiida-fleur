@@ -37,7 +37,7 @@ class FleurinputgenCalculation(JobCalculation):
         super(FleurinputgenCalculation, self)._init_internal_params()
 
         # Default fleur output parser
-        self._default_parser = 'fleur_inp.fleur_inputgen'
+        self._default_parser = 'fleur.fleur_inputgen'
 
         # Default input and output files
         self._DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
