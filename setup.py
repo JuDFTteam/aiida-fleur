@@ -49,7 +49,7 @@ if __name__ == '__main__':
             ],
             'aiida.parsers': [
                 'fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser',
-                'fleur.fleurinpgenparser = fleur.inpgenparser = aiida_fleur.parsers.fleur_inpgen:FleurinputgenParser'
+                'fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser'
             ]
 
         },
