@@ -32,3 +32,4 @@ uritools==1.0.2
 validate_email==1.3
 voluptuous==0.8.11
 wheel==0.29.0
+aiida_core==0.8.1
