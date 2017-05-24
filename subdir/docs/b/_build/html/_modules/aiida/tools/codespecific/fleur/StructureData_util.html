@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>aiida.tools.codespecific.fleur.StructureData_util &mdash; Fleur plugin 0.27 beta documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Fleur plugin 0.27 beta documentation" href="../../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../../index.html"/> 
+
+  
+  <script src="../../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> Fleur plugin
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.27 beta
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../plugin/fleur_plugin.html">Fleur-plugin</a></li>
+</ul>
+<ul class="simple">
+</ul>
+<ul class="simple">
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../code.html">Plug-in Classes</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../../index.html">Fleur plugin</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>aiida.tools.codespecific.fleur.StructureData_util</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aiida.tools.codespecific.fleur.StructureData_util</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Collection of utility routines dealing with StructureData objects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#TODO move imports to workfuncitons namespace?</span>
+<span class="kn">from</span> <span class="nn">aiida</span> <span class="kn">import</span> <span class="n">load_dbenv</span><span class="p">,</span> <span class="n">is_dbenv_loaded</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">is_dbenv_loaded</span><span class="p">():</span>
+    <span class="n">load_dbenv</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">ase</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">ase.lattice.surface</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">ase.io</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">aiida.orm</span> <span class="kn">import</span> <span class="n">DataFactory</span>
+<span class="kn">from</span> <span class="nn">aiida.orm</span> <span class="kn">import</span> <span class="n">load_node</span>
+<span class="kn">from</span> <span class="nn">aiida.orm.data.structure</span> <span class="kn">import</span> <span class="n">Site</span><span class="p">,</span> <span class="n">Kind</span>
+
+<span class="c">#from aiida.workflows2.wf import wf</span>
+
+<span class="n">StructureData</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;structure&#39;</span><span class="p">)</span>
+<span class="n">ParameterData</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;parameter&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_structure"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.is_structure">[docs]</a><span class="k">def</span> <span class="nf">is_structure</span><span class="p">(</span><span class="n">structure</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test if the given input is a StructureData node, by obejct, id, or pk</span>
+<span class="sd">    if yes returns a StructureData node in all cases</span>
+<span class="sd">    if no returns None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">StructureData</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;structure&#39;</span><span class="p">)</span>
+
+    <span class="c">#Test if StructureData</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">StructureData</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">structure</span>
+    <span class="c">#Test if pk, if yes, is the corresponding node StructureData</span>
+    <span class="n">pk</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pk</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">pk</span><span class="p">:</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="n">load_node</span><span class="p">(</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">StructureData</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">structure</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="c">#Test if uuid, if yes, is the corresponding node StructureData</span>
+    <span class="c"># TODO: test for uuids not for string (guess is ok for now)</span>
+    <span class="n">uuid</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">uuid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">uuid</span><span class="p">:</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="n">load_node</span><span class="p">(</span><span class="n">uuid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">StructureData</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">structure</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="c">#Else throw error? or rather return None</span>
+
+    <span class="k">return</span> <span class="bp">None</span>
+
+<span class="c">#@wf</span></div>
+<div class="viewcode-block" id="rescale"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.rescale">[docs]</a><span class="k">def</span> <span class="nf">rescale</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rescales a crystal structure. Keeps the provanance in the database.</span>
+
+<span class="sd">    :param inp_structure, a StructureData node (pk, or uuid)</span>
+<span class="sd">    :param scale, float scaling factor for the cell</span>
+
+<span class="sd">    :returns: New StrcutureData node with rescalled structure, which is linked to input Structure</span>
+<span class="sd">              and None if inp_structure was not a StructureData</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">#test if structure:</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">is_structure</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">structure</span><span class="p">:</span>
+        <span class="c">#TODO: log something</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="n">the_ase</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">get_ase</span><span class="p">()</span>
+    <span class="n">new_ase</span> <span class="o">=</span> <span class="n">the_ase</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">new_ase</span><span class="o">.</span><span class="n">set_cell</span><span class="p">(</span><span class="n">the_ase</span><span class="o">.</span><span class="n">get_cell</span><span class="p">()</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">scale</span><span class="p">),</span> <span class="n">scale_atoms</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">rescaled_structure</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;structure&#39;</span><span class="p">)(</span><span class="n">ase</span><span class="o">=</span><span class="n">new_ase</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rescaled_structure</span>
+
+<span class="c">#@wf</span></div>
+<div class="viewcode-block" id="rescale_xyz"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.rescale_xyz">[docs]</a><span class="k">def</span> <span class="nf">rescale_xyz</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">,</span> <span class="n">scalevec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    rescales a structure a certain way...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+
+<span class="c">#@wf</span></div>
+<div class="viewcode-block" id="supercell"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.supercell">[docs]</a><span class="k">def</span> <span class="nf">supercell</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">,</span> <span class="n">n_a1</span><span class="p">,</span> <span class="n">n_a2</span><span class="p">,</span> <span class="n">n_a3</span><span class="p">):</span><span class="c"># be carefull you have to use AiiDA datatypes...</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a super cell from a StructureData node.</span>
+<span class="sd">    Keeps the provanance in the database.</span>
+
+<span class="sd">    :param StructureData, a StructureData node (pk, or uuid)</span>
+<span class="sd">    :param scale: tuple of 3 integers, number of cells in a1, a2, a3, or if cart =True in x,y,z</span>
+<span class="sd">    :param cart, Boolean #TODO needed?</span>
+
+<span class="sd">    :returns StructureData, Node with supercell</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#test if structure:</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">is_structure</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">structure</span><span class="p">:</span>
+        <span class="c">#TODO: log something</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">old_cell</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">cell</span>
+    <span class="n">old_a1</span> <span class="o">=</span> <span class="n">old_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">old_a2</span> <span class="o">=</span> <span class="n">old_cell</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">old_a3</span> <span class="o">=</span> <span class="n">old_cell</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">old_sites</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">sites</span>
+    <span class="n">old_pbc</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">pbc</span>
+
+    <span class="n">na1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_a1</span><span class="p">)</span>
+    <span class="n">na2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_a2</span><span class="p">)</span>
+    <span class="n">na3</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_a3</span><span class="p">)</span>
+
+    <span class="c">#new cell</span>
+    <span class="n">new_a1</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">na1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">old_a1</span><span class="p">]</span>
+    <span class="n">new_a2</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">na2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">old_a2</span><span class="p">]</span>
+    <span class="n">new_a3</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">na3</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">old_a3</span><span class="p">]</span>
+    <span class="n">new_cell</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_a1</span><span class="p">,</span> <span class="n">new_a2</span><span class="p">,</span> <span class="n">new_a3</span><span class="p">]</span>
+    <span class="n">new_structure</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;structure&#39;</span><span class="p">)(</span><span class="n">cell</span><span class="o">=</span><span class="n">new_cell</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">old_pbc</span><span class="p">)</span>
+
+    <span class="c">#insert atoms</span>
+    <span class="c"># first create all kinds</span>
+    <span class="n">old_kinds</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">kinds</span>
+    <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">old_kinds</span><span class="p">:</span>
+        <span class="n">new_structure</span><span class="o">.</span><span class="n">append_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+
+    <span class="c">#scale n_a1</span>
+    <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">old_sites</span><span class="p">:</span>
+        <span class="c"># get atom position</span>
+        <span class="n">kn</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">kind_name</span>
+        <span class="n">pos_o</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">position</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">na1</span><span class="p">):</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos_o</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="n">old_a1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">old_a1</span><span class="p">))]</span>
+            <span class="n">new_structure</span><span class="o">.</span><span class="n">append_site</span><span class="p">(</span><span class="n">Site</span><span class="p">(</span><span class="n">kind_name</span><span class="o">=</span><span class="n">kn</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">pos</span><span class="p">))</span>
+
+    <span class="c">#scale n_a2</span>
+    <span class="n">o_sites</span> <span class="o">=</span> <span class="n">new_structure</span><span class="o">.</span><span class="n">sites</span>
+    <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">o_sites</span><span class="p">:</span>
+        <span class="c"># get atom position</span>
+        <span class="n">kn</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">kind_name</span>
+        <span class="n">pos_o</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">position</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">na2</span><span class="p">):</span> <span class="c"># j=0 these sites/atoms are already added</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos_o</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="n">old_a2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">old_a2</span><span class="p">))]</span>
+            <span class="n">new_structure</span><span class="o">.</span><span class="n">append_site</span><span class="p">(</span><span class="n">Site</span><span class="p">(</span><span class="n">kind_name</span><span class="o">=</span><span class="n">kn</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">pos</span><span class="p">))</span>
+
+    <span class="c">#scale n_a3</span>
+    <span class="n">o_sites</span> <span class="o">=</span> <span class="n">new_structure</span><span class="o">.</span><span class="n">sites</span>
+    <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">o_sites</span><span class="p">:</span>
+        <span class="c"># get atom position</span>
+        <span class="n">kn</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">kind_name</span>
+        <span class="n">pos_o</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">position</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">na3</span><span class="p">):</span> <span class="c"># these sites/atoms are already added</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos_o</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="n">old_a3</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">old_a3</span><span class="p">))]</span>
+            <span class="n">new_structure</span><span class="o">.</span><span class="n">append_site</span><span class="p">(</span><span class="n">Site</span><span class="p">(</span><span class="n">kind_name</span><span class="o">=</span><span class="n">kn</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">pos</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_structure</span>
+
+
+<span class="c">#wf</span>
+<span class="c">#prob don&#39;t make this a workfuntion, because rescale is already one and scalelist would has to be a ParameterData Node, since AiiDA has no list-datatype</span></div>
+<div class="viewcode-block" id="eos_structures"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.eos_structures">[docs]</a><span class="k">def</span> <span class="nf">eos_structures</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">,</span> <span class="n">scalelist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates many rescalled StrucutureData nodes out of a crystal structure.</span>
+<span class="sd">    Keeps the provanance in the database.</span>
+
+<span class="sd">    :param StructureData, a StructureData node (pk, sor uuid)</span>
+<span class="sd">    :param scalelist, list of floats, scaling factors for the cell</span>
+
+<span class="sd">    :returns: list of New StructureData nodes with rescalled structure, which are linked to input Structure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#test if structure:</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">is_structure</span><span class="p">(</span><span class="n">inp_structure</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">structure</span><span class="p">:</span>
+        <span class="c">#TODO: log something</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">re_structures</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="n">scalelist</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">rescale</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+        <span class="n">re_structures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re_structures</span>
+
+<span class="c">#### Structure util</span>
+<span class="c"># after ths is in plugin code import these in fleurinp.</span></div>
+<div class="viewcode-block" id="abs_to_rel"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.abs_to_rel">[docs]</a><span class="k">def</span> <span class="nf">abs_to_rel</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">cell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a position vector in absolut coordinates to relative coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="n">inv_cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cell_np</span><span class="p">)</span>
+        <span class="n">postionR</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+        <span class="n">new_rel_post</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">postionR</span><span class="p">,</span> <span class="n">inv_cell_np</span><span class="p">)</span><span class="c">#np.matmul(inv_cell_np, postionR)#</span>
+        <span class="n">new_rel_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">new_rel_post</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">new_rel_pos</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="abs_to_rel_f"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.abs_to_rel_f">[docs]</a><span class="k">def</span> <span class="nf">abs_to_rel_f</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">pbc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a position vector in absolut coordinates to relative coordinates </span>
+<span class="sd">    for a film system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+    <span class="c"># TODO this currently only works if the z-coordinate is the one with no pbc</span>
+    <span class="c"># Therefore if a structure with x non pbc is given this should also work.</span>
+    <span class="c"># maybe write a &#39;tranform film to fleur_film routine&#39;?</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">pbc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+            <span class="c"># leave z coordinate absolut</span>
+            <span class="c"># convert only x and y.</span>
+            <span class="n">postionR</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+            <span class="n">postionR_f</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">postionR</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+            <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell_np</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">inv_cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cell_np</span><span class="p">)</span>
+            <span class="n">new_xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">postionR_f</span><span class="p">,</span> <span class="n">inv_cell_np</span><span class="p">)]</span><span class="c">#np.matmul(inv_cell_np, postionR_f)]</span>
+            <span class="n">new_rel_pos_f</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">postionR</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+            <span class="k">return</span> <span class="n">new_rel_pos_f</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;FLEUR can not handle this type of film coordinate&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="rel_to_abs"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.rel_to_abs">[docs]</a><span class="k">def</span> <span class="nf">rel_to_abs</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">cell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a position vector in interal coordinates to absolut coordinates </span>
+<span class="sd">    in Angstroem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="n">postionR</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+        <span class="n">new_abs_post</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">postionR</span><span class="p">,</span> <span class="n">cell_np</span><span class="p">)</span><span class="c">#</span>
+        <span class="n">new_abs_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">new_abs_post</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">new_abs_pos</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="rel_to_abs_f"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.rel_to_abs_f">[docs]</a><span class="k">def</span> <span class="nf">rel_to_abs_f</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">cell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a position vector in interal coordinates to absolut coordinates </span>
+<span class="sd">    in Angstroem for a film structure (2D).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+    <span class="c"># TODO this currently only works if the z-coordinate is the one with no pbc</span>
+    <span class="c"># Therefore if a structure with x non pbc is given this should also work.</span>
+    <span class="c"># maybe write a &#39;tranform film to fleur_film routine&#39;?</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">postionR</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+        <span class="n">postionR_f</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">postionR</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="c">#print postionR_f</span>
+        <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="n">cell_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell_np</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="c">#print cell_np</span>
+        <span class="n">new_xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">postionR_f</span><span class="p">,</span> <span class="n">cell_np</span><span class="p">)]</span>
+        <span class="n">new_abs_pos_f</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">postionR</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">new_abs_pos_f</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+
+</div>
+<div class="viewcode-block" id="break_symmetry"><a class="viewcode-back" href="../../../../../code.html#aiida.tools.codespecific.fleur.StructureData_util.break_symmetry">[docs]</a><span class="k">def</span> <span class="nf">break_symmetry</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">atoms</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;all&#39;</span><span class="p">],</span> <span class="n">site</span><span class="o">=</span><span class="p">[],</span> <span class="n">pos</span><span class="o">=</span><span class="p">[],</span> <span class="n">parameterData</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This routine introduces different &#39;kind objects&#39; in a structure</span>
+<span class="sd">    and names them that inpgen will make different species/atomgroups out of them.</span>
+<span class="sd">    If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)</span>
+
+<span class="sd">    params: StructureData</span>
+<span class="sd">    params: atoms: python list of symbols, exp: [&#39;W&#39;, &#39;Be&#39;]. This would make for </span>
+<span class="sd">                   all Be and W atoms their own kinds.</span>
+<span class="sd">    params: site: python list of integers, exp: [1, 4, 8]. This would create for</span>
+<span class="sd">                  atom 1, 4 and 8 their own kinds.</span>
+<span class="sd">    params: pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].</span>
+<span class="sd">                 This will create a new kind for the atom at that position.</span>
+<span class="sd">                 Be carefull the number given has to match EXACTLY the position</span>
+<span class="sd">                 in the structure.</span>
+<span class="sd">    </span>
+<span class="sd">    return: StructureData, a AiiDA crystal structure with new kind specification.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># TODO proper input checks?</span>
+
+    <span class="c">#get all atoms, get the symbol of the atom</span>
+    <span class="c">#if wanted make individual kind for that atom</span>
+    <span class="c">#kind names will be atomsymbol+number</span>
+    <span class="c">#create new structure with new kinds and atoms</span>
+
+    <span class="n">symbol_count</span> <span class="o">=</span> <span class="p">{}</span> <span class="c"># Counts the atom symbol occurence to set id&#39;s and kind names right</span>
+    <span class="n">replace</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># all atoms symbols (&#39;W&#39;) to be replaced</span>
+    <span class="n">replace_siteN</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># all site integers to be replaced</span>
+    <span class="n">replace_pos</span> <span class="o">=</span> <span class="p">[]</span> <span class="c">#all the atom positions to be replaced</span>
+    <span class="n">new_parameterd</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">struc</span> <span class="o">=</span> <span class="n">is_structure</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">struc</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;Error, no structure given&#39;</span>
+        <span class="c"># throw error?</span>
+
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">struc</span><span class="o">.</span><span class="n">cell</span>
+    <span class="n">pbc</span> <span class="o">=</span> <span class="n">struc</span><span class="o">.</span><span class="n">pbc</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">struc</span><span class="o">.</span><span class="n">sites</span>
+    <span class="c">#natoms = len(sites)</span>
+    <span class="n">new_structure</span> <span class="o">=</span> <span class="n">DataFactory</span><span class="p">(</span><span class="s">&#39;structure&#39;</span><span class="p">)(</span><span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+        <span class="n">replace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">pos</span><span class="p">:</span>
+        <span class="n">replace_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">site</span><span class="p">:</span>
+        <span class="n">replace_siteN</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">parameterData</span><span class="p">:</span>
+        <span class="n">para</span> <span class="o">=</span> <span class="n">parameterData</span><span class="o">.</span><span class="n">get_dict</span><span class="p">()</span>
+        <span class="n">new_parameterd</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">para</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sites</span><span class="p">):</span>
+        <span class="n">kind_name</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">kind_name</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">position</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">struc</span><span class="o">.</span><span class="n">get_kind</span><span class="p">(</span><span class="n">kind_name</span><span class="p">)</span>
+        <span class="n">symbol</span> <span class="o">=</span> <span class="n">kind</span><span class="o">.</span><span class="n">symbol</span>
+        <span class="n">replace_kind</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">replace</span> <span class="ow">or</span> <span class="s">&#39;all&#39;</span> <span class="ow">in</span> <span class="n">replace</span><span class="p">:</span>
+            <span class="n">replace_kind</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">replace_pos</span><span class="p">:</span>
+            <span class="n">replace_kind</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">replace_siteN</span><span class="p">:</span>
+            <span class="n">replace_kind</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">if</span> <span class="n">replace_kind</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">symbol_count</span><span class="p">:</span>
+                <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span>  <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">newkindname</span> <span class="o">=</span> <span class="s">&#39;{}{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">newkindname</span> <span class="o">=</span> <span class="s">&#39;{}{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span>
+            <span class="n">new_kind</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">newkindname</span><span class="p">,</span> <span class="n">symbols</span><span class="o">=</span><span class="n">symbol</span><span class="p">)</span>
+            <span class="n">new_structure</span><span class="o">.</span><span class="n">append_kind</span><span class="p">(</span><span class="n">new_kind</span><span class="p">)</span>
+
+            <span class="c"># now we have to add an atom list to parameterData with the corresponding id.</span>
+            <span class="k">if</span> <span class="n">parameterData</span><span class="p">:</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="n">symbol_count</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span>
+                <span class="c">#print &#39;id: {}&#39;.format(id)</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">para</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="s">&#39;atom&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;element&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">symbol</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="nb">id</span> <span class="ow">and</span> <span class="nb">id</span> <span class="o">==</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+                                <span class="k">break</span> <span class="c"># we assume the user is smart and provides a para node,</span>
+                                <span class="c"># which incooperates the symmetry breaking already</span>
+                            <span class="k">elif</span> <span class="nb">id</span><span class="p">:</span><span class="c"># != 1: # copy parameter of symbol and add id</span>
+                                <span class="n">val_new</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                                <span class="n">val_new</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">u&#39;id&#39;</span> <span class="p">:</span> <span class="nb">id</span><span class="p">})</span>
+                                <span class="n">atomlistname</span> <span class="o">=</span> <span class="s">&#39;atom{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+                                <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+                                <span class="k">while</span> <span class="n">new_parameterd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">atomlistname</span><span class="p">,</span> <span class="p">{}):</span>
+                                    <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+                                    <span class="n">atomlistname</span> <span class="o">=</span> <span class="s">&#39;atom{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+                                <span class="n">new_parameterd</span><span class="p">[</span><span class="n">atomlistname</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_new</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">newkindname</span> <span class="o">=</span> <span class="n">kind_name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">kind_name</span> <span class="ow">in</span> <span class="n">new_structure</span><span class="o">.</span><span class="n">get_kind_names</span><span class="p">():</span>
+                <span class="n">new_structure</span><span class="o">.</span><span class="n">append_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="n">new_structure</span><span class="o">.</span><span class="n">append_site</span><span class="p">(</span><span class="n">Site</span><span class="p">(</span><span class="n">kind_name</span><span class="o">=</span><span class="n">newkindname</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">pos</span><span class="p">))</span>
+
+    <span class="c">#print &#39;natoms: {}, nkinds: {}&#39;.format(natoms, len(new_structure.get_kind_names()))</span>
+
+    <span class="k">if</span> <span class="n">parameterData</span><span class="p">:</span>
+        <span class="n">para_new</span> <span class="o">=</span> <span class="n">ParameterData</span><span class="p">(</span><span class="nb">dict</span><span class="o">=</span><span class="n">new_parameterd</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">para_new</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">return</span> <span class="n">new_structure</span><span class="p">,</span> <span class="n">para_new</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Jens Broeder.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../',
+            VERSION:'0.27 beta',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

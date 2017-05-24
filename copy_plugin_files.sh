@@ -48,3 +48,8 @@ if [ ! -d $aiida_repo/tools/codespecific/fleur ]; then
 fi
 cp $aiida_fleur/tools/* $aiida_repo/tools/codespecific/fleur/
 
+cp $aiida_fleur/util/* $aiida_repo/tools/codespecific/fleur/
+
+#worklfows
+# for now they are all kept together, but this will change
+cp $aiida_fleur/workflows/* $aiida_repo/tools/codespecific/fleur/
