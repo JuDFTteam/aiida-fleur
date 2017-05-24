@@ -24,18 +24,18 @@ from aiida.work.process_registry import ProcessRegistry
 #from aiida.work.workfunction import workfunction as wf
 from aiida.work.workchain import WorkChain
 
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.tools.codespecific.fleur.StructureData_util import rescale, is_structure
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from convergence import fleur_convergence
 #from convergence2 import fleur_convergence2
-from aiida.tools.codespecific.fleur.convergence import fleur_convergence
+from aiida_fleur.workflows.scf import fleur_scf_wc
 
 
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
-FleurInpData = DataFactory('fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
@@ -125,7 +125,7 @@ class fleur_eos_wc(WorkChain):
             inputs['structure'] = struc
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.structurs_uuids.append(struc.uuid)
-            res = fleur_convergence.run(
+            res = fleur_scf_wc.run(
                       wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], 
                       calc_parameters=inputs['calc_parameters'], 

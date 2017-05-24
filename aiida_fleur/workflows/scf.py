@@ -26,9 +26,9 @@ from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 #from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -40,8 +40,7 @@ __contributors__ = "Jens Broeder"
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
-#FleurInpData = DataFactory('fleurinp.fleurinp')
-FleurInpData = DataFactory('fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
 
@@ -96,7 +95,7 @@ class fleur_scf_wc(WorkChain):
                    'queue_name' : ''}
     @classmethod
     def define(cls, spec):
-        super(fleur_convergence, cls).define(spec)
+        super(fleur_scf_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False, 
                    default=ParameterData(dict={'fleur_runmax': 4, 
                                                'density_criterion' : 0.00002, 
@@ -451,7 +450,7 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
    
     args = parser.parse_args()
-    res = fleur_convergence.run(wf_parameters=args.wf_parameters, 
+    res = fleur_scf_wc.run(wf_parameters=args.wf_parameters, 
                                 structure=args.structure, 
                                 calc_parameters=args.calc_parameters,
                                 fleurinp=args.fleurinp,

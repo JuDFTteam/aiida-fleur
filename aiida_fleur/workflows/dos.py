@@ -19,15 +19,15 @@ from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 #from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
 #from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
-from aiida.tools.codespecific.fleur.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
