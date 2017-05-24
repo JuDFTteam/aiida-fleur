@@ -45,7 +45,7 @@ FleurInpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
 
-class fleur_convergence(WorkChain):
+class fleur_scf_wc(WorkChain):
     """
     This workflow converges a FLEUR calculation (SCF).
     It converges the charge density and optional the total energy

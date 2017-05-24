@@ -50,7 +50,12 @@ if __name__ == '__main__':
             'aiida.parsers': [
                 'fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser',
                 'fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser'
-            ]
-
+            ],
+            'aiida.workflows': [
+                'fleur.scf = aiida_fleur.workflows.scf:fleur_scf_wc',
+                'fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc',
+                'fleur.band = aiida_fleur.workflows.band:fleur_band_wc',
+                'fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc'
+           ]
         },
     )
