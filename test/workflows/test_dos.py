@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#/usr/bin/env python
 """
 This test runs the Fleur dos workflow
 """
@@ -8,12 +8,12 @@ if not is_dbenv_loaded():
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
 #from aiida.work.run import run
-from aiida.tools.codespecific.fleur.dos import dos
+from aiidai_fleur.workflows.dos import fleur_dos_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
@@ -30,5 +30,5 @@ remote = fleur_calc.out.remote_folder
 #wf_para = ParameterData(dict={})
 
 
-res = dos.run(fleurinp=fleurinp, remote=remote, fleur=code2)
+res = fleur_dos_wc.run(fleurinp=fleurinp, remote=remote, fleur=code2)
 #res = dos.run(wf_parameters=wf_para, fleurinp=fleurinp, fleur_calc=remote, fleur=code2)

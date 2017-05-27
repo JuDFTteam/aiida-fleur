@@ -8,13 +8,13 @@ if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
-from aiida.tools.codespecific.fleur.convergence import fleur_convergence
+from aiida_fleur.worklfows.scf import fleur_scf_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 #FleurinpData = DataFactory('fleurinp.fleurinp')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
@@ -42,7 +42,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
                               'walltime_sec':  10*60})
 
-res = fleur_convergence.run(wf_parameters=wf_para, structure=s, 
+res = fleur_scf_wc.run(wf_parameters=wf_para, structure=s, 
                             #calc_parameters=parameters, 
                             inpgen = code, fleur=code2)#, settings=settings)# 
 

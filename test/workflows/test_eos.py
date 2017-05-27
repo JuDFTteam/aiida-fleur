@@ -6,11 +6,11 @@ if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
-from aiida.tools.codespecific.fleur.eos import fleur_eos_wc
+from aiida_fleur.workflows.eos import fleur_eos_wc
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here

@@ -8,12 +8,12 @@ if not is_dbenv_loaded():
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
 #from aiida.work.run import run
-from aiida.tools.codespecific.fleur.band import band
+from aiida_fleur.workflows.band import fleur_band_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
@@ -30,4 +30,4 @@ wf_para = ParameterData(dict={'queue' : 'th123_node'})
 
 
 #res = band.run(fleurinp=fleurinp, remote=remote, fleur=code2)
-res = band.run(wf_parameters=wf_para, fleurinp=fleurinp, remote=remote, fleur=code2)
+res = fleur_band_wc.run(wf_parameters=wf_para, fleurinp=fleurinp, remote=remote, fleur=code2)
