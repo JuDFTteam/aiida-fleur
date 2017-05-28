@@ -1,5 +1,5 @@
-Plug-in Classes
-===============
+Source code Documentation
+=========================
 
 
 Fleur input generator plug-in
@@ -46,26 +46,60 @@ Fleur Parser
 .. automodule:: aiida_fleur.parsers.fleur
    :members:
 
+Workflows/Workchains
+++++++++++++++++++++
+
+SCF: Fleur-scf wf
+-------------------------
+
+.. automodule:: aiida_fleur.workflows.scf
+   :members:
+
+Band: Bandstructure wf
+----------------------
+
+.. automodule:: aiida_fleur.workflows.band
+   :members:
+
+DOS: Density of states wf
+-------------------------
+
+.. automodule:: aiida_fleur.workflows.dos
+   :members:
+
+EOS: Calculate a lattice constant
+---------------------------------
+
+.. automodule:: aiida_fleur.workflows.eos
+   :members:
+
+Relax: Relaxation of a Cystalstructure wf
+-----------------------------------------
+
+.. automodule:: aiida_fleur.workflows.relax
+   :members:
+
+
 Fleur tools/utility
-===================
++++++++++++++++++++
 
 Structure Data util
-+++++++++++++++++++
+-------------------
 
 .. automodule:: aiida_fleur.tools.StructureData_util
    :members:
 
 XML utility
-+++++++++++
+-----------
 
 .. automodule:: aiida_fleur.tools.xml_util
    :members:
 
 Parameter utility
-+++++++++++++++++
+-----------------
 
 Merge Parameter
----------------
+_______________
 
 .. automodule:: aiida_fleur.tools.merge_parameter
    :members:

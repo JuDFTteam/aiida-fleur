@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Fleur plugin'
+project = u'AiiDA-FLEUR'
 copyright = u'2016, Jens Broeder'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -184,7 +184,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Fleurplugindoc'
+htmlhelp_basename = 'aiida-fleurdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -204,7 +204,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'Fleurplugin.tex', u'Fleur plugin Documentation',
+  ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
    u'Jens Broeder', 'manual'),
 ]
 
@@ -270,7 +270,7 @@ else:
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'fleurplugin', u'Fleur plugin Documentation',
+    ('index', 'aiida-fleur', u'AiiDA-FLEUR Documentation',
      [u'Jens Broeder'], 1)
 ]
 
@@ -284,8 +284,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'Fleurplugin', u'Fleur plugin Documentation',
-   u'Jens Broeder', 'Fleurplugin', 'One line description of project.',
+  ('index', 'aiida-fleur', u'AiiDA-Fleur Documentation',
+   u'Jens Broeder', 'aiida-fleur', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -304,7 +304,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'AiiDA_fleur_plugin'
+epub_title = u'AiiDA-Fleurn'
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright

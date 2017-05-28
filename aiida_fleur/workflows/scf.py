@@ -48,12 +48,12 @@ class fleur_scf_wc(WorkChain):
     """
     This workflow converges a FLEUR calculation (SCF).
     It converges the charge density and optional the total energy
-    
+
     Two paths are possible: 
-    
+
     (1) Start from a structure and run the inpgen first
     (2) Start from a Fleur calculation, with optional remoteData
-      
+
     :Params: wf_parameters: parameterData node,
     :Params: structure : structureData node,
     :Params: calc_parameters: parameterData node,
@@ -61,13 +61,13 @@ class fleur_scf_wc(WorkChain):
     :Params: remote_data: remoteData node,
     :Params: inpgen: Code node,
     :Params: fleur: Code node,
-    
+
     :returns: Success, last result node, list with convergence behavior
-    
+
     minimum input example: 
     1. Code1, Code2, Structure, (Parameters), (wf_parameters)
     2. Code2, FleurinpData, (wf_parameters)
-    
+
     maximum input example: 
     1. Code1, Code2, Structure, Parameters 
                            wf_parameters: {
@@ -80,7 +80,7 @@ class fleur_scf_wc(WorkChain):
                                {"num_machines": int, "num_mpiprocs_per_machine" : int})
                            'walltime' : int}
     2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
-    
+
     Hints:
     1. This workflow does not work with local codes!
     """
