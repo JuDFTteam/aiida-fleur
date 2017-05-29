@@ -5,7 +5,7 @@
 
 
 Welcome to the AiiDA-FLEUR 's documentation!
-=========================================
+++++++++++++++++++++++++++++++++++++++++++++
 
 .. image:: images/fleur.png
     :width: 20%
@@ -45,7 +45,7 @@ If you use this package please cite:
 
 
 Requirements to use this code:
-..............................
+------------------------------
 
 * A running AiiDA version (and postgresql database)
 * Executables of the Fleur code
@@ -56,13 +56,13 @@ Other packages (in addition to all requirements of AiiDA):
 * ase
 
 Acknowledgments:
-...............
+----------------
 
 We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
 We also thank the AiiDA team for their help.
 
 Installation Instructions:
-..........................
+--------------------------
 
 From the aiida-fleur folder use::
 
@@ -112,10 +112,10 @@ You should see fleur.* in the list
 
 
 Contents:
-.........
+---------
 
 The Fleur plug-in
-+++++++++++++++++
+=================
 
 .. toctree::
    :maxdepth: 4
@@ -125,7 +125,7 @@ The Fleur plug-in
    examples
 
 Common Fleur Workflows
-++++++++++++++++++++++
+======================
 
 .. toctree::
    :maxdepth: 4
@@ -138,7 +138,7 @@ Common Fleur Workflows
    examples
 
 Guides/tutorials
-++++++++++++++++
+================
 .. toctree::
    :maxdepth: 4
 
@@ -152,7 +152,7 @@ Guides/tutorials
 
 
 Tools and utility
-+++++++++++++++++
+=================
 
 .. toctree::
    :maxdepth: 4
@@ -162,7 +162,7 @@ Tools and utility
   plugin/utility
 
 Source code documentation
-+++++++++++++++++++++++++
+=========================
 
 .. toctree::
    :maxdepth: 4
@@ -176,7 +176,7 @@ Source code documentation
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

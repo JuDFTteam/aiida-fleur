@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-In this module is the FleurinpData class, and useful methods for FLEUR input
-manipulation.
+In this module is the FleurinpData class, and methods for FLEUR input
+manipulation plus methods for extration of AiiDA data structures.
 """
 # TODO: this needs to be cleaned up and redocumented
 # TODO: all methods to change now in fleurinpmodifier, do we still want to
@@ -29,14 +29,10 @@ if not is_dbenv_loaded():
 
 from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
-#from aiida.common.exceptions import UniquenessError
-#from aiida.common.utils import get_repository_folder
-#from aiida.common.links import LinkType
-#from aiida.common.lang import override
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv, xml_set_all_attribv, xml_set_text
 from aiida.work.workfunction import workfunction as wf
 
-bohr_a = 0.52917721092#A
+bohr_a = 0.52917721092#A, todo: get from somewhereA
 
 
 class FleurinpData(Data):
@@ -44,25 +40,21 @@ class FleurinpData(Data):
     AiiDA data object representing everything a FLEUR calculation needs.
 
     It is initialized with an absolute path to an inp.xml file.
-    Other files can also be added, but are not represented and used so far. (TODO ?)
+    Other files can also be added, which will be compied to the remote machine, where the calculation takes place.
 
-    It will store the files in the repository and store the input parameters of the
+    It stores the files in the repository and stores the input parameters of the
     inp.xml file of FLEUR in the Database as a python dictionary (as internal attributes).
     When an inp.xml (name important!) file is added to files, FleurinpData searches
     for a corresponding xml schema file in the PYTHONPATH environment variable.
-    Therefore, it is recommened to place all schema files in the plug-in source code directory.
+    Therefore, it is recommened to have the plug-in source code directory in the python environment..
     If no corresponding schema file is found an error is raised.
 
-    FleurinpData further provides the user with manipulation methods for the inp.xml file and
+    FleurinpData further provides the user with 
     methods to extract AiiDA StructureData and KpointsData nodes.
-
-    It tracks the changes made by the user on the inp.xml file in a dictionary.
-    The plug-in needs to know, what files change, because files should only be uploaded
-    if changed, otherwise copied remotely. (for now the logic is simple: always copy)
-
+    
     Remember that most attributes of AiiDA nodes can not be changed after they
-    have been stored in the DB! Therefore, you often have to copy first a
-    FleurinpData object, if you want to change somthing in the inp.xml file and
+    have been stored in the DB! Therefore, you have to use the FleurinpModifier class and its methods
+    if you want to change somthing in the inp.xml file. You will retrieve a new FLeurinpdata that way and
     start a new calculation from it.
     """
 
