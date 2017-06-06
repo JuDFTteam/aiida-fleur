@@ -19,13 +19,13 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import Code, DataFactory
-#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
+
+
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
@@ -108,7 +108,7 @@ class fleur_scf_wc(WorkChain):
                                                'reuse' : True}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        #spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -124,15 +124,16 @@ class fleur_scf_wc(WorkChain):
                 cls.get_res),
             cls.return_results
         )
-        #spec.dynamic_output()
+        spec.dynamic_output()
 
     def start(self):
         """
         init context and some parameters
         """
-        
+        self.report('started convergence workflow version {}'.format(self._workflowversion))
+        self.report('Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
         print('started convergence workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
+        print('Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
         
         # init
         self.ctx.last_calc = None
@@ -174,26 +175,30 @@ class fleur_scf_wc(WorkChain):
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
                 print(warning)
                 self.ctx.warnings.append(warning)
+                self.report(warning)
             if 'inpgen' in inputs:
                 warning = 'WARNING: Ignoring inpgen code input, because Fleurinp was given'
                 print(warning)
                 self.ctx.warnings.append(warning)
+                self.report(warning)
             if 'calc_parameters' in inputs:
                 warning = 'WARNING: Ignoring parameter input, because Fleurinp was given'
                 print(warning)
                 self.ctx.warnings.append(warning)
+                self.report(warning)
         elif 'structure' in inputs:
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 print(error)
                 self.ctx.errors.append(error)
-                #kill workflow
+                self.abort_nowait(error)
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             print(error)
             self.ctx.errors.append(error)
-            #kill workflow        
-        
+            self.abort_nowait(error)
+
+
         return run_inpgen
 
 
@@ -232,7 +237,11 @@ class fleur_scf_wc(WorkChain):
         elif 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
         else:
-            fleurin = self.ctx['inpgen'].out.fleurinpData
+            try:
+                fleurin = self.ctx['inpgen'].out.fleurinpData
+            except:
+                error = 'No fleurinpData found, inpgen failed'
+                self.abort_nowait(error)
         
         wf_dict = self.inputs.wf_parameters.get_dict()
         converge_te = wf_dict.get('converge_energy', False)
@@ -267,6 +276,7 @@ class fleur_scf_wc(WorkChain):
                                'commandline_options': ["-wtime", "{}".format(self.ctx.walltime_sec)], 'blaha' : ['bla']})
         '''
         if self.ctx['last_calc']:
+            # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_calc'].out.remote_folder
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
@@ -425,7 +435,7 @@ class fleur_scf_wc(WorkChain):
             outdict['fleurinp'] = self.inputs.fleurinp
         else:
             outdict['fleurinp'] = self.ctx['inpgen'].out.fleurinpData
-        outdict['output_scf_wf_para'] = outputnode
+        outdict['output_scf_wc_para'] = outputnode
         #print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)
@@ -459,3 +469,62 @@ if __name__ == "__main__":
                                 remote_data=args.remote_data,
                                 inpgen = args.inpgen, 
                                 fleur=args.fleur)
+
+
+def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
+    """
+    Pass a code node and an expected code (plugin) type. Check that the
+    code exists, is unique, and return the Code object. 
+    
+    :param codenode: the name of the code to load (in the form label@machine)
+    :param expected_code_type: a string with the plugin that is expected to
+      be loaded. In case no plugins exist with the given name, show all existing
+      plugins of that type
+    :param use_exceptions: if True, raise a ValueError exception instead of
+      calling sys.exit(1)
+    :return: a Code object
+    """
+    import sys
+    from aiida.common.exceptions import NotExistent
+    from aiida.orm import Code
+
+    try:
+        if codenode is None:
+            raise ValueError
+        code = codenode
+        if code.get_input_plugin_name() != expected_code_type:
+            raise ValueError
+    except (NotExistent, ValueError):
+        from aiida.orm.querybuilder import QueryBuilder
+        qb = QueryBuilder()
+        qb.append(Code,
+                  filters={'attributes.input_plugin':
+                               {'==': expected_code_type}},
+                  project='*')
+
+        valid_code_labels = ["{}@{}".format(c.label, c.get_computer().name)
+                             for [c] in qb.all()]
+
+        if valid_code_labels:
+            msg = ("Pass as further parameter a valid code label.\n"
+                   "Valid labels with a {} executable are:\n".format(
+                expected_code_type))
+            msg += "\n".join("* {}".format(l) for l in valid_code_labels)
+
+            if use_exceptions:
+                raise ValueError(msg)
+            else:
+                print >> sys.stderr, msg
+                sys.exit(1)
+        else:
+            msg = ("Code not valid, and no valid codes for {}.\n"
+                   "Configure at least one first using\n"
+                   "    verdi code setup".format(
+                expected_code_type))
+            if use_exceptions:
+                raise ValueError(msg)
+            else:
+                print >> sys.stderr, msg
+                sys.exit(1)
+
+    return code
