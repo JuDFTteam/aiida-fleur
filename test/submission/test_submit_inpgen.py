@@ -47,7 +47,7 @@ queue = None
 settings = None
 #####
 
-code = test_and_get_code(codename, expected_code_type='fleur_inp.fleurinputgen')
+code = test_and_get_code(codename, expected_code_type='fleur.inpgen')
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A

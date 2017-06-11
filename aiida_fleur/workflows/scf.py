@@ -320,7 +320,10 @@ class fleur_scf_wc(WorkChain):
         if calc_state != 'FINISHED':
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
-            pass
+            #TODO error handling here controled ending routine
+            self.ctx.successful
+            error = 'Fleur calculation failed somehow'
+            self.abort(error)
         '''
         spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
 
@@ -440,6 +443,16 @@ class fleur_scf_wc(WorkChain):
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)
 
+    def bad_ending(self):
+        pass
+    
+    def handle_fleur_failure(self):
+        pass
+    
+    def handle_inpgen_failure(self):
+        pass
+    
+    
 if __name__ == "__main__":
     import argparse
 
