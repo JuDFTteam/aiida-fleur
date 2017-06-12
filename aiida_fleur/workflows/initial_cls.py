@@ -33,7 +33,7 @@ FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
 
 htr_to_eV = 1
 
-class initial_state_CLS(WorkChain):
+class fleur_initial_cls_wc(WorkChain):
     '''
     Turn key solution for the calculation of core level shift and Binding energies
     

@@ -30,7 +30,7 @@ FleurinpData = DataFactory('fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
-class corehole(WorkChain):
+class fleur_corehole_wc(WorkChain):
     '''
     Turn key solution for the calculation of core level shift and Binding energies
     
