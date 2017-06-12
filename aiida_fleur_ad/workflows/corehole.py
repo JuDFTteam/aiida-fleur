@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This is the worklfow 'corelevel' using the Fleur code, which calculates Binding
+This is the worklfow 'corehole' using the Fleur code, which calculates Binding
 energies and corelevel shifts with different methods.
 'divide and conquer'
 """
@@ -21,7 +21,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import while_, if_
-from aiida_fleur.util.create_corehole import create_corehole
+from aiida_fleur_ad.util.create_corehole import create_corehole
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -68,7 +68,7 @@ class fleur_corehole_wc(WorkChain):
     
     @classmethod
     def define(cls, spec):
-        super(corelevel, cls).define(spec)
+        super(fleur_corehole_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                             'method' : 'initial',

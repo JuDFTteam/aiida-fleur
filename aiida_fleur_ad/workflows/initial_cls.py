@@ -21,7 +21,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
-from aiida_fleur.util.extract_corelevels import extract_corelevels
+from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -85,7 +85,7 @@ class fleur_initial_cls_wc(WorkChain):
      '''     
     @classmethod
     def define(cls, spec):
-        super(initial_state_CLS, cls).define(spec)
+        super(fleur_initial_cls_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={ 
                         #'references' : {'calculate' : 'all'}, 
