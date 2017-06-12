@@ -6,6 +6,8 @@ energies and corelevel shifts with different methods.
 'divide and conquer'
 """
 #TODO parsing of eigenvalues of LOS!
+#TODO error handling of scf
+#TODO USE SAME PARAMETERS! (maybe extract method for fleurinp needed)
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -17,6 +19,7 @@ from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
+from aiida_fleur.workflows.scf import fleur_scf_wc
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -42,7 +45,7 @@ class fleur_initial_cls_wc(WorkChain):
     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
     'Bes' : [W4f, Be1s]
     'CLS' : [W4f, Be1s]
-    'atoms' : ['all', 'postions' : []]
+ toms' : ['all', 'postions' : []]
     #'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
     'references' : { 'W': [calc/ouputnode or  fleurinp, or structure data or structure data + Parameter  ], 'Be' : }
     'scf_para' : {...}, 'default' 
@@ -78,7 +81,8 @@ class fleur_initial_cls_wc(WorkChain):
                         'walltime_sec' : 10*30,
                         'queue_name' : None,
                         'serial' : True}    
-    
+    def __init__(self, *args, **kwargs):
+        super(fleur_initial_cls_wc, self).__init__(*args, **kwargs)    
     '''
     def get_defaut_wf_para(self):
         return self._default_wf_para
@@ -106,7 +110,7 @@ class fleur_initial_cls_wc(WorkChain):
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.outline(
             cls.check_input,
-            cls.get_refernces,
+            cls.get_references,
             cls.run_fleur_scfs,
             if_(cls.relaxation_needed)(
                 cls.relax),
@@ -114,8 +118,8 @@ class fleur_initial_cls_wc(WorkChain):
             cls.run_scfs_ref,
             cls.return_results
         )
-        #spec.dynamic_output()
-
+        spec.dynamic_output()
+        #spec.dynamic_input()
 
     def check_input(self):
         """
@@ -204,7 +208,7 @@ class fleur_initial_cls_wc(WorkChain):
         print('elements in structure: {}'.format(self.ctx.elements))
         
         
-    def get_refernces(self):
+    def get_references(self):
         """
         To calculate a CLS in inital state approx, we need reference calculations
         to the Elemental crystals. First it is checked if the user has provided them
@@ -224,37 +228,45 @@ class fleur_initial_cls_wc(WorkChain):
         #                 'Be' : ...}
         
         self.ctx.ref = {}
-         
+        self.ctx.abort = False
         #TODO better checks if ref makes sense?
         for elem in self.ctx.elements:
             #to_calc[elem] = 'find' 
             ref_el = references.get(elem, None)
             if ref_el:
-                if isinstance(ref_el, (StructureData, ParameterData)):
+                try:
+                    ref_el_node = load_node(ref_el)
+                except:
+                    ref_el_node = None
+                    self.report('The reference node (id or uuid) provided: {} for '
+                                'element: {} could not be loaded with load_node'.format(ref_el, elem))
+                    self.ctx.abort = True
+                if isinstance(ref_el_node, (StructureData, ParameterData)):
                     #self.ctx.ref[elem] = ref_el
                     #enforced parameters, add directly to run queue
-                    self.ctx.ref_calcs_torun.append(ref_el)
-                elif isinstance(ref_el, FleurCalc):
+                    self.ctx.ref_calcs_torun.append(ref_el_node)
+                elif isinstance(ref_el_node, FleurCalc):
                     #extract from fleur calc TODO
                     self.ctx.ref_cl_energies[elem] = {}
-                elif isinstance(ref_el, ParameterData):
+                elif isinstance(ref_el_node, ParameterData):
                     #extract from workflow output TODO
                     self.ctx.ref_cl_energies[elem] = {}             
-                elif isinstance(ref_el, FleurinpData):
+                elif isinstance(ref_el_node, FleurinpData):
                     # add to calculations
                     #enforced parameters, add directly to run queue
-                    self.ctx.ref_calcs_torun.append(ref_el)
+                    self.ctx.ref_calcs_torun.append(ref_el_node)
                     #self.ctx.ref[elem] = ref_el
-                elif isinstance(ref_el, StructureData):
-                    self.ctx.ref[elem] = ref_el
+                elif isinstance(ref_el_node, StructureData):
+                    self.ctx.ref[elem] = ref_el_node
                 #elif isinstance(ref_el, initial_state_CLS):
                 #    extract TODO
                 else:
                     error = (" I do not know what to do with this given reference"
                              "{} for element {}".format(ref_el, elem))
                     print(error)
+                    self.report(error)
                     self.ctx.errors.append(error)
-                    #TODO log, ggf warning or error
+                    self.ctx.abort = True
             else: # no ref given, we have to look for it.
                 structure = querry_for_ref_structure(elem)
                 if structure:
@@ -265,7 +277,15 @@ class fleur_initial_cls_wc(WorkChain):
                              "to see what extras are querried for.".format(elem))
                     print(error)
                     self.ctx.errors.append(error)
-                    #TODO log, warning or error
+                    self.ctx.abort = True
+                    self.report(error)
+        if self.ctx.abort:
+            error = ('Something was wrong with the reference input provided. '
+                    'I cannot calculate from the input, or what I have found '
+                    'what you want me to do. Please check the workchain report'
+                    'for details.')
+            self.abort_nowait(error)
+
         print('self.ctx.ref: {} '.format(self.ctx.ref))
         #StructureData 
         #ParameterData
@@ -295,7 +315,6 @@ class fleur_initial_cls_wc(WorkChain):
         """
         print('In run_fleur_scfs inital_state_CLS workflow')        
         #from aiida.work import run, async, 
-        from aiida.tools.codespecific.fleur.convergence import fleur_convergence
         #TODO if submiting of workdlows work, use that. 
         #or run them with async (if youy know how to extract results) 
         
@@ -306,6 +325,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = para
         
         wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameter['serial'] = self.ctx.serial
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
@@ -313,13 +333,13 @@ class fleur_initial_cls_wc(WorkChain):
         for node in self.ctx.calcs_torun:
             print node
             if isinstance(node, StructureData):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, FleurinpData):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, (StructureData, ParameterData)):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 print('something in calcs_torun which I do not reconise: {}'.format(node))
@@ -363,7 +383,8 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        print('In relax inital_state_CLS workflow')        
+        print('In relax inital_state_CLS workflow')  
+        self.ctx.dos_to_calc = []
         for calc in self.ctx.dos_to_calc:
             pass 
             # TODO run relax workflow
@@ -395,7 +416,6 @@ class fleur_initial_cls_wc(WorkChain):
         """
         print('In run_fleur_scfs inital_state_CLS workflow')        
         #from aiida.work import run, async, 
-        from aiida.tools.codespecific.fleur.convergence import fleur_convergence
         #TODO if submiting of workdlows work, use that. 
         #or run them with async (if youy know how to extract results) 
         
@@ -404,7 +424,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        
+        wf_parameter['serial'] = self.ctx.serial
         wf_parameter['queue_name'] = self.ctx.queue
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
@@ -413,13 +433,13 @@ class fleur_initial_cls_wc(WorkChain):
         for node in self.ctx.ref_calcs_torun:
             print node
             if isinstance(node, StructureData):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, FleurinpData):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, structure=node, 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, (StructureData, ParameterData)):
-                res = fleur_convergence.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 print('something in calcs_torun which I do not reconise: {}'.format(node))
@@ -431,7 +451,51 @@ class fleur_initial_cls_wc(WorkChain):
             #print res    
         self.ctx.ref_calcs_torun = []
         #return ToContext(last_calc=res)
-        
+   
+    def handle_scf_failure(self):
+        """
+        In here we handle all failures from the scf workchain
+        """
+        pass
+        '''
+        try:
+            calculation = self.ctx.calculation
+        except Exception:
+            self.abort_nowait('the first iteration finished without returning a PwCalculation')
+            return
+
+        expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
+
+        # Done: successful convergence of last calculation
+        if calculation.has_finished_ok():
+            self.report('converged successfully after {} iterations'.format(self.ctx.iteration))
+            self.ctx.restart_calc = calculation
+            self.ctx.is_finished = True
+
+        # Abort: exceeded maximum number of retries
+        elif self.ctx.iteration >= self.ctx.max_iterations:
+            self.report('reached the max number of iterations {}'.format(self.ctx.max_iterations))
+            self.abort_nowait('last ran PwCalculation<{}>'.format(calculation.pk))
+
+        # Abort: unexpected state of last calculation
+        elif calculation.get_state() not in expected_states:
+            self.abort_nowait('unexpected state ({}) of PwCalculation<{}>'.format(
+                calculation.get_state(), calculation.pk))
+
+        # Retry: submission failed, try to restart or abort
+        elif calculation.get_state() in [calc_states.SUBMISSIONFAILED]:
+            self._handle_submission_failure(calculation)
+
+        # Retry: calculation failed, try to salvage or abort
+        elif calculation.get_state() in [calc_states.FAILED]:
+            self._handle_calculation_failure(calculation)
+
+        # Retry: try to convergence restarting from this calculation
+        else:
+            self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
+            self.ctx.restart_calc = calculation
+        '''
+        return        
 
         
     def collect_results(self):
@@ -451,6 +515,9 @@ class fleur_initial_cls_wc(WorkChain):
         fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
         ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
 
+        #print(all_corelevel)
+        #print(ref_all_corelevel)
+        
         ref_cl_energies = {}
         cl_energies = {}
         
@@ -469,6 +536,7 @@ class fleur_initial_cls_wc(WorkChain):
                     ref_cls.append(corelevel['energy']-ref_fermi_energies[compound])
                 ref_cl_energies[elm].append(ref_cls)
         
+        #print('ref_cl_energies')
         #pprint(ref_cl_energies)
         #pprint(all_corelevel)
         
@@ -597,7 +665,7 @@ def querry_for_ref_structure(element_string):
     return: the latest StructureData node that was found
     
     """
-    from aiida.orm import QueryBuilder
+    from aiida.orm.querybuilder import QueryBuilder
 
     #query db
     q = QueryBuilder()
@@ -632,7 +700,7 @@ def extract_results(calcs):
     calc_uuids = []
     for calc in calcs:
         print(calc)
-        calc_uuids.append(calc['output_scf_wf_para'].get_dict()['last_calc_uuid'])
+        calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
     print(calc_uuids)
     
     all_corelevels = {}
