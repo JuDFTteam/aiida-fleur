@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+DO NOT USE, this is crab so far. The development was stoped because this is done with AiiDA 'caching' now.
+ 
 Here are methods to check the existence of something in the database
 example if a (successful) SCF with the same inputs exists
 """

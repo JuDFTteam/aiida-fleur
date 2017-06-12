@@ -5,16 +5,17 @@ This test runs the initial stae CLS workflow
 #TODO: overall tests, should create the nodes they use in the db.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
-    load_dbenv(profile='aiida_test')
+    load_dbenv()
+    #load_dbenv(profile='aiida_test')
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
-from aiida.tools.codespecific.fleur.initial_state_CLS import initial_state_CLS
+from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 #FleurinpData = DataFactory('fleurinp.fleurinp')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
@@ -48,7 +49,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'serial' : False,
                               'references' : references})
 
-res = initial_state_CLS.run(structure=s, wf_parameters=wf_para, inpgen = code, fleur=code2)# 
+res = fleur_initial_cls_wc.run(structure=s, wf_parameters=wf_para, inpgen = code, fleur=code2)# 
 #wf_parameters=wf_para, 
 '''
     _default_wf_para = {'references' : {'calculate' : 'all'}, 

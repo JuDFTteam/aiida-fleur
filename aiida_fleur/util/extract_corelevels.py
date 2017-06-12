@@ -16,16 +16,15 @@ from pprint import pprint
 from aiida.orm import DataFactory, CalculationFactory
 #from aiida.orm import Computer
 from aiida.orm import load_node
-#from pprint import pprint
-from aiida.tools.codespecific.fleur.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
+from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
 #convert_to_float
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 
-FleurInpCalc = CalculationFactory('fleur_inp.fleurinputgen.FleurinputgenCalculation')
-FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
+FleurInpCalc = CalculationFactory('fleur.inpgen')
+FleurCalc = CalculationFactory('fleur.fleur')
 
 
 #import time

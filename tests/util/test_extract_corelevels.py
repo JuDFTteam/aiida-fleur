@@ -10,13 +10,13 @@ from aiida.orm import Code, DataFactory, CalculationFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
 from pprint import pprint
-from aiida.tools.codespecific.fleur.extract_corelevels import extract_corelevels
+from aiida_fleur.util.extract_corelevels import extract_corelevels
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 
-FleurInpCalc = CalculationFactory('fleur_inp.fleurinputgen.FleurinputgenCalculation')
-FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
+FleurInpCalc = CalculationFactory('fleur.inpgen')
+FleurCalc = CalculationFactory('fleur.fleur')
 
 
 import time

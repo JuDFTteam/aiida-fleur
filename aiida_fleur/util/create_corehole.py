@@ -86,8 +86,10 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
             <stateOccupation state="(5d5/2)" spinUp="2.00000000" spinDown=".00000000"/>
          </electronConfig>
     '''
-    from aiida.orm.data.fleurinp import FleurinpData
-    from aiida.orm.data.fleurinp import eval_xpath2, get_xml_attribute
+    from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
+    # or from fleurinp?
+
+    FleurinpData = DataFactory('fleur.fleurinp')
     ########### all xpath maintain ########### ? needed?
     electronConfig_xpath =  '/fleurInput/atomSpecies/species/electronConfig'
     species_xpath = '/fleurInput/atomSpecies/species'
