@@ -24,6 +24,7 @@ from aiida.work.workchain import while_, if_
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
+from aiida.common.datastructures import calc_states
 
 
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
@@ -121,6 +122,7 @@ class fleur_scf_wc(WorkChain):
             cls.get_res,
             while_(cls.condition)(
                 cls.run_fleur,
+                cls.inspect_fleur,
                 cls.get_res),
             cls.return_results
         )
@@ -295,6 +297,67 @@ class fleur_scf_wc(WorkChain):
 
         return ToContext(last_calc=future) #calcs.append(future),
 
+
+    def inspect_fleur(self):
+        """
+        Analyse the results of the previous Calculation (Fleur or inpgen), checking whether it finished successfully
+        or if not troubleshoot the cause and adapt the input parameters accordingly before
+        restarting, or abort if unrecoverable error was found
+        """
+        expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
+
+        
+        try:
+            calculation = self.ctx.last_calc
+        except Exception:
+            self.ctx.successful = False
+            self.abort_nowait('Something went wrong I do not have a last calculation')
+            return
+
+        calc_state = calculation.get_state()
+        if calc_state != calc_states.FINISHED:
+            #kill workflow in a controled way, call return results, or write a end_routine
+            #TODO
+            #TODO error handling here controled ending routine
+            self.ctx.successful = False
+            error = 'Last Fleur calculation failed somehow it is in state {}'.format(calc_state)
+            #self.report(error)
+            self.abort_nowait(error)
+            return
+
+
+        '''
+        # Done: successful convergence of last calculation
+        if calculation.has_finished_ok():
+            self.report('converged successfully after {} iterations'.format(self.ctx.iteration))
+            self.ctx.restart_calc = calculation
+            self.ctx.is_finished = True
+
+        # Abort: exceeded maximum number of retries
+        elif self.ctx.iteration >= self.ctx.max_iterations:
+            self.report('reached the max number of iterations {}'.format(self.ctx.max_iterations))
+            self.abort_nowait('last ran PwCalculation<{}>'.format(calculation.pk))
+
+        # Abort: unexpected state of last calculation
+        elif calculation.get_state() not in expected_states:
+            self.abort_nowait('unexpected state ({}) of PwCalculation<{}>'.format(
+                calculation.get_state(), calculation.pk))
+
+        # Retry: submission failed, try to restart or abort
+        elif calculation.get_state() in [calc_states.SUBMISSIONFAILED]:
+            self._handle_submission_failure(calculation)
+
+        # Retry: calculation failed, try to salvage or abort
+        elif calculation.get_state() in [calc_states.FAILED]:
+            self._handle_calculation_failure(calculation)
+
+        # Retry: try to convergence restarting from this calculation
+        else:
+            self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
+            self.ctx.restart_calc = calculation
+
+        return
+        '''  
     def get_res(self):
         """
         Check how the last Fleur calculation went
@@ -313,17 +376,10 @@ class fleur_scf_wc(WorkChain):
         #chargedensity_xpath = 'densityConvergence/chargeDensity'
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
-       
+        if not self.ctx.successful:
+            return # otherwise this will lead to erros further down
         last_calc = self.ctx.last_calc
-        # TODO check calculation state:
-        calc_state = 'FINISHED'
-        if calc_state != 'FINISHED':
-            #kill workflow in a controled way, call return results, or write a end_routine
-            #TODO
-            #TODO error handling here controled ending routine
-            self.ctx.successful
-            error = 'Fleur calculation failed somehow'
-            self.abort(error)
+
         '''
         spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
 
