@@ -3,7 +3,7 @@
 #copy plugin files from aiida_fleur into your aiida version
 
 aiida_repo=/usr/users/iff_th1/broeder/aiida/aiida/aiida
-aiida_corelevel=${PWD}
+aiida_corelevel=${PWD}/aiida_fleur_ad
 #'.'
 
 #test if aiida_repo exists
