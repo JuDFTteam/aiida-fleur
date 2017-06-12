@@ -17,19 +17,18 @@ from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
+
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
-#from aiida.tools.codespecific.fleur import create_corehole
-from aiida.tools.codespecific.fleur.extract_corelevels import extract_corelevels
+from aiida_fleur.util.extract_corelevels import extract_corelevels
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
-FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
+FleurCalc = CalculationFactory('fleur.fleur')
 
 htr_to_eV = 1
 
@@ -534,7 +533,7 @@ class fleur_initial_cls_wc(WorkChain):
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
-        outdict['Inital_state_CLS_out'] = outputnode
+        outdict['output_inital_cls_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)

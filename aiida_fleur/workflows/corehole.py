@@ -17,16 +17,16 @@ from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
+
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import while_, if_
-from aiida.tools.codespecific.fleur import create_corehole
+from aiida_fleur.util.create_corehole import create_corehole
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
@@ -267,7 +267,7 @@ class fleur_corehole_wc(WorkChain):
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
-        outdict['band_out'] = outputnode
+        outdict['output_corehole_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
