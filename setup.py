@@ -7,10 +7,10 @@ from setuptools import setup, find_packages
 
 if __name__ == '__main__':
     setup(
-        name='aiida-fleur',
+        name='aiida-fleur-advanced-wcs',
         version='0.1b',
-        description='AiiDA Plugin for running the FLEUR-code and its input generator. Plus some utility',
-        url='https://github.com/broeder-j/aiida_fleur_plugin',
+        description='AiiDA Workchains turnkey solutions using the FLEUR-code and its input generator. Plus some utility',
+        url='https://bitbucket.org/broeder-j/aiida_fleur_corelevel_wf',
         author='Jens Broeder',
         author_email='j.broeder@fz-juelich.de',
         license='MIT License, see LICENSE.txt file.',
@@ -32,6 +32,7 @@ if __name__ == '__main__':
         reentry_register=True,
         install_requires=[
             'aiida-core',
+            'aiida-fleur',
             'ase',
             'lxml >= 3.6.4'
         ],
@@ -39,23 +40,11 @@ if __name__ == '__main__':
             'graphs': ['matplotlib'],
         },
         entry_points={
-            'aiida.calculations': [
-                'fleur.fleur = aiida_fleur.calculation.fleur:FleurCalculation',
-                'fleur.inpgen = aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation',
-            ],
-            'aiida.data': [
-                'fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData',
-                'fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier',
-            ],
-            'aiida.parsers': [
-                'fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser',
-                'fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser'
-            ],
             'aiida.workflows': [
-                'fleur.scf = aiida_fleur.workflows.scf:fleur_scf_wc',
-                'fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc',
-                'fleur.band = aiida_fleur.workflows.band:fleur_band_wc',
-                'fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc'
+                'fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_inital_cls_wc',
+                'fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc',
+                'fleur.corelevel = aiida_fleur.workflows.corelevel:fleur_corelevel_wc',
+                #'fleur.xps = aiida_fleur.workflows.xps:fleur_xps_wc'
            ]
         },
     )
