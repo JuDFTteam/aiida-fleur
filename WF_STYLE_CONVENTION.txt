@@ -1,22 +1,53 @@
-Here are some guidlines form writting FLEUR workflows and AiiDA in general.
+__author__: Jens Broeder (j.broeder@fz-juelich.de)
 
-general:
+Here are some guidlines for writting FLEUR workflows/workchains and AiiDA in general.
+Keep in mind that a workflow is REAL SOFTWARE which will be used by others and build ontop and NOT a script.
 
-1. Every Workflow needs a clear documentation of input, output structures o
-2. reuse as much of previous workflows as possible.
+
+########################
+
+GENERAL:
+
+1. Every Workflow needs a clear documentation of input, output! Think this through and do not change it later on, bcause you will break the code of others! Therefore thinking about good names (see below) is not wasted time.
+
+2. reuse as much of previous workflows as possible, use subworkflows.
+(otherwise your code exploded, is hard to understand again und not reusable)
+
 3. If you think somthing processing is common or might be useful for something else,
-make it modular, and import the method
-4. Try to keep the context clean
+make it modular, and import the method (goes along with point 2.).
 
-5. ggf one has to think about resource managment.
+4. Try to keep the workflow context clean! (this part will always be saved and visible, there people track what is going on.
+
+5. Write clear report statements in the worklow report.
+
+6. ggf one has to think about resource managment.
 i.e if a big system needs to be calculated and the user says use x hundred cores,
 and in the workflow simulations on very small systems need to be done, it makes no
-sense to submit a job with the same huge amoun
+sense to submit a job with the same huge amount
+(use a default amount of resources, or the given ones if they are less, for small calculations)
 
-Fleur Specific:
+7. ERROR handling:
 
-1. Output of a workflow has the nameing convention 'output_wfname_description'
-   i.e 'output_scf_wf_para'
+Error handling is very important and might take a lot of effort. Write at least an outline (named: inspect_xx, handle_xx), which skeleton for all the errors (treated or not). (look at the aiida QE workflows as example)
+Now iterative put every time you ancounter a 'crash' because something failed (usually variable/node acess stuff), the corresponding code in a try block and call your handler.
+Use self.abort('message') to clearly terminate the workflow in the case something went wrong and it makes no sense to continue.
+
+Keep in mind, your workflow should never:
+
+7.1 end up in a while true (because of a calculation or subworkflow failure)
+7.2 crash with at a later point because a calculation or subworkflow failed.
+(The user won't understand so easly what append, also this makes it impossible to build useful error handling of your workflow ontop (when using your workflow as a subworkflow))
+....
+
+
+
+
+##########################
+
+FLEUR Specific:
+
+1. Output nodes of a workflow has the nameing convention 'output_name_description'
+   i.e 'output_scf_wc_para'
    
 2. Every workflow should give back one parameter output node named 'output_wfname_para'
    which contains all the 'physical results' the workflow is designd to provide,
@@ -30,4 +61,6 @@ Fleur Specific:
    what came out?  What was put in, how can I see what was put in?
    Is this valueable or garbage?
    
-3. so far workflow name: fleur_name_wc   
+3. so far name Fleur workflows/workchains name: fleur_name_wc
+
+4. (advanced) group workflow internal(between) calculations and add extras to calcualtion. (that way one can extract them from global querries, if need.

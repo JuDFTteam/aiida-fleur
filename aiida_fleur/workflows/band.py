@@ -6,6 +6,7 @@ This is the worklfow 'band' for the Fleur code, which calculates a
 electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
+# TODO alternative parse a structure and run scf
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -17,8 +18,6 @@ from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur

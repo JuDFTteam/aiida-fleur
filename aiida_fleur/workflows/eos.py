@@ -98,6 +98,7 @@ class fleur_eos_wc(WorkChain):
         self.ctx.points = wf_dict.get('points', 2)#9
         self.ctx.step = wf_dict.get('step', 0.002)
         self.ctx.guess = wf_dict.get('guess', 1.00)
+        self.ctx.serial = wf_dict.get('serial', False)#True
         # set values, or defaults, default: always converge charge density, crit < 0.00002, max 4 fleur runs
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
@@ -154,6 +155,7 @@ class fleur_eos_wc(WorkChain):
             para['resources'] = wf_para_dict.get('resources')
             para['walltime_sec'] = wf_para_dict.get('walltime_sec')
             para['queue_name'] = wf_para_dict.get('queue_name')
+            para['serial'] = wf_para_dict.get('serial')
             inputs['wf_parameters'] = ParameterData(dict=para)        
         inputs['calc_parameters'] = self.inputs.calc_parameters
         inputs['inpgen'] = self.inputs.inpgen
@@ -179,7 +181,7 @@ class fleur_eos_wc(WorkChain):
             if calc.get('successful', False):
                 self.ctx.successful = False
                 # TODO print something
-            outpara = calc['output_scf_wf_para'].get_dict()
+            outpara = calc['output_scf_wc_para'].get_dict()
             #get total_energy, density distance
             #print outpara
             t_e = outpara.get('total_energy', -1)
@@ -226,7 +228,7 @@ class fleur_eos_wc(WorkChain):
  
         # output must be aiida Data types.        
         outdict = {}
-        outdict['output_eos_wf_para']  = ParameterData(dict=out)
+        outdict['output_eos_wc_para']  = ParameterData(dict=out)
         print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
