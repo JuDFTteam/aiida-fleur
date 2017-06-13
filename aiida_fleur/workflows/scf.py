@@ -108,7 +108,7 @@ class fleur_scf_wc(WorkChain):
                                                'reuse' : True}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        #spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -270,6 +270,8 @@ class fleur_scf_wc(WorkChain):
             remote = self.ctx['last_calc'].out.remote_folder
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
+        else:
+            remote = None
         code = self.inputs.fleur
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,

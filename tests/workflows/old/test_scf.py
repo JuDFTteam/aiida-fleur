@@ -8,7 +8,7 @@ if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
-from aiida_fleur.worklfows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import fleur_scf_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -18,11 +18,11 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
-codename = 'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
+codename = 'inpgen_iff_0.28@local_iff' #'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
 #codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
 #codename = 'fleur_inpgen_iff003@iff003'#'inpgen_mac_30_11_2016@local_mac'
 #codename2 = 'fleur_iff003_v0_27@iff003'#fleur_iff@iff003'#'fleur_mac_v0_27@local_mac'
-codename2 = 'fleur_MPI_iff003_v0_27@iff003'
+codename2 = 'fleur_iff_0.28@local_iff'#'fleur_MPI_iff003_v0_27@iff003'
 ###############################
 
 code = Code.get_from_string(codename)
