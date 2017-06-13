@@ -7,7 +7,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import DataFactory
-from aiida.orm.data.fleurinp.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from pprint import pprint
 from lxml import etree
 from lxml.etree import XMLSyntaxError
@@ -17,7 +17,7 @@ import time
 start_time = time.time()
 
 ParameterData = DataFactory('parameter')
-FleurInpData = DataFactory('fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 
 #schemanameQq
 

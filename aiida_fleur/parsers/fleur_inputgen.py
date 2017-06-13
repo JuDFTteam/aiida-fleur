@@ -13,11 +13,11 @@ import os
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.parsers.plugins.fleur_inp import FleurOutputParsingError
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.parsers import FleurOutputParsingError
 from aiida.parsers.parser import Parser
 #from aiida.orm.data.fleurinp.fleurinp import FleurinpData
-from aiida.orm.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData
 #from aiida.orm.data.fleurinp import get_inpxml_file_structure
 #from aiida.orm.data.parameter import ParameterData
 #from aiida.common.exceptions import InputValidationError,ValidationError,

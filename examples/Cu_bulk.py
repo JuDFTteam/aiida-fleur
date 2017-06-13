@@ -5,12 +5,12 @@ if not is_dbenv_loaded():
 import sys,os 
 from aiida.orm import Code, DataFactory, Computer, load_node
 from aiida.work.run import async, run
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
-FleurinpData = DataFactory('fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 codename = 'inpgen_iff@local_iff'

@@ -7,7 +7,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 
-from aiida.parsers.plugins.fleur_inp.fleur import parse_xmlout_file
+from aiida_fleur.parsers.fleur import parse_xmlout_file
 
 
 

@@ -16,7 +16,7 @@ import os
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.orm import DataFactory
-from aiida.tools.codespecific.fleur.StructureData_util import rel_to_abs
+from aiida_fleur.tools.StructureData_util import rel_to_abs
 
 ################################################################
 

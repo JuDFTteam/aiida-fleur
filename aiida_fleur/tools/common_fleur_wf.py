@@ -14,8 +14,8 @@ from aiida.orm import Code, DataFactory, load_node
 #from aiida.work.workchain import ToContext
 #from aiida.work.process_registry import ProcessRegistry
 #from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -27,7 +27,7 @@ __contributors__ = "Jens Broeder"
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
-FleurInpData = DataFactory('fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
 

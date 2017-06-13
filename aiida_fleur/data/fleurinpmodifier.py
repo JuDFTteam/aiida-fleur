@@ -25,7 +25,7 @@ from aiida.orm import DataFactory
 #from aiida.workflows2.wf import wf
 from aiida.work.workfunction import workfunction as wf
 
-FleurinpData = DataFactory("fleurinp")
+FleurinpData = DataFactory("fleur.fleurinp")
 
 class FleurinpModifier(object):
 
@@ -89,7 +89,7 @@ class FleurinpModifier(object):
         lxml etree of inp.xml
         and task dictionary
         """
-        from aiida.tools.codespecific.fleur.xml_util import xml_set_attribv_occ,xml_set_first_attribv,xml_set_all_attribv, xml_set_text, xml_set_all_text, create_tag, replace_tag, delete_tag, delete_att, set_species, change_atomgr_att#, set_inpchanges
+        from aiida_fleur.tools.xml_util import xml_set_attribv_occ,xml_set_first_attribv,xml_set_all_attribv, xml_set_text, xml_set_all_text, create_tag, replace_tag, delete_tag, delete_att, set_species, change_atomgr_att#, set_inpchanges
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=[0], create=False):
             xml_set_attribv_occ(fleurinp_tree_copy, xpathn, attributename, attribv, occ=occ, create=create)
@@ -152,7 +152,7 @@ class FleurinpModifier(object):
                                 overwriting existing keys.
             """
             #print 'in set_inpchanges'
-            from aiida.tools.codespecific.fleur.xml_util import write_new_fleur_xmlinp_file, get_inpxml_file_structure
+            from aiida_fleur.tools.xml_util import write_new_fleur_xmlinp_file, get_inpxml_file_structure
             
             #TODO if we still want tracking that way, have to get fleurinp in argument
             '''

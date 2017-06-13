@@ -1,5 +1,6 @@
-Plug-in Classes
-===============
+=========================
+Source code Documentation
+=========================
 
 
 Fleur input generator plug-in
@@ -8,7 +9,7 @@ Fleur input generator plug-in
 
 Fleurinputgen Calculation
 -------------------------
-.. automodule:: aiida.orm.calculation.job.fleur_inp.fleurinputgen
+.. automodule:: aiida_fleur.calculation.fleurinputgen
    :members:
 
 Fleurinputgen Parser
@@ -23,14 +24,14 @@ Fleur input Data structure
 
 Fleur input Data structure
 --------------------------
-.. automodule:: aiida.orm.data.fleurinp
+.. automodule:: aiida_fleur.data.fleurinp
    :members:
    :special-members: __init__
 
 Fleurinp modifier
 -----------------
 
-.. automodule:: aiida.orm.data.fleurinp.fleurinpmodifier
+.. automodule:: aiida_fleur.data.fleurinpmodifier
    :members:
 
 Fleur-code plugin
@@ -38,7 +39,7 @@ Fleur-code plugin
 
 Fleur Calculation
 -----------------
-.. automodule:: aiida.orm.calculation.job.fleur_inp.fleur
+.. automodule:: aiida_fleur.calculation.fleur
    :members:
 
 Fleur Parser
@@ -46,27 +47,61 @@ Fleur Parser
 .. automodule:: aiida_fleur.parsers.fleur
    :members:
 
-Fleur tools/utility
-===================
+Workflows/Workchains
+++++++++++++++++++++
 
-Structure Data util
+SCF: Fleur-scf wf
+-------------------------
+
+.. automodule:: aiida_fleur.workflows.scf
+   :members:
+
+Band: Bandstructure wf
+----------------------
+
+.. automodule:: aiida_fleur.workflows.band
+   :members:
+
+DOS: Density of states wf
+-------------------------
+
+.. automodule:: aiida_fleur.workflows.dos
+   :members:
+
+EOS: Calculate a lattice constant
+---------------------------------
+
+.. automodule:: aiida_fleur.workflows.eos
+   :members:
+
+Relax: Relaxation of a Cystalstructure wf
+-----------------------------------------
+
+.. automodule:: aiida_fleur.workflows.relax
+   :members:
+
+
+Fleur tools/utility
 +++++++++++++++++++
 
-.. automodule:: aiida.tools.codespecific.fleur.StructureData_util
+Structure Data util
+-------------------
+
+.. automodule:: aiida_fleur.tools.StructureData_util
    :members:
 
 XML utility
-+++++++++++
+-----------
 
-.. automodule:: aiida.tools.codespecific.fleur.xml_util
+.. automodule:: aiida_fleur.tools.xml_util
    :members:
 
 Parameter utility
-+++++++++++++++++
+-----------------
 
 Merge Parameter
----------------
+_______________
 
-.. automodule:: aiida.tools.codespecific.fleur.merge_parameter
+.. automodule:: aiida_fleur.tools.merge_parameter
    :members:
 
