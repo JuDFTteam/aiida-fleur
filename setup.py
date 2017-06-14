@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 if __name__ == '__main__':
     setup(
         name='aiida-fleur',
-        version='0.1b',
+        version='0.4.0b',
         description='AiiDA Plugin for running the FLEUR-code and its input generator. Plus some basic workflows and utility',
         url='https://github.com/broeder-j/aiida-fleur',
         author='Jens Broeder',
