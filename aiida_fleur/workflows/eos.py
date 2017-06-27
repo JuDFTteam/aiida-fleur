@@ -13,6 +13,9 @@ if not is_dbenv_loaded():
     load_dbenv()
 #import sys,os
 from ase import *
+import numpy as np
+from sys import argv
+
 from ase.lattice.surface import *
 from ase.io import *
 from aiida.orm import Code, CalculationFactory, DataFactory
@@ -20,10 +23,12 @@ from aiida.orm import Computer
 from aiida.orm import load_node
 from aiida.orm.data.singlefile import SinglefileData
 from aiida.work.process_registry import ProcessRegistry
+from aiida.work.workchain import Outputs, ToContext
 
 #from aiida.work.workfunction import workfunction as wf
 from aiida.work.workchain import WorkChain
-
+from aiida.work import async as asy
+from aiida.work import submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
@@ -84,15 +89,20 @@ class fleur_eos_wc(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         """
+        self.report('started eos workflow version {}'.format(self._workflowversion))
+        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))  
         print('started eos workflow version {}'.format(self._workflowversion))
         print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
+        self.ctx.calcs_future = []
         self.ctx.structures = []
+        self.ctx.temp_calc = None
         self.ctx.structurs_uuids = []
         self.ctx.scalelist = []
         self.ctx.volume = []
+        self.ctx.labels = []
         self.ctx.successful = True#False # TODO get all succesfull from convergence, if all True this
         wf_dict = self.inputs.wf_parameters.get_dict()
         self.ctx.points = wf_dict.get('points', 2)#9
@@ -112,9 +122,11 @@ class fleur_eos_wc(WorkChain):
         startscale = guess-(points-1)/2*step
         for point in range(points):
             self.ctx.scalelist.append(startscale + point*step)
+        self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
         print 'scaling factors which will be calculated:{}'.format(self.ctx.scalelist)
         self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
-
+    '''
+    # I do not know yet how to deal with several futures in one workflow step, therefore rewrite...
     def converge_scf(self):
         """
         start scf-cycle from Fleur calculation
@@ -126,19 +138,59 @@ class fleur_eos_wc(WorkChain):
             inputs['structure'] = struc
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.structurs_uuids.append(struc.uuid)
-            res = fleur_scf_wc.run(
+            res = submit(fleur_scf_wc,
                       wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], 
                       calc_parameters=inputs['calc_parameters'], 
                       inpgen = inputs['inpgen'], 
-                      fleur=inputs['fleur'])# async
-            self.ctx.calcs.append(res)
+                      fleur=inputs['fleur'])# asy async .run( submit()
+            self.ctx.calcs_future.append(res)
+            #self.ctx.calcs.append(res)
+        for future in self.ctx.calcs_future:
+            ToContext(temp_calc=future)
+            self.ctx.calcs.append(self.ctx.temp_calc)
+        return ToContext(temp_calc=res)           
             #print self.ctx.calcs
             #ResultToContext(self.ctx.calcs1.append(res))
             #calcs.append(res)
         #self.ctx.last_calc2 = res#.get('remote_folder', None)
         #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),
-
+    ''' 
+    
+    def converge_scf(self):
+        """
+        start scf-cycle from Fleur calculation
+        """    
+        #calcs = []
+        calcs= {}
+        # run a convergence worklfow# TODO better sumbit or async?
+        for i, struc in enumerate(self.ctx.structurs):
+            inputs = self.get_inputs_scf()
+            inputs['structure'] = struc
+            self.ctx.volume.append(struc.get_cell_volume())
+            self.ctx.structurs_uuids.append(struc.uuid)
+            res = asy(fleur_scf_wc,
+                      wf_parameters=inputs['wf_parameters'],
+                      structure=inputs['structure'], 
+                      calc_parameters=inputs['calc_parameters'], 
+                      inpgen = inputs['inpgen'], 
+                      fleur=inputs['fleur'])# asy async .run( submit()
+            #self.ctx.calcs_future.append(res)
+            label = str(self.ctx.scalelist[i])
+            self.ctx.labels.append(label)
+            calcs[label] = res
+            #self.ctx.calcs.append(res)
+        # for future in self.ctx.calcs_future:
+        #    ToContext(temp_calc=future)
+        #    self.ctx.calcs.append(self.ctx.temp_calc)
+        return ToContext(**calcs)           
+            #print self.ctx.calcs
+            #ResultToContext(self.ctx.calcs1.append(res))
+            #calcs.append(res)
+        #self.ctx.last_calc2 = res#.get('remote_folder', None)
+        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),    
+ 
+    
     def get_inputs_scf(self):
         """
         get the inputs for a scf-cycle
@@ -176,32 +228,61 @@ class fleur_eos_wc(WorkChain):
         distancelist = []
         t_energylist = []
         latticeconstant = 0
-        #print self.ctx.calcs1
-        for calc in self.ctx.calcs:
-            if calc.get('successful', False):
+
+        print(self.ctx.calcs)
+        print(self.ctx.labels)
+        print('#####')
+     
+        for label in self.ctx.labels:
+            calc = self.ctx[label]
+            print(calc)
+            outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+            if outpara.get('successful', False):
+                #maybe do something else here (exclude point and write a warning or so, or error treatment)
                 self.ctx.successful = False
-                # TODO print something
-            outpara = calc['output_scf_wc_para'].get_dict()
-            #get total_energy, density distance
-            #print outpara
-            t_e = outpara.get('total_energy', -1)
+            t_e = outpara.get('total_energy', None)
             e_u = outpara.get('total_energy_units', 'eV')
-            dis = outpara.get('distance_charge', -1)
+            dis = outpara.get('distance_charge', None)
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
-            distancelist.append(dis)
+            distancelist.append(dis)                
+        
+        print(t_energylist)   
+        print(self.ctx.volume)
+        print(distancelist)
+        #print(self.ctx.calcs_last)
+        #for calc in self.ctx.calcs:
+        #    if calc.get('successful', False):
+        #        self.ctx.successful = False
+        #        # TODO print something
+        #    outpara = calc['output_scf_wc_para'].get_dict()
+        #    #get total_energy, density distance
+        #    #print outpara
+        #    t_e = outpara.get('total_energy', -1)
+        #    e_u = outpara.get('total_energy_units', 'eV')
+        #    dis = outpara.get('distance_charge', -1)
+        #    dis_u = outpara.get('distance_charge_units')
+        #    t_energylist.append(t_e)
+        #    distancelist.append(dis)
         # fit lattice constant
-        a, latticeconstant, c, fit = fit_latticeconstant(self.ctx.scalelist, t_energylist)
+        #a, latticeconstant, c, fit = fit_latticeconstant(self.ctx.scalelist, t_energylist)
+        a = np.array(t_energylist)
+        b = np.array(self.ctx.volume)
+        if t_energylist:
+            volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(a, b)
+        else: 
+            print('error')
         # somehow problem, that fit is 'array'
-        fit_new = []
-        for val in fit:
-            fit_new.append(val)
+        #fit_new = []
+        #for val in fit:
+        #    fit_new.append(val)
         #TODO optimal volume?
         out = {
                'workflow_name' : self.__class__.__name__,
                'scaling': self.ctx.scalelist,
                'initial_structure': self.inputs.structure.uuid,
-               'volume' : self.ctx.volume,
+               'volume' : volume,#self.ctx.volume,
+               'volums' : self.ctx.volume,
                'volume_units' : 'A^3',
                'total_energy': t_energylist,
                'total_energy_units' : e_u,
@@ -215,15 +296,20 @@ class fleur_eos_wc(WorkChain):
                'stepsize' : self.ctx.step,
                'lattice_constant' : latticeconstant, # miss leading, currently scaling
                'lattice_constant_units' : '',
-               'fitresults' : [a, latticeconstant, c], 
-               'fit' : fit_new, 
+               #'fitresults' : [a, latticeconstant, c], 
+               #'fit' : fit_new, 
+               'residuals' : residuals,
+               'bulk_deriv' : bulk_deriv,
+               'bulk_modulus' : bulk_modulus,
                'successful' : self.ctx.successful}
         
         print out
         
         if self.ctx.successful:
+            self.report('Done, Equation of states calculation complete')
             print 'Done, Equation of states calculation complete'
         else:
+            self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
             print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
  
         # output must be aiida Data types.        
@@ -301,9 +387,46 @@ def parabola(x, a, b, c):
 
 
 
+def Birch_Murnaghan_fit(energies, volumes):
+    """
+    least squares fit of a Birch-Murnaghan equation of state curve. From delta project
+    containing in its columns the volumes in A^3/atom and energies in eV/atom
 
+    :params energies: list (numpy arrays!) of total energies eV/atom
+    :params volumes: list (numpy arrays!) of volumes in A^3/atom
+    
+    #volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(data)
+    """
+    fitdata = np.polyfit(volumes[:]**(-2./3.), energies[:], 3, full=True)
+    ssr = fitdata[1]
+    sst = np.sum((energies[:] - np.average(energies[:]))**2.)
+    print(fitdata)
+    print(ssr)
+    print(sst)
+    residuals0 = ssr/sst
+    deriv0 = np.poly1d(fitdata[0])
+    deriv1 = np.polyder(deriv0, 1)
+    deriv2 = np.polyder(deriv1, 1)
+    deriv3 = np.polyder(deriv2, 1)
 
+    volume0 = 0
+    x = 0
+    for x in np.roots(deriv1):
+        if x > 0 and deriv2(x) > 0:
+            volume0 = x**(-3./2.)
+            break
 
+    if volume0 == 0:
+        print('Error: No minimum could be found')
+        exit()
+    
+    derivV2 = 4./9. * x**5. * deriv2(x)
+    derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
+        8./27. * x**(15./2.) * deriv3(x))
+    bulk_modulus0 = derivV2 / x**(3./2.)
+    bulk_deriv0 = -1 - x**(-3./2.) * derivV3 / derivV2
+
+    return volume0, bulk_modulus0, bulk_deriv0, residuals0
 
 
 
