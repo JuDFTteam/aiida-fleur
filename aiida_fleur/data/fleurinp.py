@@ -233,10 +233,10 @@ class FleurinpData(Data):
         old_file_list = self.get_folder_list()
 
         if not os.path.isabs(src_abs):
-            raise ValueError("Pass an absolute path for src_abs")
+            raise ValueError("Pass an absolute path for src_abs: {}".format(src_abs))
 
         if not os.path.isfile(src_abs):
-            raise ValueError("src_abs must exist and must be a single file")
+            raise ValueError("src_abs must exist and must be a single file: {}".format(src_abs))
 
         if dst_filename is None:
             final_filename = os.path.split(src_abs)[1]
@@ -1138,6 +1138,33 @@ class FleurinpData(Data):
         else:
             return return_value
     '''
+
+from aiida.orm.data.base import Str
+
+#@wf
+def extract_parameterdata(fleurinp, element=Str('all'))
+    """
+    Method to extract a ParameterData node from a fleurinp data object. 
+    This parameter node can be used as an input node for inpgen.
+    
+    :param: fleurinp: an FleurinpData node
+    :param: element: string ('all', 'W', 'W O') default all, or specify the
+    species you want to extract
+    
+    :return: ParameterData node
+    """
+    pass
+    print("sorry not implemented yet")
+    if element=='all':
+        pass
+    else:
+        species = element.split()
+
+    #open inpxml tree
+    #use xpath expressions to extract parameters for all species or certain species
+
+    #store species paremeters in the right form in a parameter data node.
+
 '''
 # TODO write xml util and put all these functions there, parse as option a logger,
 # that parser can use these methods too.

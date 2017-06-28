@@ -31,8 +31,8 @@ import os
 extensions = ['sphinx.ext.autodoc', 
               'sphinx.ext.doctest', 
               'sphinx.ext.todo', 
-              'sphinx.ext.coverage', 
-              'sphinx.ext.pngmath', 
+              'sphinx.ext.coverage',  
+              'sphinx.ext.imgmath',
               'sphinx.ext.ifconfig', 
               'sphinx.ext.viewcode']
 
