@@ -102,6 +102,7 @@ class fleur_eos_wc(WorkChain):
         self.ctx.structurs_uuids = []
         self.ctx.scalelist = []
         self.ctx.volume = []
+        self.ctx.volume_peratom = []
         self.ctx.labels = []
         self.ctx.successful = True#False # TODO get all succesfull from convergence, if all True this
         wf_dict = self.inputs.wf_parameters.get_dict()
@@ -167,7 +168,9 @@ class fleur_eos_wc(WorkChain):
         for i, struc in enumerate(self.ctx.structurs):
             inputs = self.get_inputs_scf()
             inputs['structure'] = struc
+            natoms = len(struc.sites)
             self.ctx.volume.append(struc.get_cell_volume())
+            self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
             res = asy(fleur_scf_wc,
                       wf_parameters=inputs['wf_parameters'],
@@ -218,72 +221,49 @@ class fleur_eos_wc(WorkChain):
 
     def return_results(self):
         """
-        return the results of the calculations
+        return the results of the calculations  (scf workchains) and do a 
+        Birch-Murnaghan fit for the equation of states
         """
-        # TODO create parameterNode with all results, all total energy and their, scaling
-        #factor and lattice constant.
-        # TODO: maybe create a standart plot?
-        # node : {scaling: list, total_energy: list, structures : list, calculations_outputs : list,
-        # convergence : list, nsteps : int, guess :float, stepsize : float, lattice_constant :float, lattice_constant_units : 'Angstroem'
         distancelist = []
         t_energylist = []
-        latticeconstant = 0
-
-        print(self.ctx.calcs)
-        print(self.ctx.labels)
-        print('#####')
+        t_energylist_peratom = []
+        #latticeconstant = 0
+        natoms = len(self.inputs.structure.sites)
+        htr2eV = 27.21138602
      
         for label in self.ctx.labels:
             calc = self.ctx[label]
-            print(calc)
+            #print(calc)
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
-            if outpara.get('successful', False):
+            if not outpara.get('successful', False):
                 #maybe do something else here (exclude point and write a warning or so, or error treatment)
                 self.ctx.successful = False
             t_e = outpara.get('total_energy', None)
             e_u = outpara.get('total_energy_units', 'eV')
+            if e_u == 'Htr' or 'htr':
+                t_e = t_e * htr2eV
             dis = outpara.get('distance_charge', None)
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
+            t_energylist_peratom.append(t_e/natoms)
             distancelist.append(dis)                
         
-        print(t_energylist)   
-        print(self.ctx.volume)
-        print(distancelist)
-        #print(self.ctx.calcs_last)
-        #for calc in self.ctx.calcs:
-        #    if calc.get('successful', False):
-        #        self.ctx.successful = False
-        #        # TODO print something
-        #    outpara = calc['output_scf_wc_para'].get_dict()
-        #    #get total_energy, density distance
-        #    #print outpara
-        #    t_e = outpara.get('total_energy', -1)
-        #    e_u = outpara.get('total_energy_units', 'eV')
-        #    dis = outpara.get('distance_charge', -1)
-        #    dis_u = outpara.get('distance_charge_units')
-        #    t_energylist.append(t_e)
-        #    distancelist.append(dis)
-        # fit lattice constant
-        #a, latticeconstant, c, fit = fit_latticeconstant(self.ctx.scalelist, t_energylist)
         a = np.array(t_energylist)
-        b = np.array(self.ctx.volume)
-        if t_energylist:
-            volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(a, b)
-        else: 
-            print('error')
-        # somehow problem, that fit is 'array'
-        #fit_new = []
-        #for val in fit:
-        #    fit_new.append(val)
-        #TODO optimal volume?
+        b = np.array(self.ctx.volume_peratom)
+        # all erros should be caught before
+        #if t_energylist:
+        volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(a, b)
+        #else: 
+        #    print('error')
+        #echarge = 1.60217733e-19
         out = {
                'workflow_name' : self.__class__.__name__,
                'scaling': self.ctx.scalelist,
                'initial_structure': self.inputs.structure.uuid,
-               'volume' : volume,#self.ctx.volume,
-               'volums' : self.ctx.volume,
+               'volume_gs' : volume*natoms,#self.ctx.volume,
+               'volumes' : self.ctx.volume,
                'volume_units' : 'A^3',
+               'natoms' : natoms,
                'total_energy': t_energylist,
                'total_energy_units' : e_u,
                'structures' : self.ctx.structurs_uuids, 
@@ -294,16 +274,17 @@ class fleur_eos_wc(WorkChain):
                'nsteps' : self.ctx.points,
                'guess' : self.ctx.guess , 
                'stepsize' : self.ctx.step,
-               'lattice_constant' : latticeconstant, # miss leading, currently scaling
-               'lattice_constant_units' : '',
+               #'lattice_constant' : latticeconstant, # miss leading, currently scaling
+               #'lattice_constant_units' : '',
                #'fitresults' : [a, latticeconstant, c], 
                #'fit' : fit_new, 
                'residuals' : residuals,
                'bulk_deriv' : bulk_deriv,
-               'bulk_modulus' : bulk_modulus,
+               'bulk_modulus' : bulk_modulus * 1.60217733 * 100.0,#* echarge * 1.0e21,
+               'bulk_modulus_units' : 'GPa',
                'successful' : self.ctx.successful}
         
-        print out
+        #print out
         
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
@@ -315,7 +296,7 @@ class fleur_eos_wc(WorkChain):
         # output must be aiida Data types.        
         outdict = {}
         outdict['output_eos_wc_para']  = ParameterData(dict=out)
-        print outdict
+        #print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
 
@@ -385,13 +366,12 @@ def parabola(x, a, b, c):
     return a*x**2 + b*x + c
 
 
-
-
 def Birch_Murnaghan_fit(energies, volumes):
     """
     least squares fit of a Birch-Murnaghan equation of state curve. From delta project
     containing in its columns the volumes in A^3/atom and energies in eV/atom
-
+    # The following code is based on the source code of eos.py from the Atomic 
+    # Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>.
     :params energies: list (numpy arrays!) of total energies eV/atom
     :params volumes: list (numpy arrays!) of volumes in A^3/atom
     
@@ -400,9 +380,9 @@ def Birch_Murnaghan_fit(energies, volumes):
     fitdata = np.polyfit(volumes[:]**(-2./3.), energies[:], 3, full=True)
     ssr = fitdata[1]
     sst = np.sum((energies[:] - np.average(energies[:]))**2.)
-    print(fitdata)
-    print(ssr)
-    print(sst)
+    #print(fitdata)
+    #print(ssr)
+    #print(sst)
     residuals0 = ssr/sst
     deriv0 = np.poly1d(fitdata[0])
     deriv1 = np.polyder(deriv0, 1)
@@ -424,9 +404,24 @@ def Birch_Murnaghan_fit(energies, volumes):
     derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
         8./27. * x**(15./2.) * deriv3(x))
     bulk_modulus0 = derivV2 / x**(3./2.)
+    print bulk_modulus0
     bulk_deriv0 = -1 - x**(-3./2.) * derivV3 / derivV2
 
     return volume0, bulk_modulus0, bulk_deriv0, residuals0
 
-
-
+def Birch_Murnaghan(volumes, volume0, bulk_modulus0, bulk_deriv0):
+    """
+    This evaluates the Birch Murnaghan equation of states
+    """
+    PV = []
+    EV = []
+    v0 = volume0
+    bm = bulk_modulus0
+    dbm = bulk_deriv0
+    
+    for vol in volumes:
+        pv_val = 3 * bm/2. * ((v0/vol)**(7/3.) - (v0/vol)**(5/3.)) * (1 + 3/4. * (dbm -4) * ((v0/vol)**(2/3.)-1))
+        PV.append(pv_val)
+        ev_val = 9 * bm*v0/16. * ((dbm*(v0/vol)**(2/3.) - 1)**(3) * ((v0/vol)**(2/3.)-1)**2 * (6-4*(v0/vol)**(2/3.)))
+        EV.appemd(ev_val)
+    return EV, PV
