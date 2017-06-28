@@ -73,9 +73,10 @@ calc.set_max_wallclock_seconds(300)  # 5 min
 if run_in_serial_mode:
     calc.set_withmpi(False)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
-calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 12})
-#calc.set_resources({"tot_num_mpiprocs" : 1})
-#calc.set_custom_scheduler_commands("#BSUB -P jara0043")
+#calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 12})
+calc.set_resources({"tot_num_mpiprocs" : 8})
+calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -a intelmpi")
+#calc.set_custom_scheduler_commands("#BSUB -P test-clx \n#BSUB -a intelmpi")
 
 if queue is not None:
     calc.set_queue_name(queue)
