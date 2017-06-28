@@ -15,7 +15,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory, CalculationFactory
+from aiida.orm import DataFactory, CalculationFactory, load_node
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation as calc
 
 
@@ -72,7 +72,7 @@ parameters = ParameterData(dict={
                   'kpt': {
                         'nkpt': 200,
                         }})
-    
+#s=load_node(5814)    
 #elements = list(s.get_symbols_set())    
 
 ## For remote codes, it is not necessary to manually set the computer,
@@ -92,11 +92,11 @@ calc.set_resources({"num_machines": 1})
 calc.set_withmpi(False)
 calc.use_code(code)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
-# calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 8})
-calc.set_resources({"tot_num_mpiprocs" : 1})
+calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 8})
+#calc.set_resources({"tot_num_mpiprocs" : 1})
 
 #calc.set_custom_scheduler_commands("#SBATCH --account=ch3")
-calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -x")
+#calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -x")
 
 if queue is not None:
     calc.set_queue_name(queue)

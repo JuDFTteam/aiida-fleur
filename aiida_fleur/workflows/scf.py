@@ -25,7 +25,7 @@ from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
-
+from aiida.work.workchain import Outputs
 
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -141,7 +141,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.last_calc = None
         self.ctx.loop_count = 0
         self.ctx.calcs = []
-        self.ctx.successful = False
+        self.ctx.successful = True
         self.ctx.distance = []
         self.ctx.total_energy = []
         self.energydiff = 10000
@@ -280,10 +280,15 @@ class fleur_scf_wc(WorkChain):
         if self.ctx['last_calc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_calc'].out.remote_folder
+            #print('found last calc remote folder')
+            #print(remote)
+            #print(self.ctx['last_calc'])
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
+            #print('remote from input')#is this taken only once or all the time?
         else:
             remote = None
+            #print('no remote')
         code = self.inputs.fleur
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
@@ -297,8 +302,8 @@ class fleur_scf_wc(WorkChain):
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
         self.ctx.calcs.append(future)
 
-        return ToContext(last_calc=future) #calcs.append(future),
-
+        #return ToContext(last_calc=Outputs(future)) #calcs.append(future),
+        return ToContext(last_calc=future)
 
     def inspect_fleur(self):
         """
@@ -307,16 +312,18 @@ class fleur_scf_wc(WorkChain):
         restarting, or abort if unrecoverable error was found
         """
         expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
-
+        print(self.ctx['last_calc'])
         
         try:
-            calculation = self.ctx.last_calc
+            calculation = self.ctx['last_calc']
         except Exception:
             self.ctx.successful = False
             self.abort_nowait('Something went wrong I do not have a last calculation')
+            self.report('Something went wrong I do not have a last calculation')
             return
 
         calc_state = calculation.get_state()
+        print(calc_state)
         if calc_state != calc_states.FINISHED:
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
@@ -379,6 +386,7 @@ class fleur_scf_wc(WorkChain):
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
         if not self.ctx.successful:
+            print('not successful')
             return # otherwise this will lead to erros further down
         last_calc = self.ctx.last_calc
 
@@ -406,15 +414,20 @@ class fleur_scf_wc(WorkChain):
        
         '''
         #TODO: dangerous, can fail, error catching
+        #print(last_calc)
         outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
+        #outpara = last_calc.get('output_parameters', None)
+        #outxmlfile = outpara.dict.outputfile_path
         tree = etree.parse(outxmlfile)
         root = tree.getroot()
         energies = eval_xpath2(root, xpath_energy)
+        #print(energies)
         for energy in energies:
             self.ctx.total_energy.append(float(energy))
         
+        #print(self.ctx.total_energy)
         distances = eval_xpath2(root, xpath_distance)
-        #print distances
+        #print self.ctx.distance
         for distance in distances:
             self.ctx.distance.append(float(distance))
         
@@ -429,6 +442,7 @@ class fleur_scf_wc(WorkChain):
         # TODO do a test first if last_calculation was successful, otherwise,
         # 'output_parameters' wont exist.
         inpwfp_dict = self.inputs.wf_parameters.get_dict()
+        #last_charge_density = self.ctx.last_calc['output_parameters'].dict.charge_density
         last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
         #print last_charge_density
         if inpwfp_dict.get('converge_density', True):
@@ -438,7 +452,7 @@ class fleur_scf_wc(WorkChain):
             density_converged = True
             
         energy = self.ctx.total_energy
-        
+        #print(energy)
         if len(energy) >=2:
             self.energydiff = abs(energy[-1]-energy[-2])
         #print self.energydiff 
@@ -461,26 +475,29 @@ class fleur_scf_wc(WorkChain):
         """
         return the results of the calculations
         """
+        #TODO report
+        last_calc_out = self.ctx.last_calc.out.output_parameters.dict
+        #last_calc_out = self.ctx.last_calc['output_parameters'].dict
         outputnode_dict ={}
         if self.ctx.successful:
             print('Done, the convergence criteria are reached.')
             print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
-                  '"me/bohr^3"'.format(self.ctx.loop_count, self.ctx.last_calc.out.output_parameters.dict.number_of_iterations_total,
-                                       self.ctx.last_calc.out.output_parameters.dict.charge_density))
+                  '"me/bohr^3"'.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+                                       last_calc_out.charge_density))
             print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
         else:
             print('Done, the maximum number of runs was reached or something failed.')
             print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
-                  ''.format(self.ctx.loop_count, self.ctx.last_calc.out.output_parameters.dict.number_of_iterations_total,
-                            self.ctx.last_calc.out.output_parameters.dict.charge_density))
+                  ''.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+                            last_calc_out.charge_density))
             print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
 
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
         outputnode_dict['loop_count'] = self.ctx.loop_count
-        outputnode_dict['iterations_total'] = self.ctx.last_calc.out.output_parameters.dict.number_of_iterations_total
-        outputnode_dict['distance_charge'] = self.ctx.last_calc.out.output_parameters.dict.charge_density
+        outputnode_dict['iterations_total'] = last_calc_out.number_of_iterations_total
+        outputnode_dict['distance_charge'] = last_calc_out.charge_density
         outputnode_dict['distance_charge_all'] = self.ctx.distance
-        outputnode_dict['total_energy'] = self.ctx.last_calc.out.output_parameters.dict.energy_hartree
+        outputnode_dict['total_energy'] = last_calc_out.energy_hartree
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = ''
         outputnode_dict['total_energy_units'] = 'Htr'

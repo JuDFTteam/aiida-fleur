@@ -18,7 +18,8 @@ from aiida.orm.querybuilder import QueryBuilder
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.wokrlfows.eos import fleur_eos_wc
-
+from aiida.orm import Group
+from aiida.common.exceptions import NotExistent
 from aiida_fleur.tools.xml_util import eval_xpath2
 from lxml import etree
 
@@ -43,11 +44,7 @@ class fleur_delta_wc(WorkChain):
     """
 
     _workflowversion = "0.0.1"
-    _wf_default = {'points' : 4,
-                   'step' : 0.002,
-                   'queue_name' : '',
-                   'resources' : {"num_machines": 1},
-                   'walltime_sec' : 60*60}
+    _wf_default = {}
 
     def __init__(self, *args, **kwargs):
         super(fleur_delta_wc, self).__init__(*args, **kwargs)
@@ -61,7 +58,7 @@ class fleur_delta_wc(WorkChain):
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
                                                'group_label' : 'delta_eos',
-                                               'points' : 4,
+                                               'points' : 5,
                                                'step' : 0.02,
                                                'queue_name' : '',
                                                'options' : {'resources' : {"num_machines": 1},
@@ -97,13 +94,96 @@ class fleur_delta_wc(WorkChain):
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
-            'wf_parameters': {'points' : wf_dict.get('points', 5), wf_dict.get('step', 0.02), 'guess' : 1.0},
-            'options': wf_dict.get('options',
-            {'resources': {'num_machines': 1}, 'max_wallclock_seconds': 1800})
-            }
+            'wf_parameters': 
+                {'points' : wf_dict.get('points', 5), 
+                 'step' : wf_dict.get('step', 0.02), 
+                 'guess' : 1.0,
+                 'options': wf_dict.get('options',
+                                         {'resources': {'num_machines': 1}, 
+                                          'max_wallclock_seconds': 1800}),
+                 'serial' : wf_dict.get('serial', False)
+             }}
         self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
 
         #get all delta structure
+        str_gr = wf_dict.get('struc_group', 'delta')
+        
+        try:
+            group_pk = int(str_gr)
+        except ValueError:
+            group_pk = None
+            group_name = str_gr
+        
+        if group_pk is not None:
+            try:
+                str_group = Group(dbgroup=group_pk)
+            except NotExistent:
+                str_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'structures or a Group name. Wf_para key: "struc_group".'
+                          'given pk= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_pk))
+                print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no structures to calculate ...')
+        else:
+            try:
+                str_group = Group.get_from_string(group_name)
+            except NotExistent:
+                str_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'structures or a Group name. Wf_para key: "struc_group".'
+                          'given group name= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_name))
+                print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no structures to calculate ...')
+                
+                
+                
+        #get all delta parameters
+        para_gr = wf_dict.get('para_group', 'delta')
+        
+        if not para_gr:
+            #waring use defauls
+            message = 'I did recieve "para_group=None" as input. I will use inpgen defaults'
+            self.report(message)
+        
+        try:
+            group_pk = int(para_gr )
+        except ValueError:
+            group_pk = None
+            group_name = para_gr 
+        
+        if group_pk is not None:
+            try:
+                para_group = Group(dbgroup=group_pk)
+            except NotExistent:
+                para_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "para_group".'
+                          'given pk= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_pk))
+                print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')
+        else:
+            try:
+                para_group = Group.get_from_string(group_name)
+            except NotExistent:
+                para_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "struc_group".'
+                          'given group name= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_name))
+                print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')        
+
+        # creating calculation pairs (structure, parameters)
+
         #qb = QueryBuilder()
         #qb.append(StructureData, filters={})
         #all_delta_struc = qb.all()
@@ -117,8 +197,11 @@ class fleur_delta_wc(WorkChain):
         for para in all_para:
             struc_uuid = para.get_extra('structure_uuid')
             struc = load_node(struc_uuid)
-            calcs.append((struc, para))
+            if struc.pk in structures_pks:
+                calcs.append((struc, para))
         self.ctx.calcs_to_run = calcs
+        
+        
 
     def run_eos(self):
         """
