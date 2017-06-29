@@ -132,10 +132,10 @@ class fleur_scf_wc(WorkChain):
         """
         init context and some parameters
         """
-        self.report('started convergence workflow version {}'.format(self._workflowversion))
-        self.report('Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
-        print('started convergence workflow version {}'.format(self._workflowversion))
-        print('Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
+        self.report('INFO: started convergence workflow version {}'.format(self._workflowversion))
+        self.report('INFO: Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
+        #print('started convergence workflow version {}'.format(self._workflowversion))
+        #print('Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
         
         # init
         self.ctx.last_calc = None
@@ -175,28 +175,28 @@ class fleur_scf_wc(WorkChain):
             run_inpgen = False
             if 'structure' in inputs:
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
-                print(warning)
+                #print(warning)
                 self.ctx.warnings.append(warning)
                 self.report(warning)
             if 'inpgen' in inputs:
                 warning = 'WARNING: Ignoring inpgen code input, because Fleurinp was given'
-                print(warning)
+                #print(warning)
                 self.ctx.warnings.append(warning)
                 self.report(warning)
             if 'calc_parameters' in inputs:
                 warning = 'WARNING: Ignoring parameter input, because Fleurinp was given'
-                print(warning)
+                #print(warning)
                 self.ctx.warnings.append(warning)
                 self.report(warning)
         elif 'structure' in inputs:
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                print(error)
+                #print(error)
                 self.ctx.errors.append(error)
                 self.abort_nowait(error)
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
-            print(error)
+            #print(error)
             self.ctx.errors.append(error)
             self.abort_nowait(error)
 
@@ -220,7 +220,7 @@ class fleur_scf_wc(WorkChain):
                    "queue_name" : self.ctx.queue}
         
         inputs = get_inputs_inpgen(structure, inpgencode, options, params=params)        
-        print 'run inpgen'
+        self.report('INFO: run inpgen')
         future = submit(FleurinpProcess, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
@@ -299,7 +299,8 @@ class fleur_scf_wc(WorkChain):
         #print inputs
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
-        print 'run FLEUR number: {}'.format(self.ctx.loop_count)
+        self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
+        #print 'run FLEUR number: {}'.format(self.ctx.loop_count)
         self.ctx.calcs.append(future)
 
         #return ToContext(last_calc=Outputs(future)) #calcs.append(future),
@@ -312,14 +313,14 @@ class fleur_scf_wc(WorkChain):
         restarting, or abort if unrecoverable error was found
         """
         expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
-        print(self.ctx['last_calc'])
+        #print(self.ctx['last_calc'])
         
         try:
             calculation = self.ctx['last_calc']
         except Exception:
             self.ctx.successful = False
-            self.abort_nowait('Something went wrong I do not have a last calculation')
-            self.report('Something went wrong I do not have a last calculation')
+            self.abort_nowait('ERROR: Something went wrong I do not have a last calculation')
+            #self.report('ERROR: Something went wrong I do not have a last calculation')
             return
 
         calc_state = calculation.get_state()
@@ -329,7 +330,7 @@ class fleur_scf_wc(WorkChain):
             #TODO
             #TODO error handling here controled ending routine
             self.ctx.successful = False
-            error = 'Last Fleur calculation failed somehow it is in state {}'.format(calc_state)
+            error = 'ERROR: Last Fleur calculation failed somehow it is in state {}'.format(calc_state)
             #self.report(error)
             self.abort_nowait(error)
             return
@@ -386,7 +387,7 @@ class fleur_scf_wc(WorkChain):
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
         if not self.ctx.successful:
-            print('not successful')
+            #print('not successful')
             return # otherwise this will lead to erros further down
         last_calc = self.ctx.last_calc
 
@@ -480,17 +481,33 @@ class fleur_scf_wc(WorkChain):
         #last_calc_out = self.ctx.last_calc['output_parameters'].dict
         outputnode_dict ={}
         if self.ctx.successful:
-            print('Done, the convergence criteria are reached.')
-            print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
-                  '"me/bohr^3"'.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+            self.report('STATUS: Done, the convergence criteria are reached.')
+            self.report('INFO: The charge density of the FLEUR calculation pk= '
+                        'converged after {} FLEUR runs and {} iterations to {} '
+                        '"me/bohr^3"'.format(self.ctx.loop_count, 
+                                       last_calc_out.number_of_iterations_total,
                                        last_calc_out.charge_density))
-            print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
+            self.report('INFO: The total energy difference of the last two iterations '
+                        'is {} htr \n'.format(self.energydiff))
+            #print('Done, the convergence criteria are reached.')
+            #print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
+            #      '"me/bohr^3"'.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+            #                           last_calc_out.charge_density))
+            #print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
         else:
-            print('Done, the maximum number of runs was reached or something failed.')
-            print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
-                  ''.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+            self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.')
+            self.report('INFO: The charge density of the FLEUR calculation pk= '
+                        'after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
+                        ''.format(self.ctx.loop_count, 
+                            last_calc_out.number_of_iterations_total,
                             last_calc_out.charge_density))
-            print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
+            self.report('INFO: The total energy difference of the last two interations'
+                        'is {} htr \n'.format(self.energydiff))
+            #print('Done, the maximum number of runs was reached or something failed.')
+            #print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
+            #      ''.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
+            #                last_calc_out.charge_density))
+            #print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
 
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
         outputnode_dict['loop_count'] = self.ctx.loop_count
