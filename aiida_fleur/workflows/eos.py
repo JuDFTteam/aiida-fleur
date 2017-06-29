@@ -27,8 +27,8 @@ from aiida.work.workchain import Outputs, ToContext
 
 #from aiida.work.workfunction import workfunction as wf
 from aiida.work.workchain import WorkChain
-from aiida.work import async as asy
-from aiida.work import submit
+from aiida.work.run import async as asy
+from aiida.work.run import submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
@@ -69,7 +69,7 @@ class fleur_eos_wc(WorkChain):
                                        'points' : 9, 
                                        'step' : 0.002, 
                                        'guess' : 1.00,
-                                       'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
+                                       'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                                        'walltime_sec':  10*60,
                                        'queue_name' : ''}))
         spec.input("structure", valid_type=StructureData, required=True)
@@ -91,8 +91,8 @@ class fleur_eos_wc(WorkChain):
         """
         self.report('started eos workflow version {}'.format(self._workflowversion))
         self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))  
-        print('started eos workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
+        #print('started eos workflow version {}'.format(self._workflowversion))
+        #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -124,7 +124,7 @@ class fleur_eos_wc(WorkChain):
         for point in range(points):
             self.ctx.scalelist.append(startscale + point*step)
         self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
-        print 'scaling factors which will be calculated:{}'.format(self.ctx.scalelist)
+        #print 'scaling factors which will be calculated:{}'.format(self.ctx.scalelist)
         self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
     '''
     # I do not know yet how to deal with several futures in one workflow step, therefore rewrite...
@@ -161,8 +161,41 @@ class fleur_eos_wc(WorkChain):
     def converge_scf(self):
         """
         start scf-cycle from Fleur calculation
-        """    
-        #calcs = []
+        """ 
+        '''
+        #submit somehow produces strange different results then async... AiiDA problem?
+        calcs= {}
+        # run a convergence worklfow# TODO better sumbit or async?
+        for i, struc in enumerate(self.ctx.structurs):
+            inputs = self.get_inputs_scf()
+            inputs['structure'] = struc
+            natoms = len(struc.sites)
+            self.ctx.volume.append(struc.get_cell_volume())
+            self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
+            self.ctx.structurs_uuids.append(struc.uuid)
+            res = submit(fleur_scf_wc,
+                      wf_parameters=inputs['wf_parameters'],
+                      structure=inputs['structure'], 
+                      calc_parameters=inputs['calc_parameters'], 
+                      inpgen=inputs['inpgen'], 
+                      fleur=inputs['fleur'])# asy async .run( submit()
+            #self.ctx.calcs_future.append(res)
+            label = str(self.ctx.scalelist[i])
+            self.ctx.labels.append(label)
+            calcs[label] = res
+            #self.ctx.calcs.append(res)
+        # for future in self.ctx.calcs_future:
+        #    ToContext(temp_calc=future)
+        #    self.ctx.calcs.append(self.ctx.temp_calc)
+        return ToContext(**calcs)           
+            #print self.ctx.calcs
+            #ResultToContext(self.ctx.calcs1.append(res))
+            #calcs.append(res)
+        #self.ctx.last_calc2 = res#.get('remote_folder', None)
+        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),            
+        
+        '''
+        #aync works but job amount small, because limited to computer and async(async) seems to be always 1...
         calcs= {}
         # run a convergence worklfow# TODO better sumbit or async?
         for i, struc in enumerate(self.ctx.structurs):
@@ -176,7 +209,7 @@ class fleur_eos_wc(WorkChain):
                       wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], 
                       calc_parameters=inputs['calc_parameters'], 
-                      inpgen = inputs['inpgen'], 
+                      inpgen=inputs['inpgen'], 
                       fleur=inputs['fleur'])# asy async .run( submit()
             #self.ctx.calcs_future.append(res)
             label = str(self.ctx.scalelist[i])
@@ -192,7 +225,7 @@ class fleur_eos_wc(WorkChain):
             #calcs.append(res)
         #self.ctx.last_calc2 = res#.get('remote_folder', None)
         #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),    
- 
+        
     
     def get_inputs_scf(self):
         """
@@ -234,6 +267,7 @@ class fleur_eos_wc(WorkChain):
         for label in self.ctx.labels:
             calc = self.ctx[label]
             #print(calc)
+            #print(Outputs(calc))
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
             if not outpara.get('successful', False):
                 #maybe do something else here (exclude point and write a warning or so, or error treatment)
@@ -288,10 +322,10 @@ class fleur_eos_wc(WorkChain):
         
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
-            print 'Done, Equation of states calculation complete'
+            #print 'Done, Equation of states calculation complete'
         else:
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
-            print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
+            #print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
  
         # output must be aiida Data types.        
         outdict = {}
