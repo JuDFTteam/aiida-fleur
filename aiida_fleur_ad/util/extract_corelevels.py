@@ -153,7 +153,9 @@ def extract_corelevels(outxmlfile, options=None):
 
     # 2. get all species from input
     # get element, name, coreStates
+    # TODO why can this not be eval_xpath2?
     species_nodes = eval_xpath(root, species_xpath, parser_info)#/fleurinp/
+    #print species_nodes
     species_atts = {}
     species_names = []
     for species in species_nodes:
@@ -170,7 +172,7 @@ def extract_corelevels(outxmlfile, options=None):
                                       'atomic_number' : species_atomicnumber}
         species_names.append(species_name)
     #nspecies = len(species_nodes)
-
+    #print(species_atts)
     #3. get number of atom types and their species from input
     atomtypes = []
     atomgroup_nodes = eval_xpath(root, atomgroup_xpath, parser_info)#/fleurinp/
@@ -192,7 +194,7 @@ def extract_corelevels(outxmlfile, options=None):
     
     #print atomtypes
     natomgroup = len(atomgroup_nodes)
-    #print natomgroup, nspecies
+    #print natomgroup#, nspecies
     #print species_names
     corelevels = []
 
@@ -200,19 +202,26 @@ def extract_corelevels(outxmlfile, options=None):
     #5 init saving arrays:
     #6 parse corelevels:
     
-    iteration_nodes = eval_xpath(root, iteration_xpath, parser_info)
+    iteration_nodes = eval_xpath2(root, iteration_xpath, parser_info)
     #print iteration_nodes
     nIteration = len(iteration_nodes)
     if nIteration >= 1:
         iteration_to_parse = iteration_nodes[-1]#TODO:Optional all or other
         #print iteration_to_parse
-        corestatescards = eval_xpath(iteration_to_parse, relcoreStates_xpath, parser_info)
-
+        corestatescards = eval_xpath2(iteration_to_parse, relcoreStates_xpath, parser_info)
+        # maybe does not return a list...
+        #print(corestatescards)
         for type in atomtypes: # spin=2 is already in there
             corelevels.append([])
             
         for corestatescard in corestatescards:
+            #print('here')
+            #print(etree.tostring(corestatescard, pretty_print=True))
+            #print(corestatescard, iteration_to_parse, parser_info)
             corelv = parse_state_card(corestatescard, iteration_to_parse, parser_info)
+            #print(corelv['atomtype'])
+            #print corelv
+            #print(corelv['atomtype'])
             corelevels[int(corelv['atomtype'])-1].append(corelv)# is corelv['atomtype'] always an integer
             #corelevels.append(corelv)
                      
@@ -225,6 +234,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     """
     Parses the ONE core state card
 
+    :param corestateNode: an etree element (node), of a fleur output corestate card
     :param iteration_node: an etree element, iteration node
     :param jspin : integer 1 or 2
     
@@ -249,21 +259,22 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     lostElectrons_name = 'lostElectrons'
     atomtype_name = 'atomType'
     #######
-
+    
     atomtype = get_xml_attribute(corestateNode, atomtype_name, parser_info)
 
     kinEnergy = get_xml_attribute(corestateNode, kinEnergy_name, parser_info)
     vE2, suc = convert_to_float(kinEnergy, parser_info)
-
+    #print('kinEnergy {}'.format(kinEnergy))
     eigenvalueSum = get_xml_attribute(corestateNode, eigenvalueSum_name, parser_info)
     vE2, suc = convert_to_float(eigenvalueSum, parser_info)
 
     spin = get_xml_attribute(corestateNode, spin_name, parser_info)
+    #print('spin {}'.format(spin))
     #states = corestateNode.xpath(
     #for state in states:
 
     # get all corestate tags, (atomtypes * spin)
-    corestateNodes = eval_xpath(iteration_node, coreStates_xpath, parser_info)
+    #corestateNodes = eval_xpath(iteration_node, coreStates_xpath, parser_info)
     # for every corestate tag parse the attributes
     
     # some only the first interation, then get all state tags of the corestate tag (atom depended)
