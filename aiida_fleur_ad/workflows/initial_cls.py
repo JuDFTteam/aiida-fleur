@@ -17,6 +17,7 @@ if not is_dbenv_loaded():
 from aiida.orm import Code, DataFactory, CalculationFactory, load_node
 from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
+from aiida.work.run import async as asy
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -25,6 +26,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
 from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
+from aiida.common.exceptions import NotExistent
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -126,15 +128,18 @@ class fleur_initial_cls_wc(WorkChain):
         Init same context and check what input is given if it makes sence
         """
         ### input check ### ? or done automaticly, how optional?
-        print('Started inital_state_CLS workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}"
-              "".format(ProcessRegistry().current_calc_node))
+        msg=("INFO: Started inital_state_CLS workflow version {} "
+             "Workchain node identifiers: {}"
+              "".format(self._workflowversion, ProcessRegistry().current_calc_node))
+        self.report(msg)
         
         # init
         self.ctx.last_calc = None
         self.ctx.eximated_jobs = 0
         self.ctx.run_jobs = 0
         self.ctx.calcs_res = []
+        self.ctx.labels = []
+        self.ctx.ref_labels = []
         self.ctx.calcs_torun = []
         self.ctx.ref_calcs_torun = []
         self.ctx.ref_calcs_res = []
@@ -180,20 +185,22 @@ class fleur_initial_cls_wc(WorkChain):
             #print('here1')
             if 'structure' in inputs:
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
-                print(warning)
+                #print(warning)
                 self.ctx.warnings.append(warning)
+                self.report(warning)
             if 'calc_parameters' in inputs:
                 warning = 'WARNING: Ignoring parameter input, because Fleurinp was given'
-                print(warning)
+                #print(warning)
                 self.ctx.warnings.append(warning)
+                self.report(warning)
         elif 'structure' in inputs:
             self.ctx.elements = list(inputs.structure.get_composition().keys())
             #self.ctx.elements = list(s.get_symbols_set())  
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                print(error)
+                #print(error)
                 self.ctx.errors.append(error)
-                #TODO kill workflow
+                self.abort_nowait(error)
             if 'calc_parameters' in inputs:
                 self.ctx.calcs_torun.append((inputs.get('calc_parameters'), inputs.get('structure')))
                 #print('here2')
@@ -202,10 +209,10 @@ class fleur_initial_cls_wc(WorkChain):
                 #print('here3')
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
-            print(error)
+            #print(error)
             self.ctx.errors.append(error)
-            #TODO kill workflow          
-        print('elements in structure: {}'.format(self.ctx.elements))
+            self.abort_nowait(error)
+        self.report('INFO: elements in structure: {}'.format(self.ctx.elements))
         
         
     def get_references(self):
@@ -219,7 +226,7 @@ class fleur_initial_cls_wc(WorkChain):
         We do not put these calculation in the calculation queue yet because we
         need specific parameters for them
         """
-        print('In Get_references inital_state_CLS workflow')   
+        self.report('INFO: In Get_references inital_state_CLS workflow')   
         #references = self.inputs.wf_parameters.get_dict().get('references', {'calculate' : 'all'})
         references = self.inputs.wf_parameters.get_dict().get('references', {})
         # should be of the form of
@@ -229,6 +236,8 @@ class fleur_initial_cls_wc(WorkChain):
         
         self.ctx.ref = {}
         self.ctx.abort = False
+        struc_group = references.get('group', None)
+        para_group = references.get('para_group', None)
         #TODO better checks if ref makes sense?
         for elem in self.ctx.elements:
             #to_calc[elem] = 'find' 
@@ -263,19 +272,30 @@ class fleur_initial_cls_wc(WorkChain):
                 else:
                     error = (" I do not know what to do with this given reference"
                              "{} for element {}".format(ref_el, elem))
-                    print(error)
+                    #print(error)
                     self.report(error)
                     self.ctx.errors.append(error)
                     self.ctx.abort = True
+            elif struc_group:
+                #print('here, looking in group')
+                #print(elem, struc_group)
+                structure, report = get_ref_from_group(elem, struc_group)
+                if report:
+                   self.report(report)
+                if structure:
+                    self.ctx.ref[elem] = ref_el
+                else:
+                    pass # report not found?
             else: # no ref given, we have to look for it.
                 structure = querry_for_ref_structure(elem)
                 if structure:
-                    self.ctx.ref[elem] = ref_el
+                    self.ctx.ref[elem] = structure
+                    self.ctx.ref_calcs_torun.append(structure)# tempoary later check parameters
                 else: #not found
                     error = ("Reference structure for element: {} not found."
-                             "checkout the 'querry_for_ref_structure' method."
+                             " Checkout the 'querry_for_ref_structure' method."
                              "to see what extras are querried for.".format(elem))
-                    print(error)
+                    #print(error)
                     self.ctx.errors.append(error)
                     self.ctx.abort = True
                     self.report(error)
@@ -286,7 +306,7 @@ class fleur_initial_cls_wc(WorkChain):
                     'for details.')
             self.abort_nowait(error)
 
-        print('self.ctx.ref: {} '.format(self.ctx.ref))
+        #print('self.ctx.ref: {} '.format(self.ctx.ref))
         #StructureData 
         #ParameterData
         #FleurinpData
@@ -313,7 +333,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
-        print('In run_fleur_scfs inital_state_CLS workflow')        
+        self.report('INFO: In run_fleur_scfs inital_state_CLS workflow')        
         #from aiida.work import run, async, 
         #TODO if submiting of workdlows work, use that. 
         #or run them with async (if youy know how to extract results) 
@@ -329,9 +349,9 @@ class fleur_initial_cls_wc(WorkChain):
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
-        print self.ctx.calcs_torun
+        #print self.ctx.calcs_torun
         for node in self.ctx.calcs_torun:
-            print node
+            #print node
             if isinstance(node, StructureData):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
@@ -342,11 +362,12 @@ class fleur_initial_cls_wc(WorkChain):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
-                print('something in calcs_torun which I do not reconise: {}'.format(node))
+                self.report('ERROR: something in calcs_torun which I do not recognize: {}'.format(node))
                 continue
             res_all.append(res)
-            print res  
-            self.ctx.calcs_res.append(res)
+            #print res
+            calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
+            self.ctx.calcs_res.append(calc_node)
             #self.ctx.calcs_torun.remove(node)
             #print res    
         self.ctx.calcs_torun = []
@@ -367,7 +388,7 @@ class fleur_initial_cls_wc(WorkChain):
         If the structures should be relaxed, check if their Forces are below a certain 
         threshold, otherwise throw them in the relaxation wf.
         """
-        print('In relaxation inital_state_CLS workflow')
+        self.report('INFO: In relaxation inital_state_CLS workflow (so far nothing to do)')
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
@@ -383,7 +404,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        print('In relax inital_state_CLS workflow')  
+        self.report('INFO: In relax inital_state_CLS workflow (so far nothing to do)')  
         self.ctx.dos_to_calc = []
         for calc in self.ctx.dos_to_calc:
             pass 
@@ -400,7 +421,9 @@ class fleur_initial_cls_wc(WorkChain):
         #self.ctx.ref_calcs_torun.append(ref_el)
         
         # for entry in ref[elem] find parameter node
-        for elm, struc in self.ctx.ref:
+        for elm, struc in self.ctx.ref.iteritems():
+            print(elm, struc)
+            #self.ctx.ref_calcs_torun.append(ref_el)
             pass
             # if parameter node given, extract from there, 
             #parameter_dict
@@ -408,13 +431,14 @@ class fleur_initial_cls_wc(WorkChain):
             #extract parameter out of previous calculation
             #parameter_dict = fleurinp.extract_para(element)
             # BE CAREFUL WITH LOs! soc and co
+            
 
     def run_scfs_ref(self):
         """
         Run SCF-cycles for ref structures, calculations given in certain workflow arrays.
         parameter nodes should be given
         """
-        print('In run_fleur_scfs inital_state_CLS workflow')        
+        self.report('INFO: In run_scfs_ref inital_state_CLS workflow')        
         #from aiida.work import run, async, 
         #TODO if submiting of workdlows work, use that. 
         #or run them with async (if youy know how to extract results) 
@@ -428,6 +452,39 @@ class fleur_initial_cls_wc(WorkChain):
         wf_parameter['queue_name'] = self.ctx.queue
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
+        calcs = {}
+        # now in parallel
+        #print self.ctx.ref_calcs_torun
+        i = 0
+        for node in self.ctx.ref_calcs_torun:
+            #print node
+            i = i+1
+            if isinstance(node, StructureData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, FleurinpData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            else:
+                print('something in calcs_torun which I do not reconise: {}'.format(node))
+                continue
+            label = str('calc_ref{}'.format(i))
+            print(label)
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
+            self.ctx.ref_labels.append(label)
+            calcs[label] = res
+            res_all.append(res)
+            #print res  
+            self.ctx.ref_calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.ref_calcs_torun = []
+        return ToContext(**calcs)   
+      
+        '''
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         print self.ctx.ref_calcs_torun
         for node in self.ctx.ref_calcs_torun:
@@ -451,7 +508,7 @@ class fleur_initial_cls_wc(WorkChain):
             #print res    
         self.ctx.ref_calcs_torun = []
         #return ToContext(last_calc=res)
-   
+        '''
     def handle_scf_failure(self):
         """
         In here we handle all failures from the scf workchain
@@ -503,7 +560,8 @@ class fleur_initial_cls_wc(WorkChain):
         Collect results from certain calculation, check if everything is fine, 
         calculate the wanted quantities. currently all energies are in hartree (as provided by Fleur)
         """
-        print('Collecting results of inital_state_CLS workflow')        
+        message=('INFO: Collecting results of inital_state_CLS workflow')
+        self.report(message)        
         # TODO be very careful with core config?
         #from pprint import pprint
         
@@ -511,7 +569,17 @@ class fleur_initial_cls_wc(WorkChain):
         all_CLS = {}
         # get results from calc
         calcs = self.ctx.calcs_res
-        ref_calcs = self.ctx.ref_calcs_res         
+        ref_calcs = []#self.ctx.ref_calcs_res
+        print (self.ctx.ref_labels)
+        for label in self.ctx.ref_labels:
+            calc = self.ctx[label]
+            ref_calcs.append(calc)
+        
+        print('ref_calcs')
+        print ref_calcs
+        print('calcs')
+        print calcs
+        # extract_results need the scf workchain calculation node
         fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
         ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
 
@@ -536,8 +604,8 @@ class fleur_initial_cls_wc(WorkChain):
                     ref_cls.append(corelevel['energy']-ref_fermi_energies[compound])
                 ref_cl_energies[elm].append(ref_cls)
         
-        #print('ref_cl_energies')
-        #pprint(ref_cl_energies)
+        print('ref_cl energies')
+        print(ref_cl_energies)
         #pprint(all_corelevel)
         
         #now substract efermi from corelevel of compound structure
@@ -552,7 +620,7 @@ class fleur_initial_cls_wc(WorkChain):
             #now fill
             for i, atomtype in enumerate(atomtypes[compound]):
                 elm = atomtype.get('element', None)
-                print elm
+                #print elm
                 cls_atomtype = cls_atomtypes_list[i]
                 corelevels = []
                 for corelevel in cls_atomtype[0]['corestates']:
@@ -605,7 +673,8 @@ class fleur_initial_cls_wc(WorkChain):
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
-        print('Inital_state_CLS workflow Done')
+        msg=('INFO: Inital_state_CLS workflow Done')
+        self.report(msg)
 
     def create_new_fleurinp(self):
         """
@@ -636,7 +705,7 @@ class fleur_initial_cls_wc(WorkChain):
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp1 = fleurinp_new
-        print(fleurinp_new)
+        #print(fleurinp_new)
         #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
 
         
@@ -649,7 +718,7 @@ class fleur_initial_cls_wc(WorkChain):
         inputs = self.get_inputs_fleur()
         #print inputs
         future = submit(FleurProcess, **inputs)
-        print 'run Fleur in band workflow'
+        #print 'run Fleur in band workflow'
 
         return ToContext(last_calc=future)
 
@@ -696,12 +765,15 @@ def extract_results(calcs):
     """
     Collect results from certain calculation, check if everything is fine, 
     calculate the wanted quantities.
+    
+    params: calcs : list of scf workchains nodes
     """
     calc_uuids = []
     for calc in calcs:
-        print(calc)
-        calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
-    print(calc_uuids)
+        #print(calc)
+        calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+    #print(calc_uuids)
     
     all_corelevels = {}
     fermi_energies = {}
@@ -723,6 +795,7 @@ def extract_results(calcs):
         
         # get out.xml file of calculation
         outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+        #print outxml
         corelevels, atomtypes = extract_corelevels(outxml)
         #all_corelevels.append(core)
         #print('corelevels: {}'.format(corelevels))
@@ -732,7 +805,7 @@ def extract_results(calcs):
             
         #TODO how to store?
         efermi = calc.res.fermi_energy
-        print efermi
+        #print efermi
         bandgap = calc.res.bandgap
         
         # TODO: maybe different, because it is prob know from before
@@ -769,3 +842,161 @@ def extract_results(calcs):
     #Style: {'Compound' : energy, 'ref_x' : energy , ...}
     #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
     #self.ctx.fermi_energies = {}    
+
+def get_ref_from_group(element, group):
+    """
+    get structure node for a given element from a given group of structures
+    (quit creedy, done straighforward)
+    
+    """
+    from aiida.orm import Group
+    from string import digits
+    
+    report = []
+    
+    try:
+        group_pk = int(group)
+    except ValueError:
+        group_pk = None
+        group_name = group
+    
+    if group_pk is not None:
+        try:
+            str_group = Group(dbgroup=group_pk)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group of' 
+                      'structures or a Group name. Reference key: "group".'
+                      'given pk= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_pk))
+            #print(message)
+            report.append(message)
+    else:
+        try:
+            str_group = Group.get_from_string(group_name)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group of' 
+                      'structures or a Group name. Wf_para key: "struc_group".'
+                      'given group name= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_name))
+            #print(message)
+            report.append(message)
+            #abort_nowait('I abort, because I have no structures to calculate ...')    
+ 
+    stru_nodes = str_group.nodes
+    n_stru = len(stru_nodes)
+        
+    structure = None
+        
+    for struc in stru_nodes:
+        formula = struc.get_formula()
+        eformula = formula.translate(None, digits) # remove digits, !python3 differs
+        if eformula == element:
+            return struc, report
+            
+    report.append('Structure node for element {} not found in group {}'
+                  ''.format(element, group))
+    
+    return structure, report
+'''
+   def get_calcs_from_groups(self):
+        """
+        Extract the crystal structures and parameter data nodes from the given 
+        groups and create calculation 'pairs' (stru, para).
+        """
+        wf_dict = self.inputs.wf_parameters.get_dict()
+        #get all delta structure
+        str_gr = wf_dict.get('struc_group', 'delta')
+        
+        try:
+            group_pk = int(str_gr)
+        except ValueError:
+            group_pk = None
+            group_name = str_gr
+        
+        if group_pk is not None:
+            try:
+                str_group = Group(dbgroup=group_pk)
+            except NotExistent:
+                str_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'structures or a Group name. Wf_para key: "struc_group".'
+                          'given pk= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_pk))
+                #print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no structures to calculate ...')
+        else:
+            try:
+                str_group = Group.get_from_string(group_name)
+            except NotExistent:
+                str_group = None
+                message = ('You have to provide a valid pk for a Group of' 
+                          'structures or a Group name. Wf_para key: "struc_group".'
+                          'given group name= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_name))
+                #print(message)
+                self.report(message)
+                self.abort_nowait('I abort, because I have no structures to calculate ...')
+                                
+                
+        #get all delta parameters
+        para_gr = wf_dict.get('para_group', 'delta')
+        
+        if not para_gr:
+            #waring use defauls
+            message = 'COMMENT: I did recieve "para_group=None" as input. I will use inpgen defaults'
+            self.report(message)
+        
+        try:
+            group_pk = int(para_gr )
+        except ValueError:
+            group_pk = None
+            group_name = para_gr 
+        
+        if group_pk is not None:
+            try:
+                para_group = Group(dbgroup=group_pk)
+            except NotExistent:
+                para_group = None
+                message = ('ERROR: You have to provide a valid pk for a Group of' 
+                          'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "para_group".'
+                          'given pk= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_pk))
+                #print(message)
+                self.report(message)
+                self.abort_nowait('ERROR: I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')
+        else:
+            try:
+                para_group = Group.get_from_string(group_name)
+            except NotExistent:
+                para_group = None
+                message = ('ERROR: You have to provide a valid pk for a Group of' 
+                          'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "struc_group".'
+                          'given group name= {} is not a valid group'
+                          '(or is your group name integer?)'.format(group_name))
+                #print(message)
+                self.report(message)
+                self.abort_nowait('ERROR: I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')        
+
+        # creating calculation pairs (structure, parameters)
+
+        para_nodes = para_group.nodes
+        n_para = len(para_nodes)
+        stru_nodes = str_group.nodes
+        n_stru = len(stru_nodes)
+        if n_para != n_stru:
+            message = ('COMMENT: You did not provide the same number of parameter'
+                       'nodes as structure nodes. Is this wanted?')
+            self.report(message)
+        
+        calcs = []
+        for struc in stru_nodes:
+            para = get_paranode(struc, para_nodes)
+            calcs.append((struc, para))
+        print calcs[:10]
+        self.ctx.calcs_to_run = calcs
+'''
