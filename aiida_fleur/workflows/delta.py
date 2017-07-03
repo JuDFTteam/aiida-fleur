@@ -217,11 +217,12 @@ class fleur_delta_wc(WorkChain):
         """
         Run the equation of states for all delta structures with their parameters
         """
+        '''
         eos_results = {}
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:2]:
+        for struc, para in self.ctx.calcs_to_run[:]:#[:2]
             print para
             formula = struc.get_formula()
             if para:
@@ -241,14 +242,14 @@ class fleur_delta_wc(WorkChain):
             eos_results[label] = eos_future
             
         return ToContext(**eos_results)        
-        
+        '''
         '''
         #async works
         eos_results = {}
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:2]:
+        for struc, para in self.ctx.calcs_to_run[:4]:
             print para
             formula = struc.get_formula()
             if para:
@@ -270,6 +271,32 @@ class fleur_delta_wc(WorkChain):
         return ToContext(**eos_results)
         '''
         
+        # with run
+        eos_results = {}
+        inputs = self.get_inputs_eos()
+
+        
+        for struc, para in self.ctx.calcs_to_run[:2]:
+            print para
+            formula = struc.get_formula()
+            if para:
+                eos_future = fleur_eos_wc.run( 
+                                wf_parameters=inputs['wc_eos_para'], structure=struc,
+                                calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'])
+                #fleur_eos_wc.run(#
+            else:
+                eos_future = fleur_eos_wc.run( 
+                                wf_parameters=inputs['wc_eos_para'], structure=struc,
+                                inpgen=inputs['inpgen'], fleur=inputs['fleur'])
+                #fleur_eos_wc.run(#a
+            #self.report('launching fleur_eos_wc<{}> on structure {} with parameter {}'
+            #            ''.format(eos_future.pid, struc.pk, para.pk))
+            label = formula
+            self.ctx.labels.append(label)
+            eos_results[label] = eos_future
+            
+        return ToContext(**eos_results)
+
     def get_inputs_eos(self):
         """
         get the inputs for a scf-cycle
@@ -296,8 +323,7 @@ class fleur_delta_wc(WorkChain):
         outstr = ('''\
              Delta calculation FLEUR {} (AiiDA wc).
 
-             Crystal \t V0 \t \t  B0 \t \t  BP
-             [A^3/at] \t [GPa] \t \t [--] \n
+             Crystal \t V0 \t \t  B0 \t \t  BP [A^3/at] \t [GPa] \t \t [--] \n
              '''.format(self.ctx.inputs_eos.get('fleur')))
         for label in self.ctx.labels:
             eos_res = self.ctx[label]
@@ -399,7 +425,7 @@ class fleur_delta_wc(WorkChain):
         
         outdict = {}
         outdict['output_delta_wc_para'] = outputnode
-        outdict['delta_file'] = delta_file
+        #outdict['delta_file'] = delta_file
         #print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)
