@@ -15,8 +15,8 @@ StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
 
-FleurInpCalc = CalculationFactory('fleur_inp.fleurinputgen.FleurinputgenCalculation')
-FleurCalc = CalculationFactory('fleur_inp.fleur.FleurCalculation')
+FleurInpCalc = CalculationFactory('fleur.inpgen')
+FleurCalc = CalculationFactory('fleur.fleur')
 
 
 import time

@@ -10,7 +10,7 @@ from aiida.orm import Code, DataFactory, CalculationFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
 from pprint import pprint
-from aiida_fleur.util.extract_corelevels import extract_corelevels
+from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
@@ -26,7 +26,7 @@ start_time = time.time()
 #calculation to extract from:
 # either from list given here or system argument
 
-calcs_pks = [4436]
+calcs_pks = [4743]#4436]
 #calcs_pks = [1464, 1462, 1399, 1403]#, 1059]#, 1414
 ####
 '''
@@ -56,11 +56,12 @@ parser_info = {'parser_warnings': [], 'unparsed' : []}
 test_outxmlfiles = ['./test_outxml/outBeCr.xml','./test_outxml/out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml', './test_outxml/outHg.xml',  './test_outxml/outO.xml']
 outxmlfile = test_outxmlfiles[0]
 
-#corelevels = extract_corelevels(outxmlfile)
-#for i in range(0,len(corelevels[0][1]['corestates'])):
-#    print corelevels[0][1]['corestates'][i]['energy']
+corelevels, atomtypes = extract_corelevels(outxmlfile)
+#print corelevels
+for i in range(0,len(corelevels[0][1]['corestates'])):
+    print corelevels[0][1]['corestates'][i]['energy']
 
-
+print(calcs_pks)
 for calc in calcs_pks:
     # get out.xml file of calculation
     outxml = load_node(pk).out.retrieved.folder.get_abs_path('path/out.xml')
@@ -68,7 +69,7 @@ for calc in calcs_pks:
     #print('corelevels {}'.format(corelevels))
     pprint(corelevels)
     pprint(atypes)
-    for i in range(0,len(corelevels[3][0]['corestates'])):
+    for i in range(0,len(corelevels[1][0]['corestates'])):
         #print corelevels[3][1]['corestates'][i]['energy']
-        print corelevels[3][0]['corestates'][i]['energy']
+        print corelevels[1][0]['corestates'][i]['energy']
 print("--- %s seconds ---" % (time.time() - start_time))
