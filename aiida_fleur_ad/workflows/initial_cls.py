@@ -283,7 +283,8 @@ class fleur_initial_cls_wc(WorkChain):
                 if report:
                    self.report(report)
                 if structure:
-                    self.ctx.ref[elem] = ref_el
+                    self.ctx.ref[elem] = structure
+                    self.ctx.ref_calcs_torun.append(structure)
                 else:
                     pass # report not found?
             else: # no ref given, we have to look for it.
@@ -454,7 +455,7 @@ class fleur_initial_cls_wc(WorkChain):
         res_all = []
         calcs = {}
         # now in parallel
-        #print self.ctx.ref_calcs_torun
+        print self.ctx.ref_calcs_torun
         i = 0
         for node in self.ctx.ref_calcs_torun:
             #print node
