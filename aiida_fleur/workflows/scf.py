@@ -15,6 +15,7 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: get density for magnetic structures
 #TODO: set minDistance and higher iteration number, ggf change logic for total energy
 #TODO: check if calculation already exists
+# TODO test if code given if fleur and inpgen code, uses the right plugin.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
