@@ -32,7 +32,7 @@ FleurProcess = FleurCalculation.process()
 
 class fleur_corehole_wc(WorkChain):
     '''
-    Turn key solution for a corehole calculation
+    Turn key solution for the calculation of core level shift and Binding energies
     
 
     '''
@@ -71,24 +71,22 @@ class fleur_corehole_wc(WorkChain):
         super(fleur_corehole_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
-                                            'method' : 'full valence',
+                                            'method' : 'initial',
                                             'atoms' : 'all',
-                                            'corelevel': 'all',
-                                            #'references' : 'calculate',
-                                            #'relax' : False,
-                                            #'relax_mode': 'Fleur',
-                                            #'relax_para' : 'default',
+                                            'references' : 'calculate',
+                                            'relax' : False,
+                                            'relax_mode': 'Fleur',
+                                            'relax_para' : 'default',
                                             'scf_para' : 'default',
                                             }))
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.outline(
             cls.check_input,
-            #if_(cls.relaxation_needed)(
-            #    cls.relax),
+            if_(cls.relaxation_needed)(
+                cls.relax),
             if_(cls.supercell_needed)(
                 cls.create_supercell
                     ),
@@ -111,52 +109,7 @@ class fleur_corehole_wc(WorkChain):
         print('started bands workflow version {}'.format(self._workflowversion))
         print("Workchain node identifiers: {}"
               "".format(ProcessRegistry().current_calc_node))
-
-        '''
-        #ususal fleur stuff check
-        if fleurinp.get structure
-        self.ctx.inputs.base_structure
-        wf_para = self.inputs.wf_parameters
-        corelevel_to_calc = wf_para.get('corelevel', None)
-        if not corelevel_to_calc:
-            errormsg = 'You need to specify unter 'corelevel' in the wf_para node on what corelevel you want to have a corehole calculated. (Default is 'all')'
-            self.abort_nowait(errormsg)
-
-        '''
-
-    def supercell_needed(self):
-        """
-        check if a supercell is needed and what size
-        """
-        #think about a rule here to apply 2x2x2 should be enough for nearly everything.
-        # but for larger unit cells smaller onces might be ok.
-        # So far we just go with what the user has given us
-        # Is there a way to tell if a supercell was already given as base? Do we want to deteckt it?
-        needed = self.ctx.supercell_boal
-
-        return needed
-
-    def create_supercell(self):
-        """
-        create the needed supercell
-        """
-        pass
-        '''
-        supercell_base = self.ctx.supercell_size
-        supercell = create_supercell(self.ctx.inputs.base_structure, supercellsize)
-        new_calc = (supercell, calc_para=self.ctx.inputs.get('calc_para', None)
-        self.ctx.calcs_to_run.append(new_calc)
-        '''
-
-    def create_coreholes(self):
-        """
-        create structurs with all the need coreholes
-        """
-        pass
-        '''
-        #Check what coreholes should be created.
-        '''
-
+        
     def relaxation_needed(self):
         """
         If the structures should be relaxed, check if their Forces are below a certain 
@@ -187,7 +140,33 @@ class fleur_corehole_wc(WorkChain):
         """
         create a new fleurinp from the old with certain parameters
         """
-        pass
+        # TODO allow change of kpoint mesh?, tria?
+        wf_dict = self.inputs.wf_parameters.get_dict()
+        nkpts = wf_dict.get('nkpts', 500) 
+        # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
+        sigma = wf_dict.get('sigma', 0.005)
+        emin = wf_dict.get('emin', -0.30)
+        emax = wf_dict.get('emax', 0.80)
+      
+        fleurmode = FleurinpModifier(self.inputs.fleurinp)
+
+        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000), 
+        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'), 
+        #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
+        change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
+                       'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
+        
+        fleurmode.set_inpchanges(change_dict)
+
+        if nkpts:
+            fleurmode.set_nkpts(count=nkpts)
+            #fleurinp_new.replace_tag()
+        
+        fleurmode.show(validate=True, display=False) # needed?
+        fleurinp_new = fleurmode.freeze()
+        self.ctx.fleurinp1 = fleurinp_new
+        print(fleurinp_new)
+        #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
 
     def get_inputs_fleur(self):
         '''
