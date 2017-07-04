@@ -205,12 +205,22 @@ class fleur_eos_wc(WorkChain):
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
-            res = asy(fleur_scf_wc,
-                      wf_parameters=inputs['wf_parameters'],
-                      structure=inputs['structure'], 
-                      calc_parameters=inputs['calc_parameters'], 
-                      inpgen=inputs['inpgen'], 
-                      fleur=inputs['fleur'])# asy async .run( submit()
+            calc_para = inputs.get('calc_parameters', None)
+
+            if calc_para:
+                res = asy(fleur_scf_wc,
+                          wf_parameters=inputs['wf_parameters'],
+                          structure=inputs['structure'], 
+                          calc_parameters=inputs['calc_parameters'], 
+                          inpgen=inputs['inpgen'], 
+                          fleur=inputs['fleur'])# asy async .run( submit(                
+            else:
+                res = asy(fleur_scf_wc,
+                          wf_parameters=inputs['wf_parameters'],
+                          structure=inputs['structure'], 
+                          inpgen=inputs['inpgen'], 
+                          fleur=inputs['fleur'])# asy async .run( submit(                   
+                
             #self.ctx.calcs_future.append(res)
             label = str(self.ctx.scalelist[i])
             self.ctx.labels.append(label)
@@ -245,7 +255,12 @@ class fleur_eos_wc(WorkChain):
             para['queue_name'] = wf_para_dict.get('queue_name')
             para['serial'] = wf_para_dict.get('serial')
             inputs['wf_parameters'] = ParameterData(dict=para)        
-        inputs['calc_parameters'] = self.inputs.calc_parameters
+        try:
+            calc_para = self.inputs.calc_parameters
+        except AttributeError:
+            calc_para = None
+        if calc_para:
+            inputs['calc_parameters'] = calc_para
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
 
