@@ -498,6 +498,7 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
 
 ####### XML GETTERS #########
+# TODO parser infos do not really work, might need to be returned, here
 def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
@@ -518,6 +519,24 @@ def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
         return return_value
 
 
+def eval_xpath2(node, xpath, parser_info={'parser_warnings':[]}):
+    """
+    Tries to evalutate an xpath expression. If it fails it logs it.
+    
+    :param root node of an etree and an xpath expression (relative, or absolute)
+    :returns either nodes, or attributes, or text
+    """
+    try:
+        return_value = node.xpath(xpath)
+    except etree.XPathEvalError:
+        parser_info['parser_warnings'].append('There was a XpathEvalError on the xpath: {} \n'
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
+        # TODO maybe raise an error again to catch in upper routine, to know where exactly
+        return []
+    return return_value
+
+
+'''
 def eval_xpath2(node, xpath):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
@@ -534,7 +553,7 @@ def eval_xpath2(node, xpath):
             ''.format(xpath))
         return []
     return return_value
-
+'''
 def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
