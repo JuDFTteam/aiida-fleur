@@ -282,7 +282,11 @@ class fleur_initial_cls_wc(WorkChain):
                 structure, report = get_ref_from_group(elem, struc_group)
                 if report:
                    self.report(report)
-                if structure:
+                parameter, report = get_para_from_group(elem, para_group)
+                if structure and parameter:
+                    self.ctx.ref[elem] = structure
+                    self.ctx.ref_calcs_torun.append(structure, parameter)
+                elif structure:
                     self.ctx.ref[elem] = structure
                     self.ctx.ref_calcs_torun.append(structure)
                 else:
@@ -900,6 +904,65 @@ def get_ref_from_group(element, group):
                   ''.format(element, group))
     
     return structure, report
+
+
+def get_para_from_group(element, group):
+    """
+    get structure node for a given element from a given group of structures
+    (quit creedy, done straighforward)
+    
+    """
+    from aiida.orm import Group
+    from string import digits
+    
+    report = []
+    
+    try:
+        group_pk = int(group)
+    except ValueError:
+        group_pk = None
+        group_name = group
+    
+    if group_pk is not None:
+        try:
+            para_group = Group(dbgroup=group_pk)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group of' 
+                      'parameters or a Group name. Reference key: "group".'
+                      'given pk= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_pk))
+            #print(message)
+            report.append(message)
+    else:
+        try:
+            str_group = Group.get_from_string(group_name)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group of' 
+                      'parameters or a Group name. Wf_para key: "para_group".'
+                      'given group name= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_name))
+            #print(message)
+            report.append(message)
+            #abort_nowait('I abort, because I have no structures to calculate ...')    
+ 
+    para_nodes = para_group.nodes
+    n_stru = len(para_nodes)
+        
+    parameter = None
+        
+    for para in para_nodes:
+        formula = para.get_extras().get('element', None)
+        #eformula = formula.translate(None, digits) # remove digits, !python3 differs
+        if formula == element:
+            return para, report
+            
+    report.append('Parameter node for element {} not found in group {}'
+                  ''.format(element, group))
+    
+    return parameter, report
+
 '''
    def get_calcs_from_groups(self):
         """
