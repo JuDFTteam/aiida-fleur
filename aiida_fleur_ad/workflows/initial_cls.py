@@ -285,7 +285,7 @@ class fleur_initial_cls_wc(WorkChain):
                 parameter, report = get_para_from_group(elem, para_group)
                 if structure and parameter:
                     self.ctx.ref[elem] = structure
-                    self.ctx.ref_calcs_torun.append(structure, parameter)
+                    self.ctx.ref_calcs_torun.append((structure, parameter))
                 elif structure:
                     self.ctx.ref[elem] = structure
                     self.ctx.ref_calcs_torun.append(structure)
@@ -368,6 +368,7 @@ class fleur_initial_cls_wc(WorkChain):
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 self.report('ERROR: something in calcs_torun which I do not recognize: {}'.format(node))
+                self.report('{}{}'.format(type(node[0], node[1])))
                 continue
             res_all.append(res)
             #print res
@@ -427,7 +428,7 @@ class fleur_initial_cls_wc(WorkChain):
         
         # for entry in ref[elem] find parameter node
         for elm, struc in self.ctx.ref.iteritems():
-            print(elm, struc)
+            #print(elm, struc)
             #self.ctx.ref_calcs_torun.append(ref_el)
             pass
             # if parameter node given, extract from there, 
@@ -459,7 +460,7 @@ class fleur_initial_cls_wc(WorkChain):
         res_all = []
         calcs = {}
         # now in parallel
-        print self.ctx.ref_calcs_torun
+        #print self.ctx.ref_calcs_torun
         i = 0
         for node in self.ctx.ref_calcs_torun:
             #print node
@@ -477,7 +478,7 @@ class fleur_initial_cls_wc(WorkChain):
                 print('something in calcs_torun which I do not reconise: {}'.format(node))
                 continue
             label = str('calc_ref{}'.format(i))
-            print(label)
+            #print(label)
             #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
             self.ctx.ref_labels.append(label)
             calcs[label] = res
@@ -575,15 +576,15 @@ class fleur_initial_cls_wc(WorkChain):
         # get results from calc
         calcs = self.ctx.calcs_res
         ref_calcs = []#self.ctx.ref_calcs_res
-        print (self.ctx.ref_labels)
+        #print (self.ctx.ref_labels)
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
             ref_calcs.append(calc)
         
-        print('ref_calcs')
-        print ref_calcs
-        print('calcs')
-        print calcs
+        #print('ref_calcs')
+        #print ref_calcs
+        #print('calcs')
+        #print calcs
         # extract_results need the scf workchain calculation node
         fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
         ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
@@ -609,8 +610,8 @@ class fleur_initial_cls_wc(WorkChain):
                     ref_cls.append(corelevel['energy']-ref_fermi_energies[compound])
                 ref_cl_energies[elm].append(ref_cls)
         
-        print('ref_cl energies')
-        print(ref_cl_energies)
+        #print('ref_cl energies')
+        #print(ref_cl_energies)
         #pprint(all_corelevel)
         
         #now substract efermi from corelevel of compound structure
@@ -890,7 +891,7 @@ def get_ref_from_group(element, group):
             #abort_nowait('I abort, because I have no structures to calculate ...')    
  
     stru_nodes = str_group.nodes
-    n_stru = len(stru_nodes)
+    #n_stru = len(stru_nodes)
         
     structure = None
         
@@ -913,7 +914,7 @@ def get_para_from_group(element, group):
     
     """
     from aiida.orm import Group
-    from string import digits
+    #from string import digits
     
     report = []
     
@@ -927,7 +928,7 @@ def get_para_from_group(element, group):
         try:
             para_group = Group(dbgroup=group_pk)
         except NotExistent:
-            str_group = None
+            para_group = None
             message = ('You have to provide a valid pk for a Group of' 
                       'parameters or a Group name. Reference key: "group".'
                       'given pk= {} is not a valid group'
@@ -936,9 +937,9 @@ def get_para_from_group(element, group):
             report.append(message)
     else:
         try:
-            str_group = Group.get_from_string(group_name)
+            para_group = Group.get_from_string(group_name)
         except NotExistent:
-            str_group = None
+            para_group = None
             message = ('You have to provide a valid pk for a Group of' 
                       'parameters or a Group name. Wf_para key: "para_group".'
                       'given group name= {} is not a valid group'
@@ -948,7 +949,7 @@ def get_para_from_group(element, group):
             #abort_nowait('I abort, because I have no structures to calculate ...')    
  
     para_nodes = para_group.nodes
-    n_stru = len(para_nodes)
+    #n_stru = len(para_nodes)
         
     parameter = None
         
