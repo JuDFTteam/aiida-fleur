@@ -1,0 +1,3 @@
+Since the schemas were often not found, we added a small python routine to tell the plugin where they are...
+
+So please if you add a NEW schemafile, add its relative path to this routine in schema_file_index.py

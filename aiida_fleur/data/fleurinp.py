@@ -31,6 +31,7 @@ from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv, xml_set_all_attribv, xml_set_text
 from aiida.work.workfunction import workfunction as wf
+from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA
 
@@ -64,15 +65,26 @@ class FleurinpData(Data):
     #TODO: dont walk the whole python path, test if dir below is aiida?
     #needs to be imporved, schema file is often after new installation not found...
     #installation with pip should always lead to a schmea file in the python path, or even specific place
-    
+
+    _search_paths = []
+    ifolders = get_internal_search_paths()
+    ischemas = get_schema_paths()
+    for path in ischemas:
+        _search_paths.append(path)
+    for path in ifolders:
+        _search_paths.append(path)
+    _search_paths.append('./')
+
+    # Now add also python path maybe will be decaptivated
     #if pythonpath is non existant catch error
     try:
         pythonpath = os.environ['PYTHONPATH'].split(':')
     except KeyError:
         pythonpath = []
-    _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/','/home/aiida/code/aiida_core/aiida/']
+
     for path in pythonpath[:]:
         _search_paths.append(path)
+        
     #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
     #                 str(get_repository_folder())]
 
@@ -233,10 +245,10 @@ class FleurinpData(Data):
         old_file_list = self.get_folder_list()
 
         if not os.path.isabs(src_abs):
-            raise ValueError("Pass an absolute path for src_abs")
+            raise ValueError("Pass an absolute path for src_abs: {}".format(src_abs))
 
         if not os.path.isfile(src_abs):
-            raise ValueError("src_abs must exist and must be a single file")
+            raise ValueError("src_abs must exist and must be a single file: {}".format(src_abs))
 
         if dst_filename is None:
             final_filename = os.path.split(src_abs)[1]
@@ -1138,6 +1150,33 @@ class FleurinpData(Data):
         else:
             return return_value
     '''
+'''
+from aiida.orm.data.base import Str
+
+#@wf
+def extract_parameterdata(fleurinp, element=Str('all'))
+    """
+    Method to extract a ParameterData node from a fleurinp data object. 
+    This parameter node can be used as an input node for inpgen.
+    
+    :param: fleurinp: an FleurinpData node
+    :param: element: string ('all', 'W', 'W O') default all, or specify the
+    species you want to extract
+    
+    :return: ParameterData node
+    """
+    pass
+    print("sorry not implemented yet")
+    if element=='all':
+        pass
+    else:
+        species = element.split()
+
+    #open inpxml tree
+    #use xpath expressions to extract parameters for all species or certain species
+
+    #store species paremeters in the right form in a parameter data node.
+'''
 '''
 # TODO write xml util and put all these functions there, parse as option a logger,
 # that parser can use these methods too.

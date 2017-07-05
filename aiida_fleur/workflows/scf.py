@@ -15,6 +15,7 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: get density for magnetic structures
 #TODO: set minDistance and higher iteration number, ggf change logic for total energy
 #TODO: check if calculation already exists
+# TODO test if code given if fleur and inpgen code, uses the right plugin.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -90,13 +91,22 @@ class fleur_scf_wc(WorkChain):
     """
 
     _workflowversion = "0.1.0"
-    _wf_default = {'fleur_runmax': 4, 
-                   'density_criterion' : 0.00002, 
-                   'energy_criterion' : 0.002, 
-                   'converge_density' : True, 
-                   'converge_energy' : False,
-                   'resue' : True,
-                   'queue_name' : ''}
+    _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start) 
+                   'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
+                   'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
+                   'converge_density' : True,      # converge the charge density
+                   'converge_energy' : False,      # converge the total energy (usually converged before density)
+                   'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
+                   'queue_name' : '',              # Queue name to submit jobs too
+                   'resources': {"num_machines": 1},# resources to allowcate for the job
+                   'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
+                   'serial' : False,                # execute fleur with mpi or without 
+                   'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
+                   'description' : 'Fleur self consistensy cycle workchain'} # description (see label)
+    
+    def __init__(self, *args, **kwargs):
+        super(fleur_scf_wc, self).__init__(*args, **kwargs)    
+    
     @classmethod
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
@@ -106,7 +116,13 @@ class fleur_scf_wc(WorkChain):
                                                'energy_criterion' : 0.002, 
                                                'converge_density' : True, 
                                                'converge_energy' : False,
-                                               'reuse' : True}))
+                                               'reuse' : True,
+                                               'resources': {"num_machines": 1},
+                                               'walltime_sec': 60*60,
+                                               'queue_name': '',
+                                               'serial' : False,
+                                               'label' : 'fleur_scf_wc',
+                                               'description' : 'Fleur self consistensy cycle workchain'}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
@@ -481,28 +497,28 @@ class fleur_scf_wc(WorkChain):
         #last_calc_out = self.ctx.last_calc['output_parameters'].dict
         outputnode_dict ={}
         if self.ctx.successful:
-            self.report('STATUS: Done, the convergence criteria are reached.')
-            self.report('INFO: The charge density of the FLEUR calculation pk= '
+            self.report('STATUS: Done, the convergence criteria are reached.\n'
+                        'INFO: The charge density of the FLEUR calculation pk= '
                         'converged after {} FLEUR runs and {} iterations to {} '
                         '"me/bohr^3"'.format(self.ctx.loop_count, 
                                        last_calc_out.number_of_iterations_total,
                                        last_calc_out.charge_density))
             self.report('INFO: The total energy difference of the last two iterations '
-                        'is {} htr \n'.format(self.energydiff))
+                        'is {} htr'.format(self.energydiff))
             #print('Done, the convergence criteria are reached.')
             #print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
             #      '"me/bohr^3"'.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
             #                           last_calc_out.charge_density))
             #print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
         else:
-            self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.')
-            self.report('INFO: The charge density of the FLEUR calculation pk= '
+            self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.\n'
+                        'INFO: The charge density of the FLEUR calculation pk= '
                         'after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
                         ''.format(self.ctx.loop_count, 
                             last_calc_out.number_of_iterations_total,
                             last_calc_out.charge_density))
             self.report('INFO: The total energy difference of the last two interations'
-                        'is {} htr \n'.format(self.energydiff))
+                        'is {} htr'.format(self.energydiff))
             #print('Done, the maximum number of runs was reached or something failed.')
             #print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
             #      ''.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
