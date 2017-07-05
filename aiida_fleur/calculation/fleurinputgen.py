@@ -320,7 +320,7 @@ class FleurinputgenCalculation(JobCalculation):
 
         # check existence of settings (optional)
         settings = inputdict.pop(self.get_linkname('settings'), None)
-        print('settings: {}'.format(settings))
+        #print('settings: {}'.format(settings))
         if settings is None:
             settings_dict = {}            
         else:
@@ -400,7 +400,7 @@ class FleurinputgenCalculation(JobCalculation):
                 # per default we use relative coordinates in Fleur
                 # we have to scale back to atomic units from angstrom
                 pos = site.position
-                print 'pos {}'.format(pos)
+                #print 'pos {}'.format(pos)
                 if bulk:
                     vector_rel = abs_to_rel(pos, cell)
                 elif film:
@@ -507,7 +507,7 @@ class FleurinputgenCalculation(JobCalculation):
 
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
-        print('add_retrieve: {}'.format(add_retrieve))
+        #print('add_retrieve: {}'.format(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
         
