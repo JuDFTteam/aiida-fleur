@@ -12,10 +12,10 @@ __contributors__ = "Jens Broeder"
 import os
 
 # any additional schema file add here, plugin will find them
-schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.27/FleurInputSchema.xsd',]
+schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.27/FleurInputSchema.xsd', '.']
 
 
-package_directory = os.path.dirname(os.path.abspath(__file__))#path = os.getcwd()#path.realpath(__file__)
+package_directory = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_schema_paths():
@@ -27,5 +27,16 @@ def get_schema_paths():
         path = os.path.abspath(os.path.join(package_directory, schema))
         if os.path.isfile(path):
            schema_paths.append(path)
+    return schema_paths
 
+def get_internal_search_paths():
+    """
+    returns all abs paths to dirs where schema files might be
+    """
+    #schema_paths = []
+    #for schema in schema_file_paths:
+    #    path = os.path.abspath(os.path.join(package_directory, schema))
+    #    if os.path.isdir(path):
+    #       schema_paths.append(path)
+    schema_paths = [package_directory]
     return schema_paths
