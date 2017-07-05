@@ -128,11 +128,12 @@ class fleur_initial_cls_wc(WorkChain):
         Init same context and check what input is given if it makes sence
         """
         ### input check ### ? or done automaticly, how optional?
+
         msg=("INFO: Started inital_state_CLS workflow version {} "
              "Workchain node identifiers: {}"
               "".format(self._workflowversion, ProcessRegistry().current_calc_node))
         self.report(msg)
-        
+
         # init
         self.ctx.last_calc = None
         self.ctx.eximated_jobs = 0
@@ -185,12 +186,10 @@ class fleur_initial_cls_wc(WorkChain):
             #print('here1')
             if 'structure' in inputs:
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
-                #print(warning)
                 self.ctx.warnings.append(warning)
                 self.report(warning)
             if 'calc_parameters' in inputs:
                 warning = 'WARNING: Ignoring parameter input, because Fleurinp was given'
-                #print(warning)
                 self.ctx.warnings.append(warning)
                 self.report(warning)
         elif 'structure' in inputs:
@@ -198,7 +197,6 @@ class fleur_initial_cls_wc(WorkChain):
             #self.ctx.elements = list(s.get_symbols_set())  
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                #print(error)
                 self.ctx.errors.append(error)
                 self.abort_nowait(error)
             if 'calc_parameters' in inputs:
@@ -226,7 +224,9 @@ class fleur_initial_cls_wc(WorkChain):
         We do not put these calculation in the calculation queue yet because we
         need specific parameters for them
         """
+
         self.report('INFO: In Get_references inital_state_CLS workflow')   
+
         #references = self.inputs.wf_parameters.get_dict().get('references', {'calculate' : 'all'})
         references = self.inputs.wf_parameters.get_dict().get('references', {})
         # should be of the form of
@@ -236,9 +236,13 @@ class fleur_initial_cls_wc(WorkChain):
         
         self.ctx.ref = {}
         self.ctx.abort = False
+
         struc_group = references.get('group', None)
         para_group = references.get('para_group', None)
+
         #TODO better checks if ref makes sense?
+        
+        # get specific element reference if given override
         for elem in self.ctx.elements:
             #to_calc[elem] = 'find' 
             ref_el = references.get(elem, None)
@@ -247,7 +251,7 @@ class fleur_initial_cls_wc(WorkChain):
                     ref_el_node = load_node(ref_el)
                 except:
                     ref_el_node = None
-                    self.report('The reference node (id or uuid) provided: {} for '
+                    self.report('ERROR: The reference node (id or uuid) provided: {} for '
                                 'element: {} could not be loaded with load_node'.format(ref_el, elem))
                     self.ctx.abort = True
                 if isinstance(ref_el_node, (StructureData, ParameterData)):
@@ -270,7 +274,7 @@ class fleur_initial_cls_wc(WorkChain):
                 #elif isinstance(ref_el, initial_state_CLS):
                 #    extract TODO
                 else:
-                    error = (" I do not know what to do with this given reference"
+                    error = ("ERROR: I do not know what to do with this given reference"
                              "{} for element {}".format(ref_el, elem))
                     #print(error)
                     self.report(error)
@@ -297,15 +301,15 @@ class fleur_initial_cls_wc(WorkChain):
                     self.ctx.ref[elem] = structure
                     self.ctx.ref_calcs_torun.append(structure)# tempoary later check parameters
                 else: #not found
-                    error = ("Reference structure for element: {} not found."
-                             " Checkout the 'querry_for_ref_structure' method."
+                    error = ("ERROR: Reference structure for element: {} not found."
+                             "checkout the 'querry_for_ref_structure' method."
                              "to see what extras are querried for.".format(elem))
                     #print(error)
                     self.ctx.errors.append(error)
                     self.ctx.abort = True
                     self.report(error)
         if self.ctx.abort:
-            error = ('Something was wrong with the reference input provided. '
+            error = ('ERROR: Something was wrong with the reference input provided. '
                     'I cannot calculate from the input, or what I have found '
                     'what you want me to do. Please check the workchain report'
                     'for details.')
@@ -849,10 +853,16 @@ def extract_results(calcs):
     #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
     #self.ctx.fermi_energies = {}    
 
+
 def get_ref_from_group(element, group):
     """
-    get structure node for a given element from a given group of structures
+    Return a structure data node from a given group for a given element.
     (quit creedy, done straighforward)
+
+    params: group: group name or pk
+    params: element: string with the element i.e 'Si'
+    
+    returns: AiiDA StructureData node
     
     """
     from aiida.orm import Group
@@ -972,6 +982,7 @@ def get_para_from_group(element, group):
         """
         wf_dict = self.inputs.wf_parameters.get_dict()
         #get all delta structure
+
         str_gr = wf_dict.get('struc_group', 'delta')
         
         try:
