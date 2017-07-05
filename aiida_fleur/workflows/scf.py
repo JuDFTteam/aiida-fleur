@@ -142,7 +142,7 @@ class fleur_scf_wc(WorkChain):
                 cls.get_res),
             cls.return_results
         )
-        spec.dynamic_output()
+        #spec.dynamic_output()
 
     def start(self):
         """
@@ -496,6 +496,23 @@ class fleur_scf_wc(WorkChain):
         last_calc_out = self.ctx.last_calc.out.output_parameters.dict
         #last_calc_out = self.ctx.last_calc['output_parameters'].dict
         outputnode_dict ={}
+
+
+        outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
+        outputnode_dict['loop_count'] = self.ctx.loop_count
+        outputnode_dict['iterations_total'] = last_calc_out.number_of_iterations_total
+        outputnode_dict['distance_charge'] = last_calc_out.charge_density
+        outputnode_dict['distance_charge_all'] = self.ctx.distance
+        outputnode_dict['total_energy'] = last_calc_out.energy_hartree
+        outputnode_dict['total_energy_all'] = self.ctx.total_energy
+        outputnode_dict['distance_charge_units'] = 'me/bohr^3'
+        outputnode_dict['total_energy_units'] = 'Htr'
+        outputnode_dict['warnings'] = self.ctx.warnings               
+        outputnode_dict['successful'] = self.ctx.successful
+        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid            
+        #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
+        #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
+
         if self.ctx.successful:
             self.report('STATUS: Done, the convergence criteria are reached.\n'
                         'INFO: The charge density of the FLEUR calculation pk= '
@@ -504,12 +521,7 @@ class fleur_scf_wc(WorkChain):
                                        last_calc_out.number_of_iterations_total,
                                        last_calc_out.charge_density))
             self.report('INFO: The total energy difference of the last two iterations '
-                        'is {} htr'.format(self.energydiff))
-            #print('Done, the convergence criteria are reached.')
-            #print('The charge density of the FLEUR calculation pk= converged after {} FLEUR runs and {} iterations to {} '
-            #      '"me/bohr^3"'.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
-            #                           last_calc_out.charge_density))
-            #print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
+                        'is {} htr \n'.format(self.energydiff))
         else:
             self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.\n'
                         'INFO: The charge density of the FLEUR calculation pk= '
@@ -519,27 +531,11 @@ class fleur_scf_wc(WorkChain):
                             last_calc_out.charge_density))
             self.report('INFO: The total energy difference of the last two interations'
                         'is {} htr'.format(self.energydiff))
-            #print('Done, the maximum number of runs was reached or something failed.')
-            #print('The charge density of the FLEUR calculation pk= after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
-            #      ''.format(self.ctx.loop_count, last_calc_out.number_of_iterations_total,
-            #                last_calc_out.charge_density))
-            #print('The total energy difference of the last two interations is {} htr \n'.format(self.energydiff))
 
-        outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
-        outputnode_dict['loop_count'] = self.ctx.loop_count
-        outputnode_dict['iterations_total'] = last_calc_out.number_of_iterations_total
-        outputnode_dict['distance_charge'] = last_calc_out.charge_density
-        outputnode_dict['distance_charge_all'] = self.ctx.distance
-        outputnode_dict['total_energy'] = last_calc_out.energy_hartree
-        outputnode_dict['total_energy_all'] = self.ctx.total_energy
-        outputnode_dict['distance_charge_units'] = ''
-        outputnode_dict['total_energy_units'] = 'Htr'
-        outputnode_dict['warnings'] = self.ctx.warnings               
-        outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid            
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
+            
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
         if 'fleurinp' in self.inputs:

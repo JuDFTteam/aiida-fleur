@@ -421,7 +421,7 @@ class FleurCalculation(JobCalculation):
         
         # check existence of settings (optional)
         settings = inputdict.pop(self.get_linkname('settings'), None)
-        print('settings: {}'.format(settings))
+        #print('settings: {}'.format(settings))
         if settings is None:
             settings_dict = {}            
         else:
@@ -437,7 +437,7 @@ class FleurCalculation(JobCalculation):
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
-        print settings_dict
+        #print settings_dict
         # Here, there should be no other inputs
         if inputdict:
             raise InputValidationError(
@@ -517,7 +517,7 @@ class FleurCalculation(JobCalculation):
             # TODO not on same computer -> copy needed files from repository,
             # if they are not there, throw error
             if copy_remotely: # on same computer.
-                print('copy files remotely')
+                #print('copy files remotely')
 
                 # from fleurmodes
                 if modes['pot8']:
@@ -557,7 +557,7 @@ class FleurCalculation(JobCalculation):
         #cmdline_params = settings_dict.pop('CMDLINE', [])
         #calcinfo.cmdline_params = (list(cmdline_params)
         #                           + ["-in", self._INPUT_FILE_NAME])
-        print local_copy_list
+        #print local_copy_list
         self.logger.info("local copy file list {}".format(local_copy_list))
 
         calcinfo.local_copy_list = local_copy_list
@@ -583,14 +583,14 @@ class FleurCalculation(JobCalculation):
         
         # if certain things are modefied, flags set,
         #other files should be retrieved, example DOS.x...
-        print "mode_retrieved_filelist", repr(mode_retrieved_filelist)
+        #print "mode_retrieved_filelist", repr(mode_retrieved_filelist)
         for mode_file in mode_retrieved_filelist:
             retrieve_list.append(mode_file)
-        print('retrieve_list: {}'.format(retrieve_list))
+        #print('retrieve_list: {}'.format(retrieve_list))
        
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
-        print('add_retrieve: {}'.format(add_retrieve))
+        #print('add_retrieve: {}'.format(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
         
@@ -610,7 +610,7 @@ class FleurCalculation(JobCalculation):
         #                         "".format(walltime_sec))
         cmdline_params = ["-xml"]#, "-wtime", "{}".format(walltime_sec)]
         #walltime_sec = self.get_max_wallclock_seconds()
-        print('walltime: {}'.format(walltime_sec))
+        #print('walltime: {}'.format(walltime_sec))
         if walltime_sec:
             walltime_min = max(1, walltime_sec/60)      
             cmdline_params.append("-wtime")

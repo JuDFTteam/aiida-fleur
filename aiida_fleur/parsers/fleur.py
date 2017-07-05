@@ -368,7 +368,7 @@ def parse_xmlout_file(outxmlfile):
         # get all iterations in out.xml file
         iteration_nodes = eval_xpath2(root, iteration_xpath)
         nIteration = len(iteration_nodes)
-        print nIteration
+        #print nIteration
         data_exists = True
 
         # parse only last stable interation
@@ -431,7 +431,7 @@ def parse_xmlout_file(outxmlfile):
                    
         # time
         starttime = eval_xpath(root, start_time_xpath)
-        print starttime
+        #print starttime
         starttimes = starttime.split(':')
         endtime = eval_xpath(root, end_time_xpath).split(':')
         
