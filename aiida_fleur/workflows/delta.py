@@ -3,7 +3,9 @@
 """
 In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solution to calculate a delta for a given code with AiiDA.
 """
-
+#TODO: calculation of delta value from the files
+# submit everything if subworkchaining works in Aiida
+# parameter node finding is not optimal.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -26,6 +28,7 @@ from aiida.common.exceptions import NotExistent
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 from string import digits
+from pprint import pprint
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -197,7 +200,8 @@ class fleur_delta_wc(WorkChain):
 
         # creating calculation pairs (structure, parameters)
 
-        para_nodes = para_group.nodes
+        para_nodesi = para_group.nodes
+        para_nodes = []
         n_para = len(para_nodes)
         stru_nodes = str_group.nodes
         n_stru = len(stru_nodes)
@@ -205,6 +209,8 @@ class fleur_delta_wc(WorkChain):
             message = ('COMMENT: You did not provide the same number of parameter'
                        'nodes as structure nodes. Is this wanted?')
             self.report(message)
+        for para in para_nodesi:
+            para_nodes.append(para)
         
         calcs = []
         for struc in stru_nodes:
@@ -213,7 +219,7 @@ class fleur_delta_wc(WorkChain):
             calcs.append((struc, para))
             #else:
             #    calcs.append((struc))
-        print calcs[:10]
+        pprint(calcs[:])
         self.ctx.calcs_to_run = calcs
 
     def run_eos(self):
@@ -279,16 +285,17 @@ class fleur_delta_wc(WorkChain):
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:]:
+        for struc, para in self.ctx.calcs_to_run[:10]:
             print para
             formula = struc.get_formula()
             if para:
-                print('here')
+                #print('here')
                 eos_future = fleur_eos_wc.run( 
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#
             else:
+                self.report('INFO: default parameters for structure {}'.format(formula))
                 eos_future = fleur_eos_wc.run( 
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'])
@@ -363,23 +370,27 @@ class fleur_delta_wc(WorkChain):
             self.ctx.all_succ[element] = eos_succ
             self.ctx.eos_uuids[element] = eos_res.get_inputs()[0].uuid
             
-            #outstr = outstr + '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
+            outstr = outstr + '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
             #write inside the loop to have at least partially results...
-            outfile = open('delta_wc.out', 'a')
-            outstr = '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
-            outfile.write(outstr)
-            outfile.close()
+            #outfile = open('delta_wc.out', 'a')
+            #outstr = '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
+            #outfile.write(outstr)
+            #outfile.close()
         # produce a single file
         # maybe put in try(or write in a certain place where is sure that you have the permissions)
         #outfile = open('delta_wc.out', 'w')
-        #outfile.write(outstr)
+        outfile = open('delta_wc.out', 'a') # for testing purposes
+        outfile.write(outstr)
 
-        #outfile.close()
+        outfile.close()
         
         self.ctx.outfilepath = os.path.abspath(outfile.name)
 
 
     def calculate_delta(self):
+        """
+        Execute here the script to calculate a delta factor
+        """
         pass
     
     def return_results(self):
@@ -478,6 +489,7 @@ def get_paranode(struc, para_nodes):
     """
 
     suuid = struc.uuid
+    #print para_nodes
     for para in para_nodes:
         struc_uuid = para.get_extra('struc_uuid', None)
         if suuid == struc_uuid:
