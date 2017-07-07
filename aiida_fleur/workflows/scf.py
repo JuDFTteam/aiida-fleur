@@ -248,7 +248,9 @@ class fleur_scf_wc(WorkChain):
         """
 
         #print('in change_fleurinp')
-        
+        # TODO recongize inpgen fail, then no fleurin exists...
+
+
         if self.ctx.fleurinp: #something was already changed
             #print('Fleurinp already exists')
             return
