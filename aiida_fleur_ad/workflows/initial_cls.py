@@ -175,7 +175,8 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.resources = wf_dict.get('resources', default.get('resources'))
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
         self.ctx.queue = wf_dict.get('queue_name', default.get('queue_name'))
-        # check if inputs given make sense
+
+        # check if inputs given make sense # TODO sort this out in common wc
         inputs = self.inputs        
         if 'fleurinp' in inputs:
             #TODO make a check if an extracted structure exists, since get_structuredata is wf
@@ -682,51 +683,7 @@ class fleur_initial_cls_wc(WorkChain):
         msg=('INFO: Inital_state_CLS workflow Done')
         self.report(msg)
 
-    def create_new_fleurinp(self):
-        """
-        create a new fleurinp from the old with certain parameters
-        """
-        # TODO allow change of kpoint mesh?, tria?
-        wf_dict = self.inputs.wf_parameters.get_dict()
-        nkpts = wf_dict.get('nkpts', 500) 
-        # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
-        sigma = wf_dict.get('sigma', 0.005)
-        emin = wf_dict.get('emin', -0.30)
-        emax = wf_dict.get('emax', 0.80)
-      
-        fleurmode = FleurinpModifier(self.inputs.fleurinp)
 
-        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000), 
-        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'), 
-        #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
-        change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
-                       'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
-        
-        fleurmode.set_inpchanges(change_dict)
-
-        if nkpts:
-            fleurmode.set_nkpts(count=nkpts)
-            #fleurinp_new.replace_tag()
-        
-        fleurmode.show(validate=True, display=False) # needed?
-        fleurinp_new = fleurmode.freeze()
-        self.ctx.fleurinp1 = fleurinp_new
-        #print(fleurinp_new)
-        #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
-
-        
-    def run_fleur(self):
-        '''
-        run a fleur calculation
-        '''
-        FleurProcess = FleurCalculation.process()
-        inputs = {}
-        inputs = self.get_inputs_fleur()
-        #print inputs
-        future = submit(FleurProcess, **inputs)
-        #print 'run Fleur in band workflow'
-
-        return ToContext(last_calc=future)
 
 def querry_for_ref_structure(element_string):
     """
