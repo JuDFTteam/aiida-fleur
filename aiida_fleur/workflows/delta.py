@@ -219,7 +219,7 @@ class fleur_delta_wc(WorkChain):
             calcs.append((struc, para))
             #else:
             #    calcs.append((struc))
-        pprint(calcs[:])
+        pprint(calcs[:20])
         self.ctx.calcs_to_run = calcs
 
     def run_eos(self):
@@ -285,7 +285,7 @@ class fleur_delta_wc(WorkChain):
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:10]:
+        for struc, para in self.ctx.calcs_to_run[:]:
             print para
             formula = struc.get_formula()
             if para:

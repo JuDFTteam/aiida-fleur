@@ -328,7 +328,7 @@ class fleur_scf_wc(WorkChain):
         or if not troubleshoot the cause and adapt the input parameters accordingly before
         restarting, or abort if unrecoverable error was found
         """
-        expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
+        #expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
         
         try:
