@@ -93,15 +93,14 @@ def rescale_xyz(inp_structure, scalevec):
     pass
 
 
-#@wf
+@wf
 def supercell(inp_structure, n_a1, n_a2, n_a3):# be carefull you have to use AiiDA datatypes...
     """
     Creates a super cell from a StructureData node.
     Keeps the provanance in the database.
 
     :param StructureData, a StructureData node (pk, or uuid)
-    :param scale: tuple of 3 integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
-    :param cart, Boolean #TODO needed?
+    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
 
     :returns StructureData, Node with supercell
     """

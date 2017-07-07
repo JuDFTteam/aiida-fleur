@@ -55,7 +55,9 @@ if __name__ == '__main__':
                 'fleur.scf = aiida_fleur.workflows.scf:fleur_scf_wc',
                 'fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc',
                 'fleur.band = aiida_fleur.workflows.band:fleur_band_wc',
-                'fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc'
+                'fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc',
+                'fleur.dummy = aida_fleur.workflows.dummy:dummy_wc',
+                'fleur.sub_dummy = aida_fleur.workflows.dummy:sub_dummy_wc'
            ]
         },
     )
