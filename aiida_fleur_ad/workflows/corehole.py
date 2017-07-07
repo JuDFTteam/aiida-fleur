@@ -6,63 +6,43 @@ This is the worklfow 'corehole' using the Fleur code, which calculates Binding
 energies and corelevel shifts with different methods.
 'divide and conquer'
 """
-# TODO alow certain kpoint path, or kpoint node, so far auto
+
+# TODO maybe also calculate the reference structure to check on the supercell calculation
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
     
 import os.path
-from aiida.orm import Code, DataFactory
+from aiida.orm import Code, DataFactory, load_node
+from aiida.orm.data.base import Int
 from aiida.work.workchain import WorkChain
+from aiida.work.workchain import while_, if_
+
 from aiida.work.run import submit
+from aiida.work.run import async as asy
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.work.workchain import while_, if_
+from aiida_fleur.tools.StructureData_util import supercell
 from aiida_fleur_ad.util.create_corehole import create_corehole
+from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
+from aiida_fleur.workflows.scf import fleur_scf_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
+#FleurProcess = FleurCalculation.process()
 
 
 class fleur_corehole_wc(WorkChain):
-    '''
-    Turn key solution for a corehole calculation
+    """
+    Turn key solution for a corehole calculation with FLEUR
     
 
-    '''
-    # wf_Parameters: ParameterData, 
-    '''
-    'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
-    'Bes' : [W4f, Be1s]
-    'CLS' : [W4f, Be1s]
-    'atoms' : ['all', 'postions' : []]
-    'references' : ['calculate', or 
-    'scf_para' : {...}, 'default' 
-    'relax' : True
-    'relax_mode': ['Fleur', 'QE Fleur', 'QE']
-    'relax_para' : {...}, 'default' 
-    'calculate_doses' : False
-    'dos_para' : {...}, 'default' 
-    '''
-    '''
-    # defaults 
-    default wf_Parameters::
-    'method' : 'initial'
-    'atoms' : 'all
-    'references' : 'calculate' 
-    'scf_para' : 'default' 
-    'relax' : True
-    'relax_mode': 'QE Fleur'
-    'relax_para' : 'default' 
-    'calculate_doses' : False
-    'dos_para' : 'default'
-    '''
+    """
     
     _workflowversion = "0.0.1"
     
@@ -70,32 +50,41 @@ class fleur_corehole_wc(WorkChain):
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                                            'method' : 'full valence',
-                                            'atoms' : 'all',
-                                            'corelevel': 'all',
-                                            #'references' : 'calculate',
-                                            #'relax' : False,
-                                            #'relax_mode': 'Fleur',
-                                            #'relax_para' : 'default',
-                                            'scf_para' : 'default',
-                                            }))
-        spec.input("fleurinp", valid_type=FleurinpData, required=True)
+            default=ParameterData(dict={
+                'method' : 'full valence', # what method to use
+                'atoms' : 'all',           # coreholes on what atoms, positions or index for list, or element
+                'corelevel': 'all',        # coreholes on which corelevels [ '1s', '4f', ...]
+                'para_group' : None,       # use parameter nodes from a parameter group
+                #'references' : 'calculate',# at some point aiida will have fast forwarding
+                #'relax' : False,          # relax the unit cell first?
+                #'relax_mode': 'Fleur',    # what releaxation do you want
+                #'relax_para' : 'default', # parameter dict for the relaxation
+                'scf_para' : 'default',    # wf parameter dict for the scfs
+                'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
+                'resources' : {"num_machines": 1},# resources per job
+                'walltime_sec' : 10*30,    # walltime per job
+                'queue_name' : None,       # what queue to submit to
+                'serial' : True,           # run fleur in serial, or parallel?
+                'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
+                }))
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
+
         spec.outline(
-            cls.check_input,
-            #if_(cls.relaxation_needed)(
+            cls.check_input,              # first check if input is consistent
+            #if_(cls.relaxation_needed)(  # ggf relax the given cell
             #    cls.relax),
-            if_(cls.supercell_needed)(
+            if_(cls.supercell_needed)(    # create a supercell from the given/relaxed cell
                 cls.create_supercell
                     ),
-            cls.create_new_fleurinp,
+            cls.run_ref_scf,              # calculate the reference supercell
+            cls.check_scf,
             cls.create_coreholes,
             cls.run_scfs,
-            cls.collect_results,
+            #cls.collect_results,
             cls.return_results
         )
         #spec.dynamic_output()
@@ -106,11 +95,10 @@ class fleur_corehole_wc(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         '''
-        ### input check ### ? or done automaticly, how optional?
-        # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}"
-              "".format(ProcessRegistry().current_calc_node))
+        ### input check ###
+        self.report("started fleur_corehole_wc version {}"
+                    "Workchain node identifiers: {}"
+              "".format(self._workflowversion, ProcessRegistry().current_calc_node))
 
         '''
         #ususal fleur stuff check
@@ -123,6 +111,36 @@ class fleur_corehole_wc(WorkChain):
             self.abort_nowait(errormsg)
 
         '''
+        ### init ctx ###
+
+        self.ctx.calcs_torun = []
+        
+        inputs = self.inputs
+        self.ctx.base_structure = inputs.get('structure') # ggf get from fleurinp
+        self.ctx.supercell_size = (2, 2, 2) # 2x2x2
+        self.ctx.calcs_to_run = []
+        if 'calc_parameters' in inputs:
+            self.ctx.ref_para = inputs.get('calc_parameters')
+        else:
+            self.ctx.ref_para = None
+
+
+        wf_dict = self.inputs.wf_parameters.get_dict()
+
+        self.ctx.joblimit = wf_dict.get('joblimit')
+        self.ctx.serial = wf_dict.get('serial')
+        self.ctx.same_para = wf_dict.get('same_para')
+        self.ctx.scf_para = wf_dict.get('scf_para', {})
+        
+        #self.ctx.relax = wf_dict.get('relax', default.get('relax'))
+        #self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
+        #self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
+        self.ctx.resources = wf_dict.get('resources')
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec')
+        self.ctx.queue = wf_dict.get('queue_name')
+
+
+
 
     def supercell_needed(self):
         """
@@ -130,39 +148,118 @@ class fleur_corehole_wc(WorkChain):
         """
         #think about a rule here to apply 2x2x2 should be enough for nearly everything.
         # but for larger unit cells smaller onces might be ok.
-        # So far we just go with what the user has given us
-        # Is there a way to tell if a supercell was already given as base? Do we want to deteckt it?
+        # So far we just go with what the user has given
+        # Is there a way to tell if a supercell was already given as base?
+        # Do we want to detect it with some spglib methods?
+        self.ctx.supercell_boal = True
         needed = self.ctx.supercell_boal
 
         return needed
+
 
     def create_supercell(self):
         """
         create the needed supercell
         """
-        pass
-        '''
+        print('in create_supercell')
         supercell_base = self.ctx.supercell_size
-        supercell = create_supercell(self.ctx.inputs.base_structure, supercellsize)
-        new_calc = (supercell, calc_para=self.ctx.inputs.get('calc_para', None)
-        self.ctx.calcs_to_run.append(new_calc)
-        '''
+        supercell_s = supercell(
+                        self.ctx.base_structure,
+                        Int(supercell_base[0]),
+                        Int(supercell_base[1]),
+                        Int(supercell_base[2]))
+        self.ctx.ref_supercell = supercell_s
+        print(self.ctx.base_structure)
+        print(self.ctx.base_structure.sites)
+        print(supercell_s)
+        print(supercell_s.sites)
+        calc_para = self.ctx.ref_para
+        new_calc = (supercell_s, calc_para)
+        self.ctx.calcs_torun.append(new_calc)
+
+        return
+
+    def run_ref_scf(self):
+        """
+        Run a scf for the reference super cell
+        """
+        self.report('INFO: In run_ref_scf fleur_corehole_wc')
+        #TODO if submiting of workdlows work, use that.
+        #async here because is closer to submit
+        
+        para = self.ctx.scf_para
+        if para == 'default': 
+            wf_parameter = {}
+        else:
+            wf_parameter = para
+        print(wf_parameter)
+        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameters =  ParameterData(dict=wf_parameter)
+        res_all = []
+        calcs = {}
+        # now in parallel
+        #print self.ctx.ref_calcs_torun
+        i = 0
+        for node in self.ctx.calcs_torun:
+            #print node
+            i = i+1
+            if isinstance(node, StructureData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, FleurinpData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            else:
+                print('something in run_ref_scf which I do not reconise: {}'.format(node))
+                continue
+            label = str('calc_ref{}'.format(i))
+            #print(label)
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
+            self.ctx.labels.append(label)
+            calcs[label] = res
+            res_all.append(res)
+            #print res  
+            self.ctx.calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.calcs_torun = []
+        return ToContext(**calcs)
+
+    def check_scf(self):
+        """
+        Check if ref scf was successful, or something needs to be dealt with
+        """
+        #so far not implemented
+        pass
 
     def create_coreholes(self):
         """
         create structurs with all the need coreholes
         """
-        pass
-        '''
+        print('in create_coreholes fleur_corehole_wc')
+
         #Check what coreholes should be created.
-        '''
+        # said in the input
+        # look in the original cell
+        # are the positions the same for the supercell?
+        # find these atoms in the supercell
+        # break the symmetry?
+        # use the fleurinpdate from the supercell calculation
+        # create a new species and a corehole for this atom group.
+        # start the scf with the last charge density of the ref calc?
+        # only possible if symmetry allready the same.
+
 
     def relaxation_needed(self):
         """
         If the structures should be relaxed, check if their Forces are below a certain 
         threshold, otherwise throw them in the relaxation wf.
         """
-        print('In relaxation inital_state_CLS workflow')
+        print('In relaxation fleur_corehole_wc')
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
@@ -178,117 +275,206 @@ class fleur_corehole_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        print('In relax inital_state_CLS workflow')        
-        for calc in self.ctx.dos_to_calc:
-            pass 
-            # TODO run relax workflow        
-        
-    def create_new_fleurinp(self):
+        print('In relax fleur_corehole_wc workflow')
+        #for calc in self.ctx.dos_to_calc:
+        #    pass
+        #    # TODO run relax workflow
+
+
+    def run_scfs(self):
         """
-        create a new fleurinp from the old with certain parameters
+        Run a scf for the all corehole calculations in parallel super cell
         """
-        pass
+        self.report('INFO: In run_scfs fleur_corehole_wc')
+        #TODO if submiting of workdlows work, use that.
+        #async here because is closer to submit
+        
+        para = self.ctx.scf_para
+        if para == 'default': 
+            wf_parameter = {}
+        else:
+            wf_parameter = para
+        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameters =  ParameterData(dict=wf_parameter)
+        res_all = []
+        calcs = {}
+        # now in parallel
+        #print self.ctx.ref_calcs_torun
+        i = 1 # 0 is reference
+        for node in self.ctx.calcs_torun:
+            #print node
+            i = i+1
+            if isinstance(node, StructureData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, FleurinpData):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            else:
+                print('something in run_ref_scf which I do not reconise: {}'.format(node))
+                continue
+            label = str('calc_ref{}'.format(i))
+            #print(label)
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
+            self.ctx.labels.append(label)
+            calcs[label] = res
+            res_all.append(res)
+            #print res  
+            self.ctx.calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.calcs_torun = []
+        return ToContext(**calcs)
 
-    def get_inputs_fleur(self):
-        '''
-        get the input for a FLEUR calc
-        '''
-        inputs = FleurProcess.get_inputs_template()
 
-        fleurin = self.ctx.fleurinp1
-        #print fleurin
-        remote = self.inputs.remote
-        inputs.parent_folder = remote
-        inputs.code = self.inputs.fleur
-        inputs.fleurinpdata = fleurin
-        
-        # TODO nkpoints decide n core
+    def collect_results(self):
+        """
+        Collect results from certain calculation, check if everything is fine, 
+        calculate the wanted quantities. currently all energies are in hartree (as provided by Fleur)
+        """
+        message=('INFO: Collecting results of fleur_corehole_wc workflow')
+        self.report(message)
 
-        core = 12 # get from computer nodes per machine
-        inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
-        inputs._options.max_wallclock_seconds = 30 * 60
-          
-        if self.ctx.serial:
-            inputs._options.withmpi = False # for now
-            inputs._options.resources = {"num_machines": 1}
-        
-        if self.ctx.queue:
-            inputs._options.queue_name = self.ctx.queue
-            print self.ctx.queue
-        # if code local use
-        #if self.inputs.fleur.is_local():
-        #    inputs._options.computer = computer
-        #    #else use computer from code.
-        #else:
-        #    inputs._options.queue_name = 'th1'
-        
-        if self.ctx.serial:
-            inputs._options.withmpi = False # for now
-            inputs._options.resources = {"num_machines": 1}
-        
-        return inputs
-        
-    def run_fleur(self):
-        '''
-        run a fleur calculation
-        '''
-        FleurProcess = FleurCalculation.process()
-        inputs = {}
-        inputs = self.get_inputs_fleur()
-        #print inputs
-        future = submit(FleurProcess, **inputs)
-        print 'run Fleur in band workflow'
+        all_CLS = {}
+        ref_calcs = []
+        ref_cl_energies = {}
+        cl_energies = {}
 
-        return ToContext(last_calc=future)
+        calcs = []
+        # get results from calc/scf
+        calcs = self.ctx.calcs_res
+        for i, label in enumerate(self.ctx.labels):
+            calc = self.ctx[label]
+            if i==0:
+                ref_calcs.append(calc)
+            else:
+                calcs.append(calc)
+
+        fermi_energies, bandgaps, atomtypes, all_corelevel, total_energies = extract_results(calcs)
+        ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, ref_total_energies = extract_results(ref_calcs)
+
+
+        # now calculate binding energies of the coreholes.
+        # Differences of total energies
+        # make a return dict
+        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, total_energies, ref_total_energies
 
     def return_results(self):
         '''
         return the results of the calculations
         '''
-        # TODO more here
-        print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+        # TODO more output, info here
         
-        #check if band file exists: if not succesful = False
-        #TODO be careful with general bands.X
-
-        bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
-        # TODO this should be easier...
-        last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path')
-        bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print bandfilepath
-        #bandfilepath = "path to bandfile" # Array?
-        if os.path.isfile(bandfilepath):
-            self.ctx.successful = True
-        else:
-            bandfilepath = None
-            print '!NO bandstructure file was found, something went wrong!'
-        #TODO corret efermi:
-        # get efermi from last calculation
-        efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
-        #get efermi from this caclulation
-        efermi2 = self.ctx.last_calc.res.fermi_energy
-        diff_efermi = efermi1 - efermi2
-        # store difference in output node
-        # adjust difference in band.gnu
-        #filename = 'gnutest2'
+        print('coreholes were calculated bla bla')
+        cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref, te, te_ref =  self.collect_results()
         
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['Warnings'] = self.ctx.warnings               
+        outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['diff_efermi'] = diff_efermi               
-        #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
-        #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
-        outputnode_dict['bandfile'] = bandfilepath
-        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid 
-        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved 
-        #print outputnode_dict
+        outputnode_dict['total_energy_ref'] = te_ref
+        outputnode_dict['total_energy_ref_units'] = 'eV'
+        outputnode_dict['total_energy_all'] = te
+        outputnode_dict['total_energy_all_units'] = 'eV'
+        outputnode_dict['binding_energy'] = []
+        outputnode_dict['binding_energy_units'] = 'eV'
+        outputnode_dict['binding_energy_convention'] = 'negativ'
+        outputnode_dict['corehole_type'] = ''
+        outputnode_dict['coreholes_calculated'] = '' # on what atom what level basicly description of the other lists
+
+        #outputnode_dict['corelevel_energies'] = cl
+        #outputnode_dict['reference_corelevel_energies'] = ref_cl
+        outputnode_dict['fermi_energy'] = efermi
+        outputnode_dict['fermi_energy_unit'] = ''
+
+        outputnode_dict['coresetup'] = []#cls
+        outputnode_dict['reference_coresetup'] = []#cls
+        outputnode_dict['bandgap'] = gap
+        outputnode_dict['bandgap_unit'] = ''
+
+        outputnode_dict['reference_bandgaps'] = ref_gap
+        outputnode_dict['atomtypes'] = at
+
+
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
+        msg=('INFO: fleur_corehole_wc workflow Done')
+        self.report(msg)
+
+
+def extract_results(calcs):
+    """
+    Collect results from certain calculation, check if everything is fine, 
+    calculate the wanted quantities.
+    
+    params: calcs : list of scf workchains nodes
+    """
+    # TODO maybe import from somewhere move to common wf
+
+    calc_uuids = []
+    for calc in calcs:
+        #print(calc)
+        calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+    #print(calc_uuids)
+    
+    all_corelevels = {}
+    fermi_energies = {}
+    bandgaps = {}
+    all_atomtypes = {}
+    all_total_energies = {}
+    # more structures way: divide into this calc and reference calcs.
+    # currently the order in calcs is given, but this might change if you submit
+    # check if calculation pks belong to successful fleur calculations
+    for i,uuid in enumerate(calc_uuids):
+        calc = load_node(uuid)
+        if (not isinstance(calc, FleurCalculation)):
+            #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
+            # log and continue
+            continue
+        if calc.get_state() != 'FINISHED':
+            # log and continue
+            continue
+            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
+        
+        # get out.xml file of calculation
+        outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+        #print outxml
+        corelevels, atomtypes = extract_corelevels(outxml)
+        #all_corelevels.append(core)
+        #print('corelevels: {}'.format(corelevels))
+        #print('atomtypes: {}'.format(atomtypes))
+        #for i in range(0,len(corelevels[0][0]['corestates'])):
+        #    print corelevels[0][0]['corestates'][i]['energy']
+            
+        #TODO how to store?
+        efermi = calc.res.fermi_energy
+        #print efermi
+        bandgap = calc.res.bandgap
+        total_energy = calc.res.total_energy
+        total_energy_units = calc.res.total_energy_units
+        
+        # TODO: maybe different, because it is prob know from before
+        #fleurinp = calc.inp.fleurinpdata
+        #structure = fleurinp.get_structuredata(fleurinp)
+        #compound = structure.get_formula()
+        #print compound
+        number = '{}'.format(i)
+        fermi_energies[number] = efermi
+        bandgaps[number] = bandgap
+        all_atomtypes[number] = atomtypes
+        all_corelevels[number] = corelevels
+        all_total_energies[number] = total_energy
+
+    return fermi_energies, bandgaps, all_atomtypes, all_corelevels, all_total_energies
+
+
