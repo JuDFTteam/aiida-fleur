@@ -60,7 +60,10 @@ class fleur_eos_wc(WorkChain):
     
     _workflowversion = "0.1.0"
 
-    
+    def __init__(self, *args, **kwargs):
+        super(fleur_eos_wc, self).__init__(*args, **kwargs) 
+        
+        
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
@@ -162,7 +165,7 @@ class fleur_eos_wc(WorkChain):
         """
         start scf-cycle from Fleur calculation
         """ 
-        '''
+        
         #submit somehow produces strange different results then async... AiiDA problem?
         calcs= {}
         # run a convergence worklfow# TODO better sumbit or async?
@@ -229,12 +232,9 @@ class fleur_eos_wc(WorkChain):
         # for future in self.ctx.calcs_future:
         #    ToContext(temp_calc=future)
         #    self.ctx.calcs.append(self.ctx.temp_calc)
+        '''
         return ToContext(**calcs)           
-            #print self.ctx.calcs
-            #ResultToContext(self.ctx.calcs1.append(res))
-            #calcs.append(res)
-        #self.ctx.last_calc2 = res#.get('remote_folder', None)
-        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),    
+   
         
     
     def get_inputs_scf(self):
