@@ -432,9 +432,16 @@ def parse_xmlout_file(outxmlfile):
         # time
         starttime = eval_xpath(root, start_time_xpath)
         #print starttime
-        starttimes = starttime.split(':')
+        if starttime:
+            starttimes = starttime.split(':')
+        else:
+            starttimes = [0,0,0]
+            
         endtime = eval_xpath(root, end_time_xpath).split(':')
-        
+        if endtime:
+            endtime = endtime.split(':')
+        else:
+            endtime = [0,0,0]
         start_date = eval_xpath(root, start_date_xpath)
         end_date = eval_xpath(root, end_date_xpath)
         
@@ -464,7 +471,7 @@ def parse_xmlout_file(outxmlfile):
                 'There was a XpathEvalError on the xpath: {} \n Either it does '
                 'not exist, or something is wrong with the expression.'
                 ''.format(xpath))
-            return []
+            return []# or rather None?
         if len(return_value) == 1:
             return return_value[0]
         else:
