@@ -259,6 +259,29 @@ class FleurinpModifier(object):
                     pass
                     #print 'change validated'
         return workingtree
+        
+    def get_avail_actions(self):
+        """
+        returns the allowed functions from fleurinpmod, this is for checking purposes of other routines
+        """
+        outside_actions = {
+            'xml_set_attribv_occ' : self.xml_set_attribv_occ,
+            'xml_set_first_attribv' : self.xml_set_first_attribv,
+            'xml_set_all_attribv' : self.xml_set_all_attribv,
+            'xml_set_text' : self.xml_set_text,
+            'xml_set_all_text' : self.xml_set_all_text,
+            'create_tag' : self.create_tag,
+            'replace_tag' : self.replace_tag,
+            'delete_tag' : self.delete_tag,
+            'delete_att' : self.delete_att,
+            'set_species' : self.set_species,
+            'set_atomgr_att' : self.change_atomgr_att,
+            'set_inpchanges': self.set_inpchanges,
+            'set_nkpts' : self.set_nkpts
+
+        }
+        return outside_actions
+       
     '''
     def set_inpchanges(self, change_dict):
         self._tasks.append(('set_inpchanges', change_dict))
