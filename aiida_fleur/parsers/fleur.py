@@ -437,7 +437,7 @@ def parse_xmlout_file(outxmlfile):
         else:
             starttimes = [0,0,0]
             
-        endtime = eval_xpath(root, end_time_xpath).split(':')
+        endtime = eval_xpath(root, end_time_xpath)
         if endtime:
             endtime = endtime.split(':')
         else:
