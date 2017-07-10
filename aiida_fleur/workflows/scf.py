@@ -16,6 +16,9 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: set minDistance and higher iteration number, ggf change logic for total energy
 #TODO: check if calculation already exists
 # TODO test if code given if fleur and inpgen code, uses the right plugin.
+#TODO write a routine that calls self.abort and produced there output nodes dict with errors all keys and
+# successful false
+
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -102,7 +105,10 @@ class fleur_scf_wc(WorkChain):
                    'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
                    'serial' : False,                # execute fleur with mpi or without 
                    'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
-                   'description' : 'Fleur self consistensy cycle workchain'} # description (see label)
+                   'description' : 'Fleur self consistensy cycle workchain', # description (see label)
+                   'inpxml_changes' : []}      # (expert) List of further changes applied after the inpgen run
+                                                    # tuples (function_name, [parameters]), the ones from fleurinpmodifier
+                                                    # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
     
     def __init__(self, *args, **kwargs):
         super(fleur_scf_wc, self).__init__(*args, **kwargs)    
@@ -215,7 +221,14 @@ class fleur_scf_wc(WorkChain):
             #print(error)
             self.ctx.errors.append(error)
             self.abort_nowait(error)
-
+        
+        # check format of inpxml_changes
+        fchanges = wf_dict.get('inpxml_changes', [])
+        if fchanges:
+            for change in fchanges:
+                if not isinstance(change, tuple):
+                    error = 'ERROR: Wrong Input inpxml_changes wrong format of : {} should be tuple of 2. I abort'.format(change)
+                    self.abort_nowait(error)
 
         return run_inpgen
 
@@ -265,17 +278,46 @@ class fleur_scf_wc(WorkChain):
         
         wf_dict = self.inputs.wf_parameters.get_dict()
         converge_te = wf_dict.get('converge_energy', False)
-
-        if not converge_te:
+        fchanges = wf_dict.get('inpxml_changes', [])
+        
+        if not converge_te or fchanges:# change inp.xml file
             #if not energy convergence, set mindistance to criterium
             #itermax to 18 (less jobs needed)   
-            dc = wf_dict.get('density_criterion', 0.00002)
+            
             fleurmode = FleurinpModifier(fleurin)
-            fleurmode.set_inpchanges({'itmax': 30, 'minDistance' : dc})
-            out = fleurmode.freeze()
-            self.ctx.fleurinp = out
+            if not converge_te:
+                dc = wf_dict.get('density_criterion', 0.00002)
+                fleurmode.set_inpchanges({'itmax': 30, 'minDistance' : dc})
+            avail_ac_dict = fleurmode.get_avail_actions()
+            # apply further user dependend changes
+            if fchanges:
+                for change in fchanges:
+                    function = change[0]
+                    para = change[1]
+                    method = avail_ac_dict.get(function, None)
+                    if not method:
+                        error = ("ERROR: Input 'inpxml_changes', function {}"
+                                 "is not known to fleurinpmodifier class, "
+                                 "plaese check/test your input. I abort..."
+                                 "".format(method))
+                        self.abort(error)
+                    else:# apply change
+                        method(**para)
+                        
+            # validate?
+            apply_c = True
+            try:
+                fleurmode.show(display=False, validate=True)
+            except:
+                error = ('ERROR: input, user wanted inp.xml changes did not validate')
+                self.abort(error)
+                apply_c = False
+            # apply
+            if apply_c:
+                out = fleurmode.freeze()
+                self.ctx.fleurinp = out
             return
-        else:
+        else: # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
             return
 
@@ -558,6 +600,23 @@ class fleur_scf_wc(WorkChain):
     def handle_inpgen_failure(self):
         pass
     
+    def control_end_wc(self, errormsg):
+        """
+        Controled way to shutdown the workchain. will initalize the output nodes
+        """
+        outputnode_dict = {}
+        outputnode = ParameterData(dict=outputnode_dict)
+        outdict = {}
+        if 'fleurinp' in self.inputs:
+            outdict['fleurinp'] = self.inputs.fleurinp
+        else:
+            outdict['fleurinp'] = self.ctx['inpgen'].out.fleurinpData
+        outdict['output_scf_wc_para'] = outputnode
+        #print outdict
+        for link_name, node in outdict.iteritems():
+            self.out(link_name, node)      
+        
+        self.abort_nowait(errormsg)
     
 if __name__ == "__main__":
     import argparse
