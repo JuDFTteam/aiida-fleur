@@ -275,7 +275,7 @@ class FleurinpModifier(object):
             'delete_tag' : self.delete_tag,
             'delete_att' : self.delete_att,
             'set_species' : self.set_species,
-            'set_atomgr_att' : self.change_atomgr_att,
+            'set_atomgr_att' : self.set_atomgr_att,
             'set_inpchanges': self.set_inpchanges,
             'set_nkpts' : self.set_nkpts
 

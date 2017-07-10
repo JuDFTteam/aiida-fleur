@@ -128,7 +128,8 @@ class fleur_scf_wc(WorkChain):
                                                'queue_name': '',
                                                'serial' : False,
                                                'label' : 'fleur_scf_wc',
-                                               'description' : 'Fleur self consistensy cycle workchain'}))
+                                               'description' : 'Fleur self consistensy cycle workchain',
+                                               'inpxml_changes' : []}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
@@ -222,11 +223,19 @@ class fleur_scf_wc(WorkChain):
             self.ctx.errors.append(error)
             self.abort_nowait(error)
         
+        # maybe ckeck here is unessesary...        
+        wf_dict = self.inputs.wf_parameters.get_dict()
+        
+        if wf_dict == {}:
+            wf_dict = self._wf_default
+        
         # check format of inpxml_changes
         fchanges = wf_dict.get('inpxml_changes', [])
         if fchanges:
             for change in fchanges:
-                if not isinstance(change, tuple):
+                print('change : {}'.format(change))
+                # somehow the tuple type gets destroyed on the way and becomes a list
+                if (not isinstance(change, tuple)) and (not isinstance(change, list)):
                     error = 'ERROR: Wrong Input inpxml_changes wrong format of : {} should be tuple of 2. I abort'.format(change)
                     self.abort_nowait(error)
 
@@ -302,6 +311,7 @@ class fleur_scf_wc(WorkChain):
                                  "".format(method))
                         self.abort(error)
                     else:# apply change
+                        #method(para)
                         method(**para)
                         
             # validate?
