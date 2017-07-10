@@ -202,16 +202,17 @@ class fleur_delta_wc(WorkChain):
 
         para_nodesi = para_group.nodes
         para_nodes = []
+
+        for para in para_nodesi:
+            para_nodes.append(para)
+        #print para_nodes
         n_para = len(para_nodes)
         stru_nodes = str_group.nodes
         n_stru = len(stru_nodes)
         if n_para != n_stru:
             message = ('COMMENT: You did not provide the same number of parameter'
-                       'nodes as structure nodes. Is this wanted?')
-            self.report(message)
-        for para in para_nodesi:
-            para_nodes.append(para)
-        
+                       'nodes as structure nodes. Is this wanted? npara={} nstru={}'.format(n_para, n_stru))
+            self.report(message)        
         calcs = []
         for struc in stru_nodes:
             para = get_paranode(struc, para_nodes)
@@ -219,7 +220,7 @@ class fleur_delta_wc(WorkChain):
             calcs.append((struc, para))
             #else:
             #    calcs.append((struc))
-        pprint(calcs[:])
+        pprint(calcs[:20])
         self.ctx.calcs_to_run = calcs
 
     def run_eos(self):
@@ -285,7 +286,7 @@ class fleur_delta_wc(WorkChain):
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:10]:
+        for struc, para in self.ctx.calcs_to_run[:]:
             print para
             formula = struc.get_formula()
             if para:
@@ -489,15 +490,25 @@ def get_paranode(struc, para_nodes):
     """
 
     suuid = struc.uuid
+    formula = struc.get_formula()
+    element = formula.translate(None, digits)
     #print para_nodes
     for para in para_nodes:
         struc_uuid = para.get_extra('struc_uuid', None)
+        para_form = para.get_extra('formula', None)
+        para_ele = para.get_extra('element', None)        
         if suuid == struc_uuid:
             return para
+        elif formula == para_form:
+            return para
+        elif element == para_ele:
+            return para
+        elif element == para_form:
+            return para
         else:
+            pass
             #Do something else (test if parameters for a certain element are there)
             #....
-            pass
     # we found no parameter node for the given structure therefore return none
     return None
 
