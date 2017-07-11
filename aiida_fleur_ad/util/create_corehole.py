@@ -1,6 +1,12 @@
  #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__license__ = "MIT license, see LICENSE.txt file"
+__version__ = "0.27"
+__contributors__ = "Jens Broeder"
+
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -10,7 +16,7 @@ from aiida.orm import DataFactory
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
 ParameterData = DataFactory('parameter')
 #355
-def create_corehole(structure, kind, econfig, parameterData=None):
+def create_corehole(structure, kind, econfig, parameterData=None, move=False):
     """
     This methods sets of electron configurations for a kind
     or position given, make sure to break the symmetry for this position/kind 
@@ -19,9 +25,11 @@ def create_corehole(structure, kind, econfig, parameterData=None):
     param: structure: StructureData
     param: kind, a string with the kind_name (TODO: alternative the kind object)
     param: econfig, string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
+    ! THis is the new econfig therefore 
 
     returns a parameterData node
     """
+    # TODO ggf change structure, move corehole to 0.0 position
     from merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -56,10 +64,10 @@ def create_corehole(structure, kind, econfig, parameterData=None):
     new_parameter= ParameterData(dict=new_parameterd)
     #if parameterData:
     #    new_parameter = merge_parameter(parameterData, new_parameter)
-    return new_parameter
+    return structure, new_parameter
 
 
-# Move to fleurinp? fleurinp->self
+# Move to fleurinpmod? fleurinp->self
 def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
