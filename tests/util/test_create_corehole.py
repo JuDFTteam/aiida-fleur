@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__license__ = "MIT license, see LICENSE.txt file"
+__version__ = "0.27"
+__contributors__ = "Jens Broeder"
+
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()

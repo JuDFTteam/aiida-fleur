@@ -373,7 +373,7 @@ class fleur_initial_cls_wc(WorkChain):
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 self.report('ERROR: something in calcs_torun which I do not recognize: {}'.format(node))
-                self.report('{}{}'.format(type(node[0], node[1])))
+                #self.report('{}{}'.format(type(node[0], node[1])))
                 continue
             res_all.append(res)
             #print res
@@ -471,6 +471,35 @@ class fleur_initial_cls_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, FleurinpData):
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, (StructureData, ParameterData)):
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            else:
+                print('something in calcs_torun which I do not reconise: {}'.format(node))
+                continue
+            label = str('calc_ref{}'.format(i))
+            #print(label)
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
+            self.ctx.ref_labels.append(label)
+            calcs[label] = res
+            res_all.append(res)
+            #print res  
+            self.ctx.ref_calcs_res.append(res)
+            #self.ctx.calcs_torun.remove(node)
+            #print res    
+        self.ctx.ref_calcs_torun = []
+        return ToContext(**calcs)          
+        '''
+        i = 0
+        for node in self.ctx.ref_calcs_torun:
+            #print node
+            i = i+1
+            if isinstance(node, StructureData):
                 res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, FleurinpData):
@@ -494,7 +523,7 @@ class fleur_initial_cls_wc(WorkChain):
             #print res    
         self.ctx.ref_calcs_torun = []
         return ToContext(**calcs)   
-      
+        '''
         '''
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         print self.ctx.ref_calcs_torun
