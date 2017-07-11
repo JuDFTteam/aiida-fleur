@@ -7,7 +7,14 @@ energies and corelevel shifts with different methods.
 'divide and conquer'
 """
 
+__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__license__ = "MIT license, see LICENSE.txt file"
+__version__ = "0.27"
+__contributors__ = "Jens Broeder"
+
 # TODO maybe also calculate the reference structure to check on the supercell calculation
+
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -26,7 +33,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.StructureData_util import supercell
-from aiida_fleur_ad.util.create_corehole import create_corehole
+from aiida_fleur_ad.util.create_corehole import create_corehole, create_corehole_fleurinp
 from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
 from aiida_fleur.workflows.scf import fleur_scf_wc
 
@@ -45,15 +52,18 @@ class fleur_corehole_wc(WorkChain):
     """
     
     _workflowversion = "0.0.1"
+    def __init__(self, *args, **kwargs):
+        super(fleur_corehole_wc, self).__init__(*args, **kwargs)
+    
     
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
             default=ParameterData(dict={
-                'method' : 'full valence', # what method to use
-                'atoms' : 'all',           # coreholes on what atoms, positions or index for list, or element
-                'corelevel': 'all',        # coreholes on which corelevels [ '1s', '4f', ...]
+                'method' : 'full valence', # what method to use, default for valence to highest open shel
+                'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
+                'corelevel': ['all'],        # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
                 'para_group' : None,       # use parameter nodes from a parameter group
                 #'references' : 'calculate',# at some point aiida will have fast forwarding
                 #'relax' : False,          # relax the unit cell first?
@@ -114,11 +124,12 @@ class fleur_corehole_wc(WorkChain):
         ### init ctx ###
 
         self.ctx.calcs_torun = []
-        
+
+        self.ctx.labels = []
+        self.ctx.calcs_res = []
         inputs = self.inputs
         self.ctx.base_structure = inputs.get('structure') # ggf get from fleurinp
-        self.ctx.supercell_size = (2, 2, 2) # 2x2x2
-        self.ctx.calcs_to_run = []
+        self.ctx.supercell_size = (2, 1, 1) # 2x2x2 or smaller?
         if 'calc_parameters' in inputs:
             self.ctx.ref_para = inputs.get('calc_parameters')
         else:
@@ -126,7 +137,7 @@ class fleur_corehole_wc(WorkChain):
 
 
         wf_dict = self.inputs.wf_parameters.get_dict()
-
+        self.ctx.method = wf_dict.get('method', 'full valence')
         self.ctx.joblimit = wf_dict.get('joblimit')
         self.ctx.serial = wf_dict.get('serial')
         self.ctx.same_para = wf_dict.get('same_para')
@@ -138,8 +149,9 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.resources = wf_dict.get('resources')
         self.ctx.walltime_sec = wf_dict.get('walltime_sec')
         self.ctx.queue = wf_dict.get('queue_name')
-
-
+        
+        self.ctx.be_to_calc = wf_dict.get('corelevel')
+        self.ctx.atoms_to_calc = wf_dict.get('atoms')
 
 
     def supercell_needed(self):
@@ -192,16 +204,15 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        print(wf_parameter)
+        #print(wf_parameter)
         wf_parameter['serial'] = self.ctx.serial
         wf_parameter['queue_name'] = self.ctx.queue
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         calcs = {}
-        # now in parallel
-        #print self.ctx.ref_calcs_torun
+
         i = 0
-        for node in self.ctx.calcs_torun:
+        for node in self.ctx.calcs_torun: # usually just 1, but
             #print node
             i = i+1
             if isinstance(node, StructureData):
@@ -210,22 +221,23 @@ class fleur_corehole_wc(WorkChain):
             elif isinstance(node, FleurinpData):
                 res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, (StructureData, ParameterData)):
-                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
-                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, tuple):
+                if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
+                    res = asy(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0], 
+                                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+                else:
+                    self.report(' WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
             else:
-                print('something in run_ref_scf which I do not reconise: {}'.format(node))
+                self.report('WARNING: something in run_ref_scf which I do not reconise: {}'.format(node))
                 continue
+            
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels            
             label = str('calc_ref{}'.format(i))
-            #print(label)
-            #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
             self.ctx.labels.append(label)
             calcs[label] = res
             res_all.append(res)
-            #print res  
             self.ctx.calcs_res.append(res)
-            #self.ctx.calcs_torun.remove(node)
-            #print res    
+            
         self.ctx.calcs_torun = []
         return ToContext(**calcs)
 
@@ -241,7 +253,6 @@ class fleur_corehole_wc(WorkChain):
         create structurs with all the need coreholes
         """
         print('in create_coreholes fleur_corehole_wc')
-
         #Check what coreholes should be created.
         # said in the input
         # look in the original cell
@@ -253,7 +264,61 @@ class fleur_corehole_wc(WorkChain):
         # start the scf with the last charge density of the ref calc?
         # only possible if symmetry allready the same.
 
+        # go over inpgen, isolate atom and ggf move unit cell that impurity is in 0.0 0.0 0.0
+        base_struc = self.ctx.base_structure
+        base_atoms = base_struc.sites
+        base_supercell = self.ctx.ref_supercell
 
+
+        method = self.ctx.method       
+        if method == 'full valence':
+            pass
+        elif method == 'full charge':
+            pass
+        elif method == 'half_valence':
+            pass
+        elif method == 'fractional':
+            pass
+        
+        # we have to find the atoms we want a corelevel on and make them a new kind,
+        # also we have to figure out what electron config to set
+        atoms_toc = self.ctx.atoms_to_calc
+        corelevel = self.ctx.be_to_calc
+        coreholes_atoms =[]
+        corehole_to_create = []
+        
+        for atom in atoms_toc:
+            if isinstance(atom, str):
+                if atom == 'all':
+                    # add all atoms of structure to create coreholes
+                    coreholes_atoms = base_atoms
+                elif 'all' in atom:
+                    atom.split('all')
+                    pass # check what element we are taking about
+                else:
+                    pass
+            elif isinstance(atom, tuple): # coordinates
+                if len(atom) != 3:
+                    print('strange position/coordinates given: {}'.format(atom))
+                else:
+                    pass
+                    #
+            else:
+                print("input: {} of 'atoms' not recongized".format(atom))
+                
+        # get the symmetry equivivalent atoms by ase
+        #first run inpgen to get symmetry right and occupations in inp.xml
+        # then work on the inp.xml
+        '''
+        calcs = []
+        for corehole in corehole_to_create:
+            #para = create_corehole(structure, kind, econfig, parameterData=None):                
+            para =  self.ctx.ref_para         
+            struc, new_para = create_corehole(corehole[0], corehole[1], corehole[2], parameterData=para)
+            calcs.append(struc, new_para)
+        self.ctx.calcs_torun = calcs
+        '''
+                
     def relaxation_needed(self):
         """
         If the structures should be relaxed, check if their Forces are below a certain 
