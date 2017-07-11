@@ -20,4 +20,4 @@ res = dummy_wc.run(str_display=input_s)
 # if you check the output nodes of the submit run, there will be none
 res1 = submit(dummy_wc, str_display=input_s)
 
-res2 = async(dummy_wc, str_display=input_s)
+#res2 = async(dummy_wc, str_display=input_s)
