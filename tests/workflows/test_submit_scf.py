@@ -16,14 +16,14 @@ import os
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.orm import DataFactory
-from aiida.work import submit
+from aiida.work.run import submit
 from aiida_fleur.workflows.scf import fleur_scf_wc
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
 # invoke the mpirun command in the submission script)
 run_in_serial_mode = True#False
 queue = None
-
+queue = 'th123_node'
 ################################################################
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
