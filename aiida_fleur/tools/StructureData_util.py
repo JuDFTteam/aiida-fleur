@@ -362,3 +362,47 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
         para_new = None
 
     return new_structure, para_new
+
+
+
+def find_equi_atoms(structure):#, sitenumber=0, position=None):
+    """
+    This routine uses spqlib and ASE to provide informations of all equivivalent 
+    atoms in the cell.
+    
+    params: AiiDA StructureData
+    
+    returns: equi_info_symbol : list of lists ['element': site_indexlist, ...]
+    len(equi_info_symbol) = number of symmetryatomtypes
+    returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
+    """
+    import spglib
+    import numpy as np
+    
+    equi_info = []    
+    equi_info_symbol = []
+    n_equi_info_symbol = {}
+    k_symbols = {}
+
+    s_ase = structure.get_ase()
+    sym = spglib.get_symmetry(s_ase, symprec=1e-5)
+    equi = sym['equivalent_atoms']
+    unique = np.unique(equi)
+    
+    for uni in unique:
+        equi_info.append(np.where(equi==uni)[0])
+
+    sites = structure.sites
+    kinds = structure.kinds
+
+    for kind in kinds:
+        k_symbols[kind.name] = kind.symbol
+        
+
+    for equi in equi_info:
+        kind = sites[equi[0]].kind_name
+        element = k_symbols[kind]
+        n_equi_info_symbol[element] = n_equi_info_symbol.get(element, 0) + 1
+        equi_info_symbol.append([element, equi])    
+        
+    return equi_info_symbol, n_equi_info_symbol
