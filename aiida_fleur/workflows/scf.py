@@ -384,17 +384,16 @@ class fleur_scf_wc(WorkChain):
         """
         #expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
-        
         try:
-            calculation = self.ctx['last_calc']
-        except Exception:
+            calculation = self.ctx.last_calc#self.ctx['last_calc']
+        except:#
             self.ctx.successful = False
             self.abort_nowait('ERROR: Something went wrong I do not have a last calculation')
             #self.report('ERROR: Something went wrong I do not have a last calculation')
             return
-
+        
         calc_state = calculation.get_state()
-        print(calc_state)
+        #print(calc_state)
         if calc_state != calc_states.FINISHED:
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
@@ -456,52 +455,56 @@ class fleur_scf_wc(WorkChain):
         #chargedensity_xpath = 'densityConvergence/chargeDensity'
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
-        if not self.ctx.successful:
+        if self.ctx.successful:
+            last_calc = self.ctx.last_calc
+    
+            '''
+            spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
+    
+                charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
+                charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+                write_simple_outnode(
+                    charge_density1, 'float', 'charge_density1', simple_data)
+    
+                charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
+                write_simple_outnode(
+                    charge_density2, 'float', 'charge_density2', simple_data)
+    
+                spin_density = get_xml_attribute(
+                    eval_xpath(iteration_node, spindensity_xpath), distance_name)
+                write_simple_outnode(
+                    spin_density, 'float', 'spin_density', simple_data)
+    
+                overall_charge_density = get_xml_attribute(
+                    eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+                write_simple_outnode(
+                    overall_charge_density, 'float', 'overall_charge_density', simple_data) 
+           
+            '''
+            #TODO: dangerous, can fail, error catching
+            #print(last_calc)
+            outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
+            #outpara = last_calc.get('output_parameters', None)
+            #outxmlfile = outpara.dict.outputfile_path
+            tree = etree.parse(outxmlfile)
+            root = tree.getroot()
+            energies = eval_xpath2(root, xpath_energy)
+            #print(energies)
+            for energy in energies:
+                self.ctx.total_energy.append(float(energy))
+            
+            #print(self.ctx.total_energy)
+            distances = eval_xpath2(root, xpath_distance)
+            #print self.ctx.distance
+            for distance in distances:
+                self.ctx.distance.append(float(distance))
+        else:
+            #TODO better control shutdown
+            errormsg =  'ERROR: scf wc was not successful, check log for details'
+            self.abort_nowait(errormsg)            
             #print('not successful')
             return # otherwise this will lead to erros further down
-        last_calc = self.ctx.last_calc
-
-        '''
-        spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
-
-            charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
-            charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
-            write_simple_outnode(
-                charge_density1, 'float', 'charge_density1', simple_data)
-
-            charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
-            write_simple_outnode(
-                charge_density2, 'float', 'charge_density2', simple_data)
-
-            spin_density = get_xml_attribute(
-                eval_xpath(iteration_node, spindensity_xpath), distance_name)
-            write_simple_outnode(
-                spin_density, 'float', 'spin_density', simple_data)
-
-            overall_charge_density = get_xml_attribute(
-                eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
-            write_simple_outnode(
-                overall_charge_density, 'float', 'overall_charge_density', simple_data) 
-       
-        '''
-        #TODO: dangerous, can fail, error catching
-        #print(last_calc)
-        outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
-        #outpara = last_calc.get('output_parameters', None)
-        #outxmlfile = outpara.dict.outputfile_path
-        tree = etree.parse(outxmlfile)
-        root = tree.getroot()
-        energies = eval_xpath2(root, xpath_energy)
-        #print(energies)
-        for energy in energies:
-            self.ctx.total_energy.append(float(energy))
-        
-        #print(self.ctx.total_energy)
-        distances = eval_xpath2(root, xpath_distance)
-        #print self.ctx.distance
-        for distance in distances:
-            self.ctx.distance.append(float(distance))
-        
+            
     def condition(self):
         """
         check convergence condition
