@@ -385,6 +385,7 @@ class fleur_scf_wc(WorkChain):
         """
         #expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
+        self.report('I am in inspect_fleur')
         try:
             calculation = self.ctx.last_calc#self.ctx['last_calc']
         except:#
@@ -394,6 +395,7 @@ class fleur_scf_wc(WorkChain):
             return
         calc_state = calculation.get_state()
         self.report('the state of the last calculation is: {}'.format(calc_state))
+        
         if calc_state != calc_states.FINISHED:
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
