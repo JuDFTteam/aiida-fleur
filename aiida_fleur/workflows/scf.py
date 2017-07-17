@@ -393,7 +393,7 @@ class fleur_scf_wc(WorkChain):
             #self.report('ERROR: Something went wrong I do not have a last calculation')
             return
         calc_state = calculation.get_state()
-        #print(calc_state)
+        self.report('the state of the last calculation is: {}'.format(calc_state))
         if calc_state != calc_states.FINISHED:
             #kill workflow in a controled way, call return results, or write a end_routine
             #TODO
@@ -458,7 +458,7 @@ class fleur_scf_wc(WorkChain):
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
         if self.ctx.successful:
-            self.report('last calc successful')
+            self.report('last calc successful = {}'.format(self.ctx.successful))
             last_calc = self.ctx.last_calc
     
             '''
