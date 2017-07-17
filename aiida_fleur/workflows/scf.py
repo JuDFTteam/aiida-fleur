@@ -141,8 +141,9 @@ class fleur_scf_wc(WorkChain):
             cls.start,
             if_(cls.validate_input)(
                 cls.run_fleurinpgen),
-            cls.run_fleur,
-            cls.get_res,
+            cls.run_fleur, # are these first runs needed TODO
+            cls.inspect_fleur, # are these first runs needed
+            cls.get_res, # are these first runs needed
             while_(cls.condition)(
                 cls.run_fleur,
                 cls.inspect_fleur,
