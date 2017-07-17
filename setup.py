@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 if __name__ == '__main__':
     setup(
         name='aiida-fleur',
-        version='0.4.0b',
+        version='0.4.0',
         description='AiiDA Plugin for running the FLEUR-code and its input generator. Plus some basic workflows and utility',
         url='https://github.com/broeder-j/aiida-fleur',
         author='Jens Broeder',
@@ -17,11 +17,12 @@ if __name__ == '__main__':
         classifiers=[
             'Development Status :: 4 - Beta',
             'Environment :: Plugins',
-            'Framework :: AiiDA',
+            #'Framework :: AiiDA',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 2.7',
-            'Topic :: Scientific/Engineering :: Physics'
+            'Topic :: Scientific/Engineering :: Physics',
+            'Natural Language :: English'
         ],
         keywords='fleur aiida inpgen workflows flapw juelich dft all-electron',
         packages=find_packages(exclude=['aiida']),

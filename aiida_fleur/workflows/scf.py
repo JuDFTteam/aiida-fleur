@@ -514,7 +514,13 @@ class fleur_scf_wc(WorkChain):
         # 'output_parameters' wont exist.
         inpwfp_dict = self.inputs.wf_parameters.get_dict()
         #last_charge_density = self.ctx.last_calc['output_parameters'].dict.charge_density
-        last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
+        # not a good fix for magnetic stuff, but for now, we want to test if the rest works.
+        try:
+            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
+        except AttributeError:
+            # magnetic system
+            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.overall_charge_density
+            # divide by 2?
         #print last_charge_density
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:

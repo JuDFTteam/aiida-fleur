@@ -252,7 +252,7 @@ def rel_to_abs_f(vector, cell):
         return False
 
 
-
+# TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
 def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = None):
     """
     This routine introduces different 'kind objects' in a structure
@@ -277,7 +277,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
     #if wanted make individual kind for that atom
     #kind names will be atomsymbol+number
     #create new structure with new kinds and atoms
-
+    Param = DataFactory('parameter')
     symbol_count = {} # Counts the atom symbol occurence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
     replace_siteN = [] # all site integers to be replaced
@@ -304,7 +304,9 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
     if parameterData:
         para = parameterData.get_dict()
         new_parameterd = dict(para)
-
+    else:
+        new_parameterd = {}
+    
     for i, site in enumerate(sites):
         kind_name = site.kind_name
         pos = site.position
@@ -348,6 +350,9 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
                                     i = i+1
                                     atomlistname = 'atom{}'.format(id+i)
                                 new_parameterd[atomlistname] = val_new
+            else:
+                pass
+                #TODO write basic parameter data node
         else:
             newkindname = kind_name
             if not kind_name in new_structure.get_kind_names():
