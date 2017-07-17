@@ -172,6 +172,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.errors = []
         self.ctx.fleurinp = None
         wf_dict = self.inputs.wf_parameters.get_dict()
+        self.ctx.abort = False
         
         if wf_dict == {}:
             wf_dict = self._wf_default
@@ -391,7 +392,6 @@ class fleur_scf_wc(WorkChain):
             self.abort_nowait('ERROR: Something went wrong I do not have a last calculation')
             #self.report('ERROR: Something went wrong I do not have a last calculation')
             return
-        
         calc_state = calculation.get_state()
         #print(calc_state)
         if calc_state != calc_states.FINISHED:
@@ -399,11 +399,13 @@ class fleur_scf_wc(WorkChain):
             #TODO
             #TODO error handling here controled ending routine
             self.ctx.successful = False
+            self.ctx.abort = True
             error = 'ERROR: Last Fleur calculation failed somehow it is in state {}'.format(calc_state)
             #self.report(error)
             self.abort_nowait(error)
             return
-
+        elif calc_state == calc_states.FINISHED:
+            pass
 
         '''
         # Done: successful convergence of last calculation
@@ -456,6 +458,7 @@ class fleur_scf_wc(WorkChain):
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
         if self.ctx.successful:
+            self.report('last calc successful')
             last_calc = self.ctx.last_calc
     
             '''
@@ -500,6 +503,8 @@ class fleur_scf_wc(WorkChain):
                 self.ctx.distance.append(float(distance))
         else:
             #TODO better control shutdown
+            self.report('last calc not successful')
+
             errormsg =  'ERROR: scf wc was not successful, check log for details'
             self.abort_nowait(errormsg)            
             #print('not successful')
