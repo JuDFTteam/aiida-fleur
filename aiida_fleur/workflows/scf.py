@@ -13,7 +13,6 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: maybe write dict schema for wf_parameter inputs, how?
 #TODO: ggf change logic for total energy
 #TODO: check if calculation already exists
-# TODO test if code given if fleur and inpgen code, uses the right plugin.
 
 
 from aiida import load_dbenv, is_dbenv_loaded
@@ -231,7 +230,22 @@ class fleur_scf_wc(WorkChain):
             #self.abort_nowait(error)
             self.control_end_wc(error)            
 
-        
+        if 'inpgen' in inputs:
+            try:
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for inpgen of FLEUR does not "
+                         "use the plugin fleur.inpgen")
+                self.control_end_wc(error)
+                
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for FLEUR does not "
+                         "use the plugin fleur.fleur")
+                self.control_end_wc(error)            
+            
         # maybe ckeck here is unessesary...        
         wf_dict = self.inputs.wf_parameters.get_dict()
         
