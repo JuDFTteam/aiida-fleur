@@ -259,7 +259,8 @@ class fleur_scf_wc(WorkChain):
                 print('change : {}'.format(change))
                 # somehow the tuple type gets destroyed on the way and becomes a list
                 if (not isinstance(change, tuple)) and (not isinstance(change, list)):
-                    error = 'ERROR: Wrong Input inpxml_changes wrong format of : {} should be tuple of 2. I abort'.format(change)
+                    error = ('ERROR: Wrong Input inpxml_changes wrong format of'
+                             ': {} should be tuple of 2. I abort'.format(change))
                     #self.abort_nowait(error)
                     self.control_end_wc(error)            
 
@@ -602,9 +603,9 @@ class fleur_scf_wc(WorkChain):
         except:
             last_calc_uuid = None
         try: # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.out.output_parameters.dict
+            last_calc_out = self.ctx.last_calc.out['output_parameters'].get_dict()
         except:
-            last_calc_out = None
+            last_calc_out = {}
 
         outputnode_dict ={}
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
