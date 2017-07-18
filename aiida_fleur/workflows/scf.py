@@ -386,7 +386,7 @@ class fleur_scf_wc(WorkChain):
         """
         #expected_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
-        self.report('I am in inspect_fleur')
+        #self.report('I am in inspect_fleur')
         try:
             calculation = self.ctx.last_calc#self.ctx['last_calc']
         except:#
@@ -395,7 +395,7 @@ class fleur_scf_wc(WorkChain):
             #self.report('ERROR: Something went wrong I do not have a last calculation')
             return
         calc_state = calculation.get_state()
-        self.report('the state of the last calculation is: {}'.format(calc_state))
+        #self.report('the state of the last calculation is: {}'.format(calc_state))
         
         if calc_state != calc_states.FINISHED:
             #kill workflow in a controled way, call return results, or write a end_routine
@@ -430,7 +430,7 @@ class fleur_scf_wc(WorkChain):
         # Retry: submission failed, try to restart or abort
         elif calculation.get_state() in [calc_states.SUBMISSIONFAILED]:
             self._handle_submission_failure(calculation)
-
+            
         # Retry: calculation failed, try to salvage or abort
         elif calculation.get_state() in [calc_states.FAILED]:
             self._handle_calculation_failure(calculation)
@@ -439,7 +439,8 @@ class fleur_scf_wc(WorkChain):
         else:
             self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
             self.ctx.restart_calc = calculation
-
+        
+        # ggf handle bad convergence behavior, delete broyd (do not copy)
         return
         '''  
     def get_res(self):
@@ -623,6 +624,54 @@ class fleur_scf_wc(WorkChain):
     
     def handle_fleur_failure(self):
         pass
+        # handle out of walltime (not one interation run) abort, tell user to specifi mor resources, or different cutoffs
+        
+        # handle fleur error fermi level convergence
+        # restart fleur with more tempertature broad or other smearing type (gauss = T)
+        
+        # qfix needed, restart fleur with Qfix
+        
+        # differ errors, solving dirac equation
+        # abort, or restart with different parameters
+        
+        # muffin tin radii overlap, restart with smaller MT
+        
+        # wrong command line switches
+        # hdf, -h , ... restart with the right one, or abort
+        
+        # something about kpt grid
+        # abort, or restart with increased number /different number of kpoints
+        
+        # wrong parallelisation
+        # abort or restart with right parallelisation
+        
+        # 
+        
+        '''
+        #ALl FLEUR current (07.2017) ERROR hints: TODO
+        
+        1.nsh greater than dimensioned | increase nmax in jcoff2'
+        2. Fermi-level determination did not converge| change temperature or set input = F
+        3. Too low eigenvalue detected | If the lowest eigenvalue is more than 1Htr below the lowest energy parameter, you probably have picked up a ghoststate
+        4. e >= vz0 | Vacuum energy-parameter too high
+        5. kidx /= stars | something wrong with kmxxc_fft or nxc3_fft
+        6 Wrong size of matrix | Your basis might be too large or the parallelization fail or ??
+        If no LO's are set skiplo must be 0 in enpara        
+        You compiled without support for HDF5. Please use another mode
+        Your HDF5 library does not support parallel IO
+        Use -mpi or -hdf instead
+        Consider setting 'autocomp = false' in apwefl.
+        Film setup not centered" | The z = 0 plane is the center of the film
+        setcore_bystr |
+        expnadconfig | 
+        File not readable:"//filename | FLEUR wants to read a file that is not present
+        Both inp & inp.xml given  | Please delete one of the input files or specify -xml to use inp.xml    
+        inp.xml not found | You gave the -xml option but provided no inp.xml file
+        No input file found | To use FLEUR, you have to provide either an 'inp' or an 'inp.xml' file in the working directory
+        Use a supercell or a different functional
+        MPI parallelization failed | ou have to either compile FLEUR with a parallel diagonalization library (ELPA,SCALAPACK...) or you have to run such that the No of kpoints can be distributed on the PEs
+        '''
+        
     
     def handle_inpgen_failure(self):
         pass
