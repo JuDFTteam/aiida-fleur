@@ -152,8 +152,9 @@ class fleur_scf_wc(WorkChain):
         """
         init context and some parameters
         """
-        self.report('INFO: started convergence workflow version {}'.format(self._workflowversion))
-        self.report('INFO: Workchain node identifiers: {}'.format(ProcessRegistry().current_calc_node))
+        self.report('INFO: started convergence workflow version {}\n'
+                    'INFO: Workchain node identifiers: {}'
+                    ''.format(self._workflowversion, ProcessRegistry().current_calc_node))
         
         ####### init    #######
         
@@ -627,22 +628,22 @@ class fleur_scf_wc(WorkChain):
             self.report('STATUS: Done, the convergence criteria are reached.\n'
                         'INFO: The charge density of the FLEUR calculation pk= '
                         'converged after {} FLEUR runs and {} iterations to {} '
-                        '"me/bohr^3"'.format(self.ctx.loop_count, 
+                        '"me/bohr^3" \n'
+                        'INFO: The total energy difference of the last two iterations '
+                        'is {} htr \n'.format(self.ctx.loop_count, 
                                        last_calc_out.get('number_of_iterations_total', None),
-                                       last_calc_out.get('charge_density', None)))
-            self.report('INFO: The total energy difference of the last two iterations '
-                        'is {} htr \n'.format(self.ctx.energydiff))
+                                       last_calc_out.get('charge_density', None), self.ctx.energydiff))
         elif self.ctx.abort: # some error occured, donot use the output.
             self.report('STATUS/ERROR: I abort, see logs and erros/warning/hints in output_scf_wc_para')
         else: # Termination ok, but not converged yet...
             self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.\n'
                         'INFO: The charge density of the FLEUR calculation pk= '
-                        'after {} FLEUR runs and {} iterations is {} "me/bohr^3"'
+                        'after {} FLEUR runs and {} iterations is {} "me/bohr^3"\n'
+                        'INFO: The total energy difference of the last two interations'
+                        'is {} htr'
                         ''.format(self.ctx.loop_count, 
                             last_calc_out.get('number_of_iterations_total', None),
-                            last_calc_out.get('charge_density', None)))
-            self.report('INFO: The total energy difference of the last two interations'
-                        'is {} htr'.format(self.ctx.energydiff))
+                            last_calc_out.get('charge_density', None), self.ctx.energydiff))
 
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
