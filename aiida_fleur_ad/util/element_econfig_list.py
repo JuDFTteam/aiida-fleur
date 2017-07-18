@@ -5,80 +5,80 @@ You find the usual econfig for all elements in the periodic table.
 # TOD
 # FLEUR econfig=[core states|valence states] 
 econfiguration = {
-    1: {'mass': 1.00794, 'name': 'Hydrogen', 'symbol': 'H', 'econfig': '1s' },
-    2: {'mass': 4.002602, 'name': 'Helium', 'symbol': 'He', 'econfig': ''},
-    3: {'mass': 6.941, 'name': 'Lithium', 'symbol': 'Li', 'econfig': ''},
-    4: {'mass': 9.012182, 'name': 'Beryllium', 'symbol': 'Be', 'econfig': ''},
-    5: {'mass': 10.811, 'name': 'Boron', 'symbol': 'B', 'econfig': ''},
-    6: {'mass': 12.0107, 'name': 'Carbon', 'symbol': 'C', 'econfig': ''},
-    7: {'mass': 14.0067, 'name': 'Nitrogen', 'symbol': 'N', 'econfig': ''},
-    8: {'mass': 15.9994, 'name': 'Oxygen', 'symbol': 'O', 'econfig': ''},
-    9: {'mass': 18.9984032, 'name': 'Fluorine', 'symbol': 'F', 'econfig': ''},
-    10: {'mass': 20.1797, 'name': 'Neon', 'symbol': 'Ne', 'econfig': ''},
-    11: {'mass': 22.98977, 'name': 'Sodium', 'symbol': 'Na', 'econfig': ''},
-    12: {'mass': 24.305, 'name': 'Magnesium', 'symbol': 'Mg', 'econfig': ''},
-    13: {'mass': 26.981538, 'name': 'Aluminium', 'symbol': 'Al', 'econfig': ''},
-    14: {'mass': 28.0855, 'name': 'Silicon', 'symbol': 'Si', 'econfig': ''},
-    15: {'mass': 30.973761, 'name': 'Phosphorus', 'symbol': 'P', 'econfig': ''},
-    16: {'mass': 32.065, 'name': 'Sulfur', 'symbol': 'S', 'econfig': ''},
-    17: {'mass': 35.453, 'name': 'Chlorine', 'symbol': 'Cl', 'econfig': ''},
-    18: {'mass': 39.948, 'name': 'Argon', 'symbol': 'Ar', 'econfig': ''},
-    19: {'mass': 39.0983, 'name': 'Potassium', 'symbol': 'K', 'econfig': ''},
-    20: {'mass': 40.078, 'name': 'Calcium', 'symbol': 'Ca', 'econfig': ''},
-    21: {'mass': 44.955912, 'name': 'Scandium', 'symbol': 'Sc', 'econfig': ''},
-    22: {'mass': 47.867, 'name': 'Titanium', 'symbol': 'Ti', 'econfig': ''},
-    23: {'mass': 50.9415, 'name': 'Vanadium', 'symbol': 'V', 'econfig': ''},
-    24: {'mass': 51.9961, 'name': 'Chromium', 'symbol': 'Cr', 'econfig': ''},
-    25: {'mass': 54.938045, 'name': 'Manganese', 'symbol': 'Mn', 'econfig': ''},
-    26: {'mass': 55.845, 'name': 'Iron', 'symbol': 'Fe', 'econfig': ''},
-    27: {'mass': 58.933195, 'name': 'Cobalt', 'symbol': 'Co', 'econfig': ''},
-    28: {'mass': 58.6934, 'name': 'Nickel', 'symbol': 'Ni', 'econfig': ''},
-    29: {'mass': 63.546, 'name': 'Copper', 'symbol': 'Cu', 'econfig': ''},
+    1: {'mass': 1.00794, 'name': 'Hydrogen', 'symbol': 'H', 'econfig': '1s1' },
+    2: {'mass': 4.002602, 'name': 'Helium', 'symbol': 'He', 'econfig': '1s2'},
+    3: {'mass': 6.941, 'name': 'Lithium', 'symbol': 'Li', 'econfig': '1s2 | 2s1'},
+    4: {'mass': 9.012182, 'name': 'Beryllium', 'symbol': 'Be', 'econfig': '1s2 | 2s2'},
+    5: {'mass': 10.811, 'name': 'Boron', 'symbol': 'B', 'econfig': '1s2 | 2s2 2p1'},
+    6: {'mass': 12.0107, 'name': 'Carbon', 'symbol': 'C', 'econfig': '[He] 2s2 | 2p2'},
+    7: {'mass': 14.0067, 'name': 'Nitrogen', 'symbol': 'N', 'econfig': '[He] 2s2 | 2p3'},
+    8: {'mass': 15.9994, 'name': 'Oxygen', 'symbol': 'O', 'econfig': '[He] 2s2 | 2p4'},
+    9: {'mass': 18.9984032, 'name': 'Fluorine', 'symbol': 'F', 'econfig': '[He] 2s2 | 2p5'},
+    10: {'mass': 20.1797, 'name': 'Neon', 'symbol': 'Ne', 'econfig': '[He] 2s2 | 2p6'},
+    11: {'mass': 22.98977, 'name': 'Sodium', 'symbol': 'Na', 'econfig': '[He] 2s2 | 2p6 3s1'},
+    12: {'mass': 24.305, 'name': 'Magnesium', 'symbol': 'Mg', 'econfig': '[He] 2s2 | 2p6 3s2'},
+    13: {'mass': 26.981538, 'name': 'Aluminium', 'symbol': 'Al', 'econfig': '[He] 2s2 2p6 | 3s2 3p1'},
+    14: {'mass': 28.0855, 'name': 'Silicon', 'symbol': 'Si', 'econfig': '[He] 2s2 2p6 | 3s2 3p2'},
+    15: {'mass': 30.973761, 'name': 'Phosphorus', 'symbol': 'P', 'econfig': '[He] 2s2 2p6 | 3s2 3p3'},
+    16: {'mass': 32.065, 'name': 'Sulfur', 'symbol': 'S', 'econfig': '[He] 2s2 2p6 | 3s2 3p4'},
+    17: {'mass': 35.453, 'name': 'Chlorine', 'symbol': 'Cl', 'econfig': '[He] 2s2 2p6 | 3s2 3p5'},
+    18: {'mass': 39.948, 'name': 'Argon', 'symbol': 'Ar', 'econfig': '[He] 2s2 2p6 | 3s2 3p6'},
+    19: {'mass': 39.0983, 'name': 'Potassium', 'symbol': 'K', 'econfig': '[Ne] 3s2 | 3p6 4s1 '},
+    20: {'mass': 40.078, 'name': 'Calcium', 'symbol': 'Ca', 'econfig': '[Ne] 3s2 | 3p6 4s2 '},
+    21: {'mass': 44.955912, 'name': 'Scandium', 'symbol': 'Sc', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d1'},
+    22: {'mass': 47.867, 'name': 'Titanium', 'symbol': 'Ti', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d2'},
+    23: {'mass': 50.9415, 'name': 'Vanadium', 'symbol': 'V', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d3'},
+    24: {'mass': 51.9961, 'name': 'Chromium', 'symbol': 'Cr', 'econfig': '[Ne] 3s2 3p6 | 4s1 3d5'},
+    25: {'mass': 54.938045, 'name': 'Manganese', 'symbol': 'Mn', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d5'},
+    26: {'mass': 55.845, 'name': 'Iron', 'symbol': 'Fe', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d6'},
+    27: {'mass': 58.933195, 'name': 'Cobalt', 'symbol': 'Co', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d7'},
+    28: {'mass': 58.6934, 'name': 'Nickel', 'symbol': 'Ni', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d8'},
+    29: {'mass': 63.546, 'name': 'Copper', 'symbol': 'Cu', 'econfig': '[Ne] 3s2 3p6 |4s1 3d10'},
     30: {'mass': 65.38, 'name': 'Zinc', 'symbol': 'Zn', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2'},
-    31: {'mass': 69.723, 'name': 'Gallium', 'symbol': 'Ga', 'econfig': ''},
-    32: {'mass': 72.64, 'name': 'Germanium', 'symbol': 'Ge', 'econfig': ''},
-    33: {'mass': 74.9216, 'name': 'Arsenic', 'symbol': 'As', 'econfig': ''},
-    34: {'mass': 78.96, 'name': 'Selenium', 'symbol': 'Se', 'econfig': ''},
-    35: {'mass': 79.904, 'name': 'Bromine', 'symbol': 'Br', 'econfig': ''},
-    36: {'mass': 83.798, 'name': 'Krypton', 'symbol': 'Kr', 'econfig': ''},
-    37: {'mass': 85.4678, 'name': 'Rubidium', 'symbol': 'Rb', 'econfig': ''},
-    38: {'mass': 87.62, 'name': 'Strontium', 'symbol': 'Sr', 'econfig': ''},
-    39: {'mass': 88.90585, 'name': 'Yttrium', 'symbol': 'Y', 'econfig': ''},
-    40: {'mass': 91.224, 'name': 'Zirconium', 'symbol': 'Zr', 'econfig': ''},
-    41: {'mass': 92.90638, 'name': 'Niobium', 'symbol': 'Nb', 'econfig': ''},
-    42: {'mass': 95.96, 'name': 'Molybdenum', 'symbol': 'Mo', 'econfig': ''},
-    43: {'mass': 98.0, 'name': 'Technetium', 'symbol': 'Tc', 'econfig': ''},
-    44: {'mass': 101.07, 'name': 'Ruthenium', 'symbol': 'Ru', 'econfig': ''},
-    45: {'mass': 102.9055, 'name': 'Rhodium', 'symbol': 'Rh', 'econfig': ''},
-    46: {'mass': 106.42, 'name': 'Palladium', 'symbol': 'Pd', 'econfig': ''},
-    47: {'mass': 107.8682, 'name': 'Silver', 'symbol': 'Ag', 'econfig': ''},
+    31: {'mass': 69.723, 'name': 'Gallium', 'symbol': 'Ga', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p1'},
+    32: {'mass': 72.64, 'name': 'Germanium', 'symbol': 'Ge', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p2'},
+    33: {'mass': 74.9216, 'name': 'Arsenic', 'symbol': 'As', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p3'},
+    34: {'mass': 78.96, 'name': 'Selenium', 'symbol': 'Se', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p4'},
+    35: {'mass': 79.904, 'name': 'Bromine', 'symbol': 'Br', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p5'},
+    36: {'mass': 83.798, 'name': 'Krypton', 'symbol': 'Kr', 'econfig': '[Ne] 3s2 3p6 | 3d10 4s2 4p6'},
+    37: {'mass': 85.4678, 'name': 'Rubidium', 'symbol': 'Rb', 'econfig': '[Ar] 3d10 4s2 | 4p6 5s1'},
+    38: {'mass': 87.62, 'name': 'Strontium', 'symbol': 'Sr', 'econfig': '[Ar] 3d10 4s2 | 4p6 5s2'},
+    39: {'mass': 88.90585, 'name': 'Yttrium', 'symbol': 'Y', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s2 4d1'},
+    40: {'mass': 91.224, 'name': 'Zirconium', 'symbol': 'Zr', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s2 4d2'},
+    41: {'mass': 92.90638, 'name': 'Niobium', 'symbol': 'Nb', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s1 4d4'},
+    42: {'mass': 95.96, 'name': 'Molybdenum', 'symbol': 'Mo', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s1 4d5'},
+    43: {'mass': 98.0, 'name': 'Technetium', 'symbol': 'Tc', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s2 4d5'},
+    44: {'mass': 101.07, 'name': 'Ruthenium', 'symbol': 'Ru', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s1 4d7'},
+    45: {'mass': 102.9055, 'name': 'Rhodium', 'symbol': 'Rh', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s1 4d8'},
+    46: {'mass': 106.42, 'name': 'Palladium', 'symbol': 'Pd', 'econfig': '[Ar] 4s2 3d10 4p6 | 4d10'},
+    47: {'mass': 107.8682, 'name': 'Silver', 'symbol': 'Ag', 'econfig': '[Ar] 4s2 3d10 4p6 | 5s1 4d10'},
     48: {'mass': 112.411, 'name': 'Cadmium', 'symbol': 'Cd', 'econfig': '[Ar] 4s2 3d10 4p6 | 4d10 5s2'},
-    49: {'mass': 114.818, 'name': 'Indium', 'symbol': 'In', 'econfig': ''},
-    50: {'mass': 118.71, 'name': 'Tin', 'symbol': 'Sn', 'econfig': ''},
-    51: {'mass': 121.76, 'name': 'Antimony', 'symbol': 'Sb', 'econfig': ''},
-    52: {'mass': 127.6, 'name': 'Tellurium', 'symbol': 'Te', 'econfig': ''},
-    53: {'mass': 126.90447, 'name': 'Iodine', 'symbol': 'I', 'econfig': ''},
-    54: {'mass': 131.293, 'name': 'Xenon', 'symbol': 'Xe', 'econfig': ''},
-    55: {'mass': 132.9054519, 'name': 'Caesium', 'symbol': 'Cs', 'econfig': ''},
-    56: {'mass': 137.327, 'name': 'Barium', 'symbol': 'Ba', 'econfig': ''},
-    57: {'mass': 138.90547, 'name': 'Lanthanum', 'symbol': 'La', 'econfig': ''},
-    58: {'mass': 140.116, 'name': 'Cerium', 'symbol': 'Ce', 'econfig': ''},
-    59: {'mass': 140.90765, 'name': 'Praseodymium', 'symbol': 'Pr', 'econfig': ''},
-    60: {'mass': 144.242, 'name': 'Neodymium', 'symbol': 'Nd', 'econfig': ''},
-    61: {'mass': 145.0, 'name': 'Promethium', 'symbol': 'Pm', 'econfig': ''},
-    62: {'mass': 150.36, 'name': 'Samarium', 'symbol': 'Sm', 'econfig': ''},
+    49: {'mass': 114.818, 'name': 'Indium', 'symbol': 'In', 'econfig': '[Ar] 4s2 3d10 4p6 | 4d10 5s2 5p1'},
+    50: {'mass': 118.71, 'name': 'Tin', 'symbol': 'Sn', 'econfig': '[Kr] 4d10 | 5s2 5p2'},
+    51: {'mass': 121.76, 'name': 'Antimony', 'symbol': 'Sb', 'econfig': '[Kr] 4d10 | 5s2 5p3'},
+    52: {'mass': 127.6, 'name': 'Tellurium', 'symbol': 'Te', 'econfig': '[Kr] 4d10 | 5s2 5p4'},
+    53: {'mass': 126.90447, 'name': 'Iodine', 'symbol': 'I', 'econfig': '[Kr] 4d10 | 5s2 5p5'},
+    54: {'mass': 131.293, 'name': 'Xenon', 'symbol': 'Xe', 'econfig': '[Kr] 4d10 | 5s2 5p6'},
+    55: {'mass': 132.9054519, 'name': 'Caesium', 'symbol': 'Cs', 'econfig': '[Kr] 4d10 5s2 | 5p6 6s1'},
+    56: {'mass': 137.327, 'name': 'Barium', 'symbol': 'Ba', 'econfig': '[Kr] 4d10 5s2 | 5p6 6s2'},
+    57: {'mass': 138.90547, 'name': 'Lanthanum', 'symbol': 'La', 'econfig': '[Kr] 4d10 5s2 | 5p6 6s2 5d1'},
+    58: {'mass': 140.116, 'name': 'Cerium', 'symbol': 'Ce', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f1 5d1'},
+    59: {'mass': 140.90765, 'name': 'Praseodymium', 'symbol': 'Pr', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f3'},
+    60: {'mass': 144.242, 'name': 'Neodymium', 'symbol': 'Nd', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f4'},
+    61: {'mass': 145.0, 'name': 'Promethium', 'symbol': 'Pm', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f5'},
+    62: {'mass': 150.36, 'name': 'Samarium', 'symbol': 'Sm', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f6'},
     63: {'mass': 151.964, 'name': 'Europium', 'symbol': 'Eu', 'econfig' : '[Kr] 4d10 | 4f7 5s2 5p6 6s2'},
-    64: {'mass': 157.25, 'name': 'Gadolinium', 'symbol': 'Gd', 'econfig': ''},
-    65: {'mass': 158.92535, 'name': 'Terbium', 'symbol': 'Tb', 'econfig': ''},
-    66: {'mass': 162.5, 'name': 'Dysprosium', 'symbol': 'Dy', 'econfig': ''},
-    67: {'mass': 164.93032, 'name': 'Holmium', 'symbol': 'Ho', 'econfig': ''},
-    68: {'mass': 167.259, 'name': 'Erbium', 'symbol': 'Er', 'econfig': ''},
-    69: {'mass': 168.93421, 'name': 'Thulium', 'symbol': 'Tm', 'econfig': ''},
-    70: {'mass': 173.054, 'name': 'Ytterbium', 'symbol': 'Yb', 'econfig': ''},
+    64: {'mass': 157.25, 'name': 'Gadolinium', 'symbol': 'Gd', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f7 5d1'},
+    65: {'mass': 158.92535, 'name': 'Terbium', 'symbol': 'Tb', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f9'},
+    66: {'mass': 162.5, 'name': 'Dysprosium', 'symbol': 'Dy', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f10'},
+    67: {'mass': 164.93032, 'name': 'Holmium', 'symbol': 'Ho', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f11'},
+    68: {'mass': 167.259, 'name': 'Erbium', 'symbol': 'Er', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f12'},
+    69: {'mass': 168.93421, 'name': 'Thulium', 'symbol': 'Tm', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f13'},
+    70: {'mass': 173.054, 'name': 'Ytterbium', 'symbol': 'Yb', 'econfig': '[Kr] 4d10 5s2 5p6 | 6s2 4f14'},
     71: {'mass': 174.9668, 'name': 'Lutetium', 'symbol': 'Lu', 'econfig': '[Kr] 4d10 | 4f14 5s2 5p6 5d1 6s2'},
-    72: {'mass': 178.49, 'name': 'Hafnium', 'symbol': 'Hf', 'econfig': ''},
-    73: {'mass': 180.94788, 'name': 'Tantalum', 'symbol': 'Ta', 'econfig': ''},
-    74: {'mass': 183.84, 'name': 'Tungsten', 'symbol': 'W', 'econfig' : '[Kr] 4d10 4f7 5p6 | 5s2 6s2 5d4'},
+    72: {'mass': 178.49, 'name': 'Hafnium', 'symbol': 'Hf', 'econfig': '[Kr] 4d10 | 4f14 5s2 5p6 5d2 6s2'},
+    73: {'mass': 180.94788, 'name': 'Tantalum', 'symbol': 'Ta', 'econfig': '[Kr] 4d10 4f14 | 5s2 5p6 5d3 6s2'},
+    74: {'mass': 183.84, 'name': 'Tungsten', 'symbol': 'W', 'econfig' : '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4'},
     75: {'mass': 186.207, 'name': 'Rhenium', 'symbol': 'Re', 'econfig': ''},
     76: {'mass': 190.23, 'name': 'Osmium', 'symbol': 'Os', 'econfig': ''},
     77: {'mass': 192.217, 'name': 'Iridium', 'symbol': 'Ir', 'econfig': ''},
@@ -121,21 +121,92 @@ econfiguration = {
     116: {'mass': 293.0, 'name': 'Livermorium', 'symbol': 'Lv', 'econfig': ''},
 }
 
+all_econfig = ['1s2', '2s2', '2p6', '3s2', '3p6', '4s2', '3d10', '4p6', '5s2', '4d10', '5p6', '6s2', '4f14', '5d10', '6p6', '7s2', '5f14', '6d10', '7p6', '8s2', '6f14']
+states_spin = {'s': ['1/2'], 'p' : ['1/2', '3/2'], 'd' : ['3/2', '5/2'], 'f' : ['5/2', '7/2']}
+max_state_occ = {'s': 2, 'p' : 6, 'd' : 10, 'f' : 14}
+
 element_delta_defaults = {} # for workflow purposes
 
 element_max_para = {} # for workflow purposes
 
 
-def get_econfig(element):
+def get_econfig(element, full=False):
     if isinstance(element, int):
         econ = econfiguration.get(element, {}).get('econfig', None)
-        return econ
+        if full:
+            econ = rek_econ(econ)
+            return econ
+        else:
+            return econ
     elif isinstance(element, str):
-         atomic_names = {data['symbol']: num for num,
+        atomic_names = {data['symbol']: num for num,
                          data in econfiguration.iteritems()}
-         element_num = atomic_names.get(element, None)
-         econ = econfiguration.get(element_num, {}).get('econfig', None)
-        return econ
+        element_num = atomic_names.get(element, None)
+        econ = econfiguration.get(element_num, {}).get('econfig', None)
+        if full:
+            econ = rek_econ(econ)
+            return econ
+        else:
+            return econ
     else:
         print('INPUTERROR: element has to be and int or string')
-        return None 
+        return None
+
+def get_coreconfig(element, full=False):
+    if isinstance(element, int):
+        econ = econfiguration.get(element, {}).get('econfig', None)
+        if full:
+            econ = rek_econ(econ)
+            return econ.split('|')[0]
+        else:
+            return econ.split('|')[0]
+    elif isinstance(element, str):
+        atomic_names = {data['symbol']: num for num,
+                         data in econfiguration.iteritems()}
+        element_num = atomic_names.get(element, None)
+        econ = econfiguration.get(element_num, {}).get('econfig', None)
+        if full:
+            econ = rek_econ(econ)
+            return econ.split('|')[0]
+        else:
+            return econ.split('|')[0]
+    else:
+        print('INPUTERROR: element has to be and int or string')
+        return None
+        
+def rek_econ(econfigstr):
+    """
+    rekursive routine to return a full econfig
+    '[Xe] 4f14 | 5d10 6s2 6p4' -> '1s 2s ... 4f14 | 5d10 6s2 6p4'
+    """
+    split_econ = econfigstr.strip('[')
+    split_econ = split_econ.split(']')
+    if len(split_econ) == 1:
+        return econfigstr
+    else:
+        rest = split_econ[1]
+        elem = split_econ[0]
+        econfig = get_econfig(elem)
+        econ = econfig.replace(' |', '')
+        econfigstr = rek_econ(econ + rest)
+        return econfigstr# for now
+        
+def highest_unocc_valence(econfigstr):
+    """
+    returns the highest not full valence orbital. If all are full, it returns ''
+    #maybe should be advanced to give back the next highest unocc
+    """
+    
+    val_orb = ''
+    econ = econfigstr.split('|')
+    econ_val = econ[-1]
+    econ_val_list = econ_val.split()
+    for state in econ_val_list[::-1]:
+        state_l = state[1]
+        occ = int(state.split(state_l)[-1])
+        max_occ = max_state_occ.get(state_l, 100)     
+        if occ < max_occ:
+            val_orb = state            
+            return val_orb
+    return val_orb # ''  # everythin is full  
+    
