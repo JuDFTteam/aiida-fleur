@@ -162,11 +162,11 @@ class fleur_scf_wc(WorkChain):
         self.ctx.last_calc = None
         self.ctx.loop_count = 0
         self.ctx.calcs = []
+        self.ctx.abort = False
 
         
         # input para
         wf_dict = self.inputs.wf_parameters.get_dict()
-        self.ctx.abort = False
         
         # TODO checkout how the AiiDA workchain default really works by now,
         # currently things are kind of double...
@@ -633,10 +633,12 @@ class fleur_scf_wc(WorkChain):
                         'is {} htr \n'.format(self.ctx.loop_count, 
                                        last_calc_out.get('number_of_iterations_total', None),
                                        last_calc_out.get('charge_density', None), self.ctx.energydiff))
-        elif self.ctx.abort: # some error occured, donot use the output.
-            self.report('STATUS/ERROR: I abort, see logs and erros/warning/hints in output_scf_wc_para')
+
         else: # Termination ok, but not converged yet...
-            self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.\n'
+            if self.ctx.abort: # some error occured, donot use the output.
+                self.report('STATUS/ERROR: I abort, see logs and erros/warning/hints in output_scf_wc_para')
+            else:
+                self.report('STATUS/WARNING: Done, the maximum number of runs was reached or something failed.\n'
                         'INFO: The charge density of the FLEUR calculation pk= '
                         'after {} FLEUR runs and {} iterations is {} "me/bohr^3"\n'
                         'INFO: The total energy difference of the last two interations'
@@ -730,8 +732,10 @@ class fleur_scf_wc(WorkChain):
         self.ctx.successful = False
         self.ctx.abort = True
         self.return_results()
-        self.abort_nowait(errormsg)
-    
+        #self.abort_nowait(errormsg)
+        self.abort(errormsg)
+        
+        
 if __name__ == "__main__":
     import argparse
 

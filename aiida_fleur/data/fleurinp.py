@@ -1108,7 +1108,7 @@ class FleurinpData(Data):
         os.remove(inpxmlfile)
 
         return fleurinp
-    '''
+    
     def get_tag(self, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
@@ -1126,7 +1126,7 @@ class FleurinpData(Data):
                 xmlschema_doc = etree.parse(self._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
                 parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                tree = etree.parse(inpxmlfile, parser)
+                tree = etree.parse(inpxmlfile)#, parser)
             else: #schema not there, parse without
                 print 'parsing inp.xml without XMLSchema'
                 tree = etree.parse(inpxmlfile)
@@ -1149,7 +1149,7 @@ class FleurinpData(Data):
             return return_value
         else:
             return return_value
-    '''
+    
 '''
 from aiida.orm.data.base import Str
 
