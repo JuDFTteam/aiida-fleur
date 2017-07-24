@@ -418,19 +418,20 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                     if not etag == tag:
                         continue
                     if etag=='stateOccupation':# there can be multiple times stateOccupation
-                        #policy: we DELETE all LOs, and create new ones from the given parameters.
+                        #policy: default we DELETE all existing occs and create new ones for the given input!
                         existingocc = eval_xpath3(fleurinp_tree_copy, xpathcoreocc)
                         for occ in existingocc:
                             parent = occ.getparent()
                             parent.remove(occ)
                         if isinstance(edictlist,dict):
+                            print('here')
                             for attrib, value in edictlist.iteritems():
                                 xml_set_attribv_occ(fleurinp_tree_copy, xpathcoreocc, attrib, value, create=create)
                         else:# I expect a list of dicts
                             #occnodes = eval_xpath3(root, xpathcoreocc)
                             #noccnodes = len(occnodes)
                             #ggf create more lo tags of needed
-                            nodes_need = len(val)# - noccnodes
+                            nodes_need = len(edictlist)# - noccnodes
                             for j in range(0,nodes_need):
                                 create_tag(fleurinp_tree_copy, xpathelectronConfig, 'stateOccupation', create=create)
                             for i, occdict in enumerate(edictlist):
