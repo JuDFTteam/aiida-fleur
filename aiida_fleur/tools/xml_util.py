@@ -356,7 +356,19 @@ def replace_tag(xmltree, xpath, newelement):
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     """
-
+    Method to set parameters of a species tag of the fleur inp.xml file.
+    
+    param: fleurinp_tree_copy, xml etree of the inp.xml
+    param: species_name : string, name of the species you want to change
+    param: attributedict: python dict: what you want to change
+    param: create: bool, if species does not exist create it and all subtags?
+    
+    raises: ValueError, if species name is non existent in inp.xml and should not be created.
+    also if other given tags are garbage. (errors from eval_xpath() methods)
+    
+    return: fleurinp_tree_copy: xml etree of the new inp.xml
+    
+    
     """
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also number, other parameters
