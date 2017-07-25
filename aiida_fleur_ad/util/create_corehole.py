@@ -42,7 +42,7 @@ def create_corehole_para(structure, kind, econfig, parameterData=None, move=Fals
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /
     count = 0
     if parameterData:
-        new_parameterd = dict(parameterData.get_dict()) # otherwise parameterData is changed
+        new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
         for key, val in new_parameterd.iteritems():
             if 'atom' in key:
                 if val.get('element', None) == symbol:
@@ -95,6 +95,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
          </electronConfig>
     '''
     from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
+    from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
     # or from fleurinp?
 
     FleurinpData = DataFactory('fleur.fleurinp')
