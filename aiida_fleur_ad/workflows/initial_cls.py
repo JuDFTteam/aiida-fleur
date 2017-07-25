@@ -959,6 +959,44 @@ def get_para_from_group(element, group):
                   ''.format(element, group))
     
     return parameter, report
+    
+
+
+def clshifts_to_be(coreleveldict, reference_dict):
+    """
+    This methods converts corelevel shifts to binding energies, if a reference is given.
+    These cann than be used for plotting.
+    
+    i.e
+    
+    reference = {'W' : {'4f7/2' : [124], 
+                     '4f5/2' : [102]}, 
+              'Be' : {'1s': [117]}}
+    corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1], 
+                     '4f5/2' : [0, 0.3, 0.4, 0.1]}, 
+              'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}}
+    """
+    return_corelevel_dict = {}
+    for elem, corelevel_dict in coreleveldict.iteritems():
+        ref_el = reference_dict.get(elem, {})
+        return_corelevel_dict[elem] = {}
+        for corelevel_name, corelevel_list in corelevel_dict.iteritems():
+            ref_cl = ref_el.get(corelevel_name, [])
+            be_all = []
+            nref = len(ref_cl)
+            ncl = len(corelevel_list)
+            if nref == ncl:
+                for i, corelevel in enumerate(corelevel_list):
+                    be = corelevel + ref_cl[i]
+                    be_all.append(be)
+            else:
+                for corelevel in corelevel_list:
+                    be = corelevel + ref_cl[0]
+                    be_all.append(be)
+            return_corelevel_dict[elem][corelevel_name] = be_all
+                
+                
+    return return_corelevel_dict
 
 '''
    def get_calcs_from_groups(self):
