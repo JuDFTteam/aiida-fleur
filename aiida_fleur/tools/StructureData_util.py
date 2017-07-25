@@ -13,8 +13,8 @@ from ase.io import *
 from aiida.orm import DataFactory
 from aiida.orm import load_node
 from aiida.orm.data.structure import Site, Kind
-
 from aiida.work.workfunction import workfunction as wf
+import numpy as np
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -174,7 +174,6 @@ def abs_to_rel(vector, cell):
     """
     Converts a position vector in absolut coordinates to relative coordinates.
     """
-    import numpy as np
 
     if len(vector) == 3:
         cell_np = np.array(cell)
@@ -191,7 +190,6 @@ def abs_to_rel_f(vector, cell, pbc):
     Converts a position vector in absolut coordinates to relative coordinates 
     for a film system.
     """
-    import numpy as np
     # TODO this currently only works if the z-coordinate is the one with no pbc
     # Therefore if a structure with x non pbc is given this should also work.
     # maybe write a 'tranform film to fleur_film routine'?
@@ -217,7 +215,6 @@ def rel_to_abs(vector, cell):
     Converts a position vector in interal coordinates to absolut coordinates 
     in Angstroem.
     """
-    import numpy as np
     if len(vector) == 3:
         cell_np = np.array(cell)
         postionR =  np.array(vector)
@@ -234,7 +231,6 @@ def rel_to_abs_f(vector, cell):
     Converts a position vector in interal coordinates to absolut coordinates 
     in Angstroem for a film structure (2D).
     """
-    import numpy as np
     # TODO this currently only works if the z-coordinate is the one with no pbc
     # Therefore if a structure with x non pbc is given this should also work.
     # maybe write a 'tranform film to fleur_film routine'?
@@ -251,7 +247,40 @@ def rel_to_abs_f(vector, cell):
     else:
         return False
 
+@wf
+def break_symmetry_wf(structure, wf_para, parameterData = ParameterData(dict={})):
+    """
+    This is the workfunction of the routine break_symmetry, which 
+    introduces different 'kind objects' in a structure
+    and names them that inpgen will make different species/atomgroups out of them.
+    If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
 
+    params: StructureData
+    params: wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
+    
+    {
+    params: atoms: python list of symbols, exp: ['W', 'Be']. This would make for 
+                   all Be and W atoms their own kinds.
+    params: site: python list of integers, exp: [1, 4, 8]. This would create for
+                  atom 1, 4 and 8 their own kinds.
+    params: pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
+                 This will create a new kind for the atom at that position.
+                 Be carefull the number given has to match EXACTLY the position
+                 in the structure.
+    }
+    
+    params: parameterData: AiiDa ParameterData
+    return: StructureData, a AiiDA crystal structure with new kind specification.
+    """
+    wf_dict = wf_para.get_dict()
+    atoms = wf_dict.get('atoms', ['all'])
+    sites = wf_dict.get('site', [])
+    pos = wf_dict.get('pos', [])
+    new_structure, para_new = break_symmetry(structure, atoms=atoms, site=sites, pos=pos, parameterData = parameterData)
+    
+    return new_structure, para_new
+    
+    
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
 def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = None):
     """
@@ -277,7 +306,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
     #if wanted make individual kind for that atom
     #kind names will be atomsymbol+number
     #create new structure with new kinds and atoms
-    Param = DataFactory('parameter')
+    #Param = DataFactory('parameter')
     symbol_count = {} # Counts the atom symbol occurence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
     replace_siteN = [] # all site integers to be replaced
@@ -382,7 +411,6 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
     """
     import spglib
-    import numpy as np
     
     equi_info = []    
     equi_info_symbol = []
@@ -403,7 +431,6 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     for kind in kinds:
         k_symbols[kind.name] = kind.symbol
         
-
     for equi in equi_info:
         kind = sites[equi[0]].kind_name
         element = k_symbols[kind]
@@ -411,3 +438,49 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
         equi_info_symbol.append([element, equi])    
         
     return equi_info_symbol, n_equi_info_symbol
+
+
+
+@wf
+def move_atoms_incell_wf(structure, wf_para):#Float1, Float2, Float3, test=None):
+    """
+    moves all atoms in a unit cell by a given vector
+    
+    para: AiiDA structure
+    para: vector: tuple of 3, or array
+    (currently 3 AiiDA Floats to make it a wf,
+    In the future maybe a list or vector if AiiDa basetype exists)
+    
+    returns: AiiDA stucture
+    """
+    wf_para_dict = wf_para.get_dict()
+    vector = wf_para_dict.get('vector' , [0.0, 0.0, 0.0])
+    wf_para_dict.get('testp' , None)
+    new_structure = move_atoms_incell(structure, vector)#[Float1, Float2, Float3])
+    
+    return new_structure
+
+def move_atoms_incell(structure, vector):
+    """
+    moves all atoms in a unit cell by a given vector
+    
+    para: AiiDA structure
+    para: vector: tuple of 3, or array
+    
+    returns: AiiDA stucture
+    """
+
+    StructureData = DataFactory('structure')
+    new_structure = StructureData(cell=structure.cell)
+    new_structure.pbc = structure.pbc
+    sites = structure.sites
+    for kind in structure.kinds:
+        new_structure.append_kind(kind)
+        
+    for site in sites:
+        pos = site.position
+        new_pos = np.array(pos) + np.array(vector)
+        new_site = Site(kind_name=site.kind_name, position=new_pos)
+        new_structure.append_site(new_site)
+    
+    return new_structure
