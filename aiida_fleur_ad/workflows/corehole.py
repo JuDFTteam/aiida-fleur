@@ -14,6 +14,9 @@ __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
 # TODO maybe also calculate the reference structure to check on the supercell calculation
+# TODO creation of wf_para nodes for scf fleurinp_changes for corelevel has to be right
+# TODO moving of cell with corehole, can inpgen do this?
+#
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -39,7 +42,7 @@ from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
 from aiida_fleur.tools.StructureData_util import break_symmetry
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import find_equi_atoms
-from aiida_fleur_ad.util.element_econfig_list import get_econfig #,get_coreconfig, rek_econ
+from aiida_fleur_ad.util.element_econfig_list import get_econfig ,get_coreconfig, econfigstr_hole, rek_econ, states_spin, get_state_occ
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -190,7 +193,7 @@ class fleur_corehole_wc(WorkChain):
 
     def supercell_needed(self):
         """
-        check if a supercell is needed and what size
+        check if a supercell is needed and what size it should be
         """
         #think about a rule here to apply 2x2x2 should be enough for nearly everything.
         # but for larger unit cells smaller onces might be ok.
@@ -234,10 +237,11 @@ class fleur_corehole_wc(WorkChain):
         # These positions are the same for the supercell. 
         # break the symmetry for the supercells. (make the corehole atoms its own atom type)
         # create a new species and a corehole for this atom group.
-        # move all the atoms in the cell that impurity is in 0.0, 0.0, 0.0
+        # move all the atoms in the cell that impurity is in the origin (0.0, 0.0, 0.0)
         # use the fleurinp_change feature of scf to create the corehole after inpgen gen in the scf        
         # start the scf with the last charge density of the ref calc? so far no, might not make sense      
         
+        # TODO if this becomes to long split
         """
         self.report('INFO: In create_coreholes of fleur_corehole_wc. '
                     'Preparing everything for calcualtion launches.')
@@ -247,6 +251,7 @@ class fleur_corehole_wc(WorkChain):
         base_struc = self.ctx.base_structure # one unit cell (given cell)
         base_atoms_sites = base_struc.sites  # list of AiiDA Site types of cell
         base_kinds = base_struc.kinds        # list of AiiDA Kind types of cell
+        valid_elements = list(base_struc.get_composition().keys())# elements in structure
         base_supercell = self.ctx.ref_supercell # supercell of base cell
         base_k_symbols = {}                    #map kind names to elements 
         
@@ -255,19 +260,19 @@ class fleur_corehole_wc(WorkChain):
         
         # we have to find the atoms we want a corelevel on and make them a new kind,
         # also we have to figure out what electron config to set
-        atoms_toc = self.ctx.atoms_to_calc #['Be', (0.0, 0.5, 0.334), 3, 'all']
+        atoms_toc = self.ctx.atoms_to_calc #['Be', (0.0, 0.5, 0.334)/ 3(index)/ 'all']
         corelevels_toc = self.ctx.be_to_calc # [ 'Be 1s', 'W_4f', 'O all', 'W-3d'...]
         coreholes_atoms = []  # list of aiida sites
-        corehole_to_create = []
-        valid_elements = list(base_struc.get_composition().keys())# get elements in structure
+        corehole_to_create = [] # prepare list of dicts for final loop, for calculation creation
+        #[{'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}]
         
         # get the symmetry equivivalent atoms by ase
-        # equi_info_symbol = [['W', 1,2,3,8], ['Be', 4,5,6,7,9] ...], n_equi_info_symbol= {'Be' : number, ...}
+        # equi_info_symbol = [['W', 1,2,3,8], ['Be', 4,5,6,7,9] ...]
+        #n_equi_info_symbol= {'Be' : count, ...}
         equi_info_symbol, n_equi_info_symbol = find_equi_atoms(base_struc)  
-        print(atoms_toc)
+        
         # 1. Find out what atoms to do coreholes on
         for atom_info in atoms_toc:
-            print(atom_info, type(atom_info))
             if isinstance(atom_info, basestring):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
@@ -314,9 +319,10 @@ class fleur_corehole_wc(WorkChain):
             else:
                 print("input: {} of 'atoms' not recongized".format(atom_info))
                 
-        # remove doubles in coreholes_atoms?
-        #a = s.sites
-        #a[0] == a[0]
+        # TODO: remove doubles in coreholes_atoms?
+
+        dict_corelevel = {} # 
+        # dict_corelevel['W' : {corelevel: ['1s 1/2','4f 7/2', '4f 3/2'], econfig: [config], fleur_changes : []}]
         
         # 2. now check what type of corelevel shall we create on those atoms
         for corel in corelevels_toc:
@@ -328,20 +334,45 @@ class fleur_corehole_wc(WorkChain):
                         # something went wrong, wrong input
                         continue                
                 else:
-                    # we assume for now ['Element', 'corelevel'] i.e ['Be', '1s']                    
+                    # we assume for now ['Element', 'corelevel'] i.e ['Be', '1s'] 
+                    econfigs = []
+                    all_corestates = []                   
                     if elm_cl[0] in valid_elements:
                         # get corelevel econfig of element
-                        valid_coreconfig = get_econfig(elm_cl[0], full=True)
+                        dict_corelevel_elm = {}
+                        valid_coreconfig = get_coreconfig(elm_cl[0], full=True)
+                        oriegconfig = get_econfig(elm_cl[0], full=True)
+                        highest_unocc = get_econfig(elm_cl[0], full=True)
                         if 'all' == elm_cl[1]:
                             # add all corelevels to calculate
-                            pass
-                        elif elm_cl in valid_coreconfig: # check if corelevel in valid coreconfig
+                            corestates = valid_coreconfig.split()
+                            for state in corestates:
+                                holeconfig = econfigstr_hole(oriegconfig, state, highest_unocc)
+                                rel_states = states_spin.get(state[1], [])
+                                for rel in rel_states:
+                                    econfigs.append(holeconfig)
+                                    all_corestates.append(state + ' ' + rel)
+                            
+                        elif elm_cl[1] in valid_coreconfig: # check if corelevel in valid coreconfig
                             #add corelevel to calculate.
+                            state_index = oriegconfig.find(elm_cl[1])
+                            state = oriegconfig[state_index:state_index+4].rstrip(' ')# +4: icii, or ici    
+                            holeconfig = econfigstr_hole(oriegconfig, state, highest_unocc)
+                            rel_states = states_spin.get(state[1], [])
                             # get rel core level (for 4f 5/2, 7/2)
-                            pass
+                            for rel in rel_states:
+                                econfigs.append(holeconfig)
+                                all_corestates.append(state + ' ' + rel)
+                        elif "/" in elm_cl[1]:
+                            pass # TODO FUll state information give...[4f 7/2]
                         else:
                             pass
                             # corelevel provided wrong, not understood, warning
+                            continue
+                        # TODO several corelevels of one element...
+                        dict_corelevel_elm['corelevel'] = all_corestates
+                        dict_corelevel_elm['econfig'] = econfigs                        
+                        dict_corelevel[elm_cl[0]] = dict_corelevel_elm
                     else:
                         pass
                         #element or string provieded not in structure,
@@ -357,11 +388,10 @@ class fleur_corehole_wc(WorkChain):
         elif method == 'fractional':
             pass
         
-        #output of about                
+        #output of above               
         #list of sites [site_bla, ..]
-        # dict_corelevel['W' : {corelevel: ['3d','4f 7/2', '4f 3/2'], econfig: [config], fleur_changes : []}]
         dict_corelevel = {'Be' : {'corelevel' : ['1s'], 'econfig' : ['1s2 | 2s2']}}
-        
+        # now put atom and corehole information together
         for site in coreholes_atoms:
             selem = base_k_symbols[site.kind_name]
             cl_dict = dict_corelevel.get(selem, None)
@@ -369,6 +399,8 @@ class fleur_corehole_wc(WorkChain):
                 # what coreholes need to be created for that element
                 for econfig in cl_dict.get('econfig', []):
                     kind = site.kind_name + '1' # # TODO do rigth, this might lead to errors
+                    
+                    # because there might be already some kinds and another number is right...
                     corehole = {'site' : site, 'econfig' : econfig, 'kindname' : kind}
                     corehole_to_create.append(corehole)
         
@@ -377,7 +409,7 @@ class fleur_corehole_wc(WorkChain):
         # (default kind name = element + id) use this for paramter settings
 
         # fill calcs_torun with (sturcutre, parameter, wf_para)
-        #corehole_to_create = [{'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"}]
+        #corehole_to_create = [{'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}]
         calcs = []
         for corehole in corehole_to_create:
             site = corehole['site']
@@ -391,12 +423,13 @@ class fleur_corehole_wc(WorkChain):
             # get kind name from new_para?
             
             # move unit cell that impurity is in 0,0,0
-            para = create_corehole_para(new_struc, corehole['kindname'], corehole['econfig'], parameterData=new_para)
+            moved_struc = move_atoms_incell_wf(new_struc, Float(-pos(0)), Float(-pos)))
+            para = create_corehole_para(moved_struc, corehole['kindname'], corehole['econfig'], parameterData=new_para)
             
             # create_wf para or write in last line what should be in 'fleur_change'            
             #  for scf, which with the changes in the inp.xml needed
 
-            calcs.append((new_struc, para))
+            calcs.append((moved_struc, para))
         self.ctx.calcs_torun = calcs
         
                 
@@ -585,8 +618,6 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.ref_atomtypes = ref_atomtypes
         self.ctx.total_energies = total_energies
         self.ctx.ref_total_energies = ref_total_energies
-
-        
         return
         
     def return_results(self):
