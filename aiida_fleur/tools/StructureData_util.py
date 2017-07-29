@@ -301,6 +301,10 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
     return: StructureData, a AiiDA crystal structure with new kind specification.
     """
     # TODO proper input checks?
+    from aiida.common.constants import elements as PeriodicTableElements
+
+    _atomic_numbers = {data['symbol']: num for num,
+                           data in PeriodicTableElements.iteritems()}
 
     #get all atoms, get the symbol of the atom
     #if wanted make individual kind for that atom
@@ -362,22 +366,27 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
 
             # now we have to add an atom list to parameterData with the corresponding id.
             if parameterData:
-                id = symbol_count[symbol]
+                id_a =  symbol_count[symbol]#'{}.{}'.format(charge, symbol_count[symbol])
                 #print 'id: {}'.format(id)
                 for key, val in para.iteritems():
                     if 'atom' in key:
                         if val.get('element', None) == symbol:
-                            if id and id == val.get('id', None):
+                            if id_a and id_a == val.get('id', None):
                                 break # we assume the user is smart and provides a para node,
                                 # which incooperates the symmetry breaking already
-                            elif id:# != 1: # copy parameter of symbol and add id
+                            elif id_a:# != 1: # copy parameter of symbol and add id
                                 val_new = dict(val)
-                                val_new.update({u'id' : id})
-                                atomlistname = 'atom{}'.format(id)
+                                # getting the charge over element might be risky
+                                charge = _atomic_numbers.get((val.get('element')))
+                                idp = '{}.{}'.format(charge, symbol_count[symbol])
+                                idp = float("{0:.2f}".format(float(idp)))                                
+                                # dot cannot be stored in AiiDA dict...
+                                val_new.update({u'id' : idp})
+                                atomlistname = 'atom{}'.format(id_a)
                                 i = 0
                                 while new_parameterd.get(atomlistname, {}):
                                     i = i+1
-                                    atomlistname = 'atom{}'.format(id+i)
+                                    atomlistname = 'atom{}'.format(id_a+i)
                                 new_parameterd[atomlistname] = val_new
             else:
                 pass
@@ -455,10 +464,9 @@ def move_atoms_incell_wf(structure, wf_para):#Float1, Float2, Float3, test=None)
     """
     wf_para_dict = wf_para.get_dict()
     vector = wf_para_dict.get('vector' , [0.0, 0.0, 0.0])
-    wf_para_dict.get('testp' , None)
     new_structure = move_atoms_incell(structure, vector)#[Float1, Float2, Float3])
     
-    return new_structure
+    return {'moved_struc' : new_structure}
 
 def move_atoms_incell(structure, vector):
     """
