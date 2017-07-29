@@ -22,7 +22,8 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.common.exceptions import InputValidationError
 
-#from somewhere import ValidationError
+#from somewhere import ValidationError/InputValidationError
+#some error, that does not depend on aiida
 
 def is_sequence(arg):
     return (not hasattr(arg, "strip") and
@@ -270,7 +271,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
         except ValueError as v:
             raise ValueError('{}. If this is a species, are you sure this species exists in your inp.xml?'.format(v))
     nodes = eval_xpath3(xmlnode, xpath, create=create, place_index=place_index, tag_order=tag_order)
-    print 'nodes found from create_tag: {}'.format(nodes)
+    #print 'nodes found from create_tag: {}'.format(nodes)
     if nodes:
         for node_1 in nodes:
             if place_index:
@@ -278,18 +279,18 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                     print 'in tag_order'
                     # behind what shall I place it
                     behind_tags = tag_order[:place_index]
-                    children = node_1.getchildren()
-                    print children
+                    #children = node_1.getchildren()
+                    #print children
                     # get all names of tag exisiting tags
                     set = False
-                    print reversed(behind_tags)
+                    #print reversed(behind_tags)
                     for tag in reversed(behind_tags):
-                        print tag
+                        #print tag
                         for child in node_1.iterchildren(tag=tag, reversed=False):
                             # if tagname of elements==tag:
                             tag_index = node_1.index(child)
-                            print child
-                            print tag_index
+                            #print child
+                            #print tag_index
                             try:
                                 node_1.insert(tag_index, newelement)
                             except ValueError as v:
@@ -309,10 +310,10 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                         node_1.insert(place_index, newelement)
                     except ValueError as v:
                         raise ValueError('{}. If this is a species, are you sure this species exists in your inp.xml?'.format(v))
-                    print 'in place_index'
+                    #print 'in place_index'
 
             else:
-                print 'normal append'
+                #print 'normal append'
                 try:
                     node_1.append(newelement)
                 except ValueError as v:
@@ -320,6 +321,12 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
     return xmlnode
 
 def delete_att(xmltree, xpath, attrib):
+    """
+    deletes an xml tag in an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    """ 
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -331,6 +338,12 @@ def delete_att(xmltree, xpath, attrib):
     return xmltree
 
 def delete_tag(xmltree, xpath):
+    """
+    deletes an xml tag in an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    """    
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -340,18 +353,24 @@ def delete_tag(xmltree, xpath):
     return xmltree
 
 def replace_tag(xmltree, xpath, newelement):
+    """
+    replaces a xml tag by another tag on an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    param: newelement: xmlElement
+    """
     root = xmltree.getroot()
 
     nodes = eval_xpath3(root, xpath)
-    #print nodes
     if nodes:
         for node in nodes:
-            #print newelement
             parent = node.getparent()
             parent.remove(node)
             parent.append(newelement)
 
     return xmltree
+    
 ####### XML SETTERS SPECIAL ########
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
@@ -386,7 +405,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # can we get this out of schema file?
     species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'force', 'electronConfig', 'nocoParams', 'ldaU', 'lo']
 
-    root = fleurinp_tree_copy.getroot()
+    #root = fleurinp_tree_copy.getroot()
     for key,val in attributedict.iteritems():
         if key == 'mtSphere': # always in inp.xml
             for attrib, value in val.iteritems():
@@ -422,7 +441,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
         elif key == 'electronConfig':
             # eval electronConfig and ggf create tag at right place.
-            print 'index {}'.format(species_seq.index('electronConfig'))
+            #print 'index {}'.format(species_seq.index('electronConfig'))
             eval_xpath3(fleurinp_tree_copy, xpathelectronConfig, create=True, place_index=species_seq.index('electronConfig'), tag_order=species_seq)
 
             for tag in ['coreConfig', 'valenceConfig', 'stateOccupation']:
@@ -436,7 +455,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                             parent = occ.getparent()
                             parent.remove(occ)
                         if isinstance(edictlist,dict):
-                            print('here')
+                            #print('here')
                             for attrib, value in edictlist.iteritems():
                                 xml_set_attribv_occ(fleurinp_tree_copy, xpathcoreocc, attrib, value, create=create)
                         else:# I expect a list of dicts
@@ -508,7 +527,42 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
     return fleurinp_tree_copy
 
+def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
+    """
+    Routine adds something to the value of an attribute in the xml file (should be a number here)
 
+    :param: an etree a xpath from root to the attribute and the attribute value
+    
+    :param: mode: 'abs', 'rel', change by absolut or relative amount
+    :return: None, or an etree
+
+    Comment: Element.set will add the attribute if it does not exist,
+             xpath expression has to exist
+    example: add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1')
+             add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1.1', mode='rel')
+    """
+    
+    
+    #get attribute, add or multiply
+    #set attribute
+    attribval_node = eval_xpath(xmltree, xpathn)
+    # do some checks..
+    attribval = get_xml_attribute(attribval_node, attributename)
+    print(attribval)
+    if attribval:
+        if mode=='abs':
+            newattribv = float(attribval) + float(set_val)
+        elif mode == 'rel':
+            newattribv = float(attribval) * float(set_val)
+        else:
+            pass
+            #unknown mode
+            
+        xml_set_attribv_occ(xmltree, xpathn, attributename, newattribv, occ=[0], create=False)
+    else:
+        pass
+        # something was wrong, ...
+    return xmltree
 
 ####### XML GETTERS #########
 # TODO parser infos do not really work, might need to be returned, here
