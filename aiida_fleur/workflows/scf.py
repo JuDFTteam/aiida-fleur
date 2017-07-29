@@ -25,7 +25,7 @@ from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
-from aiida.work.workchain import Outputs
+#from aiida.work.workchain import Outputs
 
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -33,6 +33,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpge
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.xml_util import eval_xpath2
 from lxml import etree
+from lxml.etree import XMLSyntaxError
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -257,7 +258,7 @@ class fleur_scf_wc(WorkChain):
         fchanges = wf_dict.get('inpxml_changes', [])
         if fchanges:
             for change in fchanges:
-                print('change : {}'.format(change))
+                #print('change : {}'.format(change))
                 # somehow the tuple type gets destroyed on the way and becomes a list
                 if (not isinstance(change, tuple)) and (not isinstance(change, list)):
                     error = ('ERROR: Wrong Input inpxml_changes wrong format of'
@@ -347,12 +348,13 @@ class fleur_scf_wc(WorkChain):
             # validate?
             apply_c = True
             try:
-                fleurmode.show(display=False, validate=True)
-            except:
+                fleurmode.show(display=False, validate=True)#True
+            except XMLSyntaxError:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 #self.abort(error)
+                #fleurmode.show(display=True)#, validate=True)
                 self.control_end_wc(error)            
-
+            
                 apply_c = False
             # apply
             if apply_c:
@@ -495,7 +497,7 @@ class fleur_scf_wc(WorkChain):
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
         if self.ctx.successful:
-            self.report('last calc successful = {}'.format(self.ctx.successful))
+            #self.report('last calc successful = {}'.format(self.ctx.successful))
             last_calc = self.ctx.last_calc
     
             '''
@@ -540,7 +542,7 @@ class fleur_scf_wc(WorkChain):
                 self.ctx.distance.append(float(distance))
         else:
             #TODO better control shutdown
-            self.report('last calc not successful')
+            #self.report('last calc not successful')
 
             errormsg =  'ERROR: scf wc was not successful, check log for details'
             #self.abort_nowait(errormsg)
@@ -659,7 +661,7 @@ class fleur_scf_wc(WorkChain):
             try:
                 fleurinp = self.ctx['inpgen'].out.fleurinpData
             except:
-                print('something was wrong with the inpgen calc')
+                self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None
             outdict['fleurinp'] = fleurinp
         outdict['output_scf_wc_para'] = outputnode
@@ -731,6 +733,7 @@ class fleur_scf_wc(WorkChain):
         """
         self.ctx.successful = False
         self.ctx.abort = True
+        self.report(errormsg) # because return_results still fails somewhen
         self.return_results()
         #self.abort_nowait(errormsg)
         self.abort(errormsg)
