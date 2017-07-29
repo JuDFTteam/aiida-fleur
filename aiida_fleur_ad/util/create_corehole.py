@@ -29,24 +29,32 @@ def create_corehole_para(structure, kind, econfig, parameterData=None, move=Fals
 
     returns a parameterData node
     """
+    
+    from aiida.common.constants import elements as PeriodicTableElements
+
+    _atomic_numbers = {data['symbol']: num for num,
+                           data in PeriodicTableElements.iteritems()}    
     # TODO ggf change structure, move corehole to 0.0 position
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
     symbol = kindo.symbol
     head = kindo.name.rstrip('01223456789')
-    id = kindo.name[len(head):]
-    print id
+    #print(kindo)
+    charge = _atomic_numbers[kindo.symbol]
+    id = float("{}.{}".format(charge, kindo.name[len(head):]))
+    #print('id {}'.format(id))
 
     # get kind symbol, get kind name,
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /
-    count = 0
+    #count = 0
     if parameterData:
         new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
         for key, val in new_parameterd.iteritems():
             if 'atom' in key:
                 if val.get('element', None) == symbol:
-                    if (id and int(id) == int(val.get('id', -1))):
+                    # remember id is atomic number.some int
+                    if (id and float(id) == float(val.get('id', -1))):
                         val.update({'econfig' : econfig})
                         #print 'here1'
                         break
@@ -95,7 +103,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
          </electronConfig>
     '''
     from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
-    from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+    #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
     # or from fleurinp?
 
     FleurinpData = DataFactory('fleur.fleurinp')
@@ -124,10 +132,10 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
 
     if valenceconfig != 'same':
         new_valence = True
-    print stateocc
+    #print stateocc
 
     species_tags = fleurinp.get_tag(species_xpath)
-    print species_tags
+    #print species_tags
     for speci in species_tags:
         if get_xml_attribute(speci, 'name') == species:
             # change
@@ -137,11 +145,11 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
             occupations = eval_xpath2(econfig, 'stateOccupation')
 
             for key, val in stateocc.iteritems():
-                print key
+                #print key
                 added = False
                 for occ in occupations:
                     name = get_xml_attribute(occ, 'state')
-                    print name
+                    #print name
                     if name == key:
                         added = True
                         # override and break (can occur only once)
@@ -174,7 +182,7 @@ def write_change(xmltree, changelist_xpath):
     for element in changelist_xpath:
         xpath = element[0]
         value = element[1]
-        print element
+        #print element
     return xmltree_new
 
 
