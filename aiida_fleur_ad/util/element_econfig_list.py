@@ -131,6 +131,14 @@ element_max_para = {} # for workflow purposes
 
 
 def get_econfig(element, full=False):
+    """
+    returns the econfiguration as a string of an element.
+    
+    :params: element string
+    :params: full, bool (econfig without [He]...)
+    returns string
+    Be careful with base strings...
+    """
     if isinstance(element, int):
         econ = econfiguration.get(element, {}).get('econfig', None)
         if full:
@@ -153,6 +161,14 @@ def get_econfig(element, full=False):
         return None
 
 def get_coreconfig(element, full=False):
+    """
+    returns the econfiguration as a string of an element.
+    
+    :params: element string
+    :params: full, bool (econfig without [He]...)
+    returns string
+    Be careful with base strings...
+    """    
     if isinstance(element, int):
         econ = econfiguration.get(element, {}).get('econfig', None)
         if full:
@@ -210,7 +226,7 @@ def highest_unocc_valence(econfigstr):
             return val_orb
     # everything was full return next empty orbital
     hightest_orb = econ_val_list[-1]
-    print hightest_orb
+    #print hightest_orb
     index = all_econfig.index(hightest_orb)
     if index:    
         next_orb_full = all_econfig[all_econfig.index(hightest_orb)+1]
@@ -219,7 +235,7 @@ def highest_unocc_valence(econfigstr):
     else:
         return val_orb#None
         
-def econfigstr_hole(econfigstr, corelevel, highesunoccp):
+def econfigstr_hole(econfigstr, corelevel, highesunoccp, htype='valence'):
     """
     # '1s2 | 2s2' , '1s2' , '2p0' -> '1s1 | 2s2 2p1'
 
@@ -231,7 +247,15 @@ def econfigstr_hole(econfigstr, corelevel, highesunoccp):
     """
     corestates = econfigstr.split()
     
-    new_highocc = str(int(highesunoccp[2:]) + 1)
+    hoc = int(highesunoccp[2:])
+    if htype=='valence':
+        new_highocc = str(hoc + 1)
+    else:# charged corehole, removed from system, keep occ
+        if hoc == 0: # do not add orbital to econfig
+            highesunoccp = ''
+            new_highocc = ''
+        else:
+            new_highocc = str(hoc)
     new_econfig = ''
     added = False
     for state in corestates:
@@ -256,6 +280,10 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
     return a dict
     i.e corehole '4f 5/2'
     ch_occ full or fractional corehole occupation?
+    valence: orbital sting '5d', is to adjust the charges for fractional coreholes
+    To that orbital occupation ch_occ - 1 will be added.
+
+
     """
     # get all not full occ states
     # get how are are filled spin up down
@@ -269,15 +297,19 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
         max_occ = max_state_occ.get(state_l, 100)     
         if occ < max_occ:
             spinstates = states_spin.get(state_l, [])
-            print(spinstates)
+            #print(spinstates)
             statename = state[:2]
             spinupocc = 0
             spindownocc = 0
             occ_spin = occ
+            if statename==valence:
+                is_valence = True
+            else:
+                is_valence = False            
             for i, spins in enumerate(spinstates):
                 spin_mac_occ = max_state_occ_spin[spins]
                 occ_spin = occ_spin - spin_mac_occ
-                print occ_spin
+                #print occ_spin
                 name = statename + spins
                 if name==corehole:
                     # use this state
@@ -286,26 +318,28 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
                     max_spin_up_occ = spin_mac_occ/2.
                     spinupocc = max_spin_up_occ
                     spindownocc = max_spin_up_occ - ch_occ
-                    state_dict = {'state' : name, 'spinUp' : spinupocc, 'spinDown' : spindownocc}
+                    fleur_name = '(' + name + ')'
+                    state_dict = {'state' : fleur_name, 'spinUp' : spinupocc, 'spinDown' : spindownocc}
                     state_occ_dict_list.append(state_dict)
                     occ_spin = occ_spin + 1 # because the electron left here and not in the other state
                     continue
                 if occ_spin < 0: # this one state is not full
-                    if name==valence:
-                        if ch_occ < 1.0:
-                            nelec = occ_spin + spin_mac_occ -1 + ch_occ
-                        else:
-                            nelec = occ_spin + spin_mac_occ
+                    if is_valence:
+                        #print('is_valence')
+                        nelec = occ_spin + spin_mac_occ -1 + ch_occ
                     else:
                         nelec = occ_spin + spin_mac_occ
                     max_spin_up_occ = spin_mac_occ/2.
-                    if nelec <= max_spin_up_occ:
+                    if 0<= nelec <= max_spin_up_occ:
                         spinupocc = nelec
                         spindownocc = 0.00000
-                    else:
+                    elif 0<= nelec:
                         spinupocc = max_spin_up_occ
-                        spindownocc = nelec - max_spin_up_occ                        
-                    state_dict = {'state' : name, 'spinUp' : spinupocc, 'spinDown' : spindownocc}
+                        spindownocc = nelec - max_spin_up_occ 
+                    else:# do not append
+                        continue
+                    fleur_name = '(' + name + ')'
+                    state_dict = {'state' : fleur_name, 'spinUp' : spinupocc, 'spinDown' : spindownocc}
                     state_occ_dict_list.append(state_dict)                   
 
 
