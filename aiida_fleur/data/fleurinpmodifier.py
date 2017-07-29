@@ -91,6 +91,7 @@ class FleurinpModifier(object):
         and task dictionary
         """
         from aiida_fleur.tools.xml_util import xml_set_attribv_occ,xml_set_first_attribv,xml_set_all_attribv, xml_set_text, xml_set_all_text, create_tag, replace_tag, delete_tag, delete_att, set_species, change_atomgr_att#, set_inpchanges
+        from aiida_fleur.tools.xml_util import add_num_to_att
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=[0], create=False):
             xml_set_attribv_occ(fleurinp_tree_copy, xpathn, attributename, attribv, occ=occ, create=create)
@@ -133,8 +134,13 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def change_atomgr_att1(fleurinp_tree_copy, attributedict, position=None, species=None,create=False):
-            fleurinp_tree_copy = change_atomgr_att1(fleurinp_tree_copy, attributedict, position=position, species=species,create=create)
+            fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=position, species=species,create=create)
             return fleurinp_tree_copy
+            
+        
+        def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
+            fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy, xpathn, attributename, set_val, mode=mode, occ=occ, create=create)
+            return fleurinp_tree_copy      
 
         '''
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
@@ -233,7 +239,8 @@ class FleurinpModifier(object):
             'set_species' : set_species1,
             'set_atomgr_att' : change_atomgr_att1,
             'set_inpchanges': set_inpchanges1,
-            'set_nkpts' : set_nkpts1
+            'set_nkpts' : set_nkpts1,
+            'add_num_to_att' : add_num_to_att1
 
         }
 
@@ -278,7 +285,8 @@ class FleurinpModifier(object):
             'set_species' : self.set_species,
             'set_atomgr_att' : self.set_atomgr_att,
             'set_inpchanges': self.set_inpchanges,
-            'set_nkpts' : self.set_nkpts
+            'set_nkpts' : self.set_nkpts,
+            'add_num_to_att' : self.add_num_to_att
 
         }
         return outside_actions
@@ -335,6 +343,9 @@ class FleurinpModifier(object):
         
     def set_nkpts(self, count, gamma='F'):
         self._tasks.append(('set_nkpts', count, gamma))
+        
+    def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
+        self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ, create))
     #def set_attribute(self, key, value):
     #    pass
     
@@ -342,6 +353,7 @@ class FleurinpModifier(object):
     #    for k, v in attrib
     
     def validate(self):
+        #print('in validate')
         inpxmlfile = self._original.get_file_abs_path('inp.xml')
         tree = etree.parse(inpxmlfile)
 
