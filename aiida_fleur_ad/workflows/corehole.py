@@ -95,7 +95,7 @@ class fleur_corehole_wc(WorkChain):
                 'queue_name' : None,       # what queue to submit to
                 'serial' : True,           # run fleur in serial, or parallel?
                 #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-                }))
+                'magnetic' : True}))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
@@ -161,7 +161,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.base_structure = inputs.get('structure') # ggf get from fleurinp
         self.ctx.supercell_size = wf_dict.get('supercell_size', [2, 1, 1]) # 2x2x2 or smaller?
         self.ctx.hole_charge = wf_dict.get('hole_charge', 1.0)
-
+        self.ctx.magnetic = wf_dict.get('magnetic', True)
 
         #self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         #self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
@@ -289,6 +289,9 @@ class fleur_corehole_wc(WorkChain):
             hole_charge = self.ctx.hole_charge
             correct_val_charge = True
             htype='charge'
+        else:
+            htype='valence' # default so far, otherwise not defined.
+            # TODO probally better, to throw error
         
         ##########
         # 1. Find out what atoms to put coreholes on
@@ -435,6 +438,9 @@ class fleur_corehole_wc(WorkChain):
                         'mode' : 'abs', 
                         'occ' : [0], 
                         'create' : False})
+                        fleurinp_change.append(charge_change)
+                    if self.ctx.magnetic: # Do a collinear magentic calculation
+                        charge_change = ('set_inpchanges', {'change_dict' : {'jspins' : 2}})
                         fleurinp_change.append(charge_change)
                     #self.report('{}'.format(fleurinp_change))
                     # because there might be already some kinds and another number is right...
