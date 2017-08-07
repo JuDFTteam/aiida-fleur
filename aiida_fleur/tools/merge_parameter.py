@@ -16,6 +16,8 @@ import sys,os
 
 from aiida.orm import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
+from aiida.orm.data.base import Bool
+from aiida.work import workfunction as wf
 
 ParameterData = DataFactory('parameter')
 
@@ -106,6 +108,31 @@ def merge_parameters(ParameterDataList, overwrite=True):
 
     return paremeter_data_new
 
+@wf
+def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
+    """
+    workfunction of merge_parameters
+    """     
+    paremeter_data_new = merge_parameter(ParameterData1, ParameterData2, overwrite=overwrite)
+    
+    return paremeter_data_new
+
+'''
+# TODO how to deal with a list? *args, prob is not the best, also it is not working here.
+# makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
+# I guess...  
+@wf    
+def merge_parameters_wf(*ParameterDatas, overwrite=Bool(True)):
+    """
+    workfunction of merge_parameters
+    """    
+    ParameterDataList = []
+    for parameter in ParameterDatas:
+        ParameterDataList.append(parameter)
+    paremeter_data_new = merge_parameters(ParameterDataList, overwrite=overwrite)
+    
+    return paremeter_data_new
+'''
 if __name__ == "__main__":
     import argparse
 

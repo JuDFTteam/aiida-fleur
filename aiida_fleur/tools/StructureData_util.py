@@ -61,7 +61,7 @@ def is_structure(structure):
     return None
 
 @wf
-def rescale(inp_structure, scale):
+def rescale(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
     """
     Rescales a crystal structure. Keeps the provanance in the database.
 
@@ -94,7 +94,7 @@ def rescale_xyz(inp_structure, scalevec):
 
 
 @wf
-def supercell(inp_structure, n_a1, n_a2, n_a3):# be carefull you have to use AiiDA datatypes...
+def supercell(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
     """
     Creates a super cell from a StructureData node.
     Keeps the provanance in the database.
@@ -104,6 +104,7 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):# be carefull you have to use Aii
 
     :returns StructureData, Node with supercell
     """
+    print('in create supercell')
     #test if structure:
     structure = is_structure(inp_structure)
     if not structure:
@@ -248,7 +249,7 @@ def rel_to_abs_f(vector, cell):
         return False
 
 @wf
-def break_symmetry_wf(structure, wf_para, parameterData = ParameterData(dict={})):
+def break_symmetry_wf(structure, wf_para, parameterData = ParameterData(dict={})):#, _label='break_symmetry_wf', _description='WF, Introduces certain kind objects in a crystal structure, and adapts the parameter node for inpgen accordingly. All kinds of the structure will become there own species.'):
     """
     This is the workfunction of the routine break_symmetry, which 
     introduces different 'kind objects' in a structure
@@ -451,7 +452,7 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
 
 
 @wf
-def move_atoms_incell_wf(structure, wf_para):#Float1, Float2, Float3, test=None):
+def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_wf', _description='WF, that moves all atoms in a unit cell by a given vector'):#Float1, Float2, Float3, test=None):
     """
     moves all atoms in a unit cell by a given vector
     
