@@ -80,9 +80,12 @@ class FleurinpModifier(object):
         new_fleurinp.del_file('inp.xml')
         new_fleurinp._add_path(str(inpxmlfile), 'inp.xml')
         os.remove(inpxmlfile)
-
+        
+        # default label and description
+        new_fleurinp.label = 'mod_fleurinp:{}'.format(original.label)
+        new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
+        #return {'modified_fleurinp' : new_fleurinp} # this will break other stuff (Scf), also link was not renamed somehow.
         return new_fleurinp
-
 
     @staticmethod
     def apply_modifications(fleurinp_tree_copy, modification_tasks, schema_tree=None):
@@ -392,10 +395,14 @@ class FleurinpModifier(object):
 
     def freeze(self):
         modifications = DataFactory("parameter")(dict={"tasks": self._tasks})
+        modifications.description = u'Fleurinpmodifier Tasks and inputs of these.'
+        modifications.label = u'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
         out = self.modify_fleurinpdata(
             original=self._original, 
-            modifications=modifications)
+            modifications=modifications,
+            _label='fleurinp modifier', 
+            _description='This workfunction modified an Fleurinpdataobject')
         return out
     
     def undo(self, all=False):
