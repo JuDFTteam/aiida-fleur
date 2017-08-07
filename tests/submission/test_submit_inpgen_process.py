@@ -16,7 +16,8 @@ import os
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.orm import DataFactory, CalculationFactory, load_node
-from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation as calc
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation# as calc
+from aiida.work.run import submit, run
 
 
 ################################################################
@@ -79,7 +80,33 @@ parameters = ParameterData(dict={
 ## since it is set automatically by new_calc
 #computer = code.get_remote_computer()
 #calc = code.new_calc(computer=computer)
+calc = FleurinputgenCalculation()
+#print calc
+#calc.label = 'Test inpgen run'
+print('set label {}'.format(calc.label))
+JobCalc = calc.process()
+print(JobCalc.calc)
+print(JobCalc)
+#print(JobCalc.label)
+#JobCalc.calc.label = 'Test inpgen run'
+#print(JobCalc.calc)
+#print(JobCalc.label)
+label = 'Test inpgen run'
+description = 'Test inpgen run on W' 
+label = 'fleur_scf_wc inpgen on W'
+description = '|fleur_scf_wc| inpgen on W, pbc(True, True, True)'
 
+attrs ={'max_wallclock_seconds' :180,
+        'resources' : {"num_machines": 1},
+        'withmpi' : False}#,
+        #'label' : 'Test inpgen run'}#,
+        #'description' : 'Test inpgen run on W' }
+inp = {'structure' : s, 'parameters' : parameters, 'code' : code,  '_options' : attrs, '_label' : label, '_description'  : description}
+
+#f = run(JobCalc, _options=attrs, **inp)
+#fleurinp= f['fleurinpData']
+
+'''
 calc = code.new_calc()
 #calc = CalculationFactory('fleur.inpgen')
 print calc, type(calc)
@@ -106,21 +133,28 @@ calc.use_parameters(parameters)
 
 if settings is not None:
     calc.use_settings(settings)
-
+'''
 
 if submit_test:
-    subfolder, script_filename = calc.submit_test()
-    print "Test_submit for calculation (uuid='{}')".format(
-        calc.uuid)
-    print "Submit file in {}".format(os.path.join(
-        os.path.relpath(subfolder.abspath),
-        script_filename
-    ))
+    #subfolder, script_filename = calc.submit_test()
+    #print "Test_submit for calculation (uuid='{}')".format(
+    #    calc.uuid)
+    #print "Submit file in {}".format(os.path.join(
+    #    os.path.relpath(subfolder.abspath),
+    #    script_filename
+    #))
+    pass
 else:
-    calc.store_all()
-    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
-    calc.submit()
-    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    #future = submit(JobCalc, _options=attrs, _label=label, _description=description, **inp)
+    future = submit(JobCalc,  **inp)
+    #calc.store_all()
+    print('submited')
+    print(future)
+    print(JobCalc.calc)
+
+    #print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+    #    JobCalc.uuid, JobCalc.dbnode.pk)
+    #calc.submit()
+    #print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+    #    calc.uuid, calc.dbnode.pk)
 
