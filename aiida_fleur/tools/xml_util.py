@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 In this module contains useful methods for handling xml trees and files which are used
-by the Fleur plugin.
+by the Fleur code and the fleur plugin.
 """
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
          "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -706,6 +706,7 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
 
 # TODO this has to be done better. be able to write tags and
 # certain attributes of attributes that occur possible more then once.
+# HINT: This is not really used any more. use fleurinpmodifier
 def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstructure):
     """
     This modifies the xml-inp file. Makes all the changes wanted by
@@ -784,10 +785,13 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
                 " to the fleur plug-in".format(key, fleur_change_dic[key]))
     return xmltree_new
 
+
+# TODO: maybe it is possible to use the xml, schema to dict libary of the QE people.
+# So far it does not seem to do what we need.
 def inpxml_todict(parent, xmlstr):
     """
     Recursive operation which transforms an xml etree to
-    python dictionaries and lists.
+    python nested dictionaries and lists.
     Decision to add a list is if the tag name is in the given list tag_several
 
     :param parent: some xmltree, or xml element

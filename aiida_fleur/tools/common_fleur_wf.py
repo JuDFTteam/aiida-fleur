@@ -80,11 +80,12 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, settings=None, serial=False):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
     '''
     get the input for a FLEUR calc
     '''
     inputs = FleurProcess.get_inputs_template()
+    #print('Template fleur {} '.format(inputs))
     if remote:
         inputs.parent_folder = remote
     if code:
@@ -98,6 +99,14 @@ def get_inputs_fleur(code, remote, fleurinp, options, settings=None, serial=Fals
         else:
             inputs._options[key] = val
     
+    if description:
+        inputs['_description'] = description
+    else:
+        inputs['_description'] = ''
+    if label:
+        inputs['_label'] = label
+    else:
+        inputs['_label'] = ''        
     #TODO check  if code is parallel version?
     if serial:
         inputs._options.withmpi = False # for now
@@ -109,11 +118,13 @@ def get_inputs_fleur(code, remote, fleurinp, options, settings=None, serial=Fals
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, params=None):
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None):
     """
     get the input for a inpgen calc
     """
     inputs = FleurinpProcess.get_inputs_template()
+    #print('Template inpgen {} '.format(inputs))
+
     if structure:
         inputs.structure = structure
     if inpgencode:
@@ -127,9 +138,18 @@ def get_inputs_inpgen(structure, inpgencode, options, params=None):
         else:
             inputs._options[key] = val
     
+    if description:
+        inputs['_description'] = description
+    else:
+        inputs['_description'] = ''        
+    
+    if label:
+        inputs['_label'] = label
+    else:
+        inputs['_label'] = ''
     
     #inpgen run always serial
     inputs._options.withmpi = False # for now
     inputs._options.resources = {"num_machines": 1}
-                    
+    #print(inputs)
     return inputs
