@@ -13,7 +13,8 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: maybe write dict schema for wf_parameter inputs, how?
 #TODO: ggf change logic for total energy
 #TODO: check if calculation already exists
-
+#TODO: Better convergence behavior if broyd files are not copied?
+# maybe adjust this in general in the plugin?
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -22,6 +23,7 @@ from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
 from aiida.work.run import submit
+from aiida.work import workfunction as wf
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
@@ -106,10 +108,30 @@ class fleur_scf_wc(WorkChain):
                    'inpxml_changes' : []}      # (expert) List of further changes applied after the inpgen run
                                                     # tuples (function_name, [parameters]), the ones from fleurinpmodifier
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
+    #_default_wc_label = u'fleur_scf_wc'
+    #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
     
     def __init__(self, *args, **kwargs):
+        #print(kwargs)
+        #keys = kwargs.keys()
+        #if '_description' not in keys:
+        #    print('here')
+        #    kwargs['_description'] =  self._default_wc_description
+        #if '_label' not in keys:
+        #    print('here2')
+        #    kwargs['_label'] =  self._default_wc_description        
+        # set raw input defaults of process, if not given
+        #for key, val in kwargs.iteritems():        
+        #    if key=='_description':
+        #        print('here')
+        #        if not val:
+        #            kwargs[key] =  self._default_wc_description
+        #    if key=='_label':
+        #        if not val:
+        #            kwargs[key] = self._default_wc_label
+        
         super(fleur_scf_wc, self).__init__(*args, **kwargs)    
-    
+        
     @classmethod
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
@@ -124,8 +146,6 @@ class fleur_scf_wc(WorkChain):
                                                'walltime_sec': 60*60,
                                                'queue_name': '',
                                                'serial' : False,
-                                               'label' : 'fleur_scf_wc',
-                                               'description' : 'Fleur self consistensy cycle workchain',
                                                'inpxml_changes' : []}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
@@ -134,6 +154,7 @@ class fleur_scf_wc(WorkChain):
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
+                 
         spec.outline(
             cls.start,
             if_(cls.validate_input)(
@@ -164,7 +185,6 @@ class fleur_scf_wc(WorkChain):
         self.ctx.loop_count = 0
         self.ctx.calcs = []
         self.ctx.abort = False
-
         
         # input para
         wf_dict = self.inputs.wf_parameters.get_dict()
@@ -183,7 +203,13 @@ class fleur_scf_wc(WorkChain):
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
         self.ctx.queue = wf_dict.get('queue_name', '')
         
+        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
+                
+        #print(self.ctx.description_wf)
+        self.ctx.label_wf =  self.inputs.get('_label', 'fleur_scf_wc')
+        #print(self.ctx.label_wf)
         
+
         # return para/vars
         self.ctx.successful = True
         self.ctx.distance = []
@@ -191,7 +217,8 @@ class fleur_scf_wc(WorkChain):
         self.ctx.energydiff = 10000
         self.ctx.warnings = []
         self.ctx.errors = []
-        self.ctx.fleurinp = None        
+        self.ctx.fleurinp = None 
+        self.ctx.formula = ''
 
     def validate_input(self):
         """
@@ -275,6 +302,15 @@ class fleur_scf_wc(WorkChain):
         run the inpgen
         """        
         structure = self.inputs.structure
+        self.ctx.formula = structure.get_formula()
+        #pbc = structure.pbc
+        #label = '{} on {}'.format(self.ctx.label_wf, self.ctx.formula)
+        label = 'scf: inpgen'        
+        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
+        
+        #print(label)
+        #print(description)        
+        
         inpgencode = self.inputs.inpgen
         if 'calc_parameters' in self.inputs:
             params = self.inputs.calc_parameters
@@ -284,8 +320,9 @@ class fleur_scf_wc(WorkChain):
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
-        
-        inputs = get_inputs_inpgen(structure, inpgencode, options, params=params)        
+
+        inputs = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
+        #print('inputs {}'.format(inputs))
         self.report('INFO: run inpgen')
         future = submit(FleurinpProcess, **inputs)
 
@@ -335,7 +372,7 @@ class fleur_scf_wc(WorkChain):
                     para = change[1]
                     method = avail_ac_dict.get(function, None)
                     if not method:
-                        error = ("ERROR: Input 'inpxml_changes', function {}"
+                        error = ("ERROR: Input 'inpxml_changes', function {} "
                                  "is not known to fleurinpmodifier class, "
                                  "plaese check/test your input. I abort..."
                                  "".format(method))
@@ -393,14 +430,28 @@ class fleur_scf_wc(WorkChain):
         else:
             remote = None
             #print('no remote')
+        
+        label = ' '
+        description = ' '
+        if self.ctx.formula:
+            #label = '{} run {} on {}'.format(self.ctx.label_wf, self.ctx.loop_count+1, self.ctx.formula)
+            label = 'scf: fleur run {}'.format(self.ctx.loop_count+1)           
+            description = '{} fleur run {} on {}'.format(self.ctx.description_wf, self.ctx.loop_count+1, self.ctx.formula)
+        else:
+            label = 'scf: fleur run {}'.format(self.ctx.loop_count+1)
+            #label = '{} fleur run {}, fleurinp given'.format(self.ctx.label_wf, self.ctx.loop_count+1)
+            description = '{} fleur run {}, fleurinp given'.format(self.ctx.description_wf, self.ctx.loop_count+1)              
+        
         code = self.inputs.fleur
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
         
         #inputs = get_inputs_fleur(code, remote, fleurin, options, settings=settings, serial=self.ctx.serial)
-        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        #print inputs
+        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
+        #print('inputs fleur {}'.format(inputs))
+
+
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
@@ -606,17 +657,20 @@ class fleur_scf_wc(WorkChain):
         except:
             last_calc_uuid = None
         try: # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.out['output_parameters'].get_dict()
+            last_calc_out = self.ctx.last_calc.out['output_parameters']
+            last_calc_out_dict = last_calc_out.get_dict()
         except:
-            last_calc_out = {}
+            last_calc_out_dict = {}
+        
+        
 
         outputnode_dict ={}
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
         outputnode_dict['loop_count'] = self.ctx.loop_count
-        outputnode_dict['iterations_total'] = last_calc_out.get('number_of_iterations_total', None)
-        outputnode_dict['distance_charge'] = last_calc_out.get('charge_density', None)
+        outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
+        outputnode_dict['distance_charge'] = last_calc_out_dict.get('charge_density', None)
         outputnode_dict['distance_charge_all'] = self.ctx.distance
-        outputnode_dict['total_energy'] = last_calc_out.get('energy_hartree', None)
+        outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
         outputnode_dict['total_energy_units'] = 'Htr'
@@ -633,8 +687,8 @@ class fleur_scf_wc(WorkChain):
                         '"me/bohr^3" \n'
                         'INFO: The total energy difference of the last two iterations '
                         'is {} htr \n'.format(self.ctx.loop_count, 
-                                       last_calc_out.get('number_of_iterations_total', None),
-                                       last_calc_out.get('charge_density', None), self.ctx.energydiff))
+                                       last_calc_out_dict.get('number_of_iterations_total', None),
+                                       last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
 
         else: # Termination ok, but not converged yet...
             if self.ctx.abort: # some error occured, donot use the output.
@@ -646,14 +700,16 @@ class fleur_scf_wc(WorkChain):
                         'INFO: The total energy difference of the last two interations'
                         'is {} htr'
                         ''.format(self.ctx.loop_count, 
-                            last_calc_out.get('number_of_iterations_total', None),
-                            last_calc_out.get('charge_density', None), self.ctx.energydiff))
+                            last_calc_out_dict.get('number_of_iterations_total', None),
+                            last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
 
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
             
         outputnode = ParameterData(dict=outputnode_dict)
+        
+       
         outdict = {}
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
@@ -664,6 +720,12 @@ class fleur_scf_wc(WorkChain):
                 self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None
             outdict['fleurinp'] = fleurinp
+          
+          
+         # this is unsafe so far, because last_calc_out could not exist...
+        #outdict = create_result_node(outputnode_t, last_calc_out)
+       
+        
         outdict['output_scf_wc_para'] = outputnode
         #print outdict
         for link_name, node in outdict.iteritems():
@@ -768,6 +830,21 @@ if __name__ == "__main__":
                                 remote_data=args.remote_data,
                                 inpgen = args.inpgen, 
                                 fleur=args.fleur)
+
+
+@wf
+def create_result_node(*args):
+    """
+    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy 
+    to put most of the code overworked from return_results in here.
+    
+    """
+    output_para = args[0]
+    #return {'output_eos_wc_para'}
+    return output_para
 
 
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):

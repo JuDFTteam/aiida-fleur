@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 In this module you find the worklfow 'lattice_constant' for the calculation of 
-of a lattice constant"""
+of a lattice constant
+"""
 
 #TODO: print more user info
 #  allow different inputs, make things optional(don't know yet how)
@@ -52,10 +53,25 @@ __contributors__ = "Jens Broeder"
 
 class fleur_eos_wc(WorkChain):
     """
-    This workflow calculates a lattice constant
+    This workflow calculates the equation of states of a structure.
+    Calculates several unit cells with different valumes.
+    A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the 
+    groundstate volume of the cell.
 
-    :Params: a parameterData node,
-    :returns: Success, last result node, list with convergence behavior
+    :Params: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
+    :params: StructureData node, 'structure' crystal structure 
+    :params: ParameterData node, optional 'calc_parameters' parameters for inpgen
+    :Params: inpgen: Code node,
+    :Params: fleur: Code node,
+    
+    
+    :returns: ParameterData: ouptut_eos_wc_para node, contains relevant output information.
+    about general succces, fit results and so on.
+    
+    
+    example input.
+    
+    
     """
     
     _workflowversion = "0.1.0"
@@ -168,11 +184,16 @@ class fleur_eos_wc(WorkChain):
         
         #submit somehow produces strange different results then async... AiiDA problem?
         calcs= {}
+        
+
         # run a convergence worklfow# TODO better sumbit or async?
         for i, struc in enumerate(self.ctx.structurs):
             inputs = self.get_inputs_scf()
             inputs['structure'] = struc
             natoms = len(struc.sites)
+            label = str(self.ctx.scalelist[i])
+            label_c = '|eos| fleur_scf_wc'
+            description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)            
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
@@ -181,9 +202,9 @@ class fleur_eos_wc(WorkChain):
                       structure=inputs['structure'], 
                       calc_parameters=inputs['calc_parameters'], 
                       inpgen=inputs['inpgen'], 
-                      fleur=inputs['fleur'])# asy async .run( submit()
+                      fleur=inputs['fleur'], _label=label_c, _description=description)# asy async .run( submit()
             #self.ctx.calcs_future.append(res)
-            label = str(self.ctx.scalelist[i])
+            
             self.ctx.labels.append(label)
             calcs[label] = res
             #self.ctx.calcs.append(res)
@@ -367,6 +388,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
     res = fleur_eos_wc.run(wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
 
+
+
+
+@wf
+def create_result_node(*args):
+    """
+    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy 
+    to put most of the code overworked from return_results in here.
+    
+    """
+    output_para = args[0]
+    #return {'output_eos_wc_para'}
+    return output_para
+    
+
+
 def eos_structures(inp_structure, scalelist):
     """
     Creates many rescalled StrucutureData nodes out of a crystal structure.
@@ -453,7 +493,7 @@ def Birch_Murnaghan_fit(energies, volumes):
     derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
         8./27. * x**(15./2.) * deriv3(x))
     bulk_modulus0 = derivV2 / x**(3./2.)
-    print bulk_modulus0
+    print('bulk modulus 0: {} '.format(bulk_modulus0))
     bulk_deriv0 = -1 - x**(-3./2.) * derivV3 / derivV2
 
     return volume0, bulk_modulus0, bulk_deriv0, residuals0
