@@ -710,7 +710,6 @@ class fleur_scf_wc(WorkChain):
         outputnode_t = ParameterData(dict=outputnode_dict)
          # this is unsafe so far, because last_calc_out could not exist...
         outdict = create_scf_result_node(outputnode_t, last_calc_out)        
-       
         #outdict = {}
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
@@ -865,8 +864,11 @@ def create_scf_result_node(outpara, last_out):
     
     """
     outdict = {}    
-    
-    outdict['output_scf_wc_para'] = outpara.copy() 
+    outputnode = outpara.copy()
+    outputnode.label = 'output_scf_wc_para'
+    outputnode.description = 'Contains self-consistency results and information of an fleur_scf_wc run.' 
+       
+    outdict['output_scf_wc_para'] = outputnode
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}

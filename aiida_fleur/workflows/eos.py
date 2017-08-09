@@ -353,7 +353,7 @@ class fleur_eos_wc(WorkChain):
                #'fit' : fit_new, 
                'residuals' : residuals,
                'bulk_deriv' : bulk_deriv,
-               'bulk_modulus' : bulk_modulus * 1.60217733 * 100.0,#* echarge * 1.0e21,
+               'bulk_modulus' : bulk_modulus * 160.217733,#* echarge * 1.0e21,#GPa
                'bulk_modulus_units' : 'GPa',
                'successful' : self.ctx.successful}
         
@@ -369,11 +369,15 @@ class fleur_eos_wc(WorkChain):
         # output must be aiida Data types.
         outnode = ParameterData(dict=out)
         outnodedict['results_node'] = outnode
+        # create links between all these nodes...        
         ouputnode = create_eos_result_node(**outnodedict)
-        outdict = {}
-        outdict['output_eos_wc_para']  = ouputnode.get('output_eos_wc_para')
-        #print outdict
-        for link_name, node in outdict.iteritems():
+        outputnode.label = 'output_eos_wc_para'
+        outputnode.description = 'Contains equation of states results and information of an fleur_eos_wc run.' 
+        
+        returndict = {}
+        returndict['output_eos_wc_para']  = ouputnode.get('output_eos_wc_para')
+        # create link to workchain node
+        for link_name, node in returndict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
 
 
@@ -501,7 +505,7 @@ def Birch_Murnaghan_fit(energies, volumes):
     derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
         8./27. * x**(15./2.) * deriv3(x))
     bulk_modulus0 = derivV2 / x**(3./2.)
-    print('bulk modulus 0: {} '.format(bulk_modulus0))
+    #print('bulk modulus 0: {} '.format(bulk_modulus0))
     bulk_deriv0 = -1 - x**(-3./2.) * derivV3 / derivV2
 
     return volume0, bulk_modulus0, bulk_deriv0, residuals0
