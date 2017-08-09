@@ -707,10 +707,11 @@ class fleur_scf_wc(WorkChain):
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
             
-        outputnode = ParameterData(dict=outputnode_dict)
-        
+        outputnode_t = ParameterData(dict=outputnode_dict)
+         # this is unsafe so far, because last_calc_out could not exist...
+        outdict = create_scf_result_node(outputnode_t, last_calc_out)        
        
-        outdict = {}
+        #outdict = {}
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
         else:
@@ -722,11 +723,10 @@ class fleur_scf_wc(WorkChain):
             outdict['fleurinp'] = fleurinp
           
           
-         # this is unsafe so far, because last_calc_out could not exist...
-        #outdict = create_result_node(outputnode_t, last_calc_out)
+
        
         
-        outdict['output_scf_wc_para'] = outputnode
+        #outdict['output_scf_wc_para'] = outputnode
         #print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)
@@ -783,6 +783,28 @@ class fleur_scf_wc(WorkChain):
         No input file found | To use FLEUR, you have to provide either an 'inp' or an 'inp.xml' file in the working directory
         Use a supercell or a different functional
         MPI parallelization failed | ou have to either compile FLEUR with a parallel diagonalization library (ELPA,SCALAPACK...) or you have to run such that the No of kpoints can be distributed on the PEs
+        
+        AiiDA related:
+        1. Submissionfailed:
+        SSHException: SSH session not active   -> wait and relaunch
+        
+        Scheduler/HPC related:
+        
+        1. scf scheduler needs other things than torque, try to provide both as default
+        that they both work
+        
+        2. ran out of walltime with out a single interation done. (killed by scheduler)
+        -> terminate, because the user should specify more recources or in the
+        calculation something is fishy
+        
+        3. bumped by scheduler joblimit. reached
+        -> think about something here and retry
+        
+        4. no space/files left on remote machine.
+        -> also terminate, tell user to delete stuff
+        
+        5. not eneough memory, (killed by scheduler, or some fleur error)
+        -> can we do something here
         '''
         
     
@@ -833,7 +855,7 @@ if __name__ == "__main__":
 
 
 @wf
-def create_result_node(*args):
+def create_scf_result_node(outpara, last_out):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
@@ -842,9 +864,13 @@ def create_result_node(*args):
     to put most of the code overworked from return_results in here.
     
     """
-    output_para = args[0]
+    outdict = {}    
+    
+    outdict['output_scf_wc_para'] = outpara.copy() 
+    # copy, because we rather produce the same node twice then have a circle in the database for now...
+    #output_para = args[0]
     #return {'output_eos_wc_para'}
-    return output_para
+    return outdict
 
 
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):

@@ -14,16 +14,16 @@ import os
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
 #from aiida.work.workchain import while_, if_
-#from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 #from aiida.orm.querybuilder import QueryBuilder
-
+from aiida.work import workfunction as wf
 #from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.eos import fleur_eos_wc
 from aiida.orm import Group
 from aiida.work import async as asy
+from aiida.work import submit
 from aiida.common.exceptions import NotExistent
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
@@ -227,12 +227,12 @@ class fleur_delta_wc(WorkChain):
         """
         Run the equation of states for all delta structures with their parameters
         """
-        '''
+        
         eos_results = {}
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:]:#[:2]
+        for struc, para in self.ctx.calcs_to_run[:20]:#[:2]
             print para
             formula = struc.get_formula()
             if para:
@@ -252,7 +252,7 @@ class fleur_delta_wc(WorkChain):
             eos_results[label] = eos_future
             
         return ToContext(**eos_results)        
-        '''
+        
         '''
         #async works
         eos_results = {}
@@ -280,7 +280,7 @@ class fleur_delta_wc(WorkChain):
             
         return ToContext(**eos_results)
         '''
-        
+        '''
         # with run
         eos_results = {}
         inputs = self.get_inputs_eos()
@@ -308,7 +308,7 @@ class fleur_delta_wc(WorkChain):
             eos_results[label] = eos_future
             
         return ToContext(**eos_results)
-
+        '''
     def get_inputs_eos(self):
         """
         get the inputs for a scf-cycle
@@ -431,7 +431,7 @@ class fleur_delta_wc(WorkChain):
         outputnode_dict['volumes_units'] = 'A^3/per atom'
         outputnode_dict['delta_factor'] = {'Wien2K' : '', 'Fleur_026' : ''}
 
-        outputnode = ParameterData(dict=outputnode_dict)
+        #outputnode = ParameterData(dict=outputnode_dict)
 
         if self.ctx.successful:
             self.report('INFO: Done, delta worklfow complete')
@@ -445,9 +445,28 @@ class fleur_delta_wc(WorkChain):
         delta_file = SingleData.filename = self.ctx.outfilepath
         
         print delta_file
+ 
+        # output must be aiida Data types.
+        outnodedict = {}
+        outnode = ParameterData(dict=outputnode_dict)
+        outnodedict['results_node'] = outnode
+        for label in self.ctx.labels:
+            eos_res = self.ctx[label]
+            #print(calc)
+            outpara1 = eos_res.get_outputs_dict()
+            #print outpara1
+            try:
+                outpara = outpara1['output_eos_wc_para']
+            except KeyError:
+                #self.report('ERROR: Eos wc for element: {} failed. I retrieved {} '
+                #            'I skip the results retrieval for that element.'.format(label, eos_res))
+                continue
+            outnodedict[label] = outpara
+            
+        outputnode = create_delta_result_node(**outnodedict)
         
         outdict = {}
-        outdict['output_delta_wc_para'] = outputnode
+        outdict['output_delta_wc_para'] = outputnode.get('output_delta_wc_para')
         #outdict['delta_file'] = delta_file
         #print outdict
         for link_name, node in outdict.iteritems():
@@ -483,6 +502,29 @@ if __name__ == "__main__":
                                 inpgen = args.inpgen, 
                                 fleur=args.fleur)
 '''
+@wf
+def create_delta_result_node(**kwargs):#*args):
+    """
+    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy 
+    to put most of the code overworked from return_results in here.
+    
+    """
+    outdict = {}    
+    outpara =  kwargs.get('results_node', {})
+    outdict['output_delta_wc_para'] = outpara.copy() 
+    # copy, because we rather produce the same node twice then have a circle in the database for now...
+    #output_para = args[0]
+    #return {'output_eos_wc_para'}
+    return outdict
+  
+
+
+
+
+
 def get_paranode(struc, para_nodes):        
     """
     find out if a parameter node for a structure is in para_nodes

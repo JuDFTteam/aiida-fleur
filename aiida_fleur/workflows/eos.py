@@ -25,7 +25,7 @@ from aiida.orm import load_node
 from aiida.orm.data.singlefile import SinglefileData
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import Outputs, ToContext
-
+from aiida.work import workfunction as wf
 #from aiida.work.workfunction import workfunction as wf
 from aiida.work.workchain import WorkChain
 from aiida.work.run import async as asy
@@ -296,15 +296,18 @@ class fleur_eos_wc(WorkChain):
         distancelist = []
         t_energylist = []
         t_energylist_peratom = []
+        outnodedict = {}
         #latticeconstant = 0
         natoms = len(self.inputs.structure.sites)
         htr2eV = 27.21138602
      
         for label in self.ctx.labels:
             calc = self.ctx[label]
+            outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para'] 
             #print(calc)
             #print(Outputs(calc))
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+            
             if not outpara.get('successful', False):
                 #maybe do something else here (exclude point and write a warning or so, or error treatment)
                 self.ctx.successful = False
@@ -363,9 +366,12 @@ class fleur_eos_wc(WorkChain):
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
             #print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
  
-        # output must be aiida Data types.        
+        # output must be aiida Data types.
+        outnode = ParameterData(dict=out)
+        outnodedict['results_node'] = outnode
+        ouputnode = create_eos_result_node(**outnodedict)
         outdict = {}
-        outdict['output_eos_wc_para']  = ParameterData(dict=out)
+        outdict['output_eos_wc_para']  = ouputnode.get('output_eos_wc_para')
         #print outdict
         for link_name, node in outdict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
@@ -389,10 +395,8 @@ if __name__ == "__main__":
     res = fleur_eos_wc.run(wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
 
 
-
-
 @wf
-def create_result_node(*args):
+def create_eos_result_node(**kwargs):#*args):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
@@ -401,10 +405,14 @@ def create_result_node(*args):
     to put most of the code overworked from return_results in here.
     
     """
-    output_para = args[0]
+    outdict = {}    
+    outpara =  kwargs.get('results_node', {})
+    outdict['output_eos_wc_para'] = outpara.copy() 
+    # copy, because we rather produce the same node twice then have a circle in the database for now...
+    #output_para = args[0]
     #return {'output_eos_wc_para'}
-    return output_para
-    
+    return outdict
+  
 
 
 def eos_structures(inp_structure, scalelist):
