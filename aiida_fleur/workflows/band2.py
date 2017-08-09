@@ -3,8 +3,8 @@
 
 """
 This is the worklfow 'band2' for the Fleur code, which calculates a
-electron bandstructure. Is implemetned after the one for QE and will later replace
-fleur_band_wc
+electron bandstructure from a given structure data node with seekpath.
+
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 # TODO alternative parse a structure and run scf
@@ -57,19 +57,17 @@ class fleur_band2_wc(WorkChain):
                                          'sigma' : 0.005,
                                          'emin' : -0.50, 
                                          'emax' :  0.90}))
-        #way 1        
-        spec.input("remote", valid_type=RemoteData, required=True)
-        spec.input("fleurinp", valid_type=FleurinpData, required=True)
+
         spec.input("fleur", valid_type=Code, required=True)
-        #way 2
-        #spec.input("structure", valid_type=StructureData, required=False)
-        #spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        #spec.input("settings", valid_type=ParameterData, required=False)
-        #spec.input("inpgen", valid_type=Code, required=False)
+        spec.input("structure", valid_type=StructureData, required=False)
+        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.outline(
             cls.start,
-            #if_(cls.have_to_run_scf)(
-            #    cls.run_scf),
+            cls.setup_structure,
+            cls.setup_kpoints,
+            cls.setup_parameters,
             cls.create_new_fleurinp,
             cls.run_fleur,
             cls.return_results
