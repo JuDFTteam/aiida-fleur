@@ -718,7 +718,12 @@ class fleur_initial_cls_wc(WorkChain):
         outnodedict['results_node'] = outnode
         
         # TODO: bad design, put in workfunction and make bullet proof.
-        for i, label in enumerate(self.ctx.labels):
+        for calc in self.ctx.calcs_res:
+            calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
+            outnodedict['input_structure']  = calc_dict
+            
+            
+        for label in self.ctx.ref_labels:
             calc = self.ctx[label]
             calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
             outnodedict[label]  = calc_dict
