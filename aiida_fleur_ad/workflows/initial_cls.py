@@ -21,7 +21,7 @@ from aiida.work.run import async as asy
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.workflows.scf import fleur_scf_wc
-
+from aiida.work import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
@@ -707,15 +707,52 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['reference_bandgaps'] = ref_gap#self.ctx.bandgaps
         outputnode_dict['atomtypes'] = at#self.ctx.atomtypes
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
-        outdict = {}
-        outdict['output_inital_cls_wc_para'] = outputnode
+        
+        
+        
+        #outputnode = ParameterData(dict=outputnode_dict)
+
+        # To have to ouput node linked to the calculation output nodes
+        outnodedict = {}
+        outnode = ParameterData(dict=outputnode_dict)
+        outnodedict['results_node'] = outnode
+        
+        # TODO: bad design, put in workfunction and make bullet proof.
+        for i, label in enumerate(self.ctx.labels):
+            calc = self.ctx[label]
+            calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
+            outnodedict[label]  = calc_dict
+            
+        outdict = create_initcls_result_node(**outnodedict)        
+        
+        #outdict = {}
+        #outdict['output_inital_cls_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
         msg=('INFO: Inital_state_CLS workflow Done')
         self.report(msg)
 
+
+
+@wf
+def create_initcls_result_node(**kwargs):#*args):
+    """
+    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy 
+    to put most of the code overworked from return_results in here.
+    
+    """
+    outdict = {}    
+    outpara = kwargs.get('results_node', {})
+    outdict['output_inital_cls_wc_para'] = outpara.copy() 
+    # copy, because we rather produce the same node twice then have a circle in the database for now...
+    #output_para = args[0]
+    #return {'output_eos_wc_para'}
+    return outdict
+  
 
 
 def querry_for_ref_structure(element_string):
