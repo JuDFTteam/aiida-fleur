@@ -82,7 +82,7 @@ class FleurinpModifier(object):
         os.remove(inpxmlfile)
         
         # default label and description
-        new_fleurinp.label = 'mod_fleurinp:{}'.format(original.label)
+        new_fleurinp.label = 'mod_fleurinp'# {}'.format(original.label)
         new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
         #return {'modified_fleurinp' : new_fleurinp} # this will break other stuff (Scf), also link was not renamed somehow.
         return new_fleurinp

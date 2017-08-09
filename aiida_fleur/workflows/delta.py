@@ -232,7 +232,7 @@ class fleur_delta_wc(WorkChain):
         inputs = self.get_inputs_eos()
 
         
-        for struc, para in self.ctx.calcs_to_run[:20]:#[:2]
+        for struc, para in self.ctx.calcs_to_run[:10]:#[:2]
             print para
             formula = struc.get_formula()
             if para:
