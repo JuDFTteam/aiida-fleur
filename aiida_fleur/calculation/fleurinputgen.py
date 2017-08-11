@@ -77,7 +77,7 @@ class FleurinputgenCalculation(JobCalculation):
                                    'beta', 'gamma'],
                         'atom':['id', 'z', 'rmt', 'dx', 'jri', 'lmax',
                                 'lnonsph', 'ncst', 'econfig', 'bmu', 'lo',
-                                'element'],
+                                'element', 'name'],
                         'comp' : ['jspins', 'frcor', 'ctail', 'kcrel', 'gmax',
                                   'gmaxxc', 'kmax'],
                         'exco' : ['xctyp', 'relxc'],
@@ -388,7 +388,7 @@ class FleurinputgenCalculation(JobCalculation):
                 site_symbol = structure.get_kind(kind_name).symbols[0] # TODO: list I assume atoms therefore I just get the first one...
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
-                if site_symbol != kind_name:
+                if site_symbol != kind_name: # This is an important fact, if usere renames it becomes a new species!
                     suc = True
                     try:
                         head = kind_name.rstrip('0123456789')
@@ -521,7 +521,7 @@ class FleurinputgenCalculation(JobCalculation):
             calcinfo.retrieve_list.append(file1)
 
         codeinfo = CodeInfo()
-        cmdline_params = ["-explicit"] # TODO? let the user decide
+        cmdline_params = ["-explicit"] # TODO? let the user decide -econfig?
         
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

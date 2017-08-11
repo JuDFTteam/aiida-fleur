@@ -166,6 +166,8 @@ def xml_set_attribv_occ(xmltree, xpathn, attributename, attribv, occ=[0], create
     for i, node in enumerate(nodes):
         if i in occ:
             node.set(attributename, attribv)
+        if -1 in occ:# 'all'
+            node.set(attributename, attribv)
 
 def xml_set_first_attribv(xmltree, xpathn, attributename, attribv, create=False):
     """

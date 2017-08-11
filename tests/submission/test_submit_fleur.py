@@ -19,7 +19,7 @@ from aiida.orm import DataFactory
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
 # invoke the mpirun command in the submission script)
-run_in_serial_mode = False#True#False
+run_in_serial_mode = True#False
 
 ################################################################
 
@@ -55,7 +55,8 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 
 #TODO: how to make smart path?
 # get where tests folder is, then relative path
-inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
+#inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
+inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
 fleurinp = FleurinpData(files = [inpxmlfile])
 
 ## For remote codes, it is not necessary to manually set the computer,
@@ -73,9 +74,9 @@ calc.set_max_wallclock_seconds(300)  # 5 min
 if run_in_serial_mode:
     calc.set_withmpi(False)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
-#calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 12})
-calc.set_resources({"tot_num_mpiprocs" : 8})
-calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -a intelmpi")
+calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 12})
+#calc.set_resources({"tot_num_mpiprocs" : 8})
+#calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -a intelmpi")
 #calc.set_custom_scheduler_commands("#BSUB -P test-clx \n#BSUB -a intelmpi")
 
 if queue is not None:

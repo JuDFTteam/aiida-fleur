@@ -56,6 +56,7 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 #TODO: how to make smart path?
 # get where tests folder is, then relative path
 inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
+inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
 fleurinp = FleurinpData(files = [inpxmlfile])
 
 ## For remote codes, it is not necessary to manually set the computer,
@@ -78,7 +79,7 @@ if run_in_serial_mode:
 calc.set_resources({"tot_num_mpiprocs" : 1})
 
 
-calc.set_custom_scheduler_commands('#BSUB -P jara0043 \n"')
+calc.set_custom_scheduler_commands('#BSUB -P jara0043 \n')
 
 if queue is not None:
     calc.set_queue_name(queue)
