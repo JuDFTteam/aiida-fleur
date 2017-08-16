@@ -2,8 +2,9 @@
 """
 You find the usual econfig for all elements in the periodic table.
 """
-# TOD
+# TODO
 # FLEUR econfig=[core states|valence states] 
+# TODO add default los
 econfiguration = {
     1: {'mass': 1.00794, 'name': 'Hydrogen', 'symbol': 'H', 'econfig': '1s1' },
     2: {'mass': 4.002602, 'name': 'Helium', 'symbol': 'He', 'econfig': '1s2'},
@@ -288,7 +289,9 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
     # get all not full occ states
     # get how are are filled spin up down
     state_occ_dict_list = []
-
+    
+    corehole1 = corehole.replace(" ", "")# get rid of spaces
+    corehole_blank = corehole1[:2] + corehole1[-3:] # get rid of occupation    
     econ = econfigstr.replace("| ", "")
     econ_list = econ.split()
     for state in econ_list[::-1]:
@@ -311,7 +314,7 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
                 occ_spin = occ_spin - spin_mac_occ
                 #print occ_spin
                 name = statename + spins
-                if name==corehole:
+                if name==corehole_blank:
                     # use this state
                     # assume it is without the corehole fully filled.
                     nelec = spin_mac_occ 

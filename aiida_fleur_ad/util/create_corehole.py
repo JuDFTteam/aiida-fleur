@@ -16,7 +16,8 @@ from aiida.orm import DataFactory
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
 ParameterData = DataFactory('parameter')
 #355
-def create_corehole_para(structure, kind, econfig, parameterData=None, move=False):
+
+def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
     """
     This methods sets of electron configurations for a kind
     or position given, make sure to break the symmetry for this position/kind 
@@ -34,7 +35,6 @@ def create_corehole_para(structure, kind, econfig, parameterData=None, move=Fals
 
     _atomic_numbers = {data['symbol']: num for num,
                            data in PeriodicTableElements.iteritems()}    
-    # TODO ggf change structure, move corehole to 0.0 position
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -65,7 +65,10 @@ def create_corehole_para(structure, kind, econfig, parameterData=None, move=Fals
                         pass
     else:
         if id:
-            new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig, 'id' : id}}
+            if species_name:
+                new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig, 'id' : id, 'name' : species_name}}
+            else:
+                new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig, 'id' : id}}
         else:
             new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig}}
 
