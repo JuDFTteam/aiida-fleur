@@ -5,6 +5,8 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
+
+# TODO title of simulations
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -173,7 +175,7 @@ class FleurinputgenCalculation(JobCalculation):
         replacer_values_bool = [True, False, 'True', 'False', 't', 'T',
                                 'F', 'f']
         # some keywords require a string " around them in the input file.
-        string_replace = ['econfig', 'lo', 'element']
+        string_replace = ['econfig', 'lo', 'element', 'name']
 
         # of some keys only the values are writen to the file, specify them here.
         val_only_namelist = ['soc', 'qss']
