@@ -277,13 +277,14 @@ def break_symmetry_wf(structure, wf_para, parameterData = ParameterData(dict={})
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
     pos = wf_dict.get('pos', [])
-    new_structure, para_new = break_symmetry(structure, atoms=atoms, site=sites, pos=pos, parameterData = parameterData)
+    new_kinds_names = wf_dict.get('new_kinds_names', {})
+    new_structure, para_new = break_symmetry(structure, atoms=atoms, site=sites, pos=pos, new_kinds_names=new_kinds_names, parameterData = parameterData)
     
     return new_structure, para_new
     
     
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
-def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = None):
+def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}, parameterData = None):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -358,10 +359,21 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
         if replace_kind:
             if symbol in symbol_count:
                 symbol_count[symbol] =  symbol_count[symbol] + 1
-                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+                print(symbol_new_kinds_names)
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
+                    newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
+                else:
+                    newkindname = '{}{}'.format(symbol, symbol_count[symbol])
             else:
                 symbol_count[symbol] = 1
-                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+                #print(symbol_new_kinds_names)
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
+                    newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
+                else:                
+                    newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+            #print(newkindname)
             new_kind = Kind(name=newkindname, symbols=symbol)
             new_structure.append_kind(new_kind)
 
@@ -388,6 +400,13 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], parameterData = No
                                 while new_parameterd.get(atomlistname, {}):
                                     i = i+1
                                     atomlistname = 'atom{}'.format(id_a+i)
+                                
+                                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+                                #print(symbol_new_kinds_names)
+                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
+                                     species_name = symbol_new_kinds_names[symbol_count[symbol]-1]
+                                val_new.update({u'name' : species_name})
+                                
                                 new_parameterd[atomlistname] = val_new
             else:
                 pass
@@ -450,6 +469,14 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     return equi_info_symbol, n_equi_info_symbol
 
 
+def get_spacegroup(structure):
+    """
+    returns the spacegorup of a given AiiDA structure
+    """
+    import spglib
+    s_ase = structure.get_ase()
+    spacegroup = spglib.get_spacegroup(s_ase, symprec=1e-5)
+    return spacegroup
 
 @wf
 def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_wf', _description='WF, that moves all atoms in a unit cell by a given vector'):#Float1, Float2, Float3, test=None):
