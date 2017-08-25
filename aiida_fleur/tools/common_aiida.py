@@ -210,6 +210,7 @@ def create_group(name, nodes, description=None):
     :param: nodes: list of AiiDA nodes, pks, or uuids
     :param: description, optional string that will be stored as description for the group
     
+    :returns: the group, AiiDa group
     usage example:
     
     group_name = 'delta_structures_gustav'
@@ -243,4 +244,63 @@ def create_group(name, nodes, description=None):
     print('added nodes: {} to group {} {}'.format(nodes2_pks, group.name, group.pk))
     
     if description:
-        group.description = description   
+        group.description = description
+        
+    return group
+    
+    
+def get_nodes_from_group(group, return_format='uuid'):
+    """
+    returns a list of node uuids for a given group as, name, pk, uuid or group object
+    """
+    from aiida.orm import Group
+    from aiida.common.exceptions import NotExistent
+    
+    nodes = []
+    g_nodes = []
+
+    
+    try:
+        group_pk = int(group)
+    except ValueError:
+        group_pk = None
+        group_name = group
+    
+    if group_pk is not None:
+        try:
+            str_group = Group(dbgroup=group_pk)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group '
+                       'or a Group name. Reference key: "group".'
+                      'given pk= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_pk))
+            print(message)
+    elif group_name is not None:
+        try:
+            str_group = Group.get_from_string(group_name)
+        except NotExistent:
+            str_group = None
+            message = ('You have to provide a valid pk for a Group or a Group name.'
+                      'given group name= {} is not a valid group'
+                      '(or is your group name integer?)'.format(group_name))
+            print(message)
+    elif isinstance(group, Group):
+        str_group = group 
+    else:
+        str_group = None
+        print('I could not handle given input, either Group, pk, or group name please.')
+        return nodes
+    
+    g_nodes = str_group.nodes    
+    
+    for node in g_nodes:
+        if return_format == 'uuid':
+            nodes.append(node.uuid)
+        elif return_format == 'pk':
+            nodes.append(node.pk)
+    
+    return nodes
+        
+        
+        
