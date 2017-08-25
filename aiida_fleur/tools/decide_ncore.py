@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 def gcd(x, y):
+    """
+    greatest common divisor
+    """
     while y != 0:
         (x, y) = (y, x % y)
     return x
