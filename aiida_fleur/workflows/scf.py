@@ -103,10 +103,10 @@ class fleur_scf_wc(WorkChain):
                    'resources': {"num_machines": 1},# resources to allowcate for the job
                    'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
                    'serial' : False,                # execute fleur with mpi or without 
-                   'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
-                   'description' : 'Fleur self consistensy cycle workchain', # description (see label)
-                   'inpxml_changes' : []}      # (expert) List of further changes applied after the inpgen run
-                                                    # tuples (function_name, [parameters]), the ones from fleurinpmodifier
+                   #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
+                   #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
+                   'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
+                   'custom_scheduler_commands' : ''}                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
     #_default_wc_label = u'fleur_scf_wc'
     #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
@@ -146,7 +146,8 @@ class fleur_scf_wc(WorkChain):
                                                'walltime_sec': 60*60,
                                                'queue_name': '',
                                                'serial' : False,
-                                               'inpxml_changes' : []}))
+                                               'inpxml_changes' : [],
+                                               'custom_scheduler_commands' : ''}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
@@ -202,7 +203,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
         self.ctx.queue = wf_dict.get('queue_name', '')
-        
+        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
                 
         #print(self.ctx.description_wf)
@@ -445,8 +446,9 @@ class fleur_scf_wc(WorkChain):
         code = self.inputs.fleur
         options = {"max_wallclock_seconds": self.ctx.walltime_sec,
                    "resources": self.ctx.resources,
-                   "queue_name" : self.ctx.queue}
-        
+                   "queue_name" : self.ctx.queue}#,
+        if self.ctx.custom_scheduler_commands:
+            options["custom_scheduler_commands"] =  self.ctx.custom_scheduler_commands
         #inputs = get_inputs_fleur(code, remote, fleurin, options, settings=settings, serial=self.ctx.serial)
         inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         #print('inputs fleur {}'.format(inputs))
@@ -660,6 +662,7 @@ class fleur_scf_wc(WorkChain):
             last_calc_out = self.ctx.last_calc.out['output_parameters']
             last_calc_out_dict = last_calc_out.get_dict()
         except:
+            last_calc_out = None
             last_calc_out_dict = {}
         
         
@@ -676,7 +679,8 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid            
+        outputnode_dict['last_calc_uuid'] = last_calc_uuid
+        # maybe also store some information about the formula         
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids), 
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
@@ -720,10 +724,8 @@ class fleur_scf_wc(WorkChain):
                 self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None
             outdict['fleurinp'] = fleurinp
-          
-          
-
-       
+        if last_calc_out:
+            outdict['last_fleur_calc_output'] = last_calc_out
         
         #outdict['output_scf_wc_para'] = outputnode
         #print outdict

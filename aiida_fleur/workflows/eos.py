@@ -16,7 +16,7 @@ if not is_dbenv_loaded():
 from ase import *
 import numpy as np
 from sys import argv
-
+import time
 from ase.lattice.surface import *
 from ase.io import *
 from aiida.orm import Code, CalculationFactory, DataFactory
@@ -90,7 +90,8 @@ class fleur_eos_wc(WorkChain):
                                        'guess' : 1.00,
                                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                                        'walltime_sec':  10*60,
-                                       'queue_name' : ''}))
+                                       'queue_name' : '',
+                                       'custom_scheduler_commands' : ''}))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
@@ -129,6 +130,7 @@ class fleur_eos_wc(WorkChain):
         self.ctx.step = wf_dict.get('step', 0.002)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)#True
+        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         # set values, or defaults, default: always converge charge density, crit < 0.00002, max 4 fleur runs
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
@@ -203,8 +205,8 @@ class fleur_eos_wc(WorkChain):
                       calc_parameters=inputs['calc_parameters'], 
                       inpgen=inputs['inpgen'], 
                       fleur=inputs['fleur'], _label=label_c, _description=description)# asy async .run( submit()
+            time.sleep(5)            
             #self.ctx.calcs_future.append(res)
-            
             self.ctx.labels.append(label)
             calcs[label] = res
             #self.ctx.calcs.append(res)
@@ -275,6 +277,7 @@ class fleur_eos_wc(WorkChain):
             para['walltime_sec'] = wf_para_dict.get('walltime_sec')
             para['queue_name'] = wf_para_dict.get('queue_name')
             para['serial'] = wf_para_dict.get('serial')
+            para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
             inputs['wf_parameters'] = ParameterData(dict=para)        
         try:
             calc_para = self.inputs.calc_parameters
@@ -370,12 +373,12 @@ class fleur_eos_wc(WorkChain):
         outnode = ParameterData(dict=out)
         outnodedict['results_node'] = outnode
         # create links between all these nodes...        
-        ouputnode = create_eos_result_node(**outnodedict)
+        outputnode = create_eos_result_node(**outnodedict).get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
         outputnode.description = 'Contains equation of states results and information of an fleur_eos_wc run.' 
         
         returndict = {}
-        returndict['output_eos_wc_para']  = ouputnode.get('output_eos_wc_para')
+        returndict['output_eos_wc_para']  = outputnode#.get('output_eos_wc_para')
         # create link to workchain node
         for link_name, node in returndict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
