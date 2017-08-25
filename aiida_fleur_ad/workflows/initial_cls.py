@@ -104,7 +104,8 @@ class fleur_initial_cls_wc(WorkChain):
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 10*60,
                         'queue_name' : None,
-                        'serial' : True}))#TODO_default_wf_para out of here#
+                        'serial' : True,
+                        'custom_scheduler_commands' : ''}))#TODO_default_wf_para out of here#
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=False)        
@@ -176,7 +177,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.resources = wf_dict.get('resources', default.get('resources'))
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
         self.ctx.queue = wf_dict.get('queue_name', default.get('queue_name'))
-
+        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         # check if inputs given make sense # TODO sort this out in common wc
         inputs = self.inputs        
         if 'fleurinp' in inputs:
@@ -356,6 +357,7 @@ class fleur_initial_cls_wc(WorkChain):
         
         wf_parameter['queue_name'] = self.ctx.queue
         wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
@@ -461,6 +463,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
         wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters =  ParameterData(dict=wf_parameter)
         res_all = []
         calcs = {}

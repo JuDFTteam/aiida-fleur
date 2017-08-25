@@ -146,7 +146,8 @@ class fleur_corehole_wc(WorkChain):
                 'queue_name' : None,       # what queue to submit to
                 'serial' : True,           # run fleur in serial, or parallel?
                 #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-                'magnetic' : True}))
+                'magnetic' : True,
+                'custom_scheduler_commands' : ''}))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
@@ -215,7 +216,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.supercell_size = wf_dict.get('supercell_size', [2, 1, 1]) # 2x2x2 or smaller?
         self.ctx.hole_charge = wf_dict.get('hole_charge', 1.0)
         self.ctx.magnetic = wf_dict.get('magnetic', True)
-
+        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         #self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         #self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         #self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))       
@@ -568,6 +569,8 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter['serial'] = self.ctx.serial
             wf_parameter['queue_name'] = self.ctx.queue
             wf_parameter['inpxml_changes'] =  corehole['inpxml_changes']
+            wf_parameter['resources'] = self.ctx.resources
+            wf_parameter['walltime_sec'] = self.ctx.walltime_sec
             wf_parameters =  ParameterData(dict=wf_parameter)            
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
@@ -616,6 +619,9 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
         wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameter['resources'] = self.ctx.resources
+        wf_parameter['walltime_sec'] = self.ctx.walltime_sec
+        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters =  ParameterData(dict=wf_parameter)        
         '''
         #res_all = []
@@ -738,6 +744,7 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
         wf_parameter['queue_name'] = self.ctx.queue
+        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters =  ParameterData(dict=wf_parameter)          
         #res_all = []
         calcs = {}
