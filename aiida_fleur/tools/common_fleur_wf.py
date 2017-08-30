@@ -23,7 +23,7 @@ __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
-
+KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
@@ -337,4 +337,108 @@ def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
 #print(get_scheduler_extras(code2, {'num_machines' : 2}))
 #print(get_scheduler_extras(code4, {'num_machines' : 1}))
 
+def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
+    """
+    Pass a code node and an expected code (plugin) type. Check that the
+    code exists, is unique, and return the Code object. 
     
+    :param codenode: the name of the code to load (in the form label@machine)
+    :param expected_code_type: a string with the plugin that is expected to
+      be loaded. In case no plugins exist with the given name, show all existing
+      plugins of that type
+    :param use_exceptions: if True, raise a ValueError exception instead of
+      calling sys.exit(1)
+    :return: a Code object
+    """
+    import sys
+    from aiida.common.exceptions import NotExistent
+    from aiida.orm import Code
+    
+
+    try:
+        if codenode is None:
+            raise ValueError
+        code = codenode
+        if code.get_input_plugin_name() != expected_code_type:
+            raise ValueError
+    except (NotExistent, ValueError):
+        from aiida.orm.querybuilder import QueryBuilder
+        qb = QueryBuilder()
+        qb.append(Code,
+                  filters={'attributes.input_plugin':
+                               {'==': expected_code_type}},
+                  project='*')
+
+        valid_code_labels = ["{}@{}".format(c.label, c.get_computer().name)
+                             for [c] in qb.all()]
+
+        if valid_code_labels:
+            msg = ("Pass as further parameter a valid code label.\n"
+                   "Valid labels with a {} executable are:\n".format(
+                expected_code_type))
+            msg += "\n".join("* {}".format(l) for l in valid_code_labels)
+
+            if use_exceptions:
+                raise ValueError(msg)
+            else:
+                print >> sys.stderr, msg
+                sys.exit(1)
+        else:
+            msg = ("Code not valid, and no valid codes for {}.\n"
+                   "Configure at least one first using\n"
+                   "    verdi code setup".format(
+                expected_code_type))
+            if use_exceptions:
+                raise ValueError(msg)
+            else:
+                print >> sys.stderr, msg
+                sys.exit(1)
+
+    return code
+    
+    
+def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
+    """
+    params: structuredata, Aiida structuredata
+    params: kpoint_density
+    
+    returns: tuple (mesh, offset)
+    returns: kpointsdata node
+    """
+    kp = KpointsData()
+    kp.set_cell_from_structure(structure)
+    density  = kpoint_density #1/A
+    kp.set_kpoints_mesh_from_density(density)
+    mesh = kp.get_kpoints_mesh()
+    return mesh, kp
+
+# test
+# print(get_kpoints_mesh_from_kdensity(load_node(structure(120)), 0.1))
+#(([33, 33, 18], [0.0, 0.0, 0.0]), <KpointsData: uuid: cee9d05f-b31a-44d7-aa72-30a406712fba (unstored)>)
+# mesh, kp = get_kpoints_mesh_from_kdensity(structuredata, 0.1)
+#print mesh[0]
+
+
+def inpgen_dict_set_mesh(inpgendict, mesh):
+    """
+    params: python dict, used for inpgen parameterdata node
+    params: mesh either as returned by kpointsdata or tuple of 3 integers
+    
+    returns: python dict, used for inpgen parameterdata node
+    """
+    if len(mesh) == 2:
+        kmesh = mesh[0]
+    elif len(mesh) == 3:
+        kmesh = mesh
+    kpt_dict = inpgendict.get('kpt', {})
+    kpt_dict['div1'] = kmesh[0]
+    kpt_dict['div2'] = kmesh[1]
+    kpt_dict['div3'] = kmesh[2]
+    
+    inpgendict_new = inpgendict
+    inpgendict_new['kpt'] = kpt_dict
+    
+    return inpgendict_new
+
+# test
+#inpgen_dict_set_mesh(Be_para.get_dict(), mesh)
