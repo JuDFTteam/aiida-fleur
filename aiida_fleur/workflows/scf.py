@@ -36,6 +36,7 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.xml_util import eval_xpath2
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -669,6 +670,7 @@ class fleur_scf_wc(WorkChain):
 
         outputnode_dict ={}
         outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
+        outputnode_dict['material'] = self.ctx.formula
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
         outputnode_dict['distance_charge'] = last_calc_out_dict.get('charge_density', None)
@@ -713,7 +715,10 @@ class fleur_scf_wc(WorkChain):
             
         outputnode_t = ParameterData(dict=outputnode_dict)
          # this is unsafe so far, because last_calc_out could not exist...
-        outdict = create_scf_result_node(outputnode_t, last_calc_out)        
+        if last_calc_out:
+            outdict = create_scf_result_node(outpara=outputnode_t, last_calc_out=last_calc_out)
+        else:
+            outdict = create_scf_result_node(outpara=outputnode_t)
         #outdict = {}
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
@@ -856,7 +861,7 @@ if __name__ == "__main__":
 
 
 @wf
-def create_scf_result_node(outpara, last_out):
+def create_scf_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
@@ -865,6 +870,9 @@ def create_scf_result_node(outpara, last_out):
     to put most of the code overworked from return_results in here.
     
     """
+    for key, val in kwargs.iteritems():
+        if key == 'outpara': #  should be alwasys there
+            outpara = val
     outdict = {}    
     outputnode = outpara.copy()
     outputnode.label = 'output_scf_wc_para'
@@ -877,61 +885,4 @@ def create_scf_result_node(outpara, last_out):
     return outdict
 
 
-def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
-    """
-    Pass a code node and an expected code (plugin) type. Check that the
-    code exists, is unique, and return the Code object. 
-    
-    :param codenode: the name of the code to load (in the form label@machine)
-    :param expected_code_type: a string with the plugin that is expected to
-      be loaded. In case no plugins exist with the given name, show all existing
-      plugins of that type
-    :param use_exceptions: if True, raise a ValueError exception instead of
-      calling sys.exit(1)
-    :return: a Code object
-    """
-    import sys
-    from aiida.common.exceptions import NotExistent
-    from aiida.orm import Code
-    
 
-    try:
-        if codenode is None:
-            raise ValueError
-        code = codenode
-        if code.get_input_plugin_name() != expected_code_type:
-            raise ValueError
-    except (NotExistent, ValueError):
-        from aiida.orm.querybuilder import QueryBuilder
-        qb = QueryBuilder()
-        qb.append(Code,
-                  filters={'attributes.input_plugin':
-                               {'==': expected_code_type}},
-                  project='*')
-
-        valid_code_labels = ["{}@{}".format(c.label, c.get_computer().name)
-                             for [c] in qb.all()]
-
-        if valid_code_labels:
-            msg = ("Pass as further parameter a valid code label.\n"
-                   "Valid labels with a {} executable are:\n".format(
-                expected_code_type))
-            msg += "\n".join("* {}".format(l) for l in valid_code_labels)
-
-            if use_exceptions:
-                raise ValueError(msg)
-            else:
-                print >> sys.stderr, msg
-                sys.exit(1)
-        else:
-            msg = ("Code not valid, and no valid codes for {}.\n"
-                   "Configure at least one first using\n"
-                   "    verdi code setup".format(
-                expected_code_type))
-            if use_exceptions:
-                raise ValueError(msg)
-            else:
-                print >> sys.stderr, msg
-                sys.exit(1)
-
-    return code
