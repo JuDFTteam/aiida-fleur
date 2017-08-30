@@ -36,6 +36,8 @@ from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from convergence import fleur_convergence
 #from convergence2 import fleur_convergence2
 from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+
 
 
 
@@ -134,6 +136,28 @@ class fleur_eos_wc(WorkChain):
         # set values, or defaults, default: always converge charge density, crit < 0.00002, max 4 fleur runs
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
+        inputs = self.inputs
+        
+        if 'inpgen' in inputs:
+            try:
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for inpgen of FLEUR does not "
+                         "use the plugin fleur.inpgen")
+                #self.control_end_wc(error)
+                print(error)
+                self.abort()
+                
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for FLEUR does not "
+                         "use the plugin fleur.fleur")
+                #self.control_end_wc(error)    
+                print(error)
+                self.abort()
+                
     def structures(self):
         """
         Creates structure data nodes with different Volume (lattice constants)
