@@ -29,7 +29,8 @@ if not is_dbenv_loaded():
 
 from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
-from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv, xml_set_all_attribv, xml_set_text
+from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
+from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
 from aiida.work.workfunction import workfunction as wf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
@@ -529,7 +530,8 @@ class FleurinpData(Data):
         super(FleurinpData, self)._validate()
 
         if 'inp.xml' in self.files:
-            has_inpxml = True # does nothing so far
+            #has_inpxml = True # does nothing so far
+            pass
         else:
             raise ValidationError('inp.xml file not in attribute "files". '
                                   'FleurinpData needs to have and inp.xml file!')
@@ -648,13 +650,12 @@ class FleurinpData(Data):
             ldau = False # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False 
         return fleur_modes
-
-    @staticmethod
-    @wf
-    def get_structuredata(fleurinp):
+    
+    #@staticmethod
+    def get_structuredata_nwf(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file.
+        file. not a workfunction
     
         :return: StructureData node
         """
@@ -697,7 +698,7 @@ class FleurinpData(Data):
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?           
         else: #schema not there, parse without
             print 'parsing inp.xml without XMLSchema'
             tree = etree.parse(inpxmlfile)
@@ -838,16 +839,25 @@ class FleurinpData(Data):
         #return {label : struc}
         return struc
     
+    @staticmethod
+    @wf
+    def get_structuredata(fleurinp):
+        """
+        This routine return an AiiDA Structure Data type produced from the inp.xml
+        file. This is a workfunction and therefore keeps the provenance.
+    
+        :return: StructureData node
+        """
+        return fleurinp.get_structuredata_nwf(fleurinp)
 
 
 
     @staticmethod
-    @wf
-    def get_kpointsdata(fleurinp):
+    def get_kpointsdata_nwf(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-
+        This is NOT a workfunction and does not keep the provenance!
         :return: KpointsData node
         """
         from aiida.orm.data.array.kpoints import KpointsData
@@ -873,7 +883,7 @@ class FleurinpData(Data):
         kpoint_tag = 'kPoint'
         kpointlist_attrib_posscale = 'posScale'
         kpointlist_attrib_weightscale = 'weightScale'
-        kpointlist_attrib_count = 'count'
+        #kpointlist_attrib_count = 'count'
         kpoint_attrib_weight = 'weight'
         row1_tag_name = 'row-1'
         row2_tag_name = 'row-2'
@@ -939,7 +949,7 @@ class FleurinpData(Data):
         if kpoints:
             posscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_posscale)
             weightscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_weightscale)
-            count = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_count)
+            #count = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_count)
 
             kpoints_pos = []
             kpoints_weight = []
@@ -960,12 +970,26 @@ class FleurinpData(Data):
 
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)
             #kps.add_link_from(fleurinp, label='fleurinp.kpts', link_type=LinkType.CREATE)
-            label='fleurinp.kpts'
+            kps.label='fleurinp.kpts'
             #return {label: kps}
             return kps
         else: # TODO parser other kpoints formats, if they fit in an AiiDA node
             print 'No kpoint list in inp.xml'
             return None
+            
+            
+    @staticmethod
+    @wf
+    def get_kpointsdata(fleurinp):
+        """
+        This routine returns an AiiDA kpoint Data type produced from the inp.xml
+        file. This only works if the kpoints are listed in the in inpxml.
+        This is a workfunction and does not keep the provenance!
+        :return: KpointsData node
+        """
+
+        return fleurinp.get_kpointsdata_nwf(fleurinp)
+            
     '''
     def set_nkpts(fleurinp, count, gamma='F'):#_orgi
 
@@ -1024,11 +1048,11 @@ class FleurinpData(Data):
         # all hardcoded xpaths used and attributes names:
         fleurinp = fleurinp_orgi.copy()
         kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-        kpoint_tag = 'kPoint'
-        kpointlist_attrib_posscale = 'posScale'
-        kpointlist_attrib_weightscale = 'weightScale'
-        kpointlist_attrib_count = 'count'
-        kpoint_attrib_weight = 'weight'
+        #kpoint_tag = 'kPoint'
+        #kpointlist_attrib_posscale = 'posScale'
+        #kpointlist_attrib_weightscale = 'weightScale'
+        #kpointlist_attrib_count = 'count'
+        #kpoint_attrib_weight = 'weight'
 
         #### method layout: #####
         # Check if Kpoints node
@@ -1058,12 +1082,12 @@ class FleurinpData(Data):
                 print 'parsing inp.xml without XMLSchema'
                 tree = etree.parse(inpxmlfile)
 
-            root = tree.getroot()
+            #root = tree.getroot()
         else:
             raise InputValidationError(
                       "No inp.xml file yet specified, to add kpoints to.")
 
-        cell_k = KpointsDataNode.cell
+        #cell_k = KpointsDataNode.cell
 
         # TODO: shall we check if cell is the same as cell from structure?
         # or is that to narrow?
@@ -1073,7 +1097,7 @@ class FleurinpData(Data):
         totalw = 0
         for weight in kpoint_list[1]:
             totalw = totalw + weight
-        weightscale = totalw
+        #weightscale = totalw
         #for j, kpos in enumerate(kpoint_list[0]):
         #    print '<kPoint weight="{}">{}</kPoint>'.format(kpoint_list[1][j], str(kpos).strip('[]'))
 
@@ -1123,9 +1147,9 @@ class FleurinpData(Data):
             inpxmlfile = self.get_file_abs_path('inp.xml')
 
             if self._schema_file_path: # Schema there, parse with schema
-                xmlschema_doc = etree.parse(self._schema_file_path)
-                xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+                #xmlschema_doc = etree.parse(self._schema_file_path)
+                #xmlschema = etree.XMLSchema(xmlschema_doc)
+                #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
                 tree = etree.parse(inpxmlfile)#, parser)
             else: #schema not there, parse without
                 print 'parsing inp.xml without XMLSchema'
