@@ -26,6 +26,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
 from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
+from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
 from aiida.common.exceptions import NotExistent
 
 StructureData = DataFactory('structure')
@@ -97,7 +98,7 @@ class fleur_initial_cls_wc(WorkChain):
                         #'references' : {'calculate' : 'all'}, 
                         'references' : {},
                         'relax' : True,
-                        'relax_mode': 'QE Fleur',
+                        'relax_mode': 'Fleur',
                         'relax_para' : 'default',
                         'scf_para' : 'default',
                         'same_para' : True,
@@ -202,7 +203,7 @@ class fleur_initial_cls_wc(WorkChain):
                 self.ctx.errors.append(error)
                 self.abort_nowait(error)
             if 'calc_parameters' in inputs:
-                self.ctx.calcs_torun.append((inputs.get('calc_parameters'), inputs.get('structure')))
+                self.ctx.calcs_torun.append([inputs.get('calc_parameters'), inputs.get('structure')])
                 #print('here2')
             else:
                 self.ctx.calcs_torun.append(inputs.get('structure'))
@@ -249,14 +250,34 @@ class fleur_initial_cls_wc(WorkChain):
             #to_calc[elem] = 'find' 
             ref_el = references.get(elem, None)
             if ref_el:
-                try:
-                    ref_el_node = load_node(ref_el)
-                except:
-                    ref_el_node = None
-                    self.report('ERROR: The reference node (id or uuid) provided: {} for '
-                                'element: {} could not be loaded with load_node'.format(ref_el, elem))
-                    self.ctx.abort = True
-                if isinstance(ref_el_node, (StructureData, ParameterData)):
+                if isinstance(ref_el, list):
+                    ref_el_node = []
+                    for ref_el_el in ref_el:
+                        try:
+                            ref_el_nodes = load_node(ref_el_el)
+                        except:
+                            ref_el_node = None
+                            self.report('ERROR: The reference node in the list (id or uuid) provided: {} for '
+                                            'element: {} could not be loaded with load_node'.format(ref_el_el, elem))
+                            self.ctx.abort = True
+                    ref_el_node.append(ref_el_nodes)
+                else:
+                    try:
+                        ref_el_node = load_node(ref_el)
+                    except:
+                        ref_el_node = None
+                        self.report('ERROR: The reference node (id or uuid) provided: {} for '
+                                    'element: {} could not be loaded with load_node'.format(ref_el, elem))
+                        self.ctx.abort = True
+                        
+                if isinstance(ref_el_node, list):#(StructureData, ParameterData)):
+                    if len(ref_el_node)==2:
+                        if isinstance(ref_el_node[0], StructureData) and isinstance(ref_el_node[1], ParameterData):
+                            self.ctx.ref_calcs_torun.append(ref_el_node)
+                        else:
+                            print('I did not undestand the list with length 2 you gave me as reference input')
+                    else:
+                        print('I did not undestand the list you gave me as reference input')
                     #self.ctx.ref[elem] = ref_el
                     #enforced parameters, add directly to run queue
                     self.ctx.ref_calcs_torun.append(ref_el_node)
@@ -273,6 +294,7 @@ class fleur_initial_cls_wc(WorkChain):
                     #self.ctx.ref[elem] = ref_el
                 elif isinstance(ref_el_node, StructureData):
                     self.ctx.ref[elem] = ref_el_node
+                    self.ctx.ref_calcs_torun.append(ref_el_node)
                 #elif isinstance(ref_el, initial_state_CLS):
                 #    extract TODO
                 else:
@@ -291,7 +313,7 @@ class fleur_initial_cls_wc(WorkChain):
                 parameter, report = get_para_from_group(elem, para_group)
                 if structure and parameter:
                     self.ctx.ref[elem] = structure
-                    self.ctx.ref_calcs_torun.append((structure, parameter))
+                    self.ctx.ref_calcs_torun.append([structure, parameter])
                 elif structure:
                     self.ctx.ref[elem] = structure
                     self.ctx.ref_calcs_torun.append(structure)
@@ -354,7 +376,6 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        
         wf_parameter['queue_name'] = self.ctx.queue
         wf_parameter['serial'] = self.ctx.serial
         wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
@@ -367,11 +388,11 @@ class fleur_initial_cls_wc(WorkChain):
             if isinstance(node, StructureData):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, FleurinpData):
-                res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
-                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, (StructureData, ParameterData)):
-                res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+            #elif isinstance(node, FleurinpData):
+            #    res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node, 
+            #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, list):#(StructureData, ParameterData)):
+                res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0], 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 self.report('ERROR: something in calcs_torun which I do not recognize: {}'.format(node))
@@ -455,7 +476,6 @@ class fleur_initial_cls_wc(WorkChain):
         #from aiida.work import run, async, 
         #TODO if submiting of workdlows work, use that. 
         #or run them with async (if youy know how to extract results) 
-        
         para = self.ctx.scf_para
         if para == 'default': 
             wf_parameter = {}
@@ -476,11 +496,11 @@ class fleur_initial_cls_wc(WorkChain):
             if isinstance(node, StructureData):
                 res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, FleurinpData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
-                            inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, (StructureData, ParameterData)):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node(1), structure=node(0), 
+            #elif isinstance(node, FleurinpData):
+            #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+            #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
+            elif isinstance(node, list):#(StructureData, ParameterData)):
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0], 
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             else:
                 print('something in calcs_torun which I do not reconise: {}'.format(node))
@@ -623,8 +643,8 @@ class fleur_initial_cls_wc(WorkChain):
         #print('calcs')
         #print calcs
         # extract_results need the scf workchain calculation node
-        fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
-        ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
+        total_en, fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results(calcs)
+        ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
 
         #print(all_corelevel)
         #print(ref_all_corelevel)
@@ -681,10 +701,19 @@ class fleur_initial_cls_wc(WorkChain):
                     corelevel_shifts.append(corelevel - float(ref[i]))
                 all_CLS[elm].append(corelevel_shifts)
         
+        # calculate formation energy
+        #determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1}) 
+        # to normalize ref,
+        # from.split(012345678910)
+        # devide total energy by number of atoms
+        ref_total_en_norm = ref_total_en
+        formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
+        
+        
         # TODO make simpler format of atomtypes for node
         # TODO write corelevel explanation/coresetup in a format like 4f7/2 
         #TODO ? also get total energies?
-        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes
+        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy[0], total_en, ref_total_en 
         
     def return_results(self):
         """
@@ -693,7 +722,7 @@ class fleur_initial_cls_wc(WorkChain):
         # TODO more output, info here
         
         #print corelevel shifts were calculated bla bla
-        cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref =  self.collect_results()
+        cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref, formE, tE, tE_ref =  self.collect_results()
         
         outputnode_dict ={}
         
@@ -701,14 +730,26 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['corelevel_energies'] = cl #self.ctx.cl_energies
+        outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl #self.ctx.cl_energies
-        outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies               
+        outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
+        outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies
+        outputnode_dict['fermi_energy_units'] = 'eV'          
         outputnode_dict['corelevelshifts'] = cls #self.ctx.CLS
+        outputnode_dict['corelevelshifts_units'] = 'htr'#'eV'
+        outputnode_dict['binding_energy_convention'] = 'negativ'
         outputnode_dict['coresetup'] = []#cls
         outputnode_dict['reference_coresetup'] = []#cls
         outputnode_dict['bandgap'] = gap#self.ctx.bandgaps
+        outputnode_dict['bandgap_units'] = 'eV'
         outputnode_dict['reference_bandgaps'] = ref_gap#self.ctx.bandgaps
         outputnode_dict['atomtypes'] = at#self.ctx.atomtypes
+        outputnode_dict['formation_energy'] = formE
+        outputnode_dict['formation_energy_units'] = 'eV'
+        outputnode_dict['total_energy'] = tE.values()[0]
+        outputnode_dict['total_energy_units'] = 'eV'
+        outputnode_dict['total_energy_ref'] = tE_ref.values()
+        outputnode_dict['total_energy_ref_dis'] = tE_ref.keys()
         #print outputnode_dict
         
         
@@ -802,7 +843,7 @@ def fleur_calc_get_structure(calc_node):
     structure = fleurinp.get_structuredata(fleurinp)
     return structure
 
-def extract_results(calcs):
+def extract_results(calcs, formulas=[]):
     """
     Collect results from certain calculation, check if everything is fine, 
     calculate the wanted quantities.
@@ -819,7 +860,8 @@ def extract_results(calcs):
     all_corelevels = {}
     fermi_energies = {}
     bandgaps = {}
-    all_atomtypes = {}  
+    all_atomtypes = {}
+    total_energy = {}
     # more structures way: divide into this calc and reference calcs.
     # currently the order in calcs is given, but this might change if you submit
     # check if calculation pks belong to successful fleur calculations
@@ -848,22 +890,23 @@ def extract_results(calcs):
         efermi = calc.res.fermi_energy
         #print efermi
         bandgap = calc.res.bandgap
-        
+        te = calc.res.energy
         # TODO: maybe different, because it is prob know from before
         fleurinp = calc.inp.fleurinpdata
-        structure = fleurinp.get_structuredata(fleurinp)            
+        structure = fleurinp.get_structuredata_nwf()            
         compound = structure.get_formula()
         #print compound
         fermi_energies[compound] = efermi
         bandgaps[compound] = bandgap
         all_atomtypes[compound] = atomtypes
         all_corelevels[compound] = corelevels
+        total_energy[compound] = te
         #fermi_energies = efermi
         #bandgaps = bandgap
         #all_atomtypes = atomtypes
         #all_corelevels = corelevels
     
-    return fermi_energies, bandgaps, all_atomtypes, all_corelevels
+    return total_energy, fermi_energies, bandgaps, all_atomtypes, all_corelevels
     #TODO validate results and give some warnings
     
     # check bandgaps, if not all metals, throw warnings:
