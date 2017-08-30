@@ -520,3 +520,53 @@ def move_atoms_incell(structure, vector):
         new_structure.append_site(new_site)
     
     return new_structure
+    
+    
+def find_primitive_cell(structure):
+    """
+    uses spglib find_primitive to find the primitive cell
+    params: AiiDa structure data
+    
+    returns: list of new AiiDa structure data
+    """
+    from spglib import find_primitive
+    from ase.atoms import Atoms
+    symprec = 1e-7
+    #print('old {}'.format(len(structure.sites)))
+    ase_structure = structure.get_ase()
+    lattice, scaled_positions, numbers = find_primitive(ase_structure, symprec=symprec)
+    new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
+    new_structure = StructureData(ase=new_structure_ase)
+    #print('new {}'.format(len(new_structure.sites)))
+    return new_structure
+    
+@wf
+def find_primitive_cell_wf(structure):
+    """
+    uses spglib find_primitive to find the primitive cell
+    params: AiiDa structure data
+    
+    returns: list of new AiiDa structure data
+    """
+    
+    return find_primitive_cell(structure)
+
+
+def find_primitive_cells(uuid_list):
+    """
+    uses spglib find_primitive to find the primitive cell
+    params: list of structureData uuids, or pks
+    
+    returns: list of new AiiDa structure datas
+    """
+    
+    new_structures = []
+    for uuid in uuid_list:
+        structure = load_node(uuid)
+        new_structure = find_primitive_cell(structure)
+        new_structures.append(new_structure)
+    return new_structures
+
+#test
+#strucs = find_primitive_cells(all_be_ti_structures_uuid)
+   
