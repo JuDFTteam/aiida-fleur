@@ -234,21 +234,28 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     
     :inputs: struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
     :inputs: ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom} for the elements
+    (if the formula of the elements contains a number the total energy is devided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
     eform_list = []
     eform_dict = {} 
-    ref_el = ref_struc_te_dict.keys()
+    #ref_el = ref_struc_te_dict.keys()
+    ref_struc_te_dict_norm = {}
+    # normalize reference
+    for key, val in ref_struc_te_dict.iteritems():
+        elem_n = get_natoms_element(key)
+        ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
+    ref_el_norm = ref_struc_te_dict_norm.keys()
     
     for formula, tE in struc_te_dict.iteritems():
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
         eform = tE#abs(tE)
         for elem, count in elements_count.iteritems():
-            if elem in ref_el:
-                eform = eform - count * ref_struc_te_dict.get(elem)#abs(ref_struc_te_dict.get(elem))
+            if elem in ref_el_norm:
+                eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
-                print('Reference energy missing for element {}.'
+                print('Reference energy missing for element {}. '
                       'You need to provide reference energies for all elements in you compound.'
                        ''.format(elem))
         eform_dict[formula] = eform/ntotal

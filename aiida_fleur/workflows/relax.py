@@ -18,7 +18,7 @@ from ase.io import *
 from aiida.orm import Code, CalculationFactory, DataFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
-from aiida.orm.data.fleurinp import FleurinpData as FleurInpData
+#from aiida.orm.data.fleurinp import FleurinpData as FleurInpData
 from aiida.orm.data.singlefile import SinglefileData
 #from aiida.workflows2.run import run
 #from aiida.workflows2.fragmented_wf import FragmentedWorkfunction, \
@@ -37,6 +37,7 @@ from aiida.work.workchain import ToContext
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
+FleurInpData = DataFactory('fleur.fleurinp')
 computer_name = 'local_mac'
 computer = Computer.get(computer_name)
 codename = 'fleur_inpgen_xml_mac_v0.27'

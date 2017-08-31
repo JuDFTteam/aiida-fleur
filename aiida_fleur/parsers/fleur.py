@@ -278,7 +278,7 @@ def parse_xmlout_file(outxmlfile):
     parser_info_out = {'parser_warnings': [], 'unparsed' : []}
     parser_version = '0.1beta'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
-    parsed_data = {}
+    #parsed_data = {}
 
     successful = True
     outfile_broken = False

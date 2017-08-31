@@ -6,6 +6,7 @@ A dummy workchain to test nested workchains
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
+import time
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
 from aiida.work.run import submit, async
@@ -29,9 +30,9 @@ class dummy_wc(WorkChain):
         spec.input("str_display", valid_type=Str, required=True),
         spec.outline(
             cls.display,
-            #cls.run_sub1,
+            cls.run_sub1,
             #cls.run_sub2,
-            cls.run_sub3,
+            #cls.run_sub3,
             cls.return_out
         )
         spec.dynamic_output()
@@ -44,16 +45,31 @@ class dummy_wc(WorkChain):
         self.ctx.sub2 = None
         self.ctx.sub31 = None
         self.ctx.sub32 = None
-
+        time.sleep(65)
+        
+    
+    def get_input(self):
+        message = 'I am here'
+        self.report(message)
+        time.sleep(10)
+    
+    
     def run_sub1(self):
         """
         Submiting this subwork chain is still buggy somehow...
         """
         print('run_sub1')
-        inputs_sub = Str('This is wonderful 1')
-        res = submit(sub_dummy_wc, str_display=inputs_sub)
-
-        return ToContext(sub1 = res)
+        n = 3
+        allres = {}
+        time.sleep(35)
+        for i in range(0,n):
+            inputs_sub = Str('This is wonderful 1.{}'.format(i))
+            res = submit(sub_dummy_wc, str_display=inputs_sub)
+            label = 'sub1_run{}'.format(i)
+            allres[label] = res
+            time.sleep(65)
+            self.get_input()
+        return ToContext(**allres)
 
 
     def run_sub2(self):
@@ -101,13 +117,14 @@ class sub_dummy_wc(WorkChain):
     def display(self):
         message = 'message from sub_dummy_wc: {}'.format(self.inputs.str_display)
         self.report(message)
-
+        time.sleep(65)
     def run_sub(self):
         pass
         # ggf to test further depth call this wc rekursively
 
 
     def return_out(self):
+        time.sleep(65)
         message = 'generating output nodes sub_dummy'
         self.report(message)
         outdict = {'out_sub_dummy_wc' : Str('wonderful sub_dummy_wc')}
@@ -115,3 +132,5 @@ class sub_dummy_wc(WorkChain):
             self.out(link_name, node)
 
 
+class dummy_wf():
+    pass    
