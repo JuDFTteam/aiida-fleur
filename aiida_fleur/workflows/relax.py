@@ -26,10 +26,9 @@ from aiida.orm.data.singlefile import SinglefileData
 #from aiida.workflows2.db_types import Float, Str, NumericType, SimpleData
 #from aiida.workflows2.defaults import registry
 
-from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-from aiida.orm.calculation.job.fleur_inp.fleur import FleurCalculation
-from convergence import fleur_convergence
-from convergence2 import fleur_convergence2
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.work.workchain import WorkChain
 from aiida.work.workchain import while_, if_
 from aiida.work.run import run
@@ -124,7 +123,7 @@ class fleur_relax_wc(WorkChain):
                   #inpgen = code,
                   #fleur=code2)#, computer=computer)
         else:
-            res = run(fleur_convergence, wf_parameters=inputs['wf_parameters'],
+            res = run(fleur_scf_wc, wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], calc_parameters=inputs['calc_parameters'], inpgen = inputs['inpgen'], fleur=inputs['fleur'] )#inputs)#
         #print 'ctx, after scf {} {}'.format(ctx, [a for a in self.ctx])
 
