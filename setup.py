@@ -8,8 +8,8 @@ from setuptools import setup, find_packages
 if __name__ == '__main__':
     setup(
         name='aiida-fleur',
-        version='0.4.0',
-        description='AiiDA Plugin for running the FLEUR-code and its input generator. Plus some basic workflows and utility',
+        version='0.5.0',
+        description='Python FLEUR simulation package containing an AiiDA Plugin for running the FLEUR-code and its input generator. Plus some workflows and utility',
         url='https://github.com/broeder-j/aiida-fleur',
         author='Jens Broeder',
         author_email='j.broeder@fz-juelich.de',
