@@ -8,6 +8,6 @@ Fleur tools/utility
 Workflow tools/utility
 ======================
 
-.. automodule:: aiida.tools.codespecific.fleur.create_corehole
+.. automodule:: aiida.tools.create_corehole
    :members:
 
