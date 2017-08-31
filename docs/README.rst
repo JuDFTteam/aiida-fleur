@@ -19,3 +19,5 @@ in html format.
   
     sudo pip install sphinx_rtd_theme 
 
+
+TODO: find a way to document the test, they should not run, when the documentation is build :-)

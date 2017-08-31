@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 In this module contains useful methods for handling xml trees and files which are used
-by the Fleur plugin.
+by the Fleur code and the fleur plugin.
 """
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
          "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -22,7 +22,8 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.common.exceptions import InputValidationError
 
-#from somewhere import ValidationError
+#from somewhere import ValidationError/InputValidationError
+#some error, that does not depend on aiida
 
 def is_sequence(arg):
     return (not hasattr(arg, "strip") and
@@ -165,6 +166,8 @@ def xml_set_attribv_occ(xmltree, xpathn, attributename, attribv, occ=[0], create
     for i, node in enumerate(nodes):
         if i in occ:
             node.set(attributename, attribv)
+        if -1 in occ:# 'all'
+            node.set(attributename, attribv)
 
 def xml_set_first_attribv(xmltree, xpathn, attributename, attribv, create=False):
     """
@@ -270,7 +273,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
         except ValueError as v:
             raise ValueError('{}. If this is a species, are you sure this species exists in your inp.xml?'.format(v))
     nodes = eval_xpath3(xmlnode, xpath, create=create, place_index=place_index, tag_order=tag_order)
-    print 'nodes found from create_tag: {}'.format(nodes)
+    #print 'nodes found from create_tag: {}'.format(nodes)
     if nodes:
         for node_1 in nodes:
             if place_index:
@@ -278,18 +281,18 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                     print 'in tag_order'
                     # behind what shall I place it
                     behind_tags = tag_order[:place_index]
-                    children = node_1.getchildren()
-                    print children
+                    #children = node_1.getchildren()
+                    #print children
                     # get all names of tag exisiting tags
                     set = False
-                    print reversed(behind_tags)
+                    #print reversed(behind_tags)
                     for tag in reversed(behind_tags):
-                        print tag
+                        #print tag
                         for child in node_1.iterchildren(tag=tag, reversed=False):
                             # if tagname of elements==tag:
                             tag_index = node_1.index(child)
-                            print child
-                            print tag_index
+                            #print child
+                            #print tag_index
                             try:
                                 node_1.insert(tag_index, newelement)
                             except ValueError as v:
@@ -309,10 +312,10 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                         node_1.insert(place_index, newelement)
                     except ValueError as v:
                         raise ValueError('{}. If this is a species, are you sure this species exists in your inp.xml?'.format(v))
-                    print 'in place_index'
+                    #print 'in place_index'
 
             else:
-                print 'normal append'
+                #print 'normal append'
                 try:
                     node_1.append(newelement)
                 except ValueError as v:
@@ -320,6 +323,12 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
     return xmlnode
 
 def delete_att(xmltree, xpath, attrib):
+    """
+    deletes an xml tag in an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    """ 
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -331,6 +340,12 @@ def delete_att(xmltree, xpath, attrib):
     return xmltree
 
 def delete_tag(xmltree, xpath):
+    """
+    deletes an xml tag in an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    """    
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -340,23 +355,41 @@ def delete_tag(xmltree, xpath):
     return xmltree
 
 def replace_tag(xmltree, xpath, newelement):
+    """
+    replaces a xml tag by another tag on an xmletree in place
+    
+    param: xmltree: xmltree (etree)
+    param: xpath: xpathexpression
+    param: newelement: xmlElement
+    """
     root = xmltree.getroot()
 
     nodes = eval_xpath3(root, xpath)
-    #print nodes
     if nodes:
         for node in nodes:
-            #print newelement
             parent = node.getparent()
             parent.remove(node)
             parent.append(newelement)
 
     return xmltree
+    
 ####### XML SETTERS SPECIAL ########
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     """
-
+    Method to set parameters of a species tag of the fleur inp.xml file.
+    
+    param: fleurinp_tree_copy, xml etree of the inp.xml
+    param: species_name : string, name of the species you want to change
+    param: attributedict: python dict: what you want to change
+    param: create: bool, if species does not exist create it and all subtags?
+    
+    raises: ValueError, if species name is non existent in inp.xml and should not be created.
+    also if other given tags are garbage. (errors from eval_xpath() methods)
+    
+    return: fleurinp_tree_copy: xml etree of the new inp.xml
+    
+    
     """
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also number, other parameters
@@ -374,7 +407,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # can we get this out of schema file?
     species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'force', 'electronConfig', 'nocoParams', 'ldaU', 'lo']
 
-    root = fleurinp_tree_copy.getroot()
+    #root = fleurinp_tree_copy.getroot()
     for key,val in attributedict.iteritems():
         if key == 'mtSphere': # always in inp.xml
             for attrib, value in val.iteritems():
@@ -410,7 +443,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
         elif key == 'electronConfig':
             # eval electronConfig and ggf create tag at right place.
-            print 'index {}'.format(species_seq.index('electronConfig'))
+            #print 'index {}'.format(species_seq.index('electronConfig'))
             eval_xpath3(fleurinp_tree_copy, xpathelectronConfig, create=True, place_index=species_seq.index('electronConfig'), tag_order=species_seq)
 
             for tag in ['coreConfig', 'valenceConfig', 'stateOccupation']:
@@ -418,19 +451,20 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                     if not etag == tag:
                         continue
                     if etag=='stateOccupation':# there can be multiple times stateOccupation
-                        #policy: we DELETE all LOs, and create new ones from the given parameters.
+                        #policy: default we DELETE all existing occs and create new ones for the given input!
                         existingocc = eval_xpath3(fleurinp_tree_copy, xpathcoreocc)
                         for occ in existingocc:
                             parent = occ.getparent()
                             parent.remove(occ)
                         if isinstance(edictlist,dict):
+                            #print('here')
                             for attrib, value in edictlist.iteritems():
                                 xml_set_attribv_occ(fleurinp_tree_copy, xpathcoreocc, attrib, value, create=create)
                         else:# I expect a list of dicts
                             #occnodes = eval_xpath3(root, xpathcoreocc)
                             #noccnodes = len(occnodes)
                             #ggf create more lo tags of needed
-                            nodes_need = len(val)# - noccnodes
+                            nodes_need = len(edictlist)# - noccnodes
                             for j in range(0,nodes_need):
                                 create_tag(fleurinp_tree_copy, xpathelectronConfig, 'stateOccupation', create=create)
                             for i, occdict in enumerate(edictlist):
@@ -495,9 +529,45 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
     return fleurinp_tree_copy
 
+def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
+    """
+    Routine adds something to the value of an attribute in the xml file (should be a number here)
 
+    :param: an etree a xpath from root to the attribute and the attribute value
+    
+    :param: mode: 'abs', 'rel', change by absolut or relative amount
+    :return: None, or an etree
+
+    Comment: Element.set will add the attribute if it does not exist,
+             xpath expression has to exist
+    example: add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1')
+             add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1.1', mode='rel')
+    """
+    
+    
+    #get attribute, add or multiply
+    #set attribute
+    attribval_node = eval_xpath(xmltree, xpathn)
+    # do some checks..
+    attribval = get_xml_attribute(attribval_node, attributename)
+    print(attribval)
+    if attribval:
+        if mode=='abs':
+            newattribv = float(attribval) + float(set_val)
+        elif mode == 'rel':
+            newattribv = float(attribval) * float(set_val)
+        else:
+            pass
+            #unknown mode
+            
+        xml_set_attribv_occ(xmltree, xpathn, attributename, newattribv, occ=[0], create=False)
+    else:
+        pass
+        # something was wrong, ...
+    return xmltree
 
 ####### XML GETTERS #########
+# TODO parser infos do not really work, might need to be returned, here
 def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
@@ -518,6 +588,24 @@ def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
         return return_value
 
 
+def eval_xpath2(node, xpath, parser_info={'parser_warnings':[]}):
+    """
+    Tries to evalutate an xpath expression. If it fails it logs it.
+    
+    :param root node of an etree and an xpath expression (relative, or absolute)
+    :returns either nodes, or attributes, or text
+    """
+    try:
+        return_value = node.xpath(xpath)
+    except etree.XPathEvalError:
+        parser_info['parser_warnings'].append('There was a XpathEvalError on the xpath: {} \n'
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
+        # TODO maybe raise an error again to catch in upper routine, to know where exactly
+        return []
+    return return_value
+
+
+'''
 def eval_xpath2(node, xpath):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
@@ -534,7 +622,7 @@ def eval_xpath2(node, xpath):
             ''.format(xpath))
         return []
     return return_value
-
+'''
 def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
@@ -620,6 +708,7 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
 
 # TODO this has to be done better. be able to write tags and
 # certain attributes of attributes that occur possible more then once.
+# HINT: This is not really used any more. use fleurinpmodifier
 def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstructure):
     """
     This modifies the xml-inp file. Makes all the changes wanted by
@@ -698,10 +787,13 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
                 " to the fleur plug-in".format(key, fleur_change_dic[key]))
     return xmltree_new
 
+
+# TODO: maybe it is possible to use the xml, schema to dict libary of the QE people.
+# So far it does not seem to do what we need.
 def inpxml_todict(parent, xmlstr):
     """
     Recursive operation which transforms an xml etree to
-    python dictionaries and lists.
+    python nested dictionaries and lists.
     Decision to add a list is if the tag name is in the given list tag_several
 
     :param parent: some xmltree, or xml element

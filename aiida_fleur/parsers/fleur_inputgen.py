@@ -148,6 +148,8 @@ class Fleur_inputgenParser(Parser):
 
             #check if inpgen was invokes with other options
             fleurinp_data = FleurinpData(files=[inpxmlfile])
+            # if kpoints
+            # fleurinp_data.set_kpoints
             #, symoutfile, enparafile])
             self.logger.info('FleurinpData initialized')
             #self.logger.info

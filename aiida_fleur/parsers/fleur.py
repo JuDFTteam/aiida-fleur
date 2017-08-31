@@ -278,7 +278,7 @@ def parse_xmlout_file(outxmlfile):
     parser_info_out = {'parser_warnings': [], 'unparsed' : []}
     parser_version = '0.1beta'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
-    parsed_data = {}
+    #parsed_data = {}
 
     successful = True
     outfile_broken = False
@@ -368,7 +368,7 @@ def parse_xmlout_file(outxmlfile):
         # get all iterations in out.xml file
         iteration_nodes = eval_xpath2(root, iteration_xpath)
         nIteration = len(iteration_nodes)
-        print nIteration
+        #print nIteration
         data_exists = True
 
         # parse only last stable interation
@@ -431,10 +431,17 @@ def parse_xmlout_file(outxmlfile):
                    
         # time
         starttime = eval_xpath(root, start_time_xpath)
-        print starttime
-        starttimes = starttime.split(':')
-        endtime = eval_xpath(root, end_time_xpath).split(':')
-        
+        #print starttime
+        if starttime:
+            starttimes = starttime.split(':')
+        else:
+            starttimes = [0,0,0]
+            
+        endtime = eval_xpath(root, end_time_xpath)
+        if endtime:
+            endtime = endtime.split(':')
+        else:
+            endtime = [0,0,0]
         start_date = eval_xpath(root, start_date_xpath)
         end_date = eval_xpath(root, end_date_xpath)
         
@@ -464,7 +471,7 @@ def parse_xmlout_file(outxmlfile):
                 'There was a XpathEvalError on the xpath: {} \n Either it does '
                 'not exist, or something is wrong with the expression.'
                 ''.format(xpath))
-            return []
+            return []# or rather None?
         if len(return_value) == 1:
             return return_value[0]
         else:

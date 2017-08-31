@@ -5,6 +5,8 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
+
+# TODO title of simulations
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -77,7 +79,7 @@ class FleurinputgenCalculation(JobCalculation):
                                    'beta', 'gamma'],
                         'atom':['id', 'z', 'rmt', 'dx', 'jri', 'lmax',
                                 'lnonsph', 'ncst', 'econfig', 'bmu', 'lo',
-                                'element'],
+                                'element', 'name'],
                         'comp' : ['jspins', 'frcor', 'ctail', 'kcrel', 'gmax',
                                   'gmaxxc', 'kmax'],
                         'exco' : ['xctyp', 'relxc'],
@@ -173,7 +175,7 @@ class FleurinputgenCalculation(JobCalculation):
         replacer_values_bool = [True, False, 'True', 'False', 't', 'T',
                                 'F', 'f']
         # some keywords require a string " around them in the input file.
-        string_replace = ['econfig', 'lo', 'element']
+        string_replace = ['econfig', 'lo', 'element', 'name']
 
         # of some keys only the values are writen to the file, specify them here.
         val_only_namelist = ['soc', 'qss']
@@ -320,7 +322,7 @@ class FleurinputgenCalculation(JobCalculation):
 
         # check existence of settings (optional)
         settings = inputdict.pop(self.get_linkname('settings'), None)
-        print('settings: {}'.format(settings))
+        #print('settings: {}'.format(settings))
         if settings is None:
             settings_dict = {}            
         else:
@@ -388,7 +390,7 @@ class FleurinputgenCalculation(JobCalculation):
                 site_symbol = structure.get_kind(kind_name).symbols[0] # TODO: list I assume atoms therefore I just get the first one...
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
-                if site_symbol != kind_name:
+                if site_symbol != kind_name: # This is an important fact, if usere renames it becomes a new species!
                     suc = True
                     try:
                         head = kind_name.rstrip('0123456789')
@@ -400,7 +402,7 @@ class FleurinputgenCalculation(JobCalculation):
                 # per default we use relative coordinates in Fleur
                 # we have to scale back to atomic units from angstrom
                 pos = site.position
-                print 'pos {}'.format(pos)
+                #print 'pos {}'.format(pos)
                 if bulk:
                     vector_rel = abs_to_rel(pos, cell)
                 elif film:
@@ -507,7 +509,7 @@ class FleurinputgenCalculation(JobCalculation):
 
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
-        print('add_retrieve: {}'.format(add_retrieve))
+        #print('add_retrieve: {}'.format(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
         
@@ -521,7 +523,7 @@ class FleurinputgenCalculation(JobCalculation):
             calcinfo.retrieve_list.append(file1)
 
         codeinfo = CodeInfo()
-        cmdline_params = ["-explicit"] # TODO? let the user decide
+        cmdline_params = ["-explicit"] # TODO? let the user decide -econfig?
         
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

@@ -22,7 +22,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
-
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -92,6 +92,17 @@ class fleur_dos_wc(WorkChain):
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
         self.ctx.queue = wf_dict.get('queue_name', None)          
         
+        inputs = self.inputs
+        
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for FLEUR does not "
+                         "use the plugin fleur.fleur")
+                #self.control_end_wc(error) 
+                print(error)
+                self.abort()
         
     def create_new_fleurinp(self):
         """

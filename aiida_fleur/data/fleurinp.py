@@ -29,8 +29,10 @@ if not is_dbenv_loaded():
 
 from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
-from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv, xml_set_all_attribv, xml_set_text
+from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
+from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
 from aiida.work.workfunction import workfunction as wf
+from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA
 
@@ -64,15 +66,26 @@ class FleurinpData(Data):
     #TODO: dont walk the whole python path, test if dir below is aiida?
     #needs to be imporved, schema file is often after new installation not found...
     #installation with pip should always lead to a schmea file in the python path, or even specific place
-    
+
+    _search_paths = []
+    ifolders = get_internal_search_paths()
+    ischemas = get_schema_paths()
+    for path in ischemas:
+        _search_paths.append(path)
+    for path in ifolders:
+        _search_paths.append(path)
+    _search_paths.append('./')
+
+    # Now add also python path maybe will be decaptivated
     #if pythonpath is non existant catch error
     try:
         pythonpath = os.environ['PYTHONPATH'].split(':')
     except KeyError:
         pythonpath = []
-    _search_paths = ['./','/usr/users/iff_th1/broeder/aiida/aiida/aiida/orm/calculation/job/','/home/aiida/code/aiida_core/aiida/']
+
     for path in pythonpath[:]:
         _search_paths.append(path)
+        
     #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
     #                 str(get_repository_folder())]
 
@@ -233,10 +246,10 @@ class FleurinpData(Data):
         old_file_list = self.get_folder_list()
 
         if not os.path.isabs(src_abs):
-            raise ValueError("Pass an absolute path for src_abs")
+            raise ValueError("Pass an absolute path for src_abs: {}".format(src_abs))
 
         if not os.path.isfile(src_abs):
-            raise ValueError("src_abs must exist and must be a single file")
+            raise ValueError("src_abs must exist and must be a single file: {}".format(src_abs))
 
         if dst_filename is None:
             final_filename = os.path.split(src_abs)[1]
@@ -517,7 +530,8 @@ class FleurinpData(Data):
         super(FleurinpData, self)._validate()
 
         if 'inp.xml' in self.files:
-            has_inpxml = True # does nothing so far
+            #has_inpxml = True # does nothing so far
+            pass
         else:
             raise ValidationError('inp.xml file not in attribute "files". '
                                   'FleurinpData needs to have and inp.xml file!')
@@ -636,13 +650,12 @@ class FleurinpData(Data):
             ldau = False # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False 
         return fleur_modes
-
-    @staticmethod
-    @wf
-    def get_structuredata(fleurinp):
+    
+    #@staticmethod
+    def get_structuredata_nwf(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file.
+        file. not a workfunction
     
         :return: StructureData node
         """
@@ -685,7 +698,7 @@ class FleurinpData(Data):
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?           
         else: #schema not there, parse without
             print 'parsing inp.xml without XMLSchema'
             tree = etree.parse(inpxmlfile)
@@ -826,16 +839,25 @@ class FleurinpData(Data):
         #return {label : struc}
         return struc
     
+    @staticmethod
+    @wf
+    def get_structuredata(fleurinp):
+        """
+        This routine return an AiiDA Structure Data type produced from the inp.xml
+        file. This is a workfunction and therefore keeps the provenance.
+    
+        :return: StructureData node
+        """
+        return fleurinp.get_structuredata_nwf(fleurinp)
 
 
 
     @staticmethod
-    @wf
-    def get_kpointsdata(fleurinp):
+    def get_kpointsdata_nwf(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-
+        This is NOT a workfunction and does not keep the provenance!
         :return: KpointsData node
         """
         from aiida.orm.data.array.kpoints import KpointsData
@@ -861,7 +883,7 @@ class FleurinpData(Data):
         kpoint_tag = 'kPoint'
         kpointlist_attrib_posscale = 'posScale'
         kpointlist_attrib_weightscale = 'weightScale'
-        kpointlist_attrib_count = 'count'
+        #kpointlist_attrib_count = 'count'
         kpoint_attrib_weight = 'weight'
         row1_tag_name = 'row-1'
         row2_tag_name = 'row-2'
@@ -927,7 +949,7 @@ class FleurinpData(Data):
         if kpoints:
             posscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_posscale)
             weightscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_weightscale)
-            count = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_count)
+            #count = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_count)
 
             kpoints_pos = []
             kpoints_weight = []
@@ -948,12 +970,26 @@ class FleurinpData(Data):
 
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)
             #kps.add_link_from(fleurinp, label='fleurinp.kpts', link_type=LinkType.CREATE)
-            label='fleurinp.kpts'
+            kps.label='fleurinp.kpts'
             #return {label: kps}
             return kps
         else: # TODO parser other kpoints formats, if they fit in an AiiDA node
             print 'No kpoint list in inp.xml'
             return None
+            
+            
+    @staticmethod
+    @wf
+    def get_kpointsdata(fleurinp):
+        """
+        This routine returns an AiiDA kpoint Data type produced from the inp.xml
+        file. This only works if the kpoints are listed in the in inpxml.
+        This is a workfunction and does not keep the provenance!
+        :return: KpointsData node
+        """
+
+        return fleurinp.get_kpointsdata_nwf(fleurinp)
+            
     '''
     def set_nkpts(fleurinp, count, gamma='F'):#_orgi
 
@@ -1012,11 +1048,11 @@ class FleurinpData(Data):
         # all hardcoded xpaths used and attributes names:
         fleurinp = fleurinp_orgi.copy()
         kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-        kpoint_tag = 'kPoint'
-        kpointlist_attrib_posscale = 'posScale'
-        kpointlist_attrib_weightscale = 'weightScale'
-        kpointlist_attrib_count = 'count'
-        kpoint_attrib_weight = 'weight'
+        #kpoint_tag = 'kPoint'
+        #kpointlist_attrib_posscale = 'posScale'
+        #kpointlist_attrib_weightscale = 'weightScale'
+        #kpointlist_attrib_count = 'count'
+        #kpoint_attrib_weight = 'weight'
 
         #### method layout: #####
         # Check if Kpoints node
@@ -1046,12 +1082,12 @@ class FleurinpData(Data):
                 print 'parsing inp.xml without XMLSchema'
                 tree = etree.parse(inpxmlfile)
 
-            root = tree.getroot()
+            #root = tree.getroot()
         else:
             raise InputValidationError(
                       "No inp.xml file yet specified, to add kpoints to.")
 
-        cell_k = KpointsDataNode.cell
+        #cell_k = KpointsDataNode.cell
 
         # TODO: shall we check if cell is the same as cell from structure?
         # or is that to narrow?
@@ -1061,7 +1097,7 @@ class FleurinpData(Data):
         totalw = 0
         for weight in kpoint_list[1]:
             totalw = totalw + weight
-        weightscale = totalw
+        #weightscale = totalw
         #for j, kpos in enumerate(kpoint_list[0]):
         #    print '<kPoint weight="{}">{}</kPoint>'.format(kpoint_list[1][j], str(kpos).strip('[]'))
 
@@ -1096,7 +1132,7 @@ class FleurinpData(Data):
         os.remove(inpxmlfile)
 
         return fleurinp
-    '''
+    
     def get_tag(self, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
@@ -1111,10 +1147,10 @@ class FleurinpData(Data):
             inpxmlfile = self.get_file_abs_path('inp.xml')
 
             if self._schema_file_path: # Schema there, parse with schema
-                xmlschema_doc = etree.parse(self._schema_file_path)
-                xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                tree = etree.parse(inpxmlfile, parser)
+                #xmlschema_doc = etree.parse(self._schema_file_path)
+                #xmlschema = etree.XMLSchema(xmlschema_doc)
+                #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+                tree = etree.parse(inpxmlfile)#, parser)
             else: #schema not there, parse without
                 print 'parsing inp.xml without XMLSchema'
                 tree = etree.parse(inpxmlfile)
@@ -1137,7 +1173,34 @@ class FleurinpData(Data):
             return return_value
         else:
             return return_value
-    '''
+    
+'''
+from aiida.orm.data.base import Str
+
+#@wf
+def extract_parameterdata(fleurinp, element=Str('all'))
+    """
+    Method to extract a ParameterData node from a fleurinp data object. 
+    This parameter node can be used as an input node for inpgen.
+    
+    :param: fleurinp: an FleurinpData node
+    :param: element: string ('all', 'W', 'W O') default all, or specify the
+    species you want to extract
+    
+    :return: ParameterData node
+    """
+    pass
+    print("sorry not implemented yet")
+    if element=='all':
+        pass
+    else:
+        species = element.split()
+
+    #open inpxml tree
+    #use xpath expressions to extract parameters for all species or certain species
+
+    #store species paremeters in the right form in a parameter data node.
+'''
 '''
 # TODO write xml util and put all these functions there, parse as option a logger,
 # that parser can use these methods too.

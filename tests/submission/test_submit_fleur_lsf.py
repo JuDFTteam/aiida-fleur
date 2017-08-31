@@ -56,6 +56,7 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 #TODO: how to make smart path?
 # get where tests folder is, then relative path
 inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
+inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
 fleurinp = FleurinpData(files = [inpxmlfile])
 
 ## For remote codes, it is not necessary to manually set the computer,
@@ -66,7 +67,7 @@ fleurinp = FleurinpData(files = [inpxmlfile])
 calc = code.new_calc()
 calc.label = "Test Fleur fleur_MPI"
 calc.description = "Test calculation of the Fleur code"
-calc.set_max_wallclock_seconds(300)  # 5 min
+calc.set_max_wallclock_seconds(600)  # 10 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
 #calc.set_resources({"num_machines": 1})
@@ -78,7 +79,7 @@ calc.set_resources({"tot_num_mpiprocs" : 4})
 #calc.set_resources({"tot_num_mpiprocs" : 1})
 
 
-calc.set_custom_scheduler_commands('#BSUB -P jara0043 \n#BSUB -x \n#BSUB -a intelmpi \n#BSUB -R "span[ptile=4]"')
+calc.set_custom_scheduler_commands('#BSUB -P jara0043 \n#BSUB -M 1024  \n#BSUB -a intelmpi')# \n#BSUB -R "span[ptile=4]"')
 
 if queue is not None:
     calc.set_queue_name(queue)
