@@ -59,6 +59,9 @@ if __name__ == '__main__':
                 'fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc',
                 'fleur.dummy = aida_fleur.workflows.dummy:dummy_wc',
                 'fleur.sub_dummy = aida_fleur.workflows.dummy:sub_dummy_wc'
+                'fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_inital_cls_wc',
+                'fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc',
+                'fleur.corelevel = aiida_fleur.workflows.corelevel:fleur_corelevel_wc',
            ]
         },
     )
