@@ -38,14 +38,14 @@ from aiida.work.workfunction import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.StructureData_util import supercell
-from aiida_fleur_ad.util.create_corehole import create_corehole_para#, create_corehole_fleurinp
-from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
+from aiida_fleur.tools.create_corehole import create_corehole_para#, create_corehole_fleurinp
+from aiida_fleur.tools.extract_corelevels import extract_corelevels
 from aiida_fleur.tools.StructureData_util import break_symmetry
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import find_equi_atoms
-from aiida_fleur_ad.util.element_econfig_list import get_econfig ,get_coreconfig
-from aiida_fleur_ad.util.element_econfig_list import econfigstr_hole, states_spin
-from aiida_fleur_ad.util.element_econfig_list import get_state_occ, highest_unocc_valence
+from aiida_fleur.tools.element_econfig_list import get_econfig ,get_coreconfig
+from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
+from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 
 from pprint import pprint
 

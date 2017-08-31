@@ -21,7 +21,7 @@ from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import while_, if_
-from aiida_fleur_ad.util.create_corehole import create_corehole
+from aiida_fleur.tools.create_corehole import create_corehole
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')

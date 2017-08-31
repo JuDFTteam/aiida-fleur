@@ -28,7 +28,7 @@ from aiida.work import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import  if_ #while_,
-from aiida_fleur_ad.util.extract_corelevels import extract_corelevels
+from aiida_fleur.tools.extract_corelevels import extract_corelevels
 from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
 from aiida.common.exceptions import NotExistent
 
