@@ -1,3 +1,19 @@
+## v0.5.0
+### Merge with advanced workflow repo
+- this included the corehole and inital corehole workflow as well calculation of formation energies
+  Therefore this is the first public released verison of them with in MaX
+- all the utility of the corelevel repo is now under aiida_fleur/tools
+
+
+## v0.4.0
+- further improvment of scf, eos and other workchains
+- a workchain delta form calculation a delta value, or performing calculation on the delta structures or a group of structures in a single shot
+- lots of new utilty methods for structure dealings, fleur parameters and so on
+- lots of bugfixes
+- new system for the schema files, user does not has to add aiida-fleur to pythonpath or hack the schema paths.
+- added new tests, submission tests and standard fleur tests
+- first documention online, still very rusty still some issues there (stay with local one)
+
 ## v0.3.0 
 
 ### Merge with workflows repo
