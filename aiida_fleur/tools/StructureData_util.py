@@ -15,6 +15,7 @@ from aiida.orm import load_node
 from aiida.orm.data.structure import Site, Kind
 from aiida.work.workfunction import workfunction as wf
 import numpy as np
+from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -61,9 +62,22 @@ def is_structure(structure):
     return None
 
 @wf
-def rescale(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
+def rescale(inp_structure, scale):
     """
     Rescales a crystal structure. Keeps the provanance in the database.
+
+    :param inp_structure, a StructureData node (pk, or uuid)
+    :param scale, float scaling factor for the cell
+
+    :returns: New StrcutureData node with rescalled structure, which is linked to input Structure
+              and None if inp_structure was not a StructureData
+    """
+    
+    return rescale_nowf(inp_structure, scale)
+
+def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
+    """
+    Rescales a crystal structure. DOES NOT keep the provanence in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
     :param scale, float scaling factor for the cell
@@ -94,7 +108,7 @@ def rescale_xyz(inp_structure, scalevec):
 
 
 @wf
-def supercell(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
+def supercell(inp_structure, n_a1, n_a2, n_a3):
     """
     Creates a super cell from a StructureData node.
     Keeps the provanance in the database.
@@ -104,7 +118,20 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _descr
 
     :returns StructureData, Node with supercell
     """
-    print('in create supercell')
+    return supercell_nwf(inp_structure, n_a1, n_a2, n_a3)
+
+    
+def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
+    """
+    Creates a super cell from a StructureData node.
+    Does NOT keeps the provanance in the database.
+
+    :param StructureData, a StructureData node (pk, or uuid)
+    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
+
+    :returns StructureData, Node with supercell
+    """
+    #print('in create supercell')
     #test if structure:
     structure = is_structure(inp_structure)
     if not structure:
@@ -569,4 +596,71 @@ def find_primitive_cells(uuid_list):
 
 #test
 #strucs = find_primitive_cells(all_be_ti_structures_uuid)
-   
+
+def get_all_miller_indices(structure, highestindex):
+    """
+    wraps the pymatgen function get_symmetrically_distinct_miller_indices for an AiiDa structure
+    """  
+    return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
+
+def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0, 
+                       bonds=None, tol=1e-3, max_broken_bonds=0,
+                       lll_reduce=False, center_slab=False, primitive=False,
+                       max_normal_search=None, symmetrize=False):#, reorient_lattice=True):
+    """
+    wraps the pymatgen function generate_all_slabs with some useful extras
+    returns a dictionary of structures
+    """
+    aiida_strucs = {}
+    pymat_struc = initial_structure.get_pymatgen_structure()
+    # currently the pymatgen method is buggy... no coordinates in x,y....
+    all_slabs = generate_all_slabs(pymat_struc, miller_index, min_slab_size_ang, min_vacuum_size,
+                       bonds=bonds, tol=tol, max_broken_bonds=max_broken_bonds,
+                       lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
+                       max_normal_search=max_normal_search, symmetrize=symmetrize)#, reorient_lattice=reorient_lattice)
+    for slab in all_slabs:
+        print slab
+        #slab2 = #slab.get_orthogonal_c_slab()
+        film_struc = StructureData(pymatgen_structure=slab2)
+        film_struc.pbc = (True, True, False)
+        aiida_strucs[slab.miller_index] = film_struc
+    return aiida_strucs
+
+def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0, 
+                       bonds=None, tol=1e-3, max_broken_bonds=0,
+                       lll_reduce=False, center_slab=False, primitive=False,
+                       max_normal_search=1, symmetrize=False):#, reorient_lattice=True):
+    """
+    returns a dictionary of structures
+    """
+    aiida_strucs = {}
+    #pymat_struc = initial_structure.get_pymatgen_structure()
+    indices = get_all_miller_indices(initial_structure, miller_index)
+    for index in indices:
+        slab = create_slap(initial_structure, index, min_slab_size, min_vacuum_size, min_slab_size_ang)
+        film_struc = StructureData(pymatgen_structure=slab)
+        film_struc.pbc = (True, True, False)
+        aiida_strucs[slab.miller_index] = film_struc
+    
+    return aiida_strucs
+
+
+def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=0, lll_reduce=False, center_slab=False, primitive=False, max_normal_search=1, reorient_lattice=True):
+    """
+    wraps the pymatgen slab generator
+    """
+    # minimum slab size is in Angstroem!!!
+    pymat_struc = initial_structure.get_pymatgen_structure()
+    slabg = SlabGenerator(pymat_struc, miller_index, min_slab_size, min_vacuum_size, 
+                          lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive, 
+                          max_normal_search=max_normal_search)
+    slab = slabg.get_slab()
+    #slab2 = slab.get_orthogonal_c_slab()
+    film_struc = StructureData(pymatgen_structure=slab)
+    film_struc.pbc = (True, True, False) 
+    
+    # TODO: sort atoms after z-coordinate value,
+    # TODO: Move all atoms that the middle atom is at [x,y,0]     
+    # film_struc2 = move_atoms_incell(film_struc, [0,0, z_of_middle atom])
+    
+    return film_struc
