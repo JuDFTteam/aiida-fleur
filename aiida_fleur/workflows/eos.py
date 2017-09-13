@@ -229,7 +229,7 @@ class fleur_eos_wc(WorkChain):
                       calc_parameters=inputs['calc_parameters'], 
                       inpgen=inputs['inpgen'], 
                       fleur=inputs['fleur'], _label=label_c, _description=description)# asy async .run( submit()
-            time.sleep(5)            
+            #time.sleep(5)            
             #self.ctx.calcs_future.append(res)
             self.ctx.labels.append(label)
             calcs[label] = res

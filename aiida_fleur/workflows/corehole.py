@@ -59,19 +59,21 @@ FleurinpData = DataFactory('fleur.fleurinp')
 class fleur_corehole_wc(WorkChain):
     """
     Turn key solution for a corehole calculation with the FLEUR code.
-    Has different protocols for different core-hole types (Full-valence, 
-    partial valence, charged).
+    Has different protocols for different core-hole types (valence, charge).
     
-    Calculates supercells. From the total energy differences binding energies
-    for certain corelevels are extracted.
+    Calculates supercells. Extracts binding energies
+    for certain corelevels from the total energy differences a the calculation with
+    corehole and without.
     
     Documentation: 
     See help for details.
     
     Two paths are possible: 
 
-    (1) Start from a structure and run inpgen first (recommended)
-    (2) Start from a Fleurinp data object
+    (1) Start from a structure -> workchains run inpgen first (recommended)
+    (2) Start from a Fleurinp data object 
+    
+    Also it is recommended to provide a calc parameter node for the structure
 
     :Params: wf_parameters: parameterData node, specify, resources and what should be calculated
     :Params: structure : structureData node, crystal structure
@@ -83,8 +85,8 @@ class fleur_corehole_wc(WorkChain):
     :returns: output_corehole_wc_para: parameterData node,  successful=True if no error
    
 
-    :uses: fleur_scf_wc
-    :uses: fleur_relax_wc
+    :uses: workchains: fleur_scf_wc, fleur_relax_wc
+    :uses: workfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
     
     minimum input example: 
     1. Code1, Code2, Structure, (Parameters), (wf_parameters)
@@ -106,8 +108,8 @@ class fleur_corehole_wc(WorkChain):
             'scf_para' : 'default',    # wf parameter dict for the scfs
             'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
             'resources' : {"num_machines": 1},# resources per job
-            'walltime_sec' : 60*60,    # walltime per job
-            'queue_name' : None,       # what queue to submit to
+            'walltime_sec' : 6*60*60,    # walltime per job
+            'queue_name' : '',       # what queue to submit to
             'serial' : True,           # run fleur in serial, or parallel?
             #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
             'magnetic' : True          # jspins=2, makes a difference for coreholes
@@ -118,7 +120,7 @@ class fleur_corehole_wc(WorkChain):
     1. This workflow does not work with local codes!    
     """
     
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.2.0"
     
     def __init__(self, *args, **kwargs):
         super(fleur_corehole_wc, self).__init__(*args, **kwargs)
@@ -359,6 +361,8 @@ class fleur_corehole_wc(WorkChain):
         else:
             htype='valence' # default so far, otherwise not defined.
             # TODO probally better, to throw error
+            hole_charge = self.ctx.hole_charge
+            correct_val_charge = False # the routines add the electron per default to the valence            
         
         ##########
         # 1. Find out what atoms to put coreholes on
@@ -410,8 +414,8 @@ class fleur_corehole_wc(WorkChain):
                 print("WARNING: input: {} of 'atoms' not recongized".format(atom_info))
                 
         # TODO: remove doubles in coreholes_atoms?
-        print(coreholes_atoms)
-        print(corelevels_toc)
+        #print(coreholes_atoms)
+        #print(corelevels_toc)
         dict_corelevel = {} 
         # dict_corelevel['W' : {corelevel: ['1s 1/2','4f 7/2', '4f 3/2'], econfig: [config], fleur_changes : []}]
         
@@ -576,7 +580,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
         #self.report('INFO: end of create coreholes')
-
+    '''
     def run_scf2(self):
         """
         Run scf 
@@ -599,7 +603,7 @@ class fleur_corehole_wc(WorkChain):
 
         self.ctx.calcs_ref_torun = []
         return ToContext(**calcs)#  this is a blocking return
-        
+    '''
         
         
     def run_ref_scf(self):
@@ -748,7 +752,7 @@ class fleur_corehole_wc(WorkChain):
         wf_parameters =  ParameterData(dict=wf_parameter)          
         #res_all = []
         calcs = {}
-        scf_label = 'corehole_wc ref cell'
+        scf_label = 'corehole_wc cell'
         scf_desc = '|corehole_wc|'        
         # now in parallel
         #print self.ctx.ref_calcs_torun
