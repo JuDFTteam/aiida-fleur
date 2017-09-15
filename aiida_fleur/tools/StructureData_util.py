@@ -664,3 +664,68 @@ def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=
     # film_struc2 = move_atoms_incell(film_struc, [0,0, z_of_middle atom])
     
     return film_struc
+    
+@wf
+def center_film_wf(structure):
+    """
+    Centers a film at z=0, keeps the provenance in the database
+    
+    Args:
+       structure: AiiDA structure
+       
+       returns: AiiDA structure
+    """
+    return center_film(structure)
+
+def center_film(structure):
+    """
+    Centers a film at z=0
+    
+    Args:
+       structure: AiiDA structure
+       
+       returns: AiiDA structure
+    """
+    # get highest and lowest z value, therefore the whole coordinate range,
+    # then check if number of atoms is odd or even
+    # if even move all atoms that 0 lies in the middle of the atoms in the middle
+    # if odd, set the middle atom to 0.0
+    
+    sorted_struc = sort_atoms_z_value(structure)
+    sites = sorted_struc.sites
+    #natoms = len(sites)
+    #if natoms%2: # odd
+    #    shift = [0,0,-sites[natoms/2].position[2]]
+    #else: #even
+    #    middle = (sites[natoms/2].position[2] + sites[natoms/2 + 1].position[2])/2.0
+    #    shift = [0,0, -middle]
+    shift = [0,0, (sites[0].position[2]-sites[-1].position[2])/2.0]
+    
+    #print shift
+    return move_atoms_incell(sorted_struc, shift)
+
+                 
+def sort_atoms_z_value(structure):
+    """
+    Resorts the atoms in a structure by there Z-value
+    
+    Args:
+       structure: AiiDA structure
+       
+       returns: AiiDA structure
+    """
+    new_structure = StructureData(cell=structure.cell)
+    for kind in structure.kinds:
+        new_structure.append_kind(kind)
+    
+    sites = structure.sites
+    new_site_list = []
+    for site in sites:
+        new_site_list.append([site, site.position[2]])
+    #pprint(new_site_list)
+    sorted_sites = sorted(new_site_list, key=lambda position: position[1])
+    #pprint(sorted_sites)
+    for site in sorted_sites:
+        new_structure.append_site(site[0])
+    
+    return new_structure
