@@ -181,6 +181,7 @@ class fleur_dos_wc(WorkChain):
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['Warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
         #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk

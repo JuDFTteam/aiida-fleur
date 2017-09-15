@@ -750,12 +750,14 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['corelevel_energies'] = cl #self.ctx.cl_energies
         outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl #self.ctx.cl_energies
         outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
+        outputnode_dict['reference_fermi_energy'] = ref_efermi
         outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies
         outputnode_dict['fermi_energy_units'] = 'eV'          
         outputnode_dict['corelevelshifts'] = cls #self.ctx.CLS
@@ -893,26 +895,47 @@ def extract_results(calcs):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue
-        if calc.get_state() != 'FINISHED':
-            # log and continue
-            continue
-            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
-        
-        # get out.xml file of calculation
-        outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
-        #print outxml
-        corelevels, atomtypes = extract_corelevels(outxml)
-        #all_corelevels.append(core)
-        #print('corelevels: {}'.format(corelevels))
-        #print('atomtypes: {}'.format(atomtypes))
-        #for i in range(0,len(corelevels[0][0]['corestates'])):
-        #    print corelevels[0][0]['corestates'][i]['energy']
+        if calc.get_state() == 'FINISHED':
+            # get out.xml file of calculation
+            outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+            #print outxml
+            corelevels, atomtypes = extract_corelevels(outxml)
+            #all_corelevels.append(core)
+            #print('corelevels: {}'.format(corelevels))
+            #print('atomtypes: {}'.format(atomtypes))
+            #for i in range(0,len(corelevels[0][0]['corestates'])):
+            #    print corelevels[0][0]['corestates'][i]['energy']
+                
+            #TODO how to store?
+            efermi = calc.res.fermi_energy
+            #print efermi
+            bandgap = calc.res.bandgap
+            te = calc.res.energy
+            total_energy_units = calc.res.energy_units
+            #total_energy = calc.res.total_energy
+            #total_energy_units = calc.res.total_energy_units
             
-        #TODO how to store?
-        efermi = calc.res.fermi_energy
-        #print efermi
-        bandgap = calc.res.bandgap
-        te = calc.res.energy
+            # TODO: maybe different, because it is prob know from before
+            #fleurinp = calc.inp.fleurinpdata
+            #structure = fleurinp.get_structuredata(fleurinp)
+            #compound = structure.get_formula()
+            #print compound
+            #number = '{}'.format(i)
+            #fermi_energies[number] = efermi
+            #bandgaps[number] = bandgap
+            #all_atomtypes[number] = atomtypes
+            #all_corelevels[number] = corelevels
+            #all_total_energies[number] = total_energy
+        else:
+            # log and continue
+            te = float('nan')
+            bandgap = float('nan')
+            efermi = float('nan')
+            corelevels = [float('nan')]
+            atomtypes = [float('nan')]
+            #continue
+            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))   
+        
         # TODO: maybe different, because it is prob know from before
         fleurinp = calc.inp.fleurinpdata
         structure = fleurinp.get_structuredata_nwf()            

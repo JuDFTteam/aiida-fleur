@@ -348,7 +348,7 @@ class fleur_corehole_wc(WorkChain):
         # equi_info_symbol = [['W', 1,2,3,8], ['Be', 4,5,6,7,9] ...]
         #n_equi_info_symbol= {'Be' : count, ...}
         equi_info_symbol, n_equi_info_symbol = find_equi_atoms(base_struc)  
-        print(n_equi_info_symbol)
+        #print(n_equi_info_symbol)
         method = self.ctx.method       
         if method == 'valence':
             hole_charge = self.ctx.hole_charge
@@ -501,9 +501,9 @@ class fleur_corehole_wc(WorkChain):
                     #its name will be changed later to change_kind
                     # maybe the kind name cann also not be known at this point
                     #self.report('{}, {}, {}, {}'.format(econfig, cl_dict.get('corelevel')[i], cl_dict.get('valence')[i], hole_charge))
-                    print(cl_dict.get('corelevel')[i])
-                    print(cl_dict.get('valence')[i])
-                    print(econfig)
+                    #print(cl_dict.get('corelevel')[i])
+                    #print(cl_dict.get('valence')[i])
+                    #print(econfig)
                     state_tag_list = get_state_occ(econfig, corehole = cl_dict.get('corelevel')[i], valence = cl_dict.get('valence')[i], ch_occ = hole_charge)
                     attributedict = {'electronConfig' : {'stateOccupation' : state_tag_list}}       
                     pprint(state_tag_list)
@@ -559,7 +559,7 @@ class fleur_corehole_wc(WorkChain):
             ret_dict = prepare_struc_corehole_wf(base_supercell, wf_para, para)
             moved_struc = ret_dict['moved_struc']
             calc_para = ret_dict['hole_para']
-            print('calc_para:')
+            #print('calc_para:')
             pprint(calc_para.get_dict())
             pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
             # create_wf para or write in last line what should be in 'fleur_change'            
@@ -874,6 +874,7 @@ class fleur_corehole_wc(WorkChain):
         outputnode_dict ={}
         
         outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings               
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['total_energy_ref'] = self.ctx.ref_total_energies
@@ -1041,41 +1042,46 @@ def extract_results_corehole(calcs):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue
-        if calc.get_state() != 'FINISHED':
-            # log and continue
-            continue
-            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
-        
-        # get out.xml file of calculation
-        outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
-        #print outxml
-        corelevels, atomtypes = extract_corelevels(outxml)
-        #all_corelevels.append(core)
-        #print('corelevels: {}'.format(corelevels))
-        #print('atomtypes: {}'.format(atomtypes))
-        #for i in range(0,len(corelevels[0][0]['corestates'])):
-        #    print corelevels[0][0]['corestates'][i]['energy']
+        if calc.get_state() == 'FINISHED':
+            # get out.xml file of calculation
+            outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+            #print outxml
+            corelevels, atomtypes = extract_corelevels(outxml)
+            #all_corelevels.append(core)
+            #print('corelevels: {}'.format(corelevels))
+            #print('atomtypes: {}'.format(atomtypes))
+            #for i in range(0,len(corelevels[0][0]['corestates'])):
+            #    print corelevels[0][0]['corestates'][i]['energy']
+                
+            #TODO how to store?
+            efermi = calc.res.fermi_energy
+            #print efermi
+            bandgap = calc.res.bandgap
+            total_energy = calc.res.energy
+            total_energy_units = calc.res.energy_units
+            #total_energy = calc.res.total_energy
+            #total_energy_units = calc.res.total_energy_units
             
-        #TODO how to store?
-        efermi = calc.res.fermi_energy
-        #print efermi
-        bandgap = calc.res.bandgap
-        total_energy = calc.res.energy
-        total_energy_units = calc.res.energy_units
-        #total_energy = calc.res.total_energy
-        #total_energy_units = calc.res.total_energy_units
-        
-        # TODO: maybe different, because it is prob know from before
-        #fleurinp = calc.inp.fleurinpdata
-        #structure = fleurinp.get_structuredata(fleurinp)
-        #compound = structure.get_formula()
-        #print compound
-        #number = '{}'.format(i)
-        #fermi_energies[number] = efermi
-        #bandgaps[number] = bandgap
-        #all_atomtypes[number] = atomtypes
-        #all_corelevels[number] = corelevels
-        #all_total_energies[number] = total_energy
+            # TODO: maybe different, because it is prob know from before
+            #fleurinp = calc.inp.fleurinpdata
+            #structure = fleurinp.get_structuredata(fleurinp)
+            #compound = structure.get_formula()
+            #print compound
+            #number = '{}'.format(i)
+            #fermi_energies[number] = efermi
+            #bandgaps[number] = bandgap
+            #all_atomtypes[number] = atomtypes
+            #all_corelevels[number] = corelevels
+            #all_total_energies[number] = total_energy
+        else:
+            # log and continue
+            total_energy = float('nan')
+            bandgap = float('nan')
+            efermi = float('nan')
+            corelevels = [float('nan')]
+            atomtypes = [float('nan')]
+            #continue
+            #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))      
         fermi_energies.append(efermi)
         bandgaps.append(bandgap)
         all_atomtypes.append(atomtypes)

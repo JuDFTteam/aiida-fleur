@@ -669,7 +669,8 @@ class fleur_scf_wc(WorkChain):
         
 
         outputnode_dict ={}
-        outputnode_dict['workflow_name'] = self.__class__.__name__# fleur_convergence
+        outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['material'] = self.ctx.formula
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
