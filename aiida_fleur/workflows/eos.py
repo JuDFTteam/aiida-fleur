@@ -142,9 +142,9 @@ class fleur_eos_wc(WorkChain):
             except ValueError:
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
-                #self.control_end_wc(error)
+                #self.control_end_wc(error)                
                 print(error)
-                self.abort()
+                self.abort(error)
                 
         if 'fleur' in inputs:
             try:
@@ -153,8 +153,8 @@ class fleur_eos_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 #self.control_end_wc(error)    
-                print(error)
-                self.abort()
+                #print(error)
+                self.abort(error)
                 
     def structures(self):
         """
@@ -164,136 +164,68 @@ class fleur_eos_wc(WorkChain):
         step = self.ctx.step
         guess = self.ctx.guess
         startscale = guess-(points-1)/2*step
+        
         for point in range(points):
             self.ctx.scalelist.append(startscale + point*step)
+            
         self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
-        #print 'scaling factors which will be calculated:{}'.format(self.ctx.scalelist)
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
         self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
-    '''
-    # I do not know yet how to deal with several futures in one workflow step, therefore rewrite...
+  
     def converge_scf(self):
         """
-        start scf-cycle from Fleur calculation
-        """
-        #calcs = []
-        # run a convergence worklfow# TODO better sumbit or async?
-        for struc in self.ctx.structurs:
-            inputs = self.get_inputs_scf()
-            inputs['structure'] = struc
-            self.ctx.volume.append(struc.get_cell_volume())
-            self.ctx.structurs_uuids.append(struc.uuid)
-            res = submit(fleur_scf_wc,
-                      wf_parameters=inputs['wf_parameters'],
-                      structure=inputs['structure'], 
-                      calc_parameters=inputs['calc_parameters'], 
-                      inpgen = inputs['inpgen'], 
-                      fleur=inputs['fleur'])# asy async .run( submit()
-            self.ctx.calcs_future.append(res)
-            #self.ctx.calcs.append(res)
-        for future in self.ctx.calcs_future:
-            ToContext(temp_calc=future)
-            self.ctx.calcs.append(self.ctx.temp_calc)
-        return ToContext(temp_calc=res)           
-            #print self.ctx.calcs
-            #ResultToContext(self.ctx.calcs1.append(res))
-            #calcs.append(res)
-        #self.ctx.last_calc2 = res#.get('remote_folder', None)
-        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),
-    ''' 
-    
-    def converge_scf(self):
-        """
-        start scf-cycle from Fleur calculation
+        Launch fleur_scfs from the generated structures
         """ 
-        
-        #submit somehow produces strange different results then async... AiiDA problem?
         calcs= {}
         
-
-        # run a convergence worklfow# TODO better sumbit or async?
         for i, struc in enumerate(self.ctx.structurs):
             inputs = self.get_inputs_scf()
             inputs['structure'] = struc
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i])
             label_c = '|eos| fleur_scf_wc'
-            description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)            
+            description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)  
+            
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
-            res = submit(fleur_scf_wc,
-                      wf_parameters=inputs['wf_parameters'],
-                      structure=inputs['structure'], 
-                      calc_parameters=inputs['calc_parameters'], 
-                      inpgen=inputs['inpgen'], 
-                      fleur=inputs['fleur'], _label=label_c, _description=description)# asy async .run( submit()
-            #time.sleep(5)            
-            #self.ctx.calcs_future.append(res)
-            self.ctx.labels.append(label)
-            calcs[label] = res
-            #self.ctx.calcs.append(res)
-        # for future in self.ctx.calcs_future:
-        #    ToContext(temp_calc=future)
-        #    self.ctx.calcs.append(self.ctx.temp_calc)
-        return ToContext(**calcs)           
-            #print self.ctx.calcs
-            #ResultToContext(self.ctx.calcs1.append(res))
-            #calcs.append(res)
-        #self.ctx.last_calc2 = res#.get('remote_folder', None)
-        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),            
-        
-        '''
-        #aync works but job amount small, because limited to computer and async(async) seems to be always 1...
-        calcs= {}
-        # run a convergence worklfow# TODO better sumbit or async?
-        for i, struc in enumerate(self.ctx.structurs):
-            inputs = self.get_inputs_scf()
-            inputs['structure'] = struc
-            natoms = len(struc.sites)
-            self.ctx.volume.append(struc.get_cell_volume())
-            self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
-            self.ctx.structurs_uuids.append(struc.uuid)
-            calc_para = inputs.get('calc_parameters', None)
-
+            
+            calc_para = inputs['calc_parameters']
             if calc_para:
-                res = asy(fleur_scf_wc,
+                res = submit(fleur_scf_wc,
                           wf_parameters=inputs['wf_parameters'],
                           structure=inputs['structure'], 
-                          calc_parameters=inputs['calc_parameters'], 
+                          calc_parameters=calc_para, 
                           inpgen=inputs['inpgen'], 
-                          fleur=inputs['fleur'])# asy async .run( submit(                
+                          fleur=inputs['fleur'], 
+                          _label=label_c, 
+                          _description=description)
             else:
-                res = asy(fleur_scf_wc,
+                 res = submit(fleur_scf_wc,
                           wf_parameters=inputs['wf_parameters'],
                           structure=inputs['structure'], 
                           inpgen=inputs['inpgen'], 
-                          fleur=inputs['fleur'])# asy async .run( submit(                   
-                
-            #self.ctx.calcs_future.append(res)
-            label = str(self.ctx.scalelist[i])
+                          fleur=inputs['fleur'], 
+                          _label=label_c, 
+                          _description=description)               
+            #time.sleep(5)
+
             self.ctx.labels.append(label)
             calcs[label] = res
-            #self.ctx.calcs.append(res)
-        # for future in self.ctx.calcs_future:
-        #    ToContext(temp_calc=future)
-        #    self.ctx.calcs.append(self.ctx.temp_calc)
+            
+        return ToContext(**calcs)                      
         
-        return ToContext(**calcs)           
-        '''
         
-    
     def get_inputs_scf(self):
         """
-        get the inputs for a scf-cycle
+        get and 'produce' the inputs for a scf-cycle
         """
         inputs = {}
-        # produce the inputs for a convergence worklfow
+        
         # create input from that
-        #print 'getting inputs for scf'
         wf_para_dict = self.inputs.wf_parameters.get_dict()
         inputs['wf_parameters'] = wf_para_dict.get('scf_para', None)
-        #inputs['structure'] = self.inputs.structure
+
         if not inputs['wf_parameters']:
             para = {}
             para['resources'] = wf_para_dict.get('resources')
@@ -306,6 +238,7 @@ class fleur_eos_wc(WorkChain):
             calc_para = self.inputs.calc_parameters
         except AttributeError:
             calc_para = None
+        
         if calc_para:
             inputs['calc_parameters'] = calc_para
         inputs['inpgen'] = self.inputs.inpgen
@@ -323,25 +256,25 @@ class fleur_eos_wc(WorkChain):
         t_energylist = []
         t_energylist_peratom = []
         outnodedict = {}
-        #latticeconstant = 0
         natoms = len(self.inputs.structure.sites)
         htr2eV = 27.21138602
      
         for label in self.ctx.labels:
             calc = self.ctx[label]
             outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para'] 
-            #print(calc)
-            #print(Outputs(calc))
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
             
             if not outpara.get('successful', False):
-                #maybe do something else here (exclude point and write a warning or so, or error treatment)
+                #TODO: maybe do something else here 
+                # (exclude point and write a warning or so, or error treatment)
+                # bzw implement and scf_handler, 
+                #also if not perfect converged, results might be good
                 self.ctx.successful = False
-            t_e = outpara.get('total_energy', None)
+            t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr2eV
-            dis = outpara.get('distance_charge', None)
+            dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
             t_energylist_peratom.append(t_e/natoms)
@@ -349,19 +282,19 @@ class fleur_eos_wc(WorkChain):
         
         a = np.array(t_energylist)
         b = np.array(self.ctx.volume_peratom)
-        # all erros should be caught before
-        #if t_energylist:
+        
+        # all erros should be caught before\
+        
+        # TODO: different fits
         volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(a, b)
-        #else: 
-        #    print('error')
-        #echarge = 1.60217733e-19
+
         out = {
                'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'scaling': self.ctx.scalelist,
                'scaling_gs' : volume*natoms/self.ctx.org_volume,
                'initial_structure': self.inputs.structure.uuid,
-               'volume_gs' : volume*natoms,#self.ctx.volume,
+               'volume_gs' : volume*natoms,
                'volumes' : self.ctx.volume,
                'volume_units' : 'A^3',
                'natoms' : natoms,
@@ -375,8 +308,7 @@ class fleur_eos_wc(WorkChain):
                'nsteps' : self.ctx.points,
                'guess' : self.ctx.guess , 
                'stepsize' : self.ctx.step,
-               #'lattice_constant' : latticeconstant, # miss leading, currently scaling
-               #'lattice_constant_units' : '',
+
                #'fitresults' : [a, latticeconstant, c], 
                #'fit' : fit_new, 
                'residuals' : residuals,
@@ -384,19 +316,16 @@ class fleur_eos_wc(WorkChain):
                'bulk_modulus' : bulk_modulus * 160.217733,#* echarge * 1.0e21,#GPa
                'bulk_modulus_units' : 'GPa',
                'successful' : self.ctx.successful}
-        
-        #print out
-        
+                
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
-            #print 'Done, Equation of states calculation complete'
         else:
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
-            #print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
  
         # output must be aiida Data types.
         outnode = ParameterData(dict=out)
         outnodedict['results_node'] = outnode
+        
         # create links between all these nodes...        
         outputnode_dict = create_eos_result_node(**outnodedict)
         outputnode =  outputnode_dict.get('output_eos_wc_para')
@@ -408,17 +337,21 @@ class fleur_eos_wc(WorkChain):
         outputstructure.description = 'Structure with the scaling/volume of the lowest total energy extracted from fleur_eos_wc'
         
         returndict = {}
-        returndict['output_eos_wc_para']  = outputnode#.get('output_eos_wc_para')
+        returndict['output_eos_wc_para']  = outputnode
         returndict['output_eos_wc_structure']  = outputstructure
+        
         # create link to workchain node
         for link_name, node in returndict.iteritems():
-            self.out(link_name, node)        # return success, and the last calculation outputs
+            self.out(link_name, node)
 
 
 if __name__ == "__main__":
     import argparse
-
-    parser = argparse.ArgumentParser(description='lattice constant calculation with Fleur. Do scf-cycles for a structure with different scalling.')
+    
+    # TODO: this is not usable in the command line, since you cannot provide the nodes in the shell
+    # instead you need to use somehting that will load the nodes from pks or uuids
+    # checkout what other aiida people do here
+    parser = argparse.ArgumentParser(description='Equation of states workchain with Fleur. Does scf-cycles for a structure with different scaleings.')
     parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
                         help='Parameter data node, specifing workflow parameters', required=False)
     parser.add_argument('--inpgen', type=Code, dest='inpgen',
@@ -434,7 +367,7 @@ if __name__ == "__main__":
 
 
 @wf
-def create_eos_result_node(**kwargs):#*args):
+def create_eos_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
@@ -446,15 +379,15 @@ def create_eos_result_node(**kwargs):#*args):
     outdict = {}    
     outpara =  kwargs.get('results_node', {})
     outdict['output_eos_wc_para'] = outpara.copy()
-    # copy, because we rather produce the same node twice then have a circle in the database for now...
-    #output_para = args[0]
-    #return {'output_eos_wc_para'}
+    # copy, because we rather produce the same node twice 
+    # then have a circle in the database for now...
     outputdict = outpara.get_dict()
     structure = load_node(outputdict.get('initial_structure'))
     gs_scaling = outputdict.get('scaling_gs', 0)
     if gs_scaling:
        gs_structure = rescale(structure, Float(gs_scaling))
        outdict['gs_structure'] = gs_structure
+
     return outdict
   
 
@@ -469,20 +402,19 @@ def eos_structures(inp_structure, scalelist):
 
     :returns: list of New StructureData nodes with rescalled structure, which are linked to input Structure
     """
-    
-    #test if structure:
     structure = is_structure(inp_structure)
     if not structure:
-        #TODO: log something
+        #TODO: log something (test if it gets here at all)
         return None
     re_structures = []
 
     for scale in scalelist:
-        s = rescale(structure, Float(scale))
+        s = rescale(structure, Float(scale)) # this is a wf
         re_structures.append(s)
+        
     return re_structures
 
-
+'''
 def fit_latticeconstant(scale, eT):
     """
     Extract the lattice constant out of an parabola fit.
@@ -505,8 +437,9 @@ def fit_latticeconstant(scale, eT):
 
 def parabola(x, a, b, c):
     return a*x**2 + b*x + c
+'''
 
-
+# TODO other fits
 def Birch_Murnaghan_fit(energies, volumes):
     """
     least squares fit of a Birch-Murnaghan equation of state curve. From delta project
