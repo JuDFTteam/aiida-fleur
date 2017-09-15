@@ -13,38 +13,33 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 #import sys,os
-from ase import *
+#from ase import *
 import numpy as np
 from sys import argv
-import time
-from ase.lattice.surface import *
-from ase.io import *
-from aiida.orm import Code, CalculationFactory, DataFactory
-from aiida.orm import Computer
+#import time
+#from ase.lattice.surface import *
+#from ase.io import *
+from aiida.orm import Code, DataFactory#, CalculationFactory
+#from aiida.orm import Computer
 from aiida.orm import load_node
-from aiida.orm.data.singlefile import SinglefileData
+from aiida.orm.data.base import Float
 from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import Outputs, ToContext
+from aiida.work.workchain import ToContext#,Outputs
 from aiida.work import workfunction as wf
-#from aiida.work.workfunction import workfunction as wf
 from aiida.work.workchain import WorkChain
-from aiida.work.run import async as asy
+#from aiida.work.run import async as asy
 from aiida.work.run import submit
-from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
-from aiida_fleur.calculation.fleur import FleurCalculation
+#from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+#from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from convergence import fleur_convergence
 #from convergence2 import fleur_convergence2
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 
-
-
-
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
-
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -91,7 +86,7 @@ class fleur_eos_wc(WorkChain):
                                        'step' : 0.002, 
                                        'guess' : 1.00,
                                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
-                                       'walltime_sec':  10*60,
+                                       'walltime_sec':  60*60,
                                        'queue_name' : '',
                                        'custom_scheduler_commands' : ''}))
         spec.input("structure", valid_type=StructureData, required=True)
@@ -125,10 +120,13 @@ class fleur_eos_wc(WorkChain):
         self.ctx.scalelist = []
         self.ctx.volume = []
         self.ctx.volume_peratom = []
+        self.ctx.org_volume = -1# avoid div 0
         self.ctx.labels = []
         self.ctx.successful = True#False # TODO get all succesfull from convergence, if all True this
+        
+        
         wf_dict = self.inputs.wf_parameters.get_dict()
-        self.ctx.points = wf_dict.get('points', 2)#9
+        self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.002)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)#True
@@ -170,6 +168,7 @@ class fleur_eos_wc(WorkChain):
             self.ctx.scalelist.append(startscale + point*step)
         self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
         #print 'scaling factors which will be calculated:{}'.format(self.ctx.scalelist)
+        self.ctx.org_volume = self.inputs.structure.get_cell_volume()
         self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
     '''
     # I do not know yet how to deal with several futures in one workflow step, therefore rewrite...
@@ -279,9 +278,9 @@ class fleur_eos_wc(WorkChain):
         # for future in self.ctx.calcs_future:
         #    ToContext(temp_calc=future)
         #    self.ctx.calcs.append(self.ctx.temp_calc)
-        '''
+        
         return ToContext(**calcs)           
-   
+        '''
         
     
     def get_inputs_scf(self):
@@ -358,7 +357,9 @@ class fleur_eos_wc(WorkChain):
         #echarge = 1.60217733e-19
         out = {
                'workflow_name' : self.__class__.__name__,
+               'workflow_version' : self._workflowversion,
                'scaling': self.ctx.scalelist,
+               'scaling_gs' : volume*natoms/self.ctx.org_volume,
                'initial_structure': self.inputs.structure.uuid,
                'volume_gs' : volume*natoms,#self.ctx.volume,
                'volumes' : self.ctx.volume,
@@ -397,12 +398,18 @@ class fleur_eos_wc(WorkChain):
         outnode = ParameterData(dict=out)
         outnodedict['results_node'] = outnode
         # create links between all these nodes...        
-        outputnode = create_eos_result_node(**outnodedict).get('output_eos_wc_para')
+        outputnode_dict = create_eos_result_node(**outnodedict)
+        outputnode =  outputnode_dict.get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
         outputnode.description = 'Contains equation of states results and information of an fleur_eos_wc run.' 
         
+        outputstructure =  outputnode_dict.get('gs_structure')
+        outputstructure.label = 'ouput_eos_wc_structure'
+        outputstructure.description = 'Structure with the scaling/volume of the lowest total energy extracted from fleur_eos_wc'
+        
         returndict = {}
         returndict['output_eos_wc_para']  = outputnode#.get('output_eos_wc_para')
+        returndict['output_eos_wc_structure']  = outputstructure
         # create link to workchain node
         for link_name, node in returndict.iteritems():
             self.out(link_name, node)        # return success, and the last calculation outputs
@@ -438,10 +445,16 @@ def create_eos_result_node(**kwargs):#*args):
     """
     outdict = {}    
     outpara =  kwargs.get('results_node', {})
-    outdict['output_eos_wc_para'] = outpara.copy() 
+    outdict['output_eos_wc_para'] = outpara.copy()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}
+    outputdict = outpara.get_dict()
+    structure = load_node(outputdict.get('initial_structure'))
+    gs_scaling = outputdict.get('scaling_gs', 0)
+    if gs_scaling:
+       gs_structure = rescale(structure, Float(gs_scaling))
+       outdict['gs_structure'] = gs_structure
     return outdict
   
 
@@ -456,7 +469,7 @@ def eos_structures(inp_structure, scalelist):
 
     :returns: list of New StructureData nodes with rescalled structure, which are linked to input Structure
     """
-    from aiida.orm.data.base import Float
+    
     #test if structure:
     structure = is_structure(inp_structure)
     if not structure:
