@@ -287,6 +287,10 @@ class fleur_corehole_wc(WorkChain):
                         Int(supercell_base[2]))#,
                         #_label=u'supercell_wf', 
                         #_description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).')
+        #form = self.ctx.base_structure_relax.get_formula()
+        # overwrite label and description
+        supercell_s.label = '{}x{}x{} ' +  supercell_s.label.format(supercell_base[0], supercell_base[1], supercell_base[2])
+        supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'#'{}x{}x{} supercell of {} created in a fleur_corehole_wc'   
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
         new_calc = [supercell_s, calc_para]
