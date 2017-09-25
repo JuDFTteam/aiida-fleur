@@ -7,27 +7,25 @@ energies and corelevel shifts with different methods.
 """
 #TODO parsing of eigenvalues of LOS!
 #TODO error handling of scf
-#TODO USE SAME PARAMETERS! (maybe extract method for fleurinp needed)
-# TODO Check if calculations failed, and termine the workflow without a raised execption
+#TODO Check if calculations failed, and termine the workflow without a raised execption
 # currently the result extraction part will fail if calculations failed
+#TODO USE SAME PARAMETERS! (maybe extract method for fleurinp needed)
 # TODO: Allow for providing referenes as scf_ouputparameter nodes
 # TODO: maybe launch all scfs at the same time
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
     
-#import os.path
 from aiida.orm import Code, DataFactory, CalculationFactory, load_node
 from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
-from aiida.work.run import async as asy
+#from aiida.work.run import async as asy
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.work import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
-#from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.work.workchain import  if_ #while_,
+from aiida.work.workchain import  if_
 from aiida_fleur.tools.extract_corelevels import extract_corelevels
 from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
 from aiida.common.exceptions import NotExistent
@@ -39,14 +37,12 @@ FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 FleurCalc = CalculationFactory('fleur.fleur')
 
-htr_to_eV = 1
 
 class fleur_initial_cls_wc(WorkChain):
-    '''
-    Turn key solution for the calculation of core level shift and Binding energies
+    """
+    Turn key solution for the calculation of core level shift 
     
-    '''
-    # wf_Parameters: ParameterData, 
+    """
     '''
     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
     'Bes' : [W4f, Be1s]
@@ -75,7 +71,7 @@ class fleur_initial_cls_wc(WorkChain):
     'dos_para' : 'default'
     '''
     
-    _workflowversion = "0.0.1"
+    _workflowversion = "0.2.0"
     _default_wf_para = {#'references' : {'calculate' : 'all'},
                         'structure_ref' : {},
                         'relax' : True,
@@ -89,10 +85,7 @@ class fleur_initial_cls_wc(WorkChain):
                         'serial' : True}    
     def __init__(self, *args, **kwargs):
         super(fleur_initial_cls_wc, self).__init__(*args, **kwargs)    
-    '''
-    def get_defaut_wf_para(self):
-        return self._default_wf_para
-     '''     
+     
     @classmethod
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
@@ -126,7 +119,7 @@ class fleur_initial_cls_wc(WorkChain):
             cls.return_results
         )
         spec.dynamic_output()
-        #spec.dynamic_input()
+
 
     def check_input(self):
         """
@@ -154,6 +147,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.warnings = []
         self.ctx.errors = []
         self.ctx.ref = {}
+        self.ctx.calculate_formation_energy = True
         
         #Style: {atomtype : listof all corelevel, atomtype_coresetup... }
         #ie: { 'W-1' : [shift_1s, ... shift 7/2 4f], 
@@ -250,7 +244,8 @@ class fleur_initial_cls_wc(WorkChain):
         
         # get specific element reference if given override
         #print(self.ctx.elements)
-        for elem in self.ctx.elements:
+        elements = self.ctx.elements # ggf copy because ctx.elements will be modified
+        for elem in elements:
             #to_calc[elem] = 'find'
             ref_el = references.get(elem, None)
             #print ref_el
@@ -279,6 +274,8 @@ class fleur_initial_cls_wc(WorkChain):
                 # expecting nodes and filling ref_calcs_torun
                 if isinstance(ref_el_node, list):#(StructureData, ParameterData)):
                     #enforced parameters, add directly to run queue
+                    # TODO: if a scf with these parameters was already done link to it
+                    # and extract the results instead of running the calculation again....
                     if len(ref_el_node)==2:
                         if isinstance(ref_el_node[0], StructureData) and isinstance(ref_el_node[1], ParameterData):
                             self.ctx.ref_calcs_torun.append(ref_el_node)
@@ -324,19 +321,37 @@ class fleur_initial_cls_wc(WorkChain):
                     self.ctx.ref_calcs_torun.append(structure)
                 else:
                     pass # report not found?
-            else: # no ref given, we have to look for it.
-                structure = querry_for_ref_structure(elem)
-                if structure:
-                    self.ctx.ref[elem] = structure
-                    self.ctx.ref_calcs_torun.append(structure)# tempoary later check parameters
-                else: #not found
-                    error = ("ERROR: Reference structure for element: {} not found."
-                             "checkout the 'querry_for_ref_structure' method."
-                             "to see what extras are querried for.".format(elem))
-                    #print(error)
-                    self.ctx.errors.append(error)
-                    self.ctx.abort = True
-                    self.report(error)
+            
+            
+            #elif query_for_ref: # no ref given, we have to look for it.
+            #    structure = querry_for_ref_structure(elem)
+            #    # TODO: Advance this querry, if a calculation with the given parameter was already done use these results
+            #    if structure:
+            #        self.ctx.ref[elem] = structure
+            #        self.ctx.ref_calcs_torun.append(structure)# tempoary later check parameters
+            #    else: #not found
+            #        error = ("ERROR: Reference structure for element: {} not found."
+            #                 "checkout the 'querry_for_ref_structure' method."
+            #                 "to see what extras are querried for.".format(elem))
+            #        #print(error)
+            #        self.ctx.errors.append(error)
+            #        self.ctx.abort = True
+            #        self.report(error)
+            
+            else: # no reference for element found
+                # do we not want to calculate it or is this an error?
+                warning = ('WARNING: I did not find a reference for element {}. '
+                    'If you do not calculate shifts for this element ignore this warning.'
+                    'If I should calculate this will lead to an error later.'
+                    'Note: without all references I cannot calculte the binding energy'.format(elem))
+                self.report(warning)
+                self.ctx.calculate_formation_energy = False
+                # delete element from element list (no calculations will be launched for it)                
+                valid_elm = self.ctx.elements
+                i = valid_elm.index(elem)
+                del valid_elm[i]
+                self.ctx.elements = valid_elm
+            
         if self.ctx.abort:
             error = ('ERROR: Something was wrong with the reference input provided. '
                     'I cannot calculate from the input, or what I have found '
@@ -727,11 +742,16 @@ class fleur_initial_cls_wc(WorkChain):
         # to normalize ref,
         # from.split(012345678910)
         # devide total energy by number of atoms
-        ref_total_en_norm = ref_total_en
-        print ref_total_en_norm
-        print total_en
-        formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
         
+        # Formation energy calculation is ony possible if all elementals of the structure
+        # have been calculated.
+        if self.ctx.calculate_formation_energy:
+            ref_total_en_norm = ref_total_en
+            print ref_total_en_norm
+            print total_en
+            formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
+        else:
+            formation_energy = [[]]
         
         # TODO make simpler format of atomtypes for node
         # TODO write corelevel explanation/coresetup in a format like 4f7/2 
