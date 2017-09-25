@@ -118,7 +118,10 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):
 
     :returns StructureData, Node with supercell
     """
-    return supercell_nwf(inp_structure, n_a1, n_a2, n_a3)
+    superc = supercell_nwf(inp_structure, n_a1, n_a2, n_a3)
+    
+    formula = inp_structure.get_formula()
+    return superc
 
     
 def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
@@ -189,6 +192,9 @@ def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         for j in range(1,na3): # these sites/atoms are already added
             pos = [pos_o[i] + j * old_a3[i] for i in range(0,len(old_a3))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
+            
+    new_structure.label = 'supercell of {}'.format(formula)
+    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, inp_structure.get_formula())    
     return new_structure
 
 
@@ -450,7 +456,10 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
         para_new = ParameterData(dict=new_parameterd)
     else:
         para_new = None
-
+    
+    new_structure.label = structure.label
+    new_structure.description =  structure.description + 'more kinds, less sym'
+ 
     return new_structure, para_new
 
 
@@ -520,6 +529,7 @@ def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_w
     wf_para_dict = wf_para.get_dict()
     vector = wf_para_dict.get('vector' , [0.0, 0.0, 0.0])
     new_structure = move_atoms_incell(structure, vector)#[Float1, Float2, Float3])
+
     
     return {'moved_struc' : new_structure}
 
@@ -545,7 +555,10 @@ def move_atoms_incell(structure, vector):
         new_pos = np.array(pos) + np.array(vector)
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
-    
+        new_structure.label = structure.label
+        
+    new_structure.label = structure.label
+    new_structure.description =  structure.description + 'moved'
     return new_structure
     
     
@@ -565,6 +578,10 @@ def find_primitive_cell(structure):
     new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
     #print('new {}'.format(len(new_structure.sites)))
+    
+ 
+    new_structure.label = structure.label + ' primitive'
+    new_structure.description =  structure.description + ' primitive cell'   
     return new_structure
     
 @wf
@@ -576,7 +593,7 @@ def find_primitive_cell_wf(structure):
     returns: list of new AiiDa structure data
     """
     
-    return find_primitive_cell(structure)
+    return {'primitive_cell' : find_primitive_cell(structure)}
 
 
 def find_primitive_cells(uuid_list):
