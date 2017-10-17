@@ -569,6 +569,8 @@ def find_primitive_cell(structure):
     
     returns: list of new AiiDa structure data
     """
+    # TODO: if refinced structure is the same as given structure
+    # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
     symprec = 1e-7
@@ -746,3 +748,45 @@ def sort_atoms_z_value(structure):
         new_structure.append_site(site[0])
     
     return new_structure
+    
+    
+def estimate_mt_radii(structure, stepsize=0.05):
+    """
+    #TODO implement
+    This method returns for every atom type (group/kind) in the structure a range of 
+    possible muffin tin radii (min, max).
+    Or maybe just the maximal muffin tin radi (or sets of maximal muffin tin radii)
+    
+    example return for some Be-W compound
+    [[{Be: 1.6, W:2.4}, {Be:1.8, W:2.2}]
+
+    """
+    
+    
+    # get symmetry equivalent atoms,
+    # for each atom extimate muffin tin
+    # check what algo fleur uses here
+    # Max radius easy increase all spheres until they touch.
+    # How to get the minimal muffin tin radii?
+    pass
+
+def common_mt(max_muffin_tins):
+    """
+    #TODO implement
+    From a list of dictionary given return smallest common set. 
+    
+    
+    [[{Be: 1.7, W:2.4}, {Be:1.8, W:2.3}], [{Be : 1.75}], [{W:2.5}]
+    should return [{Be:1.7, W:2.4}]
+    """
+    pass
+
+
+def find_common_mt(structures):
+    """
+    #TODO implement
+    From a given list of structures, estimate the muffin tin radii and return
+    the smallest common set. (therefore a choice for rmt that would work for every structure given)
+    
+    """
+    pass
