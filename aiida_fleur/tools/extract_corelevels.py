@@ -92,7 +92,6 @@ def extract_corelevels(outxmlfile, options=None):
    'eigenvalue_sum': '     -7.2979861254',
    'kin_energy': '     13.4757066163',
    'spin': '1'}]]
-    
     """
     ##########################################
     #1. read out.xml in etree
@@ -376,7 +375,7 @@ for calc in calcs_pks:
 
 print("--- %s seconds ---" % (time.time() - start_time))
 '''
-
+# TODO this is prob doubled is also in init_cls wc
 def clshifts_to_be(coreleveldict, reference_dict):
     """
     This methods converts corelevel shifts to binding energies, if a reference is given.

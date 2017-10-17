@@ -15,27 +15,23 @@ cylce of a FLEUR calculation with AiiDA.
 #TODO: check if calculation already exists
 #TODO: Better convergence behavior if broyd files are not copied?
 # maybe adjust this in general in the plugin?
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-from aiida.work.workchain import while_, if_
-from aiida.work.run import submit
+from aiida.work.workchain import WorkChain, while_, if_, ToContext
+from aiida.work.run import submit, run
 from aiida.work import workfunction as wf
-from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
-#from aiida.work.workchain import Outputs
-
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.xml_util import eval_xpath2
-from lxml import etree
-from lxml.etree import XMLSyntaxError
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
@@ -78,15 +74,13 @@ class fleur_scf_wc(WorkChain):
 
     maximum input example: 
     1. Code1, Code2, Structure, Parameters 
-                           wf_parameters: {
-                           'density_criterion' : Float,
-                           'energy_criterion' : Float,
-                           'converge_density' : True,
-                           'converge_energy' : True,
-                           'queue' : String,
-                           'resources' : dict(
-                               {"num_machines": int, "num_mpiprocs_per_machine" : int})
-                           'walltime' : int}
+        wf_parameters: {'density_criterion' : Float,
+                        'energy_criterion' : Float,
+                        'converge_density' : True,
+                        'converge_energy' : True,
+                        'queue' : String,
+                        'resources' : dict({"num_machines": int, "num_mpiprocs_per_machine" : int})
+                        'walltime' : int}
     2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
 
     Hints:
@@ -117,16 +111,16 @@ class fleur_scf_wc(WorkChain):
         #keys = kwargs.keys()
         #if '_description' not in keys:
         #    print('here')
-        #    kwargs['_description'] =  self._default_wc_description
+        #    kwargs['_description'] = self._default_wc_description
         #if '_label' not in keys:
         #    print('here2')
-        #    kwargs['_label'] =  self._default_wc_description        
+        #    kwargs['_label'] = self._default_wc_description        
         # set raw input defaults of process, if not given
         #for key, val in kwargs.iteritems():        
         #    if key=='_description':
         #        print('here')
         #        if not val:
-        #            kwargs[key] =  self._default_wc_description
+        #            kwargs[key] = self._default_wc_description
         #    if key=='_label':
         #        if not val:
         #            kwargs[key] = self._default_wc_label
@@ -208,7 +202,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
                 
         #print(self.ctx.description_wf)
-        self.ctx.label_wf =  self.inputs.get('_label', 'fleur_scf_wc')
+        self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
         #print(self.ctx.label_wf)
         
 
@@ -449,7 +443,7 @@ class fleur_scf_wc(WorkChain):
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}#,
         if self.ctx.custom_scheduler_commands:
-            options["custom_scheduler_commands"] =  self.ctx.custom_scheduler_commands
+            options["custom_scheduler_commands"] = self.ctx.custom_scheduler_commands
         #inputs = get_inputs_fleur(code, remote, fleurin, options, settings=settings, serial=self.ctx.serial)
         inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         #print('inputs fleur {}'.format(inputs))
@@ -598,7 +592,7 @@ class fleur_scf_wc(WorkChain):
             #TODO better control shutdown
             #self.report('last calc not successful')
 
-            errormsg =  'ERROR: scf wc was not successful, check log for details'
+            errormsg = 'ERROR: scf wc was not successful, check log for details'
             #self.abort_nowait(errormsg)
             self.control_end_wc(errormsg)
             #print('not successful')
@@ -632,7 +626,7 @@ class fleur_scf_wc(WorkChain):
             
         energy = self.ctx.total_energy
         #print(energy)
-        if len(energy) >=2:
+        if len(energy) >= 2:
             self.ctx.energydiff = abs(energy[-1]-energy[-2])
         if inpwfp_dict.get('converge_energy', True):
             if inpwfp_dict.get('energy_criterion', 0.002) >= self.ctx.energydiff:
@@ -668,7 +662,7 @@ class fleur_scf_wc(WorkChain):
         
         
 
-        outputnode_dict ={}
+        outputnode_dict = {}
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['material'] = self.ctx.formula
@@ -740,9 +734,15 @@ class fleur_scf_wc(WorkChain):
                
         
     def bad_ending(self):
+        """
+        controled shutdown
+        """
         pass
     
     def handle_fleur_failure(self):
+        """
+        handle a failure of a Fleur calculation
+        """
         pass
         # handle out of walltime (not one interation run) abort, tell user to specifi mor resources, or different cutoffs
         
@@ -816,6 +816,9 @@ class fleur_scf_wc(WorkChain):
         
     
     def handle_inpgen_failure(self):
+        """
+        Handle a failure of inpgen
+        """
         pass
     
     def control_end_wc(self, errormsg):
@@ -852,13 +855,14 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
    
     args = parser.parse_args()
-    res = fleur_scf_wc.run(wf_parameters=args.wf_parameters, 
+    res = run(fleur_scf_wc, wf_parameters=args.wf_parameters, 
                                 structure=args.structure, 
                                 calc_parameters=args.calc_parameters,
                                 fleurinp=args.fleurinp,
                                 remote_data=args.remote_data,
                                 inpgen = args.inpgen, 
                                 fleur=args.fleur)
+
 
 
 @wf
@@ -869,7 +873,6 @@ def create_scf_result_node(**kwargs):
     It also connects the output_node to all nodes the information commes from.
     So far it is just also parsed in as argument, because so far we are to lazy 
     to put most of the code overworked from return_results in here.
-    
     """
     for key, val in kwargs.iteritems():
         if key == 'outpara': #  should be alwasys there
@@ -884,6 +887,3 @@ def create_scf_result_node(**kwargs):
     #output_para = args[0]
     #return {'output_eos_wc_para'}
     return outdict
-
-
-

@@ -161,6 +161,14 @@ Tools and utility
 ..
   plugin/utility
 
+FAQ
+===
+
+.. toctree::
+   :maxdepth: 4
+   
+   plugin/hints_faq
+
 Source code documentation
 =========================
 

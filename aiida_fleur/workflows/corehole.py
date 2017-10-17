@@ -36,7 +36,6 @@ from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workfunction import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
-#from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.StructureData_util import supercell
 from aiida_fleur.tools.create_corehole import create_corehole_para#, create_corehole_fleurinp
 from aiida_fleur.tools.extract_corelevels import extract_corelevels
@@ -53,7 +52,6 @@ StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
-#FleurProcess = FleurCalculation.process()
 
 
 class fleur_corehole_wc(WorkChain):
@@ -117,7 +115,7 @@ class fleur_corehole_wc(WorkChain):
     2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
 
     Hints:
-    1. This workflow does not work with local codes!    
+    1. This workflow does not work with local codes!
     """
     
     _workflowversion = "0.2.0"
@@ -859,9 +857,9 @@ class fleur_corehole_wc(WorkChain):
         return
         
     def return_results(self):
-        '''
+        """
         return the results of the calculations
-        '''
+        """
         # TODO: make sure ouputnodes are always produced
         # get 
         # TODO: Maybe all variables should come from the context, therefore they
@@ -955,7 +953,6 @@ def create_corehole_result_node(**kwargs):#*args):
     It also connects the output_node to all nodes the information commes from.
     So far it is just also parsed in as argument, because so far we are to lazy 
     to put most of the code overworked from return_results in here.
-    
     """
     outdict = {}    
     outpara = kwargs.get('results_node', {})
@@ -977,7 +974,6 @@ def prepare_struc_corehole_wf(base_supercell, wf_para, para):#, _label='prepare_
     workfunction which does all/some the structure+calcparameter manipulations together
     (therefore less nodes are produced and proverance is kept)
     wf_para: ParameterData node dict: {'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}
-
     """
     from aiida_fleur.tools.StructureData_util import move_atoms_incell
     #from aiida.orm.data.structure import Site

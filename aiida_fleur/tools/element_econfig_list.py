@@ -283,8 +283,6 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
     ch_occ full or fractional corehole occupation?
     valence: orbital sting '5d', is to adjust the charges for fractional coreholes
     To that orbital occupation ch_occ - 1 will be added.
-
-
     """
     # get all not full occ states
     # get how are are filled spin up down
