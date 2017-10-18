@@ -23,17 +23,17 @@ ParameterData = DataFactory('parameter')
 
 def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     """
-    Merges two parameterData nodes. 
+    Merges two parameterData nodes.
     Additive: uses all namelists of both.
     If they have a namelist in common. ParameterData2 will overwrite the namelist
-    of parameterData. If this is not wanted. set overwrite = False. 
+    of parameterData. If this is not wanted. set overwrite = False.
     Then attributes of both will be added, but attributes from ParameterData1 won't
     be oeverwritten.
-    
+
 
     param: AiiDA ParamterData Node
     param: AiiDA ParamterData Node
-    
+
     returns: AiiDA ParamterData Node
     """
 
@@ -112,25 +112,25 @@ def merge_parameters(ParameterDataList, overwrite=True):
 def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
     """
     workfunction of merge_parameters
-    """     
+    """
     paremeter_data_new = merge_parameter(ParameterData1, ParameterData2, overwrite=overwrite)
-    
+
     return paremeter_data_new
 
 '''
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
 # makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
-# I guess...  
-@wf    
+# I guess...
+@wf
 def merge_parameters_wf(*ParameterDatas, overwrite=Bool(True)):
     """
     workfunction of merge_parameters
-    """    
+    """
     ParameterDataList = []
     for parameter in ParameterDatas:
         ParameterDataList.append(parameter)
     paremeter_data_new = merge_parameters(ParameterDataList, overwrite=overwrite)
-    
+
     return paremeter_data_new
 '''
 if __name__ == "__main__":

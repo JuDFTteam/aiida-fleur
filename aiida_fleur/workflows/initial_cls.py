@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This is the worklfow 'initial_cls' using the Fleur code calculating 
+This is the worklfow 'initial_cls' using the Fleur code calculating
 corelevel shifts with different methods.
 """
 #TODO parsing of eigenvalues of LOS!
@@ -288,7 +288,7 @@ class fleur_initial_cls_wc(WorkChain):
                     self.ctx.ref_cl_energies[elem] = {}
                 elif isinstance(ref_el_node, ParameterData):
                     #extract from workflow output TODO
-                    self.ctx.ref_cl_energies[elem] = {}        
+                    self.ctx.ref_cl_energies[elem] = {}
                 elif isinstance(ref_el_node, FleurinpData):
                     # add to calculations
                     #enforced parameters, add directly to run queue
@@ -348,7 +348,7 @@ class fleur_initial_cls_wc(WorkChain):
                            ' I cannot calculte the binding energy'.format(elem))
                 self.report(warning)
                 self.ctx.calculate_formation_energy = False
-                # delete element from element list (no calculations will be launched for it)              
+                # delete element from element list (no calculations will be launched for it)
                 valid_elm = self.ctx.elements
                 i = valid_elm.index(elem)
                 del valid_elm[i]
@@ -385,7 +385,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
-        self.report('INFO: In run_fleur_scfs inital_state_CLS workflow')  
+        self.report('INFO: In run_fleur_scfs inital_state_CLS workflow')
         #from aiida.work import run, async,
         #TODO if submiting of workdlows work, use that.
         #or run them with async (if youy know how to extract results)
@@ -428,11 +428,11 @@ class fleur_initial_cls_wc(WorkChain):
                 self.report('ERROR: something in calcs_torun which I do not '
                             'recognize: {}'.format(node))
                 #self.report('{}{}'.format(type(node[0], node[1])))
-                res = None 
+                res = None
                 continue
             res_all.append(res)
             #print res
-            #calc_node = res['output_scf_wc_para'].get_inputs()[0] 
+            #calc_node = res['output_scf_wc_para'].get_inputs()[0]
             # if run is used, otherwise use labels
             #self.ctx.calcs_res.append(calc_node)
             #self.ctx.calcs_torun.remove(node)
@@ -440,7 +440,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.calcs_torun = []
         #return ToContext(last_calc=res)
 
-        '''    
+        '''
         inputs = get_inputs_fleur(code, remote, fleurin, options)
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
@@ -449,10 +449,10 @@ class fleur_initial_cls_wc(WorkChain):
         '''
         return ToContext(calcs_res=res) #calcs.append(future
 
-        
+
     def relaxation_needed(self):
         """
-        If the structures should be relaxed, check if their Forces are below a certain 
+        If the structures should be relaxed, check if their Forces are below a certain
         threshold, otherwise throw them in the relaxation wf.
         """
         self.report('INFO: In relaxation inital_state_CLS workflow (so far nothing to do)')
@@ -465,53 +465,53 @@ class fleur_initial_cls_wc(WorkChain):
                 return False
         else:
             return False
-    
-    
+
+
     def relax(self):
         """
         Do structural relaxation for certain structures.
         """
-        self.report('INFO: In relax inital_state_CLS workflow (so far nothing to do)')  
+        self.report('INFO: In relax inital_state_CLS workflow (so far nothing to do)')
         self.ctx.dos_to_calc = []
         for calc in self.ctx.dos_to_calc:
-            pass 
+            pass
             # TODO run relax workflow
 
-    
+
     def find_parameters(self):
         """
-        If the same parameters shall be used in the calculations you have to 
+        If the same parameters shall be used in the calculations you have to
         find some that match. For low error on CLS. therefore use the ones enforced
         or extract from the previous Fleur calculation.
         """
-        #self.ctx.ref[elem] = ref_el        
+        #self.ctx.ref[elem] = ref_el
         #self.ctx.ref_calcs_torun.append(ref_el)
-        
+
         # for entry in ref[elem] find parameter node
         for elm, struc in self.ctx.ref.iteritems():
             #print(elm, struc)
             #self.ctx.ref_calcs_torun.append(ref_el)
             pass
-            # if parameter node given, extract from there, 
+            # if parameter node given, extract from there,
             #parameter_dict
             # else
             #extract parameter out of previous calculation
             #parameter_dict = fleurinp.extract_para(element)
             # BE CAREFUL WITH LOs! soc and co
-            
+
 
     def run_scfs_ref(self):
         """
         Run SCF-cycles for ref structures, calculations given in certain workflow arrays.
         parameter nodes should be given
         """
-        self.report('INFO: In run_scfs_ref inital_state_CLS workflow')  
+        self.report('INFO: In run_scfs_ref inital_state_CLS workflow')
 
-        #from aiida.work import run, async, 
-        #TODO if submiting of workdlows work, use that. 
-        #or run them with async (if youy know how to extract results) 
+        #from aiida.work import run, async,
+        #TODO if submiting of workdlows work, use that.
+        #or run them with async (if youy know how to extract results)
         para = self.ctx.scf_para
-        if para == 'default': 
+        if para == 'default':
             wf_parameter = {}
         else:
             wf_parameter = para
@@ -532,11 +532,11 @@ class fleur_initial_cls_wc(WorkChain):
                                ''.format(self.ctx.elements[i]))
             #print node
             if isinstance(node, StructureData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
-                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur, 
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur,
                              _label=scf_label, _description=scf_description)#
             #elif isinstance(node, FleurinpData):
-            #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node, 
+            #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):#(StructureData, ParameterData)):
                 res = submit(fleur_scf_wc, wf_parameters=wf_parameters,
@@ -552,12 +552,12 @@ class fleur_initial_cls_wc(WorkChain):
             self.ctx.ref_labels.append(label)
             calcs[label] = res
             res_all.append(res)
-            #print res  
+            #print res
             self.ctx.ref_calcs_res.append(res)
             #self.ctx.calcs_torun.remove(node)
-            #print res    
+            #print res
         self.ctx.ref_calcs_torun = []
-        return ToContext(**calcs)          
+        return ToContext(**calcs)
 
     def handle_scf_failure(self):
         """
@@ -601,13 +601,13 @@ class fleur_initial_cls_wc(WorkChain):
             self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
             self.ctx.restart_calc = calculation
         '''
-        return 
+        return
 
 
     def collect_results(self):
         """
-        Collect results from certain calculation, check if everything is fine, 
-        calculate the wanted quantities. currently all energies are in hartree 
+        Collect results from certain calculation, check if everything is fine,
+        calculate the wanted quantities. currently all energies are in hartree
         (as provided by Fleur)
         """
         from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
@@ -720,7 +720,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
-        outputnode_dict['warnings'] = self.ctx.warnings   
+        outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['corelevel_energies'] = cl #self.ctx.cl_energies
         outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
@@ -728,7 +728,7 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
         outputnode_dict['reference_fermi_energy'] = ref_efermi
         outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies
-        outputnode_dict['fermi_energy_units'] = 'eV'       
+        outputnode_dict['fermi_energy_units'] = 'eV'
         outputnode_dict['corelevelshifts'] = cls #self.ctx.CLS
         outputnode_dict['corelevelshifts_units'] = 'htr'#'eV'
         outputnode_dict['binding_energy_convention'] = 'negativ'
@@ -761,7 +761,7 @@ class fleur_initial_cls_wc(WorkChain):
             calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
             outnodedict[label]  = calc_dict
 
-        outdict = create_initcls_result_node(**outnodedict)        
+        outdict = create_initcls_result_node(**outnodedict)
 
         #outdict = {}
         #outdict['output_inital_cls_wc_para'] = outputnode
@@ -779,7 +779,7 @@ def create_initcls_result_node(**kwargs):
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
     It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy 
+    So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
 
@@ -796,7 +796,7 @@ def create_initcls_result_node(**kwargs):
 def querry_for_ref_structure(element_string):
     """
     This methods finds StructureData nodes with the following extras:
-    extra.type = 'bulk', # Should be done by looking at pbc, but I could not 
+    extra.type = 'bulk', # Should be done by looking at pbc, but I could not
     get querry to work.
     extra.specific = 'reference',
     'extra.elemental' = True,
@@ -818,7 +818,7 @@ def querry_for_ref_structure(element_string):
     structures = q.all()
 
     if structures:
-        return structures[-1][0] 
+        return structures[-1][0]
     else:
         return None
 
@@ -839,9 +839,9 @@ def extract_results(calcs):
 
     params: calcs : list of scf workchains nodes
     """
-    
+
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
-    
+
     calc_uuids = []
     for calc in calcs:
         #print(calc)
@@ -1032,7 +1032,7 @@ def get_para_from_group(element, group):
                        'given group name= {} is not a valid group'
                        '(or is your group name integer?)'.format(group_name))
             report.append(message)
-            #abort_nowait('I abort, because I have no structures to calculate ...')  
+            #abort_nowait('I abort, because I have no structures to calculate ...')
 
     para_nodes = para_group.nodes
     #n_stru = len(para_nodes)

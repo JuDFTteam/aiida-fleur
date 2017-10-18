@@ -257,7 +257,7 @@ def xml_set_all_text(xmltree, xpathn, text, create=False):
 
 def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag_order = None):
     """
-    This method evaluates an xpath expresion and creates tag in an xmltree under the 
+    This method evaluates an xpath expresion and creates tag in an xmltree under the
     returned nodes. If the path does exist things will be overriden, or created.
     Per default the new element is appended to the elements, but it can also be
     inserted in a certain position or after certain other tags.
@@ -325,10 +325,10 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
 def delete_att(xmltree, xpath, attrib):
     """
     deletes an xml tag in an xmletree in place
-    
+
     param: xmltree: xmltree (etree)
     param: xpath: xpathexpression
-    """ 
+    """
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -342,10 +342,10 @@ def delete_att(xmltree, xpath, attrib):
 def delete_tag(xmltree, xpath):
     """
     deletes an xml tag in an xmletree in place
-    
+
     param: xmltree: xmltree (etree)
     param: xpath: xpathexpression
-    """    
+    """
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
     if nodes:
@@ -357,7 +357,7 @@ def delete_tag(xmltree, xpath):
 def replace_tag(xmltree, xpath, newelement):
     """
     replaces a xml tag by another tag on an xmletree in place
-    
+
     param: xmltree: xmltree (etree)
     param: xpath: xpathexpression
     param: newelement: xmlElement
@@ -372,24 +372,24 @@ def replace_tag(xmltree, xpath, newelement):
             parent.append(newelement)
 
     return xmltree
-    
+
 ####### XML SETTERS SPECIAL ########
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     """
     Method to set parameters of a species tag of the fleur inp.xml file.
-    
+
     param: fleurinp_tree_copy, xml etree of the inp.xml
     param: species_name : string, name of the species you want to change
     param: attributedict: python dict: what you want to change
     param: create: bool, if species does not exist create it and all subtags?
-    
+
     raises: ValueError, if species name is non existent in inp.xml and should not be created.
     also if other given tags are garbage. (errors from eval_xpath() methods)
-    
+
     return: fleurinp_tree_copy: xml etree of the new inp.xml
-    
-    
+
+
     """
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also number, other parameters
@@ -534,7 +534,7 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0],
     Routine adds something to the value of an attribute in the xml file (should be a number here)
 
     :param: an etree a xpath from root to the attribute and the attribute value
-    
+
     :param: mode: 'abs', 'rel', change by absolut or relative amount
     :return: None, or an etree
 
@@ -543,8 +543,8 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0],
     example: add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1')
              add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1.1', mode='rel')
     """
-    
-    
+
+
     #get attribute, add or multiply
     #set attribute
     attribval_node = eval_xpath(xmltree, xpathn)
@@ -559,7 +559,7 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0],
         else:
             pass
             #unknown mode
-            
+
         xml_set_attribv_occ(xmltree, xpathn, attributename, newattribv, occ=[0], create=False)
     else:
         pass
@@ -571,7 +571,7 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0],
 def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
     :param root node of an etree and an xpath expression (relative, or absolute)
     :returns either nodes, or attributes, or text
     """
@@ -591,7 +591,7 @@ def eval_xpath(node, xpath, parser_info={'parser_warnings':[]}):
 def eval_xpath2(node, xpath, parser_info={'parser_warnings':[]}):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
     :param root node of an etree and an xpath expression (relative, or absolute)
     :returns either nodes, or attributes, or text
     """
@@ -764,7 +764,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             #print xmltree_new, xpath_set, key, fleur_change_dic[key]
             if key in pos_float_attributes_once:
                 newfloat = '{:.10f}'.format(fleur_change_dic[key])
-                xml_set_first_attribv(xmltree_new, xpath_set, key, newfloat)                
+                xml_set_first_attribv(xmltree_new, xpath_set, key, newfloat)
             else:
                 xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
         elif key in pos_attrib_several:
@@ -890,7 +890,7 @@ def get_inpxml_file_structure():
     to be set and where, i.e all attributes and their xpaths.
     As a developer make sure to use this routine always of you need information
     about the inp.xml file structure.
-    Therefore, this plug-in should be easy to adjust to other codes with xml 
+    Therefore, this plug-in should be easy to adjust to other codes with xml
     files as input files. Just rewrite this routine.
 
     For now the structure of the xmlinp file for fleur is hardcoded.

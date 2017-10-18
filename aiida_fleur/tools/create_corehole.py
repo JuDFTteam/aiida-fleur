@@ -20,21 +20,21 @@ ParameterData = DataFactory('parameter')
 def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
     """
     This methods sets of electron configurations for a kind
-    or position given, make sure to break the symmetry for this position/kind 
+    or position given, make sure to break the symmetry for this position/kind
     beforehand, otherwise you will create several coreholes.
-    
+
     param: structure: StructureData
     param: kind, a string with the kind_name (TODO: alternative the kind object)
     param: econfig, string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
-    ! THis is the new econfig therefore 
+    ! THis is the new econfig therefore
 
     returns a parameterData node
     """
-    
+
     from aiida.common.constants import elements as PeriodicTableElements
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}    
+                           data in PeriodicTableElements.iteritems()}
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)

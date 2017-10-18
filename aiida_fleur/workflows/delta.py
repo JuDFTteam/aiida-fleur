@@ -9,7 +9,7 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-    
+
 import os
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
@@ -45,7 +45,7 @@ SingleData = DataFactory('singlefile')
 
 class fleur_delta_wc(WorkChain):
     """
-    This workflow calculates a equation of states and from a given 
+    This workflow calculates a equation of states and from a given
     group of structures in the database using a group of given parameter nodes in the database
 
     """
@@ -59,7 +59,7 @@ class fleur_delta_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False, 
+        spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                                'struc_group': 'delta',
                                                'para_group' : 'delta',
@@ -86,7 +86,7 @@ class fleur_delta_wc(WorkChain):
         """
         init context and some parameters
         """
-        
+
         #print('started delta workflow version {}'.format(self._workflowversion))
         #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         self.report('started delta workflow version {} with idenifier: {}'
@@ -101,12 +101,12 @@ class fleur_delta_wc(WorkChain):
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
-            'wf_parameters': 
-                {'points' : wf_dict.get('points', 5), 
-                 'step' : wf_dict.get('step', 0.02), 
+            'wf_parameters':
+                {'points' : wf_dict.get('points', 5),
+                 'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
                  'resources' : wf_dict.get('resources' , {"num_machines": 1}),
-                 'walltime_sec':  wf_dict.get('walltime_sec', 3600),    
+                 'walltime_sec':  wf_dict.get('walltime_sec', 3600),
                  'queue_name' : wf_dict.get('queue_name' , ''),
                  'serial' : wf_dict.get('serial', False)
              }}
@@ -114,29 +114,29 @@ class fleur_delta_wc(WorkChain):
         self.get_calcs_from_groups()
         self.ctx.successful = True
         self.ctx.warnings = []
-        self.ctx.labels = [] 
-        
+        self.ctx.labels = []
+
     def get_calcs_from_groups(self):
         """
-        Extract the crystal structures and parameter data nodes from the given 
+        Extract the crystal structures and parameter data nodes from the given
         groups and create calculation 'pairs' (stru, para).
         """
         wf_dict = self.inputs.wf_parameters.get_dict()
         #get all delta structure
         str_gr = wf_dict.get('struc_group', 'delta')
-        
+
         try:
             group_pk = int(str_gr)
         except ValueError:
             group_pk = None
             group_name = str_gr
-        
+
         if group_pk is not None:
             try:
                 str_group = Group(dbgroup=group_pk)
             except NotExistent:
                 str_group = None
-                message = ('You have to provide a valid pk for a Group of' 
+                message = ('You have to provide a valid pk for a Group of'
                           'structures or a Group name. Wf_para key: "struc_group".'
                           'given pk= {} is not a valid group'
                           '(or is your group name integer?)'.format(group_pk))
@@ -148,35 +148,35 @@ class fleur_delta_wc(WorkChain):
                 str_group = Group.get_from_string(group_name)
             except NotExistent:
                 str_group = None
-                message = ('You have to provide a valid pk for a Group of' 
+                message = ('You have to provide a valid pk for a Group of'
                           'structures or a Group name. Wf_para key: "struc_group".'
                           'given group name= {} is not a valid group'
                           '(or is your group name integer?)'.format(group_name))
                 #print(message)
                 self.report(message)
                 self.abort_nowait('I abort, because I have no structures to calculate ...')
-                                
-                
+
+
         #get all delta parameters
         para_gr = wf_dict.get('para_group', 'delta')
-        
+
         if not para_gr:
             #waring use defauls
             message = 'COMMENT: I did recieve "para_group=None" as input. I will use inpgen defaults'
             self.report(message)
-        
+
         try:
             group_pk = int(para_gr )
         except ValueError:
             group_pk = None
-            group_name = para_gr 
-        
+            group_name = para_gr
+
         if group_pk is not None:
             try:
                 para_group = Group(dbgroup=group_pk)
             except NotExistent:
                 para_group = None
-                message = ('ERROR: You have to provide a valid pk for a Group of' 
+                message = ('ERROR: You have to provide a valid pk for a Group of'
                           'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "para_group".'
                           'given pk= {} is not a valid group'
                           '(or is your group name integer?)'.format(group_pk))
@@ -189,14 +189,14 @@ class fleur_delta_wc(WorkChain):
                 para_group = Group.get_from_string(group_name)
             except NotExistent:
                 para_group = None
-                message = ('ERROR: You have to provide a valid pk for a Group of' 
+                message = ('ERROR: You have to provide a valid pk for a Group of'
                           'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "struc_group".'
                           'given group name= {} is not a valid group'
                           '(or is your group name integer?)'.format(group_name))
                 #print(message)
                 self.report(message)
                 self.abort_nowait('ERROR: I abort, because I have no paremeters to calculate and '
-                                  'I guess you did not want to use the inpgen default...')        
+                                  'I guess you did not want to use the inpgen default...')
 
         # creating calculation pairs (structure, parameters)
 
@@ -212,7 +212,7 @@ class fleur_delta_wc(WorkChain):
         if n_para != n_stru:
             message = ('COMMENT: You did not provide the same number of parameter'
                        'nodes as structure nodes. Is this wanted? npara={} nstru={}'.format(n_para, n_stru))
-            self.report(message)        
+            self.report(message)
         calcs = []
         for struc in stru_nodes:
             para = get_paranode(struc, para_nodes)
@@ -227,21 +227,21 @@ class fleur_delta_wc(WorkChain):
         """
         Run the equation of states for all delta structures with their parameters
         """
-        
+
         eos_results = {}
         inputs = self.get_inputs_eos()
 
-        
+
         for struc, para in self.ctx.calcs_to_run[:10]:#[:2]
             print para
             formula = struc.get_formula()
             if para:
-                eos_future = submit(fleur_eos_wc, 
+                eos_future = submit(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#
             else:
-                eos_future = submit(fleur_eos_wc, 
+                eos_future = submit(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#a
@@ -250,25 +250,25 @@ class fleur_delta_wc(WorkChain):
             label = formula
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
-            
-        return ToContext(**eos_results)        
-        
+
+        return ToContext(**eos_results)
+
         '''
         #async works
         eos_results = {}
         inputs = self.get_inputs_eos()
 
-        
+
         for struc, para in self.ctx.calcs_to_run[:4]:
             print para
             formula = struc.get_formula()
             if para:
-                eos_future = asy(fleur_eos_wc, 
+                eos_future = asy(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#
             else:
-                eos_future = asy(fleur_eos_wc, 
+                eos_future = asy(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#a
@@ -277,7 +277,7 @@ class fleur_delta_wc(WorkChain):
             label = formula
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
-            
+
         return ToContext(**eos_results)
         '''
         '''
@@ -285,19 +285,19 @@ class fleur_delta_wc(WorkChain):
         eos_results = {}
         inputs = self.get_inputs_eos()
 
-        
+
         for struc, para in self.ctx.calcs_to_run[:]:
             print para
             formula = struc.get_formula()
             if para:
                 #print('here')
-                eos_future = fleur_eos_wc.run( 
+                eos_future = fleur_eos_wc.run(
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#
             else:
                 self.report('INFO: default parameters for structure {}'.format(formula))
-                eos_future = fleur_eos_wc.run( 
+                eos_future = fleur_eos_wc.run(
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'])
                 #fleur_eos_wc.run(#a
@@ -306,7 +306,7 @@ class fleur_delta_wc(WorkChain):
             label = formula
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
-            
+
         return ToContext(**eos_results)
         '''
     def get_inputs_eos(self):
@@ -321,14 +321,14 @@ class fleur_delta_wc(WorkChain):
         inputs['inpgen'] = self.ctx.inputs_eos.get('inpgen')
         inputs['fleur'] = self.ctx.inputs_eos.get('fleur')
 
-        return inputs        
-        
+        return inputs
+
     def extract_results_eos(self):
         """
         extract information out of the result nodes of the the eos workchains
         ran in the step before
         """
-        
+
         self.ctx.all_results = {}
         self.ctx.all_succ = {}
         self.ctx.eos_uuids ={}
@@ -355,7 +355,7 @@ class fleur_delta_wc(WorkChain):
             if not eos_succ:
                 #maybe do something else here (exclude point and write a warning or so, or error treatment)
                 self.ctx.successful = False
-                
+
             natoms = outpara.get('natoms', None)
             gs_vol = outpara.get('volume_gs', None)
             bm = outpara.get('bulk_modulus', None)
@@ -365,12 +365,12 @@ class fleur_delta_wc(WorkChain):
                 gs_vol_pera = gs_vol/natoms
             else:
                 gs_vol_pera = gs_vol
-           
+
             element = label.translate(None, digits) # remove all numbers from string
             self.ctx.all_results[element] = [gs_vol_pera, bm, dbm]
             self.ctx.all_succ[element] = eos_succ
             self.ctx.eos_uuids[element] = eos_res.get_inputs()[0].uuid
-            
+
             outstr = outstr + '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
             #write inside the loop to have at least partially results...
             #outfile = open('delta_wc.out', 'a')
@@ -384,7 +384,7 @@ class fleur_delta_wc(WorkChain):
         outfile.write(outstr)
 
         outfile.close()
-        
+
         self.ctx.outfilepath = os.path.abspath(outfile.name)
 
 
@@ -393,7 +393,7 @@ class fleur_delta_wc(WorkChain):
         Execute here the script to calculate a delta factor
         """
         pass
-    
+
     def return_results(self):
         """
         return the results of the calculations
@@ -403,24 +403,24 @@ class fleur_delta_wc(WorkChain):
 
         # a text file should be written and stored as single file data and
         #parameter data node in the database
-        
+
         #produce a single file data with all the numbers
-        
+
         all_res = self.ctx.all_results
         bm_dic = {}
         bmd_dic = {}
         vol_dic = {}
-        
+
         for elem,val in all_res:
             vol_dic[elem] = val[0]
-            bm_dic[elem] = val[1]     
+            bm_dic[elem] = val[1]
             bmd_dic[elem] = val[2]
-        
+
         outputnode_dict ={}
 
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['warnings'] = self.ctx.warnings               
+        outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['eos_uuids'] = self.ctx.eos_uuids
         outputnode_dict['eos_success'] = self.ctx.all_succ
@@ -441,11 +441,11 @@ class fleur_delta_wc(WorkChain):
                         'individual eos workchain failed. Check the log.')
             #print('Done, but something went wrong.... Properly some '
             #            'individual eos workchain failed. Check the log.')
-        
+
         delta_file = SingleData.filename = self.ctx.outfilepath
-        
+
         print delta_file
- 
+
         # output must be aiida Data types.
         outnodedict = {}
         outnode = ParameterData(dict=outputnode_dict)
@@ -462,9 +462,9 @@ class fleur_delta_wc(WorkChain):
                 #            'I skip the results retrieval for that element.'.format(label, eos_res))
                 continue
             outnodedict[label] = outpara
-            
+
         outputnode = create_delta_result_node(**outnodedict)
-        
+
         outdict = {}
         outdict['output_delta_wc_para'] = outputnode.get('output_delta_wc_para')
         #outdict['delta_file'] = delta_file
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
     parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
-                        help='Parameters for the FLEUR calculation', required=False)    
+                        help='Parameters for the FLEUR calculation', required=False)
     parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)
     parser.add_argument('--remote', type=RemoteData, dest='remote_data',
@@ -492,14 +492,14 @@ if __name__ == "__main__":
                         help='The inpgen code node to use', required=False)
     parser.add_argument('--fleur', type=Code, dest='fleur',
                         help='The FLEUR code node to use', required=True)
-   
+
     args = parser.parse_args()
-    res = fleur_scf_wc.run(wf_parameters=args.wf_parameters, 
-                                structure=args.structure, 
+    res = fleur_scf_wc.run(wf_parameters=args.wf_parameters,
+                                structure=args.structure,
                                 calc_parameters=args.calc_parameters,
                                 fleurinp=args.fleurinp,
                                 remote_data=args.remote_data,
-                                inpgen = args.inpgen, 
+                                inpgen = args.inpgen,
                                 fleur=args.fleur)
 '''
 @wf
@@ -508,24 +508,24 @@ def create_delta_result_node(**kwargs):#*args):
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
     It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy 
+    So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
-    
+
     """
-    outdict = {}    
+    outdict = {}
     outpara =  kwargs.get('results_node', {})
-    outdict['output_delta_wc_para'] = outpara.copy() 
+    outdict['output_delta_wc_para'] = outpara.copy()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}
     return outdict
-  
 
 
 
 
 
-def get_paranode(struc, para_nodes):        
+
+def get_paranode(struc, para_nodes):
     """
     find out if a parameter node for a structure is in para_nodes
     (currently very creedy, but lists are small (100x100) but maybe reduce database accesses)
@@ -538,7 +538,7 @@ def get_paranode(struc, para_nodes):
     for para in para_nodes:
         struc_uuid = para.get_extra('struc_uuid', None)
         para_form = para.get_extra('formula', None)
-        para_ele = para.get_extra('element', None)        
+        para_ele = para.get_extra('element', None)
         if suuid == struc_uuid:
             return para
         elif formula == para_form:

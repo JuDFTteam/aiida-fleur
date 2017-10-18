@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'AiiDA-FLEUR'
-copyright = u'2016, Jens Broeder'
+copyright = u'2016-2017, Jens Broeder'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -304,7 +304,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'AiiDA-Fleurn'
+epub_title = u'AiiDA-Fleur'
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright

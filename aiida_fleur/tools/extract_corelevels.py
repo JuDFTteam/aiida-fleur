@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-In this module you find methods to parse/extract corelevel shifts from an 
-out.xml file of FLEUR. 
+In this module you find methods to parse/extract corelevel shifts from an
+out.xml file of FLEUR.
 """
 # TODO clean up
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
-# or rather throw exception on lowest level and catch at higher levels? 
+# or rather throw exception on lowest level and catch at higher levels?
 
 import sys#,os
 from lxml import etree#, objectify
@@ -60,18 +60,18 @@ def extract_lo_energies(outxmlfile, options=None):
 
 
 def extract_corelevels(outxmlfile, options=None):
-    """ 
+    """
     Extras corelevels out of out.xml files
-    
+
     param: outxmlfile path to out.xml file
-    
+
     param: options, dict: 'iteration' : X/'all'
     return: corelevels, list of the form
-             [atomtypes][spin][dict={atomtype : '', corestates : list_of_corestates}] 
+             [atomtypes][spin][dict={atomtype : '', corestates : list_of_corestates}]
              [atomtypeNumber][spin]['corestates'][corestate number][attribute]
-    get corelevel energy of first atomtype, spin1, corelevels[0][0]['corestates'][i]['energy']                                  
+    get corelevel energy of first atomtype, spin1, corelevels[0][0]['corestates'][i]['energy']
     example::
-    
+
     [[{'atomtype': '     1',
    'corestates': [{'energy': -3.6489930627,
                    'j': ' 0.5',
@@ -109,16 +109,16 @@ def extract_corelevels(outxmlfile, options=None):
     #######################################
     ########################
     #XPATHS to maintain
-    
+
     species_xpath = '/fleurOutput/inputData/atomSpecies'
     iteration_xpath = '/fleurOutput/scfLoop/iteration'
     atomgroup_xpath = '/fleurOutput/inputData/atomGroups'
     relcoreStates_xpath = 'coreStates'
-    
+
     #TODO all the attribute names...
     ######################
-    
-    
+
+
     #1. read out.xml in etree
     # TODO this should be common, moved somewhere else and importet
     parsed_data = {}
@@ -126,7 +126,7 @@ def extract_corelevels(outxmlfile, options=None):
     parse_xml = True
     parser = etree.XMLParser(recover=False)#, remove_blank_text=True)
     parser_info = {'parser_warnings': [], 'unparsed' : []}
-    
+
     try:
         tree = etree.parse(outxmlfile, parser)
     except XMLSyntaxError:
@@ -161,11 +161,11 @@ def extract_corelevels(outxmlfile, options=None):
         species_element = species.get('element')
         species_atomicnumber = species.get('atomicNumber')
         species_magMom = species.get('magMom')
-        species_atts[species_name] = {'name' : species_name, 
-                                      'corestates' : species_corestates, 
-                                      'element': species_element, 
-                                      'atomgroups' : [], 
-                                      'mag_mom' : species_magMom, 
+        species_atts[species_name] = {'name' : species_name,
+                                      'corestates' : species_corestates,
+                                      'element': species_element,
+                                      'atomgroups' : [],
+                                      'mag_mom' : species_magMom,
                                       'atomic_number' : species_atomicnumber}
         species_names.append(species_name)
     #nspecies = len(species_nodes)
@@ -183,12 +183,12 @@ def extract_corelevels(outxmlfile, options=None):
             element = species_atts[group_species]['element']
             atomicnumber = int(species_atts[group_species]['atomic_number'])
             #TODO get coreconfig,..., usually not in inp.xml...
-            types_dict = {'species' : group_species, 'element' : element, 
-                          'atomic_number' : atomicnumber, 'coreconfig': '', 
+            types_dict = {'species' : group_species, 'element' : element,
+                          'atomic_number' : atomicnumber, 'coreconfig': '',
                           'valenceconfig' : '',
                           'stateOccupation' : []}
         atomtypes.append(types_dict)
-    
+
     #print atomtypes
     natomgroup = len(atomgroup_nodes)
     #print natomgroup#, nspecies
@@ -198,7 +198,7 @@ def extract_corelevels(outxmlfile, options=None):
     #4 get corelevel dimension from atoms types.
     #5 init saving arrays:
     #6 parse corelevels:
-    
+
     iteration_nodes = eval_xpath2(root, iteration_xpath, parser_info)
     #print iteration_nodes
     nIteration = len(iteration_nodes)
@@ -210,7 +210,7 @@ def extract_corelevels(outxmlfile, options=None):
         #print(corestatescards)
         for type in atomtypes: # spin=2 is already in there
             corelevels.append([])
-            
+
         for corestatescard in corestatescards:
             #print('here')
             #print(etree.tostring(corestatescard, pretty_print=True))
@@ -221,7 +221,7 @@ def extract_corelevels(outxmlfile, options=None):
             #print(corelv['atomtype'])
             corelevels[int(corelv['atomtype'])-1].append(corelv)# is corelv['atomtype'] always an integer
             #corelevels.append(corelv)
-                     
+
     #print parser_info
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
     #corelevels[atomtypeNumber][spin]['corestates'][corestate number][attribute]
@@ -234,7 +234,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     :param corestateNode: an etree element (node), of a fleur output corestate card
     :param iteration_node: an etree element, iteration node
     :param jspin : integer 1 or 2
-    
+
     :return a pythondict, {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
     """
     ##### all xpath of density convergence card (maintain) ########
@@ -256,7 +256,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     lostElectrons_name = 'lostElectrons'
     atomtype_name = 'atomType'
     #######
-    
+
     atomtype = get_xml_attribute(corestateNode, atomtype_name, parser_info)
 
     kinEnergy = get_xml_attribute(corestateNode, kinEnergy_name, parser_info)
@@ -273,7 +273,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     # get all corestate tags, (atomtypes * spin)
     #corestateNodes = eval_xpath(iteration_node, coreStates_xpath, parser_info)
     # for every corestate tag parse the attributes
-    
+
     # some only the first interation, then get all state tags of the corestate tag (atom depended)
     # parse each core state #Attention to spin
     states = []
@@ -288,7 +288,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
         weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name, parser_info), parser_info)
         state_dict = {'n' : n_state, 'l' : l_state, 'j' : j_state, 'energy' : energy, 'weight' : weight}
         states.append(state_dict)
-    
+
     #print(states)
 
     core_states = {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
@@ -298,7 +298,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
 def eval_xpath(node, xpath):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
     :param root node of an etree and an xpath expression (relative, or absolute)
     :returns either nodes, or attributes, or text
     """
@@ -316,9 +316,9 @@ def eval_xpath(node, xpath):
 '''
 def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
     """
-    Tries to make a float out of a string. If it can't it logs a warning 
+    Tries to make a float out of a string. If it can't it logs a warning
     and returns True or False if convertion worked or not.
-    
+
     :param value_string: a string
     :returns value: the new float or value_string: the string given
     :retruns True or False
@@ -336,7 +336,7 @@ def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
 def get_xml_attribute(node, attributename):
     """
     Get an attribute value from a node.
-    
+
     :param node: a node from etree
     :param attributename: a string with the attribute name.
     :returns either attributevalue, or None
@@ -378,14 +378,14 @@ def clshifts_to_be(coreleveldict, reference_dict):
     """
     This methods converts corelevel shifts to binding energies, if a reference is given.
     These cann than be used for plotting.
-    
+
     i.e
-    
-    reference = {'W' : {'4f7/2' : [124], 
-                     '4f5/2' : [102]}, 
+
+    reference = {'W' : {'4f7/2' : [124],
+                     '4f5/2' : [102]},
               'Be' : {'1s': [117]}}
-    corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1], 
-                     '4f5/2' : [0, 0.3, 0.4, 0.1]}, 
+    corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
+                     '4f5/2' : [0, 0.3, 0.4, 0.1]},
               'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}}
     """
     return_corelevel_dict = {}
@@ -406,23 +406,23 @@ def clshifts_to_be(coreleveldict, reference_dict):
                     be = corelevel + ref_cl[0]
                     be_all.append(be)
             return_corelevel_dict[elem][corelevel_name] = be_all
-                
-                
+
+
     return return_corelevel_dict
-    
-    
+
+
 # test
-'''    
-reference = {'W' : {'4f7/2' : [124], 
-                     '4f5/2' : [102]}, 
+'''
+reference = {'W' : {'4f7/2' : [124],
+                     '4f5/2' : [102]},
               'Be' : {'1s': [117]}}
-corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1], 
-                     '4f5/2' : [0, 0.3, 0.4, 0.1]}, 
+corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
+                     '4f5/2' : [0, 0.3, 0.4, 0.1]},
               'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}}
 clshifts_to_be(corelevels, reference)
 
 {'Be': {'1s': [117, 117.2, 117.4, 117.1, 117.3]},
  'W': {'4f5/2': [102, 102.3, 102.4, 102.1],
-  '4f7/2': [124.4, 124.3, 124.4, 124.1]}}              
-'''              
-              
+  '4f7/2': [124.4, 124.3, 124.4, 124.1]}}
+'''
+

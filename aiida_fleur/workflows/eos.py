@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-In this module you find the worklfow 'lattice_constant' for the calculation of 
+In this module you find the worklfow 'lattice_constant' for the calculation of
 of a lattice constant
 """
 
@@ -52,38 +52,38 @@ class fleur_eos_wc(WorkChain):
     """
     This workflow calculates the equation of states of a structure.
     Calculates several unit cells with different valumes.
-    A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the 
+    A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
     :Params: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
-    :params: StructureData node, 'structure' crystal structure 
+    :params: StructureData node, 'structure' crystal structure
     :params: ParameterData node, optional 'calc_parameters' parameters for inpgen
     :Params: inpgen: Code node,
     :Params: fleur: Code node,
-    
-    
+
+
     :returns: ParameterData: ouptut_eos_wc_para node, contains relevant output information.
     about general succces, fit results and so on.
-    
-    
+
+
     example input.
-    
-    
+
+
     """
-    
+
     _workflowversion = "0.1.0"
 
     def __init__(self, *args, **kwargs):
-        super(fleur_eos_wc, self).__init__(*args, **kwargs) 
-        
-        
+        super(fleur_eos_wc, self).__init__(*args, **kwargs)
+
+
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'fleur_runmax': 4, 
-                                       'points' : 9, 
-                                       'step' : 0.002, 
+                   default=ParameterData(dict={'fleur_runmax': 4,
+                                       'points' : 9,
+                                       'step' : 0.002,
                                        'guess' : 1.00,
                                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                                        'walltime_sec':  60*60,
@@ -107,9 +107,9 @@ class fleur_eos_wc(WorkChain):
         check input nodes
         """
         self.report('started eos workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))  
+        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         #print('started eos workflow version {}'.format(self._workflowversion))
-        #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
+        #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -123,8 +123,8 @@ class fleur_eos_wc(WorkChain):
         self.ctx.org_volume = -1# avoid div 0
         self.ctx.labels = []
         self.ctx.successful = True#False # TODO get all succesfull from convergence, if all True this
-        
-        
+
+
         wf_dict = self.inputs.wf_parameters.get_dict()
         self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.002)
@@ -135,27 +135,27 @@ class fleur_eos_wc(WorkChain):
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
         inputs = self.inputs
-        
+
         if 'inpgen' in inputs:
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
-                #self.control_end_wc(error)                
+                #self.control_end_wc(error)
                 print(error)
                 self.abort(error)
-                
+
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
-                #self.control_end_wc(error)    
+                #self.control_end_wc(error)
                 #print(error)
                 self.abort(error)
-                
+
     def structures(self):
         """
         Creates structure data nodes with different Volume (lattice constants)
@@ -164,64 +164,64 @@ class fleur_eos_wc(WorkChain):
         step = self.ctx.step
         guess = self.ctx.guess
         startscale = guess-(points-1)/2*step
-        
+
         for point in range(points):
             self.ctx.scalelist.append(startscale + point*step)
-            
+
         self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
         self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
-  
+
     def converge_scf(self):
         """
         Launch fleur_scfs from the generated structures
-        """ 
+        """
         calcs= {}
-        
+
         for i, struc in enumerate(self.ctx.structurs):
             inputs = self.get_inputs_scf()
             inputs['structure'] = struc
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i])
             label_c = '|eos| fleur_scf_wc'
-            description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)  
-            
+            description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)
+
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
-            
+
             calc_para = inputs['calc_parameters']
             if calc_para:
                 res = submit(fleur_scf_wc,
                           wf_parameters=inputs['wf_parameters'],
-                          structure=inputs['structure'], 
-                          calc_parameters=calc_para, 
-                          inpgen=inputs['inpgen'], 
-                          fleur=inputs['fleur'], 
-                          _label=label_c, 
+                          structure=inputs['structure'],
+                          calc_parameters=calc_para,
+                          inpgen=inputs['inpgen'],
+                          fleur=inputs['fleur'],
+                          _label=label_c,
                           _description=description)
             else:
                  res = submit(fleur_scf_wc,
                           wf_parameters=inputs['wf_parameters'],
-                          structure=inputs['structure'], 
-                          inpgen=inputs['inpgen'], 
-                          fleur=inputs['fleur'], 
-                          _label=label_c, 
-                          _description=description)               
+                          structure=inputs['structure'],
+                          inpgen=inputs['inpgen'],
+                          fleur=inputs['fleur'],
+                          _label=label_c,
+                          _description=description)
             #time.sleep(5)
 
             self.ctx.labels.append(label)
             calcs[label] = res
-            
-        return ToContext(**calcs)                      
-        
-        
+
+        return ToContext(**calcs)
+
+
     def get_inputs_scf(self):
         """
         get and 'produce' the inputs for a scf-cycle
         """
         inputs = {}
-        
+
         # create input from that
         wf_para_dict = self.inputs.wf_parameters.get_dict()
         inputs['wf_parameters'] = wf_para_dict.get('scf_para', None)
@@ -233,12 +233,12 @@ class fleur_eos_wc(WorkChain):
             para['queue_name'] = wf_para_dict.get('queue_name')
             para['serial'] = wf_para_dict.get('serial')
             para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
-            inputs['wf_parameters'] = ParameterData(dict=para)        
+            inputs['wf_parameters'] = ParameterData(dict=para)
         try:
             calc_para = self.inputs.calc_parameters
         except AttributeError:
             calc_para = None
-        
+
         if calc_para:
             inputs['calc_parameters'] = calc_para
         inputs['inpgen'] = self.inputs.inpgen
@@ -249,7 +249,7 @@ class fleur_eos_wc(WorkChain):
 
     def return_results(self):
         """
-        return the results of the calculations  (scf workchains) and do a 
+        return the results of the calculations  (scf workchains) and do a
         Birch-Murnaghan fit for the equation of states
         """
         distancelist = []
@@ -258,16 +258,16 @@ class fleur_eos_wc(WorkChain):
         outnodedict = {}
         natoms = len(self.inputs.structure.sites)
         htr2eV = 27.21138602
-     
+
         for label in self.ctx.labels:
             calc = self.ctx[label]
-            outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para'] 
+            outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
-            
+
             if not outpara.get('successful', False):
-                #TODO: maybe do something else here 
+                #TODO: maybe do something else here
                 # (exclude point and write a warning or so, or error treatment)
-                # bzw implement and scf_handler, 
+                # bzw implement and scf_handler,
                 #also if not perfect converged, results might be good
                 self.ctx.successful = False
             t_e = outpara.get('total_energy', float('nan'))
@@ -278,13 +278,13 @@ class fleur_eos_wc(WorkChain):
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
             t_energylist_peratom.append(t_e/natoms)
-            distancelist.append(dis)                
-        
+            distancelist.append(dis)
+
         a = np.array(t_energylist)
         b = np.array(self.ctx.volume_peratom)
-        
+
         # all erros should be caught before\
-        
+
         # TODO: different fits
         volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(a, b)
 
@@ -300,46 +300,46 @@ class fleur_eos_wc(WorkChain):
                'natoms' : natoms,
                'total_energy': t_energylist,
                'total_energy_units' : e_u,
-               'structures' : self.ctx.structurs_uuids, 
+               'structures' : self.ctx.structurs_uuids,
                'calculations' : [],#self.ctx.calcs1,
                'scf_wfs' : [],#self.converge_scf_uuids,
-               'distance_charge' : distancelist, 
+               'distance_charge' : distancelist,
                'distance_charge_units' : dis_u,
                'nsteps' : self.ctx.points,
-               'guess' : self.ctx.guess , 
+               'guess' : self.ctx.guess ,
                'stepsize' : self.ctx.step,
 
-               #'fitresults' : [a, latticeconstant, c], 
-               #'fit' : fit_new, 
+               #'fitresults' : [a, latticeconstant, c],
+               #'fit' : fit_new,
                'residuals' : residuals,
                'bulk_deriv' : bulk_deriv,
                'bulk_modulus' : bulk_modulus * 160.217733,#* echarge * 1.0e21,#GPa
                'bulk_modulus_units' : 'GPa',
                'successful' : self.ctx.successful}
-                
+
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
         else:
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
- 
+
         # output must be aiida Data types.
         outnode = ParameterData(dict=out)
         outnodedict['results_node'] = outnode
-        
-        # create links between all these nodes...        
+
+        # create links between all these nodes...
         outputnode_dict = create_eos_result_node(**outnodedict)
         outputnode =  outputnode_dict.get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
-        outputnode.description = 'Contains equation of states results and information of an fleur_eos_wc run.' 
-        
+        outputnode.description = 'Contains equation of states results and information of an fleur_eos_wc run.'
+
         outputstructure =  outputnode_dict.get('gs_structure')
         outputstructure.label = 'ouput_eos_wc_structure'
         outputstructure.description = 'Structure with the scaling/volume of the lowest total energy extracted from fleur_eos_wc'
-        
+
         returndict = {}
         returndict['output_eos_wc_para']  = outputnode
         returndict['output_eos_wc_structure']  = outputstructure
-        
+
         # create link to workchain node
         for link_name, node in returndict.iteritems():
             self.out(link_name, node)
@@ -347,7 +347,7 @@ class fleur_eos_wc(WorkChain):
 
 if __name__ == "__main__":
     import argparse
-    
+
     # TODO: this is not usable in the command line, since you cannot provide the nodes in the shell
     # instead you need to use somehting that will load the nodes from pks or uuids
     # checkout what other aiida people do here
@@ -372,14 +372,14 @@ def create_eos_result_node(**kwargs):
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
     This wokfunction will create the output node in the database.
     It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy 
+    So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
-    
+
     """
-    outdict = {}    
+    outdict = {}
     outpara =  kwargs.get('results_node', {})
     outdict['output_eos_wc_para'] = outpara.copy()
-    # copy, because we rather produce the same node twice 
+    # copy, because we rather produce the same node twice
     # then have a circle in the database for now...
     outputdict = outpara.get_dict()
     structure = load_node(outputdict.get('initial_structure'))
@@ -389,7 +389,7 @@ def create_eos_result_node(**kwargs):
        outdict['gs_structure'] = gs_structure
 
     return outdict
-  
+
 
 
 def eos_structures(inp_structure, scalelist):
@@ -411,14 +411,14 @@ def eos_structures(inp_structure, scalelist):
     for scale in scalelist:
         s = rescale(structure, Float(scale)) # this is a wf
         re_structures.append(s)
-        
+
     return re_structures
 
 '''
 def fit_latticeconstant(scale, eT):
     """
     Extract the lattice constant out of an parabola fit.
-    
+
     scale : list of scales, or lattice constants
     eT: list of total energies
     """
@@ -444,11 +444,11 @@ def Birch_Murnaghan_fit(energies, volumes):
     """
     least squares fit of a Birch-Murnaghan equation of state curve. From delta project
     containing in its columns the volumes in A^3/atom and energies in eV/atom
-    # The following code is based on the source code of eos.py from the Atomic 
+    # The following code is based on the source code of eos.py from the Atomic
     # Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>.
     :params energies: list (numpy arrays!) of total energies eV/atom
     :params volumes: list (numpy arrays!) of volumes in A^3/atom
-    
+
     #volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(data)
     """
     fitdata = np.polyfit(volumes[:]**(-2./3.), energies[:], 3, full=True)
@@ -473,7 +473,7 @@ def Birch_Murnaghan_fit(energies, volumes):
     if volume0 == 0:
         print('Error: No minimum could be found')
         exit()
-    
+
     derivV2 = 4./9. * x**5. * deriv2(x)
     derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
         8./27. * x**(15./2.) * deriv3(x))
@@ -492,7 +492,7 @@ def Birch_Murnaghan(volumes, volume0, bulk_modulus0, bulk_deriv0):
     v0 = volume0
     bm = bulk_modulus0
     dbm = bulk_deriv0
-    
+
     for vol in volumes:
         pv_val = 3 * bm/2. * ((v0/vol)**(7/3.) - (v0/vol)**(5/3.)) * (1 + 3/4. * (dbm -4) * ((v0/vol)**(2/3.)-1))
         PV.append(pv_val)

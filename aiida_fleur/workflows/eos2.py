@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-In this module you find the worklfow 'lattice_constant' for the calculation of 
+In this module you find the worklfow 'lattice_constant' for the calculation of
 of a lattice constant"""
 
 #TODO: print more user info
@@ -57,17 +57,17 @@ class fleur_eos2_wc(WorkChain):
     :Params: a parameterData node,
     :returns: Success, last result node, list with convergence behavior
     """
-    
+
     _workflowversion = "0.1.0"
 
-    
+
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'fleur_runmax': 4, 
-                                       'points' : 9, 
-                                       'step' : 0.002, 
+                   default=ParameterData(dict={'fleur_runmax': 4,
+                                       'points' : 9,
+                                       'step' : 0.002,
                                        'guess' : 1.00,
                                        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
                                        'walltime_sec':  10*60,
@@ -82,7 +82,7 @@ class fleur_eos2_wc(WorkChain):
             while_(cls.should_run_scf)(
                 cls.converge_scf,
                 cls.parse_scf,
-            ),            
+            ),
             cls.return_results
         )
         #spec.dynamic_output()
@@ -93,9 +93,9 @@ class fleur_eos2_wc(WorkChain):
         check input nodes
         """
         self.report('started eos workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))  
+        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         print('started eos workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))        
+        print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -144,16 +144,16 @@ class fleur_eos2_wc(WorkChain):
             self.ctx.structurs_uuids.append(struc.uuid)
             res = submit(fleur_scf_wc,
                       wf_parameters=inputs['wf_parameters'],
-                      structure=inputs['structure'], 
-                      calc_parameters=inputs['calc_parameters'], 
-                      inpgen = inputs['inpgen'], 
+                      structure=inputs['structure'],
+                      calc_parameters=inputs['calc_parameters'],
+                      inpgen = inputs['inpgen'],
                       fleur=inputs['fleur'])# asy async .run( submit()
             self.ctx.calcs_future.append(res)
             #self.ctx.calcs.append(res)
         for future in self.ctx.calcs_future:
             ToContext(temp_calc=future)
             self.ctx.calcs.append(self.ctx.temp_calc)
-        return ToContext(temp_calc=res)           
+        return ToContext(temp_calc=res)
             #print self.ctx.calcs
             #ResultToContext(self.ctx.calcs1.append(res))
             #calcs.append(res)
@@ -164,12 +164,12 @@ class fleur_eos2_wc(WorkChain):
         """
         Determine whether a calculation should still be run
         """
-        return self.ctx.i < len(self.ctx.scalelist)    
-    
+        return self.ctx.i < len(self.ctx.scalelist)
+
     def converge_scf(self):
         """
         start scf-cycle from Fleur calculation
-        """    
+        """
         #calcs = []
         # run a convergence worklfow# TODO better sumbit or async?
         i = self.ctx.i
@@ -181,24 +181,24 @@ class fleur_eos2_wc(WorkChain):
         self.ctx.i += 1
         res = submit(fleur_scf_wc,
                      wf_parameters=inputs['wf_parameters'],
-                     structure=inputs['structure'], 
-                     calc_parameters=inputs['calc_parameters'], 
-                     inpgen = inputs['inpgen'], 
+                     structure=inputs['structure'],
+                     calc_parameters=inputs['calc_parameters'],
+                     inpgen = inputs['inpgen'],
                      fleur=inputs['fleur'])# asy async .run( submit()
         #    self.ctx.calcs_future.append(res)
         #self.ctx.calcs.append(res)
         #for future in self.ctx.calcs_future:
         #    ToContext(temp_calc=future)
         #    self.ctx.calcs.append(self.ctx.temp_calc)
-            
-        return ToContext(last_scf_wc=res)           
+
+        return ToContext(last_scf_wc=res)
             #print self.ctx.calcs
             #ResultToContext(self.ctx.calcs1.append(res))
             #calcs.append(res)
         #self.ctx.last_calc2 = res#.get('remote_folder', None)
-        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),    
- 
-    
+        #return self.ctx.calcs1#ResultToContext(**calcs) #calcs.append(future),
+
+
     def get_inputs_scf(self):
         """
         get the inputs for a scf-cycle
@@ -216,7 +216,7 @@ class fleur_eos2_wc(WorkChain):
             para['walltime_sec'] = wf_para_dict.get('walltime_sec')
             para['queue_name'] = wf_para_dict.get('queue_name')
             para['serial'] = wf_para_dict.get('serial')
-            inputs['wf_parameters'] = ParameterData(dict=para)        
+            inputs['wf_parameters'] = ParameterData(dict=para)
         inputs['calc_parameters'] = self.inputs.calc_parameters
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
@@ -243,10 +243,10 @@ class fleur_eos2_wc(WorkChain):
         distancelist = []
         t_energylist = []
         latticeconstant = 0
-        
+
         #print(self.ctx.calcs_future)
         print('#####')
-        #print self.ctx.temp_calc        
+        #print self.ctx.temp_calc
         #print self.ctx.calcs
         #print(self.ctx.calcs_last)
         #for calc in self.ctx.calcs:
@@ -279,33 +279,33 @@ class fleur_eos2_wc(WorkChain):
                'volume_units' : 'A^3',
                'total_energy': t_energylist,
                'total_energy_units' : e_u,
-               'structures' : self.ctx.structurs_uuids, 
+               'structures' : self.ctx.structurs_uuids,
                'calculations' : [],#self.ctx.calcs1,
                'scf_wfs' : [],#self.converge_scf_uuids,
-               'distance_charge' : distancelist, 
+               'distance_charge' : distancelist,
                'distance_charge_units' : dis_u,
                'nsteps' : self.ctx.points,
-               'guess' : self.ctx.guess , 
+               'guess' : self.ctx.guess ,
                'stepsize' : self.ctx.step,
                'lattice_constant' : latticeconstant, # miss leading, currently scaling
                'lattice_constant_units' : '',
-               #'fitresults' : [a, latticeconstant, c], 
-               #'fit' : fit_new, 
+               #'fitresults' : [a, latticeconstant, c],
+               #'fit' : fit_new,
                'residuals' : residuals,
                'bulk_deriv' : bulk_deriv,
                'bulk_modulus' : bulk_modulus,
                'successful' : self.ctx.successful}
-        
+
         print out
-        
+
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
             print 'Done, Equation of states calculation complete'
         else:
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
             print 'Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.'
- 
-        # output must be aiida Data types.        
+
+        # output must be aiida Data types.
         outdict = {}
         outdict['output_eos_wc_para']  = ParameterData(dict=out)
         print outdict
@@ -357,7 +357,7 @@ def eos_structures(inp_structure, scalelist):
 def fit_latticeconstant(scale, eT):
     """
     Extract the lattice constant out of an parabola fit.
-    
+
     scale : list of scales, or lattice constants
     eT: list of total energies
     """
@@ -387,7 +387,7 @@ def Birch_Murnaghan_fit(energies, volumes):
 
     :params energies: list of total energies eV/atom
     :params volumes: list of volumes in A^3/atom
-    
+
     #volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(data)
     """
     fitdata = np.polyfit(volumes[:]**(-2./3.), energies[:], 3, full=True)
@@ -409,7 +409,7 @@ def Birch_Murnaghan_fit(energies, volumes):
     if volume0 == 0:
         print('Error: No minimum could be found')
         exit()
-    
+
     derivV2 = 4./9. * x**5. * deriv2(x)
     derivV3 = (-20./9. * x**(13./2.) * deriv2(x) -
         8./27. * x**(15./2.) * deriv3(x))

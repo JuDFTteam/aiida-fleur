@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 DO NOT USE, this is crab so far. The development was stoped because this is done with AiiDA 'caching' now.
- 
+
 Here are methods to check the existence of something in the database
 example if a (successful) SCF with the same inputs exists
 """
@@ -26,22 +26,22 @@ def check_existence_calc(input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
-    param: input_nodes : List of input nodes 
+
+    param: input_nodes : List of input nodes
 
     returns output nodes
     """
     #TODO: some checks and inputnodes could be parsed in different formats
     inputnodesuuid = [node.uuid for node in input_nodes]
-    
+
     qb=QueryBuilder()
     qb.append(
        JobCalculation, tag='calc', project='*',
        filters={'state' : {'==':'FINISHED'}})
-    
+
     for idx, uuid in enumerate(inputnodesuuid):
         qb.append(Node, input_of='calc', filters={'uuid':uuid}, tag='input_{}'.format(idx))
-    
+
     qb.order_by({JobCalculation:'ctime'})
     res = qb.all()
     if res:
@@ -53,28 +53,28 @@ def check_existence_wf(input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
-    param: input_nodes : List of input nodes 
+
+    param: input_nodes : List of input nodes
 
     returns output nodes
     """
     #TODO: some checks and inputnodes could be parsed in different formats
     inputnodesuuid = [node.uuid for node in input_nodes]
-    
+
     qb=QueryBuilder()
     qb.append(
        JobCalculation, tag='calc', project='*',
        filters={'state' : {'==':'FINISHED'}})
-    
+
     for idx, uuid in enumerate(inputnodesuuid):
         qb.append(Node, input_of='calc', filters={'uuid':uuid}, tag='input_{}'.format(idx))
-    
+
     qb.order_by({JobCalculation:'ctime'})
     res = qb.all()
     if res:
         return res[-1][0].get_outputs()
     else:
-        return None   
+        return None
 
 '''
 def intersectlist(l1, l2):
@@ -83,19 +83,19 @@ def intersectlist(l1, l2):
         if element in l2:
             common.append(element)
     return common
-    
+
 def check_existence_calc(input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
-    param: input_nodes : List of input nodes 
+
+    param: input_nodes : List of input nodes
 
     returns output nodes
     """
     inputnodesuuid = [node.uuid for node in input_nodes]
     overall_results = []
-    
+
     for node in inputnodesuuid:
         suc = successful
         qb=QueryBuilder()
@@ -115,26 +115,26 @@ def check_existence_calc(input_nodes, successful=True):
             qb.append(
                 JobCalculation,
                 output_of='input',
-                project=['uuid'])        
+                project=['uuid'])
         res = qb.all()
         if res: # if there is no node with such an input return
             resnodesuuid = [node[0].uuid for node in res] # needed for common list parts
             overall_results.append(resnodesuuid)
         else:
             return None
-    
+
     intersect = overall_results[0]
     if len(overall_results) > 1:
         for res in overall_results[1:]:
-            intersect = intersectlist(intersect, res)    
-    qb1=QueryBuilder()  
+            intersect = intersectlist(intersect, res)
+    qb1=QueryBuilder()
     qb1.append(
         JobCalculation,
         filters={
             'uuid' : {'in': intersect}
             })
     res = qb1.all()
-    # we 
+    # we
     return res[0][0].outputs()
 '''
 '''
@@ -142,12 +142,12 @@ def check_existence(target_nodetype, input_nodes, successful=False):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
+
     param: target_nodetype
-    param: input_nodes : List of input nodes 
+    param: input_nodes : List of input nodes
 
     returns output nodes
-    
+
     Hints; successful is only for calculations types
     """
     inputnodesuuid = [node.uuid for node in input_nodes]
@@ -156,7 +156,7 @@ def check_existence(target_nodetype, input_nodes, successful=False):
         filters={
             'uuid' : {'in': inputnodesuuid},
         },
-        tag='input') 
+        tag='input')
     if successful:
         qb.append(
             target_nodetype,
@@ -167,20 +167,20 @@ def check_existence(target_nodetype, input_nodes, successful=False):
     else:
         qb.append(
             target_nodetype,
-            output_of='input')       
+            output_of='input')
     res = qb.all()
     print len(res)
     if res:
         return res[0][0].ouputs()
     else:
         return None
-    
+
 def check_existence_calc(input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
-    param: input_nodes : List of input nodes 
+
+    param: input_nodes : List of input nodes
 
     returns output nodes
     """
@@ -201,7 +201,7 @@ def check_existence_calc(input_nodes, successful=True):
     else:
         qb.append(
             JobCalculation,
-            output_of='input')        
+            output_of='input')
 
     res = qb.all()
     print len(res)
@@ -214,8 +214,8 @@ def check_existence_wf(target_nodetype, input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
     input nodes already exists. If yes it returns the output nodes of that node.
-    
-    param: input_nodes : List of input nodes 
+
+    param: input_nodes : List of input nodes
 
     returns output nodes
     """
@@ -225,7 +225,7 @@ def check_existence_wf(target_nodetype, input_nodes, successful=True):
         filters={
             'uuid' : {'in': inputnodesuuid},
         },
-        tag='input') 
+        tag='input')
     if successful:
         qb.append(
             target_nodetype,
@@ -236,7 +236,7 @@ def check_existence_wf(target_nodetype, input_nodes, successful=True):
     else:
         qb.append(
             target_nodetype,
-            output_of='input')       
+            output_of='input')
     res = qb.all()
     print len(res)
     if res:

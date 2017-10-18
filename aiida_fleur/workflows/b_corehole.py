@@ -10,7 +10,7 @@ energies and corelevel shifts with different methods.
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-    
+
 import os.path
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
@@ -33,39 +33,39 @@ FleurProcess = FleurCalculation.process()
 class fleur_corehole_wc(WorkChain):
     '''
     Turn key solution for the calculation of core level shift and Binding energies
-    
+
 
     '''
-    # wf_Parameters: ParameterData, 
+    # wf_Parameters: ParameterData,
     '''
     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
     'Bes' : [W4f, Be1s]
     'CLS' : [W4f, Be1s]
     'atoms' : ['all', 'postions' : []]
-    'references' : ['calculate', or 
-    'scf_para' : {...}, 'default' 
+    'references' : ['calculate', or
+    'scf_para' : {...}, 'default'
     'relax' : True
     'relax_mode': ['Fleur', 'QE Fleur', 'QE']
-    'relax_para' : {...}, 'default' 
+    'relax_para' : {...}, 'default'
     'calculate_doses' : False
-    'dos_para' : {...}, 'default' 
+    'dos_para' : {...}, 'default'
     '''
     '''
-    # defaults 
+    # defaults
     default wf_Parameters::
     'method' : 'initial'
     'atoms' : 'all
-    'references' : 'calculate' 
-    'scf_para' : 'default' 
+    'references' : 'calculate'
+    'scf_para' : 'default'
     'relax' : True
     'relax_mode': 'QE Fleur'
-    'relax_para' : 'default' 
+    'relax_para' : 'default'
     'calculate_doses' : False
     'dos_para' : 'default'
     '''
-    
+
     _workflowversion = "0.0.1"
-    
+
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
@@ -109,10 +109,10 @@ class fleur_corehole_wc(WorkChain):
         print('started bands workflow version {}'.format(self._workflowversion))
         print("Workchain node identifiers: {}"
               "".format(ProcessRegistry().current_calc_node))
-        
+
     def relaxation_needed(self):
         """
-        If the structures should be relaxed, check if their Forces are below a certain 
+        If the structures should be relaxed, check if their Forces are below a certain
         threshold, otherwise throw them in the relaxation wf.
         """
         print('In relaxation inital_state_CLS workflow')
@@ -125,43 +125,43 @@ class fleur_corehole_wc(WorkChain):
                 return False
         else:
             return False
-    
-    
+
+
     def relax(self):
         """
         Do structural relaxation for certain structures.
         """
-        print('In relax inital_state_CLS workflow')        
+        print('In relax inital_state_CLS workflow')
         for calc in self.ctx.dos_to_calc:
-            pass 
-            # TODO run relax workflow        
-        
+            pass
+            # TODO run relax workflow
+
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
         """
         # TODO allow change of kpoint mesh?, tria?
         wf_dict = self.inputs.wf_parameters.get_dict()
-        nkpts = wf_dict.get('nkpts', 500) 
+        nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
-      
+
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
 
-        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000), 
-        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'), 
+        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
+        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
         #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
         change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
                        'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
-        
+
         fleurmode.set_inpchanges(change_dict)
 
         if nkpts:
             fleurmode.set_nkpts(count=nkpts)
             #fleurinp_new.replace_tag()
-        
+
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp1 = fleurinp_new
@@ -180,17 +180,17 @@ class fleur_corehole_wc(WorkChain):
         inputs.parent_folder = remote
         inputs.code = self.inputs.fleur
         inputs.fleurinpdata = fleurin
-        
+
         # TODO nkpoints decide n core
 
         core = 12 # get from computer nodes per machine
         inputs._options.resources = {"num_machines": 1, "num_mpiprocs_per_machine" : core}
         inputs._options.max_wallclock_seconds = 30 * 60
-          
+
         if self.ctx.serial:
             inputs._options.withmpi = False # for now
             inputs._options.resources = {"num_machines": 1}
-        
+
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
             print self.ctx.queue
@@ -200,13 +200,13 @@ class fleur_corehole_wc(WorkChain):
         #    #else use computer from code.
         #else:
         #    inputs._options.queue_name = 'th1'
-        
+
         if self.ctx.serial:
             inputs._options.withmpi = False # for now
             inputs._options.resources = {"num_machines": 1}
-        
+
         return inputs
-        
+
     def run_fleur(self):
         '''
         run a fleur calculation
@@ -228,7 +228,7 @@ class fleur_corehole_wc(WorkChain):
         print('Band workflow Done')
         print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
               'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
-        
+
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
 
@@ -252,18 +252,18 @@ class fleur_corehole_wc(WorkChain):
         # store difference in output node
         # adjust difference in band.gnu
         #filename = 'gnutest2'
-        
+
         outputnode_dict ={}
-        
+
         outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['Warnings'] = self.ctx.warnings               
+        outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['diff_efermi'] = diff_efermi               
+        outputnode_dict['diff_efermi'] = diff_efermi
         #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
         #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['bandfile'] = bandfilepath
-        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid 
-        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved 
+        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
+        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
         outdict = {}
