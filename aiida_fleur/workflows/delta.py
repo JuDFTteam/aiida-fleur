@@ -6,29 +6,22 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 #TODO: calculation of delta value from the files
 # submit everything if subworkchaining works in Aiida
 # parameter node finding is not optimal.
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
 import os
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-#from aiida.work.workchain import while_, if_
-from aiida.work.workchain import ToContext
-from aiida.work.process_registry import ProcessRegistry
-#from aiida.orm.querybuilder import QueryBuilder
-from aiida.work import workfunction as wf
-#from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
-#from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.workflows.eos import fleur_eos_wc
-from aiida.orm import Group
-from aiida.work import async as asy
-from aiida.work import submit
-from aiida.common.exceptions import NotExistent
-#from aiida_fleur.tools.xml_util import eval_xpath2
-#from lxml import etree
 from string import digits
 from pprint import pprint
+
+from aiida.orm import Code, DataFactory, Group
+from aiida.work.workchain import WorkChain, ToContext
+from aiida.work.process_registry import ProcessRegistry
+from aiida.work import workfunction as wf
+from aiida.work import submit
+#from aiida.work import async as asy
+from aiida.common.exceptions import NotExistent
+from aiida_fleur.workflows.eos import fleur_eos_wc
+
+#from aiida_fleur.tools.xml_util import eval_xpath2
+#from lxml import etree
+
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -47,7 +40,6 @@ class fleur_delta_wc(WorkChain):
     """
     This workflow calculates a equation of states and from a given
     group of structures in the database using a group of given parameter nodes in the database
-
     """
 
     _workflowversion = "0.0.1"
@@ -60,8 +52,7 @@ class fleur_delta_wc(WorkChain):
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                                               'struc_group': 'delta',
+                   default=ParameterData(dict={'struc_group': 'delta',
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
                                                #'group_label' : 'delta_eos',
@@ -93,7 +84,7 @@ class fleur_delta_wc(WorkChain):
                     ''.format(self._workflowversion, ProcessRegistry().current_calc_node))
 
         # init
-        self.ctx.calcs_to_run =[]
+        self.ctx.calcs_to_run = []
         # input  check
 
         # check if right codes
@@ -105,9 +96,9 @@ class fleur_delta_wc(WorkChain):
                 {'points' : wf_dict.get('points', 5),
                  'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
-                 'resources' : wf_dict.get('resources' , {"num_machines": 1}),
+                 'resources' : wf_dict.get('resources', {"num_machines": 1}),
                  'walltime_sec':  wf_dict.get('walltime_sec', 3600),
-                 'queue_name' : wf_dict.get('queue_name' , ''),
+                 'queue_name' : wf_dict.get('queue_name', ''),
                  'serial' : wf_dict.get('serial', False)
              }}
         self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
@@ -519,10 +510,6 @@ def create_delta_result_node(**kwargs):#*args):
     #output_para = args[0]
     #return {'output_eos_wc_para'}
     return outdict
-
-
-
-
 
 
 def get_paranode(struc, para_nodes):
