@@ -1,24 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
 """
-#TODO:
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
 import os.path
+
 from aiida.orm import Code, DataFactory
-#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
-from aiida.work.workchain import WorkChain
+from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.run import submit
-from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
-#from aiida.tools.codespecific.fleur.decide_ncore import decide_ncore
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
@@ -32,15 +23,16 @@ FleurProcess = FleurCalculation.process()
 
 
 class fleur_dos_wc(WorkChain):
-    '''
+    """
     This workflow calculated a DOS from a Fleur calculation
 
     :Params: a Fleurcalculation node
     :returns: Success, last result node, list with convergence behavior
-    '''
-    # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
-    # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
-
+    
+    wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
+    defaults : tria = True, nkpts = 800, sigma=0.005, emin= -0.3, emax = 0.8
+    """
+    
     _workflowversion = "0.1.0"
 
     @classmethod
@@ -78,7 +70,7 @@ class fleur_dos_wc(WorkChain):
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
-        self.ctx.successful = False #TODO
+        self.ctx.successful = False
         self.ctx.warnings = []
 
         wf_dict = self.inputs.wf_parameters.get_dict()
@@ -178,7 +170,7 @@ class fleur_dos_wc(WorkChain):
             dosfilepath = None
             print '!NO DOS.1 file was found, something went wrong!'
 
-        outputnode_dict ={}
+        outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
