@@ -1,22 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 This is the worklfow 'band' for the Fleur code, which calculates a
 electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 # TODO alternative parse a structure and run scf
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
 import os.path
 from aiida.orm import Code, DataFactory
-#from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
-from aiida.work.workchain import WorkChain
+from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.run import submit
-from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -45,12 +38,11 @@ class fleur_band_wc(WorkChain):
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                                         'kpath' : 'auto',
-                                         'nkpts' : 800,
-                                         'sigma' : 0.005,
-                                         'emin' : -0.50,
-                                         'emax' :  0.90}))
+                   default=ParameterData(dict={'kpath' : 'auto',
+                                               'nkpts' : 800,
+                                               'sigma' : 0.005,
+                                               'emin' : -0.50,
+                                               'emax' :  0.90}))
         spec.input("remote", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
@@ -119,8 +111,6 @@ class fleur_band_wc(WorkChain):
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp1 = fleurinp_new
-        #print(fleurinp_new)
-        #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
 
     def run_fleur(self):
         """
@@ -174,7 +164,7 @@ class fleur_band_wc(WorkChain):
         # adjust difference in band.gnu
         #filename = 'gnutest2'
 
-        outputnode_dict ={}
+        outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['Warnings'] = self.ctx.warnings
@@ -196,5 +186,5 @@ class fleur_band_wc(WorkChain):
         #outdict['output_band2'] = bandstructurenode1
         outdict['output_band_wf_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
-            self.out(k, v)
+        for key, val in outdict.iteritems():
+            self.out(key, val)
