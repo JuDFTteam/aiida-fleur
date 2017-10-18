@@ -5,10 +5,6 @@ This contains code snippets and utility useful for dealing with parameter data n
 commonly used by the fleur plugin and workflows
 """
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
 #from aiida.orm import DataFactory
 #from aiida.orm import load_node
 

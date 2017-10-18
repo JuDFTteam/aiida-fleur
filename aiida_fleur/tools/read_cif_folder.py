@@ -18,9 +18,6 @@ __contributors__ = "Jens Broeder"
 
 import os
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 from aiida.orm import DataFactory
 from aiida.work import workfunction as wf
 #from ase.io import cif

@@ -18,9 +18,6 @@ cylce of a FLEUR calculation with AiiDA.
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
 from aiida.work.run import submit, run

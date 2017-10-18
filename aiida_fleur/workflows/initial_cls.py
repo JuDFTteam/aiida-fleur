@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This is the worklfow 'corelevel' using the Fleur code, which calculates Binding
-energies and corelevel shifts with different methods.
-'divide and conquer'
+This is the worklfow 'initial_cls' using the Fleur code calculating 
+corelevel shifts with different methods.
 """
 #TODO parsing of eigenvalues of LOS!
 #TODO error handling of scf
@@ -13,22 +12,14 @@ energies and corelevel shifts with different methods.
 # TODO: Allow for providing referenes as scf_ouputparameter nodes
 # TODO: maybe launch all scfs at the same time
 from string import digits
-
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
-from aiida.orm import Code, DataFactory, CalculationFactory, load_node, Group
-from aiida.orm.querybuilder import QueryBuilder
-from aiida.common.exceptions import NotExistent
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext, WorkChain, if_
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
+from aiida.orm import Code, DataFactory, CalculationFactory, load_node, Group
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida_fleur.tools.extract_corelevels import extract_corelevels
-from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -69,6 +60,9 @@ class fleur_initial_cls_wc(WorkChain):
     'calculate_doses' : False
     'dos_para' : 'default'
     """
+
+    from aiida_fleur.workflows.scf import fleur_scf_wc
+
 
     _workflowversion = "0.2.0"
     _default_wf_para = {'structure_ref' : {},
@@ -616,6 +610,8 @@ class fleur_initial_cls_wc(WorkChain):
         calculate the wanted quantities. currently all energies are in hartree 
         (as provided by Fleur)
         """
+        from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
+
         message=('INFO: Collecting results of inital_state_CLS workflow')
         self.report(message)
         # TODO be very careful with core config?
@@ -843,6 +839,9 @@ def extract_results(calcs):
 
     params: calcs : list of scf workchains nodes
     """
+    
+    from aiida_fleur.tools.extract_corelevels import extract_corelevels
+    
     calc_uuids = []
     for calc in calcs:
         #print(calc)

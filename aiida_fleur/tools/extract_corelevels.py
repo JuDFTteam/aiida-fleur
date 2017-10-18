@@ -6,9 +6,7 @@ out.xml file of FLEUR.
 # TODO clean up
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
 # or rather throw exception on lowest level and catch at higher levels? 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 import sys#,os
 from lxml import etree#, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError

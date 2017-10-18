@@ -3,9 +3,7 @@
 """
 In here we put all things (methods) that are common to workflows 
 """
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 from aiida.orm import Code, DataFactory, load_node
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 #from aiida.work.workchain import WorkChain

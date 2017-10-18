@@ -18,10 +18,7 @@ __contributors__ = "Jens Broeder"
 # TODO maybe always rewrite hole econfig tag in inp.xml otherwise it might lead to errors,
 # be careful with LOs.
 # TODO corelevel workflow, rename species of 0,0,0 position in inp.xml
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-    
+
 #import os.path
 import re
 import numpy as np

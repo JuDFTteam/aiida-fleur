@@ -4,9 +4,7 @@
 Collection of utility routines dealing with StructureData objects
 """
 #TODO move imports to workfuncitons namespace?
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 from ase import *
 from ase.lattice.surface import *
 from ase.io import *
