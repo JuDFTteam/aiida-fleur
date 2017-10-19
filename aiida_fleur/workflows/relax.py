@@ -8,41 +8,21 @@ This module, contains the crystal structure relaxation workflow for FLEUR.
 #  allow different inputs, make things optional(don't know yet how)
 #  half number of iteration if you are close to be converged. (therefore one can start with 18 iterations, and if thats not enough run agian 9 or something)
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-import sys,os
-from ase import *
-from ase.lattice.surface import *
-from ase.io import *
-from aiida.orm import Code, CalculationFactory, DataFactory
-from aiida.orm import Computer
-from aiida.orm import load_node
-#from aiida.orm.data.fleurinp import FleurinpData as FleurInpData
-from aiida.orm.data.singlefile import SinglefileData
-#from aiida.workflows2.run import run
-#from aiida.workflows2.fragmented_wf import FragmentedWorkfunction, \
-#    ResultToContext, if_, while_
-#from aiida.workflows2.db_types import Float, Str, NumericType, SimpleData
-#from aiida.workflows2.defaults import registry
-
+#import sys,os
+#from ase import *
+#from ase.lattice.surface import *
+#from ase.io import *
+from aiida.orm import Code, DataFactory, load_node
+from aiida.work.workchain import WorkChain, while_, if_, ToContext
+from aiida.work.run import run, submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.work.workchain import WorkChain
-from aiida.work.workchain import while_, if_
-from aiida.work.run import run
-from aiida.work.workchain import ToContext
+
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
-computer_name = 'local_mac'
-computer = Computer.get(computer_name)
-codename = 'fleur_inpgen_xml_mac_v0.27'
-codename2 = 'fleur_mac'
-#code = Code.get_from_string(codename)
-#code2 = Code.get_from_string(codename2)
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -61,7 +41,7 @@ class fleur_relax_wc(WorkChain):
     # calc_parameters: Parameter data for inpgen calculation
     @classmethod
     def _define(cls, spec):
-        super(fleur_relaxation, cls).define(spec)
+        super(fleur_relax_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=True)
                    #, required=False, default = ParameterData(
                    #dict={'relax_runmax' : 4, 'fleur_runmax' : 10, 'density_criterion' : 0.00002 , 'converge_density': True, 'converge_energy' : True, 'energy_criterion' : 0.00002})# htr
@@ -108,11 +88,11 @@ class fleur_relax_wc(WorkChain):
         # Comment: Here we wait, because of run,
         # maybe using a future and submit instead might be better
         #print 'ctx, before scf {} {}'.format(ctx, [a for a in self.ctx])
-        inputs = self.get_inputs_scf(ctx)
+        inputs = self.get_inputs_scf(self.ctx)
 
         if self.ctx.last_calc2:
             #print 'inputs for convergnce2: {}'.format(inputs)
-            res = run(fleur_convergence2,
+            res = run(fleur_scf_wc,
                       wf_parameters=inputs['wf_parameters'],
                       fleurinp=inputs['fleurinp'],
                       fleur=inputs['fleur'])
@@ -206,12 +186,12 @@ class fleur_relax_wc(WorkChain):
         inputs._options.resources = {"num_machines": 1}
         inputs._options.max_wallclock_seconds = 30 * 60
         # if code local use
-        if self.inputs.fleur.is_local():
-            inputs._options.computer = computer
-        else:
-            inputs._options.queue_name = 'th1'
+        #if self.inputs.fleur.is_local():
+        #    inputs._options.computer = computer
+        #else:
+        #    inputs._options.queue_name = 'th1'
         inputs._options.withmpi = False # for now
-        print 'Relax structure with Fleur, cycle: {}'.format(ctx.loop_count2)
+        print 'Relax structure with Fleur, cycle: {}'.format(self.ctx.loop_count2)
         future = self.submit(FleurProcess, inputs)
 
         self.ctx.calcs.append(future)
@@ -259,31 +239,11 @@ class fleur_relax_wc(WorkChain):
 
         if self.ctx.successful2:
             print 'Done, Des wors, forces converged'
-            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(ctx.loop_count2, largest_force)
+            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force)
         else: # loopcount reached
             print 'Done, I reached the number of forces cycles, system is not relaxed enough.'
-            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(ctx.loop_count2, largest_force)
+            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force)
         outdict = self.ctx.last_calc2
         for k, v in outdict.iteritems():
             self.out(k, v)        # return success, and the last calculation outputs
         # ouput must be aiida Data types.
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='SCF with Fleur.')
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
-                        help='The pseudopotential family', required=False)
-    parser.add_argument('--inpgen', type=Code, dest='inpgen',
-                        help='The inpgen code node to use', required=True)
-    parser.add_argument('--fleur', type=Code, dest='fleur',
-                        help='The FLEUR code node to use', required=True)
-    parser.add_argument('--structure', type=StructureData, dest='structure',
-                        help='The crystal structure node', required=True)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
-                        help='Parameters for the FLEUR calculation', required=False)
-    args = parser.parse_args()
-    res = run(fleur_convergence, wf_parameters=args.wf_parameters, structure=args.structure, calc_parameters=args.calc_parameters, inpgen = args.inpgen, fleur=args.fleur)
-
-
-
