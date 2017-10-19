@@ -22,7 +22,8 @@
     "install_requires" : [
             "aiida-core",
             "ase",
-            "lxml >= 3.6.4"
+            "lxml >= 3.6.4",
+            "pymatgen"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib"]

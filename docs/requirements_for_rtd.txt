@@ -3,5 +3,5 @@
 lxml >= 3.6.4
 aiida>=0.9.0
 ase
-
+pymatgen
 
