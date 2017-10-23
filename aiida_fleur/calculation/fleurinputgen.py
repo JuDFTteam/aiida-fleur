@@ -5,7 +5,8 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
-from aiida.orm.calculation.job import JobCalculation, DataFactory
+from aiida.orm.calculation.job import JobCalculation
+from aiida.orm import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements 
