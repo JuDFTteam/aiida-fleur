@@ -206,11 +206,11 @@ def create_group(name, nodes, description=None):
     Creates a group for a given node list.
 
     So far this is only an AiiDA verdi command.
-    :param: name: string name for the group
-    :param: nodes: list of AiiDA nodes, pks, or uuids
-    :param: description, optional string that will be stored as description for the group
+    :param name: string name for the group
+    :param nodes: list of AiiDA nodes, pks, or uuids
+    :param description, optional string that will be stored as description for the group
 
-    :returns: the group, AiiDa group
+    :return: the group, AiiDa group
     usage example:
 
     group_name = 'delta_structures_gustav'
@@ -231,7 +231,7 @@ def create_group(name, nodes, description=None):
     nodes2_pks = []
     for node in nodes:
         try:
-            node =int(node)
+            node = int(node)
         except ValueError:
             pass
         nodes2_pks.append(node)

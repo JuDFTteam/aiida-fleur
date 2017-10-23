@@ -5,16 +5,10 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
-
-# TODO title of simulations
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-from aiida.orm.calculation.job import JobCalculation
+from aiida.orm.calculation.job import JobCalculation, DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.common.constants import elements as PeriodicTableElements
-from aiida.orm import DataFactory
+from aiida.common.constants import elements as PeriodicTableElements 
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string

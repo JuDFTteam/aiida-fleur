@@ -708,7 +708,7 @@ def get_xml_attribute(node, attributename, parser_info_out={}):
 
 # TODO this has to be done better. be able to write tags and
 # certain attributes of attributes that occur possible more then once.
-# HINT: This is not really used any more. use fleurinpmodifier
+# HINT: This is not really used anymore. use fleurinpmodifier
 def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstructure):
     """
     This modifies the xml-inp file. Makes all the changes wanted by
@@ -882,6 +882,8 @@ def inpxml_todict(parent, xmlstr):
 # list of possible xpaths from a schema file, or to validate a certain xpath expression and
 # to allow to get SINGLE xpaths for certain attrbiutes.
 #  akk: tell me where 'DOS' is
+# This might not be back compatible... i.e a certain plugin version will by this design only work with
+#  certain schema version
 def get_inpxml_file_structure():
     """
     This routine returns the structure/layout of the 'inp.xml' file.

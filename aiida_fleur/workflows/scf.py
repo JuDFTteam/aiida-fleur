@@ -42,23 +42,24 @@ FleurinpProcess = FleurinputgenCalculation.process()
 
 class fleur_scf_wc(WorkChain):
     """
-    This workflow converges a FLEUR calculation (SCF).
-    It converges the charge density and optional the total energy
+    Workchain for converging a FLEUR calculation (SCF).
 
+    It converges the charge density.
     Two paths are possible:
 
-    (1) Start from a structure and run the inpgen first
+    (1) Start from a structure and run the inpgen first optional with calc_parameters
     (2) Start from a Fleur calculation, with optional remoteData
 
-    :Params: wf_parameters: parameterData node,
-    :Params: structure : structureData node,
-    :Params: calc_parameters: parameterData node,
-    :Params: fleurinp:  fleurinpData node,
-    :Params: remote_data: remoteData node,
-    :Params: inpgen: Code node,
-    :Params: fleur: Code node,
+    :param wf_parameters: (ParameterData), Workchain Spezifications
+    :param structure: (StructureData), Crystal structure
+    :param calc_parameters: (ParameterData), Inpgen Parameters
+    :param fleurinp: (FleurinpData), to start with a Fleur calculation
+    :param remote_data: (RemoteData), from a Fleur calculation
+    :param inpgen: (Code)
+    :param fleur: (Code)
 
-    :returns: Success, last result node, list with convergence behavior
+    :return output_scf_wc_para: (ParameterData), Information of workflow results 
+        like Success, last result node, list with convergence behavior
 
     minimum input example:
     1. Code1, Code2, Structure, (Parameters), (wf_parameters)

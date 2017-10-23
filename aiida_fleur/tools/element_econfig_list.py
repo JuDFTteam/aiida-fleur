@@ -135,9 +135,9 @@ def get_econfig(element, full=False):
     """
     returns the econfiguration as a string of an element.
 
-    :params: element string
-    :params: full, bool (econfig without [He]...)
-    returns string
+    :param: element string
+    :param: full, bool (econfig without [He]...)
+    :return: string
     Be careful with base strings...
     """
     if isinstance(element, int):
@@ -165,10 +165,10 @@ def get_coreconfig(element, full=False):
     """
     returns the econfiguration as a string of an element.
 
-    :params: element string
-    :params: full, bool (econfig without [He]...)
-    returns string
-    Be careful with base strings...
+    :param: element string
+    :param: full, bool (econfig without [He]...)
+    :return: string
+    :note: Be careful with base strings...
     """
     if isinstance(element, int):
         econ = econfiguration.get(element, {}).get('econfig', None)
@@ -240,11 +240,11 @@ def econfigstr_hole(econfigstr, corelevel, highesunoccp, htype='valence'):
     """
     # '1s2 | 2s2' , '1s2' , '2p0' -> '1s1 | 2s2 2p1'
 
-    param: string
-    param: string
-    param: string
+    :param: string
+    :param: string
+    :param: string
 
-    return: string
+    :return: string
     """
     corestates = econfigstr.split()
 
