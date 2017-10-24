@@ -1,5 +1,5 @@
 dist: trusty
-
+#sudo: required
 language: python
 
 python: 2.7
@@ -24,7 +24,6 @@ install:
     - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core
     - pip install -e .
 env:
-    - TEST_TYPE="pre-commit"
     - TEST_TYPE="unittests"
 
 script: ./aiida_fleur/tests/run_all.sh
