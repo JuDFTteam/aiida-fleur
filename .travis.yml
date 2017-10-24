@@ -23,10 +23,11 @@ install:
     - pip install -U pip wheel setuptools
     - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core
     - pip install -e .
+    
 env:
     - TEST_TYPE="unittests"
 
-script: ./aiida_fleur/tests/run_all.sh
+script: cd ./aiida_fleur/tests/ && ./run_all.sh
 
 git:
   depth: 3
