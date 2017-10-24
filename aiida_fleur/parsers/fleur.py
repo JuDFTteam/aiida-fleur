@@ -12,24 +12,13 @@ the parser. Makes testing and portability easier.
 import os
 #import numpy
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
-from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.parsers import FleurOutputParsingError
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser#, ParserParamManager
-#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
-from aiida_fleur.data.fleurinp import FleurinpData
 from aiida.orm.data.array.bands import BandsData
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.parsers import FleurOutputParsingError
+from aiida_fleur.data.fleurinp import FleurinpData
 
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-#from aiida.common.datastructures import calc_states
-#from aiida.orm.data.folder import FolderData
-#from aiida.orm.calculation.job.fleur_inp.fleur import get_inpxml_file_structure
-#from aiida.common.exceptions import InputValidationError, ValidationError
-#from aiida.common.exceptions import UniquenessError
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")

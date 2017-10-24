@@ -174,9 +174,9 @@ def get_coreconfig(element, full=False):
         econ = econfiguration.get(element, {}).get('econfig', None)
         if full:
             econ = rek_econ(econ)
-            return econ.split('|')[0]
+            return econ.split('|')[0].rstrip()
         else:
-            return econ.split('|')[0]
+            return econ.split('|')[0].rstrip()
     elif isinstance(element, str):
         atomic_names = {data['symbol']: num for num,
                          data in econfiguration.iteritems()}
@@ -184,9 +184,9 @@ def get_coreconfig(element, full=False):
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
             econ = rek_econ(econ)
-            return econ.split('|')[0]
+            return econ.split('|')[0].rstrip()
         else:
-            return econ.split('|')[0]
+            return econ.split('|')[0].rstrip()
     else:
         print('INPUTERROR: element has to be and int or string')
         return None
