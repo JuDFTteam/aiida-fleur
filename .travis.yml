@@ -21,9 +21,9 @@ before_install:  # copied from pgtest's travis.yml
 
 install:
     - pip install -U pip wheel setuptools
-    - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core
+    - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing]
     - pip install -e .
-    
+
 env:
     - TEST_TYPE="unittests"
 
