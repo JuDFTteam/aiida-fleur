@@ -10,6 +10,7 @@ ase
 pymatgen
 
 pgtest
+pytest-cov
 # for plotting
 # ngtviewer
 # plot_methods

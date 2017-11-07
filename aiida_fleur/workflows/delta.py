@@ -14,7 +14,7 @@ from aiida.orm import Code, DataFactory, Group
 from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
-#from aiida.work import submit
+from aiida.work import submit
 from aiida.work import async as asy
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
@@ -222,8 +222,8 @@ class fleur_delta_wc(WorkChain):
         eos_results = {}
         inputs = self.get_inputs_eos()
 
-        '''
-        for struc, para in self.ctx.calcs_to_run[:]:#[10:33]
+        
+        for struc, para in self.ctx.calcs_to_run[10:33]:#[10:33]
             print para
             formula = struc.get_formula()
             label = '|delta_wc|eos|{}'.format(formula)
@@ -278,7 +278,7 @@ class fleur_delta_wc(WorkChain):
             eos_results[label] = eos_future
 
         return ToContext(**eos_results)
-        
+        '''
         '''
         # with run
         eos_results = {}
