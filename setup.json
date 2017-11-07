@@ -23,7 +23,8 @@
             "aiida-core",
             "ase",
             "lxml >= 3.6.4",
-            "pymatgen"
+            "pymatgen",
+            "pytest-cov"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib"]
