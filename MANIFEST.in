@@ -1,3 +1,6 @@
 
 
 include aiida_fleur/fleur_schema/input/*/*.xsd
+
+include aiida_fleur/tests/run*
+include aiida_fleur/tess/files/*/*
