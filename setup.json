@@ -24,7 +24,8 @@
             "ase",
             "lxml >= 3.6.4",
             "pymatgen",
-            "pytest-cov"
+            "pytest-cov >= 2.5.0",
+            "pytest"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib"]
