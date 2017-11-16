@@ -984,11 +984,41 @@ class FleurinpData(Data):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is a workfunction and does not keep the provenance!
+        This is a workfunction and does keep the provenance!
         :return: KpointsData node
         """
 
         return fleurinp.get_kpointsdata_nwf(fleurinp)
+
+    '''
+    @staticmethod
+    def get_parameterdata_nwf(fleurinp):
+        """
+        This routine returns an AiiDA ParameterData type produced from the inp.xml
+        file. This node can be used for inpgen.
+        This is NOT a workfunction and does NOT keep the provenance!
+        :return: ParameterData node
+        """
+        parameters = None
+        return parameters
+
+
+    @staticmethod
+    @wf
+    def get_parameterdata(fleurinp):
+        """
+        This routine returns an AiiDA ParameterData type produced from the inp.xml
+        file. This node can be used for inpgen.
+        This is a workfunction and does keep the provenance!
+        :return: ParameterData node
+        """
+
+        return fleurinp.get_parameterdata_nwf(fleurinp)
+    '''
+
+
+
+
 
     '''
     def set_nkpts(fleurinp, count, gamma='F'):#_orgi
