@@ -234,7 +234,7 @@ class fleur_delta_wc(WorkChain):
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 _label=label, _description=description)
                 #fleur_eos_wc.run(#
-            else:
+            else: # TODO: run eos_wc_simple
                 eos_future = submit(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'],
