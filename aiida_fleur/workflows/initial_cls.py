@@ -638,6 +638,7 @@ class fleur_initial_cls_wc(WorkChain):
         cl_energies = {}
 
         #first substract efermi from corelevel of reference structures
+        # TODO check if both values, corelevel and efermi are in eV
         for compound, atomtypes_list in ref_atomtypes.iteritems():
             # atomtype_list contains a list of dicts of all atomtypes from compound x
             # get corelevels of compound x
