@@ -9,6 +9,6 @@ if __name__ == '__main__':
     with open('setup.json', 'r') as info:
         kwargs = json.load(info)
     setup(
-        packages=find_packages(),
+        packages=find_packages(exclude='aiida'),
         **kwargs
     )
