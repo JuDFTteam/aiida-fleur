@@ -14,7 +14,7 @@ services:
 addons:
     postgresql: "9.5"
 
-#cache: pip
+cache: pip
 
 before_install:  # copied from pgtest's travis.yml
     - sudo apt-get install locate

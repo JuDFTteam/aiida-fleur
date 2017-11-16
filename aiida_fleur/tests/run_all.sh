@@ -3,4 +3,4 @@ export AIIDA_PATH='.';
 mkdir -p '.aiida';
 #pytest -sv
 #pytest -v
-pytest
+pytest --cov-report=term-missing --cov=aiida_fleur
