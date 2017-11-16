@@ -1,3 +1,15 @@
+## v0.6.0
+### release for MaX virtual machine, not so well testet, but used in production mode. some things are currently half done
+- added CI
+- added basic tests, coverage still bad, but tests if plugin is installed right
+- added MANIFEST
+- fixed fleur_schema isssued if installed as python package (with manifest)
+- integrated the new Fleur schema files
+- bunch of new utiltity
+- advancements of workflows
+- correction of AiiDA graphs of most workchains, Quick and dirt, still unclear what is the right way to do these things, aiida_core still changes
+
+
 ## v0.5.0
 ### Merge with advanced workflow repo
 - this included the corehole and inital corehole workflow as well calculation of formation energies
