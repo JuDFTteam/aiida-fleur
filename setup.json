@@ -20,8 +20,8 @@
             "reentry"
         ],
     "install_requires" : [
-            "aiida-core",
-            "ase",
+            "aiida-core >= 0.10.0",
+            "ase >= 3.15.0",
             "lxml >= 3.6.4",
             "pymatgen",
             "pytest-cov >= 2.5.0",
