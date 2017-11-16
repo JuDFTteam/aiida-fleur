@@ -80,6 +80,23 @@ Relax: Relaxation of a Cystalstructure wf
 .. automodule:: aiida_fleur.workflows.relax
    :members:
 
+initial_cls: Caluclation of inital corelevel shifts
+---------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.initial_cls
+   :members:
+
+corehole: Performance of coreholes calculations
+-----------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.corehole
+   :members:
+
+delta: Calculates a Delta Factor
+--------------------------------
+
+.. automodule:: aiida_fleur.workflows.delta
+   :members:
 
 Fleur tools/utility
 +++++++++++++++++++
@@ -99,9 +116,38 @@ XML utility
 Parameter utility
 -----------------
 
+General Parameter
+_________________
+
+.. automodule:: aiida_fleur.tools.ParameterData_util
+   :members:
+
 Merge Parameter
 _______________
 
 .. automodule:: aiida_fleur.tools.merge_parameter
    :members:
+
+
+Corehole/level utility
+-----------------------
+
+.. automodule:: aiida_fleur.tools.create_corehole
+   :members:
+
+.. automodule:: aiida_fleur.tools.extract_corelevels
+   :members:
+
+Common aiida utility
+--------------------
+
+.. automodule:: aiida_fleur.tools.common_aiida
+   :members:
+
+Common utitlity for fleur workchains
+------------------------------------
+
+.. automodule:: aiida_fleur.tools.common_fleur_wf
+   :members:
+   
 

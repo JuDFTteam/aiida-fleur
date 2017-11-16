@@ -20,21 +20,21 @@ ParameterData = DataFactory('parameter')
 def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
     """
     This methods sets of electron configurations for a kind
-    or position given, make sure to break the symmetry for this position/kind 
+    or position given, make sure to break the symmetry for this position/kind
     beforehand, otherwise you will create several coreholes.
-    
+
     param: structure: StructureData
     param: kind, a string with the kind_name (TODO: alternative the kind object)
     param: econfig, string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
-    ! THis is the new econfig therefore 
+    ! THis is the new econfig therefore
 
     returns a parameterData node
     """
-    
+
     from aiida.common.constants import elements as PeriodicTableElements
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}    
+                           data in PeriodicTableElements.iteritems()}
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -79,6 +79,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
 
 
 # Move to fleurinpmod? fleurinp->self
+# This method is fully implemented yet since it turned out to better go over inpgen
 def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
@@ -88,14 +89,14 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
     [Kr] 2(5s1/2) 4(4d3/2) 6(4d5/2) 6(4f5/2) 8(4f7/2) |2(5p1/2) 4(5p3/2) 2(6s1/2) 2(5d3/2) 2(5d5/2))
     occ tags already there will be untouched, unless the state is the same as given
 
-    param: fleurinp, an unstored! changes are done on this fleurinp fleurinpdata object # TODO alternatively stored?
-    param: species, string with species name
-    param: stateocc: dict state tuples (spinup, spindown), exp: {'(5d3/2)' : (2.5, 0.0), '(4f7/2)' : (3.5 , 4.0)}
-    param: pos: list of tuples of 3, pos=[(0.0, 0.0, 0.0), ...]
-    param: coreconfig: string, e.g: [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2), default='same' (same as current in inp.xml)
-    param: valenceconfig, string, e.g.: (5p1/2) (5p3/2) (6s1/2) (5d3/2) (5d5/2)
+    :param fleurinp:, an unstored! changes are done on this fleurinp fleurinpdata object # TODO alternatively stored?
+    :param species:, string with species name
+    :param stateocc: dict state tuples (spinup, spindown), exp: {'(5d3/2)' : (2.5, 0.0), '(4f7/2)' : (3.5 , 4.0)}
+    :param pos: list of tuples of 3, pos=[(0.0, 0.0, 0.0), ...]
+    :param coreconfig: string, e.g: [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2), default='same' (same as current in inp.xml)
+    :param valenceconfig, string, e.g.: (5p1/2) (5p3/2) (6s1/2) (5d3/2) (5d5/2)
 
-    returns the changes fleurinpData object
+    :return: the changes fleurinpData object
     """
     '''
          <electronConfig>

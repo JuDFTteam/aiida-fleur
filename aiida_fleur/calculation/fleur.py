@@ -209,7 +209,7 @@ class FleurCalculation(JobCalculation):
         self._copy_filelist_jij = []
 
         #possible settings_dict keys
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 
+        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
                                'additional_remotecopy_list', 'remove_from_remotecopy_list'
                                'cmdline']
         #possible modes?
@@ -252,7 +252,7 @@ class FleurCalculation(JobCalculation):
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
                     "for all available features here check the documentation."),
-            
+
             }})
             #
             #"parent_calc":{
@@ -418,12 +418,12 @@ class FleurCalculation(JobCalculation):
                 raise InputValidationError(
                     "parent_calc, must be either an 'inpgen calculation' or"
                     " a 'fleur calculation'.")
-        
+
         # check existence of settings (optional)
         settings = inputdict.pop(self.get_linkname('settings'), None)
         #print('settings: {}'.format(settings))
         if settings is None:
-            settings_dict = {}            
+            settings_dict = {}
         else:
             if not isinstance(settings, ParameterData):
                 raise InputValidationError("settings, if specified, must be of "
@@ -455,7 +455,7 @@ class FleurCalculation(JobCalculation):
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
             self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-            
+
             #local_copy_list.append((
             #    fleurinp.get_file_abs_path(self._INPXML_FILE_NAME),
             #    self._INPXML_FILE_NAME))
@@ -464,7 +464,7 @@ class FleurCalculation(JobCalculation):
             for file1 in allfiles:
                 local_copy_list.append((
                     fleurinp.get_file_abs_path(file1),
-                    file1))                
+                    file1))
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
@@ -526,19 +526,19 @@ class FleurCalculation(JobCalculation):
                 #    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
                 elif modes['dos']:
                     pass
-                elif modes['band']: 
+                elif modes['band']:
                     pass
                 else:
                     filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 # from settings, user specified
-                #TODO check if list? 
+                #TODO check if list?
                 for file1 in settings_dict.get('additional_remotecopy_list', []):
                     filelist_tocopy_remote.append(file1)
- 
+
                 for file1 in settings_dict.get('remove_from_remotecopy_list', []):
                     if file1 in filelist_tocopy_remote:
-                        filelist_tocopy_remote.remove(file1)             
-                
+                        filelist_tocopy_remote.remove(file1)
+
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
@@ -547,7 +547,7 @@ class FleurCalculation(JobCalculation):
                 #print remote_copy_list
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
 
-        
+
         ########## MAKE CALCINFO ###########
 
         calcinfo = CalcInfo()
@@ -580,29 +580,29 @@ class FleurCalculation(JobCalculation):
         #calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)
         #calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)
         #calcinfo.retrieve_list.append(self._KPTS_FILE_NAME)
-        
+
         # if certain things are modefied, flags set,
         #other files should be retrieved, example DOS.x...
         #print "mode_retrieved_filelist", repr(mode_retrieved_filelist)
         for mode_file in mode_retrieved_filelist:
             retrieve_list.append(mode_file)
         #print('retrieve_list: {}'.format(retrieve_list))
-       
+
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
         #print('add_retrieve: {}'.format(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
-        
+
         remove_retrieve = settings_dict.get('remove_from_retrieve_list', [])
         for file1 in remove_retrieve:
             if file1 in retrieve_list:
-                retrieve_list.remove(file1)             
-        
+                retrieve_list.remove(file1)
+
         calcinfo.retrieve_list = []
         for file1 in retrieve_list:
             calcinfo.retrieve_list.append(file1)
-        
+
         codeinfo = CodeInfo()
         # should look like: codepath -xmlInput < inp.xml > shell.out 2>&1
         walltime_sec = self.get_max_wallclock_seconds()
@@ -612,14 +612,14 @@ class FleurCalculation(JobCalculation):
         #walltime_sec = self.get_max_wallclock_seconds()
         #print('walltime: {}'.format(walltime_sec))
         if walltime_sec:
-            walltime_min = max(1, walltime_sec/60)      
+            walltime_min = max(1, walltime_sec/60)
             cmdline_params.append("-wtime")
             cmdline_params.append("{}".format(walltime_min))
-        
+
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
             cmdline_params.append(command)
-            
+
         codeinfo.cmdline_params = list(cmdline_params)
         # + ["<", self._INPXML_FILE_NAME,
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
@@ -655,7 +655,7 @@ class FleurCalculation(JobCalculation):
     def _check_valid_parent(self, calc):
         """
         Check that calc is a valid parent for a FleurCalculation.
-        It can be a FleurCalculation, InpgenCalculation, or (if the class exists) a 
+        It can be a FleurCalculation, InpgenCalculation, or (if the class exists) a
         CopyonlyCalculation
         :TODO: maybe assume that CopyonlyCalculation class always exists?
         """
@@ -691,9 +691,9 @@ class FleurCalculation(JobCalculation):
 
     def use_parent_calculation(self, calc):
         """
-        Set the parent calculation of Fleur, 
+        Set the parent calculation of Fleur,
         from which it will inherit the outputsubfolder.
-        The link will be created from parent RemoteData to FleurCalculation 
+        The link will be created from parent RemoteData to FleurCalculation
         """
         from aiida.common.exceptions import NotExistent
 
@@ -716,7 +716,7 @@ class FleurCalculation(JobCalculation):
         """
         if not isinstance(remotedata,RemoteData):
             raise ValueError('remotedata must be a RemoteData')
-        
+
         # complain if another remotedata is already found
         input_remote = self.get_inputs(node_type=RemoteData)
         if input_remote:

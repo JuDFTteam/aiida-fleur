@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-In here we put all things (methods) that are common to workflows 
+In here we put all things (methods) that are common to workflows
 """
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 from aiida.orm import Code, DataFactory, load_node
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
 #from aiida.work.workchain import WorkChain
@@ -38,7 +36,7 @@ def is_code(code):
     if yes returns a Code node in all cases
     if no returns None
     """
-    
+
     #Test if Code
     if isinstance(code, Code):
         return code
@@ -62,7 +60,7 @@ def is_code(code):
         pass
     if codestring:
         code = Code.get_from_string(codestring)
-        return code      
+        return code
     #Test if uuid, if yes, is the corresponding node Code
     # TODO: test for uuids not for string (guess is ok for now)
     '''
@@ -92,13 +90,13 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs.code = code
     if fleurinp:
         inputs.fleurinpdata = fleurinp
-    
+
     for key, val in options.iteritems():
         if val==None:
             continue
         else:
             inputs._options[key] = val
-    
+
     if description:
         inputs['_description'] = description
     else:
@@ -106,15 +104,15 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     if label:
         inputs['_label'] = label
     else:
-        inputs['_label'] = ''        
+        inputs['_label'] = ''
     #TODO check  if code is parallel version?
     if serial:
         inputs._options.withmpi = False # for now
         inputs._options.resources = {"num_machines": 1}
-    
+
     if settings:
         inputs.settings = settings
-    
+
     '''
     options = {
     "max_wallclock_seconds": int,
@@ -153,34 +151,34 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
             continue
         else:
             inputs._options[key] = val
-    
+
     if description:
         inputs['_description'] = description
     else:
-        inputs['_description'] = ''        
-    
+        inputs['_description'] = ''
+
     if label:
         inputs['_label'] = label
     else:
         inputs['_label'] = ''
-    
+
     #inpgen run always serial
     inputs._options.withmpi = False # for now
     inputs._options.resources = {"num_machines": 1}
     #print(inputs)
     return inputs
-    
+
 
 def get_natoms_element(formula):
     """
     Converts 'Be24W2' to {'Be': 24, 'W' : 2}, also BeW to {'Be' : 1, 'W' : 1}
     """
-    
+
     import re
     elem_count_dict = {}
     elements = re.findall('[A-Z][^A-Z]*', formula)
     #re.split('(\D+)', formula)
-    
+
     for i, elm in enumerate(elements):
         elem_count = re.findall('\d+|\D+', elm)
         #print(elem_count)
@@ -188,7 +186,7 @@ def get_natoms_element(formula):
             elem_count_dict[elem_count[0]] = 1
         else:
             elem_count_dict[elem_count[0]] = float(elem_count[1])
-            
+
     return elem_count_dict
 
 # test
@@ -197,8 +195,8 @@ def get_natoms_element(formula):
 
 def get_atomprocent(formula):
     """
-    This converts a formula to a dictionary with elemnt : atomprocent 
-    example converts 'Be24W2' to {'Be': 24/26, 'W' : 2/26}, also BeW to {'Be' : 0.5, 'W' : 0.5}    
+    This converts a formula to a dictionary with elemnt : atomprocent
+    example converts 'Be24W2' to {'Be': 24/26, 'W' : 2/26}, also BeW to {'Be' : 0.5, 'W' : 0.5}
     :params: formula: string
     :returns: a dict, element : atomprocent
 
@@ -216,29 +214,29 @@ def get_atomprocent(formula):
 
 def get_weight_procent(formula):
     """
-    This converts a formula to a dictionary with elemnt : weightprocent 
-    example converts 'Be24W2' to {'Be': , 'W' : }, also BeW to {'Be' : , 'W' : }    
+    This converts a formula to a dictionary with elemnt : weightprocent
+    example converts 'Be24W2' to {'Be': , 'W' : }, also BeW to {'Be' : , 'W' : }
     :params: formula: string
     :returns: a dict, element : weightprocent
 
     # Todo alternative with structuredata
     """
-    
+
     pass
 
 
 def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     """
-    This method determines the formation energy. 
+    This method determines the formation energy.
     E_form =  E(A_xB_y) - x*E(A) - y*E(B)
-    
+
     :inputs: struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
     :inputs: ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom} for the elements
     (if the formula of the elements contains a number the total energy is devided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
     eform_list = []
-    eform_dict = {} 
+    eform_dict = {}
     #ref_el = ref_struc_te_dict.keys()
     ref_struc_te_dict_norm = {}
     # normalize reference
@@ -246,7 +244,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
         elem_n = get_natoms_element(key)
         ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
     ref_el_norm = ref_struc_te_dict_norm.keys()
-    
+
     for formula, tE in struc_te_dict.iteritems():
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
@@ -260,7 +258,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
                        ''.format(elem))
         eform_dict[formula] = eform/ntotal
         eform_list.append(eform/ntotal)
-    return eform_list, eform_dict    
+    return eform_list, eform_dict
 
 # test
 #determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1})
@@ -271,26 +269,26 @@ def determine_convex_hull(formation_en_grid):
     For now only for 2D phase diagrams
     Adds the points [1.0, 0.0] and [0.0, 1.0], because in material science these
     are always there.
-    
+
     :params: formation_en_grid: list of points in phase space [[x, formation_energy]]
     :returns: a hul datatype
     """
     import numpy as np
     from scipy.spatial import ConvexHull
-    
+
     # TODO multi d
     # check if endpoints are in
     if [1.0, 0.0] not in formation_en_grid:
         formation_en_grid.append([1.0, 0.0])
     if [0.0, 0.0] not in formation_en_grid:
-        formation_en_grid.append([0.0, 0.0])   
-     
+        formation_en_grid.append([0.0, 0.0])
+
     points = np.array(formation_en_grid)
     hull = ConvexHull(points)
-    
+
     return hull
-    
-    
+
+
 def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
     """
     This is a utilty function with the goal to make prepare the right resource and scheduler extras for a given computer.
@@ -299,28 +297,28 @@ def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
     return: dict, custom scheduler commands
     """
     nnodes = resources.get('num_machines', 1)
-    
+
     memp_per_node = 125000# max recommend 126000 MB on claix jara-clx nodes
     if not extras:
         # use defaults # TODO add other things, span, pinnning... openmp
         extras = {'lsf' : '#BSUB -P {} \n#BSUB -M {}  \n#BSUB -a intelmpi'.format(project, memp_per_node*nnodes),#{'-P' : 'jara0043', '-M' : memp_per_node*nnodes, '-a' : 'intelmpi'},
                  'torque' : '',#{},
                  'direct' : ''}#{}}
-    
+
     # get the scheduler type from the computer the code is run on.
     com = code.get_computer()
     #com_name = com.get_name()
     scheduler_type = com.get_scheduler_type()
-     
+
     default_per_machine = com.get_default_mpiprocs_per_machine()
     if not default_per_machine:
         default_per_machine = 24# claix, lsf does can not have default mpiprocs... #TODO this better
     tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine*nnodes)
-    
+
     if scheduler_type == 'lsf':
         new_resources = {'tot_num_mpiprocs' : tot_num_mpiprocs}# only this needs to be given
     elif scheduler_type == 'torque':
-        new_resources = resources#{'num_machines', 1} # on iff003 currently we do not do multinode mpi, 
+        new_resources = resources#{'num_machines', 1} # on iff003 currently we do not do multinode mpi,
         #like this it will get stuck on iff003
     else:
         new_resources = resources
@@ -347,8 +345,8 @@ def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     """
     Pass a code node and an expected code (plugin) type. Check that the
-    code exists, is unique, and return the Code object. 
-    
+    code exists, is unique, and return the Code object.
+
     :param codenode: the name of the code to load (in the form label@machine)
     :param expected_code_type: a string with the plugin that is expected to
       be loaded. In case no plugins exist with the given name, show all existing
@@ -360,7 +358,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     import sys
     from aiida.common.exceptions import NotExistent
     from aiida.orm import Code
-    
+
 
     try:
         if codenode is None:
@@ -402,13 +400,13 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                 sys.exit(1)
 
     return code
-    
-    
+
+
 def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     """
     params: structuredata, Aiida structuredata
     params: kpoint_density
-    
+
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
@@ -430,7 +428,7 @@ def inpgen_dict_set_mesh(inpgendict, mesh):
     """
     params: python dict, used for inpgen parameterdata node
     params: mesh either as returned by kpointsdata or tuple of 3 integers
-    
+
     returns: python dict, used for inpgen parameterdata node
     """
     if len(mesh) == 2:
@@ -441,10 +439,10 @@ def inpgen_dict_set_mesh(inpgendict, mesh):
     kpt_dict['div1'] = kmesh[0]
     kpt_dict['div2'] = kmesh[1]
     kpt_dict['div3'] = kmesh[2]
-    
+
     inpgendict_new = inpgendict
     inpgendict_new['kpt'] = kpt_dict
-    
+
     return inpgendict_new
 
 # test

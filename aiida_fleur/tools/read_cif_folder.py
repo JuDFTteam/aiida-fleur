@@ -5,7 +5,7 @@ In this module you find a method (read_cif_folder) to read in all .cif files
 from a folder and store the structures in the database.
 """
 
-# TODO: links to the structures created in the db from the cif files have to be 
+# TODO: links to the structures created in the db from the cif files have to be
 # set. Might make a difference for
 # structure visualization, because cif file has more information
 # also keep connection to ICSD id number
@@ -18,9 +18,6 @@ __contributors__ = "Jens Broeder"
 
 import os
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 from aiida.orm import DataFactory
 from aiida.work import workfunction as wf
 #from ase.io import cif
@@ -85,7 +82,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
 
     #2. read all the files and store stuff.
     saved_count = 0
-    saved_count_cif = 0    
+    saved_count_cif = 0
     filenames2 = []
     structuredatas2 = []
     for i in range(nfiles):
@@ -126,7 +123,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         else:
             struc = struc_from_cif(new_cif[0])
             structuredatas.append(struc)
-            formula = struc.get_formula()            
+            formula = struc.get_formula()
         if write_log:
             # This file is a logfile/info file created by 'read_cif_folder'
             # Structure Formula, structuredata pk, Structure Data uuid,
@@ -147,7 +144,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         os.write(file1, infofilestring)
         os.close(file1)
     print '{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count)
-    
+
     return structuredatas2, filenames2
 
 
@@ -160,8 +157,8 @@ def wf_struc_from_cif(cif):
 def struc_from_cif(cif):
     asecell = cif.get_ase()
     struc = DataFactory('structure')(ase=asecell)
-    return struc    
-    
+    return struc
+
 if __name__ == "__main__":
     import argparse
     import json

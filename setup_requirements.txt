@@ -7,4 +7,11 @@ aiida>=0.9.0
 
 # for utilities
 ase
+pymatgen
 
+pgtest
+pytest-cov >= 2.5.0
+# for plotting
+# ngtviewer
+# plot_methods
+#

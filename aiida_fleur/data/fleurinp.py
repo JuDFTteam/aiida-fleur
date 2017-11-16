@@ -51,9 +51,9 @@ class FleurinpData(Data):
     Therefore, it is recommened to have the plug-in source code directory in the python environment..
     If no corresponding schema file is found an error is raised.
 
-    FleurinpData further provides the user with 
+    FleurinpData further provides the user with
     methods to extract AiiDA StructureData and KpointsData nodes.
-    
+
     Remember that most attributes of AiiDA nodes can not be changed after they
     have been stored in the DB! Therefore, you have to use the FleurinpModifier class and its methods
     if you want to change somthing in the inp.xml file. You will retrieve a new FLeurinpdata that way and
@@ -85,7 +85,7 @@ class FleurinpData(Data):
 
     for path in pythonpath[:]:
         _search_paths.append(path)
-        
+
     #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
     #                 str(get_repository_folder())]
 
@@ -95,7 +95,7 @@ class FleurinpData(Data):
         Boolean property, which stores if a schema file is already known
         """
         return self.get_attr('_has_schema', False)
-    
+
     @property
     def _schema_file_path(self):
         """
@@ -648,67 +648,67 @@ class FleurinpData(Data):
             fleur_modes['pot8'] = self.inp_dict['calculationSetup']['expertModes']['pot8']
             fleur_modes['forces'] = self.inp_dict['calculationSetup']['geometryOptimization']['l_f']
             ldau = False # TODO test if ldau in inp_dict....
-            fleur_modes['ldau'] = False 
+            fleur_modes['ldau'] = False
         return fleur_modes
-    
+
     #@staticmethod
     def get_structuredata_nwf(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
         file. not a workfunction
-    
+
         :return: StructureData node
         """
         from aiida.orm.data.structure import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
-    
+
         #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
         #therefore maintainance might be needed, if you want to circumvent this, you have
         #to get all the paths from somewhere.
-    
+
         #######
         # all hardcoded xpaths used and attributes names:
         bravaismatrix_bulk_xpath = '/fleurInput/cell/bulkLattice/bravaisMatrix/'
         bravaismatrix_film_xpath = 'fleurInput/cell/filmLattice/bravaisMatrix/'
         species_xpath = '/fleurInput/atomSpecies/species'
         all_atom_groups_xpath = '/fleurInput/atomGroups/atomGroup'
-    
+
         species_attrib_name = 'name'
         species_attrib_element = 'element'
-    
+
         row1_tag_name = 'row-1'
         row2_tag_name = 'row-2'
         row3_tag_name = 'row-3'
-    
+
         atom_group_attrib_species = 'species'
         atom_group_tag_abspos = 'absPos'
         atom_group_tag_relpos = 'relPos'
         atom_group_tag_filmpos = 'filmPos'
         ########
-    
+
         if not ('inp.xml' in fleurinp.files):
             print 'cannot get a StructureData because fleurinpdata has no inp.xml file yet'
             # TODO what to do in this case?
             return False
-    
+
         # read in inpxml
         inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
-    
+
         if fleurinp._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-            tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?           
+            tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?
         else: #schema not there, parse without
             print 'parsing inp.xml without XMLSchema'
             tree = etree.parse(inpxmlfile)
-    
+
         root = tree.getroot()
-    
+
         # Fleur uses atomic units, convert to Angstrom
         # get cell matrix from inp.xml
         row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
-    
+
         if row1: #bulk calculation
             #print 'bulk'
             row1 = row1[0].text.split()
@@ -721,12 +721,12 @@ class FleurinpData(Data):
                 row2[i] = float(cor)*bohr_a
             for i, cor in enumerate(row3):
                 row3[i] = float(cor)*bohr_a
-    
+
             cell = [row1, row2, row3]
             # create new structure Node
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, True]
-    
+
         elif root.xpath(bravaismatrix_film_xpath + row1_tag_name): #film calculation
             #print 'film'
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
@@ -740,32 +740,32 @@ class FleurinpData(Data):
             # create new structure Node
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
-    
-    
+
+
         #get species for atom kinds
         #species = root.xpath(species_xpath)
         species_name = root.xpath(species_xpath + '/@' + species_attrib_name)
         species_element = root.xpath(species_xpath + '/@' + species_attrib_element)
         # alternativ: loop over species and species.get(species_attrib_name)
-    
+
         #save species info in a dict
         species_dict = {}
         for i, spec in enumerate(species_name):
             species_dict[spec] = {species_attrib_element: species_element[i]}
-    
+
         # Now we have to get all atomgroups, look what their species is and
         # their positions are.
         # Then we append them to the new structureData
-    
+
         all_atom_groups = root.xpath(all_atom_groups_xpath)
-    
+
         for atom_group in all_atom_groups:
             current_species = atom_group.get(atom_group_attrib_species)
-    
+
             group_atom_positions_abs = atom_group.xpath(atom_group_tag_abspos)
             group_atom_positions_rel = atom_group.xpath(atom_group_tag_relpos)
             group_atom_positions_film = atom_group.xpath(atom_group_tag_filmpos)
-    
+
             if group_atom_positions_abs: #we have absolut positions
                 for atom in group_atom_positions_abs:
                     postion_a = atom.text.split()
@@ -784,7 +784,7 @@ class FleurinpData(Data):
                     struc.append_atom(
                             position=postion_a,
                             symbols=species_dict[current_species][species_attrib_element])
-    
+
             elif group_atom_positions_rel: #we have relative positions
                 # TODO: check if film or 1D calc, because this is not allowed! I guess
                 for atom in group_atom_positions_rel:
@@ -799,15 +799,15 @@ class FleurinpData(Data):
                             postion_r[i] = float(temppos[0])*float(temppos[1])
                         else:
                             postion_r[i] = float(pos)
-    
+
                     # now transform to absolut Positions
                     new_abs_pos = rel_to_abs(postion_r, cell)
-    
+
                     # append atom to StructureData
                     struc.append_atom(
                         position=new_abs_pos,
                         symbols=species_dict[current_species][species_attrib_element])
-    
+
             elif group_atom_positions_film: # Do we support mixture always, or only in film case?
                 #either support or throw error
                 for atom in group_atom_positions_film:
@@ -838,14 +838,14 @@ class FleurinpData(Data):
         #label='fleurinp.structure'
         #return {label : struc}
         return struc
-    
+
     @staticmethod
     @wf
     def get_structuredata(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
         file. This is a workfunction and therefore keeps the provenance.
-    
+
         :return: StructureData node
         """
         return fleurinp.get_structuredata_nwf(fleurinp)
@@ -976,20 +976,50 @@ class FleurinpData(Data):
         else: # TODO parser other kpoints formats, if they fit in an AiiDA node
             print 'No kpoint list in inp.xml'
             return None
-            
-            
+
+
     @staticmethod
     @wf
     def get_kpointsdata(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is a workfunction and does not keep the provenance!
+        This is a workfunction and does keep the provenance!
         :return: KpointsData node
         """
 
         return fleurinp.get_kpointsdata_nwf(fleurinp)
-            
+
+    '''
+    @staticmethod
+    def get_parameterdata_nwf(fleurinp):
+        """
+        This routine returns an AiiDA ParameterData type produced from the inp.xml
+        file. This node can be used for inpgen.
+        This is NOT a workfunction and does NOT keep the provenance!
+        :return: ParameterData node
+        """
+        parameters = None
+        return parameters
+
+
+    @staticmethod
+    @wf
+    def get_parameterdata(fleurinp):
+        """
+        This routine returns an AiiDA ParameterData type produced from the inp.xml
+        file. This node can be used for inpgen.
+        This is a workfunction and does keep the provenance!
+        :return: ParameterData node
+        """
+
+        return fleurinp.get_parameterdata_nwf(fleurinp)
+    '''
+
+
+
+
+
     '''
     def set_nkpts(fleurinp, count, gamma='F'):#_orgi
 
@@ -1012,7 +1042,7 @@ class FleurinpData(Data):
             root = tree.getroot()
         else:
             raise InputValidationError(
-                      "No inp.xml file yet specified, to add kpoints to.")        
+                      "No inp.xml file yet specified, to add kpoints to.")
 
         new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
         print new_kpo
@@ -1026,25 +1056,25 @@ class FleurinpData(Data):
         fleurinp._add_path(str(inpxmlfile), 'inp.xml')
         os.remove(inpxmlfile)
 
-        return fleurinp 
+        return fleurinp
     '''
-    
+
     @wf
     def set_kpointsdata(fleurinp_orgi, KpointsDataNode):
         """
         This function writes the all the kpoints from a KpointsDataNode in the
-        inp.xml file as a kpointslist. It replaces the Kpoints written in the 
+        inp.xml file as a kpointslist. It replaces the Kpoints written in the
         inp.xml file.
-        
+
         # currently it is the users resposibility to provide a full
         KpointsDataNode with weights. In the future FLEUR might recalculate them.
         :params: KpointsData node
         """
         from aiida.orm.data.array.kpoints import KpointsData
         #from aiida.common.exceptions import InputValidationError
-        
+
         #TODO: This is probably broken and should be moved to fleurinpmodifier
-        
+
         # all hardcoded xpaths used and attributes names:
         fleurinp = fleurinp_orgi.copy()
         kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
@@ -1132,7 +1162,7 @@ class FleurinpData(Data):
         os.remove(inpxmlfile)
 
         return fleurinp
-    
+
     def get_tag(self, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
@@ -1173,20 +1203,20 @@ class FleurinpData(Data):
             return return_value
         else:
             return return_value
-    
+
 '''
 from aiida.orm.data.base import Str
 
 #@wf
 def extract_parameterdata(fleurinp, element=Str('all'))
     """
-    Method to extract a ParameterData node from a fleurinp data object. 
+    Method to extract a ParameterData node from a fleurinp data object.
     This parameter node can be used as an input node for inpgen.
-    
+
     :param: fleurinp: an FleurinpData node
     :param: element: string ('all', 'W', 'W O') default all, or specify the
     species you want to extract
-    
+
     :return: ParameterData node
     """
     pass

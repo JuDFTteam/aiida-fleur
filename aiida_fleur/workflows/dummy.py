@@ -23,7 +23,7 @@ class dummy_wc(WorkChain):
 
     def __init__(self, *args, **kwargs):
         super(dummy_wc, self).__init__(*args, **kwargs)
-    
+
     @classmethod
     def define(cls, spec):
         super(dummy_wc, cls).define(spec)
@@ -46,14 +46,14 @@ class dummy_wc(WorkChain):
         self.ctx.sub31 = None
         self.ctx.sub32 = None
         time.sleep(65)
-        
-    
+
+
     def get_input(self):
         message = 'I am here'
         self.report(message)
         time.sleep(10)
-    
-    
+
+
     def run_sub1(self):
         """
         Submiting this subwork chain is still buggy somehow...
@@ -102,7 +102,7 @@ class sub_dummy_wc(WorkChain):
 
     def __init__(self, *args, **kwargs):
         super(sub_dummy_wc, self).__init__(*args, **kwargs)
-    
+
     @classmethod
     def define(cls, spec):
         super(sub_dummy_wc, cls).define(spec)
@@ -133,4 +133,4 @@ class sub_dummy_wc(WorkChain):
 
 
 class dummy_wf():
-    pass    
+    pass

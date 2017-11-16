@@ -5,16 +5,11 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
-
-# TODO title of simulations
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 from aiida.orm.calculation.job import JobCalculation
+from aiida.orm import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.common.constants import elements as PeriodicTableElements
-from aiida.orm import DataFactory
+from aiida.common.constants import elements as PeriodicTableElements 
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
@@ -59,7 +54,7 @@ class FleurinputgenCalculation(JobCalculation):
         self._FORT_FILE_NAME = 'fort93'
         self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
         '''
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 
+        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
                                'cmdline']
     # TODO switch all these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
@@ -254,7 +249,7 @@ class FleurinputgenCalculation(JobCalculation):
         for namelist, paramdic in input_params.iteritems():
             if 'atom' in namelist: # this namelist can be specified more often
                 # special atom namelist needs to be set for writing,
-                #  but insert it in the right spot! 
+                #  but insert it in the right spot!
                 index = namelists_toprint.index('atom') + 1
                 namelists_toprint.insert(index, namelist)
                 namelist = 'atom'
@@ -324,7 +319,7 @@ class FleurinputgenCalculation(JobCalculation):
         settings = inputdict.pop(self.get_linkname('settings'), None)
         #print('settings: {}'.format(settings))
         if settings is None:
-            settings_dict = {}            
+            settings_dict = {}
         else:
             if not isinstance(settings, ParameterData):
                 raise InputValidationError("settings, if specified, must be of "
@@ -355,7 +350,7 @@ class FleurinputgenCalculation(JobCalculation):
 
         scaling_factor_card = ""
         cell_parameters_card = ""
-        
+
         if not own_lattice:
             cell = structure.cell
             for vector in cell:
@@ -512,11 +507,11 @@ class FleurinputgenCalculation(JobCalculation):
         #print('add_retrieve: {}'.format(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
-        
+
         remove_retrieve = settings_dict.get('remove_from_retrieve_list', [])
         for file1 in remove_retrieve:
             if file1 in retrieve_list:
-                retrieve_list.remove(file1)  
+                retrieve_list.remove(file1)
 
         calcinfo.retrieve_list = []
         for file1 in retrieve_list:
@@ -524,10 +519,10 @@ class FleurinputgenCalculation(JobCalculation):
 
         codeinfo = CodeInfo()
         cmdline_params = ["-explicit"] # TODO? let the user decide -econfig?
-        
+
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
-            cmdline_params.append(command)                         
+            cmdline_params.append(command)
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid

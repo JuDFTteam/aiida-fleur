@@ -10,22 +10,11 @@ the parser. Makes testing and portability easier.
 #TODO: maybe something from the out files should be saved in the db
 
 import os
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+from aiida.parsers.parser import Parser
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.parsers import FleurOutputParsingError
-from aiida.parsers.parser import Parser
-#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
-from aiida_fleur.data.fleurinp import FleurinpData
-#from aiida.orm.data.fleurinp import get_inpxml_file_structure
-#from aiida.orm.data.parameter import ParameterData
-#from aiida.common.exceptions import InputValidationError,ValidationError,
-#from aiida.common.exceptions import UniquenessError
-#from aiida.orm.data.folder import FolderData
-#from aiida.common.datastructures import calc_states
-#from lxml import etree#, objectify
-#from lxml.etree import XMLSyntaxError
+
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -67,7 +56,6 @@ class Fleur_inputgenParser(Parser):
         Does all the logic here.
 
         :return: a dictionary of AiiDA nodes for storing in the database.
-
         """
 
         successful = True

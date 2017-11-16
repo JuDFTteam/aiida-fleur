@@ -12,24 +12,13 @@ the parser. Makes testing and portability easier.
 import os
 #import numpy
 
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
-
-from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.parsers import FleurOutputParsingError
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser#, ParserParamManager
-#from aiida.orm.data.fleurinp.fleurinp import FleurinpData
-from aiida_fleur.data.fleurinp import FleurinpData
 from aiida.orm.data.array.bands import BandsData
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.parsers import FleurOutputParsingError
+from aiida_fleur.data.fleurinp import FleurinpData
 
-#from aiida.orm.calculation.job.fleur_inp.fleurinputgen import FleurinputgenCalculation
-#from aiida.common.datastructures import calc_states
-#from aiida.orm.data.folder import FolderData
-#from aiida.orm.calculation.job.fleur_inp.fleur import get_inpxml_file_structure
-#from aiida.common.exceptions import InputValidationError, ValidationError
-#from aiida.common.exceptions import UniquenessError
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
@@ -265,7 +254,7 @@ def parse_xmlout_file(outxmlfile):
 
     :param outxmlfile: path to out.xml file
 
-    :returns xml_data_dict: a simple dictionary (QE output like) 
+    :returns xml_data_dict: a simple dictionary (QE output like)
                             with parsed data
 
     :raises FleurOutputParsingError: for errors in the parsing?
@@ -314,7 +303,7 @@ def parse_xmlout_file(outxmlfile):
 
         :param xmltree: root node of etree of out.xml file
 
-        :returns xml_data_dict: a simple dictionary (QE output like) 
+        :returns xml_data_dict: a simple dictionary (QE output like)
                                 with parsed data
 
         :raises FleurOutputParsingError: for errors in the parsing?
@@ -354,14 +343,14 @@ def parse_xmlout_file(outxmlfile):
         spin_orbit_calculation = 'calculationSetup/soc'
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
-        
+
         # timing
         start_time_xpath  = '/fleurOutput/startDateAndTime/@time'
         end_time_xpath = '/fleurOutput/endDateAndTime/@time'
         start_date_xpath  = '/fleurOutput/startDateAndTime/@date'
-        end_date_xpath = '/fleurOutput/endDateAndTime/@date'        
+        end_date_xpath = '/fleurOutput/endDateAndTime/@date'
 
-        
+
 
         ###########
 
@@ -399,10 +388,10 @@ def parse_xmlout_file(outxmlfile):
             simple_data = parse_simple_outnode(iteration_to_parse, Fleurmode)
         else:
             simple_data = {}
-        
-        
+
+
         warnings={'info': {}, 'debug' : {}, 'warning' : {}, 'error' : {}}
-        
+
         simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath)) +
                                           len(eval_xpath2(root, absPos_xpath)) +
                                           len(eval_xpath2(root, filmPos_xpath)))
@@ -421,14 +410,14 @@ def parse_xmlout_file(outxmlfile):
         simple_data['creator_target_architecture'] = eval_xpath(root, creator_target_architecture_xpath)
         simple_data['creator_target_structure'] = eval_xpath(root, creator_target_structure_xpath)
         simple_data['output_file_version'] = eval_xpath(root, output_version_xpath)
-        
+
         warnings['info'] = {}#TODO
         warnings['debug'] = {} #TODO
         warnings['warning'] = {}#TODO
         warnings['error'] = {}#TODO
         simple_data['warnings'] = warnings
-        
-                   
+
+
         # time
         starttime = eval_xpath(root, start_time_xpath)
         #print starttime
@@ -436,7 +425,7 @@ def parse_xmlout_file(outxmlfile):
             starttimes = starttime.split(':')
         else:
             starttimes = [0,0,0]
-            
+
         endtime = eval_xpath(root, end_time_xpath)
         if endtime:
             endtime = endtime.split(':')
@@ -444,12 +433,12 @@ def parse_xmlout_file(outxmlfile):
             endtime = [0,0,0]
         start_date = eval_xpath(root, start_date_xpath)
         end_date = eval_xpath(root, end_date_xpath)
-        
+
         offset = 0
         if start_date != end_date:
             pass
             offset = 0
-        
+
         time = offset + (int(endtime[0])-int(starttimes[0]))*60*60 + (int(endtime[1])-int(starttimes[1]))*60 + int(endtime[2]) - int(starttimes[2])
         simple_data['walltime'] = time
         simple_data['walltime_units'] = 'seconds'
@@ -460,7 +449,7 @@ def parse_xmlout_file(outxmlfile):
     def eval_xpath(node, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
         :param root node of an etree and an xpath expression (relative, or absolute)
         :returns either nodes, or attributes, or text
         """
@@ -480,7 +469,7 @@ def parse_xmlout_file(outxmlfile):
     def eval_xpath2(node, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
         :param root node of an etree and an xpath expression (relative, or absolute)
         :returns ALWAYS a node list
         """
@@ -552,7 +541,7 @@ def parse_xmlout_file(outxmlfile):
         """
         Tries to make a int out of a string. If it can't it logs a warning
         and returns True or False if convertion worked or not.
-    
+
         :param value_string: a string
         :returns value: the new int or value_string: the string given
         :retruns True or False
@@ -586,11 +575,11 @@ def parse_xmlout_file(outxmlfile):
 
     def parse_simple_outnode(iteration_node, Fleurmode):
         """
-        Parses the data from the iteration given (usually last iteration) 
+        Parses the data from the iteration given (usually last iteration)
         and some other data for the 'simple' output node.
 
         :param iteration_node: etree node of an interation
-        :param Fleurmode: python dictionary, with all the modes, 
+        :param Fleurmode: python dictionary, with all the modes,
                           which influence the parsing
 
         :returns simple_data: a python dictionary with all results
@@ -612,27 +601,27 @@ def parse_xmlout_file(outxmlfile):
         magnetic_moments_in_mtpheres_xpath = 'magneticMomentsInMTSpheres'
         magneticmoment_xpath = 'magneticMomentsInMTSpheres/magneticMoment'
 
-        magneticmoments_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@moment'        
-        magneticmoments_spinupcharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinUpCharge'        
-        magneticmoments_spindowncharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinDownCharge'  
-        
+        magneticmoments_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@moment'
+        magneticmoments_spinupcharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinUpCharge'
+        magneticmoments_spindowncharge_xpath = 'magneticMomentsInMTSpheres/magneticMoment/@spinDownCharge'
+
         orbmagnetic_moments_in_mtpheres_xpath = 'orbitalMagneticMomentsInMTSpheres'
         orbmagneticmoment_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment'
-        
-        orbmagneticmoments_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@moment'        
-        orbmagneticmoments_spinupcharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinUpCharge'        
-        orbmagneticmoments_spindowncharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinDownCharge'        
-        
-        
+
+        orbmagneticmoments_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@moment'
+        orbmagneticmoments_spinupcharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinUpCharge'
+        orbmagneticmoments_spindowncharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinDownCharge'
+
+
         spinupcharge_name = 'spinUpCharge'
         spindowncharge_name = 'spinDownCharge'
         moment_name = 'moment'
-        
-        
+
+
         # all electron charges
-        
+
         allelectronchages_xpath = ''
-        
+
         a = 'total'
         b = 'interstitial'
         c ='value'
@@ -684,7 +673,7 @@ def parse_xmlout_file(outxmlfile):
 
             :param value: value
             """
-            
+
             interation_current_number_name = 'numberForCurrentRun'
             suc = False
 
@@ -712,8 +701,8 @@ def parse_xmlout_file(outxmlfile):
                     for val1 in val:
                         value_to_savet1, suct = convert_to_float(val1)
                         value_to_savet.append(value_to_savet1)
-                    value_to_save.append(value_to_savet)    
-                suc = True # TODO individual or common error message?                    
+                    value_to_save.append(value_to_savet)
+                suc = True # TODO individual or common error message?
             else:
                 print 'I dont know the type you gave me {}'.format(type)
                 # TODO log error
@@ -820,29 +809,29 @@ def parse_xmlout_file(outxmlfile):
 
             moments = eval_xpath(iteration_node, magneticmoments_xpath)
             write_simple_outnode(
-                moments, 'list_floats', 'magnetic_moments', simple_data)            
+                moments, 'list_floats', 'magnetic_moments', simple_data)
 
-            spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)        
+            spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)
             write_simple_outnode(
-                spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data) 
+                spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
 
-            spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)        
+            spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
             write_simple_outnode(
-                spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data) 
-            
+                spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
+
             #orbital magnetic moments
-            orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)        
+            orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
             write_simple_outnode(
-                orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)            
+                orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
 
-            orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)        
+            orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)
             write_simple_outnode(
-                orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data) 
+                orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data)
 
-            orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)        
+            orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
             write_simple_outnode(
-                orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data) 
-            
+                orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
+
             # TODO atomtype dependence
             #moment = get_xml_attribute(
             #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
@@ -856,9 +845,9 @@ def parse_xmlout_file(outxmlfile):
             #spindown = get_xml_attribute(
             #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
             #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-            
+
             #Total charges, total magentic moment
-            
+
         # total iterations
         number_of_iterations_total = get_xml_attribute(
             eval_xpath(iteration_node, iteration_xpath), overall_number_name)
