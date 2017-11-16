@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-In this module you find the worklfow 'lattice_constant' for the calculation of
-of a lattice constant
+In this module you find the workflow 'fleur_eos_wc' for the calculation of
+of an equation of state
 """
 #TODO: print more user info
 #  allow different inputs, make things optional(don't know yet how)
@@ -34,18 +34,18 @@ __contributors__ = "Jens Broeder"
 class fleur_eos_wc(WorkChain):
     """
     This workflow calculates the equation of states of a structure.
-    Calculates several unit cells with different valumes.
+    Calculates several unit cells with different volumes.
     A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
-    :Params: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
-    :params: StructureData node, 'structure' crystal structure
-    :params: ParameterData node, optional 'calc_parameters' parameters for inpgen
-    :Params: inpgen: Code node,
-    :Params: fleur: Code node,
+    :param wf_parameters: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
+    :param structure: StructureData node, 'structure' crystal structure
+    :param calc_parameters: ParameterData node, optional 'calc_parameters' parameters for inpgen
+    :param inpgen: Code node,
+    :param fleur: Code node,
 
 
-    :returns: ParameterData: ouptut_eos_wc_para node, contains relevant output information.
+    :return output_eos_wc_para: ParameterData node, contains relevant output information.
     about general succces, fit results and so on.
 
 
