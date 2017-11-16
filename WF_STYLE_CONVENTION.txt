@@ -8,12 +8,12 @@ Keep in mind that a workflow is REAL SOFTWARE which will be used by others and b
 
 GENERAL:
 
-1. Every Workflow needs a clear documentation of input, output! Think this through and do not change it later on, bcause you will break the code of others! Therefore thinking about good names (see below) is not wasted time.
+1. Every Workflow needs a clear documentation of input, output! Think this through and do not change it later on, because you will break the code of others! Therefore thinking about good names (see below) is not wasted time.
 
 2. reuse as much of previous workflows as possible, use subworkflows.
-(otherwise your code exploded, is hard to understand again und not reusable)
+(otherwise your code explodes, is hard to understand again und not reusable)
 
-3. If you think somthing processing is common or might be useful for something else,
+3. If you think some processing is common or might be useful for something else,
 make it modular, and import the method (goes along with point 2.).
 
 4. Try to keep the workflow context clean! (this part will always be saved and visible, there people track what is going on.
@@ -64,3 +64,8 @@ FLEUR Specific:
 3. so far name Fleur workflows/workchains name: fleur_name_wc
 
 4. (advanced) group workflow internal(between) calculations and add extras to calcualtion. (that way one can extract them from global querries, if need.
+
+5. Write base subworkchains, that take all Parameters as given, but do their task very well and then write workchains ontop of these. 
+   Which then can use workchains to optimize the parameters for Fleur.
+
+6. Outsource methods to test for calculation failure, that you have only one routine in all workchains, that you can improve
