@@ -1,0 +1,3 @@
+
+
+include aiida_fleur/fleur_schema/input/*/*.xsd
