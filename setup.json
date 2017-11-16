@@ -20,7 +20,7 @@
             "reentry"
         ],
     "install_requires" : [
-            "aiida-core >= 0.10.0rc3",
+            "aiida_core >= 0.9.1",
             "ase >= 3.15.0",
             "lxml >= 3.6.4",
             "pymatgen",
