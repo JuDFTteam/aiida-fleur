@@ -8,7 +8,7 @@
 - bunch of new utiltity
 - advancements of workflows
 - correction of AiiDA graphs of most workchains, Quick and dirt, still unclear what is the right way to do these things, aiida_core still changes
-
+- increased pylint score from 0 to >5
 
 ## v0.5.0
 ### Merge with advanced workflow repo
