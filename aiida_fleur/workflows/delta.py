@@ -6,12 +6,14 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 #TODO: calculation of delta value from the files
 # submit everything if subworkchaining works in Aiida
 # parameter node finding is not optimal.
+
+# TODO several eos starts wich only 20 structures to limit jobs throughput
 import os
 from string import digits
 from pprint import pprint
 
 from aiida.orm import Code, DataFactory, Group
-from aiida.work.workchain import WorkChain, ToContext
+from aiida.work.workchain import WorkChain, ToContext, while_
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
 from aiida.work import submit
@@ -56,16 +58,19 @@ class fleur_delta_wc(WorkChain):
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
                                                #'group_label' : 'delta_eos',
+                                               'joblimit' : 100,
+                                               'part' : [1,2,3,4],
                                                'points' : 5,
                                                'step' : 0.02,
                                                'queue_name' : '',
                                                'options' : {'resources' : {"num_machines": 1},
-                                               'walltime_sec' : 3600}}))
+                                               'walltime_sec' : int(5.5*3600)}}))
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
             cls.start_up,
-            cls.run_eos,
+            while_(cls.calculations_left_torun)(
+                cls.run_eos),
             cls.extract_results_eos,
             cls.calculate_delta,
             cls.return_results,
@@ -97,16 +102,38 @@ class fleur_delta_wc(WorkChain):
                  'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
                  'resources' : wf_dict.get('resources', {"num_machines": 1}),
-                 'walltime_sec':  wf_dict.get('walltime_sec', 3600),
+                 'walltime_sec':  wf_dict.get('walltime_sec', int(5.5*3600)),
                  'queue_name' : wf_dict.get('queue_name', ''),
                  'serial' : wf_dict.get('serial', False)
              }}
         self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
+        self.ctx.ncalc = 1 # init        
         self.get_calcs_from_groups()
         self.ctx.successful = True
         self.ctx.warnings = []
         self.ctx.labels = []
+        #self.ctx.calcs_to_run = calcs
+        self.ctx.ncalcs = len(self.ctx.calcs_to_run)
+        print self.ctx.ncalcs
+        print self.ctx.ncalc
+        estimated_jobs = self.ctx.ncalc*wf_dict.get('points', 5)
+        joblimit = wf_dict.get('joblimit', 90)
+        self.ctx.eos_run_steps = 1
+        self.ctx.eos_steps_done = 0
+        self.ctx.minindex = 0
+        self.ctx.maxindex = self.ctx.ncalc -1
+        self.ctx.eos_max_perstep = 10000 # init
+        
+        if estimated_jobs >= joblimit:
+            self.ctx.eos_run_steps = estimated_jobs/joblimit + 1
+            self.ctx.eos_max_perstep = joblimit/wf_dict.get('points', 5)
+            # TODO be carefull if is not a divisor... of joblimit
+            self.ctx.maxindex = 0 # will be set later self.ctx.eos_max_perstep
 
+        self.report('{} {}'.format(self.ctx.ncalc, self.ctx.eos_max_perstep))
+        self.report('Estimated fleur scfs to run {}, running in {} steps.'
+                    ''.format(estimated_jobs, self.ctx.eos_run_steps))  
+                
     def get_calcs_from_groups(self):
         """
         Extract the crystal structures and parameter data nodes from the given
@@ -211,20 +238,49 @@ class fleur_delta_wc(WorkChain):
             calcs.append((struc, para))
             #else:
             #    calcs.append((struc))
-        pprint(calcs[:20])
+        #pprint(calcs[:20])
         self.ctx.calcs_to_run = calcs
+        self.ctx.ncalc = len(calcs)
+        return
+        
+    def calculations_left_torun(self):
+        """
+        Checks if there are still some equations of states to run
+        """
+        calculations_left = True
+        self.ctx.last_step = False
+         
+        if self.ctx.eos_steps_done == self.ctx.eos_run_steps:
+            calculations_left = False
+        if (self.ctx.eos_steps_done + 1) == self.ctx.eos_run_steps:
+            self.ctx.last_step = True
+        
+        return calculations_left
+
+
 
     def run_eos(self):
         """
         Run the equation of states for all delta structures with their parameters
         """
+        if self.ctx.last_step:
+            self.ctx.maxindex = None
+        else:
+            self.ctx.maxindex = self.ctx.maxindex + self.ctx.eos_max_perstep
 
+        self.report('Submitting eqaution of states part {} out of {}, from {} to {}'
+                    ''.format(self.ctx.eos_steps_done, self.ctx.eos_run_steps,
+                              self.ctx.minindex, self.ctx.maxindex))
+        
         eos_results = {}
         inputs = self.get_inputs_eos()
 
+            
+        print(self.ctx.minindex)
+        print(self.ctx.maxindex)
         
-        for struc, para in self.ctx.calcs_to_run[10:33]:#[10:33]
-            print para
+        for struc, para in self.ctx.calcs_to_run[self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
+            #print para
             formula = struc.get_formula()
             label = '|delta_wc|eos|{}'.format(formula)
             description = '|delta| fleur_eos_wc on {}'.format(formula)            
@@ -233,19 +289,21 @@ class fleur_delta_wc(WorkChain):
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 _label=label, _description=description)
-                #fleur_eos_wc.run(#
             else: # TODO: run eos_wc_simple
                 eos_future = submit(fleur_eos_wc,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc,
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 _label=label, _description=description)
-                #fleur_eos_wc.run(#a
             self.report('launching fleur_eos_wc<{}> on structure {} with parameter {}'
                         ''.format(eos_future.pid, struc.pk, para.pk))
             label = formula
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
+            
+        self.ctx.eos_steps_done = self.ctx.eos_steps_done + 1
+        self.ctx.minindex = self.ctx.maxindex
 
+                        
         return ToContext(**eos_results)
 
         '''
@@ -308,6 +366,8 @@ class fleur_delta_wc(WorkChain):
 
         return ToContext(**eos_results)
         '''
+        
+    # To limit the troughput of 100 jobs, we create several run eos steps
     def get_inputs_eos(self):
         """
         get the inputs for a scf-cycle
@@ -339,6 +399,7 @@ class fleur_delta_wc(WorkChain):
         outfile = open('delta_wc.out', 'w')
         outfile.write(outstr)
         outfile.close()
+        outstr = ''
         for label in self.ctx.labels:
             eos_res = self.ctx[label]
             #print(calc)
