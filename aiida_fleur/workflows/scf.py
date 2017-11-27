@@ -264,7 +264,7 @@ class fleur_scf_wc(WorkChain):
         else:
             params = None
 
-        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
+        options = {"max_wallclock_seconds": int(self.ctx.walltime_sec),
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
 
@@ -573,10 +573,12 @@ class fleur_scf_wc(WorkChain):
             last_calc_uuid = None
         try: # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.last_calc.out['output_parameters']
+            retrieved = self.ctx.last_calc.out['retrieved']
             last_calc_out_dict = last_calc_out.get_dict()
         except AttributeError:
             last_calc_out = None
             last_calc_out_dict = {}
+            retrieved = None
 
 
 
@@ -631,7 +633,7 @@ class fleur_scf_wc(WorkChain):
         outputnode_t = ParameterData(dict=outputnode_dict)
          # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
-            outdict = create_scf_result_node(outpara=outputnode_t, last_calc_out=last_calc_out)
+            outdict = create_scf_result_node(outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)
         else:
             outdict = create_scf_result_node(outpara=outputnode_t)
 
