@@ -2,6 +2,10 @@
 """
 You find the usual binding_energy for all elements in the periodic table.
 """
+from aiida.common.constants import elements as PeriodicTableElements 
+
+atomic_numbers = {data['symbol'] : num for num,data in PeriodicTableElements.iteritems()}
+
 # TODO
 # FLEUR econfig=[core states|valence states]
 # TODO add default los
@@ -122,6 +126,7 @@ econfiguration = {
     116: {'mass': 293.0, 'name': 'Livermorium', 'symbol': 'Lv', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6 7s2 5f14 6d10 7p1'},
 }
 
+
 all_econfig = ['1s2', '2s2', '2p6', '3s2', '3p6', '4s2', '3d10', '4p6', '5s2', '4d10', '5p6', '6s2', '4f14', '5d10', '6p6', '7s2', '5f14', '6d10', '7p6', '8s2', '6f14']
 states_spin = {'s': ['1/2'], 'p' : ['1/2', '3/2'], 'd' : ['3/2', '5/2'], 'f' : ['5/2', '7/2']}
 max_state_occ = {'s': 2., 'p' : 6., 'd' : 10., 'f' : 14.}
@@ -129,6 +134,7 @@ max_state_occ_spin = {'1/2' : 2., '3/2' : 4., '5/2' : 6., '7/2' : 8.}
 element_delta_defaults = {} # for workflow purposes
 
 element_max_para = {} # for workflow purposes
+
 
 
 def get_econfig(element, full=False):
@@ -208,6 +214,42 @@ def rek_econ(econfigstr):
         econfigstr = rek_econ(econ + rest)
         return econfigstr# for now
 
+
+def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
+    """
+    '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)' -> '[Kr] 4d10 4f14', or '[Kr] 4d3/2 4d5/2 4f5/2 4f7/2'
+    """
+    
+    econfstring = fleurconf_str.replace('(','').replace(')','')
+    
+    if keep_spin:
+        econfstring.split()
+    else:
+        elist = econfstring.split()
+        econfstring_new = ''
+        for state in elist:
+            if '/' in state:
+                # check if nl was added before if not add it with full occ
+                base = state[:2]
+                spin = state[2:]
+                occ = max_state_occ_spin.get(spin)
+                if base not in econfstring_new:
+                    econfstring_new = '{}{}{} '.format(econfstring_new, base, int(occ))
+                else:
+                    max_occ = max_state_occ.get(base[1])
+                    econfstring_new =  econfstring_new.split(base)[0] + '{}{} '.format(base, int(max_occ))
+                    # we assume here that the two states come behind each other, ... rather bad
+                    #econfstring_new.replace('{}'.format(base)
+            else:
+                econfstring_new =  econfstring_new + state + ' '
+        econfstring = econfstring_new 
+        
+    return econfstring.strip()
+#test convert_fleur_config_to_econfig(config, keep_spin+true/False) 
+#config = '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)'
+#config = '[Kr]'
+#config = '[Kr] 4d3/2 4d5/2 4f5/2'# 4f7/2'
+
 def highest_unocc_valence(econfigstr):
     """
     returns the highest not full valence orbital. If all are full, it returns ''
@@ -235,6 +277,38 @@ def highest_unocc_valence(econfigstr):
         return next_orb_empty # ''  # everythin is full
     else:
         return val_orb#None
+
+def get_spin_econfig(fulleconfigstr):
+    """
+    converts and econfig string to a full spin econfig
+    1s2 2s2 2p6' - > '1s1/2 2s1/2 2p1/2 2p3/2'
+    """
+
+    econ_list = fulleconfigstr.split()
+    spin_econfig_string = ''
+    
+    # check if autocomplete needed
+    if '[' in fulleconfigstr:
+        completion = rek_econ(econ_list[0])
+        econ_list.remove(econ_list[0])
+        econ_list = completion.split() + econ_list
+        
+    for state in econ_list:
+        if '/' in state:
+            spin_econfig_string = spin_econfig_string + state + ' '
+            continue
+        state_l = state[1]
+        #occ = int(state.split(state_l)[-1])
+        spinstates = states_spin.get(state_l, [])
+        for spin in spinstates:
+            spin_econfig_string = spin_econfig_string + '{}{} '.format(state[:2], spin)
+
+    return spin_econfig_string.rstrip()  
+# test get_spin_econfig('1s2 2s2 2p6'), '1s1/2 2s1/2 2p1/2 2p3/2'
+
+# test get_spin_econfig('[Kr] 4d10 4f14') '1s1/2 2s1/2 2p1/2 2p3/2 3s1/2 3p1/2 3p3/2 3d3/2 3d5/2 4s1/2 4p1/2 4p3/2 4d3/2 4d5/2 4f5/2 4f7/2'
+# test get_spin_econfig('[Kr] 4d3/2 4d5/2 4f5/2 4f7/2')'1s1/2 2s1/2 2p1/2 2p3/2 3s1/2 3p1/2 3p3/2 3d3/2 3d5/2 4s1/2 4p1/2 4p3/2 4d3/2 4d5/2 4f5/2 4f7/2'
+
 
 def econfigstr_hole(econfigstr, corelevel, highesunoccp, htype='valence'):
     """
@@ -348,10 +422,12 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
 
 
 # Reference Binding energies of simple bulk materials:
-  
+# TODO: Should be replaced by a 'read' from the NIST database,
+# TODO: Also for alloys...
+# or the whole nist Database for the elemental shall be parsed here... 
 # in eV
 exp_bindingenergies = {
-1 : {'binding_energy': {'1s1/2': []}, 'name': 'Hydrogen', 'symbol': 'H'},
+ 1 : {'binding_energy': {'1s1/2': []}, 'name': 'Hydrogen', 'symbol': 'H'},
  2: {'binding_energy': {'1s1/2': []}, 'name': 'Helium', 'symbol': 'He'},
  3: {'binding_energy': {'1s1/2': [56], '2s1/2': []},
      'name': 'Lithium',
@@ -478,8 +554,8 @@ exp_bindingenergies = {
       'name': 'Scandium',
       'symbol': 'Sc'},
  22: {'binding_energy': {'1s1/2': [],
-                         '2p1/2': [],
-                         '2p3/2': [],
+                         '2p1/2': [460.00],
+                         '2p3/2': [454.00],
                          '2s1/2': [],
                          '3d3/2': [],
                          '3d5/2': [],
@@ -490,8 +566,8 @@ exp_bindingenergies = {
       'name': 'Titanium',
       'symbol': 'Ti'},
  23: {'binding_energy': {'1s1/2': [],
-                         '2p1/2': [460.00],
-                         '2p3/2': [454.00],
+                         '2p1/2': [],
+                         '2p3/2': [],
                          '2s1/2': [],
                          '3d3/2': [],
                          '3d5/2': [],
