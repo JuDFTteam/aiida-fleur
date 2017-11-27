@@ -265,7 +265,7 @@ class fleur_eos_wc(WorkChain):
             t_energylist_peratom.append(t_e/natoms)
             distancelist.append(dis)
 
-        a = np.array(t_energylist)
+        a = np.array(t_energylist_peratom)
         b = np.array(self.ctx.volume_peratom)
 
         # all erros should be caught before\
