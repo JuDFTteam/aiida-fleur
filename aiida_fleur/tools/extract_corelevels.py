@@ -373,7 +373,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
         
         if not ref_el: # no refernce for that element given
             if warn:
-                print("Warning: Reference for element: '{}' not given. "
+                print("WARNING: Reference for element: '{}' not given. "
                       "I ignore these.".format(elem))
             continue
         
@@ -382,7 +382,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl: # no reference corelevel given for that element
                 if warn:
-                   print("Warning: Reference corelevel '{}' for element: '{}' "
+                   print("WARNING: Reference corelevel '{}' for element: '{}' "
                          "not given. I ignore these.".format(corelevel_name, elem))                
                 continue
             be_all = []
