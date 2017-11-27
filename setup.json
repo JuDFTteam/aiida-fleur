@@ -27,7 +27,8 @@
             "lxml >= 3.6.4",
             "pymatgen",
             "pytest-cov >= 2.5.0",
-            "pytest"
+            "pytest",
+            "pgtest"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib"]
