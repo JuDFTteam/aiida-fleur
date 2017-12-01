@@ -31,6 +31,98 @@ def is_sequence(arg):
             hasattr(arg, "__iter__"))
 
 ##### CONVERTERS ############
+def convert_to_float(value_string, parser_info_out={'parser_warnings' : []}, suc_return=True):
+    """
+    Tries to make a float out of a string. If it can't it logs a warning
+    and returns True or False if convertion worked or not.
+
+    :param value_string: a string
+    :returns value: the new float or value_string: the string given
+    :retruns True or Falses
+    """
+    # TODO lowercase everything
+    try:
+        value = float(value_string)
+    except TypeError:
+        parser_info_out['parser_warnings'].append(
+            'Could not convert: "{}" to float, TypeError'
+            ''.format(value_string))
+        if suc_return:
+            return value_string, False
+        else:
+            return value_string
+    except ValueError:
+        parser_info_out['parser_warnings'].append(
+            'Could not convert: "{}" to float, ValueError'
+            ''.format(value_string))
+        if suc_return:
+            return value_string, False
+        else:
+            return value_string
+    if suc_return:
+        return value, True
+    else:
+        return value    
+
+
+def convert_to_int(value_string, parser_info_out={'parser_warnings' : []}, suc_return=True):
+    """
+    Tries to make a int out of a string. If it can't it logs a warning
+    and returns True or False if convertion worked or not.
+
+    :param value_string: a string
+    :returns value: the new int or value_string: the string given
+    :retruns True or False, if suc_return=True
+    """
+    try:
+        value = int(value_string)
+    except TypeError:
+        parser_info_out['parser_warnings'].append(
+            'Could not convert: "{}" to int, TypeError'
+            ''.format(value_string))
+        if suc_return:
+            return value_string, False
+        else:
+            return value_string
+    except ValueError:
+        parser_info_out['parser_warnings'].append(
+            'Could not convert: "{}" to int, ValueError'
+            ''.format(value_string))
+        if suc_return:
+            return value_string, False
+        else:
+            return value_string
+    if suc_return:
+        return value, True
+    else:
+        return value    
+
+
+
+def convert_htr_to_ev(value, parser_info_out={'parser_warnings' : []}):
+    """
+    Multiplies the value given with the Hartree factor (converts htr to eV)
+    """
+    htr = 27.21138602
+    suc = False
+    value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
+    if suc:
+        return value_to_save*htr
+    else:
+        return value
+
+def convert_ev_to_htr(value, parser_info_out={'parser_warnings' : []}):
+    """
+    Divides the value given with the Hartree factor (converts htr to eV)
+    """
+    htr = 27.21138602
+    suc = False
+    value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
+    if suc:
+        return value_to_save / htr
+    else:
+        return value
+   
 
 def convert_from_fortran_bool(stringbool):
     """
@@ -51,6 +143,8 @@ def convert_from_fortran_bool(stringbool):
             raise InputValidationError(
             "A string: {} for a boolean was given, which is not 'True',"
             " 'False', 't', 'T', 'F' or 'f'".format(stringbool))
+    elif isinstance(stringbool, bool):
+        return stringbool# no convertion needed...
     else:
         raise TypeError("convert_to_fortran_bool accepts only a string or "
                      "bool as argument")
@@ -72,7 +166,7 @@ def convert_to_fortran_bool(boolean):
         else:
             new_string = 'F'
             return new_string
-    elif isinstance(boolean, str):
+    elif isinstance(boolean, str):#basestring):
         if boolean == 'True' or boolean == 't' or boolean == 'T':
             new_string = 'T'
             return new_string
@@ -111,6 +205,41 @@ def convert_to_fortran_string(string):
         raise TypeError("_convert_to_fortran_string accepts only a"
               "string as argument, type {} given".format(type(string)))
     '''
+
+    
+def convert_fleur_lo(loelements):
+    """
+    Converts lo xml elements from the inp.xml file into a lo string for the inpgen
+    """
+    # Developer hint: Be careful with using '' and "", basestring and str are not the same...
+    # therefore other conversion methods might fail, or the wrong format could be written.
+    from aiida_fleur.tools.element_econfig_list import shell_map
+    
+    lo_string = ''
+    for element in loelements:
+        lo_type = get_xml_attribute(element, 'type')
+        if lo_type != 'SCLO': # non standard los not supported for now
+            continue
+        l_num = get_xml_attribute(element, 'l')
+        print l_num
+        n_num = get_xml_attribute(element, 'n')
+        l_char = shell_map.get(int(l_num), '')
+        lostr = '{}{}'.format(n_num, l_char)
+        lo_string = lo_string + ' ' + lostr
+    return lo_string.strip()
+
+
+def set_dict_or_not(para_dict, key, value):
+    """
+    setter method for a dictionary that will not set the key, value pair.
+    if the key is [] or None.
+    """
+    if value==[] or value==None:
+        return para_dict
+    else:
+        para_dict[key] = value
+        return para_dict
+
 
 
 ####### XML SETTERS GENERAL ##############
@@ -666,7 +795,7 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
         return return_value
 
 
-def get_xml_attribute(node, attributename, parser_info_out={}):
+def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings' : []}):
     """
     Get an attribute value from a node.
 
@@ -877,7 +1006,7 @@ def inpxml_todict(parent, xmlstr):
     return return_dict
 
 
-
+# This is probably only used to represent the whole inp.xml in the database for the fleurinpData attributes
 # TODO this should be replaced by something else, maybe a class. that has a method to return certain
 # list of possible xpaths from a schema file, or to validate a certain xpath expression and
 # to allow to get SINGLE xpaths for certain attrbiutes.
