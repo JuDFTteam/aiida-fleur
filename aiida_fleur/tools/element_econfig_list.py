@@ -131,6 +131,7 @@ all_econfig = ['1s2', '2s2', '2p6', '3s2', '3p6', '4s2', '3d10', '4p6', '5s2', '
 states_spin = {'s': ['1/2'], 'p' : ['1/2', '3/2'], 'd' : ['3/2', '5/2'], 'f' : ['5/2', '7/2']}
 max_state_occ = {'s': 2., 'p' : 6., 'd' : 10., 'f' : 14.}
 max_state_occ_spin = {'1/2' : 2., '3/2' : 4., '5/2' : 6., '7/2' : 8.}
+shell_map = {0 : 's', 1 : 'p', 2 : 'd', 3 : 'f'}
 element_delta_defaults = {} # for workflow purposes
 
 element_max_para = {} # for workflow purposes
@@ -218,6 +219,8 @@ def rek_econ(econfigstr):
 def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
     """
     '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)' -> '[Kr] 4d10 4f14', or '[Kr] 4d3/2 4d5/2 4f5/2 4f7/2'
+    
+    # for now only use for coreconfig, it will fill all orbitals, since it has no information on the filling.
     """
     
     econfstring = fleurconf_str.replace('(','').replace(')','')

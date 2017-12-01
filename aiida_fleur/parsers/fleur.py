@@ -445,7 +445,7 @@ def parse_xmlout_file(outxmlfile):
         simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
         return simple_data
 
-
+    # TODO find a way to import these from xml_util, but make the parser logger work...
     def eval_xpath(node, xpath):
         """
         Tries to evalutate an xpath expression. If it fails it logs it.

@@ -109,7 +109,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-            
+        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|' 
         
         # codes
         if 'inpgen' in inputs:

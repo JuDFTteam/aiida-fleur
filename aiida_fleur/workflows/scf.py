@@ -171,7 +171,6 @@ class fleur_scf_wc(WorkChain):
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
-
         # return para/vars
         self.ctx.successful = True
         self.ctx.distance = []
