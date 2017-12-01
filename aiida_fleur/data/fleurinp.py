@@ -990,7 +990,7 @@ class FleurinpData(Data):
 
         return fleurinp.get_kpointsdata_nwf(fleurinp)
 
-    '''
+    # TODO: or move these outside...?
     @staticmethod
     def get_parameterdata_nwf(fleurinp):
         """
@@ -999,8 +999,18 @@ class FleurinpData(Data):
         This is NOT a workfunction and does NOT keep the provenance!
         :return: ParameterData node
         """
-        parameters = None
-        return parameters
+        from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
+        if not ('inp.xml' in fleurinp.files):
+            print 'cannot get a StructureData because fleurinpdata has no inp.xml file yet'
+            # TODO what to do in this case?
+            return False
+
+        # read in inpxml
+        inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
+
+        new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
+    
+        return new_parameters
 
 
     @staticmethod
@@ -1014,7 +1024,6 @@ class FleurinpData(Data):
         """
 
         return fleurinp.get_parameterdata_nwf(fleurinp)
-    '''
 
 
 

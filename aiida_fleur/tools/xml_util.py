@@ -502,6 +502,189 @@ def replace_tag(xmltree, xpath, newelement):
 
     return xmltree
 
+
+def get_inpgen_paranode_from_xml(inpxmlfile):
+    """
+    This routine returns an AiiDA Parameter Data type produced from the inp.xml
+    file, which can be used by inpgen.
+
+    :return: ParameterData node
+    """
+    from aiida.orm.data.parameter import ParameterData
+    para_dict = get_inpgen_para_from_xml(inpxmlfile)
+    return ParameterData(dict=para_dict)
+    
+def get_inpgen_para_from_xml(inpxmlfile):
+    """
+    This routine returns an python dictionary produced from the inp.xml
+    file, which can be used as a parameterdata node by inpgen.
+
+    :return: dict
+    
+    Warning: This routine is prelimitary, it is far from complete. 
+    Also be aware that inpgen does not take all information that is contained in an inp.xml file
+    """
+    
+    # TODO: convert econfig
+    # TODO: parse kpoints, somehow count is bad (if symmetry changes), mesh is not known, path cannot be specified
+    # TODO: 
+    #from aiida_fleur.tools.xml_util import eval_xpath, get_xml_attribute, convert_from_fortran_bool, eval_xpath2
+    #from aiida_fleur.tools.xml_util import convert_to_float, convert_to_int
+    
+    #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
+    #therefore maintainance might be needed, if you want to circumvent this, you have
+    #to get all the paths from somewhere.
+
+    #######
+    # all hardcoded xpaths used and attributes names:
+    # input
+    film_xpath = '/fleurInput/atomGroups/atomGroup/filmPos/'# check for film pos
+    
+    # atom, for each species\
+    species_xpath = '/fleurInput/atomSpecies/species'
+    atom_id_xpath = '' # is reconstruction possible at all now?
+    atom_z_xpath = '@atomicNumber'
+    atom_rmt_xpath = 'mtSphere/@radius'
+    atom_dx_xpath = 'mtSphere/@logIncrement'
+    atom_jri_xpath = 'mtSphere/@gridPoints'
+    atom_lmax_xpath = 'atomicCutoffs/@lmax'
+    atom_lnosph_xpath = 'atomicCutoffs/@lnonsphr'
+    atom_ncst_xpath = '@coreStates'
+    atom_econfig_xpath = 'electronConfig' # converting todo
+    atom_bmu_xpath = '@magMom'
+    atom_lo_xpath = 'lo' # converting todo
+    atom_element_xpath = '@element'
+    atom_name_xpath = '@name'
+
+    #comp
+    jspins_xpath = 'calculationSetup/magnetism/@jspins'
+    frcor_xpath = 'calculationSetup/coreElectrons/@frcor'
+    ctail_xpath = 'calculationSetup/coreElectrons/@ctail'
+    kcrel_xpath = 'calculationSetup/coreElectrons/@kcrel'
+    gmax_xpath = 'calculationSetup/cutoffs/@Gmax'
+    gmaxxc_xpath = 'calculationSetup/cutoffs/@GmaxXC'
+    kmax_xpath = 'calculationSetup/cutoffs/@Kmax'
+    
+    #exco
+    exco_xpath = 'xcFunctional/@name'
+    # film
+    
+    #soc
+    l_soc_xpath = '//calculationSetup/soc/@l_soc'
+    theta_xpath = '//calculationSetup/soc/@theta'
+    phi_xpath = '//calculationSetup/soc/@phi'
+    # qss
+
+    # kpt
+    
+    title_xpath = '/fleurInput/comment/text()' # text
+    
+    
+    ########
+    new_parameters = {}
+
+    #print 'parsing inp.xml without XMLSchema'
+    tree = etree.parse(inpxmlfile)
+    root = tree.getroot()
+    
+    # Create the cards
+    
+    # &input # most things are not needed for AiiDA here. or we ignor them for now.
+    # film is set by the plugin depended on the structure
+    #symor per default = False? to avoid input which fleur can't take
+    
+    # &comp
+    #attrib = get_xml_attribute(
+    comp_dict = {}
+    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_float(eval_xpath(root, jspins_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'frcor', convert_from_fortran_bool(eval_xpath(root, frcor_xpath)))
+    comp_dict = set_dict_or_not(comp_dict, 'ctail', convert_from_fortran_bool(eval_xpath(root, ctail_xpath)))#convert_from_fortran_bool()
+    comp_dict = set_dict_or_not(comp_dict, 'kcrel', eval_xpath(root, kcrel_xpath))
+    comp_dict = set_dict_or_not(comp_dict, 'gmax', convert_to_float(eval_xpath(root, gmax_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'gmaxxc', convert_to_float(eval_xpath(root, gmaxxc_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'kmax', convert_to_float(eval_xpath(root, kmax_xpath), suc_return=False))
+    new_parameters['comp'] = comp_dict
+                                
+    # &atoms
+    species_list = eval_xpath2(root, species_xpath)
+    print species_list
+    for i, species in enumerate(species_list):
+        atom_dict = {}
+        #print type(species)
+        atoms_name = 'atom{}'.format(i)
+        atom_z = convert_to_int(eval_xpath(species, atom_z_xpath), suc_return=False)
+        #print atom_z
+        atom_rmt = convert_to_float(eval_xpath(species, atom_rmt_xpath), suc_return=False)
+        #print atom_rmt
+        atom_dx = convert_to_float(eval_xpath(species, atom_dx_xpath), suc_return=False)
+        atom_jri = convert_to_int(eval_xpath(species, atom_jri_xpath), suc_return=False)
+        atom_lmax = convert_to_int(eval_xpath(species, atom_lmax_xpath), suc_return=False)
+        atom_lnosph = convert_to_int(eval_xpath(species, atom_lnosph_xpath), suc_return=False)
+        atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
+        atom_econfig = eval_xpath(species, atom_econfig_xpath)
+        #print atom_econfig
+        atom_bmu = convert_to_float(eval_xpath(species, atom_bmu_xpath), suc_return=False)
+        atom_lo = eval_xpath(species, atom_lo_xpath)
+        #print atom_lo
+        atom_element = eval_xpath(species, atom_element_xpath)
+        atom_name_2 = eval_xpath(species, atom_name_xpath)
+        
+        atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
+        atom_dict = set_dict_or_not(atom_dict, 'rmt', atom_rmt)
+        atom_dict = set_dict_or_not(atom_dict, 'dx', atom_dx)
+        atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
+        atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
+        atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
+        atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
+        atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
+        atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
+        if atom_lo:
+            atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
+        atom_dict = set_dict_or_not(atom_dict, 'element', '{}'.format(atom_element))
+        #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
+        
+        new_parameters[atoms_name] = atom_dict
+
+    
+    # &soc
+    attrib = convert_from_fortran_bool(eval_xpath(root, l_soc_xpath))
+    theta = convert_to_float(eval_xpath(root, theta_xpath), suc_return=False)
+    phi = convert_to_float(eval_xpath(root, phi_xpath), suc_return=False)
+    #print attrib, theta, phi
+    if attrib:
+        new_parameters['soc'] = {'theta' : theta, 'phi' : phi}
+    
+    # &kpt
+    #attrib = convert_from_fortran_bool(eval_xpath(root, l_soc_xpath))
+    #theta = eval_xpath(root, theta_xpath)
+    #phi = eval_xpath(root, phi_xpath)
+    #print attrib, theta, phi
+    #if kpt:
+    #    new_parameters['kpt'] = {'theta' : theta, 'phi' : phi}    
+    #    # ['nkpt', 'kpts', 'div1', 'div2', 'div3',                         'tkb', 'tria'],
+    
+    # title     
+    title = eval_xpath(root, title_xpath)# text
+    if title:
+        new_parameters['title'] = title.replace('\n', '').strip()
+    print title
+    
+    # &exco
+    #TODO, easy
+    exco_dict = {}
+    exco_dict = set_dict_or_not(exco_dict, 'xctyp', eval_xpath(root, exco_xpath))
+    #'exco' : ['xctyp', 'relxc'],
+    new_parameters['exco'] = exco_dict
+    # &film
+    # TODO
+    
+    # &qss
+    # TODO    
+    
+    # lattice, not supported?
+    
+    return new_parameters
+
 ####### XML SETTERS SPECIAL ########
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
