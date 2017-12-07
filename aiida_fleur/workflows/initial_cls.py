@@ -64,7 +64,7 @@ class fleur_initial_cls_wc(WorkChain):
     from aiida_fleur.workflows.scf import fleur_scf_wc
 
 
-    _workflowversion = "0.2.0"
+    _workflowversion = "0.3.0"
     _default_wf_para = {'structure_ref' : {},
                         #'references' : {'calculate' : 'all'},
                         'relax' : True,
@@ -121,7 +121,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         ### input check ### ? or done automaticly, how optional?
 
-        msg = ("INFO: Started inital_state_CLS workflow version {} "
+        msg = ("INFO: Started initial_state_CLS workflow version {} "
                "Workchain node identifiers: {}"
                "".format(self._workflowversion, ProcessRegistry().current_calc_node))
         self.report(msg)
@@ -209,7 +209,7 @@ class fleur_initial_cls_wc(WorkChain):
 
     def get_references(self):
         """
-        To calculate a CLS in inital state approx, we need reference calculations
+        To calculate a CLS in initial state approx, we need reference calculations
         to the Elemental crystals. First it is checked if the user has provided them
         Second the database is checked, if there are structures with certain extras.
         Third the COD database is searched for the elemental Cystal structures.
@@ -219,7 +219,7 @@ class fleur_initial_cls_wc(WorkChain):
         need specific parameters for them
         """
 
-        self.report('INFO: In Get_references inital_state_CLS workflow')
+        self.report('INFO: In Get_references initial_state_CLS workflow')
 
         references = self.inputs.wf_parameters.get_dict().get('references', {})
         # should be of the form of
@@ -385,7 +385,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
-        self.report('INFO: In run_fleur_scfs inital_state_CLS workflow')
+        self.report('INFO: In run_fleur_scfs initial_state_CLS workflow')
         #from aiida.work import run, async,
         #TODO if submiting of workdlows work, use that.
         #or run them with async (if youy know how to extract results)
@@ -455,7 +455,7 @@ class fleur_initial_cls_wc(WorkChain):
         If the structures should be relaxed, check if their Forces are below a certain
         threshold, otherwise throw them in the relaxation wf.
         """
-        self.report('INFO: In relaxation inital_state_CLS workflow (so far nothing to do)')
+        self.report('INFO: In relaxation initial_state_CLS workflow (so far nothing to do)')
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
@@ -471,7 +471,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        self.report('INFO: In relax inital_state_CLS workflow (so far nothing to do)')
+        self.report('INFO: In relax initial_state_CLS workflow (so far nothing to do)')
         self.ctx.dos_to_calc = []
         for calc in self.ctx.dos_to_calc:
             pass
@@ -505,7 +505,7 @@ class fleur_initial_cls_wc(WorkChain):
         Run SCF-cycles for ref structures, calculations given in certain workflow arrays.
         parameter nodes should be given
         """
-        self.report('INFO: In run_scfs_ref inital_state_CLS workflow')
+        self.report('INFO: In run_scfs_ref initial_state_CLS workflow')
 
         #from aiida.work import run, async,
         #TODO if submiting of workdlows work, use that.
@@ -612,7 +612,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
 
-        message=('INFO: Collecting results of inital_state_CLS workflow')
+        message=('INFO: Collecting results of initial_state_CLS workflow')
         self.report(message)
         # TODO be very careful with core config?
         #from pprint import pprint
@@ -765,11 +765,11 @@ class fleur_initial_cls_wc(WorkChain):
         outdict = create_initcls_result_node(**outnodedict)
 
         #outdict = {}
-        #outdict['output_inital_cls_wc_para'] = outputnode
+        #outdict['output_initial_cls_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
-        msg = ('INFO: Inital_state_CLS workflow Done')
+        msg = ('INFO: Initial_state_CLS workflow Done')
         self.report(msg)
 
 
@@ -786,7 +786,7 @@ def create_initcls_result_node(**kwargs):
 
     outdict = {}
     outpara = kwargs.get('results_node', {})
-    outdict['output_inital_cls_wc_para'] = outpara.copy()
+    outdict['output_initial_cls_wc_para'] = outpara.copy()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}
