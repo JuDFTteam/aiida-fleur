@@ -610,7 +610,7 @@ class fleur_initial_cls_wc(WorkChain):
         calculate the wanted quantities. currently all energies are in hartree
         (as provided by Fleur)
         """
-        from aiida_fleur.tools.common_fleur_wf import determine_formation_energy
+        from aiida_fleur.tools.common_fleur_wf_util import determine_formation_energy
 
         message=('INFO: Collecting results of initial_state_CLS workflow')
         self.report(message)
