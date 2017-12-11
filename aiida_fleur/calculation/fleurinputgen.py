@@ -367,22 +367,30 @@ class FleurinputgenCalculation(JobCalculation):
 
         # TODO: be careful with units
         atomic_positions_card_list = [""]
+        atomic_positions_card_listtmp = [""]
         # Fleur does not have any keyword before the atomic species.
         # first the number of atoms then the form nuclear charge, postion
         # Fleur hast the option of nuclear charge as floats,
         # allows the user to distinguish two atoms and break the symmetry.
         if not own_lattice:
             natoms = len(structure.sites)
+
             #for FLEUR true, general not, because you could put several
             # atoms on a site
             # TODO: test that only one atom at site?
-            atomic_positions_card_list.append("    {0:3}\n".format(natoms))
 
             # TODO this feature might change in Fleur, do different. that in inpgen kind gets a name, which will also be the name in fleur inp.xml.
             # now user has to make kind_name = atom id.
             for site in structure.sites:
                 kind_name = site.kind_name
-                site_symbol = structure.get_kind(kind_name).symbols[0] # TODO: list I assume atoms therefore I just get the first one...
+                kind = structure.get_kind(kind_name)
+                if kind.has_vacancies():
+                    # then we do not at atoms with weights smaller one
+                    if kind.weights[0] <1.0:                    
+                        natoms = natoms -1
+                        # Log message?
+                        continue
+                site_symbol = kind.symbols[0] # TODO: list I assume atoms therefore I just get the first one...
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
                 if site_symbol != kind_name: # This is an important fact, if usere renames it becomes a new species!
@@ -403,14 +411,17 @@ class FleurinputgenCalculation(JobCalculation):
                 elif film:
                     vector_rel = abs_to_rel_f(pos, cell, structure.pbc)
                     vector_rel[2] = vector_rel[2]*scaling_pos
-                atomic_positions_card_list.append(
+                atomic_positions_card_listtmp.append(
                     "    {0:3} {1:18.10f} {2:18.10f} {3:18.10f}"
                     "\n".format(atomic_number_name,
                                 vector_rel[0], vector_rel[1],
                                 vector_rel[2]))
                 #print atomic_positions_card_list
                 #TODO check format
-
+            # we write it later, since we do not know what natoms is before the loop...
+            atomic_positions_card_list.append("    {0:3}\n".format(natoms))
+            for card in atomic_positions_card_listtmp:
+                atomic_positions_card_list.append(card)
         else:
             # TODO with own lattice atomic positions have to come from somewhere
             # else.... User input?
