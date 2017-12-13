@@ -299,3 +299,86 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
 #(([33, 33, 18], [0.0, 0.0, 0.0]), <KpointsData: uuid: cee9d05f-b31a-44d7-aa72-30a406712fba (unstored)>)
 # mesh, kp = get_kpoints_mesh_from_kdensity(structuredata, 0.1)
 #print mesh[0]
+
+
+def determine_favorable_reaction(reaction_list, workchain_dict):
+    """
+    Finds out with reaction is more favorable by simple energy standpoints
+    
+    # TODO check physics
+    reaction list: list of reaction strings
+    workchain_dict = {'Be12W' : uuid_wc or output, 'Be2W' : uuid, ...}
+    
+    return dictionary that ranks the reactions after their enthalpy
+    """
+    from aiida.orm import load_node
+    from aiida.orm.calculation.work import WorkCalculation
+    from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
+    # for each reaction get the total energy sum 
+    # make sure to use the right multipliers...
+    # then sort the given list from (lowest if negativ energies to highest)
+    energy_sorted_reactions = []
+    formenergy_dict ={}
+    for compound, uuid in workchain_dict.iteritems():
+        # TODO ggf get formation energy from ouput node, or extras
+        if isinstance(uuid, float):# allow to give values
+            formenergy_dict[compound] = uuid
+            continue
+        n = load_node(uuid)
+        extras = n.get_extras() # sadly there is no get(,) method...
+        try:
+            formenergy = extras.get('formation_energy', None)
+        except KeyError:
+            formenergy = None
+        if not formenergy: # test if 0 case ok
+            if isinstance(n, WorkCalculation):
+                plabel = n.get_attr('_process_label')
+                if plabel == 'fleur_initial_cls_wc':
+                    try:
+                        ouputnode = n.out.output_initial_cls_wc_para.get_dict()
+                    except AttributeError:
+                        try:
+                            ouputnode = n.out.output_inital_cls_wc_para.get_dict()
+                        except:
+                            ouputnode = None
+                            formenergy = None
+                            print('WARNING: ouput node of {} not found. I skip'.format(n))
+                            continue
+                    formenergy = ouputnode.get('formation_energy')
+                    # TODO is this value per atom?
+                else: # check if corehole wc?
+                     pass
+  
+        formenergy_dict[compound] = formenergy
+        
+    
+    for reaction_string in reaction_list:
+        ent_peratom = get_enhalpy_of_equation(reaction_string, formenergy_dict)
+        print ent_peratom
+        energy_sorted_reactions.append([reaction_string, ent_peratom])
+    energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])    
+    return energy_sorted_reactions
+
+
+# test
+#reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
+#workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d', 
+#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4', 
+#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc', 
+#                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
+#                  'Be' : 0.0}
+#reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
+#print reac_list
+#{'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
+#0.0
+#{'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
+#0.114321037514
+#{'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
+#-0.868053153884
+#{'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
+#-0.0946046496213
+#{'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
+#0.180159355144
+#[['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
+
+
