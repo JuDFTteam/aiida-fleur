@@ -265,7 +265,14 @@ class FleurinputgenCalculation(JobCalculation):
                         "namelist '{}'. "
                         "Check the fleur website, or if it really is,"
                         " update _possible_params. ".format(para, namelist))
-                if paramdic[para] in replacer_values_bool:
+                if para in string_replace:
+                    #TODO check if its in the parameter dict
+                    #print para
+                    paramdic[para] = convert_to_fortran_string(paramdic[para])
+                    #print "{}".format(paramdic[para])
+                # things that are in string replace can never be a bool
+                # Otherwise input where someone given the title 'F' would fail...
+                elif paramdic[para] in replacer_values_bool:
                     # because 1/1.0 == True, and 0/0.0 == False
                     # maybe change in convert_to_fortran that no error occurs
                     if isinstance(paramdic[para], (int, float)):
@@ -274,11 +281,7 @@ class FleurinputgenCalculation(JobCalculation):
                     else:
                         paramdic[para] = convert_to_fortran_bool(paramdic[para])
 
-                if para in string_replace:
-                    #TODO check if its in the parameter dict
-                    #print para
-                    paramdic[para] = convert_to_fortran_string(paramdic[para])
-                    #print "{}".format(paramdic[para])
+
             #in fleur it is possible to give a lattice namelist
             if 'lattice' in input_params.keys():
                 own_lattice = True
