@@ -20,6 +20,7 @@ from aiida.orm import Code, DataFactory, CalculationFactory, load_node, Group
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.scf import fleur_scf_wc
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -61,10 +62,10 @@ class fleur_initial_cls_wc(WorkChain):
     'dos_para' : 'default'
     """
 
-    from aiida_fleur.workflows.scf import fleur_scf_wc
 
 
-    _workflowversion = "0.3.0"
+
+    _workflowversion = "0.3.1"
     _default_wf_para = {'structure_ref' : {},
                         #'references' : {'calculate' : 'all'},
                         'relax' : True,
@@ -73,7 +74,7 @@ class fleur_initial_cls_wc(WorkChain):
                         'scf_para' : 'default',
                         'same_para' : True,
                         'resources' : {"num_machines": 1},
-                        'walltime_sec' : 10*30,
+                        'walltime_sec' : 6*60*60,
                         'queue_name' : None,
                         'serial' : True}
 
@@ -92,7 +93,7 @@ class fleur_initial_cls_wc(WorkChain):
                        'scf_para' : 'default',
                        'same_para' : True,
                        'resources' : {"num_machines": 1},
-                       'walltime_sec' : 10*60,
+                       'walltime_sec' : 6*60*60,
                        'queue_name' : None,
                        'serial' : True,
                        'custom_scheduler_commands' : ''}))
@@ -137,7 +138,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.ref_calcs_torun = []
         self.ctx.ref_calcs_res = []
         self.ctx.struc_to_relax = []
-        self.ctx.successful = False
+        self.ctx.successful = True
         self.ctx.warnings = []
         self.ctx.errors = []
         self.ctx.ref = {}
@@ -600,7 +601,13 @@ class fleur_initial_cls_wc(WorkChain):
         else:
             self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
             self.ctx.restart_calc = calculation
+            
         '''
+        
+        failure = False
+        if failure:
+            self.ctx.successful = False
+    
         return
 
 
@@ -628,9 +635,13 @@ class fleur_initial_cls_wc(WorkChain):
             ref_calcs.append(calc)
 
         # extract_results need the scf workchain calculation node
-        total_en, fermi_energies, bandgaps, atomtypes, all_corelevel = extract_results([calcs])
-        ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel = extract_results(ref_calcs)
-
+        total_en, fermi_energies, bandgaps, atomtypes, all_corelevel, log_ref = extract_results([calcs])
+        ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, log = extract_results(ref_calcs)
+        
+        if log_ref or log:
+            self.ctx.successful = False
+            self.ctx.warnings.append(log_ref)
+            self.ctx.warnings.append(log)
         #print(all_corelevel)
         #print(ref_all_corelevel)
 
@@ -650,7 +661,7 @@ class fleur_initial_cls_wc(WorkChain):
                 ref_cl_energies[elm] = []
                 ref_cls = []
                 for corelevel in cls_atomtype['corestates']:
-                    ref_cls.append(corelevel['energy']-ref_fermi_energies[compound])
+                    ref_cls.append(corelevel['energy'] - ref_fermi_energies[compound])
                 ref_cl_energies[elm].append(ref_cls)
 
         #print('ref_cl energies')
@@ -716,35 +727,41 @@ class fleur_initial_cls_wc(WorkChain):
 
         #print corelevel shifts were calculated bla bla
         cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref, formE, tE, tE_ref = self.collect_results()
-
+        
+        if self.ctx.errors:
+            self.ctx.warnings.append(self.ctx.errors)
+            
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['corelevel_energies'] = cl #self.ctx.cl_energies
+        outputnode_dict['material'] = efermi.keys()[0]       
+        outputnode_dict['corelevel_energies'] = cl
         outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
-        outputnode_dict['reference_corelevel_energies'] = ref_cl #self.ctx.cl_energies
+        outputnode_dict['reference_corelevel_energies'] = ref_cl
         outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
-        outputnode_dict['reference_fermi_energy'] = ref_efermi
-        outputnode_dict['fermi_energy'] = efermi #self.ctx.fermi_energies
-        outputnode_dict['fermi_energy_units'] = 'eV'
-        outputnode_dict['corelevelshifts'] = cls #self.ctx.CLS
-        outputnode_dict['corelevelshifts_units'] = 'htr'#'eV'
+        outputnode_dict['reference_fermi_energy'] = ref_efermi.values()
+        outputnode_dict['reference_fermi_energy_des'] = ref_efermi.keys()
+        outputnode_dict['fermi_energy'] = efermi.values()[0]
+        outputnode_dict['fermi_energy_units'] = 'htr'
+        outputnode_dict['corelevelshifts'] = cls
+        outputnode_dict['corelevelshifts_units'] = 'htr'
         outputnode_dict['binding_energy_convention'] = 'negativ'
-        outputnode_dict['coresetup'] = []#cls
-        outputnode_dict['reference_coresetup'] = []#cls
-        outputnode_dict['bandgap'] = gap#self.ctx.bandgaps
-        outputnode_dict['bandgap_units'] = 'eV'
-        outputnode_dict['reference_bandgaps'] = ref_gap#self.ctx.bandgaps
-        outputnode_dict['atomtypes'] = at#self.ctx.atomtypes
+        #outputnode_dict['coresetup'] = []#cls
+        #outputnode_dict['reference_coresetup'] = []#cls
+        outputnode_dict['bandgap'] = gap.values()[0]
+        outputnode_dict['bandgap_units'] = 'htr'
+        outputnode_dict['reference_bandgaps'] = ref_gap.values()
+        outputnode_dict['reference_bandgaps_des'] = ref_gap.keys()        
+        outputnode_dict['atomtypes'] = at
         outputnode_dict['formation_energy'] = formE
         outputnode_dict['formation_energy_units'] = 'eV/atom'
         outputnode_dict['total_energy'] = tE.values()[0]
         outputnode_dict['total_energy_units'] = 'eV'
         outputnode_dict['total_energy_ref'] = tE_ref.values()
-        outputnode_dict['total_energy_ref_dis'] = tE_ref.keys()
+        outputnode_dict['total_energy_ref_des'] = tE_ref.keys()
         #outputnode = ParameterData(dict=outputnode_dict)
 
         # To have to ouput node linked to the calculation output nodes
@@ -842,11 +859,17 @@ def extract_results(calcs):
     """
 
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
-
+    log = []
     calc_uuids = []
     for calc in calcs:
         #print(calc)
-        calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        try:
+            calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        except: #TODO what error
+            logmsg = ('ERROR: No output_scf_wc_para node found for "last_calc_uuid"'
+                      'key in it for calculation: {}'.format(calc))
+            log.append(logmsg)
+            continue
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
     #print(calc_uuids)
 
@@ -855,6 +878,7 @@ def extract_results(calcs):
     bandgaps = {}
     all_atomtypes = {}
     total_energy = {}
+    
     # more structures way: divide into this calc and reference calcs.
     # currently the order in calcs is given, but this might change if you submit
     # check if calculation pks belong to successful fleur calculations
@@ -901,6 +925,8 @@ def extract_results(calcs):
             efermi = float('nan')
             corelevels = [float('nan')]
             atomtypes = [float('nan')]
+            logmsg = "ERROR: Fleur Calculation with uuid {} was not in in state FINISHED".format(uuid)
+            log.append(logmsg)
             #continue
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
@@ -919,7 +945,7 @@ def extract_results(calcs):
         #all_atomtypes = atomtypes
         #all_corelevels = corelevels
 
-    return total_energy, fermi_energies, bandgaps, all_atomtypes, all_corelevels
+    return total_energy, fermi_energies, bandgaps, all_atomtypes, all_corelevels, log
     #TODO validate results and give some warnings
 
     # check bandgaps, if not all metals, throw warnings:

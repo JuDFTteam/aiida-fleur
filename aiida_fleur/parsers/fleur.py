@@ -438,11 +438,14 @@ def parse_xmlout_file(outxmlfile):
         if start_date != end_date:
             pass
             offset = 0
-
+        #ncores = 12 #TODO parse parallelization_Parameters
         time = offset + (int(endtime[0])-int(starttimes[0]))*60*60 + (int(endtime[1])-int(starttimes[1]))*60 + int(endtime[2]) - int(starttimes[2])
         simple_data['walltime'] = time
         simple_data['walltime_units'] = 'seconds'
+        #simple_data['core_hours'] = time*ncores*1.0/3600
+        #simple_data['parallelization_Parameters'] = {'mpiPEs' : ncores}
         simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
+        
         return simple_data
 
     # TODO find a way to import these from xml_util, but make the parser logger work...

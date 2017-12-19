@@ -596,6 +596,8 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
+        outputnode_dict['total_cpu_time'] = ''
+        outputnode_dict['total_cpu_time_units'] = 'hours'
         # maybe also store some information about the formula
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
