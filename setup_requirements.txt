@@ -8,7 +8,7 @@ aiida>=0.9.0
 # for utilities
 ase
 pymatgen
-
+sympy
 pgtest
 pytest-cov >= 2.5.0
 # for plotting

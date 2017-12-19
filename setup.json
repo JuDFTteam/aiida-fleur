@@ -28,7 +28,8 @@
             "pymatgen",
             "pytest-cov >= 2.5.0",
             "pytest",
-            "pgtest"
+            "pgtest",
+            "sympy"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib"]
