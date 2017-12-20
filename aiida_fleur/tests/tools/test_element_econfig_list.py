@@ -20,14 +20,31 @@ def test_rek_econ_interface_W():
 
     assert rek_econ('[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4') == '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5p6 | 5s2 6s2 5d4'
 
+# convert_fleur_config_to_econfig
+def test_convert_fleur_econfig_to_econfig_interface():
+    from aiida_fleur.tools.element_econfig_list import convert_fleur_config_to_econfig
+
+    config1 = '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)'
+    config2 = '[Kr]'
+    config3 = '[Kr] 4d3/2 4d5/2 4f5/2'
+    
+    res1 = '[Kr] 4d10 4f14'
+    res1_1 = '[Kr] 4d3/2 4d5/2 4f5/2 4f7/2'
+    res2 = '[Kr]'
+    res3 = '[Kr] 4d10 4f6'
+    res3_1 = '[Kr] 4d3/2 4d5/2 4f5/2'
+
+    assert convert_fleur_config_to_econfig(config1) == res1
+    assert convert_fleur_config_to_econfig(config1, keep_spin=True) == res1_1
+    assert convert_fleur_config_to_econfig(config2) == res2
+    assert convert_fleur_config_to_econfig(config3) == res3
+    assert convert_fleur_config_to_econfig(config3, keep_spin=True) == res3_1
 
 # highest_unocc_valence
 def test_rek_econ_interface_W():
     from aiida_fleur.tools.element_econfig_list import highest_unocc_valence
     assert highest_unocc_valence('[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4') == '5d4'
-    assert highest_unocc_valence('1s2 | 2s2') == '2p0' 
-
-# def 
+    assert highest_unocc_valence('1s2 | 2s2') == '2p0'  
 
 
 # get_spin_econfig
