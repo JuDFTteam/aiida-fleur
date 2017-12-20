@@ -27,6 +27,24 @@ def test_rek_econ_interface_W():
     assert highest_unocc_valence('[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4') == '5d4'
     assert highest_unocc_valence('1s2 | 2s2') == '2p0' 
 
+# def 
+
+
+# get_spin_econfig
+def test_get_spin_econfig_interface():
+    from aiida_fleur.tootls.element_econfig_list import get_spin_econfig_interface
+    
+    # basic behavior
+    assert get_spin_econfig('1s2 2s2 2p6') == '1s1/2 2s1/2 2p1/2 2p3/2'
+    
+    # does autocompletion work
+    res1 = '1s1/2 2s1/2 2p1/2 2p3/2 3s1/2 3p1/2 3p3/2 3d3/2 3d5/2 4s1/2 4p1/2 4p3/2 4d3/2 4d5/2 4f5/2 4f7/2'
+    assert get_spin_econfig('[Kr] 4d10 4f14') == res1
+
+    # if addition in spin config given, does this work? and no doubles?
+    res2 = '1s1/2 2s1/2 2p1/2 2p3/2 3s1/2 3p1/2 3p3/2 3d3/2 3d5/2 4s1/2 4p1/2 4p3/2 4d3/2 4d5/2 4f5/2 4f7/2'
+    assert get_spin_econfig('[Kr] 4d3/2 4d5/2 4f5/2 4f7/2') == res2
+
 # econfig_str_hole
 def test_econfig_str_hole_1s_Be():
     from aiida_fleur.tools.element_econfig_list import econfigstr_hole
