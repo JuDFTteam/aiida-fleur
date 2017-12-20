@@ -32,7 +32,7 @@ def test_rek_econ_interface_W():
 
 # get_spin_econfig
 def test_get_spin_econfig_interface():
-    from aiida_fleur.tootls.element_econfig_list import get_spin_econfig_interface
+    from aiida_fleur.tools.element_econfig_list import get_spin_econfig
     
     # basic behavior
     assert get_spin_econfig('1s2 2s2 2p6') == '1s1/2 2s1/2 2p1/2 2p3/2'
