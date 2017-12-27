@@ -6,9 +6,6 @@ DO NOT USE, this is crab so far. The development was stoped because this is done
 Here are methods to check the existence of something in the database
 example if a (successful) SCF with the same inputs exists
 """
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 from aiida.orm import DataFactory
 from aiida.orm import QueryBuilder
 from aiida.orm.calculation.job import JobCalculation
@@ -21,7 +18,7 @@ __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
 ParameterData = DataFactory('parameter')
-
+'''
 def check_existence_calc(input_nodes, successful=True):
     """
     This methods checks in the database waether a certain type of node with the given
@@ -76,6 +73,7 @@ def check_existence_wf(input_nodes, successful=True):
     else:
         return None
 
+'''
 '''
 def intersectlist(l1, l2):
     common = []
