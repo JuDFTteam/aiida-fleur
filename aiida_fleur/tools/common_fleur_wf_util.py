@@ -70,31 +70,38 @@ def get_weight_procent(formula):
     pass
 
 
+#def norm_total_energy_peratom(totalenergy, formula)
+#def norm_total_energy_perunitcell(totalenergy, )
+
 def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     """
     This method determines the formation energy.
     E_form =  E(A_xB_y) - x*E(A) - y*E(B)
 
     :inputs: struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
-    :inputs: ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom} for the elements
+    :inputs: ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom, or per unit cell} for the elements
     (if the formula of the elements contains a number the total energy is devided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
     eform_list = []
     eform_dict = {}
     #ref_el = ref_struc_te_dict.keys()
-    ref_struc_te_dict_norm = {}
+    ref_struc_te_dict_norm = ref_struc_te_dict#{}
+    # assume reference to be normalized
+    
     # normalize reference
-    for key, val in ref_struc_te_dict.iteritems():
-        elem_n = get_natoms_element(key)
-        ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
+    #for key, val in ref_struc_te_dict.iteritems():
+    ##    elem_n = get_natoms_element(key)
+    #    ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
     ref_el_norm = ref_struc_te_dict_norm.keys()
 
     for formula, tE in struc_te_dict.iteritems():
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
+        print ntotal
         eform = tE#abs(tE)
         for elem, count in elements_count.iteritems():
+            
             if elem in ref_el_norm:
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
@@ -182,6 +189,9 @@ def determine_reactions(formula, available_data):
     
     Stoichiometry
     'Be12W', [Be12W, Be2W, Be, W, Be22W] -> [[Be22W+Be2W], [Be12W], [Be12+W],...]
+    params formula: string, given educts (left side of equation), 
+    params available_data: list of strings of compounds (products), from which all possibilities will be constructed
+    
     """
     
     # 1. for each compound try to balance equation

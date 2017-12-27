@@ -29,7 +29,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
         itemstring = ''
         for value in item:
             itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)    
-        datastring = datastring + itemstring + '\n'
+        datastring = datastring + itemstring.strip() + '\n'
     thefile.write(datastring)
     thefile.close()
 

@@ -1,0 +1,37 @@
+
+
+
+# write_results_to_file
+def test_write_results_to_file_interface():
+    from aiida_fleur.tools.io_routines import write_results_to_file
+    from os.path import isfile, abspath
+    from os import remove
+    #import os
+    from numpy import array
+    
+
+    # testing some defaults
+    inputhead = 'head\n'
+    data = array([[1,2],[3,4]])
+    destination = './outputfiletest'
+    write_results_to_file(inputhead, data, destination=destination)
+    isfile_ = isfile(abspath('./outputfiletest'))
+    test_file = open(destination, 'r')
+    content = test_file.read()
+    test_file.close()
+
+    content_exp = 'head\n1.00000000  3.00000000\n2.00000000  4.00000000\n'
+    remove(destination)
+
+    assert isfile_
+    assert content == content_exp
+
+
+# write_xps_spectra_datafile
+def test_write_xps_spectra_datafile_interface():
+    from aiida_fleur.tools.io_routines import write_xps_spectra_datafile
+    
+    #TODO how to test this?
+    # provide all sample inputs and check contents of outputfile
+    pass
+    #assert 1 == 2
