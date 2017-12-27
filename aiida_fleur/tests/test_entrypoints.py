@@ -85,12 +85,12 @@ class TestAiida_fleur_entrypoints:
         assert workflow == fleur_eos_wc
     
     # this entry point has currently a problem...
-    #def test_fleur_inital_cls_wc_entry_point(aiida_env):
-    #    from aiida.orm import WorkflowFactory
-    #    from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+    def test_fleur_inital_cls_wc_entry_point(aiida_env):
+        from aiida.orm import WorkflowFactory
+        from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
-    #    workflow = WorkflowFactory('fleur.init_cls')
-    #    assert workflow == fleur_initial_cls_wc
+        workflow = WorkflowFactory('fleur.init_cls')
+        assert workflow == fleur_initial_cls_wc
         
     def test_fleur_corehole_wc_entry_point(aiida_env):
         from aiida.orm import WorkflowFactory
