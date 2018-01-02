@@ -69,8 +69,8 @@ class fleur_delta_wc(WorkChain):
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
             cls.start_up,
-            while_(cls.calculations_left_torun)(
-                cls.run_eos),
+            #while_(cls.calculations_left_torun)(
+            cls.run_eos,#),
             cls.extract_results_eos,
             cls.calculate_delta,
             cls.return_results,
@@ -243,19 +243,19 @@ class fleur_delta_wc(WorkChain):
         self.ctx.ncalc = len(calcs)
         return
         
-    def calculations_left_torun(self):
-        """
-        Checks if there are still some equations of states to run
-        """
-        calculations_left = True
-        self.ctx.last_step = False
-         
-        if self.ctx.eos_steps_done == self.ctx.eos_run_steps:
-            calculations_left = False
-        if (self.ctx.eos_steps_done + 1) == self.ctx.eos_run_steps:
-            self.ctx.last_step = True
-        
-        return calculations_left
+    #def calculations_left_torun(self):
+    #    """
+    #    Checks if there are still some equations of states to run
+    #    """
+    #    calculations_left = True
+    #    self.ctx.last_step = False
+    #     
+    #    if self.ctx.eos_steps_done == self.ctx.eos_run_steps:
+    #        calculations_left = False
+    #    if (self.ctx.eos_steps_done + 1) == self.ctx.eos_run_steps:
+    #        self.ctx.last_step = True
+    #    
+    #    return calculations_left
 
 
 
@@ -263,23 +263,23 @@ class fleur_delta_wc(WorkChain):
         """
         Run the equation of states for all delta structures with their parameters
         """
-        if self.ctx.last_step:
-            self.ctx.maxindex = None
-        else:
-            self.ctx.maxindex = self.ctx.maxindex + self.ctx.eos_max_perstep
+        #if self.ctx.last_step:
+        #    self.ctx.maxindex = None
+        #else:
+        #    self.ctx.maxindex = self.ctx.maxindex + self.ctx.eos_max_perstep
 
-        self.report('Submitting eqaution of states part {} out of {}, from {} to {}'
-                    ''.format(self.ctx.eos_steps_done, self.ctx.eos_run_steps,
-                              self.ctx.minindex, self.ctx.maxindex))
+        #self.report('Submitting eqaution of states part {} out of {}, from {} to {}'
+        #            ''.format(self.ctx.eos_steps_done, self.ctx.eos_run_steps,
+        #                      self.ctx.minindex, self.ctx.maxindex))
         
         eos_results = {}
         inputs = self.get_inputs_eos()
 
             
-        print(self.ctx.minindex)
-        print(self.ctx.maxindex)
+        #print(self.ctx.minindex)
+        #print(self.ctx.maxindex)
         
-        for struc, para in self.ctx.calcs_to_run[self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
+        for struc, para in self.ctx.calcs_to_run[:10]:#self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
             #print para
             formula = struc.get_formula()
             label = '|delta_wc|eos|{}'.format(formula)
@@ -300,8 +300,8 @@ class fleur_delta_wc(WorkChain):
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
             
-        self.ctx.eos_steps_done = self.ctx.eos_steps_done + 1
-        self.ctx.minindex = self.ctx.maxindex
+        #self.ctx.eos_steps_done = self.ctx.eos_steps_done + 1
+        #self.ctx.minindex = self.ctx.maxindex
 
                         
         return ToContext(**eos_results)
