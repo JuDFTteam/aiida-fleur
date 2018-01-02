@@ -80,19 +80,20 @@ class fleur_scf_wc(WorkChain):
     1. This workflow does not work with local codes!
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.1.3"
     _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
                    'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
                    'converge_density' : True,      # converge the charge density
                    'converge_energy' : False,      # converge the total energy (usually converged before density)
-                   'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
+                   #'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
                    'queue_name' : '',              # Queue name to submit jobs too
                    'resources': {"num_machines": 1},# resources to allowcate for the job
                    'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
                    #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
+                   'itmax_per_run' : 30,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    'custom_scheduler_commands' : ''}                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
@@ -109,11 +110,12 @@ class fleur_scf_wc(WorkChain):
                                                'energy_criterion' : 0.002,
                                                'converge_density' : True,
                                                'converge_energy' : False,
-                                               'reuse' : True,
+                                               #'reuse' : True,
                                                'resources': {"num_machines": 1},
                                                'walltime_sec': 60*60,
                                                'queue_name': '',
                                                'serial' : False,
+                                               'itmax_per_run' : 30,
                                                'inpxml_changes' : [],
                                                'custom_scheduler_commands' : ''}))
         spec.input("structure", valid_type=StructureData, required=False)
@@ -155,6 +157,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.calcs = []
         self.ctx.abort = False
 
+        
         # input para
         wf_dict = self.inputs.wf_parameters.get_dict()
 
@@ -171,13 +174,27 @@ class fleur_scf_wc(WorkChain):
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
+        self.default_itmax = wf_dict.get('itmax_per_run', 30)
+
         # return para/vars
-        self.ctx.successful = True
+        self.ctx.successful = False
+        self.ctx.parse_last = True
         self.ctx.distance = []
         self.ctx.total_energy = []
         self.ctx.energydiff = 10000
-        self.ctx.warnings = []
+        self.ctx.warnings = []#  
+        #"warnings": {
+        #"debug": {}, 
+        #"error": {}, 
+        #"info": {}, 
+        #"warning": {}
         self.ctx.errors = []
+        self.ctx.info = []
+        self.ctx.possible_info = [
+            'Consider providing more resources',
+            'Consider providing a lot more resources',
+            'Consider changing the mixing scheme',
+            ]
         self.ctx.fleurinp = None
         self.ctx.formula = ''
 
@@ -186,6 +203,7 @@ class fleur_scf_wc(WorkChain):
         # validate input and find out which path (1, or 2) to take
         # return True means run inpgen if false run fleur directly
         """
+
         run_inpgen = True
         inputs = self.inputs
 
@@ -302,7 +320,7 @@ class fleur_scf_wc(WorkChain):
             fleurmode = FleurinpModifier(fleurin)
             if not converge_te:
                 dist = wf_dict.get('density_criterion', 0.00002)
-                fleurmode.set_inpchanges({'itmax': 30, 'minDistance' : dist})
+                fleurmode.set_inpchanges({'itmax': self.default_itmax, 'minDistance' : dist})
             avail_ac_dict = fleurmode.get_avail_actions()
 
             # apply further user dependend changes
@@ -407,6 +425,7 @@ class fleur_scf_wc(WorkChain):
         try:
             calculation = self.ctx.last_calc
         except AttributeError:
+            self.ctx.parse_last = False
             self.ctx.successful = False
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
@@ -423,7 +442,7 @@ class fleur_scf_wc(WorkChain):
             self.control_end_wc(error)
             return
         elif calc_state == calc_states.FINISHED:
-            pass
+            self.ctx.parse_last = True
 
         '''
         # Done: successful convergence of last calculation
@@ -472,7 +491,7 @@ class fleur_scf_wc(WorkChain):
         #chargedensity_xpath = 'densityConvergence/chargeDensity'
         #overallchargedensity_xpath = 'densityConvergence/overallChargeDensity'
         #spindensity_xpath = 'densityConvergence/spinDensity'
-        if self.ctx.successful:
+        if self.ctx.parse_last:#self.ctx.successful:
             #self.report('last calc successful = {}'.format(self.ctx.successful))
             last_calc = self.ctx.last_calc
 
@@ -500,6 +519,7 @@ class fleur_scf_wc(WorkChain):
 
             '''
             #TODO: dangerous, can fail, error catching
+            # TODO: is there a way to use a standard parser?
             outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
             #outpara = last_calc.get('output_parameters', None)
             #outxmlfile = outpara.dict.outputfile_path
@@ -539,7 +559,7 @@ class fleur_scf_wc(WorkChain):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
                 density_converged = True
         else:
-            density_converged = True
+            density_converged = True #since density convergence is not wanted
 
         energy = self.ctx.total_energy
 
@@ -555,6 +575,7 @@ class fleur_scf_wc(WorkChain):
             self.ctx.successful = True
             return False
         elif self.ctx.loop_count >= self.ctx.max_number_runs:
+            self.ctx.successful = False
             return False
         else:
             return True
@@ -598,6 +619,9 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_cpu_time'] = ''
         outputnode_dict['total_cpu_time_units'] = 'hours'
+        outputnode_dict['info'] = self.ctx.info
+        outputnode_dict['errors'] = self.ctx.errors
+        
         # maybe also store some information about the formula
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
