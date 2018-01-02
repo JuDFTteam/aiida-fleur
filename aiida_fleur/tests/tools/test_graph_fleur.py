@@ -7,6 +7,10 @@ import pytest
 # test draw_graph
 @pytest.mark.usefixtures("aiida_env")
 def test_draw_graph_if_produces_file():
+    """
+    does the individual fleur_draw_graph routine produce a file?
+    """
+    import os
     from aiida_fleur.tools.graph_fleur import draw_graph
     from aiida.orm import Node
     
@@ -15,7 +19,7 @@ def test_draw_graph_if_produces_file():
     outfile_expected = 'None.dot'
     exit_expected = 0
     exit_status, output_file_name = draw_graph(node)
-
+    os.remove(output_file_name)
 
     assert exit_status == exit_expected
     assert output_file_name == outfile_expected
