@@ -3,6 +3,9 @@
 
 # write_results_to_file
 def test_write_results_to_file_interface():
+    """
+    is the basic file writter wraper working as indended
+    """
     from aiida_fleur.tools.io_routines import write_results_to_file
     from os.path import isfile, abspath
     from os import remove
@@ -29,6 +32,9 @@ def test_write_results_to_file_interface():
 
 # write_xps_spectra_datafile
 def test_write_xps_spectra_datafile_interface():
+    """
+    is the xps data file writter working, is the file ok?
+    """
     from aiida_fleur.tools.io_routines import write_xps_spectra_datafile
     
     #TODO how to test this?
