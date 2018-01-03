@@ -1,7 +1,7 @@
 # FLEUR with AiiDA
 
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
-[![GitHub tag](https://img.shields.io/github/tag/broeder-j/aiida-fleur.svg)](https://github.com/broeder-j/)
+[![GitHub release](https://img.shields.io/github/release/broeder-j/aiida-fleur.svg)](https://github.com/broeder-j/aiida-fleur/releases)
 [![PyPI version](https://img.shields.io/pypi/v/aiida-fleur.svg)](https://pypi.python.org/pypi/aiida-fleur)
 [![Build develop](https://travis-ci.org/broeder-j/aiida-fleur.svg?branch=develop)](https://travis-ci.org/broeder-j/aiida-fleur)
 [![Coveralls github branch](https://github.com/broeder-j/aiida-fleur/blob/develop/aiida_fleur/tests/coverage.svg)](https://github.com/broeder-j/aiida-fleur/tree/develop)
