@@ -12,7 +12,7 @@ __contributors__ = "Jens Broeder"
 import os
 
 # any additional schema file add here, plugin will find them
-schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.27/FleurInputSchema.xsd', '.']
+schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', '.']
 
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
