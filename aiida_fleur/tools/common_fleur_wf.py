@@ -300,6 +300,15 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
 # mesh, kp = get_kpoints_mesh_from_kdensity(structuredata, 0.1)
 #print mesh[0]
 
+# TODO maybe allow lists of uuids in workchain dict, or write a second funtion for this,... 
+# The question is how do get the 'enthalpy for a reaction out of my database?
+# where I have redundant calculations or calculations with different parameters...
+# are total energies comparable?
+# -> as long as the same scheme ist used (all GGA or all GGA+U)
+# total energies are compareable and the gibs enthalpy is approximatily the 
+# total energy difference
+# there are tricks to also compare mixed energies, with experimental fits
+# for binary reactions, where both is needed
 
 def determine_favorable_reaction(reaction_list, workchain_dict):
     """

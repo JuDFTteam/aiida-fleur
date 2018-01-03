@@ -345,7 +345,9 @@ class FleurinputgenCalculation(JobCalculation):
 
         ##############################
         # END OF INITIAL INPUT CHECK #
-
+        
+        
+        # 
         #######################################################
         ######### PREPARE PARAMETERS FOR INPUT FILE ###########
 
@@ -377,11 +379,11 @@ class FleurinputgenCalculation(JobCalculation):
         # allows the user to distinguish two atoms and break the symmetry.
         if not own_lattice:
             natoms = len(structure.sites)
-
+    
             #for FLEUR true, general not, because you could put several
             # atoms on a site
             # TODO: test that only one atom at site?
-
+    
             # TODO this feature might change in Fleur, do different. that in inpgen kind gets a name, which will also be the name in fleur inp.xml.
             # now user has to make kind_name = atom id.
             for site in structure.sites:
@@ -561,6 +563,19 @@ class FleurinputgenCalculation(JobCalculation):
                     "".format(",".join(settings_dict.keys())))
         '''
         return calcinfo
+
+
+def write_inpgen_inputfile_aiida_nodes(structure, parameterdata):
+    pass
+
+
+def write_inpgen_inputfile(structure_dict, parameter_dict):
+    """
+    routine to write an input file without any aiia nodes...
+    """
+    pass
+
+
 
 def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur/ delete unnessesariy parts
     """
