@@ -174,7 +174,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
-        self.default_itmax = wf_dict.get('itmax_per_run', 30)
+        self.ctx.default_itmax = wf_dict.get('itmax_per_run', 30)
 
         # return para/vars
         self.ctx.successful = False
@@ -320,7 +320,7 @@ class fleur_scf_wc(WorkChain):
             fleurmode = FleurinpModifier(fleurin)
             if not converge_te:
                 dist = wf_dict.get('density_criterion', 0.00002)
-                fleurmode.set_inpchanges({'itmax': self.default_itmax, 'minDistance' : dist})
+                fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance' : dist})
             avail_ac_dict = fleurmode.get_avail_actions()
 
             # apply further user dependend changes
