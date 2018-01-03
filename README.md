@@ -4,8 +4,8 @@
 [![GitHub tag](https://img.shields.io/github/tag/broeder-j/aiida-fleur.svg)](https://github.com/broeder-j/)
 [![PyPI version](https://img.shields.io/pypi/v/aiida-fleur.svg)](https://pypi.python.org/pypi/aiida-fleur)
 [![Build develop](https://travis-ci.org/broeder-j/aiida-fleur.svg?branch=develop)](https://travis-ci.org/broeder-j/aiida-fleur)
-[![Coveralls github branch](https://img.shields.io/coveralls/github/jekyll/jekyll/master.svg)](https://github.com/broeder-j/aiida-fleur/tree/develop)
-[![Read the Docs](https://img.shields.io/readthedocs/pip.svg)](http://aiida-fleur.readthedocs.io/en/develop/)
+[![Coveralls github branch](https://github.com/broeder-j/aiida-fleur/blob/develop/aiida_fleur/tests/coverage.svg)](https://github.com/broeder-j/aiida-fleur/tree/develop)
+[![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](http://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
 
 This software contains a plugin that enables the usage of the all-electron DFT [FLEUR code](http://www.flapw.de) with the [AiiDA framework](http://www.aiida.net). Further this package contains common workflows and some utility.
 
