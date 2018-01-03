@@ -4,6 +4,8 @@
 [![GitHub tag](https://img.shields.io/github/tag/broeder-j/aiida-fleur.svg)](https://github.com/broeder-j/)
 [![PyPI version](https://img.shields.io/pypi/v/aiida-fleur.svg)](https://pypi.python.org/pypi/aiida-fleur)
 [![Build develop](https://travis-ci.org/broeder-j/aiida-fleur.svg?branch=develop)](https://travis-ci.org/broeder-j/aiida-fleur)
+[![Coveralls github branch](https://img.shields.io/coveralls/github/jekyll/jekyll/master.svg)](https://github.com/broeder-j/aiida-fleur/tree/develop)
+[![Read the Docs](https://img.shields.io/readthedocs/pip.svg)](http://aiida-fleur.readthedocs.io/en/develop/)
 
 This software contains a plugin that enables the usage of the all-electron DFT [FLEUR code](http://www.flapw.de) with the [AiiDA framework](http://www.aiida.net). Further this package contains common workflows and some utility.
 
@@ -26,7 +28,7 @@ See license file.
 The plug-in and the workflows will only work with a Fleur version using xml files as I/O.  
 For example check out the Fleur version released withing MAX.
 
-**WARNING:** This is a beta version, which runs, but is still under development.  
+**Notice:** This is still under heavy development.  
 For anything contact j.broeder@fz-juelich.de and feel free to write issues and contribute.
 
 
@@ -39,7 +41,7 @@ For anything contact j.broeder@fz-juelich.de and feel free to write issues and c
 
 ## Introduction <a name="Introduction"></a>
 
-This is the basic package (plugin plus workflows) to use the FLEUR-code with the AiiDA Framework.
+This is a python package (AiiDA plugin plus workflows plus utility) to use the FLEUR-code with the AiiDA Framework.
 The FLEUR-code is an all-electron DFT code using the FLAPW method,
 and widely applied in the material science and physics community.  
 
@@ -72,10 +74,11 @@ Structure_util.py | Constains some methods to handle AiiDA structures (some of t
 merge_parameter.py | Methods to handle parameterData nodes, i.e merge them. Which is very useful for all-electron codes, because instead of pseudo potentialsfamilies you can create now families of parameter nodes for the periodic table.
 xml_util.py | All xml functions that are used, by parsers and other tools are in here. Some are 'general' some a very specific to Fleur.
 read_cif.py | This can be used as stand-alone to create StructureData nodes from .cif files from an directory tree. 
+...
 
 ## Installation Instructions <a name="Installation"></a>
 
-From the aiida-fleur folder use:
+From the aiida-fleur folder (after downloading the code, recommended) use:
 
     $ pip install .
     # or which is very useful to keep track of the changes (developers)
@@ -85,14 +88,11 @@ To uninstall use:
 
     $ pip uninstall aiida-fleur
 
-Soon (When package on pypi):
+Or install lates release version from pypi:
 
     $ pip install aiida-fleur
 
-Alternative (old):
-The python source files of the plug-in have to be placed in the AiiDA source code in certain places. 
-You might use the copy_plugin_files.sh script to do so.
-
+### Test Installation
 To test wether the installation was successful use:
 ```bash
 $ verdi calculation plugins
@@ -114,13 +114,15 @@ $ verdi calculation plugins
    ...
    * fleur.fleur
    * fleur.inpgen
-   * fleur.scf
-   * fleur.eos
-   * fleur.band
-   * fleur.dos
 ```
-You should see fleur.* in the list
+You should see 'fleur.*' in the list
 
+The other entry points can be checked with the AiiDA Factories (Data, Workflow, Calculation, Parser). 
+(this is done in test_entry_points.py)
+
+We suggest to run all the (unit)tests in the aiida-fleur/aiida_fleur/tests/ folder.
+
+    $ bash run_all_cov.sh 
 
 ## Files/Contents
 A short sum up of the most important classes and where to find them, how to import them.
@@ -143,9 +145,9 @@ FleurParser: aiida_fleur.parsers.fleur.py
 #### XML Schema Files:
 in fleur_schema folder
 
-The Fleur code needs a XMLSchema file, the plugin searches (walks) for them in your PYTHONPATH.  
-Therefore **make sure that the plugin folder is under your PYTHONPATH env variable.**   
-If nothing works add a path to search_path in fleurinp.py (hack).
+The Fleur code needs a XMLSchema file, the plugin searches (walks) for them in this fleur_schema folder.  
+If nothing works add a path to schemafile_index.py, or search_paths (fleurinp).
+Also if you want to use/need different schemas add them to this folder.
 
 ___
 ### Workflows/workchains:
@@ -157,7 +159,7 @@ fleur_eos_wc | aiida_fleur.workflows.eos.py
 fleur_dos_wc | aiida_fleur.workflows.dos.py
 fleur_band_wc | aiida_fleur.workflows.band.py
 fleur_relax_wc | aiida_fleur.workflows.relax.py
-
+...
 
 ### Utility under '/aiida_fleur/tools/':
 
@@ -169,18 +171,21 @@ read_cif.py
 ___
 ## Code Dependencies <a name="Dependencies"></a>
 
-Requirements are listed in 'requirements.txt'.
+Requirements are listed in 'setup_requirements.txt' and setup.json.
 
-* aiida_core  
+most important are:
+
+* aiida_core >= 0.9  
 * lxml  
 * ase  
+...
 
 Mainly AiiDA:
 
 1. Download from [www.aiida.net/?page_id=264](www.aiida.net -> Download)
 2. install and setup -> [http://aiida-core.readthedocs.org/en/stable/](aiida's documentation)
 
-For easy ploting we recommend installing 'plot_methods':
+For easy ploting we recommend installing 'plot_methods' (not yet integrated into this package):
 https://bitbucket.org/broeder-j/plot_methods
 
 ## Further Information <a name="FurtherInfo"></a>
