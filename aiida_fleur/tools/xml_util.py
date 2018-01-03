@@ -62,7 +62,7 @@ def convert_to_float(value_string, parser_info_out={'parser_warnings' : []}, suc
     if suc_return:
         return value, True
     else:
-        return value    
+        return value
 
 
 def convert_to_int(value_string, parser_info_out={'parser_warnings' : []}, suc_return=True):
@@ -95,7 +95,7 @@ def convert_to_int(value_string, parser_info_out={'parser_warnings' : []}, suc_r
     if suc_return:
         return value, True
     else:
-        return value    
+        return value
 
 
 
@@ -122,7 +122,7 @@ def convert_ev_to_htr(value, parser_info_out={'parser_warnings' : []}):
         return value_to_save / htr
     else:
         return value
-   
+
 
 def convert_from_fortran_bool(stringbool):
     """
@@ -206,7 +206,7 @@ def convert_to_fortran_string(string):
               "string as argument, type {} given".format(type(string)))
     '''
 
-    
+
 def convert_fleur_lo(loelements):
     """
     Converts lo xml elements from the inp.xml file into a lo string for the inpgen
@@ -214,7 +214,7 @@ def convert_fleur_lo(loelements):
     # Developer hint: Be careful with using '' and "", basestring and str are not the same...
     # therefore other conversion methods might fail, or the wrong format could be written.
     from aiida_fleur.tools.element_econfig_list import shell_map
-    
+
     lo_string = ''
     for element in loelements:
         lo_type = get_xml_attribute(element, 'type')
@@ -513,24 +513,24 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
     from aiida.orm.data.parameter import ParameterData
     para_dict = get_inpgen_para_from_xml(inpxmlfile)
     return ParameterData(dict=para_dict)
-    
+
 def get_inpgen_para_from_xml(inpxmlfile):
     """
     This routine returns an python dictionary produced from the inp.xml
     file, which can be used as a parameterdata node by inpgen.
 
     :return: dict
-    
-    Warning: This routine is prelimitary, it is far from complete. 
+
+    Warning: This routine is prelimitary, it is far from complete.
     Also be aware that inpgen does not take all information that is contained in an inp.xml file
     """
-    
+
     # TODO: convert econfig
     # TODO: parse kpoints, somehow count is bad (if symmetry changes), mesh is not known, path cannot be specified
-    # TODO: 
+    # TODO:
     #from aiida_fleur.tools.xml_util import eval_xpath, get_xml_attribute, convert_from_fortran_bool, eval_xpath2
     #from aiida_fleur.tools.xml_util import convert_to_float, convert_to_int
-    
+
     #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
     #therefore maintainance might be needed, if you want to circumvent this, you have
     #to get all the paths from somewhere.
@@ -539,7 +539,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     # all hardcoded xpaths used and attributes names:
     # input
     film_xpath = '/fleurInput/atomGroups/atomGroup/filmPos/'# check for film pos
-    
+
     # atom, for each species\
     species_xpath = '/fleurInput/atomSpecies/species'
     atom_id_xpath = '' # is reconstruction possible at all now?
@@ -564,11 +564,11 @@ def get_inpgen_para_from_xml(inpxmlfile):
     gmax_xpath = 'calculationSetup/cutoffs/@Gmax'
     gmaxxc_xpath = 'calculationSetup/cutoffs/@GmaxXC'
     kmax_xpath = 'calculationSetup/cutoffs/@Kmax'
-    
+
     #exco
     exco_xpath = 'xcFunctional/@name'
     # film
-    
+
     #soc
     l_soc_xpath = '//calculationSetup/soc/@l_soc'
     theta_xpath = '//calculationSetup/soc/@theta'
@@ -576,23 +576,23 @@ def get_inpgen_para_from_xml(inpxmlfile):
     # qss
 
     # kpt
-    
+
     title_xpath = '/fleurInput/comment/text()' # text
-    
-    
+
+
     ########
     new_parameters = {}
 
     #print 'parsing inp.xml without XMLSchema'
     tree = etree.parse(inpxmlfile)
     root = tree.getroot()
-    
+
     # Create the cards
-    
+
     # &input # most things are not needed for AiiDA here. or we ignor them for now.
     # film is set by the plugin depended on the structure
     #symor per default = False? to avoid input which fleur can't take
-    
+
     # &comp
     #attrib = get_xml_attribute(
     comp_dict = {}
@@ -604,7 +604,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     comp_dict = set_dict_or_not(comp_dict, 'gmaxxc', convert_to_float(eval_xpath(root, gmaxxc_xpath), suc_return=False))
     comp_dict = set_dict_or_not(comp_dict, 'kmax', convert_to_float(eval_xpath(root, kmax_xpath), suc_return=False))
     new_parameters['comp'] = comp_dict
-                                
+
     # &atoms
     species_list = eval_xpath2(root, species_xpath)
     print species_list
@@ -628,7 +628,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         #print atom_lo
         atom_element = eval_xpath(species, atom_element_xpath)
         atom_name_2 = eval_xpath(species, atom_name_xpath)
-        
+
         atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
         atom_dict = set_dict_or_not(atom_dict, 'rmt', atom_rmt)
         atom_dict = set_dict_or_not(atom_dict, 'dx', atom_dx)
@@ -642,10 +642,10 @@ def get_inpgen_para_from_xml(inpxmlfile):
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
         atom_dict = set_dict_or_not(atom_dict, 'element', '{}'.format(atom_element))
         #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
-        
+
         new_parameters[atoms_name] = atom_dict
 
-    
+
     # &soc
     attrib = convert_from_fortran_bool(eval_xpath(root, l_soc_xpath))
     theta = convert_to_float(eval_xpath(root, theta_xpath), suc_return=False)
@@ -653,22 +653,22 @@ def get_inpgen_para_from_xml(inpxmlfile):
     #print attrib, theta, phi
     if attrib:
         new_parameters['soc'] = {'theta' : theta, 'phi' : phi}
-    
+
     # &kpt
     #attrib = convert_from_fortran_bool(eval_xpath(root, l_soc_xpath))
     #theta = eval_xpath(root, theta_xpath)
     #phi = eval_xpath(root, phi_xpath)
     #print attrib, theta, phi
     #if kpt:
-    #    new_parameters['kpt'] = {'theta' : theta, 'phi' : phi}    
+    #    new_parameters['kpt'] = {'theta' : theta, 'phi' : phi}
     #    # ['nkpt', 'kpts', 'div1', 'div2', 'div3',                         'tkb', 'tria'],
-    
-    # title     
+
+    # title
     title = eval_xpath(root, title_xpath)# text
     if title:
         new_parameters['title'] = title.replace('\n', '').strip()
     print title
-    
+
     # &exco
     #TODO, easy
     exco_dict = {}
@@ -677,12 +677,12 @@ def get_inpgen_para_from_xml(inpxmlfile):
     new_parameters['exco'] = exco_dict
     # &film
     # TODO
-    
+
     # &qss
-    # TODO    
-    
+    # TODO
+
     # lattice, not supported?
-    
+
     return new_parameters
 
 ####### XML SETTERS SPECIAL ########

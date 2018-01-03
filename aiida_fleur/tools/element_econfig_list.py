@@ -2,7 +2,7 @@
 """
 You find the usual binding_energy for all elements in the periodic table.
 """
-from aiida.common.constants import elements as PeriodicTableElements 
+from aiida.common.constants import elements as PeriodicTableElements
 
 atomic_numbers = {data['symbol'] : num for num,data in PeriodicTableElements.iteritems()}
 
@@ -219,12 +219,12 @@ def rek_econ(econfigstr):
 def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
     """
     '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)' -> '[Kr] 4d10 4f14', or '[Kr] 4d3/2 4d5/2 4f5/2 4f7/2'
-    
+
     # for now only use for coreconfig, it will fill all orbitals, since it has no information on the filling.
     """
-    
+
     econfstring = fleurconf_str.replace('(','').replace(')','')
-    
+
     if keep_spin:
         econfstring.split()
     else:
@@ -245,10 +245,10 @@ def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
                     #econfstring_new.replace('{}'.format(base)
             else:
                 econfstring_new =  econfstring_new + state + ' '
-        econfstring = econfstring_new 
-        
+        econfstring = econfstring_new
+
     return econfstring.strip()
-#test convert_fleur_config_to_econfig(config, keep_spin+true/False) 
+#test convert_fleur_config_to_econfig(config, keep_spin+true/False)
 #config = '[Kr] (4d3/2) (4d5/2) (4f5/2) (4f7/2)'
 #config = '[Kr]'
 #config = '[Kr] 4d3/2 4d5/2 4f5/2'# 4f7/2'
@@ -289,13 +289,13 @@ def get_spin_econfig(fulleconfigstr):
 
     econ_list = fulleconfigstr.split()
     spin_econfig_string = ''
-    
+
     # check if autocomplete needed
     if '[' in fulleconfigstr:
         completion = rek_econ(econ_list[0])
         econ_list.remove(econ_list[0])
         econ_list = completion.split() + econ_list
-        
+
     for state in econ_list:
         if '/' in state:
             spin_econfig_string = spin_econfig_string + state + ' '
@@ -306,7 +306,7 @@ def get_spin_econfig(fulleconfigstr):
         for spin in spinstates:
             spin_econfig_string = spin_econfig_string + '{}{} '.format(state[:2], spin)
 
-    return spin_econfig_string.rstrip()  
+    return spin_econfig_string.rstrip()
 # test get_spin_econfig('1s2 2s2 2p6'), '1s1/2 2s1/2 2p1/2 2p3/2'
 
 # test get_spin_econfig('[Kr] 4d10 4f14') '1s1/2 2s1/2 2p1/2 2p3/2 3s1/2 3p1/2 3p3/2 3d3/2 3d5/2 4s1/2 4p1/2 4p3/2 4d3/2 4d5/2 4f5/2 4f7/2'
@@ -427,7 +427,7 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
 # Reference Binding energies of simple bulk materials:
 # TODO: Should be replaced by a 'read' from the NIST database,
 # TODO: Also for alloys...
-# or the whole nist Database for the elemental shall be parsed here... 
+# or the whole nist Database for the elemental shall be parsed here...
 # in eV
 # TODO maybe use a panda file format or something for this...
 exp_bindingenergies = {

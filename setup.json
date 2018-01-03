@@ -13,7 +13,7 @@
         "Environment :: Plugins",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Physics",
-        "Natural Language :: English"      
+        "Natural Language :: English"
     ],
     "keywords" : "fleur aiida inpgen workflows flapw juelich dft all-electron",
     "include_package_data" : true,

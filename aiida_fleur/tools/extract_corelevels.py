@@ -116,7 +116,7 @@ def extract_corelevels(outxmlfile, options=None):
     coreconfig_xpath = 'electronConfig/coreConfig/text()'
     valenceconfig_xpath = 'electronConfig/valenceConfig/text()'
     state_occ_xpath = 'electronConfig/stateOccupation'
-    
+
     relcoreStates_xpath = 'coreStates'
     relpos_xpath = 'relPos'
     abspos_xpath = 'absPos'
@@ -169,7 +169,7 @@ def extract_corelevels(outxmlfile, options=None):
         coreconfig = eval_xpath(species, coreconfig_xpath, parser_info)
         valenceconfig = eval_xpath(species, valenceconfig_xpath , parser_info)
         state_occ = eval_xpath2(species, state_occ_xpath, parser_info)
-        
+
         #parse state occ
         state_results = []
         for tag in state_occ:#always a list?
@@ -178,7 +178,7 @@ def extract_corelevels(outxmlfile, options=None):
              spinDown = tag.get('spinDown')
              state_results.append({state : [spinUp, spinDown]})
 
-        
+
         species_atts[species_name] = {'name' : species_name,
                                       'corestates' : species_corestates,
                                       'element': species_element,
@@ -361,29 +361,29 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
     corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
                      '4f5/2' : [0, 0.3, 0.4, 0.1]},
               'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}
-              
+
     {'Be': {'1s': [117, 117.2, 117.4, 117.1, 117.3]},
      'W': {'4f5/2': [102, 102.3, 102.4, 102.1],
            '4f7/2': [124.4, 124.3, 124.4, 124.1]}}
     """
     return_corelevel_dict = {}
-    
+
     for elem, corelevel_dict in coreleveldict.iteritems():
         ref_el = reference_dict.get(elem, {})
-        
+
         if not ref_el: # no refernce for that element given
             if warn:
                 print("WARNING: Reference for element: '{}' not given. "
                       "I ignore these.".format(elem))
             continue
-        
-        return_corelevel_dict[elem] = {}        
+
+        return_corelevel_dict[elem] = {}
         for corelevel_name, corelevel_list in corelevel_dict.iteritems():
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl: # no reference corelevel given for that element
                 if warn:
                    print("WARNING: Reference corelevel '{}' for element: '{}' "
-                         "not given. I ignore these.".format(corelevel_name, elem))                
+                         "not given. I ignore these.".format(corelevel_name, elem))
                 continue
             be_all = []
             nref = len(ref_cl)

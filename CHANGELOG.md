@@ -26,7 +26,7 @@
 - added new tests, submission tests and standard fleur tests
 - first documention online, still very rusty still some issues there (stay with local one)
 
-## v0.3.0 
+## v0.3.0
 
 ### Merge with workflows repo
 - the second repository with basic workflows was merged into the plugin repostitory.
@@ -50,7 +50,7 @@ Therefore the files do not have to be copied anymore into the aiida_core source 
 - scf now uses minDistance and passes the walltime to fleur by default.
 
 ### Dokumentation
-- Due to the new plugin system of AiiDA the Dokumentation is now online on read-the-docs. 
+- Due to the new plugin system of AiiDA the Dokumentation is now online on read-the-docs.
 (so far incomplete because of old AiiDA version on pypi) We still recommend to take a look at the docs in the repo itself (ggf build it)
 
 ### Utils

@@ -28,11 +28,11 @@ class fleur_dos_wc(WorkChain):
 
     :Params: a Fleurcalculation node
     :returns: Success, last result node, list with convergence behavior
-    
+
     wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     defaults : tria = True, nkpts = 800, sigma=0.005, emin= -0.3, emax = 0.8
     """
-    
+
     _workflowversion = "0.1.0"
 
     @classmethod

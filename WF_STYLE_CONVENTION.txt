@@ -48,24 +48,24 @@ FLEUR Specific:
 
 1. Output nodes of a workflow has the nameing convention 'output_name_description'
    i.e 'output_scf_wc_para'
-   
+
 2. Every workflow should give back one parameter output node named 'output_wfname_para'
    which contains all the 'physical results' the workflow is designd to provide,
    or at least information to acces these results direclty (if stored in files and so on)
    further the node should contain valuable information to make sense/judge the quality of the data.
-   
+
    Try to design this node in a way that if you take a look at it, you understand
    the following questions:
-   
+
    which workflow was run, what version?
    what came out?  What was put in, how can I see what was put in?
    Is this valueable or garbage?
-   
+
 3. so far name Fleur workflows/workchains name: fleur_name_wc
 
 4. (advanced) group workflow internal(between) calculations and add extras to calcualtion. (that way one can extract them from global querries, if need.
 
-5. Write base subworkchains, that take all Parameters as given, but do their task very well and then write workchains ontop of these. 
+5. Write base subworkchains, that take all Parameters as given, but do their task very well and then write workchains ontop of these.
    Which then can use workchains to optimize the parameters for Fleur.
 
 6. Outsource methods to test for calculation failure, that you have only one routine in all workchains, that you can improve

@@ -601,13 +601,13 @@ class fleur_initial_cls_wc(WorkChain):
         else:
             self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
             self.ctx.restart_calc = calculation
-            
+
         '''
-        
+
         failure = False
         if failure:
             self.ctx.successful = False
-    
+
         return
 
 
@@ -637,7 +637,7 @@ class fleur_initial_cls_wc(WorkChain):
         # extract_results need the scf workchain calculation node
         total_en, fermi_energies, bandgaps, atomtypes, all_corelevel, log_ref = extract_results([calcs])
         ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, log = extract_results(ref_calcs)
-        
+
         if log_ref or log:
             self.ctx.successful = False
             self.ctx.warnings.append(log_ref)
@@ -727,17 +727,17 @@ class fleur_initial_cls_wc(WorkChain):
 
         #print corelevel shifts were calculated bla bla
         cl, cls, ref_cl, efermi, gap, ref_efermi, ref_gap, at, at_ref, formE, tE, tE_ref = self.collect_results()
-        
+
         if self.ctx.errors:
             self.ctx.warnings.append(self.ctx.errors)
-            
+
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['material'] = efermi.keys()[0]       
+        outputnode_dict['material'] = efermi.keys()[0]
         outputnode_dict['corelevel_energies'] = cl
         outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl
@@ -754,7 +754,7 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['bandgap'] = gap.values()[0]
         outputnode_dict['bandgap_units'] = 'htr'
         outputnode_dict['reference_bandgaps'] = ref_gap.values()
-        outputnode_dict['reference_bandgaps_des'] = ref_gap.keys()        
+        outputnode_dict['reference_bandgaps_des'] = ref_gap.keys()
         outputnode_dict['atomtypes'] = at
         outputnode_dict['formation_energy'] = formE
         outputnode_dict['formation_energy_units'] = 'eV/atom'
@@ -878,7 +878,7 @@ def extract_results(calcs):
     bandgaps = {}
     all_atomtypes = {}
     total_energy = {}
-    
+
     # more structures way: divide into this calc and reference calcs.
     # currently the order in calcs is given, but this might change if you submit
     # check if calculation pks belong to successful fleur calculations

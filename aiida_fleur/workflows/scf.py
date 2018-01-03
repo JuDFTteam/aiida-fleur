@@ -58,7 +58,7 @@ class fleur_scf_wc(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
 
-    :return output_scf_wc_para: (ParameterData), Information of workflow results 
+    :return output_scf_wc_para: (ParameterData), Information of workflow results
         like Success, last result node, list with convergence behavior
 
     minimum input example:
@@ -157,7 +157,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.calcs = []
         self.ctx.abort = False
 
-        
+
         # input para
         wf_dict = self.inputs.wf_parameters.get_dict()
 
@@ -182,11 +182,11 @@ class fleur_scf_wc(WorkChain):
         self.ctx.distance = []
         self.ctx.total_energy = []
         self.ctx.energydiff = 10000
-        self.ctx.warnings = []#  
+        self.ctx.warnings = []#
         #"warnings": {
-        #"debug": {}, 
-        #"error": {}, 
-        #"info": {}, 
+        #"debug": {},
+        #"error": {},
+        #"info": {},
         #"warning": {}
         self.ctx.errors = []
         self.ctx.info = []
@@ -418,7 +418,7 @@ class fleur_scf_wc(WorkChain):
         cause and adapt the input parameters accordingly before
         restarting, or abort if unrecoverable error was found
         """
-        #expected_states = [calc_states.FINISHED, calc_states.FAILED, 
+        #expected_states = [calc_states.FINISHED, calc_states.FAILED,
         #                   calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
         #self.report('I am in inspect_fleur')
@@ -621,7 +621,7 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['total_cpu_time_units'] = 'hours'
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['errors'] = self.ctx.errors
-        
+
         # maybe also store some information about the formula
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
@@ -801,7 +801,7 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
 
     args = parser.parse_args()
-    res = run(fleur_scf_wc, 
+    res = run(fleur_scf_wc,
               wf_parameters=args.wf_parameters,
               structure=args.structure,
               calc_parameters=args.calc_parameters,

@@ -20,7 +20,7 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     ..note::
         If an invalid format is provided graphviz prints a helpful message, so this doesn't need to be implemented here.
     """
-    # 
+    #
     # until the connected part of the graph that contains the root_pk is fully explored.
     # TODO this command deserves to be improved, with options and further subcommands
 

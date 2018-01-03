@@ -44,7 +44,7 @@ __contributors__ = "Jens Broeder"
 class fleur_optimize_parameters_wc(WorkChain):
     """
     This workflow finds out working/(in the future optimal) flapw parameters
-    from a structure. For now, it runs inpgen on the structure and uses 
+    from a structure. For now, it runs inpgen on the structure and uses
     the Fleur defaults.
 
     :param wf_parameters: ParameterData node, optional, protocol specification will be parsed like this to fleur_eos_wc
@@ -52,10 +52,10 @@ class fleur_optimize_parameters_wc(WorkChain):
     :param inpgen: Code node,
     :param fleur: Code node,
 
-    :return output_optimized_wc_para: ParameterData node, contains relevant output information 
+    :return output_optimized_wc_para: ParameterData node, contains relevant output information
                                       about general succces.
     :return optimized_para: ParameterData node usable by inpgen
-    :return optimized_fleurinp: FleurinpData with optimized 
+    :return optimized_fleurinp: FleurinpData with optimized
 
     """
 
@@ -83,8 +83,8 @@ class fleur_optimize_parameters_wc(WorkChain):
             cls.return_results
         )
         #spec.dynamic_output()
-        
-        
+
+
     def start(self):
         """
         check parameters, what condictions? complete?
@@ -93,24 +93,24 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
         self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
 
-        ### input check ### 
+        ### input check ###
 
-        # initialize contexts 
+        # initialize contexts
 
         self.ctx.successful = True
-        # Check on inputnodes        
-        
+        # Check on inputnodes
+
         inputs = self.inputs
-        
+
         # wf_parameters:
         wf_dict = inputs.wf_parameters.get_dict()
-        
-        # set values, or DEFAULTS 
+
+        # set values, or DEFAULTS
         self.ctx.serial = wf_dict.get('serial', False)
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|' 
-        
+        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|'
+
         # codes
         if 'inpgen' in inputs:
             try:
@@ -130,12 +130,12 @@ class fleur_optimize_parameters_wc(WorkChain):
                 self.control_end_wc(error)
                 self.abort(error)
 
-        
+
     def run_inpgen(self):
         """
         So far run inpgen and see what you get
         """
-        
+
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
@@ -162,35 +162,35 @@ class fleur_optimize_parameters_wc(WorkChain):
         """
         Determine_parameters, so far extract them from FleurinpData
         """
-        
+
         try:
             fleurin = self.ctx['inpgen'].out.fleurinpData
         except AttributeError:
             error = 'No fleurinpData found, inpgen failed'
             self.control_end_wc(error)
-        
+
         # TODO this has to be implemented
         self.ctx.optimal_parameters = fleurin.get_parameter_data()
-        
-        
+
+
     def return_results(self):
         """
         Prepare and return the result nodes
         """
-        
+
         if self.ctx.optimal_parameters:
             optimal_parameters_uuid = self.ctx.optimal_parameters.uuid
         else:
             optimal_parameters_uuid = None
-        
+
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'structure': self.inputs.structure.uuid,
                'optimal_para' : optimal_parameters_uuid,
-               'successful' : self.ctx.successful}        
-        
+               'successful' : self.ctx.successful}
+
         outnode = ParameterData(dict=out)
-        
+
         returndict = {}
 
         if self.ctx.successful:
@@ -201,12 +201,12 @@ class fleur_optimize_parameters_wc(WorkChain):
             #optimized_fleurinp
         else:
             self.report('Done, but something failed in fleur_optimize_parameter_wc.')
- 
+
 
         # create link to workchain node
         for link_name, node in returndict.iteritems():
-            self.out(link_name, node)   
-    
+            self.out(link_name, node)
+
     def control_end_wc(self, errormsg):
         """
         Controled way to shutdown the workchain. Can initalize the output nodes,

@@ -3,7 +3,7 @@
 """
 In here we put all things (methods) that are common to workflows AND DO NOT
 depend on AiiDA classes, therefore can be used without loading the dbenv.
-Util that does depend on AiiDA classes should go somewhere else. 
+Util that does depend on AiiDA classes should go somewhere else.
 """
 
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
@@ -88,7 +88,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     #ref_el = ref_struc_te_dict.keys()
     ref_struc_te_dict_norm = ref_struc_te_dict#{}
     # assume reference to be normalized
-    
+
     # normalize reference
     #for key, val in ref_struc_te_dict.iteritems():
     ##    elem_n = get_natoms_element(key)
@@ -101,7 +101,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
         print ntotal
         eform = tE#abs(tE)
         for elem, count in elements_count.iteritems():
-            
+
             if elem in ref_el_norm:
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
@@ -168,7 +168,7 @@ def inpgen_dict_set_mesh(inpgendict, mesh):
 def powerset(L):
     """
     Constructs the power set, 'potenz Menge' of a given list.
-    
+
     return list: of all possible subsets
     """
     import itertools
@@ -186,14 +186,14 @@ def powerset(L):
 def determine_reactions(formula, available_data):
     """
     Determines and balances theoretical possible reaction.
-    
+
     Stoichiometry
     'Be12W', [Be12W, Be2W, Be, W, Be22W] -> [[Be22W+Be2W], [Be12W], [Be12+W],...]
-    params formula: string, given educts (left side of equation), 
+    params formula: string, given educts (left side of equation),
     params available_data: list of strings of compounds (products), from which all possibilities will be constructed
-    
+
     """
-    
+
     # 1. for each compound try to balance equation
     # 2. for each compound with any other compound in list, try to balance equation
     # 3. for each compound with each two other compounds ... till other compounds
@@ -206,7 +206,7 @@ def determine_reactions(formula, available_data):
             continue
         for entry in dataset:
             productstring = productstring + '{}+'.format(entry)
-        
+
         productstring = productstring[:-1]
         #print productstring
         constructed_products.append(productstring)
@@ -219,14 +219,14 @@ def determine_reactions(formula, available_data):
         else:
             continue
     return reactions
-    
+
 # test reac = determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W'])
 #print reac ['1*Be12W->1*Be12W', '1*Be12W->1*Be2W+10*Be', '2*Be12W->1*Be2W+1*Be22W', '1*Be12W->12*Be+1*W', '11*Be12W->5*W+6*Be22W']
-    
+
 #reac = determine_reactions('Be12Ti', ['Be12Ti', 'Be17Ti2', 'BeTi', 'Ti', 'Be', 'Be2Ti', 'Be8Ti4'])
 #print reac ['1*Be12Ti->1*Be12Ti', '2*Be12Ti->1*Be17Ti2+7*Be', '1*Be12Ti->1*BeTi+11*Be', '1*Be12Ti->1*Ti+12*Be', '1*Be12Ti->10*Be+1*Be2Ti', '4*Be12Ti->40*Be+1*Be8Ti4']
-    
-    
+
+
 def convert_eq_to_dict(equationstring):
     """
     Converts an equation string to a dictionary
@@ -235,40 +235,40 @@ def convert_eq_to_dict(equationstring):
     eq_dict = {'products': {}, 'educts' : {}}
     product_dict = {}
     educt_dict = {}
-    
+
     eq_split = equationstring.split('->')
     products = eq_split[1].split('+')
     educts = eq_split[0].split('+')
-    
+
     for product in products:
         p_list = product.split('*')
         product_dict[p_list[-1]] = int(p_list[0]) + product_dict.get(p_list[-1], 0)
     for educt in educts:
         e_list = educt.split('*')
-        educt_dict[e_list[-1]] = int(e_list[0]) + educt_dict.get(e_list[-1], 0)       
-        
+        educt_dict[e_list[-1]] = int(e_list[0]) + educt_dict.get(e_list[-1], 0)
+
     eq_dict['products'] = product_dict
     eq_dict['educts'] = educt_dict
     #print eq_dict
     return eq_dict
-    
+
 # test convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be')
- # {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}   
-    
-    
+ # {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
+
+
 def get_enhalpy_of_equation(reaction, formenergydict):
     """
     calculate the enhalpy per atom of a given reaction from the given data.
-    
+
     param reaction: string
     param fromenergydict: dictionary that contains the {compound: formationenergy per atom}
-    
+
     # TODO check if physics is right
     """
     reac_dict = convert_eq_to_dict(reaction)
     educt_energy = 0
     product_energy = 0
-    
+
     for compound, factor in reac_dict.get('educts', {}).iteritems():
         compound_e = 0
         try:
@@ -276,7 +276,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         except KeyError:
             print('Formation energy of compound {} not given in {}.'
                   'I abort...'.format(compound, formenergydict))
-            compound_e = 0            
+            compound_e = 0
             return None
         educt_energy = educt_energy + factor*compound_e
 
@@ -286,36 +286,36 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         except KeyError:
             print('Formation energy of compound {} not given in {}.'
                   'I abort...'.format(compound, formenergydict))
-            compound_e = 0            
+            compound_e = 0
             return None
-        product_energy = product_energy + factor*compound_e        
-        
-    
+        product_energy = product_energy + factor*compound_e
+
+
     return educt_energy - product_energy
-    
+
 from sympy import Symbol #somehow, otherwise it in not found in balance equation...
 
 def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eval_linear=True):
     """
     Method that balances a chemical equation.
-    
+
     param equation_string: string (with '->')
     param allow_negativ: bool, default False, allows for negative coefficents for the products.
-    
-    return string: balanced equation 
-    
+
+    return string: balanced equation
+
     balance_equation("C7H16+O2 -> CO2+H2O"))
     balance_equation("Be12W->Be22W+Be12W")
     balance_equation("Be12W->Be12W")
-    
+
     1*C7H16+11*O2 ->7* CO2+8*H2O
     None
     1*Be12W->1*Be12W
-    #TODO The solver better then what we need. Currently if system is over 
+    #TODO The solver better then what we need. Currently if system is over
     #"Be12W->Be2W+W+Be" solves to {a: 24, b: -d/2 + 144, c: d/2 - 120}-> FAIL-> None
     # The code fails in the later stage, but this solution should maybe be used.
-    
-    code adapted from stack exchange (the messy part): 
+
+    code adapted from stack exchange (the messy part):
     https://codegolf.stackexchange.com/questions/8728/balance-chemical-equations
     """
 
@@ -350,12 +350,12 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         for s in sorted(Ys):
             n = k[Ys[s]]
             #print n
-            # idea: check if char in n, then linear depended, then 
+            # idea: check if char in n, then linear depended, then
             try: # since solver gives also a linear depended solution if correct, but code fails then
                 if n<0 and not allow_negativ: # We allow for 0 but might be an other case to think about
-                    return None    
+                    return None
             except TypeError:
-                return None # TODO Maybe other return value... maybe list of some values for 
+                return None # TODO Maybe other return value... maybe list of some values for
                 # linear dependencies, d,e,....? also choose them that the value is positive...?
             if n==0 and not allow_zero:
                 return None
@@ -369,8 +369,8 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         return '->'.join('+'.join(pM(N.pop(0))+str(t) for t in p.split('+')) for p in eq.split('->'))
     else:
         return None
-        
-        
+
+
 # test
 #print(balance_equation("C7H16+O2 -> CO2+H2O"))
 #print balance_equation("Be12W->Be2W+W+Be")#+Be12W+Be+Be22W")

@@ -90,9 +90,9 @@ class fleur_eos_wc_simple(WorkChain):
         self.report('started simple eos workflow version {}'.format(self._workflowversion))
         self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
 
-        ### input check ### 
+        ### input check ###
 
-        # initialize contexts 
+        # initialize contexts
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -106,26 +106,26 @@ class fleur_eos_wc_simple(WorkChain):
         self.ctx.org_volume = -1# avoid div 0
         self.ctx.labels = []
         self.ctx.successful = True
-         
-        
-        # Check on inputnodes        
-        
+
+
+        # Check on inputnodes
+
         inputs = self.inputs
-        
-        
+
+
         # wf_parameters:
-        
+
         wf_dict = inputs.wf_parameters.get_dict()
-        
-        # set values, or DEFAULTS 
+
+        # set values, or DEFAULTS
         self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.002)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-            
-        
+
+
         # codes
         if 'inpgen' in inputs:
             try:
@@ -144,7 +144,7 @@ class fleur_eos_wc_simple(WorkChain):
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
                 self.abort(error)
-                
+
     def determine_parameters(self):
         """
         determine the optimal input parameters for the given structure
@@ -157,16 +157,16 @@ class fleur_eos_wc_simple(WorkChain):
 
         for point in range(points):
             self.ctx.scalelist.append(startscale + point*step)
-       
-        smallest_structure = eos_structures(self.inputs.structure, self.ctx.scalelist[0])[0]
-        
 
-        optimize_res = submit(fleur_optimize_parameters_wc, 
-                                    structure=smallest_structure, 
-                                    inpgen=self.inputs.inpgen, 
+        smallest_structure = eos_structures(self.inputs.structure, self.ctx.scalelist[0])[0]
+
+
+        optimize_res = submit(fleur_optimize_parameters_wc,
+                                    structure=smallest_structure,
+                                    inpgen=self.inputs.inpgen,
                                     fleur=self.inputs.fleur)
         #wf_parameters
-        
+
         return ToContext(optimize_res=optimize_res)
 
     def run_eos_wc(self):
@@ -180,21 +180,21 @@ class fleur_eos_wc_simple(WorkChain):
         calc_parameters = optimize_res.get('optimized_para')
         fleur = self.inputs.fleur
         inpgen = self.inputs.inpgen
-        
+
         form = structure.get_formula()
         label = 'fleur_eos_wc on {}'.format(form)
         description = 'Fleur eos of {}'.format(form)
 
-        eos_res = submit(fleur_eos_wc, wf_parameters=eos_wc_para, fleur=fleur, inpgen=inpgen, 
-                structure=structure, calc_parameters=calc_parameters, 
-                _label=label, _description=description)    
- 
+        eos_res = submit(fleur_eos_wc, wf_parameters=eos_wc_para, fleur=fleur, inpgen=inpgen,
+                structure=structure, calc_parameters=calc_parameters,
+                _label=label, _description=description)
+
         return ToContext(**eos_res)
 
-   
+
     def inspect_eos_wc(self):
         """
-        Check the results of the fleur_eos_wc        
+        Check the results of the fleur_eos_wc
         """
         # TODO: check on the returns of fleur_eos_wc
         pass
@@ -205,18 +205,18 @@ class fleur_eos_wc_simple(WorkChain):
         """
         Return the result node of fleur_eos_wc
         """
-        
+
         returndict = {}
 
         if self.ctx.successful:
             self.report('Done, Simple equation of states calculation complete')
 
             returndict['output_eos_wc_para'] = self.ctx.eos_res['output_eos_wc_para']
-            returndict['output_eos_wc_structure'] = self.ctx.eos_res['output_eos_wc_structure']         
+            returndict['output_eos_wc_structure'] = self.ctx.eos_res['output_eos_wc_structure']
         else:
             self.report('Done, but something failed in fleur_eos_wc.')
- 
+
 
         # create link to workchain node
         for link_name, node in returndict.iteritems():
-            self.out(link_name, node)    
+            self.out(link_name, node)

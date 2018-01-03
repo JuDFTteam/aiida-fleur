@@ -3,7 +3,7 @@
 """
 In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
-Util that does not depend on AiiDA classes should go somewhere else. 
+Util that does not depend on AiiDA classes should go somewhere else.
 """
 
 from aiida.orm import DataFactory
@@ -300,12 +300,12 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
 # mesh, kp = get_kpoints_mesh_from_kdensity(structuredata, 0.1)
 #print mesh[0]
 
-# TODO maybe allow lists of uuids in workchain dict, or write a second funtion for this,... 
+# TODO maybe allow lists of uuids in workchain dict, or write a second funtion for this,...
 # The question is how do get the 'enthalpy for a reaction out of my database?
 # where I have redundant calculations or calculations with different parameters...
 # are total energies comparable?
 # -> as long as the same scheme ist used (all GGA or all GGA+U)
-# total energies are compareable and the gibs enthalpy is approximatily the 
+# total energies are compareable and the gibs enthalpy is approximatily the
 # total energy difference
 # there are tricks to also compare mixed energies, with experimental fits
 # for binary reactions, where both is needed
@@ -313,17 +313,17 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
 def determine_favorable_reaction(reaction_list, workchain_dict):
     """
     Finds out with reaction is more favorable by simple energy standpoints
-    
+
     # TODO check physics
     reaction list: list of reaction strings
     workchain_dict = {'Be12W' : uuid_wc or output, 'Be2W' : uuid, ...}
-    
+
     return dictionary that ranks the reactions after their enthalpy
     """
     from aiida.orm import load_node
     from aiida.orm.calculation.work import WorkCalculation
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
-    # for each reaction get the total energy sum 
+    # for each reaction get the total energy sum
     # make sure to use the right multipliers...
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
@@ -357,23 +357,23 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                     # TODO is this value per atom?
                 else: # check if corehole wc?
                      pass
-  
+
         formenergy_dict[compound] = formenergy
-        
-    
+
+
     for reaction_string in reaction_list:
         ent_peratom = get_enhalpy_of_equation(reaction_string, formenergy_dict)
         print ent_peratom
         energy_sorted_reactions.append([reaction_string, ent_peratom])
-    energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])    
+    energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])
     return energy_sorted_reactions
 
 
 # test
 #reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
-#workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d', 
-#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4', 
-#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc', 
+#workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
+#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4',
+#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc',
 #                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
 #                  'Be' : 0.0}
 #reac_list = determine_favorable_reaction(reaction_list, workchain_dict)

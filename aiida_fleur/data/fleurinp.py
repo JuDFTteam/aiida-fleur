@@ -1009,7 +1009,7 @@ class FleurinpData(Data):
         inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
 
         new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
-    
+
         return new_parameters
 
 

@@ -445,7 +445,7 @@ def parse_xmlout_file(outxmlfile):
         #simple_data['core_hours'] = time*ncores*1.0/3600
         #simple_data['parallelization_Parameters'] = {'mpiPEs' : ncores}
         simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
-        
+
         return simple_data
 
     # TODO find a way to import these from xml_util, but make the parser logger work...

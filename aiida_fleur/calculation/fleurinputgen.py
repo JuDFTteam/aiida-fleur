@@ -9,7 +9,7 @@ from aiida.orm.calculation.job import JobCalculation
 from aiida.orm import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.common.constants import elements as PeriodicTableElements 
+from aiida.common.constants import elements as PeriodicTableElements
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
@@ -345,9 +345,9 @@ class FleurinputgenCalculation(JobCalculation):
 
         ##############################
         # END OF INITIAL INPUT CHECK #
-        
-        
-        # 
+
+
+        #
         #######################################################
         ######### PREPARE PARAMETERS FOR INPUT FILE ###########
 
@@ -379,11 +379,11 @@ class FleurinputgenCalculation(JobCalculation):
         # allows the user to distinguish two atoms and break the symmetry.
         if not own_lattice:
             natoms = len(structure.sites)
-    
+
             #for FLEUR true, general not, because you could put several
             # atoms on a site
             # TODO: test that only one atom at site?
-    
+
             # TODO this feature might change in Fleur, do different. that in inpgen kind gets a name, which will also be the name in fleur inp.xml.
             # now user has to make kind_name = atom id.
             for site in structure.sites:
@@ -391,7 +391,7 @@ class FleurinputgenCalculation(JobCalculation):
                 kind = structure.get_kind(kind_name)
                 if kind.has_vacancies():
                     # then we do not at atoms with weights smaller one
-                    if kind.weights[0] <1.0:                    
+                    if kind.weights[0] <1.0:
                         natoms = natoms -1
                         # Log message?
                         continue
