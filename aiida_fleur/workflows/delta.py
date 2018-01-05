@@ -284,7 +284,7 @@ class fleur_delta_wc(WorkChain):
         #print(self.ctx.minindex)
         #print(self.ctx.maxindex)
 
-        for struc, para in self.ctx.calcs_to_run[:4]:#self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
+        for struc, para in self.ctx.calcs_to_run:#[:4]self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
             #print para
             formula = struc.get_formula()
             label = '|delta_wc|eos|{}'.format(formula)
