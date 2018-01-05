@@ -129,7 +129,8 @@ def delete_nodes(pks_to_delete):
     Also you will be backchecked.
 
     BE VERY CAREFUL!
-
+    TODO: CHECK IF THIS IS UP TO DATE!
+    
     :note: The script will also delete
     all children calculations generated from the specified nodes.
 

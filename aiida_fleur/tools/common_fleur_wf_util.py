@@ -12,6 +12,34 @@ __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
 
+def convert_formula_to_formula_unit(formula):
+    """
+    Converts a formula to the smalles chemical formula unit
+    'Be4W2' -> 'Be2W'
+    """
+    from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
+    from fractions import gcd
+
+    # get formula dict
+    # find greatest common divider of values
+    # form formula unit string
+    element_count_dict = get_natoms_element(formula)
+    nelements = element_count_dict.values()
+    g = nelements[0]
+    for a2 in nelements:
+        g = gcd(g,a2)
+    
+    formula_unit_string = ''
+    for key, val in element_count_dict.iteritems():
+        new_val = int(val/g)
+        if new_val == 1:
+            new_val = ''
+        formula_unit_string = formula_unit_string + '{}{}'.format(key, new_val)
+        
+    return formula_unit_string
+# test convert_formula_to_formula_unit('Be4W2')
+# Be2W
+
 
 def get_natoms_element(formula):
     """
