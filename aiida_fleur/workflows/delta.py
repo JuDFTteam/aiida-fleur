@@ -85,8 +85,12 @@ class fleur_delta_wc(WorkChain):
 
         #print('started delta workflow version {}'.format(self._workflowversion))
         #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
-        self.report('started delta workflow version {} with idenifier: {}'
-                    ''.format(self._workflowversion, ProcessRegistry().current_calc_node))
+        identifier =  ProcessRegistry().current_calc_node
+        self.ctx.own_uuid = identifier.uuid
+        self.ctx.own_pk = identifier.pk
+
+        self.report('started delta workflow version {} with identifier: {}'
+                    ''.format(self._workflowversion, identifier))
 
         # init
         self.ctx.calcs_to_run = []
@@ -94,6 +98,7 @@ class fleur_delta_wc(WorkChain):
 
         # check if right codes
         wf_dict = self.inputs.wf_parameters.get_dict()
+        options_dict = wf_dict.get('options', {'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)})
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
@@ -101,8 +106,8 @@ class fleur_delta_wc(WorkChain):
                 {'points' : wf_dict.get('points', 5),
                  'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
-                 'resources' : wf_dict.get('resources', {"num_machines": 1}),
-                 'walltime_sec':  wf_dict.get('walltime_sec', int(5.5*3600)),
+                 'resources' : options_dict.get('resources', {"num_machines": 1}),
+                 'walltime_sec':  options_dict.get('walltime_sec', int(5.5*3600)),
                  'queue_name' : wf_dict.get('queue_name', ''),
                  'serial' : wf_dict.get('serial', False)
              }}
@@ -279,7 +284,7 @@ class fleur_delta_wc(WorkChain):
         #print(self.ctx.minindex)
         #print(self.ctx.maxindex)
 
-        for struc, para in self.ctx.calcs_to_run[:10]:#self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
+        for struc, para in self.ctx.calcs_to_run[:4]:#self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
             #print para
             formula = struc.get_formula()
             label = '|delta_wc|eos|{}'.format(formula)
@@ -396,7 +401,8 @@ class fleur_delta_wc(WorkChain):
 
              Crystal \t V0 \t \t  B0 \t \t  BP [A^3/at] \t [GPa] \t \t [--] \n
              '''.format(self.ctx.inputs_eos.get('fleur')))
-        outfile = open('delta_wc.out', 'w')
+        filename = 'delta_wc_{}.out'.format(self.ctx.own_pk)
+        outfile = open(filename, 'w')
         outfile.write(outstr)
         outfile.close()
         outstr = ''
@@ -440,7 +446,7 @@ class fleur_delta_wc(WorkChain):
         # produce a single file
         # maybe put in try(or write in a certain place where is sure that you have the permissions)
         #outfile = open('delta_wc.out', 'w')
-        outfile = open('delta_wc.out', 'a') # for testing purposes
+        outfile = open(filename, 'a') # for testing purposes
         outfile.write(outstr)
 
         outfile.close()
@@ -467,11 +473,14 @@ class fleur_delta_wc(WorkChain):
         #produce a single file data with all the numbers
 
         all_res = self.ctx.all_results
+        self.report('all_res : {}'.format(all_res))
+        #print all_res
         bm_dic = {}
         bmd_dic = {}
         vol_dic = {}
 
-        for elem,val in all_res:
+        for elem,val in all_res.iteritems():
+            #print elem
             vol_dic[elem] = val[0]
             bm_dic[elem] = val[1]
             bmd_dic[elem] = val[2]
