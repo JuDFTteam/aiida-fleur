@@ -62,7 +62,9 @@ def is_structure(structure):
 @wf
 def rescale(inp_structure, scale):
     """
-    Rescales a crystal structure. Keeps the provanance in the database.
+    Rescales a crystal structures Volume, atoms stay at their same realtive postions, 
+    therefore the absolut postions change. 
+    Keeps the provanance in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
     :param scale, float scaling factor for the cell
@@ -75,7 +77,9 @@ def rescale(inp_structure, scale):
 
 def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
     """
-    Rescales a crystal structure. DOES NOT keep the provanence in the database.
+    Rescales a crystal structures Volume, atoms stay at their same realtive postions, 
+    therefore the absolut postions change. 
+    DOES NOT keep the provanence in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
     :param scale, float scaling factor for the cell
@@ -92,7 +96,7 @@ def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF,
 
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
-    new_ase.set_cell(the_ase.get_cell()*float(scale), scale_atoms=True)
+    new_ase.set_cell(the_ase.get_cell()*np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
 
     return rescaled_structure

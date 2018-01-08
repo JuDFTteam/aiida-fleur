@@ -60,7 +60,7 @@ class fleur_delta_wc(WorkChain):
                                                #'group_label' : 'delta_eos',
                                                'joblimit' : 100,
                                                'part' : [1,2,3,4],
-                                               'points' : 5,
+                                               'points' : 7,
                                                'step' : 0.02,
                                                'queue_name' : '',
                                                'options' : {'resources' : {"num_machines": 1},
@@ -103,7 +103,7 @@ class fleur_delta_wc(WorkChain):
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
             'wf_parameters':
-                {'points' : wf_dict.get('points', 5),
+                {'points' : wf_dict.get('points', 7),
                  'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
                  'resources' : options_dict.get('resources', {"num_machines": 1}),

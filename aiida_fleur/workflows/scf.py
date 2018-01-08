@@ -297,8 +297,6 @@ class fleur_scf_wc(WorkChain):
         calculation.
         """
 
-        # TODO recongize inpgen fail, then no fleurin exists...
-
         if self.ctx.fleurinp: #something was already changed
             #print('Fleurinp already exists')
             return
@@ -778,14 +776,16 @@ class fleur_scf_wc(WorkChain):
         #self.abort_nowait(errormsg)
         self.abort(errormsg)
 
-
+'''
 if __name__ == "__main__":
     import argparse
-
+    from aiida.orm import load_node
+    from aiida_fleur.tools.common_fleur_wf import is_code
+    
     parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to'
-                 ' converge the chargedensity and optional the total energy.'))
+                 ' converge the chargedensity and optional the total energy. all arguments are pks, or uuids, codes can be names'))
     parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
-                        help='The pseudopotential family', required=False)
+                        help='Some workflow parameters', required=False)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
     parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
@@ -801,15 +801,35 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
 
     args = parser.parse_args()
-    res = run(fleur_scf_wc,
-              wf_parameters=args.wf_parameters,
-              structure=args.structure,
-              calc_parameters=args.calc_parameters,
-              fleurinp=args.fleurinp,
-              remote_data=args.remote_data,
-              inpgen = args.inpgen,
-              fleur=args.fleur)
-
+    
+    # load_the nodes
+    #if args.wf_parameters:
+    wf_parameters = load_node(args.wf_parameters)
+    
+    structure = load_node(args.structure)
+    
+    #if args.calc_parameters:
+    calc_parameters = load_node(args.calc_parameters)
+    
+    fleurinp = load_node(args.fleurinp)
+    remote_data = load_node(args.remote_data)
+    
+    inpgen = is_code(args.inpgen)       
+    fleur = is_code(args.fleur)    
+    
+    # TODO input logic....
+    
+    # submit fleur_scf_wc with different inputs.
+    
+    #res = submit(fleur_scf_wc,
+    #          wf_parameters=wf_parameters,
+    #          structure=structure,
+    #          calc_parameters=args.calc_parameters,
+    #          fleurinp=args.fleurinp,
+    #          remote_data=args.remote_data,
+    #          inpgen = args.inpgen,
+    #          fleur=args.fleur)
+'''
 
 
 @wf
