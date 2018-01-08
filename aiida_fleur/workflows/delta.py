@@ -44,7 +44,7 @@ class fleur_delta_wc(WorkChain):
     group of structures in the database using a group of given parameter nodes in the database
     """
 
-    _workflowversion = "0.0.1"
+    _workflowversion = "0.2.0"
     _wf_default = {}
 
     def __init__(self, *args, **kwargs):

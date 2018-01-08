@@ -52,7 +52,7 @@ class fleur_eos_wc(WorkChain):
     example input.
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.2.0"
 
     def __init__(self, *args, **kwargs):
         super(fleur_eos_wc, self).__init__(*args, **kwargs)
