@@ -593,7 +593,7 @@ class fleur_scf_wc(WorkChain):
             last_calc_out = self.ctx.last_calc.out['output_parameters']
             retrieved = self.ctx.last_calc.out['retrieved']
             last_calc_out_dict = last_calc_out.get_dict()
-        except AttributeError:
+        except KeyError:
             last_calc_out = None
             last_calc_out_dict = {}
             retrieved = None
