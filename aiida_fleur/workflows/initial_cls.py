@@ -21,6 +21,8 @@ from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
+
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -707,8 +709,13 @@ class fleur_initial_cls_wc(WorkChain):
         # Formation energy calculation is ony possible if all elementals of the structure
         # have been calculated.
         if self.ctx.calculate_formation_energy:
-            ref_total_en_norm = ref_total_en
-            #print ref_total_en_norm
+            # the reference total energy is for the whole structure with several atoms,
+            # we need it per atom
+            ref_total_en_norm = {}
+            for key, val in ref_total_en.iteritems():
+                elm_dict = get_natoms_element(key)
+                ref_total_en_norm[elm_dict.keys()[0]] = 1.0* val/elm_dict.values()[0]
+            print ref_total_en_norm
             #print total_en
             formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
         else:
