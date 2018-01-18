@@ -991,8 +991,8 @@ class FleurinpData(Data):
         return fleurinp.get_kpointsdata_nwf(fleurinp)
 
     # TODO: or move these outside...?
-    @staticmethod
-    def get_parameterdata_nwf(fleurinp):
+    #@staticmethod
+    def get_parameterdata_nwf(self):
         """
         This routine returns an AiiDA ParameterData type produced from the inp.xml
         file. This node can be used for inpgen.
@@ -1000,19 +1000,20 @@ class FleurinpData(Data):
         :return: ParameterData node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
-        if not ('inp.xml' in fleurinp.files):
+        if not ('inp.xml' in self.files):
             print 'cannot get a StructureData because fleurinpdata has no inp.xml file yet'
             # TODO what to do in this case?
             return False
 
         # read in inpxml
-        inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
+        inpxmlfile = self.get_file_abs_path('inp.xml')#'./inp.xml'
 
         new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
 
         return new_parameters
 
-
+    
+    # Is there a way to give self to workfunctions?
     @staticmethod
     @wf
     def get_parameterdata(fleurinp):
@@ -1023,7 +1024,7 @@ class FleurinpData(Data):
         :return: ParameterData node
         """
 
-        return fleurinp.get_parameterdata_nwf(fleurinp)
+        return fleurinp.get_parameterdata_nwf()
 
 
 
