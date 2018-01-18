@@ -10,7 +10,7 @@ if not is_dbenv_loaded():
 from aiida_fleur.workflows.dummy import dummy_wc
 from pprint import pprint
 from aiida.orm.data.base import Str
-from aiida.work.run import submit, async
+from aiida.work.run import submit
 
 input_s = Str('hello world!')
 

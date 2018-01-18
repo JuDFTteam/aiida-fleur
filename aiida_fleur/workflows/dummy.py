@@ -9,7 +9,7 @@ if not is_dbenv_loaded():
 import time
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
-from aiida.work.run import submit, async
+from aiida.work.run import submit
 from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import Outputs
@@ -79,14 +79,6 @@ class dummy_wc(WorkChain):
 
         self.ctx.sub2 = res
 
-    def run_sub3(self):
-        print('run_sub3')
-        inputs_sub = Str('This is wonderful 3.1')
-        inputs_sub2 = Str('This is wonderful 3.2')
-        res = async(sub_dummy_wc, str_display=inputs_sub)
-        res2 = async(sub_dummy_wc, str_display=inputs_sub2)
-
-        return ToContext(sub31 = res, sub32 = res2)
 
     def return_out(self):
         message = 'generating output nodes'

@@ -389,9 +389,6 @@ class fleur_initial_cls_wc(WorkChain):
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
         """
         self.report('INFO: In run_fleur_scfs initial_state_CLS workflow')
-        #from aiida.work import run, async,
-        #TODO if submiting of workdlows work, use that.
-        #or run them with async (if youy know how to extract results)
 
         para = self.ctx.scf_para
         if para == 'default':
@@ -510,9 +507,6 @@ class fleur_initial_cls_wc(WorkChain):
         """
         self.report('INFO: In run_scfs_ref initial_state_CLS workflow')
 
-        #from aiida.work import run, async,
-        #TODO if submiting of workdlows work, use that.
-        #or run them with async (if youy know how to extract results)
         para = self.ctx.scf_para
         if para == 'default':
             wf_parameter = {}

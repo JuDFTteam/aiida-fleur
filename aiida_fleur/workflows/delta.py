@@ -17,7 +17,6 @@ from aiida.work.workchain import WorkChain, ToContext, while_
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
 from aiida.work import submit
-from aiida.work import async as asy
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
 
@@ -311,37 +310,6 @@ class fleur_delta_wc(WorkChain):
 
         return ToContext(**eos_results)
 
-        '''
-        #async to limit through put
-        eos_results = {}
-        inputs = self.get_inputs_eos()
-
-
-        for struc, para in self.ctx.calcs_to_run[:4]:
-            print para
-            formula = struc.get_formula()
-            label = '|delta_wc|eos|{}'.format(formula)
-            description = '|delta| fleur_eos_wc on {}'.format(formula)
-            if para:
-                eos_future = asy(fleur_eos_wc,
-                                wf_parameters=inputs['wc_eos_para'], structure=struc,
-                                calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
-                                _label=label, _description=description)
-                #fleur_eos_wc.run(#
-            else:
-                eos_future = asy(fleur_eos_wc,
-                                wf_parameters=inputs['wc_eos_para'], structure=struc,
-                                inpgen=inputs['inpgen'], fleur=inputs['fleur'],
-                                _label=label, _description=description)
-                #fleur_eos_wc.run(#a
-            self.report('launching fleur_eos_wc<{}> on structure {} with parameter {}'
-                        ''.format(eos_future.pid, struc.pk, para.pk))
-            label = formula
-            self.ctx.labels.append(label)
-            eos_results[label] = eos_future
-
-        return ToContext(**eos_results)
-        '''
         '''
         # with run
         eos_results = {}

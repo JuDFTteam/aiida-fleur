@@ -20,7 +20,6 @@ from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Int
 from aiida.work.workchain import WorkChain, if_, ToContext
 from aiida.work.run import submit
-from aiida.work.run import async as asy
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workfunction import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -608,8 +607,7 @@ class fleur_corehole_wc(WorkChain):
 
         # TODO: idea instead of a list, just use a dictionary...
         self.report('INFO: In run_ref_scf fleur_corehole_wc')
-        #TODO if submiting of workdlows work, use that.
-        #async here because is closer to submit
+
 
         para = self.ctx.scf_para
         if para == 'default':
@@ -664,11 +662,11 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                           _label=scf_label, _description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                           _label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
@@ -734,9 +732,7 @@ class fleur_corehole_wc(WorkChain):
         Run a scf for the all corehole calculations in parallel super cell
         """
         self.report('INFO: In run_scfs fleur_corehole_wc')
-        #TODO if submiting of workdlows work, use that.
-        #TODO overwork in this case....
-        #async here because is closer to submit
+
         para = self.ctx.scf_para
         if para == 'default':
             wf_parameter = {}
@@ -758,11 +754,11 @@ class fleur_corehole_wc(WorkChain):
             i = i+1
 
             if isinstance(node, StructureData):
-                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                           _label=scf_label, _description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = asy(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                           _label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
