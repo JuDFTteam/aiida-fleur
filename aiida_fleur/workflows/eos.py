@@ -19,6 +19,7 @@ from aiida.work.run import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -105,6 +106,9 @@ class fleur_eos_wc(WorkChain):
         self.ctx.org_volume = -1# avoid div 0
         self.ctx.labels = []
         self.ctx.successful = True#False
+        self.ctx.info = []
+        self.ctx.warnings = []
+        self.ctx.errors = []
         # TODO get all succesfull from convergence, if all True this
 
 
@@ -246,7 +250,14 @@ class fleur_eos_wc(WorkChain):
 
         for label in self.ctx.labels:
             calc = self.ctx[label]
-            outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
+            try:
+                outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
+            except KeyError:
+                message = ('One SCF workflow failed, no scf output node: {}. I skip this one.'.format(label))
+                self.ctx.errors.append(message)
+                self.ctx.successful = False
+                continue
+            
             outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
 
             if not outpara.get('successful', False):
@@ -254,7 +265,10 @@ class fleur_eos_wc(WorkChain):
                 # (exclude point and write a warning or so, or error treatment)
                 # bzw implement and scf_handler,
                 #also if not perfect converged, results might be good
+                message = ('One SCF workflow was not successful: {}'.format(label))
+                self.ctx.warning.append(message)
                 self.ctx.successful = False
+                
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
@@ -264,7 +278,17 @@ class fleur_eos_wc(WorkChain):
             t_energylist.append(t_e)
             t_energylist_peratom.append(t_e/natoms)
             distancelist.append(dis)
-
+        
+        not_ok, an_index = check_eos_energies(t_energylist_peratom)
+        
+        if not_ok:
+            message = ('Abnormality in Total energy list detected. Check '
+                       'entr(ies) {}.'.format(an_index))
+            hint = ('Consider refining your basis set.')
+            self.ctx.info.append(hint)
+            self.ctx.warnings.append(message)
+            
+            
         a = np.array(t_energylist_peratom)
         b = np.array(self.ctx.volume_peratom)
 
@@ -298,8 +322,11 @@ class fleur_eos_wc(WorkChain):
                'bulk_deriv' : bulk_deriv,
                'bulk_modulus' : bulk_modulus * 160.217733,#* echarge * 1.0e21,#GPa
                'bulk_modulus_units' : 'GPa',
-               'successful' : self.ctx.successful}
-
+               'successful' : self.ctx.successful,
+               'info' : self.ctx.info,
+               'warnings' : self.ctx.warnings,
+               'errors' : self.ctx.errors}
+               
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
         else:
