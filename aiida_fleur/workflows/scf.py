@@ -612,12 +612,12 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
         outputnode_dict['total_energy_units'] = 'Htr'
-        outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_cpu_time'] = ''
         outputnode_dict['total_cpu_time_units'] = 'hours'
         outputnode_dict['info'] = self.ctx.info
+        outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
 
         # maybe also store some information about the formula
