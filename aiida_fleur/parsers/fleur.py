@@ -11,7 +11,7 @@ the parser. Makes testing and portability easier.
 # TODO: warnings
 import os
 #import numpy
-
+from datetime import date
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser#, ParserParamManager
 from aiida.orm.data.array.bands import BandsData
@@ -436,8 +436,14 @@ def parse_xmlout_file(outxmlfile):
 
         offset = 0
         if start_date != end_date:
-            pass
-            offset = 0
+            # date="2018/01/15", Can this fail? what happens if not there
+            if start_date and end_date:
+                date_sl = [int(ent) for ent in start_date.split('/')]
+                date_el = [int(ent) for ent in end_date.split('/')]
+                date_s = date(*date_sl)
+                date_e = date(*date_el)
+                diff = date_e - date_s
+                offset = diff.days * 86400
         #ncores = 12 #TODO parse parallelization_Parameters
         time = offset + (int(endtime[0])-int(starttimes[0]))*60*60 + (int(endtime[1])-int(starttimes[1]))*60 + int(endtime[2]) - int(starttimes[2])
         simple_data['walltime'] = time
@@ -445,6 +451,7 @@ def parse_xmlout_file(outxmlfile):
         #simple_data['core_hours'] = time*ncores*1.0/3600
         #simple_data['parallelization_Parameters'] = {'mpiPEs' : ncores}
         simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
+        simple_data['end_date'] = {'date' : end_date, 'time' : endtime}
 
         return simple_data
 
