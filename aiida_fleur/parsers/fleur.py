@@ -389,9 +389,11 @@ def parse_xmlout_file(outxmlfile):
         else:
             simple_data = {}
 
-
+        # TODO int he future add here the warnings retunred from parse_simple_outnode
+        # Currently Fleur warnings an errors are not written to the out.xml 
+        # should they be lists or dicts
         warnings={'info': {}, 'debug' : {}, 'warning' : {}, 'error' : {}}
-
+        
         simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath)) +
                                           len(eval_xpath2(root, absPos_xpath)) +
                                           len(eval_xpath2(root, filmPos_xpath)))
@@ -411,26 +413,29 @@ def parse_xmlout_file(outxmlfile):
         simple_data['creator_target_structure'] = eval_xpath(root, creator_target_structure_xpath)
         simple_data['output_file_version'] = eval_xpath(root, output_version_xpath)
 
-        warnings['info'] = {}#TODO
-        warnings['debug'] = {} #TODO
-        warnings['warning'] = {}#TODO
-        warnings['error'] = {}#TODO
-        simple_data['warnings'] = warnings
+
 
 
         # time
+        # Maybe change the behavior if things could not be parsed...
+        # Especilly if file was broken, ie endtime it not there.
         starttime = eval_xpath(root, start_time_xpath)
-        #print starttime
         if starttime:
             starttimes = starttime.split(':')
         else:
             starttimes = [0,0,0]
+            msg = 'Startime was unparsed, inp.xml prob not complete, do not believe the walltime!'
+            if data_exists:         
+                parser_info_out['parser_warnings'].append(msg)
 
         endtime = eval_xpath(root, end_time_xpath)
         if endtime:
-            endtime = endtime.split(':')
+            endtimes = endtime.split(':')
         else:
-            endtime = [0,0,0]
+            endtimes = [0,0,0]
+            msg = 'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'
+            if data_exists:
+                parser_info_out['parser_warnings'].append(msg)
         start_date = eval_xpath(root, start_date_xpath)
         end_date = eval_xpath(root, end_date_xpath)
 
@@ -445,7 +450,7 @@ def parse_xmlout_file(outxmlfile):
                 diff = date_e - date_s
                 offset = diff.days * 86400
         #ncores = 12 #TODO parse parallelization_Parameters
-        time = offset + (int(endtime[0])-int(starttimes[0]))*60*60 + (int(endtime[1])-int(starttimes[1]))*60 + int(endtime[2]) - int(starttimes[2])
+        time = offset + (int(endtimes[0])-int(starttimes[0]))*60*60 + (int(endtimes[1])-int(starttimes[1]))*60 + int(endtimes[2]) - int(starttimes[2])
         simple_data['walltime'] = time
         simple_data['walltime_units'] = 'seconds'
         #simple_data['core_hours'] = time*ncores*1.0/3600
@@ -453,6 +458,12 @@ def parse_xmlout_file(outxmlfile):
         simple_data['start_date'] = {'date' : start_date, 'time' : starttime}
         simple_data['end_date'] = {'date' : end_date, 'time' : endtime}
 
+        warnings['info'] = {}#TODO
+        warnings['debug'] = {} #TODO
+        warnings['warning'] = {}#TODO
+        warnings['error'] = {}#TODO
+        simple_data['warnings'] = warnings
+        
         return simple_data
 
     # TODO find a way to import these from xml_util, but make the parser logger work...

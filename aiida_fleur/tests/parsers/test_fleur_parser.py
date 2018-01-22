@@ -42,6 +42,7 @@ def test_parse_xmlout_file():
                                  'number_of_symmetries': 48,
                                  'output_file_version': '0.27',
                                  'start_date': {'date': '2017/09/10', 'time': '07:58:10'},
+                                 'end_date': {'date': '2017/09/10', 'time': '07:58:34'},
                                  'sum_of_eigenvalues': -503.2781387127,
                                  'title': 'Be-Ti, bulk compounds',
                                  'walltime': 24,
@@ -75,7 +76,8 @@ def test_parse_xmlout_file_broken_xmlout_file():
     expected_parser_info_out = {
         'last_iteration_parsed': 15,
         'parser_info': 'AiiDA Fleur Parser v0.1beta',
-        'parser_warnings': ['The out.xml file is broken I try to repair it.'],
+        'parser_warnings': ['The out.xml file is broken I try to repair it.',
+                           'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
          'unparsed': []}
     
     assert successful == True
@@ -122,7 +124,8 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
                              'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
                              'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
                              'Can not get attributename: "distance" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError'],
+                             'Could not convert: "None" to float, TypeError',
+                             'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
          'unparsed': [{'energy_hartree': None, 'iteration': '    1'},
                       {'energy': None, 'iteration': '    1'},
                       {'iteration': '    1', 'sum_of_eigenvalues': None},
