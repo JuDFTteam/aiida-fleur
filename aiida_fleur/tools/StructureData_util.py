@@ -555,6 +555,7 @@ def move_atoms_incell(structure, vector):
     for site in sites:
         pos = site.position
         new_pos = np.array(pos) + np.array(vector)
+        #print new_pos
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
         new_structure.label = structure.label

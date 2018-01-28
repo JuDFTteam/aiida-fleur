@@ -6,7 +6,7 @@ depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
 
-from aiida.orm import DataFactory
+from aiida.orm import DataFactory, Node, load_node
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 
@@ -166,7 +166,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
 
 
-def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
+def get_scheduler_extras(code, resources, extras={}, project='jara0172'):
     """
     This is a utilty function with the goal to make prepare the right resource and scheduler extras for a given computer.
     Since this is user dependend you might want to create your own.
@@ -174,11 +174,13 @@ def get_scheduler_extras(code, resources, extras={}, project='jara0043'):
     return: dict, custom scheduler commands
     """
     nnodes = resources.get('num_machines', 1)
-
-    memp_per_node = 125000# max recommend 126000 MB on claix jara-clx nodes
+    
+    # TODO memmory has to be done better...
+    mem_per_node = 120000# max recommend 126000 MB on claix jara-clx nodes
+    mem_per_process = mem_per_node/24
     if not extras:
         # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {'lsf' : '#BSUB -P {} \n#BSUB -M {}  \n#BSUB -a intelmpi'.format(project, memp_per_node*nnodes),#{'-P' : 'jara0043', '-M' : memp_per_node*nnodes, '-a' : 'intelmpi'},
+        extras = {'lsf' : '#BSUB -P {} \n#BSUB -M {}  \n#BSUB -a intelmpi'.format(project, mem_per_process),#{'-P' : 'jara0043', '-M' : memp_per_node*nnodes, '-a' : 'intelmpi'},
                  'torque' : '',#{},
                  'direct' : ''}#{}}
 
@@ -391,3 +393,152 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 #[['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
 
 
+def performance_extract_calcs(calcs):
+    """
+    Extracts some runtime and system data from given fleur calculations
+    
+    :params calcs: list of calculation nodes/pks/or uuids. Fleur calc specific
+    
+    :returns data_dict: dictionary, dictionary of arrays with the same lengt, 
+                        from with a panda frame can be created.
+    
+    Note: Is not the fastest for many calculations > 1000.
+    """
+    data_dict = {u'n_symmetries':[], u'n_spin_components' : [],
+                 u'n_kpoints': [], u'n_iterations': [], 
+                 u'walltime_sec' : [], u'walltime_sec_per_it' : [], 
+                 u'n_iterations_total' : [], 
+                 u'density_distance': [], u'computer':[],
+                 u'n_atoms' : [], u'kmax':[],
+                 u'cost' : [], u'costkonstant' : [], 
+                 u'walltime_sec_cor' : [], u'total_cost' : [],
+                 u'fermi_energy' : [], u'bandgap' : [], 
+                 u'energy' : [], u'force_largest' : [], 
+                 u'ncores' : [], u'pk' : [],
+                 u'uuid' : [], u'serial' : [],
+                 u'resources' : []}
+    count = 0
+    for calc in calcs:
+        if not isinstance(calc, Node):
+            calc = load_node(calc)
+        count = count + 1
+        pk = calc.pk
+        print count, pk
+        res = calc.res
+        res_keys = list(res)
+        try:
+            efermi = res.fermi_energy
+        except AttributeError:
+            print 'skipping {}, {}'.format(pk, calc.uuid)
+            continue # we skip these entries
+            efermi = -10000
+
+        try:
+            gap = res.bandgap
+        except AttributeError:
+            gap = -10000   
+            continue
+            print 'skipping 2 {}, {}'.format(pk, calc.uuid)
+
+
+        try:
+            energy = res.energy
+        except AttributeError:
+            energy = 0.0
+            print 'skipping 3 {}, {}'.format(pk, calc.uuid)
+            continue
+
+        data_dict['bandgap'].append(gap)        
+        data_dict['fermi_energy'].append(efermi)
+        data_dict['energy'].append(energy)
+        data_dict['force_largest'].append(res.force_largest)
+        data_dict['pk'].append(pk)
+        data_dict['uuid'].append(calc.uuid)
+        data_dict['n_symmetries'].append(res.number_of_symmetries)
+        nspins = res.number_of_spin_components
+        data_dict['n_spin_components'].append(nspins)
+        nkpt = res.number_of_kpoints
+        data_dict['n_kpoints'].append(nkpt)
+        niter = res.number_of_iterations
+        data_dict['n_iterations'].append(niter)
+        data_dict['n_iterations_total'].append(res.number_of_iterations_total)
+
+
+
+        if u'charge_density' in res_keys:
+            data_dict['density_distance'].append(res.charge_density)
+        else: # magnetic, old
+            data_dict['density_distance'].append(res.overall_charge_density)
+
+
+        walltime = res.walltime
+        if walltime <= 0:
+            # date was not considert yet, we assume one day...
+            walltime_new = walltime + 86400
+        else:
+            walltime_new = walltime
+
+        walltime_periteration = walltime_new/niter
+
+
+        data_dict['walltime_sec'].append(walltime)
+        data_dict['walltime_sec_cor'].append(walltime_new)
+        data_dict['walltime_sec_per_it'].append(walltime_periteration)
+        cname = calc.get_computer().name
+        data_dict['computer'].append(cname)
+        natom = res.number_of_atoms
+        data_dict['n_atoms'].append(natom)
+
+        fleurinp = calc.get_inputs_dict()['fleurinpdata']
+        kmax = fleurinp.inp_dict['calculationSetup']['cutoffs']['Kmax']
+        data_dict['kmax'].append(kmax)
+
+
+        cost = calc_time_cost_function(natom, nkpt, kmax, nspins)
+        total_cost = cost * niter
+
+        serial = not calc.get_withmpi()
+        #codename = calc.get_code().label
+        #code_col.append(codename)
+        
+        #if 'mpi' in codename:
+        #    serial = False
+        #else:
+        #    serial = True
+        data_dict['serial'].append(serial)
+        
+        resources = calc.get_resources()
+        mpi_proc = get_mpi_proc(resources)    
+
+        c_ratio = cost_ratio(cost, walltime_new, mpi_proc)
+        data_dict['resources'].append(resources)
+        data_dict['cost'].append(cost)
+        data_dict['costkonstant'].append(c_ratio)
+        data_dict['total_cost'].append(total_cost)
+        data_dict['ncores'].append(mpi_proc)  
+
+    return data_dict
+
+
+def get_mpi_proc(resources):
+    nmachines = resources.get('num_machines', 0)
+    total_proc = resources.get('tot_num_mpiprocs', 0)
+    if not total_proc:
+        if nmachines:
+            total_proc = nmachines*resources.get('default_mpiprocs_per_machine', 12)
+        else:
+            total_proc = resources.get('tot_num_mpiprocs', 24)
+        
+    return total_proc
+
+def calc_time_cost_function(natom, nkpt, kmax, nspins=1):
+    costs = natom**3 * kmax**3 * nkpt * nspins
+    return costs
+
+def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
+    costs = natom**3 * kmax**3 * nkpt * nspins * niter
+    return costs
+
+def cost_ratio(total_costs, walltime_sec, ncores):
+    ratio = total_costs/(walltime_sec*ncores)
+    return ratio
