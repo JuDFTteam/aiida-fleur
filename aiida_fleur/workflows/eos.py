@@ -293,17 +293,26 @@ class fleur_eos_wc(WorkChain):
         b = np.array(self.ctx.volume_peratom)
 
         # all erros should be caught before\
-
+        
         # TODO: different fits
         volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(a, b)
-
+        
+        volumes = self.ctx.volume
+        gs_scale = volume*natoms/self.ctx.org_volume
+        if (volume*natoms < volumes[0]) or (volume*natoms > volumes[-1]):
+            warn = ('Groundstate volume was not in the scaling range.')         
+            hint = ('Consider rerunnning around point {}'.format(gs_scale))
+            self.ctx.info.append(hint)
+            self.ctx.warnings.append(warn)
+            # TODO maybe make it a feature to rerun with centered around the gs.
+        
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'scaling': self.ctx.scalelist,
-               'scaling_gs' : volume*natoms/self.ctx.org_volume,
+               'scaling_gs' : gs_scale,
                'initial_structure': self.inputs.structure.uuid,
                'volume_gs' : volume*natoms,
-               'volumes' : self.ctx.volume,
+               'volumes' : volumes,
                'volume_units' : 'A^3',
                'natoms' : natoms,
                'total_energy': t_energylist,
