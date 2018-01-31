@@ -111,13 +111,18 @@ class fleur_scf_wc(WorkChain):
                                                'converge_density' : True,
                                                'converge_energy' : False,
                                                #'reuse' : True,
-                                               'resources': {"num_machines": 1},
-                                               'walltime_sec': 60*60,
-                                               'queue_name': '',
+                                               'options' : {
+                                                   'resources': {"num_machines": 1},
+                                                   'walltime_sec': 60*60,
+                                                   'queue_name': '',
+                                                   'custom_scheduler_commands' : '',
+                                                   'max_memory_kb' : None,
+                                                   'import_sys_environment' : False,
+                                                   'environment_variables' : {}},
                                                'serial' : False,
                                                'itmax_per_run' : 30,
                                                'inpxml_changes' : [],
-                                               'custom_scheduler_commands' : ''}))
+}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
@@ -167,11 +172,8 @@ class fleur_scf_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
 
         # set values, or defaults
+        self.ctx.options =  wf_dict.get('options', {})
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
-        self.ctx.queue = wf_dict.get('queue_name', '')
-        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
         self.ctx.default_itmax = wf_dict.get('itmax_per_run', 30)
@@ -280,10 +282,12 @@ class fleur_scf_wc(WorkChain):
             params = self.inputs.calc_parameters
         else:
             params = None
-
-        options = {"max_wallclock_seconds": int(self.ctx.walltime_sec),
-                   "resources": self.ctx.resources,
-                   "queue_name" : self.ctx.queue}
+        
+        options = {"max_wallclock_seconds" : int(self.ctx.options.get('walltime_sec')),
+                   "resources" : self.ctx.options.get('resources', {"num_machines": 1}),
+                   "queue_name" : self.ctx.options.get('queue_name', '')}
+        # TODO do not use the same option for inpgen as for FLEUR... so far we ignore the others...
+        # clean Idea might be to provide second inpgen options, currenly for our purposes not nessesary...
 
         inputs = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
         self.report('INFO: run inpgen')
@@ -373,7 +377,7 @@ class fleur_scf_wc(WorkChain):
                                            'files_not_to_retrieve': [],
                                            'files_copy_remotely': [],
                                            'files_not_copy_remotely': [],
-                                           'commandline_options': ["-wtime", "{}".format(self.ctx.walltime_sec)],
+                                           'commandline_options': ["-wtime", "{}".format(self.ctx.options['walltime_sec'])],
                                            'blaha' : ['bla']})
         '''
         if self.ctx['last_calc']:
@@ -394,11 +398,16 @@ class fleur_scf_wc(WorkChain):
             description = '{} fleur run {}, fleurinp given'.format(self.ctx.description_wf, self.ctx.loop_count+1)
 
         code = self.inputs.fleur
-        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
-                   "resources": self.ctx.resources,
-                   "queue_name" : self.ctx.queue}#,
-        if self.ctx.custom_scheduler_commands:
-            options["custom_scheduler_commands"] = self.ctx.custom_scheduler_commands
+        options = self.ctx.options.copy()
+        options.remove('walltime_sec')
+        options["max_wallclock_seconds"] =  self.ctx.options['walltime_sec']
+        #{"max_wallclock_seconds": self.ctx.options['walltime_sec'],
+        #           "resources": self.ctx.options['resources',
+        #           "queue_name" : self.ctx.options['queue',
+        #           "environment_variables" : self.ctx.options["environment_variables"],
+        #           "max_memory_kb" : self.ctx.options["max_memory_kb"],
+        #           "import_sys_environment" : self.ctx.options["import_sys_environment"]
+        #           }#,
         inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
 
 
