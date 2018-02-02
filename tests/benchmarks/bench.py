@@ -141,7 +141,7 @@ for system in systems_to_run:
         wf_para_benchmark = wf_para_base_benchmark.copy()                     
         options = {}
         options['queue_name'] = sys_res.get('queue_name', '')
-        wf_para_benchmark['resources'] = run_res
+        options['resources'] = run_res
         options['walltime_sec'] = sys_res.get('walltime_sec')[i]
         options['custom_scheduler_commands'] = sys_res.get('custom_scheduler_commands')[i]
         options['environment_variables'] = sys_res.get('environment_variables')[i]

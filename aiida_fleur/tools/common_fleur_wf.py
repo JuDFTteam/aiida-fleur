@@ -103,6 +103,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     #TODO check  if code is parallel version?
     if serial:
         inputs._options.withmpi = False # for now
+        #TODO not every machine/scheduler type takes number of machines
         inputs._options.resources = {"num_machines": 1}
 
     if settings:

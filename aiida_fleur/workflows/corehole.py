@@ -111,7 +111,7 @@ class fleur_corehole_wc(WorkChain):
     1. This workflow does not work with local codes!
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = "0.3.2"
 
     #def __init__(self, *args, **kwargs):
     #    super(fleur_corehole_wc, self).__init__(*args, **kwargs)

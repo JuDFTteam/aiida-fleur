@@ -32,7 +32,7 @@ class fleur_band_wc(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.3.2"
 
     @classmethod
     def define(cls, spec):
@@ -78,10 +78,13 @@ class fleur_band_wc(WorkChain):
 
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        self.ctx.queue = wf_dict.get('queue_name', None)
-
+        #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
+        #self.ctx.queue = wf_dict.get('queue_name', None)
+        self.ctx.options = wf_dict.get('options', {
+                                         'resources', {"num_machines": 1}, 
+                                         'walltime_sec', 10*60
+                                         })
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
@@ -119,11 +122,11 @@ class fleur_band_wc(WorkChain):
         fleurin = self.ctx.fleurinp1
         remote = self.inputs.remote
         code = self.inputs.fleur
-
-        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
-                   "resources": self.ctx.resources,
-                   "queue_name" : self.ctx.queue}
-
+        options = self.ctx.options
+        
+        options["max_wallclock_seconds"]  = self.ctx.options.get('walltime_sec', 60*60)
+        options.pop('walltime_sec')
+        
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)
 

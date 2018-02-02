@@ -67,7 +67,7 @@ class fleur_initial_cls_wc(WorkChain):
 
 
 
-    _workflowversion = "0.3.1"
+    _workflowversion = "0.3.2"
     _default_wf_para = {'structure_ref' : {},
                         #'references' : {'calculate' : 'all'},
                         'relax' : True,
@@ -75,9 +75,10 @@ class fleur_initial_cls_wc(WorkChain):
                         'relax_para' : 'default',
                         'scf_para' : 'default',
                         'same_para' : True,
+                        'options' : {
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 6*60*60,
-                        'queue_name' : None,
+                        'queue_name' : None},
                         'serial' : True}
 
     def __init__(self, *args, **kwargs):
@@ -94,11 +95,12 @@ class fleur_initial_cls_wc(WorkChain):
                        'relax_para' : 'default',
                        'scf_para' : 'default',
                        'same_para' : True,
+                       'options' : {
                        'resources' : {"num_machines": 1},
                        'walltime_sec' : 6*60*60,
                        'queue_name' : None,
-                       'serial' : True,
-                       'custom_scheduler_commands' : ''}))
+                       'custom_scheduler_commands' : ''},
+                       'serial' : True}))
                        #TODO_default_wf_para out of here#
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
@@ -168,10 +170,8 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
-        self.ctx.resources = wf_dict.get('resources', default.get('resources'))
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', default.get('walltime_sec'))
-        self.ctx.queue = wf_dict.get('queue_name', default.get('queue_name'))
-        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
+        self.ctx.options = wf_dict.get('options', default.get('options'))
+
         # check if inputs given make sense # TODO sort this out in common wc
         inputs = self.inputs
         if 'fleurinp' in inputs:
@@ -395,10 +395,8 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['queue_name'] = self.ctx.queue
         wf_parameter['serial'] = self.ctx.serial
-        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameter['resources'] = self.ctx.resources
+        wf_parameter['options'] = self.ctx.options        
         wf_parameters = ParameterData(dict=wf_parameter)
         res_all = []
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
@@ -513,9 +511,8 @@ class fleur_initial_cls_wc(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
-        wf_parameter['queue_name'] = self.ctx.queue
-        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameter['resources'] = self.ctx.resources # TODO maybe use less, or default of one machine
+        # TODO maybe use less resources, or default of one machine
+        wf_parameter['options'] = self.ctx.options 
         wf_parameters = ParameterData(dict=wf_parameter)
         res_all = []
         calcs = {}

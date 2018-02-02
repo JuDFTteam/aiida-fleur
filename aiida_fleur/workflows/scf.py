@@ -15,7 +15,7 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.run import submit, run
+from aiida.work.run import submit
 from aiida.work import workfunction as wf
 from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
@@ -201,7 +201,8 @@ class fleur_scf_wc(WorkChain):
             ]
         self.ctx.fleurinp = None
         self.ctx.formula = ''
-
+        self.ctx.total_wall_time = 0
+        
     def validate_input(self):
         """
         # validate input and find out which path (1, or 2) to take
@@ -530,6 +531,9 @@ class fleur_scf_wc(WorkChain):
             #TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
             outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
+            walltime = last_calc.out.output_parameters.dict.walltime
+            if isinstance(walltime, int):
+                self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
             #outpara = last_calc.get('output_parameters', None)
             #outxmlfile = outpara.dict.outputfile_path
             tree = etree.parse(outxmlfile)
@@ -625,8 +629,8 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
-        outputnode_dict['total_cpu_time'] = ''
-        outputnode_dict['total_cpu_time_units'] = 'hours'
+        outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
+        outputnode_dict['total_wall_time_units'] = 'hours'
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
@@ -637,13 +641,15 @@ class fleur_scf_wc(WorkChain):
 
         if self.ctx.successful:
             self.report('STATUS: Done, the convergence criteria are reached.\n'
-                        'INFO: The charge density of the FLEUR calculation pk= '
-                        'converged after {} FLEUR runs and {} iterations to {} '
-                        '"me/bohr^3" \n'
+                        'INFO: The charge density of the FLEUR calculation '
+                        'converged after {} FLEUR runs, {} iterations and {} sec '
+                        'walltime to {} "me/bohr^3" \n'
                         'INFO: The total energy difference of the last two iterations '
                         'is {} htr \n'.format(self.ctx.loop_count,
                                        last_calc_out_dict.get('number_of_iterations_total', None),
-                                       last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
+                                       self.ctx.total_wall_time,
+                                       last_calc_out_dict.get('charge_density', None), 
+                                       self.ctx.energydiff))
 
         else: # Termination ok, but not converged yet...
             if self.ctx.abort: # some error occured, donot use the output.
@@ -652,12 +658,14 @@ class fleur_scf_wc(WorkChain):
             else:
                 self.report('STATUS/WARNING: Done, the maximum number of runs '
                             'was reached or something failed.\n INFO: The '
-                            'charge density of the FLEUR calculation pk= '
-                            'after {} FLEUR runs and {} iterations is {} "me/bohr^3"\n'
+                            'charge density of the FLEUR calculation, '
+                            'after {} FLEUR runs, {} iterations and {} sec '
+                            'walltime is {} "me/bohr^3"\n'
                             'INFO: The total energy difference of the last '
                             'two interations is {} htr'
                             ''.format(self.ctx.loop_count,
                             last_calc_out_dict.get('number_of_iterations_total', None),
+                            self.ctx.total_wall_time,
                             last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
 
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),

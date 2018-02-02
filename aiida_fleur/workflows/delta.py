@@ -10,10 +10,10 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 # TODO several eos starts wich only 20 structures to limit jobs throughput
 import os
 from string import digits
-from pprint import pprint
+#from pprint import pprint
 
 from aiida.orm import Code, DataFactory, Group
-from aiida.work.workchain import WorkChain, ToContext, while_
+from aiida.work.workchain import WorkChain, ToContext#, while_
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
 from aiida.work import submit
@@ -43,7 +43,7 @@ class fleur_delta_wc(WorkChain):
     group of structures in the database using a group of given parameter nodes in the database
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = "0.3.2"
     _wf_default = {}
 
     def __init__(self, *args, **kwargs):
@@ -61,9 +61,10 @@ class fleur_delta_wc(WorkChain):
                                                'part' : [1,2,3,4],
                                                'points' : 7,
                                                'step' : 0.02,
+                                               'options' : {
                                                'queue_name' : '',
                                                'options' : {'resources' : {"num_machines": 1},
-                                               'walltime_sec' : int(5.5*3600)}}))
+                                               'walltime_sec' : int(5.5*3600)}}}))
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
@@ -105,9 +106,10 @@ class fleur_delta_wc(WorkChain):
                 {'points' : wf_dict.get('points', 7),
                  'step' : wf_dict.get('step', 0.02),
                  'guess' : 1.0,
+                 'options' : {
                  'resources' : options_dict.get('resources', {"num_machines": 1}),
                  'walltime_sec':  options_dict.get('walltime_sec', int(5.5*3600)),
-                 'queue_name' : wf_dict.get('queue_name', ''),
+                 'queue_name' : wf_dict.get('queue_name', '')},
                  'serial' : wf_dict.get('serial', False)
              }}
         self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))

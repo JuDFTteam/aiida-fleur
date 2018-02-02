@@ -53,7 +53,7 @@ class fleur_eos_wc(WorkChain):
     example input.
     """
 
-    _workflowversion = "0.3.0"
+    _workflowversion = "0.3.2"
 
     def __init__(self, *args, **kwargs):
         super(fleur_eos_wc, self).__init__(*args, **kwargs)
@@ -68,10 +68,11 @@ class fleur_eos_wc(WorkChain):
                        'points' : 9,
                        'step' : 0.002,
                        'guess' : 1.00,
+                       'options' : {
                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                        'walltime_sec':  60*60,
                        'queue_name' : '',
-                       'custom_scheduler_commands' : ''}))
+                       'custom_scheduler_commands' : ''}}))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
@@ -120,9 +121,9 @@ class fleur_eos_wc(WorkChain):
         self.ctx.step = wf_dict.get('step', 0.002)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)#True
-        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-
+        self.ctx.options = wf_dict.get('options', {})
+        
         inputs = self.inputs
 
         if 'inpgen' in inputs:
@@ -180,6 +181,8 @@ class fleur_eos_wc(WorkChain):
             self.ctx.structurs_uuids.append(struc.uuid)
 
             calc_para = inputs['calc_parameters']
+            
+            # Here we give the same wf_parameters to the fleur_scf...
             if calc_para:
                 res = submit(fleur_scf_wc,
                              wf_parameters=inputs['wf_parameters'],
@@ -217,11 +220,12 @@ class fleur_eos_wc(WorkChain):
 
         if not inputs['wf_parameters']:
             para = {}
-            para['resources'] = wf_para_dict.get('resources')
-            para['walltime_sec'] = wf_para_dict.get('walltime_sec')
-            para['queue_name'] = wf_para_dict.get('queue_name')
+            para['options'] = wf_para_dict.get('options')            
+            #para['resources'] = wf_para_dict.get('resources')
+            #para['walltime_sec'] = wf_para_dict.get('walltime_sec')
+            #para['queue_name'] = wf_para_dict.get('queue_name')
             para['serial'] = wf_para_dict.get('serial')
-            para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
+            #para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
             inputs['wf_parameters'] = ParameterData(dict=para)
         try:
             calc_para = self.inputs.calc_parameters
