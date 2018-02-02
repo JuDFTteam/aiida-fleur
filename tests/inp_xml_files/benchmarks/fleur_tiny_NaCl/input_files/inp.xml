@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fleurInput fleurInputVersion="0.28">
+   <comment>
+      FLEUR input generated with ASE                                                  
+   </comment>
+   <calculationSetup>
+      <cutoffs Kmax="3.50000000" Gmax="14.89992024" GmaxXC="9.10000000" numbands="0"/>
+      <scfLoop itmax="1" minDistance=".00000000" maxIterBroyd="99" imix="Anderson" alpha=".05000000" spinf="2.00000000"/>
+      <coreElectrons ctail="T" frcor="F" kcrel="0" coretail_lmax="0"/>
+      <magnetism jspins="1" l_noco="F" l_J="F" swsp="F" lflip="F"/>
+      <soc theta=".00000000" phi=".00000000" l_soc="F" spav="F" off="F"/>
+      <nocoParams l_ss="F" l_mperp="F" l_constr="F" l_disp="F" sso_opt="FFF" mix_b=".00000000" thetaJ=".00000000" nsh="0">
+         <qss>.0000000000 .0000000000 .0000000000</qss>
+      </nocoParams>
+      <expertModes gw="0" pot8="F" isec1="99" secvar="F"/>
+      <geometryOptimization l_f="F" xa="2.00000000" thetad="330.00000000" epsdisp=".00001000" epsforce=".00001000"/>
+      <bzIntegration valenceElectrons="256.00000000" mode="hist" fermiSmearingEnergy=".00100000">
+         <kPointList posScale="1.00000000" weightScale="1.00000000" count="1">
+            <kPoint weight="    0.500000">    0.250000     0.250000     0.250000</kPoint>
+         </kPointList>
+      </bzIntegration>
+      <energyParameterLimits ellow="-.50000000" elup="1.00000000"/>
+   </calculationSetup>
+   <cell>
+      <symmetryOperations>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+      </symmetryOperations>
+      <bulkLattice scale="1.0000000000" latnam="any">
+         <bravaisMatrix>
+           <row-1>20.4770704800 .0000000000 .0000000000</row-1>
+           <row-2>.0000000000 20.4770704800 .0000000000</row-2>
+           <row-3>.0000000000 .0000000000 20.4770704800</row-3>
+         </bravaisMatrix>
+      </bulkLattice>
+   </cell>
+   <xcFunctional name="pbe" relativisticCorrections="F"/>
+   <atomSpecies>
+      <species name="Na-1" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Li-2" element="Li" atomicNumber="3" coreStates="1" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.05000000" gridPoints="687" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="2" p="2" d="3" f="4"/>
+      </species>
+      <species name="Na-3" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-4" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-5" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-6" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-7" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-8" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-9" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-10" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-11" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-12" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-13" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-14" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-15" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-16" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-17" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-18" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-19" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-20" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-21" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-22" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-23" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-24" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-25" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-26" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-27" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-28" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Na-29" element="Na" atomicNumber="11" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="673" logIncrement=".01700000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+      <species name="Cl-30" element="Cl" atomicNumber="17" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.19000000" gridPoints="527" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+      </species>
+   </atomSpecies>
+   <atomGroups>
+      <atomGroup species="Na-1">
+         <relPos>.0000000000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Li-2">
+         <relPos>.0000000000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-3">
+         <relPos>1.000/4.000 .0000000000 1.000/4.000</relPos>
+         <relPos>1.000/4.000 1.000/4.000 .0000000000</relPos>
+         <relPos>-1.000/4.000 .0000000000 1.000/4.000</relPos>
+         <relPos>-1.000/4.000 1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-4">
+         <relPos>1.000/4.000 1.000/4.000 1.000/4.000</relPos>
+         <relPos>-1.000/4.000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-5">
+         <relPos>1.000/4.000 .0000000000 .0000000000</relPos>
+         <relPos>-1.000/4.000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-6">
+         <relPos>.0000000000 1.000/4.000 .0000000000</relPos>
+         <relPos>.0000000000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-7">
+         <relPos>.0000000000 .0000000000 1.000/2.000</relPos>
+         <relPos>.0000000000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-8">
+         <relPos>.0000000000 1.000/4.000 -1.000/4.000</relPos>
+         <relPos>.0000000000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-9">
+         <relPos>1.000/4.000 .0000000000 -1.000/4.000</relPos>
+         <relPos>1.000/4.000 -1.000/4.000 .0000000000</relPos>
+         <relPos>-1.000/4.000 .0000000000 -1.000/4.000</relPos>
+         <relPos>-1.000/4.000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-10">
+         <relPos>1.000/4.000 1.000/4.000 1.000/2.000</relPos>
+         <relPos>1.000/4.000 1.000/2.000 1.000/4.000</relPos>
+         <relPos>-1.000/4.000 1.000/4.000 1.000/2.000</relPos>
+         <relPos>-1.000/4.000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-11">
+         <relPos>1.000/4.000 1.000/4.000 -1.000/4.000</relPos>
+         <relPos>1.000/4.000 -1.000/4.000 1.000/4.000</relPos>
+         <relPos>-1.000/4.000 1.000/4.000 -1.000/4.000</relPos>
+         <relPos>-1.000/4.000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-12">
+         <relPos>1.000/4.000 .0000000000 1.000/2.000</relPos>
+         <relPos>1.000/4.000 1.000/2.000 .0000000000</relPos>
+         <relPos>-1.000/4.000 .0000000000 1.000/2.000</relPos>
+         <relPos>-1.000/4.000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-13">
+         <relPos>.0000000000 1.000/4.000 1.000/2.000</relPos>
+         <relPos>.0000000000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-14">
+         <relPos>.0000000000 .0000000000 -1.000/4.000</relPos>
+         <relPos>.0000000000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-15">
+         <relPos>.0000000000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-16">
+         <relPos>.0000000000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-17">
+         <relPos>1.000/4.000 1.000/2.000 -1.000/4.000</relPos>
+         <relPos>1.000/4.000 -1.000/4.000 1.000/2.000</relPos>
+         <relPos>-1.000/4.000 1.000/2.000 -1.000/4.000</relPos>
+         <relPos>-1.000/4.000 -1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-18">
+         <relPos>1.000/4.000 -1.000/4.000 -1.000/4.000</relPos>
+         <relPos>-1.000/4.000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-19">
+         <relPos>1.000/4.000 1.000/2.000 1.000/2.000</relPos>
+         <relPos>-1.000/4.000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-20">
+         <relPos>.0000000000 -1.000/4.000 1.000/2.000</relPos>
+         <relPos>.0000000000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-21">
+         <relPos>1.000/2.000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-22">
+         <relPos>1.000/2.000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-23">
+         <relPos>1.000/2.000 1.000/4.000 .0000000000</relPos>
+         <relPos>1.000/2.000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-24">
+         <relPos>1.000/2.000 .0000000000 1.000/2.000</relPos>
+         <relPos>1.000/2.000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-25">
+         <relPos>1.000/2.000 1.000/4.000 -1.000/4.000</relPos>
+         <relPos>1.000/2.000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-26">
+         <relPos>1.000/2.000 1.000/4.000 1.000/2.000</relPos>
+         <relPos>1.000/2.000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-27">
+         <relPos>1.000/2.000 .0000000000 -1.000/4.000</relPos>
+         <relPos>1.000/2.000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-28">
+         <relPos>1.000/2.000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Na-29">
+         <relPos>1.000/2.000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cl-30">
+         <relPos>1.000/2.000 -1.000/4.000 1.000/2.000</relPos>
+         <relPos>1.000/2.000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+   </atomGroups>
+   <output dos="F" band="F" vacdos="F" slice="F">
+      <checks vchk="F" cdinf="F" disp="F"/>
+      <densityOfStates ndir="0" minEnergy="-.50000000" maxEnergy=".50000000" sigma=".01500000"/>
+      <vacuumDOS layers="0" integ="F" star="F" nstars="0" locx1=".00000000" locy1=".00000000" locx2=".00000000" locy2=".00000000" nstm="0" tworkf=".00000000"/>
+      <plotting iplot="F" score="F" plplot="F"/>
+      <chargeDensitySlicing numkpt="0" minEigenval=".00000000" maxEigenval=".00000000" nnne="0" pallst="F"/>
+      <specialOutput eonly="F" bmt="F"/>
+   </output>
+</fleurInput>

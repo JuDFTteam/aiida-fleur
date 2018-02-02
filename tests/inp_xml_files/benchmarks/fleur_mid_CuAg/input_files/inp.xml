@@ -1,0 +1,2613 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fleurInput fleurInputVersion="0.28">
+   <comment>
+      FLEUR input generated with ASE                                                  
+   </comment>
+   <calculationSetup>
+      <cutoffs Kmax="4.10000000" Gmax="12.39840805" GmaxXC="10.30000000" numbands="0"/>
+      <scfLoop itmax="1" minDistance=".00000000" maxIterBroyd="99" imix="Anderson" alpha=".05000000" spinf="2.00000000"/>
+      <coreElectrons ctail="F" frcor="F" kcrel="0" coretail_lmax="0"/>
+      <magnetism jspins="1" l_noco="F" l_J="F" swsp="F" lflip="F"/>
+      <soc theta=".00000000" phi=".00000000" l_soc="F" spav="F" off="F"/>
+      <nocoParams l_ss="F" l_mperp="F" l_constr="F" l_disp="F" sso_opt="FFF" mix_b=".00000000" thetaJ=".00000000" nsh="0">
+         <qss>.0000000000 .0000000000 .0000000000</qss>
+      </nocoParams>
+      <expertModes gw="0" pot8="F" isec1="99" secvar="F"/>
+      <geometryOptimization l_f="F" xa="2.00000000" thetad="330.00000000" epsdisp=".00001000" epsforce=".00001000"/>
+      <bzIntegration valenceElectrons="2816.00000000" mode="hist" fermiSmearingEnergy=".00100000">
+         <kPointList posScale="1.00000000" weightScale="1.00000000" count="1">
+            <kPoint weight="    1.000000">    0.250000     0.250000     0.250000</kPoint>
+         </kPointList>
+      </bzIntegration>
+      <energyParameterLimits ellow="-.80000000" elup="1.00000000"/>
+   </calculationSetup>
+   <cell>
+      <symmetryOperations>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+      </symmetryOperations>
+      <bulkLattice scale="1.0000000000" latnam="any">
+         <bravaisMatrix>
+            <row-1>27.300000000 .0000000000 .0000000000</row-1>
+            <row-2>.0000000000 27.300000000 .0000000000</row-2>
+            <row-3>.0000000000 .0000000000 27.300000000</row-3>
+         </bravaisMatrix>
+      </bulkLattice>
+   </cell>
+   <xcFunctional name="pbe" relativisticCorrections="F"/>
+   <atomSpecies>
+      <species name="Ag-1" element="Ag" atomicNumber="47" coreStates="12" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.41000000" gridPoints="581" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="5" p="5" d="4" f="4"/>
+      </species>
+      <species name="Cu-2" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-3" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-4" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-5" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-6" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-7" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-8" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-9" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-10" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-11" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-12" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-13" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-14" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-15" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-16" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-17" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-18" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-19" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-20" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-21" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-22" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-23" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-24" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-25" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-26" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-27" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-28" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-29" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-30" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-31" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-32" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-33" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-34" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-35" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-36" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-37" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-38" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-39" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-40" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-41" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-42" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-43" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-44" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-45" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-46" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-47" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-48" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-49" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-50" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-51" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-52" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-53" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-54" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-55" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-56" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-57" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-58" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-59" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-60" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-61" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-62" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-63" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-64" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-65" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-66" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-67" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-68" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-69" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-70" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-71" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-72" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-73" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-74" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-75" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-76" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-77" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-78" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-79" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-80" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-81" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-82" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-83" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-84" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-85" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-86" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-87" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-88" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-89" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-90" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-91" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-92" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-93" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-94" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-95" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-96" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-97" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-98" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-99" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-100" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-101" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-102" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-103" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-104" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-105" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-106" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-107" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-108" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-109" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-110" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-111" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Ag-112" element="Ag" atomicNumber="47" coreStates="12" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.41000000" gridPoints="581" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="5" p="5" d="4" f="4"/>
+      </species>
+      <species name="Cu-113" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-114" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-115" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-116" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-117" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-118" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-119" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-120" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-121" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-122" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-123" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-124" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-125" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-126" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-127" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-128" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-129" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-130" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-131" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-132" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-133" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-134" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-135" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-136" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-137" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-138" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-139" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-140" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-141" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-142" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-143" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-144" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-145" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-146" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-147" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-148" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-149" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-150" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-151" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-152" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-153" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-154" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-155" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-156" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-157" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Ag-158" element="Ag" atomicNumber="47" coreStates="12" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.41000000" gridPoints="581" logIncrement=".02200000"/>
+         <atomicCutoffs lmax="10" lnonsphr="8"/>
+         <energyParameters s="5" p="5" d="4" f="4"/>
+      </species>
+      <species name="Cu-159" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-160" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-161" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-162" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-163" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-164" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-165" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-166" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-167" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-168" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-169" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-170" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-171" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-172" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-173" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-174" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-175" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-176" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-177" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-178" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-179" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-180" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-181" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-182" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-183" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-184" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-185" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-186" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-187" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-188" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-189" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-190" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-191" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-192" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-193" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-194" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-195" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-196" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-197" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-198" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-199" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-200" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-201" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-202" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-203" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-204" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-205" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-206" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-207" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-208" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-209" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-210" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-211" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-212" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-213" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-214" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-215" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-216" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-217" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-218" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-219" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-220" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-221" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-222" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-223" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-224" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-225" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-226" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-227" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-228" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-229" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-230" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-231" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-232" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-233" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-234" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-235" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-236" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-237" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-238" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-239" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-240" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-241" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-242" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-243" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-244" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-245" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-246" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-247" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-248" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-249" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-250" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-251" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-252" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-253" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-254" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-255" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+      <species name="Cu-256" element="Cu" atomicNumber="29" coreStates="7" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.35000000" gridPoints="567" logIncrement=".02100000"/>
+         <atomicCutoffs lmax="8" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
+      </species>
+   </atomSpecies>
+   <atomGroups>
+      <atomGroup species="Ag-1">
+         <relPos>.0000000000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-2">
+         <relPos>.0000000000 1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-3">
+         <relPos>1.000/8.000 .0000000000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-4">
+         <relPos>1.000/8.000 1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-5">
+         <relPos>.0000000000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-6">
+         <relPos>.0000000000 1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-7">
+         <relPos>1.000/8.000 .0000000000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-8">
+         <relPos>1.000/8.000 1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-9">
+         <relPos>.0000000000 .0000000000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-10">
+         <relPos>.0000000000 1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-11">
+         <relPos>1.000/8.000 .0000000000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-12">
+         <relPos>1.000/8.000 1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-13">
+         <relPos>.0000000000 .0000000000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-14">
+         <relPos>.0000000000 1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-15">
+         <relPos>1.000/8.000 .0000000000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-16">
+         <relPos>1.000/8.000 1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-17">
+         <relPos>.0000000000 1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-18">
+         <relPos>.0000000000 3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-19">
+         <relPos>1.000/8.000 1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-20">
+         <relPos>1.000/8.000 3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-21">
+         <relPos>.0000000000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-22">
+         <relPos>.0000000000 3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-23">
+         <relPos>1.000/8.000 1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-24">
+         <relPos>1.000/8.000 3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-25">
+         <relPos>.0000000000 1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-26">
+         <relPos>.0000000000 3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-27">
+         <relPos>1.000/8.000 1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-28">
+         <relPos>1.000/8.000 3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-29">
+         <relPos>.0000000000 1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-30">
+         <relPos>.0000000000 3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-31">
+         <relPos>1.000/8.000 1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-32">
+         <relPos>1.000/8.000 3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-33">
+         <relPos>.0000000000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-34">
+         <relPos>.0000000000 -3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-35">
+         <relPos>1.000/8.000 1.000/2.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-36">
+         <relPos>1.000/8.000 -3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-37">
+         <relPos>.0000000000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-38">
+         <relPos>.0000000000 -3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-39">
+         <relPos>1.000/8.000 1.000/2.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-40">
+         <relPos>1.000/8.000 -3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-41">
+         <relPos>.0000000000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-42">
+         <relPos>.0000000000 -3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-43">
+         <relPos>1.000/8.000 1.000/2.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-44">
+         <relPos>1.000/8.000 -3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-45">
+         <relPos>.0000000000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-46">
+         <relPos>.0000000000 -3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-47">
+         <relPos>1.000/8.000 1.000/2.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-48">
+         <relPos>1.000/8.000 -3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-49">
+         <relPos>.0000000000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-50">
+         <relPos>.0000000000 -1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-51">
+         <relPos>1.000/8.000 -1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-52">
+         <relPos>1.000/8.000 -1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-53">
+         <relPos>.0000000000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-54">
+         <relPos>.0000000000 -1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-55">
+         <relPos>1.000/8.000 -1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-56">
+         <relPos>1.000/8.000 -1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-57">
+         <relPos>.0000000000 -1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-58">
+         <relPos>.0000000000 -1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-59">
+         <relPos>1.000/8.000 -1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-60">
+         <relPos>1.000/8.000 -1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-61">
+         <relPos>.0000000000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-62">
+         <relPos>.0000000000 -1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-63">
+         <relPos>1.000/8.000 -1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-64">
+         <relPos>1.000/8.000 -1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-65">
+         <relPos>1.000/4.000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-66">
+         <relPos>1.000/4.000 1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-67">
+         <relPos>3.000/8.000 .0000000000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-68">
+         <relPos>3.000/8.000 1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-69">
+         <relPos>1.000/4.000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-70">
+         <relPos>1.000/4.000 1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-71">
+         <relPos>3.000/8.000 .0000000000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-72">
+         <relPos>3.000/8.000 1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-73">
+         <relPos>1.000/4.000 .0000000000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-74">
+         <relPos>1.000/4.000 1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-75">
+         <relPos>3.000/8.000 .0000000000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-76">
+         <relPos>3.000/8.000 1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-77">
+         <relPos>1.000/4.000 .0000000000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-78">
+         <relPos>1.000/4.000 1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-79">
+         <relPos>3.000/8.000 .0000000000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-80">
+         <relPos>3.000/8.000 1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-81">
+         <relPos>1.000/4.000 1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-82">
+         <relPos>1.000/4.000 3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-83">
+         <relPos>3.000/8.000 1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-84">
+         <relPos>3.000/8.000 3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-85">
+         <relPos>1.000/4.000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-86">
+         <relPos>1.000/4.000 3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-87">
+         <relPos>3.000/8.000 1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-88">
+         <relPos>3.000/8.000 3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-89">
+         <relPos>1.000/4.000 1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-90">
+         <relPos>1.000/4.000 3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-91">
+         <relPos>3.000/8.000 1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-92">
+         <relPos>3.000/8.000 3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-93">
+         <relPos>1.000/4.000 1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-94">
+         <relPos>1.000/4.000 3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-95">
+         <relPos>3.000/8.000 1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-96">
+         <relPos>3.000/8.000 3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-97">
+         <relPos>1.000/4.000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-98">
+         <relPos>1.000/4.000 -3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-99">
+         <relPos>3.000/8.000 1.000/2.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-100">
+         <relPos>3.000/8.000 -3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-101">
+         <relPos>1.000/4.000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-102">
+         <relPos>1.000/4.000 -3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-103">
+         <relPos>3.000/8.000 1.000/2.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-104">
+         <relPos>3.000/8.000 -3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-105">
+         <relPos>1.000/4.000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-106">
+         <relPos>1.000/4.000 -3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-107">
+         <relPos>3.000/8.000 1.000/2.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-108">
+         <relPos>3.000/8.000 -3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-109">
+         <relPos>1.000/4.000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-110">
+         <relPos>1.000/4.000 -3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-111">
+         <relPos>3.000/8.000 1.000/2.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Ag-112">
+         <relPos>3.000/8.000 -3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-113">
+         <relPos>1.000/4.000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-114">
+         <relPos>1.000/4.000 -1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-115">
+         <relPos>3.000/8.000 -1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-116">
+         <relPos>3.000/8.000 -1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-117">
+         <relPos>1.000/4.000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-118">
+         <relPos>1.000/4.000 -1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-119">
+         <relPos>3.000/8.000 -1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-120">
+         <relPos>3.000/8.000 -1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-121">
+         <relPos>1.000/4.000 -1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-122">
+         <relPos>1.000/4.000 -1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-123">
+         <relPos>3.000/8.000 -1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-124">
+         <relPos>3.000/8.000 -1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-125">
+         <relPos>1.000/4.000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-126">
+         <relPos>1.000/4.000 -1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-127">
+         <relPos>3.000/8.000 -1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-128">
+         <relPos>3.000/8.000 -1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-129">
+         <relPos>1.000/2.000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-130">
+         <relPos>1.000/2.000 1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-131">
+         <relPos>-3.000/8.000 .0000000000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-132">
+         <relPos>-3.000/8.000 1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-133">
+         <relPos>1.000/2.000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-134">
+         <relPos>1.000/2.000 1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-135">
+         <relPos>-3.000/8.000 .0000000000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-136">
+         <relPos>-3.000/8.000 1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-137">
+         <relPos>1.000/2.000 .0000000000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-138">
+         <relPos>1.000/2.000 1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-139">
+         <relPos>-3.000/8.000 .0000000000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-140">
+         <relPos>-3.000/8.000 1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-141">
+         <relPos>1.000/2.000 .0000000000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-142">
+         <relPos>1.000/2.000 1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-143">
+         <relPos>-3.000/8.000 .0000000000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-144">
+         <relPos>-3.000/8.000 1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-145">
+         <relPos>1.000/2.000 1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-146">
+         <relPos>1.000/2.000 3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-147">
+         <relPos>-3.000/8.000 1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-148">
+         <relPos>-3.000/8.000 3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-149">
+         <relPos>1.000/2.000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-150">
+         <relPos>1.000/2.000 3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-151">
+         <relPos>-3.000/8.000 1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-152">
+         <relPos>-3.000/8.000 3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-153">
+         <relPos>1.000/2.000 1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-154">
+         <relPos>1.000/2.000 3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-155">
+         <relPos>-3.000/8.000 1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-156">
+         <relPos>-3.000/8.000 3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-157">
+         <relPos>1.000/2.000 1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Ag-158">
+         <relPos>1.000/2.000 3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-159">
+         <relPos>-3.000/8.000 1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-160">
+         <relPos>-3.000/8.000 3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-161">
+         <relPos>1.000/2.000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-162">
+         <relPos>1.000/2.000 -3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-163">
+         <relPos>-3.000/8.000 1.000/2.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-164">
+         <relPos>-3.000/8.000 -3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-165">
+         <relPos>1.000/2.000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-166">
+         <relPos>1.000/2.000 -3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-167">
+         <relPos>-3.000/8.000 1.000/2.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-168">
+         <relPos>-3.000/8.000 -3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-169">
+         <relPos>1.000/2.000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-170">
+         <relPos>1.000/2.000 -3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-171">
+         <relPos>-3.000/8.000 1.000/2.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-172">
+         <relPos>-3.000/8.000 -3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-173">
+         <relPos>1.000/2.000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-174">
+         <relPos>1.000/2.000 -3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-175">
+         <relPos>-3.000/8.000 1.000/2.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-176">
+         <relPos>-3.000/8.000 -3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-177">
+         <relPos>1.000/2.000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-178">
+         <relPos>1.000/2.000 -1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-179">
+         <relPos>-3.000/8.000 -1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-180">
+         <relPos>-3.000/8.000 -1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-181">
+         <relPos>1.000/2.000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-182">
+         <relPos>1.000/2.000 -1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-183">
+         <relPos>-3.000/8.000 -1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-184">
+         <relPos>-3.000/8.000 -1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-185">
+         <relPos>1.000/2.000 -1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-186">
+         <relPos>1.000/2.000 -1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-187">
+         <relPos>-3.000/8.000 -1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-188">
+         <relPos>-3.000/8.000 -1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-189">
+         <relPos>1.000/2.000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-190">
+         <relPos>1.000/2.000 -1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-191">
+         <relPos>-3.000/8.000 -1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-192">
+         <relPos>-3.000/8.000 -1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-193">
+         <relPos>-1.000/4.000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-194">
+         <relPos>-1.000/4.000 1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-195">
+         <relPos>-1.000/8.000 .0000000000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-196">
+         <relPos>-1.000/8.000 1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-197">
+         <relPos>-1.000/4.000 .0000000000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-198">
+         <relPos>-1.000/4.000 1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-199">
+         <relPos>-1.000/8.000 .0000000000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-200">
+         <relPos>-1.000/8.000 1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-201">
+         <relPos>-1.000/4.000 .0000000000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-202">
+         <relPos>-1.000/4.000 1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-203">
+         <relPos>-1.000/8.000 .0000000000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-204">
+         <relPos>-1.000/8.000 1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-205">
+         <relPos>-1.000/4.000 .0000000000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-206">
+         <relPos>-1.000/4.000 1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-207">
+         <relPos>-1.000/8.000 .0000000000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-208">
+         <relPos>-1.000/8.000 1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-209">
+         <relPos>-1.000/4.000 1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-210">
+         <relPos>-1.000/4.000 3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-211">
+         <relPos>-1.000/8.000 1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-212">
+         <relPos>-1.000/8.000 3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-213">
+         <relPos>-1.000/4.000 1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-214">
+         <relPos>-1.000/4.000 3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-215">
+         <relPos>-1.000/8.000 1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-216">
+         <relPos>-1.000/8.000 3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-217">
+         <relPos>-1.000/4.000 1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-218">
+         <relPos>-1.000/4.000 3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-219">
+         <relPos>-1.000/8.000 1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-220">
+         <relPos>-1.000/8.000 3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-221">
+         <relPos>-1.000/4.000 1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-222">
+         <relPos>-1.000/4.000 3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-223">
+         <relPos>-1.000/8.000 1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-224">
+         <relPos>-1.000/8.000 3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-225">
+         <relPos>-1.000/4.000 1.000/2.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-226">
+         <relPos>-1.000/4.000 -3.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-227">
+         <relPos>-1.000/8.000 1.000/2.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-228">
+         <relPos>-1.000/8.000 -3.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-229">
+         <relPos>-1.000/4.000 1.000/2.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-230">
+         <relPos>-1.000/4.000 -3.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-231">
+         <relPos>-1.000/8.000 1.000/2.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-232">
+         <relPos>-1.000/8.000 -3.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-233">
+         <relPos>-1.000/4.000 1.000/2.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-234">
+         <relPos>-1.000/4.000 -3.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-235">
+         <relPos>-1.000/8.000 1.000/2.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-236">
+         <relPos>-1.000/8.000 -3.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-237">
+         <relPos>-1.000/4.000 1.000/2.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-238">
+         <relPos>-1.000/4.000 -3.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-239">
+         <relPos>-1.000/8.000 1.000/2.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-240">
+         <relPos>-1.000/8.000 -3.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-241">
+         <relPos>-1.000/4.000 -1.000/4.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-242">
+         <relPos>-1.000/4.000 -1.000/8.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-243">
+         <relPos>-1.000/8.000 -1.000/4.000 1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-244">
+         <relPos>-1.000/8.000 -1.000/8.000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-245">
+         <relPos>-1.000/4.000 -1.000/4.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-246">
+         <relPos>-1.000/4.000 -1.000/8.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-247">
+         <relPos>-1.000/8.000 -1.000/4.000 3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-248">
+         <relPos>-1.000/8.000 -1.000/8.000 1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-249">
+         <relPos>-1.000/4.000 -1.000/4.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-250">
+         <relPos>-1.000/4.000 -1.000/8.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-251">
+         <relPos>-1.000/8.000 -1.000/4.000 -3.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-252">
+         <relPos>-1.000/8.000 -1.000/8.000 1.000/2.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-253">
+         <relPos>-1.000/4.000 -1.000/4.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-254">
+         <relPos>-1.000/4.000 -1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-255">
+         <relPos>-1.000/8.000 -1.000/4.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+      <atomGroup species="Cu-256">
+         <relPos>-1.000/8.000 -1.000/8.000 -1.000/4.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" l_magn="F" M=".0000000000" alpha=".0000000000" beta=".0000000000" b_cons_x=".0000000000" b_cons_y=".0000000000"/>
+      </atomGroup>
+   </atomGroups>
+   <output dos="F" band="F" vacdos="F" slice="F">
+      <checks vchk="F" cdinf="F" disp="F"/>
+      <densityOfStates ndir="0" minEnergy="-.50000000" maxEnergy=".50000000" sigma=".01500000"/>
+      <vacuumDOS layers="0" integ="F" star="F" nstars="0" locx1=".00000000" locy1=".00000000" locx2=".00000000" locy2=".00000000" nstm="0" tworkf=".00000000"/>
+      <plotting iplot="F" score="F" plplot="F"/>
+      <chargeDensitySlicing numkpt="0" minEigenval=".00000000" maxEigenval=".00000000" nnne="0" pallst="F"/>
+      <specialOutput eonly="F" bmt="F"/>
+   </output>
+</fleurInput>
