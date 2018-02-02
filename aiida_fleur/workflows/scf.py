@@ -80,22 +80,24 @@ class fleur_scf_wc(WorkChain):
     1. This workflow does not work with local codes!
     """
 
-    _workflowversion = "0.1.3"
+    _workflowversion = "0.2.0"
     _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
                    'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
                    'converge_density' : True,      # converge the charge density
                    'converge_energy' : False,      # converge the total energy (usually converged before density)
                    #'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
-                   'queue_name' : '',              # Queue name to submit jobs too
-                   'resources': {"num_machines": 1},# resources to allowcate for the job
-                   'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
+                   'options' : {                   
+                    'queue_name' : '',              # Queue name to submit jobs too
+                    'resources': {"num_machines": 1},# resources to allowcate for the job
+                    'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
+                    'custom_scheduler_commands' : ''},                  
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
                    #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
                    'itmax_per_run' : 30,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
-                   'custom_scheduler_commands' : ''}                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
+                   }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
     #_default_wc_label = u'fleur_scf_wc'
     #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
