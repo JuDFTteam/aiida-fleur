@@ -399,7 +399,7 @@ class fleur_scf_wc(WorkChain):
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
-        options.remove('walltime_sec')
+        options.pop('walltime_sec')
         options["max_wallclock_seconds"] =  self.ctx.options['walltime_sec']
         #{"max_wallclock_seconds": self.ctx.options['walltime_sec'],
         #           "resources": self.ctx.options['resources',
