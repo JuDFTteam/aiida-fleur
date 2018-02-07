@@ -91,7 +91,11 @@ class fleur_scf_wc(WorkChain):
                     'queue_name' : '',              # Queue name to submit jobs too
                     'resources': {"num_machines": 1},# resources to allowcate for the job
                     'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
-                    'custom_scheduler_commands' : ''},                  
+                    'custom_scheduler_commands' : '',
+                    'max_memory_kb' : None,
+                    'import_sys_environment' : False,
+                    'environment_variables' : {}                    
+                    },                  
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
                    #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
@@ -174,7 +178,11 @@ class fleur_scf_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
 
         # set values, or defaults
-        self.ctx.options =  wf_dict.get('options', {})
+        defaultoptions = self._wf_default['options']
+        options =  wf_dict.get('options', defaultoptions)
+        for key, val in defaultoptions:
+            options[key] = options.get(key, val)
+        self.ctx.options = options
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
