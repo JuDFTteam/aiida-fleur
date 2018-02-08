@@ -66,7 +66,7 @@ def plot_fleur(*args, **kwargs):
                       save_plots = False, #True,
                       save_format = 'pdf'):
     '''
-    from plot_methods import set_plot_defaults
+    from masci_tools.vis.plot_methods import set_plot_defaults
 
     save = False
     show_dict = False
@@ -202,7 +202,7 @@ def plot_fleur_scf_wc(nodes, labels=[]):
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
     """
-    from plot_methods import plot_convergence_results, plot_convergence_results_m
+    from masci_tools.vis.plot_methods import plot_convergence_results, plot_convergence_results_m
     
     if isinstance(nodes, list):
         if len(nodes) >= 2:
@@ -238,7 +238,7 @@ def plot_fleur_dos_wc(node, labels=[]):
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
     """
-    from plot_methods import plot_dos
+    from masci_tools.vis.plot_methods import plot_dos
 
     if isinstance(node, list):
         if len(node) > 2:
@@ -286,7 +286,7 @@ def plot_fleur_band_wc(node, labels=[]):
     This methods takes an AiiDA output parameter node from a band structure
     workchain and plots a simple band structure
     """
-    from plot_methods import plot_bands
+    from masci_tools.vis.plot_methods import plot_bands
 
     if isinstance(node, list):
         if len(node) > 2:
@@ -352,7 +352,7 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
     from aiida.orm.calculation.work import WorkCalculation
     from aiida_fleur.tools.element_econfig_list import exp_bindingenergies
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
-    from plot_methods import plot_corelevel_spectra
+    from masci_tools.vis.plot_methods import plot_corelevel_spectra
     from aiida_fleur.tools.extract_corelevels import clshifts_to_be
     from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
     from aiida_fleur.workflows.initial_cls import extract_results
