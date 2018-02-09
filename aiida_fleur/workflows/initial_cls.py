@@ -64,9 +64,6 @@ class fleur_initial_cls_wc(WorkChain):
     'dos_para' : 'default'
     """
 
-
-
-
     _workflowversion = "0.3.2"
     _default_wf_para = {'structure_ref' : {},
                         #'references' : {'calculate' : 'all'},

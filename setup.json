@@ -32,7 +32,8 @@
             "sympy"
     ],
     "extras_require" : {
-            "graphs ": ["matplotlib"]
+            "graphs ": ["matplotlib",
+                        "masci-tools"]
         },
     "entry_points" : {
         "aiida.calculations" : [

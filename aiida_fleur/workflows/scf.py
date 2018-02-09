@@ -180,7 +180,7 @@ class fleur_scf_wc(WorkChain):
         # set values, or defaults
         defaultoptions = self._wf_default['options']
         options =  wf_dict.get('options', defaultoptions)
-        for key, val in defaultoptions:
+        for key, val in defaultoptions.iteritems():
             options[key] = options.get(key, val)
         self.ctx.options = options
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)

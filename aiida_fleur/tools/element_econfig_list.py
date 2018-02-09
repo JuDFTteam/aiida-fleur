@@ -436,7 +436,7 @@ exp_bindingenergies = {
  3: {'binding_energy': {'1s1/2': [56], '2s1/2': []},
      'name': 'Lithium',
      'symbol': 'Li'},
- 4: {'binding_energy': {'1s1/2': [111.82], '2s1/2': []},#111.82
+ 4: {'binding_energy': {'1s1/2': [111.85], '2s1/2': []},#111.82
      'name': 'Beryllium',
      'symbol': 'Be'},
  5: {'binding_energy': {'1s1/2': [189], '2p1/2': [], '2p3/2': [], '2s1/2': []},
