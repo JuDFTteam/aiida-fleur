@@ -50,7 +50,7 @@ def plot_fleur(*args, **kwargs):
     
     Some general parameters of plot methods can be given as
     keyword arguments.
-    param: save showed the plots be saved automaticaly
+    example: save: should the plots be saved automaticaly
     
     """
     
