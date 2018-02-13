@@ -802,11 +802,15 @@ def parse_xmlout_file(outxmlfile):
 
         elif jspin == 2:
             charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
-            charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+            
+            if charge_densitys:# otherwise we get a keyerror if calculation failed.
+                charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+                charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
+            else: # Is non a problem?
+                charge_density1 = None
+                charge_density2 = None
             write_simple_outnode(
                 charge_density1, 'float', 'charge_density1', simple_data)
-
-            charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
             write_simple_outnode(
                 charge_density2, 'float', 'charge_density2', simple_data)
 
