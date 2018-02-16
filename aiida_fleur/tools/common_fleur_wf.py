@@ -89,6 +89,8 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     for key, val in options.iteritems():
         if val==None:
             continue
+        elif isinstance(val, str):# ensure unicode 
+            inputs._options[key] = unicode(val)
         else:
             inputs._options[key] = val
 
