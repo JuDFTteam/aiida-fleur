@@ -608,7 +608,7 @@ class FleurCalculation(JobCalculation):
         walltime_sec = self.get_max_wallclock_seconds()
         #self.logger.info("!!!!!!!!!!!!!!!!!!! walltime_sec : {}"
         #                         "".format(walltime_sec))
-        cmdline_params = ["-xml"]#, "-wtime", "{}".format(walltime_sec)]
+        cmdline_params = []#, "-wtime", "{}".format(walltime_sec)]"-xml"
         #walltime_sec = self.get_max_wallclock_seconds()
         #print('walltime: {}'.format(walltime_sec))
         if walltime_sec:
@@ -625,7 +625,7 @@ class FleurCalculation(JobCalculation):
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
         codeinfo.code_uuid = code.uuid
         codeinfo.withmpi = self.get_withmpi()
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
+        codeinfo.stdin_name = None#self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUTPUT_FILE_NAME
         #codeinfo.join_files = True
         codeinfo.stderr_name = self._ERROR_FILE_NAME
