@@ -88,13 +88,13 @@ class fleur_scf_wc(WorkChain):
                    'converge_energy' : False,      # converge the total energy (usually converged before density)
                    #'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
                    'options' : {                   
-                    'queue_name' : '',              # Queue name to submit jobs too
-                    'resources': {"num_machines": 1},# resources to allowcate for the job
-                    'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
-                    'custom_scheduler_commands' : '',
-                    'max_memory_kb' : None,
-                    'import_sys_environment' : False,
-                    'environment_variables' : {}                    
+                   'queue_name' : '',              # Queue name to submit jobs too
+                   'resources': {"num_machines": 1},# resources to allowcate for the job
+                   'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
+                   'custom_scheduler_commands' : '',
+                   'max_memory_kb' : None,
+                   'import_sys_environment' : False,
+                   'environment_variables' : {}                    
                     },                  
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
@@ -179,10 +179,11 @@ class fleur_scf_wc(WorkChain):
 
         # set values, or defaults
         defaultoptions = self._wf_default['options']
-        options =  wf_dict.get('options', defaultoptions)
+        options = wf_dict.get('options', defaultoptions)
         for key, val in defaultoptions.iteritems():
             options[key] = options.get(key, val)
         self.ctx.options = options
+        #self.report('options: {}'.format(self.ctx.options))
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
@@ -420,7 +421,6 @@ class fleur_scf_wc(WorkChain):
         #           "import_sys_environment" : self.ctx.options["import_sys_environment"]
         #           }#,
         inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-
 
         future = submit(FleurProcess, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1

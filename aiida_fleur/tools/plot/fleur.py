@@ -170,7 +170,9 @@ def plot_fleur_mn(nodelist, save=False):
                 for key in keys:
                     if 'output_' in key:
                         if 'wc' in key or 'wf' in key:
-                            node = output_dict.get(key)# we only visualize last output node
+                            if 'para' in key:# We are just looking for parameter 
+                                #nodes, structures, bands, dos and so on we tread different
+                                node = output_dict.get(key)# we only visualize last output node
             if isinstance(node, ParameterData):
                 p_dict = node.get_dict()
                 workflow_name = p_dict.get('workflow_name', None)
@@ -259,10 +261,23 @@ def plot_fleur_eos_wc(node, labels=[]):
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
     """
-    from plot_methods import plot_lattice_constant
+    from masci_tools.vis.plot_methods import plot_lattice_constant
 
     if isinstance(node, list):
         if len(node) > 2:
+            Total_energy = []
+            scaling = []
+            plotlables = []
+            
+            for i, nd in enumerate(node):
+                plotlables.append(r'simulation data {}'.format(i))
+                plotlables.append(r'fit results {}'.format(i))
+                outpara = nd.get_dict()
+                total_e = outpara.get('total_energy')
+                total_e_norm = np.array(total_e) - total_e[0]
+                Total_energy.append(total_e_norm)
+                scaling.append(outpara.get('scaling'))                
+            plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables)
             return # TODO
         else:
             node=node[0]
@@ -280,6 +295,7 @@ def plot_fleur_eos_wc(node, labels=[]):
     #fit_y = []
     #fit_y = [parabola(scale2, fit[0], fit[1], fit[2]) for scale2 in scaling]
     plot_lattice_constant(Total_energy, scaling)#, fit_y)
+    return
 
 def plot_fleur_band_wc(node, labels=[]):
     """
@@ -311,7 +327,6 @@ def plot_fleur_relax_wc(node, labels=[]):
     workchain and plots some information about atom movements and forces
     """
     pass
-    #from plot_methods import plot_relaxation_results
     
     #plot_relaxation_results
 
@@ -332,7 +347,7 @@ def plot_fleur_initial_cls_wc(nodes, labels=[]):
     
     pass
 
-def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g=0.6, fwhm_l=0.1, energy_grid=0.2, peakfunction='voigt', linetyp_spec='o-', warn_ref=False, **kwargs):
+def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], be_ref={}, fwhm_g=0.6, fwhm_l=0.1, energy_grid=0.2, peakfunction='voigt', linetyp_spec='o-', warn_ref=False, verbose=False, **kwargs):
     """
     This function takes a list of workflow/result nodes/pks/uuids an plots the combined spectrum in a certain energy range.
     It has all kwargs of plot_corelevel_spectra, which is used below.
@@ -344,13 +359,12 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
     Comment: For now only initial shift nodes, TODO: Final state Binding energies
     
     :param wc_nodes: 
+    :param dict be_ref: has the form {'element' : {'1s1/2': [1072], '2p1/2': [], '2p3/2': [],...}}
     :prints : Warnings a
     :return corelevelshifts: it returns the results it plots
-    # TODO if several compounds are plottet together all references energies have to be extracted, not only the last ones...
     """
     from aiida.orm import DataFactory, Node, load_node
     from aiida.orm.calculation.work import WorkCalculation
-    from aiida_fleur.tools.element_econfig_list import exp_bindingenergies
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
     from masci_tools.vis.plot_methods import plot_corelevel_spectra
     from aiida_fleur.tools.extract_corelevels import clshifts_to_be
@@ -418,7 +432,8 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
             convert_to_eV = True
         version = int(wc_version.replace('.',''))
         if not wres_dict.get('succesfull', False):
-            print('WARNING: outputnode {}, states that workchain was not successfull, check the results!'.format(node))
+            if not verbose:
+                print('WARNING: outputnode {}, states that workchain was not successfull, check the results!'.format(node))
         
         if version <= 20:
             # Some atomtype information is not saved yet, therefore we have to parse the files with the newest parser version
@@ -439,7 +454,8 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
         
         compound_label = all_atomtypes.keys()[0]
         compound_info.append(compound_label)
-        print('Material: {}'.format(compound_label))
+        if not verbose:
+            print('Material: {}'.format(compound_label))
         # Now we need to convert/build the right format for plot_corelevel_spectra        
         # For each atomtype in compound, get full coresetup, number of atoms
         # the multiplication by the number of electrons is done in the plot routine
@@ -453,7 +469,7 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
             elem = atomtype.get('element')
             coreconfig_short = atomtype.get('coreconfig')
             if not coreconfig_short:# we assume the default...
-                coreconfig_short = get_coreconfig(elem)
+                coreconfig_short = get_coreconfig(str(elem))
                 print('WARNING: no coreconfig parsed from out.xml, using default coreconfig...')
             coreconfig_full = get_spin_econfig(convert_fleur_config_to_econfig(coreconfig_short))
             natoms = atomtype.get('natoms')
@@ -497,8 +513,11 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
         symbols = coreshifts.keys()
         bindingenergies_ref = {}
         for symbol in symbols:
-            koordinationnumber = atomic_numbers[symbol]
-            bindingenergies_ref[symbol] = exp_bindingenergies.get(koordinationnumber, {})['binding_energy']
+            if not be_ref:
+                koordinationnumber = atomic_numbers[symbol]
+                bindingenergies_ref[symbol] = exp_bindingenergies.get(koordinationnumber, {})['binding_energy']
+            else:
+                bindingenergies_ref[symbol] = be_ref.get(symbol, {})
         #pprint(bindingenergies_ref)
         bindingenergies = clshifts_to_be(coreshifts_new, bindingenergies_ref, warn=warn_ref)        
         
@@ -512,7 +531,8 @@ def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], fwhm_g
         # might work, because of dict merger
     #pprint(compound_info)
     #pprint(natomtypes_dict_all)
-    pprint(bindingenergies_all)
+    if not verbose:
+        pprint(bindingenergies_all)
     # plot the results        
     [xdata_spec, ydata_spec, ydata_single_all , xdata_all, ydata_all, xdatalabel] = plot_corelevel_spectra(bindingenergies_all, natomtypes_dict_all, exp_references=bindingenergies_ref_all, #compound_info=compound_info, 
                            energy_range=energy_range, title=title, fwhm_g=fwhm_g, fwhm_l=fwhm_l, 

@@ -11,6 +11,8 @@ corelevel shifts with different methods.
 #TODO USE SAME PARAMETERS! (maybe extract method for fleurinp needed)
 # TODO: Allow for providing referenes as scf_ouputparameter nodes
 # TODO: maybe launch all scfs at the same time
+# TODO: gives only a warning currently if ref not found.
+# but should lead to error if no ref is found for what should be calculated
 from string import digits
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext, WorkChain, if_
@@ -75,8 +77,9 @@ class fleur_initial_cls_wc(WorkChain):
                         'options' : {
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 6*60*60,
-                        'queue_name' : None},
-                        'serial' : True}
+                        'queue_name' : None,
+                        'custom_scheduler_commands' : ''},
+                        'serial' : False}
 
     def __init__(self, *args, **kwargs):
         super(fleur_initial_cls_wc, self).__init__(*args, **kwargs)
@@ -696,6 +699,10 @@ class fleur_initial_cls_wc(WorkChain):
 
         # Formation energy calculation is ony possible if all elementals of the structure
         # have been calculated.
+        # convert total_en dict to list
+        total_en_list =[]
+        for key, val in total_en.iteritems():
+            total_en_list.append([key, val])
         if self.ctx.calculate_formation_energy:
             # the reference total energy is for the whole structure with several atoms,
             # we need it per atom
@@ -703,9 +710,10 @@ class fleur_initial_cls_wc(WorkChain):
             for key, val in ref_total_en.iteritems():
                 elm_dict = get_natoms_element(key)
                 ref_total_en_norm[elm_dict.keys()[0]] = 1.0* val/elm_dict.values()[0]
-            print ref_total_en_norm
+            #print ref_total_en_norm
             #print total_en
-            formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
+            
+            formation_energy, form_dict = determine_formation_energy(total_en_list, ref_total_en_norm)
         else:
             formation_energy = [[]]
 
