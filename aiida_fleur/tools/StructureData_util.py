@@ -15,6 +15,7 @@ from aiida.work.workfunction import workfunction as wf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 
+
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 
@@ -58,6 +59,19 @@ def is_structure(structure):
     #Else throw error? or rather return None
 
     return None
+
+def is_primitive(structure):
+    """
+    Checks if a structure is primitive or not,
+    returns True if the structure can not be anymore refined.
+    prints False if the structure can be futher refinded.
+    """
+    refinded_cell = find_primitive_cell(structure)
+    
+    prim = False
+    if refinded_cell.cell == structure.cell:
+        prim = True
+    return prim
 
 @wf
 def rescale(inp_structure, scale):
