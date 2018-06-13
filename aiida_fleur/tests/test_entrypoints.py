@@ -1,15 +1,26 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 import pytest
 
 @pytest.mark.usefixtures("aiida_env")
 class TestAiida_fleur_entrypoints:
     """
-    tests all the entry points of the Fleur plugin. Therefore if the plugin is reconized by AiiDA 
-    and installed right. 
+    tests all the entry points of the Fleur plugin. Therefore if the plugin is 
+    reconized by AiiDA and installed right. 
     """
     
-    # Calculation
+    # Calculations
+    
     def test_inpgen_calculation_entry_point(aiida_env):
         from aiida.orm import CalculationFactory
         inpgen_calculation = CalculationFactory('fleur.inpgen')
@@ -21,7 +32,9 @@ class TestAiida_fleur_entrypoints:
         fleur_calculation = CalculationFactory('fleur.fleur')
         assert fleur_calculation is not None
     
+    
     # Data
+    
     def test_fleur_fleurinpdata_entry_point(aiida_env):
         from aiida.orm import DataFactory
         from aiida_fleur.data.fleurinp import FleurinpData
