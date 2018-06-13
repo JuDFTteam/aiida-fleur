@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In this module contains useful methods for handling xml trees and files which are used
 by the Fleur code and the fleur plugin.
 """
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-         "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
-
 # TODO FEHLER meldungen, currently if a xpath expression is valid, but does not exists
 # xpath returns []. Do we want this behavior?
 # TODO finish implementation of create=False

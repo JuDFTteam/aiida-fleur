@@ -1,7 +1,18 @@
 # -*- coding: utf-8 -*-
-
-# This code extents the original draw_graph method from  https://github.com/aiidateam/aiida_core
-# It uses common colors to visualize the aiida-fleur nodes
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+"""
+This code extents the original draw_graph method from  https://github.com/aiidateam/aiida_core
+It uses common colors to visualize the aiida-fleur nodes
+"""
 import os, tempfile
 
 def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='dot',

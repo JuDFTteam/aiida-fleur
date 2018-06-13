@@ -1,4 +1,15 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 You find the usual binding_energy for all elements in the periodic table.
 """
@@ -436,7 +447,7 @@ exp_bindingenergies = {
  3: {'binding_energy': {'1s1/2': [56], '2s1/2': []},
      'name': 'Lithium',
      'symbol': 'Li'},
- 4: {'binding_energy': {'1s1/2': [111.85], '2s1/2': []},#111.82
+ 4: {'binding_energy': {'1s1/2': [111.82], '2s1/2': []},#111.82
      'name': 'Beryllium',
      'symbol': 'Be'},
  5: {'binding_energy': {'1s1/2': [189], '2p1/2': [], '2p3/2': [], '2s1/2': []},

@@ -1,34 +1,43 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 Here we collect io routines and their utility. For writting certain things to files.
 For example collection of data or database evaluations, for other people.
 """
 
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
-
-
-def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  '):
+def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
     """
     Writes data to a file
 
     param headerstring: string with information
-    param data: 2D array with data [colum1 colum2, ...]
+    param data: 2D array (numpy,scipy) with data [colum1 colum2, ...]
     """
 
     thefile = open(destination, 'w')
     thefile.write(headerstring)
     datastring = ''
     seperator = seperator# '\t'
-    datat = data.transpose()
+    if transpose:
+        datat = data.transpose()
+    else:
+        datat = data
     for item in datat:
         itemstring = ''
         for value in item:
-            itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
+            if isinstance(value, str) or isinstance(value, basestring):
+                itemstring = itemstring + '{}{}'.format(value, seperator)
+            else:
+                itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
         datastring = datastring + itemstring.strip() + '\n'
     thefile.write(datastring)
     thefile.close()

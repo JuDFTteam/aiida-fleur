@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 Collection of utility routines dealing with StructureData objects
 """
@@ -11,7 +21,7 @@ from ase.io import *
 from aiida.orm import DataFactory
 from aiida.orm import load_node
 from aiida.orm.data.structure import Site, Kind
-from aiida.work.workfunction import workfunction as wf
+from aiida.work.workfunctions import workfunction as wf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 
@@ -208,9 +218,10 @@ def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         for j in range(1,na3): # these sites/atoms are already added
             pos = [pos_o[i] + j * old_a3[i] for i in range(0,len(old_a3))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
-
+    
+    formula = inp_structure.get_formula()
     new_structure.label = 'supercell of {}'.format(formula)
-    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, inp_structure.get_formula())
+    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
     return new_structure
 
 
