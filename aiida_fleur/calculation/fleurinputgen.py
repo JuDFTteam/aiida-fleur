@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 Input plug-in for the FLEUR input generator 'inpgen'.
 The input generator for the Fleur code is a preprocessor
@@ -13,11 +24,6 @@ from aiida.common.constants import elements as PeriodicTableElements
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
-
-__copyright__ = u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany. All rights reserved."
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 bohr_a = 0.52917721092#A # TODO import from somewhere
 StructureData = DataFactory('structure')

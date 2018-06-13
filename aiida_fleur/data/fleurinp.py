@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
 """
 In this module is the FleurinpData class, and methods for FLEUR input
 manipulation plus methods for extration of AiiDA data structures.
@@ -13,25 +23,17 @@ manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 #TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 import os
 import re
 from lxml import etree
 #from lxml.etree import XMLSyntaxError
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 
 from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
-from aiida.work.workfunction import workfunction as wf
+from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA

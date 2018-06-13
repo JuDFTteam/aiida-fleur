@@ -1,11 +1,22 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
 """
 This module contains the parser for a inpgen run (calculation) and methods for
-parsing different files produced by inpgen, which from the input for the FLEUR
+parsing different files produced by inpgen, which form the input for the FLEUR
 code.
 
 Please implement file parsing routines that they can be executed from outside
-the parser. Makes testing and portability easier.
+the parser. Makes testing and portability easier. Also without using aiida_classes,
+that they might be useful to external tools
 """
 #TODO: maybe something from the out files should be saved in the db
 
@@ -14,13 +25,6 @@ from aiida.parsers.parser import Parser
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.parsers import FleurOutputParsingError
-
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 
 class Fleur_inputgenParser(Parser):

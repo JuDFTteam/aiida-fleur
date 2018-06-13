@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
 """
 In this module is the Fleurinpmodefier class, which is used to manipulate
 fleurinpdata objects in a way which keeps the proverance.
 """
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 # TODO implement undo
 # TODO general clean up
@@ -17,13 +21,10 @@ import os
 import re
 from lxml import etree
 from lxml.etree import XMLSyntaxError
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
 
 from aiida.orm import DataFactory
 #from aiida.workflows2.wf import wf
-from aiida.work.workfunction import workfunction as wf
+from aiida.work.workfunctions import workfunction as wf
 
 FleurinpData = DataFactory('fleur.fleurinp')
 
@@ -265,7 +266,7 @@ class FleurinpModifier(object):
                 if not xmlschema.validate(fleurinp_tree_copy):
                     pass# do something to get nice error message
                     # TODO maybe even delete wrong task
-                    print 'change not valid: {}'.format(task[1:])
+                    print('change not valid: {}'.format(task[1:]))
                 else:
                     pass
                     #print 'change validated'
@@ -365,7 +366,7 @@ class FleurinpModifier(object):
             with_schema = True
         except:
             with_schema = False
-            print 'No schema file found'
+            print('No schema file found')
             return
         if with_schema:
             tree = self.apply_modifications(tree, self._tasks, schema_tree=xmlschema_tree)
@@ -384,7 +385,7 @@ class FleurinpModifier(object):
 
         if display:
             xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print = True)
-            print xmltreestring
+            print(xmltreestring)
         return tree
         #print self.apply_modifications(self._original.get_dict(), self._tasks)
 
@@ -401,8 +402,8 @@ class FleurinpModifier(object):
         out = self.modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
-            _label='fleurinp modifier',
-            _description='This workfunction modified an Fleurinpdataobject')
+            label='fleurinp modifier',
+            description='This workfunction modified an Fleurinpdataobject')
         return out
 
     def undo(self, all=False):
