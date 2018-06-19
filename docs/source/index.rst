@@ -7,25 +7,23 @@
 Welcome to the AiiDA-FLEUR 's documentation!
 ++++++++++++++++++++++++++++++++++++++++++++
 
-.. image:: images/fleur.png
-    :width: 20%
-    :align: left
-    :height: 60px
-.. image:: images/MAX-orizz.jpeg
-    :width: 35%
-    :align: right
-    :height: 200px
-.. image:: images/AiiDA_transparent_logo.png
-    :width: 35%
-    :align: center
-    :height: 300px
 
+.. figure:: images/fleur.png
+    :width: 25 %
+    :align: center
+.. figure:: images/MAX-orizz.eps
+    :width: 50 %
+    :align: center
+.. figure:: images/AiiDA_transparent_logo.png
+    :width: 50 %
+    :align: center
+
+.. _AiiDA: http://www.aiida.net
+.. _FLEUR: http://www.flapw.de
 
 ..
 
-
-Framework for computational science
-
+  
 ..
 
 
