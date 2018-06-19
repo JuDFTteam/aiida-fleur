@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In this module you find the workflow 'fleur_optimize_parameter_wc', which finds
 working/(in the future, optiomal) flapw parameters for a given Structure
@@ -8,7 +18,7 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 #import numpy as np
 from aiida.orm import Code, DataFactory#, load_node
 #from aiida.orm.data.base import Float
-from aiida.work.process_registry import ProcessRegistry
+#from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import WorkChain, ToContext#,Outputs
 #from aiida.work import workfunction as wf
 from aiida.work.run import submit
@@ -19,12 +29,6 @@ from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
@@ -32,13 +36,6 @@ ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
 #FleurProcess = FleurCalculation.process()
 FleurinpProcess = FleurinputgenCalculation.process()
-
-
-__copyright__ = (u"Copyright (c), 2017, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 
 class fleur_optimize_parameters_wc(WorkChain):
@@ -92,7 +89,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         check input nodes
         """
         self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
+        self.report("Workchain node identifiers: ")#{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
 
