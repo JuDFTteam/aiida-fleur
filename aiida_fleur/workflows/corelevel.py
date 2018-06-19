@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 
 """
 This is the worklfow 'corelevel' using the Fleur code, which calculates Binding
@@ -7,16 +17,14 @@ energies and corelevel shifts with different methods.
 'divide and conquer'
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 
 import os.path
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext
-from aiida.work.process_registry import ProcessRegistry
+#from aiida.work.process_registry import ProcessRegistry
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -87,12 +95,11 @@ class fleur_corelevel_wc(WorkChain):
         spec.outline(
             cls.check_input,
             if_(cls.initalstate)(
-                cls.calculate_inital
-                    )
+                cls.calculate_inital),
             cls.create_new_fleurinp,
             cls.run_fleur,
-            cls.run_scfs
-            cls.collect_results
+            cls.run_scfs,
+            cls.collect_results,
             cls.return_results
         )
         #spec.dynamic_output()
@@ -106,8 +113,8 @@ class fleur_corelevel_wc(WorkChain):
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
         print('started bands workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}"
-              "".format(ProcessRegistry().current_calc_node))
+        print("Workchain node identifiers: ")#{}"
+              #"".format(ProcessRegistry().current_calc_node))
 
 
 
@@ -168,7 +175,7 @@ class fleur_corelevel_wc(WorkChain):
 
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
-            print self.ctx.queue
+            print(self.ctx.queue)
         # if code local use
         #if self.inputs.fleur.is_local():
         #    inputs._options.computer = computer
@@ -191,7 +198,7 @@ class fleur_corelevel_wc(WorkChain):
         inputs = self.get_inputs_fleur()
         #print inputs
         future = submit(FleurProcess, **inputs)
-        print 'run Fleur in band workflow'
+        print('run Fleur in band workflow')
 
         return ToContext(last_calc=future)
 
@@ -211,13 +218,13 @@ class fleur_corelevel_wc(WorkChain):
         # TODO this should be easier...
         last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path')
         bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print bandfilepath
+        print(bandfilepath)
         #bandfilepath = "path to bandfile" # Array?
         if os.path.isfile(bandfilepath):
             self.ctx.successful = True
         else:
             bandfilepath = None
-            print '!NO bandstructure file was found, something went wrong!'
+            print('!NO bandstructure file was found, something went wrong!')
         #TODO corret efermi:
         # get efermi from last calculation
         efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
