@@ -173,8 +173,9 @@ class fleur_scf_wc(WorkChain):
         init context and some parameters
         """
         self.report('INFO: started convergence workflow version {}\n'
-                    'INFO: Workchain node identifiers: {}'
-                    ''.format(self._workflowversion, self.uuid))#, ProcessRegistry().current_calc_node))
+                    #'INFO: Workchain node identifiers: {}'
+                    ''.format(self._workflowversion))#, self.uuid))#, ProcessRegistry().current_calc_node))
+                # currently buggy...
 
         ####### init    #######
 

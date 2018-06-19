@@ -213,6 +213,8 @@ def plot_fleur_scf_wc(nodes, labels=[]):
             pass
         else:
             nodes=[nodes[0]]
+    else:
+        nodes=[nodes]#[0]]
     #scf_wf = load_node(6513)
 
     iterations = []
