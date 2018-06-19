@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In this module you find the workflow 'fleur_eos_wc' for the calculation of
 of an equation of state
@@ -12,10 +22,9 @@ of an equation of state
 import numpy as np
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Float
-from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import WorkChain, ToContext#,Outputs
-from aiida.work import workfunction as wf
-from aiida.work.run import submit
+from aiida.work.workfunctions import workfunction as wf
+from aiida.work.launch import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -24,12 +33,6 @@ from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 
 class fleur_eos_wc(WorkChain):
@@ -53,8 +56,27 @@ class fleur_eos_wc(WorkChain):
     example input.
     """
 
-    _workflowversion = "0.3.2"
+    _workflowversion = "0.3.3"
 
+    _default_options = {
+                        'resources' : {"num_machines": 1},
+                        'walltime_sec' : 6*60*60,
+                        'queue_name' : '',
+                        'custom_scheduler_commands' : '',
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}    
+
+                        
+    ERROR_INVALID_INPUT_RESOURCES = 1
+    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
+    ERROR_INVALID_CODE_PROVIDED = 3
+    ERROR_INPGEN_CALCULATION_FAILED = 4
+    ERROR_CHANGING_FLEURINPUT_FAILED = 5
+    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
+    ERROR_FLEUR_CALCULATION_FALIED = 7
+    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
+    
+    
     def __init__(self, *args, **kwargs):
         super(fleur_eos_wc, self).__init__(*args, **kwargs)
 
@@ -67,33 +89,38 @@ class fleur_eos_wc(WorkChain):
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,
-                       'guess' : 1.00,
-                       'options' : {
-                       'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
-                       'walltime_sec':  60*60,
-                       'queue_name' : '',
-                       'custom_scheduler_commands' : ''}}))
+                       'guess' : 1.00}))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
+        spec.input("options", valid_type=ParameterData, required=False, 
+                   default=ParameterData(dict={
+                            'resources': {"num_machines": 1},
+                            'walltime_sec': 60*60,
+                            'queue_name': '',
+                            'custom_scheduler_commands' : '',
+                            'import_sys_environment' : False,
+                            'environment_variables' : {}}))
+        spec.input("settings", valid_type=ParameterData, required=False)
+
         spec.outline(
             cls.start,
             cls.structures,
             cls.converge_scf,
             cls.return_results
         )
-        #spec.dynamic_output()
 
+        
     def start(self):
         """
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report('started eos workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
-        #print('started eos workflow version {}'.format(self._workflowversion))
-        #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
+        self.report("Started eos workflow version {} "
+                    "Workchain node identifiers: {}".format(self._workflowversion, self.uuid))
+
+        
         ### input check ### ? or done automaticly, how optional?
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -122,7 +149,16 @@ class fleur_eos_wc(WorkChain):
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)#True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.options = wf_dict.get('options', {})
+
+        #defaultoptions = self._default_options
+        #options = wf_dict.get('options', defaultoptions)
+        #if 'options' in self.inputs:
+        #    options = self.inputs.options.get_dict()
+        #else:
+        #    options = defaultoptions
+        #for key, val in defaultoptions.iteritems():
+        #    options[key] = options.get(key, val)
+        #self.ctx.options = options
         
         inputs = self.inputs
 
@@ -132,9 +168,8 @@ class fleur_eos_wc(WorkChain):
             except ValueError:
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
-                #self.control_end_wc(error)
-                print(error)
-                self.abort(error)
+                self.control_end_wc(error)
+                return self.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
             try:
@@ -142,9 +177,8 @@ class fleur_eos_wc(WorkChain):
             except ValueError:
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
-                #self.control_end_wc(error)
-                #print(error)
-                self.abort(error)
+                self.control_end_wc(error)
+                return self.ERROR_INVALID_CODE_PROVIDED
 
     def structures(self):
         """
@@ -175,33 +209,35 @@ class fleur_eos_wc(WorkChain):
             label = str(self.ctx.scalelist[i])
             label_c = '|eos| fleur_scf_wc'
             description = '|fleur_eos_wc|fleur_scf_wc|scale {}, {}'.format(label, i)
-
+            inputs['label'] = label_c
+            inputs['description'] = description
+            
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom.append(struc.get_cell_volume()/natoms)
             self.ctx.structurs_uuids.append(struc.uuid)
 
-            calc_para = inputs['calc_parameters']
+            #calc_para = inputs['calc_parameters']
             
             # Here we give the same wf_parameters to the fleur_scf...
-            if calc_para:
-                res = submit(fleur_scf_wc,
-                             wf_parameters=inputs['wf_parameters'],
-                             structure=inputs['structure'],
-                             calc_parameters=calc_para,
-                             inpgen=inputs['inpgen'],
-                             fleur=inputs['fleur'],
-                             _label=label_c,
-                             _description=description)
-            else:
-                res = submit(fleur_scf_wc,
-                             wf_parameters=inputs['wf_parameters'],
-                             structure=inputs['structure'],
-                             inpgen=inputs['inpgen'],
-                             fleur=inputs['fleur'],
-                             _label=label_c,
-                             _description=description)
+            #if calc_para:
+            #     res = self.submit(fleur_scf_wc,
+            #                  wf_parameters=inputs['wf_parameters'],
+            #                  structure=inputs['structure'],
+            #                  calc_parameters=calc_para,
+            #                  inpgen=inputs['inpgen'],
+            #                  fleur=inputs['fleur'],
+            #                  label=label_c,
+            #                  description=description)
+            # else:
+            #     res = self.submit(fleur_scf_wc,
+            #                  wf_parameters=inputs['wf_parameters'],
+            #                  structure=inputs['structure'],
+            #                  inpgen=inputs['inpgen'],
+            #                  fleur=inputs['fleur'],
+            #                  label=label_c,
+            #                  description=description)
             #time.sleep(5)
-
+            res = self.submit(fleur_scf_wc, **inputs)
             self.ctx.labels.append(label)
             calcs[label] = res
 
@@ -216,17 +252,20 @@ class fleur_eos_wc(WorkChain):
 
         # create input from that
         wf_para_dict = self.inputs.wf_parameters.get_dict()
-        inputs['wf_parameters'] = wf_para_dict.get('scf_para', None)
+        if wf_para_dict.get('scf_para', None):
+            inputs['wf_parameters'] = wf_para_dict.get('scf_para', None)
 
-        if not inputs['wf_parameters']:
-            para = {}
-            para['options'] = wf_para_dict.get('options')            
-            #para['resources'] = wf_para_dict.get('resources')
-            #para['walltime_sec'] = wf_para_dict.get('walltime_sec')
-            #para['queue_name'] = wf_para_dict.get('queue_name')
-            para['serial'] = wf_para_dict.get('serial')
-            #para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
-            inputs['wf_parameters'] = ParameterData(dict=para)
+        #if not inputs['wf_parameters']:
+        #    para = {}
+        #    para['options'] = wf_para_dict.get('options')            
+        #    #para['resources'] = wf_para_dict.get('resources')
+        #    #para['walltime_sec'] = wf_para_dict.get('walltime_sec')
+        #    #para['queue_name'] = wf_para_dict.get('queue_name')
+        #    para['serial'] = wf_para_dict.get('serial')
+        #    #para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
+        #    inputs['wf_parameters'] = ParameterData(dict=para)
+        if 'options' in self.inputs:
+            inputs['options'] = self.inputs.options
         try:
             calc_para = self.inputs.calc_parameters
         except AttributeError:
@@ -367,6 +406,19 @@ class fleur_eos_wc(WorkChain):
         for link_name, node in returndict.iteritems():
             self.out(link_name, node)
 
+            
+    def control_end_wc(self, errormsg):
+        """
+        Controled way to shutdown the workchain. will initalize the output nodes
+        The shutdown of the workchain will has to be done afterwards
+        """
+        self.ctx.successful = False
+        self.ctx.abort = True
+        self.report(errormsg) # because return_results still fails somewhen
+        self.ctx.errors.append(errormsg)
+        self.return_results()
+        
+        return
 
 if __name__ == "__main__":
     import argparse
@@ -414,7 +466,6 @@ def create_eos_result_node(**kwargs):
         outdict['gs_structure'] = gs_structure
 
     return outdict
-
 
 
 def eos_structures(inp_structure, scalelist):

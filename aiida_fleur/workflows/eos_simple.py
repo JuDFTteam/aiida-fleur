@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In this module you find the workflow 'fleur_eos_wc_simple' for the calculation of
 of an equation of state, with only the structure and optional wc parameters as input
@@ -8,7 +18,7 @@ of an equation of state, with only the structure and optional wc parameters as i
 import numpy as np
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Float
-from aiida.work.process_registry import ProcessRegistry
+#from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import WorkChain, ToContext#,Outputs
 #from aiida.work import workfunction as wf
 from aiida.work.run import submit
@@ -23,11 +33,6 @@ StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
 
-__copyright__ = (u"Copyright (c), 2017, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 class fleur_eos_wc_simple(WorkChain):
     """
@@ -88,7 +93,7 @@ class fleur_eos_wc_simple(WorkChain):
         check input nodes
         """
         self.report('started simple eos workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
+        #self.report("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
 
