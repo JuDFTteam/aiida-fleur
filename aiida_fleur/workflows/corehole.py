@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 This is the worklfow 'corehole' using the Fleur code, which calculates Binding
 energies and corelevel shifts with different methods.
@@ -19,9 +29,9 @@ from pprint import pprint
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Int
 from aiida.work.workchain import WorkChain, if_, ToContext
-from aiida.work.run import submit
-from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workfunction import workfunction as wf
+from aiida.work.launch import submit
+#from aiida.work.process_registry import ProcessRegistry
+from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import supercell
@@ -32,14 +42,6 @@ from aiida_fleur.tools.StructureData_util import find_equi_atoms
 from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
-
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -112,11 +114,25 @@ class fleur_corehole_wc(WorkChain):
     """
 
     _workflowversion = "0.3.2"
+    _default_options = {
+                        'resources' : {"num_machines": 1},
+                        'walltime_sec' : 6*60*60,
+                        'queue_name' : '',
+                        'custom_scheduler_commands' : '',
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}    
 
-    #def __init__(self, *args, **kwargs):
-    #    super(fleur_corehole_wc, self).__init__(*args, **kwargs)
-
-
+                        
+    ERROR_INVALID_INPUT_RESOURCES = 1
+    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
+    ERROR_INVALID_CODE_PROVIDED = 3
+    ERROR_INPGEN_CALCULATION_FAILED = 4
+    ERROR_CHANGING_FLEURINPUT_FAILED = 5
+    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
+    ERROR_FLEUR_CALCULATION_FALIED = 7
+    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
+    ERROR_IN_REFERENCE_CREATION = 9
+     
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
@@ -134,19 +150,22 @@ class fleur_corehole_wc(WorkChain):
                 #'relax_para' : 'default', # parameter dict for the relaxation
                 'scf_para' : 'default',    # wf parameter dict for the scfs
                 'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
-                'resources' : {"num_machines": 1},# resources per job
-                'walltime_sec' : 60*60,    # walltime per job
-                'queue_name' : None,       # what queue to submit to
                 'serial' : True,           # run fleur in serial, or parallel?
                 #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-                'magnetic' : True,
-                'custom_scheduler_commands' : ''}))
+                'magnetic' : True}))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
-
+        spec.input("options", valid_type=ParameterData, required=False, 
+                   default=ParameterData(dict={
+                            'resources': {"num_machines": 1},
+                            'walltime_sec': 60*60,
+                            'queue_name': '',
+                            'custom_scheduler_commands' : '',
+                            'import_sys_environment' : False,
+                            'environment_variables' : {}}))
         spec.outline(
             cls.check_input,              # first check if input is consistent
             if_(cls.relaxation_needed)(  # ggf relax the given cell
@@ -158,11 +177,8 @@ class fleur_corehole_wc(WorkChain):
             cls.check_scf,
             cls.run_scfs,
             cls.check_scf,
-            #cls.collect_results,
             cls.return_results
         )
-        #spec.dynamic_output()
-
 
     def check_input(self):
         """
@@ -171,8 +187,8 @@ class fleur_corehole_wc(WorkChain):
         """
         # TODO: document parameters
         self.report("started fleur_corehole_wc version {} "
-                    "Workchain node identifiers: {}"
-                    "".format(self._workflowversion, ProcessRegistry().current_calc_node))
+                    "Workchain node identifiers: "#{}"
+                    "".format(self._workflowversion))#, ProcessRegistry().current_calc_node))
 
         ### init ctx ###
 
@@ -181,8 +197,6 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.calcs_ref_torun = []
         self.ctx.labels = []
         self.ctx.calcs_res = []
-        #self.ctx.get_res = True
-
 
         # input variables
         inputs = self.inputs
@@ -198,9 +212,6 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial')
         self.ctx.same_para = wf_dict.get('same_para')
         self.ctx.scf_para = wf_dict.get('scf_para', {})
-        self.ctx.resources = wf_dict.get('resources')
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec')
-        self.ctx.queue = wf_dict.get('queue_name')
         self.ctx.be_to_calc = wf_dict.get('corelevel')
         self.ctx.atoms_to_calc = wf_dict.get('atoms')
         self.ctx.base_structure = inputs.get('structure') # ggf get from fleurinp
@@ -208,7 +219,17 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.supercell_size = wf_dict.get('supercell_size', [2, 1, 1]) # 2x2x2 or smaller?
         self.ctx.hole_charge = wf_dict.get('hole_charge', 1.0)
         self.ctx.magnetic = wf_dict.get('magnetic', True)
-        self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
+        
+        defaultoptions = self._default_options
+        options = wf_dict.get('options', defaultoptions)
+        if 'options' in self.inputs:
+            options = self.inputs.options.get_dict()
+        else:
+            options = defaultoptions
+        for key, val in defaultoptions.iteritems():
+            options[key] = options.get(key, val)
+        self.ctx.options = options
+        
         #self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         #self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         #self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
@@ -266,26 +287,26 @@ class fleur_corehole_wc(WorkChain):
         """
         create the needed supercell
         """
-        #print('in create_supercell')
+
         supercell_base = self.ctx.supercell_size
-        #print supercell_base
-        #print self.ctx.base_structure_relax
+        description=(u'WF, Creates a supercell of a crystal structure x({},{},{}).'
+            ''.format(supercell_base[0], supercell_base[0], supercell_base[2]))
+
         supercell_s = supercell(
                         self.ctx.base_structure_relax,
                         Int(supercell_base[0]),
                         Int(supercell_base[1]),
-                        Int(supercell_base[2]))#,
-                        #_label=u'supercell_wf',
-                        #_description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).')
-        #form = self.ctx.base_structure_relax.get_formula()
-        # overwrite label and description
-        supercell_s.label = '{}x{}x{} ' +  supercell_s.label.format(supercell_base[0], supercell_base[1], supercell_base[2])
-        supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'#'{}x{}x{} supercell of {} created in a fleur_corehole_wc'
+                        Int(supercell_base[2]),
+                        label=u'supercell_wf',
+                        description=description)
+
+        # overwrite label and description of new structure
+        supercell_s.label = '{}x{}x{} of {}'.format(supercell_base[0], supercell_base[1], supercell_base[2], self.ctx.base_structure_relax.uuid)
+        supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
         new_calc = [supercell_s, calc_para]
         self.ctx.calcs_ref_torun.append(new_calc)
-        #print('calcs_ref_torun {}'.format(self.ctx.calcs_ref_torun))
         return
 
     def create_coreholes(self):
@@ -391,21 +412,22 @@ class fleur_corehole_wc(WorkChain):
                             coreholes_atoms.append(site)
                 else:
                     # wrong tuple length this is not a  position
-                    print('WARNING: strange position/coordinates given: {}'.format(atom_info))
+                    self.report('WARNING: strange position/coordinates given: {}'.format(atom_info))
                     #
             elif isinstance(atom_info, int): # index for sites
                 to_append = None
                 try:
                     to_append = base_atoms_sites[atom_info]
                 except IndexError:
-                    print("ERROR: The index/integer: {} specified in 'atoms' key is not valid."
+                    error = ("ERROR: The index/integer: {} specified in 'atoms' key is not valid."
                           "There are only {} atom sites in your provided structure."
                           "".format(atom_info, len(base_atoms_sites)))
                     to_append = None
+                    self.report(error)
                 if to_append:
                     coreholes_atoms.append(to_append)
             else:
-                print("WARNING: input: {} of 'atoms' not recongized".format(atom_info))
+                self.report("WARNING: input: {} of 'atoms' not recongized".format(atom_info))
 
         # TODO: remove doubles in coreholes_atoms?
         #print(coreholes_atoms)
@@ -416,7 +438,7 @@ class fleur_corehole_wc(WorkChain):
         #########
         # 2. now check what type of corelevel shall we create on those atoms
         for corel in corelevels_toc:
-            if isinstance(corel, basestring):
+            if isinstance(corel, str):#basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split("[, ;:-]", corel)
                 #print(elm_cl)
@@ -424,7 +446,9 @@ class fleur_corehole_wc(WorkChain):
                     pass
                     # something went wrong, wrong input
                     # TODO log, error and hint
-                    continue
+                    error = 'ERROR: corelevel was given in the wrong format: {}, should have len 2'.format(elm_cl)
+                    self.control_end_wc(error)
+                    return self.ERROR_IN_REFERENCE_CREATION
                 else:
                     # we assume for now ['Element', 'corelevel'] i.e ['Be', '1s']
                     econfigs = []
@@ -565,10 +589,8 @@ class fleur_corehole_wc(WorkChain):
                 wf_parameter = para
             #print(wf_parameter)
             wf_parameter['serial'] = self.ctx.serial
-            wf_parameter['queue_name'] = self.ctx.queue
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
-            wf_parameter['resources'] = self.ctx.resources
-            wf_parameter['walltime_sec'] = self.ctx.walltime_sec
+
             wf_parameters = ParameterData(dict=wf_parameter)
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
@@ -615,11 +637,9 @@ class fleur_corehole_wc(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
-        wf_parameter['queue_name'] = self.ctx.queue
-        wf_parameter['resources'] = self.ctx.resources
-        wf_parameter['walltime_sec'] = self.ctx.walltime_sec
-        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters = ParameterData(dict=wf_parameter)
+        options = ParameterData(dict=self.ctx.options)
+
         '''
         #res_all = []
         calcs = {}
@@ -662,21 +682,21 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
-                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                          _label=scf_label, _description=scf_desc)#
+                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
+                          label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
-                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                          _label=scf_label, _description=scf_desc)#
+                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
+                          label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
-                    res = submit(fleur_scf_wc, wf_parameters=wf_parameters,
+                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
                                  calc_parameters=node[1], structure=node[0],
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                 _label=scf_label, _description=scf_desc)#
+                                 label=scf_label, description=scf_desc)#
                 else:
-                    self.report(' WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
+                    self.report('WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
             else:
                 self.report('WARNING: something in run_ref_scf which I do not reconise: {}'.format(node))
                 continue
@@ -704,7 +724,7 @@ class fleur_corehole_wc(WorkChain):
         If the structures should be relaxed, check if their Forces are below a certain
         threshold, otherwise throw them in the relaxation wf.
         """
-        print('In relaxation fleur_corehole_wc')
+        self.report('In relaxation fleur_corehole_wc')
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
@@ -720,7 +740,7 @@ class fleur_corehole_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        print('In relax fleur_corehole_wc workflow')
+        self.report('In relax fleur_corehole_wc workflow')
         self.ctx.base_structure_relax = self.ctx.base_structure
         #for calc in self.ctx.dos_to_calc:
         #    pass
@@ -739,9 +759,10 @@ class fleur_corehole_wc(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
-        wf_parameter['queue_name'] = self.ctx.queue
-        wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
+        #wf_parameter['queue_name'] = self.ctx.queue
+        #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters = ParameterData(dict=wf_parameter)
+        options = ParameterData(dict=self.ctx.options)
         #res_all = []
         calcs = {}
         scf_label = 'corehole_wc cell'
@@ -752,24 +773,23 @@ class fleur_corehole_wc(WorkChain):
         for node in self.ctx.calcs_torun:
             #print node
             i = i+1
-
             if isinstance(node, StructureData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
-                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                          _label=scf_label, _description=scf_desc)#
+                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
+                          label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
-                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                          _label=scf_label, _description=scf_desc)#
+                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                          inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
+                          label=scf_label, description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
                     if isinstance(node[2], ParameterData):
-                        res = submit(fleur_scf_wc, wf_parameters=node[2],
-                                     calc_parameters=node[1], structure=node[0],
+                        res = self.submit(fleur_scf_wc, wf_parameters=node[2],
+                                     calc_parameters=node[1], structure=node[0], options=options,
                                      inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                     _label=scf_label, _description=scf_desc)#
+                                     label=scf_label, description=scf_desc)#
             else:
-                print('something in run_scfs which I do not recognize: {}'.format(node))
+                self.report('ERROR: Something in run_scfs which I do not recognize: {}'.format(node))
                 continue
             label = str('calc{}'.format(i))
             #print(label)
@@ -932,8 +952,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.successful = False
         self.ctx.abort = True
         self.return_results()
-        #self.abort_nowait(errormsg)
-        self.abort(errormsg)
+        return
 
 
 @wf
