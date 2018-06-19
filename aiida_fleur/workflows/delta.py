@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solution to calculate a delta for a given code with AiiDA.
 """
@@ -14,7 +24,7 @@ from string import digits
 
 from aiida.orm import Code, DataFactory, Group
 from aiida.work.workchain import WorkChain, ToContext#, while_
-from aiida.work.process_registry import ProcessRegistry
+#from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
 from aiida.work import submit
 from aiida.common.exceptions import NotExistent
@@ -22,13 +32,6 @@ from aiida_fleur.workflows.eos import fleur_eos_wc
 
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
-
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 
 RemoteData = DataFactory('remote')
@@ -85,12 +88,12 @@ class fleur_delta_wc(WorkChain):
 
         #print('started delta workflow version {}'.format(self._workflowversion))
         #print("Workchain node identifiers: {}".format(ProcessRegistry().current_calc_node))
-        identifier =  ProcessRegistry().current_calc_node
-        self.ctx.own_uuid = identifier.uuid
-        self.ctx.own_pk = identifier.pk
+        #identifier =  0#ProcessRegistry().current_calc_node
+        #self.ctx.own_uuid = identifier.uuid
+        #self.ctx.own_pk = identifier.pk
 
-        self.report('started delta workflow version {} with identifier: {}'
-                    ''.format(self._workflowversion, identifier))
+        self.report('started delta workflow version {} with identifier: '#{}'
+                    ''.format(self._workflowversion))#, identifier))
 
         # init
         self.ctx.calcs_to_run = []
