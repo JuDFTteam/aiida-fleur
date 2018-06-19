@@ -1,28 +1,39 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
+import numpy as np
 
-from aiida.orm import DataFactory, Node, load_node
+from aiida.orm import DataFactory, Node, load_node, CalculationFactory
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
+from aiida_fleur.tools.plot.fleur import extract_corelevel_spec_nodes
+from aiida_fleur.tools.common_fleur_wf_util import ucell_to_atompr, calc_stoi
+
 
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
-FleurinpProcess = FleurinputgenCalculation.process()
+#FleurProcess = FleurCalculation.process()
+#FleurinpProcess = FleurinputgenCalculation.process()
+FleurProcess = CalculationFactory('fleur.fleur')#FleurCalculation.process()
+FleurinpProcess = CalculationFactory('fleur.inpgen')#FleurinputgenCalculation.process()
 
 
 def is_code(code):
@@ -73,11 +84,11 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False, **kwargs):
     '''
     get the input for a FLEUR calc
     '''
-    inputs = FleurProcess.get_inputs_template()
+    inputs = FleurProcess.get_builder()#get_inputs_template()
     #print('Template fleur {} '.format(inputs))
     if remote:
         inputs.parent_folder = remote
@@ -86,31 +97,39 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     if fleurinp:
         inputs.fleurinpdata = fleurinp
 
-    for key, val in options.iteritems():
-        if val==None:
-            continue
-        elif isinstance(val, str):# ensure unicode 
-            inputs._options[key] = unicode(val)
-        else:
-            inputs._options[key] = val
+    #for key, val in options.iteritems():
+    #    if val==None:
+    #        continue
+    #    elif isinstance(val, str):# ensure unicode 
+    #        inputs.options[key] = unicode(val)
+    #    else:
+    #        inputs.options[key] = val
 
     if description:
-        inputs['_description'] = description
+        inputs.description = description
     else:
-        inputs['_description'] = ''
+        inputs.description = ''
     if label:
-        inputs['_label'] = label
+        inputs.label = label
     else:
-        inputs['_label'] = ''
+        inputs.label = ''
     #TODO check  if code is parallel version?
     if serial:
-        inputs._options.withmpi = False # for now
+        if not options:
+            options = {}
+        options['withmpi'] = False # for now
         #TODO not every machine/scheduler type takes number of machines
-        inputs._options.resources = {"num_machines": 1}
+        options['resources'] = {"num_machines": 1}
 
     if settings:
         inputs.settings = settings
 
+    if options:
+        inputs.options = options
+    
+    # Currently this does not work, find out howto...
+    #for key, val in kwargs.iteritems(): 
+    #    inputs[key] = val
     '''
     options = {
     "max_wallclock_seconds": int,
@@ -130,11 +149,11 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None):
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None, **kwargs):
     """
     get the input for a inpgen calc
     """
-    inputs = FleurinpProcess.get_inputs_template()
+    inputs = FleurinpProcess.get_builder()#.get_inputs_template()
     #print('Template inpgen {} '.format(inputs))
 
     if structure:
@@ -143,27 +162,37 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
         inputs.code = inpgencode
     if params:
         inputs.parameters = params
-    for key, val in options.iteritems():
-        if val==None:
-            #leave them out, otherwise the dict schema won't validate
-            continue
-        else:
-            inputs._options[key] = val
+    #for key, val in options.iteritems():
+    #    if val==None:
+    #        #leave them out, otherwise the dict schema won't validate
+    #        continue
+    #    else:
+    #        inputs.options[key] = val
 
+        
     if description:
-        inputs['_description'] = description
+        inputs.description = description
     else:
-        inputs['_description'] = ''
+        inputs.description = ''
 
     if label:
-        inputs['_label'] = label
+        inputs.label = label
     else:
-        inputs['_label'] = ''
+        inputs.label = ''
 
+    if not options:
+        options = {}
     #inpgen run always serial
-    inputs._options.withmpi = False # for now
-    inputs._options.resources = {"num_machines": 1}
+    options['withmpi'] = False # for now
+    options['resources'] = {"num_machines": 1}
     #print(inputs)
+    if options:
+        inputs.options = options
+    
+    # Currently this does not work, find out howto...
+    #for key, val in kwargs.items():
+    #    inputs[key] = val
+    
     return inputs
 
 
@@ -268,7 +297,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
             if use_exceptions:
                 raise ValueError(msg)
             else:
-                print >> sys.stderr, msg
+                print(msg)#, file=sys.stderr)
                 sys.exit(1)
         else:
             msg = ("Code not valid, and no valid codes for {}.\n"
@@ -278,7 +307,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
             if use_exceptions:
                 raise ValueError(msg)
             else:
-                print >> sys.stderr, msg
+                print(msg)#, file=sys.stderr)
                 sys.exit(1)
 
     return code
@@ -368,7 +397,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 
     for reaction_string in reaction_list:
         ent_peratom = get_enhalpy_of_equation(reaction_string, formenergy_dict)
-        print ent_peratom
+        print(ent_peratom)
         energy_sorted_reactions.append([reaction_string, ent_peratom])
     energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])
     return energy_sorted_reactions
@@ -426,13 +455,13 @@ def performance_extract_calcs(calcs):
             calc = load_node(calc)
         count = count + 1
         pk = calc.pk
-        print count, pk
+        print(count, pk)
         res = calc.res
         res_keys = list(res)
         try:
             efermi = res.fermi_energy
         except AttributeError:
-            print 'skipping {}, {}'.format(pk, calc.uuid)
+            print('skipping {}, {}'.format(pk, calc.uuid))
             continue # we skip these entries
             efermi = -10000
 
@@ -441,14 +470,14 @@ def performance_extract_calcs(calcs):
         except AttributeError:
             gap = -10000   
             continue
-            print 'skipping 2 {}, {}'.format(pk, calc.uuid)
+            print('skipping 2 {}, {}'.format(pk, calc.uuid))
 
 
         try:
             energy = res.energy
         except AttributeError:
             energy = 0.0
-            print 'skipping 3 {}, {}'.format(pk, calc.uuid)
+            print('skipping 3 {}, {}'.format(pk, calc.uuid))
             continue
 
         data_dict['bandgap'].append(gap)        
@@ -545,3 +574,4 @@ def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
 def cost_ratio(total_costs, walltime_sec, ncores):
     ratio = total_costs/(walltime_sec*ncores)
     return ratio
+    

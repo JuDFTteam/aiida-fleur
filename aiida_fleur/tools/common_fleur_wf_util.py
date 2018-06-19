@@ -1,16 +1,20 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 In here we put all things (methods) that are common to workflows AND DO NOT
 depend on AiiDA classes, therefore can be used without loading the dbenv.
 Util that does depend on AiiDA classes should go somewhere else.
 """
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
 
 def convert_formula_to_formula_unit(formula):
     """
@@ -66,6 +70,89 @@ def get_natoms_element(formula):
 #get_natoms_element('BeW')
 #get_natoms_element('Be2W')
 
+def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
+    """
+    Converts unit cell ratios into atom ratios.
+    
+    len(ratio) == len(formulas) (== len(error_ratio))
+    ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be', [0.1, 0.1, 0.1])
+    """
+    import numpy as np
+    
+    
+    atompro = []
+    atompro_err = []
+    if not (len(ratio) == len(formulas)):
+        return
+
+    n_atoms_formula = []
+    for formula in formulas:
+        res = get_natoms_element(formula)
+        n_atoms_formula.append(res.get(element, 0))
+
+    atompro = np.array(ratio)*np.array(n_atoms_formula)
+    total = sum(atompro)
+    atompro = atompro/total
+    
+    if len(error_ratio):
+        atompro_err_t = np.array(error_ratio)*np.array(n_atoms_formula)
+        e_sum = np.sqrt(sum(atompro_err_t**2))
+        atompro_err = 1/total*(np.sqrt(atompro_err_t**2 + (atompro*e_sum)**2))        
+        
+    return atompro, atompro_err
+
+# test
+#print(ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be'))
+#print(ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be', error_ratio=[0.1,0.1,0.1]))
+#(array([ 0.79470199,  0.11258278,  0.09271523]), [])
+#(array([ 0.79470199,  0.11258278,  0.09271523]), array([ 0.01357192,  0.01136565,  0.0018444 ]))
+
+
+def calc_stoi(unitcellratios, formulas, error_ratio=[]):
+    """
+    Calculate the Stoichiometry with errors from a given unit cell ratio, formulas.
+    
+    Example:
+    calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], [0.1, 0.01, 0.1])
+    ({'Be': 12.583333333333334, 'Ti': 1.0}, {'Be': 0.12621369924887876, 'Ti': 0.0012256517540566825})
+    calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'])
+    ({'Be': 12.583333333333334, 'Ti': 1.0}, {})
+    """
+    
+    import numpy as np
+
+    stoi = {}
+    if not (len(unitcellratios) == len(formulas)):
+        return
+    
+    errors_stoi = {}
+    for i, formula in enumerate(formulas):
+        res = get_natoms_element(formula)
+        for element, val in res.iteritems():
+            stoi_elm = stoi.get(element, 0)
+            stoi[element] = stoi_elm + val*unitcellratios[i]
+            if len(error_ratio):
+                errors = errors_stoi.get(element, 0)
+                errors_stoi[element] = errors + val*val*error_ratio[i]*error_ratio[i]
+    
+    # make smallest number always one.
+    vals = stoi.values()
+    minv = min(vals)
+    keymin = stoi.keys()[vals.index(minv)]
+    norm_stoi = {}
+    for key, val in stoi.iteritems():
+        norm_stoi[key] = stoi[key]/minv
+        if len(error_ratio):
+            errors_stoi[key] = 1/stoi[keymin]*np.sqrt((errors_stoi[key]**2 + (stoi[key]/stoi[keymin]*errors_stoi[keymin])**2))
+    return norm_stoi, errors_stoi
+
+# test
+#print(calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], [0.1, 0.01, 0.1]))
+#print(calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2']))
+#({'Be': 12.583333333333334, 'Ti': 1.0}, {'Be': 0.12621369924887876, 'Ti': 0.0012256517540566825})
+#({'Be': 12.583333333333334, 'Ti': 1.0}, {})
+
+
 def get_atomprocent(formula):
     """
     This converts a formula to a dictionary with elemnt : atomprocent
@@ -84,6 +171,9 @@ def get_atomprocent(formula):
     return form_dict_new
 
 # test
+
+
+
 
 def get_weight_procent(formula):
     """
@@ -126,10 +216,9 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     for formula, tE in struc_te_dict.iteritems():
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
-        print ntotal
+        print(ntotal)
         eform = tE#abs(tE)
         for elem, count in elements_count.iteritems():
-
             if elem in ref_el_norm:
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
