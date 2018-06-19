@@ -1,8 +1,18 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
-In this module you find the worklfow 'fleur_convergence' for a self-consistency
-cylce of a FLEUR calculation with AiiDA.
+In this module you find the worklfow 'fleur_scf_wc' for the self-consistency
+cylce management of a FLEUR calculation with AiiDA.
 """
 #TODO: more info in output, log warnings
 #TODO: make smarter, ggf delete broyd or restart with more or less iterations
@@ -17,28 +27,17 @@ from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
 from aiida.work.run import submit
 from aiida.work import workfunction as wf
-from aiida.work.process_registry import ProcessRegistry
 from aiida.common.datastructures import calc_states
-from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
-from aiida_fleur.calculation.fleur import FleurCalculation
+
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
-from aiida_fleur.tools.xml_util import eval_xpath2
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
+from aiida_fleur.tools.xml_util import eval_xpath2
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
-FleurinpProcess = FleurinputgenCalculation.process()
 
 class fleur_scf_wc(WorkChain):
     """
@@ -70,32 +69,20 @@ class fleur_scf_wc(WorkChain):
         wf_parameters: {'density_criterion' : Float,
                         'energy_criterion' : Float,
                         'converge_density' : True,
-                        'converge_energy' : True,
-                        'queue' : String,
-                        'resources' : dict({"num_machines": int, "num_mpiprocs_per_machine" : int})
-                        'walltime' : int}
+                        'converge_energy' : True}
     2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
 
     Hints:
     1. This workflow does not work with local codes!
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = "0.2.1"
     _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
                    'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
                    'converge_density' : True,      # converge the charge density
                    'converge_energy' : False,      # converge the total energy (usually converged before density)
-                   #'resue' : True,                 # AiiDA fastforwarding (currently not there yet)
-                   'options' : {                   
-                   'queue_name' : '',              # Queue name to submit jobs too
-                   'resources': {"num_machines": 1},# resources to allowcate for the job
-                   'walltime_sec' : 60*60,          # walltime after which the job gets killed (gets parsed to fleur)
-                   'custom_scheduler_commands' : '',
-                   'max_memory_kb' : None,
-                   'import_sys_environment' : False,
-                   'environment_variables' : {}                    
-                    },                  
+                   #'resue' : True,                 # AiiDA fastforwarding (currently not there yet
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
                    #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
@@ -105,7 +92,24 @@ class fleur_scf_wc(WorkChain):
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
     #_default_wc_label = u'fleur_scf_wc'
     #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
-
+    _default_options = {
+                        'resources' : {"num_machines": 1},
+                        'walltime_sec' : 6*60*60,
+                        'queue_name' : '',
+                        'custom_scheduler_commands' : '',
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}
+    
+    # 0 is the usual return status of each step and the workchain
+    ERROR_INVALID_INPUT_RESOURCES = 1
+    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
+    ERROR_INVALID_CODE_PROVIDED = 3
+    ERROR_INPGEN_CALCULATION_FAILED = 4
+    ERROR_CHANGING_FLEURINPUT_FAILED = 5
+    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
+    ERROR_FLEUR_CALCULATION_FALIED = 7
+    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
+    # loop count, not enough resources provided
 
     @classmethod
     def define(cls, spec):
@@ -117,21 +121,30 @@ class fleur_scf_wc(WorkChain):
                                                'converge_density' : True,
                                                'converge_energy' : False,
                                                #'reuse' : True,
-                                               'options' : {
-                                                   'resources': {"num_machines": 1},
-                                                   'walltime_sec': 60*60,
-                                                   'queue_name': '',
-                                                   'custom_scheduler_commands' : '',
-                                                   'max_memory_kb' : None,
-                                                   'import_sys_environment' : False,
-                                                   'environment_variables' : {}},
+                                               #'options' : {
+                                               #    'resources': {"num_machines": 1},
+                                               #    'walltime_sec': 60*60,
+                                               #    'queue_name': '',
+                                               #    'custom_scheduler_commands' : '',
+                                               #    #'max_memory_kb' : None,
+                                               #    'import_sys_environment' : False,
+                                               #    'environment_variables' : {}},
                                                'serial' : False,
                                                'itmax_per_run' : 30,
                                                'inpxml_changes' : [],
-}))
+                                               }))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("options", valid_type=ParameterData, required=False, 
+                   default=ParameterData(dict={
+                            'resources': {"num_machines": 1},
+                            'walltime_sec': 60*60,
+                            'queue_name': '',
+                            'custom_scheduler_commands' : '',
+                            #'max_memory_kb' : None,
+                            'import_sys_environment' : False,
+                            'environment_variables' : {}}))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -150,15 +163,18 @@ class fleur_scf_wc(WorkChain):
                 cls.get_res),
             cls.return_results
         )
-        #spec.dynamic_output()
 
+        spec.output('fleurinp', valid_type=FleurInpData)
+        spec.output('output_scf_wc_para', valid_type=ParameterData)
+        spec.output('last_fleur_calc_output', valid_type=ParameterData)
+        
     def start(self):
         """
         init context and some parameters
         """
         self.report('INFO: started convergence workflow version {}\n'
                     'INFO: Workchain node identifiers: {}'
-                    ''.format(self._workflowversion, ProcessRegistry().current_calc_node))
+                    ''.format(self._workflowversion, self.uuid))#, ProcessRegistry().current_calc_node))
 
         ####### init    #######
 
@@ -178,8 +194,12 @@ class fleur_scf_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
 
         # set values, or defaults
-        defaultoptions = self._wf_default['options']
-        options = wf_dict.get('options', defaultoptions)
+        defaultoptions = self._default_options
+        #options = wf_dict.get('options', defaultoptions)
+        if 'options' in self.inputs:
+            options = self.inputs.options.get_dict()
+        else:
+            options = defaultoptions
         for key, val in defaultoptions.iteritems():
             options[key] = options.get(key, val)
         self.ctx.options = options
@@ -238,13 +258,13 @@ class fleur_scf_wc(WorkChain):
         elif 'structure' in inputs:
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                self.ctx.errors.append(error)
-                self.control_end_wc(error)
+                self.report(error)
+                return self.ERROR_INVALID_INPUT_RESOURCES
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
-            self.ctx.errors.append(error)
             self.control_end_wc(error)
-
+            return self.ERROR_INVALID_INPUT_RESOURCES
+            
         if 'inpgen' in inputs:
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
@@ -252,7 +272,8 @@ class fleur_scf_wc(WorkChain):
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
                 self.control_end_wc(error)
-
+                return self.ERROR_INVALID_CODE_PROVIDED
+                
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
@@ -260,6 +281,7 @@ class fleur_scf_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
+                return self.ERROR_INVALID_CODE_PROVIDED
 
         # maybe ckeck here is unessesary...
         wf_dict = self.inputs.wf_parameters.get_dict()
@@ -276,6 +298,7 @@ class fleur_scf_wc(WorkChain):
                     error = ('ERROR: Wrong Input inpxml_changes wrong format of'
                              ': {} should be tuple of 2. I abort'.format(change))
                     self.control_end_wc(error)
+                    self.ERROR_INVALID_INPUT_RESOURCES
 
         return run_inpgen
 
@@ -301,9 +324,9 @@ class fleur_scf_wc(WorkChain):
         # TODO do not use the same option for inpgen as for FLEUR... so far we ignore the others...
         # clean Idea might be to provide second inpgen options, currenly for our purposes not nessesary...
 
-        inputs = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
+        inputs_build = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
         self.report('INFO: run inpgen')
-        future = submit(FleurinpProcess, **inputs)
+        future = self.submit(inputs_build)
 
         return ToContext(inpgen=future, last_calc=future)
 
@@ -312,10 +335,10 @@ class fleur_scf_wc(WorkChain):
         This routine sets somethings in the fleurinp file before running a fleur
         calculation.
         """
-
+        self.report('INFO: run change_fleurinp')
         if self.ctx.fleurinp: #something was already changed
             #print('Fleurinp already exists')
-            return
+            return 
         elif 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
         else:
@@ -324,7 +347,7 @@ class fleur_scf_wc(WorkChain):
             except AttributeError:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
-
+                return self.ERROR_INPGEN_CALCULATION_FAILED
 
         wf_dict = self.inputs.wf_parameters.get_dict()
         converge_te = wf_dict.get('converge_energy', False)
@@ -349,6 +372,7 @@ class fleur_scf_wc(WorkChain):
                                  "plaese check/test your input. I abort..."
                                  "".format(method))
                         self.control_end_wc(error)
+                        return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                     else:# apply change
                         method(**para)
@@ -360,10 +384,10 @@ class fleur_scf_wc(WorkChain):
             except XMLSyntaxError:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 #fleurmode.show(display=True)#, validate=True)
-                self.control_end_wc(error)
-
+                self.report(error)
                 apply_c = False
-
+                return self.ERROR_CALCULATION_INVALID_INPUT_FILE
+            
             # apply
             if apply_c:
                 out = fleurmode.freeze()
@@ -378,6 +402,7 @@ class fleur_scf_wc(WorkChain):
         """
         run a FLEUR calculation
         """
+        self.report('INFO: run FLEUR')
 
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
@@ -420,9 +445,9 @@ class fleur_scf_wc(WorkChain):
         #           "max_memory_kb" : self.ctx.options["max_memory_kb"],
         #           "import_sys_environment" : self.ctx.options["import_sys_environment"]
         #           }#,
-        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-
-        future = submit(FleurProcess, **inputs)
+        
+        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
+        future = submit(inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
@@ -432,7 +457,7 @@ class fleur_scf_wc(WorkChain):
     def inspect_fleur(self):
         """
         Analyse the results of the previous Calculation (Fleur or inpgen),
-        checking whether it finished successfully or if not troubleshoot the
+        checking whether it finished successfully or if not, troubleshoot the
         cause and adapt the input parameters accordingly before
         restarting, or abort if unrecoverable error was found
         """
@@ -444,21 +469,17 @@ class fleur_scf_wc(WorkChain):
             calculation = self.ctx.last_calc
         except AttributeError:
             self.ctx.parse_last = False
-            self.ctx.successful = False
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
-            return
+            return self.ERROR_FLEUR_CALCULATION_FALIED
         calc_state = calculation.get_state()
         #self.report('the state of the last calculation is: {}'.format(calc_state))
 
         if calc_state != calc_states.FINISHED:
-            #TODO kill workflow in a controled way, call return results, or write a end_routine
-            self.ctx.successful = False
-            self.ctx.abort = True
             error = ('ERROR: Last Fleur calculation failed somehow it is '
                     'in state {}'.format(calc_state))
             self.control_end_wc(error)
-            return
+            return self.ERROR_FLEUR_CALCULATION_FALIED
         elif calc_state == calc_states.FINISHED:
             self.ctx.parse_last = True
 
@@ -495,6 +516,7 @@ class fleur_scf_wc(WorkChain):
         # ggf handle bad convergence behavior, delete broyd (do not copy)
         return
         '''
+
     def get_res(self):
         """
         Check how the last Fleur calculation went
@@ -556,7 +578,8 @@ class fleur_scf_wc(WorkChain):
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
-            return # otherwise this will lead to erros further down
+            return self.ERROR_FLEUR_CALCULATION_FALIED
+            # otherwise this will lead to erros further down
 
     def condition(self):
         """
@@ -704,11 +727,6 @@ class fleur_scf_wc(WorkChain):
             self.out(link_name, node)
 
 
-    def bad_ending(self):
-        """
-        controled shutdown
-        """
-        return
 
     def handle_fleur_failure(self):
         """
@@ -795,14 +813,15 @@ class fleur_scf_wc(WorkChain):
     def control_end_wc(self, errormsg):
         """
         Controled way to shutdown the workchain. will initalize the output nodes
+        The shutdown of the workchain will has to be done afterwards
         """
         self.ctx.successful = False
         self.ctx.abort = True
         self.report(errormsg) # because return_results still fails somewhen
+        self.ctx.errors.append(errormsg)
         self.return_results()
-        #self.abort_nowait(errormsg)
-        self.abort(errormsg)
-
+        
+        return
 '''
 if __name__ == "__main__":
     import argparse
