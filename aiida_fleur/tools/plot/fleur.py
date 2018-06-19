@@ -1,5 +1,14 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
 
 """
 In this module are plot routines collected to create default plots out of certain
@@ -13,17 +22,9 @@ if this evolves.
 # TODO but allow to optional parse information for saving and title,
 #  (that user can put pks or structure formulas in there)
 
-__copyright__ = (u"Copyright (c), 2016-2017, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
-
-import re
-import os
 import numpy as np
-import matplotlib.pyplot as pp
-from masci_tools.vis.plot_methods import *
+#import matplotlib.pyplot as pp
+#from masci_tools.vis.plot_methods import *
 from aiida.orm import Code, DataFactory
 from aiida.orm import load_node
 from aiida.orm.calculation.work import WorkCalculation
@@ -250,7 +251,7 @@ def plot_fleur_dos_wc(node, labels=[]):
     
     output_d = node.get_dict()
     path_to_dosfile = output_d.get('dosfile', None)
-    print path_to_dosfile
+    print(path_to_dosfile)
     if path_to_dosfile:
         plot_dos(path_to_dosfile, only_total=False)
     else:
@@ -347,221 +348,25 @@ def plot_fleur_initial_cls_wc(nodes, labels=[]):
     
     pass
 
-def plot_spectra(wc_nodes, title='', factors=[], energy_range=[100, 120], be_ref={}, fwhm_g=0.6, fwhm_l=0.1, energy_grid=0.2, peakfunction='voigt', linetyp_spec='o-', warn_ref=False, verbose=False, **kwargs):
-    """
-    This function takes a list of workflow/result nodes/pks/uuids an plots the combined spectrum in a certain energy range.
-    It has all kwargs of plot_corelevel_spectra, which is used below.
-    
-    It checks what nodes are present, extracts the results from them and the number of atoms with that result. 
-    For older result node versions it gets parses the out.xml file again.
-    It converts the core-level shifts to Bindingenergies with all the given experimental Bindingenergies ('exp_bindingenergies') from the NIST database.
-    Then it plots the data with 'plot_corelevel_spectra'
-    Comment: For now only initial shift nodes, TODO: Final state Binding energies
-    
-    :param wc_nodes: 
-    :param dict be_ref: has the form {'element' : {'1s1/2': [1072], '2p1/2': [], '2p3/2': [],...}}
-    :prints : Warnings a
-    :return corelevelshifts: it returns the results it plots
-    """
-    from aiida.orm import DataFactory, Node, load_node
-    from aiida.orm.calculation.work import WorkCalculation
-    from aiida_fleur.tools.extract_corelevels import extract_corelevels
-    from masci_tools.vis.plot_methods import plot_corelevel_spectra
-    from aiida_fleur.tools.extract_corelevels import clshifts_to_be
-    from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
-    from aiida_fleur.workflows.initial_cls import extract_results
-    from aiida_fleur.tools.extract_corelevels import clshifts_to_be
-    from aiida_fleur.tools.element_econfig_list import exp_bindingenergies, atomic_numbers
-    from aiida_fleur.tools.element_econfig_list import get_coreconfig, get_spin_econfig, convert_fleur_config_to_econfig
-    from aiida_fleur.tools.ParameterData_util import dict_merger
-    from pprint import pprint
-    
-    ParameterData = DataFactory('parameter')
-    htr_to_ev = 27.21138602
-    # TODO: How to group certain contributions?
-    # TODO: allow also scf_ouput nodes, parse them ... you cannot get shifts
-    # TODO: how to add Elementals? only with 
-    
-    # TODO: Check what kind of nodes given
-    # If initital -> calculate binding energies from experiments, if no reference found, skip, but warn..
-    # If final use absolute results, currently only initial state
-    
-    # get Be from corelevel shifts
-    # multiply atomtypes with number of electrons and given factors (for mixtures, or wirkungsquerschnitte)
-    wc_node = None
-    
-    if not isinstance(wc_nodes, list):
-        wc_nodes = [wc_nodes]
-    bindingenergies_all = {}
-    natomtypes_dict_all = {}
-    bindingenergies_ref_all = {}
-    compound_info = []
-    for ncount, node in enumerate(wc_nodes): # each node is the wc_node or result node/uuid/pk for a compound
-        if isinstance(node, int):#pk
-            node = load_node(node)
-        if isinstance(node, str): #uuid
-            node = load_node(node) #try
-        if not isinstance(node, Node):
-            print('WARNING: node: {} is not a node, or could not load..., I skip this one'.format(node))
-            continue
-            
-        if isinstance(node, WorkCalculation):
-            wc_node = node
-            try:
-                node = node.get_outputs_dict()['output_initial_cls_wc_para']
-            except KeyError:# old wc had a tipo
-                node = node.get_outputs_dict()['output_inital_cls_wc_para']
-            
-            # try if fail continue, print warning
-        if not isinstance(node, ParameterData):
-            print('the node {} is not a result node of an initial_cls workchain'.format(node))
-            continue
-        else:
-            inputsnodes = node.get_inputs_dict()            
-            wc_node = inputsnodes.get('output_initial_cls_wc_para', None)
-            if not wc_node: # old wc version
-                wc_node = inputsnodes.get('output_inital_cls_wc_para', None)
-            if not wc_node:
-                break
-        
-        # check version of workflow if older then 0.2.0 we have to parse the files...        
-        wres_dict = node.get_dict()
-        wc_version = wres_dict.get('workflow_version','0.0.0')
-        cls_units = wres_dict.get('corelevelshifts_units', 'htr')
-        if cls_units == 'htr' or cls_units == 'Htr':
-            convert_to_eV = True
-        version = int(wc_version.replace('.',''))
-        if not wres_dict.get('succesfull', False):
-            if not verbose:
-                print('WARNING: outputnode {}, states that workchain was not successfull, check the results!'.format(node))
-        
-        if version <= 20:
-            # Some atomtype information is not saved yet, therefore we have to parse the files with the newest parser version
-            # to get theses. However the corelevel shifts we will always retrieve from the output node..
-            outputs = wc_node.get_outputs()
-            for output in outputs:# we assume the first scf we find is the 
-                if isinstance(output, WorkCalculation):
-                    outdict = output.get_outputs_dict()
-                    outscf_para = outdict.get('output_scf_wc_para', None)
-                    if outscf_para:
-                        total_energy, fermi_energies, bandgaps, all_atomtypes, all_corelevels, log = extract_results([output])
-                        break # we only use the first one (main compound per default) # TODO always the case? 
-        else: # use only information from output nodes/Database, do not use any files
-            all_atomtypes = wres_dict.get('atomtypes', {})         
-        
-        coreshifts = wres_dict.get('corelevelshifts', {})
-        #pprint(all_atomtypes)
-        
-        compound_label = all_atomtypes.keys()[0]
-        compound_info.append(compound_label)
-        if not verbose:
-            print('Material: {}'.format(compound_label))
-        # Now we need to convert/build the right format for plot_corelevel_spectra        
-        # For each atomtype in compound, get full coresetup, number of atoms
-        # the multiplication by the number of electrons is done in the plot routine
-        # write the corelevel names in the dictionary
-        natomtypes_dict = {}
-        coreshifts_new = {}
-        coreconfig_full_list = {}
-        #compound_info_dict = {}
-        
-        for atomtype in all_atomtypes.values()[0]:
-            elem = atomtype.get('element')
-            coreconfig_short = atomtype.get('coreconfig')
-            if not coreconfig_short:# we assume the default...
-                coreconfig_short = get_coreconfig(str(elem))
-                print('WARNING: no coreconfig parsed from out.xml, using default coreconfig...')
-            coreconfig_full = get_spin_econfig(convert_fleur_config_to_econfig(coreconfig_short))
-            natoms = atomtype.get('natoms')
-            natomtypes_dict[elem] = natomtypes_dict.get(elem, [])
-            multiplier_list = list(factors[ncount:ncount+1]) # one element, but does not fail.
-            # list convertion because np.array behaves different then list in [0.0] case
-            #print('multiplier_list: {}'.format(multiplier_list))
-            #print(type(multiplier_list))
-            if multiplier_list:
-                multiplier = multiplier_list[0]
-            else:
-                multiplier = 1.0
-            #print('multiplier: {}'.format(multiplier))
-            natomtypes_dict[elem].append(natoms*multiplier)
-            coreconfig_full_list[elem] = coreconfig_full_list.get(elem, [])
-            coreconfig_full_list[elem].append(coreconfig_full.split())
-        
-        for element, ecorelevels in coreshifts.iteritems():
-            #Check if number right
-            #if not len(ecorelevels) == natomtype_element
-            # continue Warning
-            coreconfig_full_list_elm = coreconfig_full_list[element]
-            coreshifts_new_element = coreshifts_new.get(element, {})
-            for j,atomtype_cls in enumerate(ecorelevels):
-                type_coreconfig = coreconfig_full_list_elm[j]
-                if not len(atomtype_cls) == len(type_coreconfig):
-                    print('WARNING: Number of corelevels found {} is not equal to number of '
-                          'corelevels in coreconfig {}... node {}. The coreconfig is {}, atomtypes: {}'
-                          ''.format(len(atomtype_cls), len(type_coreconfig), node, type_coreconfig, atomtype_cls))
-                    
-                for i,corelevel in enumerate(atomtype_cls):
-                    coreshifts_new_element[type_coreconfig[i]] = coreshifts_new_element.get(type_coreconfig[i], [])
-                    if convert_to_eV: # we move von negative BE to Postive BE, that is the -1
-                        coreshifts_new_element[type_coreconfig[i]].append(corelevel*htr_to_ev*-1)   
-                    else:
-                        coreshifts_new_element[type_coreconfig[i]].append(corelevel*-1)  
-            #compound_info_dict[element] = [0, len(ecorelevels)]
-            
-            coreshifts_new[element] = coreshifts_new_element
-        # Convert the corelevelshifts with experimental references to absolut Bindingenergies 
-        symbols = coreshifts.keys()
-        bindingenergies_ref = {}
-        for symbol in symbols:
-            if not be_ref:
-                koordinationnumber = atomic_numbers[symbol]
-                bindingenergies_ref[symbol] = exp_bindingenergies.get(koordinationnumber, {})['binding_energy']
-            else:
-                bindingenergies_ref[symbol] = be_ref.get(symbol, {})
-        #pprint(bindingenergies_ref)
-        bindingenergies = clshifts_to_be(coreshifts_new, bindingenergies_ref, warn=warn_ref)        
-        
-        # merge the contribution of the compound into a total dictionary with all compounds and apply factors. 
-        # optional mark the experiemntal references
-        bindingenergies_all = dict_merger(bindingenergies_all, bindingenergies)
-        natomtypes_dict_all = dict_merger(natomtypes_dict_all, natomtypes_dict)
-        bindingenergies_ref_all = dict_merger(bindingenergies_ref_all, bindingenergies_ref)
-        #compound_info[compound_label] = compound_info_dict#len(natomtypes_dict)
-        # compound info : { 'Be': [BeTi, BeTi, Be12Ti, Be12Ti, Be12Ti], 'Ti' : [BeTi, Be12Ti]}
-        # might work, because of dict merger
-    #pprint(compound_info)
-    #pprint(natomtypes_dict_all)
-    if not verbose:
-        pprint(bindingenergies_all)
-    # plot the results        
-    [xdata_spec, ydata_spec, ydata_single_all , xdata_all, ydata_all, xdatalabel] = plot_corelevel_spectra(bindingenergies_all, natomtypes_dict_all, exp_references=bindingenergies_ref_all, #compound_info=compound_info, 
-                           energy_range=energy_range, title=title, fwhm_g=fwhm_g, fwhm_l=fwhm_l, 
-                           energy_grid=energy_grid, peakfunction=peakfunction, linetyp_spec=linetyp_spec, **kwargs)
-
-    bindingenergies_ref_all_compressed = clear_dict_empty_lists(bindingenergies_ref_all)
-        
-    return natomtypes_dict_all, bindingenergies_all, bindingenergies_ref_all_compressed, xdata_spec, ydata_spec, ydata_single_all , xdata_all, ydata_all, compound_info, xdatalabel
-
 
 functions_dict = {
         'fleur_scf_wc' : plot_fleur_scf_wc,
         'fleur_eos_wc' : plot_fleur_eos_wc,
         'fleur_dos_wc' : plot_fleur_dos_wc,
         'fleur_band_wc' : plot_fleur_band_wc,
-        'fleur_corehole_wc' : plot_fleur_corehole_wc,
-        'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc
+        #'fleur_corehole_wc' : plot_fleur_corehole_wc,
+        #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc
+        }
 
-    }
-    
 def clear_dict_empty_lists(to_clear_dict):
-    '''
+    """
     Removes entries from a nested dictionary which are empty lists.
     
     param to_clear_dict dict: python dictionary which should be 'compressed'
     return new_dict dict: compressed python dict version of to_clear_dict
     
     Hints: rekursive
-    '''
+    """
     new_dict = {}
     if not to_clear_dict:
         return new_dict
