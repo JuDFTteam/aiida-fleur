@@ -15,25 +15,16 @@ In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
-import numpy as np
 
 from aiida.orm import DataFactory, Node, load_node, CalculationFactory
-from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
-from aiida_fleur.calculation.fleur import FleurCalculation
-
-from aiida_fleur.tools.plot.fleur import extract_corelevel_spec_nodes
-from aiida_fleur.tools.common_fleur_wf_util import ucell_to_atompr, calc_stoi
-
 
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
-#FleurProcess = FleurCalculation.process()
-#FleurinpProcess = FleurinputgenCalculation.process()
-FleurProcess = CalculationFactory('fleur.fleur')#FleurCalculation.process()
-FleurinpProcess = CalculationFactory('fleur.inpgen')#FleurinputgenCalculation.process()
+FleurProcess = CalculationFactory('fleur.fleur')
+FleurinpProcess = CalculationFactory('fleur.inpgen')
 
 
 def is_code(code):
