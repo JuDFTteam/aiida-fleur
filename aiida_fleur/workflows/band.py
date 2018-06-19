@@ -1,5 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
 """
 This is the worklfow 'band' for the Fleur code, which calculates a
 electron bandstructure.
@@ -10,7 +20,7 @@ import os.path
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.run import submit
-from aiida.work.process_registry import ProcessRegistry
+#from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
@@ -63,8 +73,8 @@ class fleur_band_wc(WorkChain):
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
         print('started bands workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}"
-              "".format(ProcessRegistry().current_calc_node))
+        print("Workchain node identifiers: ")#'{}'
+              #"".format(ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
