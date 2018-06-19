@@ -3,7 +3,7 @@
 
 # for support of the xml files and parsers
 lxml >= 3.6.4
-aiida>=0.9.0
+aiida>=0.12.0
 
 # for utilities
 ase
@@ -11,6 +11,9 @@ pymatgen
 sympy
 pgtest
 pytest-cov >= 2.5.0
+#git+https://github.com/JuDFTteam/masci-tools.git@develop#egg=masci-tools
+# "git+https://github.com/JuDFTteam/masci-tools.git@develop#egg=masci-tools"
+#masci-tools
 # for plotting
 # ngtviewer
 # plot_methods
