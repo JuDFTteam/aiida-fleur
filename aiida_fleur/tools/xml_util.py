@@ -642,7 +642,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
-        if atom_lo:
+        if atom_lo is not None:
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
         atom_dict = set_dict_or_not(atom_dict, 'element', '{}'.format(atom_element))
         #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
