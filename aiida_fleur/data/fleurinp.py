@@ -269,12 +269,18 @@ class FleurinpData(Data):
         # here this is hardcoded, might want to change? get filename from elsewhere
         if final_filename == 'inp.xml':
             #get input file version number
+            inp_version_number = None
             inpfile = open(src_abs, 'r')
             for line in inpfile.readlines():
                 if re.search('fleurInputVersion', line):
                     inp_version_number = re.findall(r'\d+.\d+', line)[0]
                     break
             inpfile.close()
+            if inp_version_number == None: # we raise after file closure
+                raise InputValidationError("No fleurInputVersion number found "
+                    "in given input file: {}. "
+                    "Please check if this is a valid fleur input file. "
+                    "It can not be validated and I can not use it. ".format(src_abs))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
             #print 'found: {}'.format(found)
@@ -659,7 +665,7 @@ class FleurinpData(Data):
         This routine return an AiiDA Structure Data type produced from the inp.xml
         file. not a workfunction
 
-        :return: StructureData node
+        :return: StructureData node, or None
         """
         from aiida.orm.data.structure import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
@@ -689,9 +695,9 @@ class FleurinpData(Data):
         ########
 
         if not ('inp.xml' in fleurinp.files):
-            print 'cannot get a StructureData because fleurinpdata has no inp.xml file yet'
+            print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
-            return False
+            return None
 
         # read in inpxml
         inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
@@ -702,7 +708,7 @@ class FleurinpData(Data):
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
             tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?
         else: #schema not there, parse without
-            print 'parsing inp.xml without XMLSchema'
+            print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
 
         root = tree.getroot()
@@ -710,7 +716,8 @@ class FleurinpData(Data):
         # Fleur uses atomic units, convert to Angstrom
         # get cell matrix from inp.xml
         row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
-
+        cell = None
+        
         if row1: #bulk calculation
             #print 'bulk'
             row1 = row1[0].text.split()
@@ -742,8 +749,13 @@ class FleurinpData(Data):
             # create new structure Node
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
-
-
+        
+        if cell is None:
+            print('Could not extract Bravais matrix out of inp.xml. Is the '
+                  'Bravais matrix explicitly given? i.e Latnam definition '
+                  'not supported.')
+            return None
+      
         #get species for atom kinds
         #species = root.xpath(species_xpath)
         species_name = root.xpath(species_xpath + '/@' + species_attrib_name)
@@ -893,7 +905,7 @@ class FleurinpData(Data):
         ########
 
         if not ('inp.xml' in fleurinp.files):
-            print 'cannot get a KpointsData because fleurinpdata has no inp.xml file yet'
+            print('cannot get a KpointsData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
 
@@ -906,13 +918,13 @@ class FleurinpData(Data):
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
             tree = etree.parse(inpxmlfile, parser)
         else: #schema not there, parse without
-            print 'parsing inp.xml without XMLSchema'
+            print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
 
         root = tree.getroot()
 
         # get cell matrix from inp.xml
-
+        cell = None
         row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
 
         if row1: #bulk calculation
@@ -944,7 +956,12 @@ class FleurinpData(Data):
             row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
-
+        
+        if cell is None:
+            print('Could not extract Bravais matrix out of inp.xml. Is the '
+                  'Bravais matrix explicitly given? i.e Latnam definition '
+                  'not supported.')
+            return None           
         # get kpoints only works if kpointlist in inp.xml
         kpoints = root.xpath(kpointlist_xpath + kpoint_tag)
 
@@ -976,7 +993,7 @@ class FleurinpData(Data):
             #return {label: kps}
             return kps
         else: # TODO parser other kpoints formats, if they fit in an AiiDA node
-            print 'No kpoint list in inp.xml'
+            print('No kpoint list in inp.xml')
             return None
 
 
