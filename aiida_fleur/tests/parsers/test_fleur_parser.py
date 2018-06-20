@@ -1,6 +1,7 @@
 # test all routines used by the fleur parser
-# TODO: implement all
 
+import os
+import pytest
 
 # parse_xmlout_file
 def test_parse_xmlout_file():
@@ -182,6 +183,7 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
 
+    
 def test_parse_xmlout_file_empty_file():
     """
     tests the behavior of the parse_xmlout_file routine in the case of an empty file
@@ -203,6 +205,28 @@ def test_parse_xmlout_file_empty_file():
     assert expected_parser_info_out == parser_info_out
 
 
+# test parser success for all out files in folder
+file_path1 = '../files/outxml/all_test/'
+outxmlfilefolder = os.path.dirname(os.path.abspath(__file__))
+outxmlfilefolder_valid =  os.path.abspath(os.path.join(outxmlfilefolder, file_path1))
+
+outxmlfilelist = []
+for subdir, dirs, files in os.walk(outxmlfilefolder_valid):
+    for file in files:
+        if file.endswith('.xml'):
+            outxmlfilelist.append(os.path.join(subdir, file))
+
+
+@pytest.mark.parametrize("xmloutfile", outxmlfilelist)
+def test_fleurparse_all_xmlout_file(xmloutfile):
+    """
+    tests if the routine that parsers the outputfile, succeeds for all out files
+    """
+    from aiida_fleur.parsers.fleur import parse_xmlout_file
+    
+    simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(xmloutfile)
+    
+    assert successful == True
 
 
 # parse_dos_file, test for different dos files with spin and without
