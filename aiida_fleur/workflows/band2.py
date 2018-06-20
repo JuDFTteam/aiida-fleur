@@ -25,6 +25,7 @@ from aiida.work.workchain import WorkChain
 from aiida.work.run import submit
 from aiida.work.workchain import if_
 from aiida.work.workchain import ToContext
+from aiida.work import workfunction as wf
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -55,7 +56,7 @@ class fleur_band2_wc(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(fleur_band_wc, cls).define(spec)
+        super(fleur_band2_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict={
                                          'kpath' : 'auto',
@@ -246,7 +247,7 @@ class fleur_band2_wc(WorkChain):
 
 
 #TODO import from somewhere?
-@workfunction
+@wf
 def seekpath_structure(structure):
 
     seekpath_info = get_path(structure)

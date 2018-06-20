@@ -206,8 +206,8 @@ class fleur_scf_wc(WorkChain):
         self.ctx.options = options
         #self.report('options: {}'.format(self.ctx.options))
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_scf_wc|'
-        self.ctx.label_wf = self.inputs.get('_label', 'fleur_scf_wc')
+        self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
+        self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
         self.ctx.default_itmax = wf_dict.get('itmax_per_run', 30)
 
         # return para/vars

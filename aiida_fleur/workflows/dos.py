@@ -28,7 +28,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleur.fleurinp')
+FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 
 
