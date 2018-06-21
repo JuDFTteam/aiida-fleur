@@ -20,7 +20,7 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.eos import fleur_eos_wc
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('parameter')
@@ -35,11 +35,6 @@ parser.add_argument('--structure', type=int, dest='structure',
                         help='The crystal structure node', required=False)
 parser.add_argument('--calc_para', type=int, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
-parser.add_argument('--fleurinp', type=int, dest='fleurinp',
-                        help='FleurinpData from which to run the FLEUR calculation', required=False)
-parser.add_argument('--remote', type=int, dest='remote_data',
-                        help=('Remote Data of older FLEUR calculation, '
-                        'from which files will be copied (broyd ...)'), required=False)
 parser.add_argument('--inpgen', type=int, dest='inpgen',
                         help='The inpgen code node to use', required=False)
 parser.add_argument('--fleur', type=int, dest='fleur',
@@ -64,8 +59,7 @@ print(args)
 
 ### Defaults ###
 wf_para = ParameterData(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,
-                              'serial' : False})
+                              'points' : 4})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th123_node',
@@ -117,12 +111,7 @@ else:
     
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
-    
-if args.fleurinp is not None:
-    inputs['fleurinp'] = load_node(args.fleurinp)
 
-if args.remote_data is not None:
-    inputs['remote_data'] = load_node(args.remote_data)
  
 if args.options is not None:
     inputs['options'] = load_node(args.options)
@@ -143,14 +132,15 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_scf_wc #####################")
+print("##################### TEST fleur_eos_wc #####################")
 
 if submit_wc:
-    res = submit(fleur_scf_wc, **inputs)
-    print("##################### Submited fleur_scf_wc #####################")
+    res = submit(fleur_eos_wc, **inputs)
+    print("##################### Submited fleur_eos_wc #####################")
     print("Runtime info: {}".format(res))
-    print("##################### Finished submiting fleur_scf_wc #####################")
+    print("##################### Finished submiting fleur_eos_wc #####################")
+
 else:
-    print("##################### Running fleur_scf_wc #####################")
-    res = run(fleur_scf_wc, **inputs)
-    print("##################### Finished running fleur_scf_wc #####################")
+    print("##################### Running fleur_eos_wc #####################")
+    res = run(fleur_eos_wc, **inputs)
+    print("##################### Finished running fleur_eos_wc #####################")
