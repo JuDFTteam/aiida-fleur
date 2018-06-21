@@ -118,7 +118,8 @@ class fleur_eos_wc(WorkChain):
         check input nodes
         """
         self.report("Started eos workflow version {} "
-                    "Workchain node identifiers: {}".format(self._workflowversion, self.uuid))
+                    #"Workchain node identifiers: {}"
+                    "".format(self._workflowversion))#, self.uuid))
 
         
         ### input check ### ? or done automaticly, how optional?
