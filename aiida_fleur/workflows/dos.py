@@ -54,8 +54,7 @@ class fleur_dos_wc(WorkChain):
                                          'nkpts' : 800,
                                          'sigma' : 0.005,
                                          'emin' : -0.30,
-                                         'emax' :  0.80}))
-        spec.input("remote", valid_type=RemoteData, required=False)#TODO ggf run convergence first
+                                         'emax' :  0.80}))#
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
@@ -68,7 +67,7 @@ class fleur_dos_wc(WorkChain):
                             'import_sys_environment' : False,
                             'environment_variables' : {}}))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
-        spec.input("remote_data", valid_type=RemoteData, required=False)
+        spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
@@ -87,9 +86,9 @@ class fleur_dos_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started dos workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: ")#{}"
-             # "".format(ProcessRegistry().current_calc_node))
+        self.report("Started dos workflow version {}"
+                    #"Workchain node identifiers: ")#{}"
+                    "".format(self._workflowversion))#ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
@@ -106,13 +105,19 @@ class fleur_dos_wc(WorkChain):
         #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
         #self.ctx.queue = wf_dict.get('queue_name', None)
-        self.ctx.options = wf_dict.get('options', {
-                                         'resources', {"num_machines": 1}, 
-                                         'walltime_sec', 10*60
-                                         })
+        #self.ctx.options = wf_dict.get('options', {
+        #                                 'resources' :  {"num_machines": 1}, 
+        #                                 'walltime_sec':  10*60
+        #                                 })
+
         
         inputs = self.inputs
-
+        if 'options' in inputs:
+            self.ctx.options = inputs.options.get_dict()
+        
+        if 'remote_data' in inputs:
+            self.ctx.remote = inputs.remote_data
+            
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
@@ -120,8 +125,8 @@ class fleur_dos_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 #self.control_end_wc(error)
-                print(error)
-                self.abort()
+                self.report(error)
+                return 1
 
     def create_new_fleurinp(self):
         """
@@ -162,7 +167,7 @@ class fleur_dos_wc(WorkChain):
         run a FLEUR calculation
         """
         fleurin = self.ctx.fleurinp1
-        remote = self.inputs.remote
+        remote = self.inputs.remote_data
         code = self.inputs.fleur
 
         options = self.ctx.options
@@ -181,22 +186,22 @@ class fleur_dos_wc(WorkChain):
         return the results of the calculations
         '''
         # TODO more here
-        print('Dos workflow Done')
-        print('A DOS was calculated for calculation {} and is found under pk=, '
-              'calculation {}')#.format(self.ctx.last_calc, ctx['last_calc'] )
+        self.report('Dos workflow Done')
+        #self.report('A DOS was calculated for calculation {} and is found under pk=, '
+        #      'calculation {}')#.format(self.ctx.last_calc, ctx['last_calc'] )
 
         #check if dos file exists: if not succesful = False
         #TODO be careful with general DOS.X
         dosfilename = 'DOS.1' # ['DOS.1', 'DOS.2', ...]
         # TODO this should be easier...
         dosfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(dosfilename)
-        print dosfilepath
+        print(dosfilepath)
         #dosfilepath = "path to dosfile" # Array?
         if os.path.isfile(dosfilepath):
             self.ctx.successful = True
         else:
             dosfilepath = None
-            print '!NO DOS.1 file was found, something went wrong!'
+            self.report('!NO DOS.1 file was found, something went wrong!')
 
         outputnode_dict = {}
 

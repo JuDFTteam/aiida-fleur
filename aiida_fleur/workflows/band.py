@@ -53,7 +53,16 @@ class fleur_band_wc(WorkChain):
                                                'sigma' : 0.005,
                                                'emin' : -0.50,
                                                'emax' :  0.90}))
-        spec.input("remote", valid_type=RemoteData, required=True)#TODO ggf run convergence first
+        spec.input("options", valid_type=ParameterData, required=False, 
+                   default=ParameterData(dict={
+                            'resources': {"num_machines": 1},
+                            'walltime_sec': 60*60,
+                            'queue_name': '',
+                            'custom_scheduler_commands' : '',
+                            #'max_memory_kb' : None,
+                            'import_sys_environment' : False,
+                            'environment_variables' : {}}))
+        spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
@@ -72,16 +81,18 @@ class fleur_band_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: ")#'{}'
+        self.report('started bands workflow version {}'.format(self._workflowversion))
+        #print("Workchain node identifiers: ")#'{}'
               #"".format(ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
+        
+        inputs = self.inputs
 
-        wf_dict = self.inputs.wf_parameters.get_dict()
+        wf_dict = inputs.wf_parameters.get_dict()
 
         # if MPI in code name, execute parallel
         self.ctx.serial = wf_dict.get('serial', False)
@@ -91,10 +102,10 @@ class fleur_band_wc(WorkChain):
         #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
         #self.ctx.queue = wf_dict.get('queue_name', None)
-        self.ctx.options = wf_dict.get('options', {
-                                         'resources', {"num_machines": 1}, 
-                                         'walltime_sec', 10*60
-                                         })
+        
+        if 'options' in inputs:
+            self.ctx.options = inputs.options.get_dict()
+            
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
@@ -130,7 +141,7 @@ class fleur_band_wc(WorkChain):
         run a FLEUR calculation
         """
         fleurin = self.ctx.fleurinp1
-        remote = self.inputs.remote
+        remote = self.inputs.remote_data
         code = self.inputs.fleur
         options = self.ctx.options
         
@@ -149,8 +160,8 @@ class fleur_band_wc(WorkChain):
         return the results of the calculations
         '''
         # TODO more here
-        print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+        self.report('Band workflow Done')
+        self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
               'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
 
         #check if band file exists: if not succesful = False
@@ -160,16 +171,16 @@ class fleur_band_wc(WorkChain):
         # TODO this should be easier...
         last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
         bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print bandfilepath
+        print(bandfilepath)
         #bandfilepath = "path to bandfile" # Array?
         if os.path.isfile(bandfilepath):
             self.ctx.successful = True
         else:
             bandfilepath = None
-            print '!NO bandstructure file was found, something went wrong!'
+            self.report('!NO bandstructure file was found, something went wrong!')
         #TODO corret efermi:
         # get efermi from last calculation
-        efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
+        efermi1 = self.inputs.remote_data.get_inputs()[-1].res.fermi_energy
         #get efermi from this caclulation
         efermi2 = self.ctx.last_calc.res.fermi_energy
         diff_efermi = efermi1 - efermi2
