@@ -4,15 +4,15 @@
 def test_get_econfig_W():
     from aiida_fleur.tools.element_econfig_list import get_econfig
 
-    assert get_econfig('W', full=False) == '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4'
-    assert get_econfig('W', full=True) == '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5p6 | 5s2 6s2 5d4'
+    assert get_econfig('W', full=False) == '[Kr] 5s2 4d10 4f14 | 5p6 6s2 5d4'
+    assert get_econfig('W', full=True) == '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2 4d10 4f14 | 5p6 6s2 5d4'
 
 # get_coreconfig
 def test_get_coreconfig_W():
     from aiida_fleur.tools.element_econfig_list import get_coreconfig
     
-    assert get_coreconfig('W', full=False) == '[Kr] 4d10 4f14 5p6'
-    assert get_coreconfig('W', full=True) == '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5p6'
+    assert get_coreconfig('W', full=False) == '[Kr] 5s2 4d10 4f14'
+    assert get_coreconfig('W', full=True) == '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2 4d10 4f14'
 
 # rek_econ
 def test_rek_econ_interface_W():
