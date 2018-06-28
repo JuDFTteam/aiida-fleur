@@ -42,7 +42,7 @@ from aiida_fleur.tools.StructureData_util import find_equi_atoms
 from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
-from aiida_fleur.tools.ParameterData_util import dict_merger
+from aiida_fleur.tools.ParameterData_util import dict_merger, extract_elementpara
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
@@ -476,7 +476,15 @@ class fleur_corehole_wc(WorkChain):
                     if elm_cl[0] in valid_elements:
                         # get corelevel econfig of element
                         dict_corelevel_elm = {}
-                        valid_coreconfig = get_coreconfig(elm_cl[0], full=True)
+                        # if econfig given in calc parameter use this econfig...
+                        para = self.ctx.ref_para
+                        if para is not None:
+                            para_dict = para.get_dict()
+                            self.report('INFO para is here: {}'.format(para_dict))
+                            element_para = extract_elementpara(para_dict, elm_cl[0])
+                            valid_coreconfig = element_para.get('econfig', get_coreconfig(elm_cl[0], full=True))
+                        else:
+                            valid_coreconfig = get_coreconfig(elm_cl[0], full=True)
                         oriegconfig = get_econfig(elm_cl[0], full=True)
                         highest_unocc = highest_unocc_valence(oriegconfig)
                         if elm_cl[1] == 'all':

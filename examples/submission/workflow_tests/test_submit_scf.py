@@ -117,7 +117,9 @@ else:
     
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
-    
+#else:
+#    inputs['calc_parameters'] = default['calc_parameters']
+
 if args.fleurinp is not None:
     inputs['fleurinp'] = load_node(args.fleurinp)
 

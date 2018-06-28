@@ -94,7 +94,7 @@ econfiguration = {
     71: {'mass': 174.9668, 'name': 'Lutetium', 'symbol': 'Lu', 'econfig': '[Kr] 4d10 | 4f14 5s2 5p6 5d1 6s2'},
     72: {'mass': 178.49, 'name': 'Hafnium', 'symbol': 'Hf', 'econfig': '[Kr] 4d10 | 4f14 5s2 5p6 5d2 6s2'},
     73: {'mass': 180.94788, 'name': 'Tantalum', 'symbol': 'Ta', 'econfig': '[Kr] 4d10 4f14 | 5s2 5p6 5d3 6s2'},
-    74: {'mass': 183.84, 'name': 'Tungsten', 'symbol': 'W', 'econfig' : '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4'},
+    74: {'mass': 183.84, 'name': 'Tungsten', 'symbol': 'W', 'econfig' : '[Kr] 5s2 4d10 4f14 | 5p6 6s2 5d4'},
     75: {'mass': 186.207, 'name': 'Rhenium', 'symbol': 'Re', 'econfig': '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d5'},
     76: {'mass': 190.23, 'name': 'Osmium', 'symbol': 'Os', 'econfig': '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d6'},
     77: {'mass': 192.217, 'name': 'Iridium', 'symbol': 'Ir', 'econfig': '[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d7'},
