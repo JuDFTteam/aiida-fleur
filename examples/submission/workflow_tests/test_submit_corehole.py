@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the fleur_scf_wc for Si or some other material
+Here we run the fleur_corehole_wc for Si or some other material
 """
 import sys
 import os
@@ -20,21 +20,26 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.corehole import fleur_corehole_wc
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
-    
-parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to'
-                 ' converge the chargedensity and optional the total energy. all arguments are pks, or uuids, codes can be names'))
+
+parser = argparse.ArgumentParser(description=('Corehole calculation with FLEUR workflow'
+                                              '. all arguments are pks, or uuids, codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                         help='Some workflow parameters', required=False)
 parser.add_argument('--structure', type=int, dest='structure',
                         help='The crystal structure node', required=False)
 parser.add_argument('--calc_para', type=int, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
+parser.add_argument('--fleurinp', type=int, dest='fleurinp',
+                        help='FleurinpData from which to run the FLEUR calculation', required=False)
+parser.add_argument('--remote', type=int, dest='remote_data',
+                        help=('Remote Data of older FLEUR calculation, '
+                        'from which files will be copied (broyd ...)'), required=False)
 parser.add_argument('--inpgen', type=int, dest='inpgen',
                         help='The inpgen code node to use', required=False)
 parser.add_argument('--fleur', type=int, dest='fleur',
@@ -58,14 +63,18 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
-                              'points' : 4})
+wf_para = ParameterData(dict={'method' : 'valence',
+                              'hole_charge' : 0.5,
+                              'atoms' : ['all'],
+                              'corelevel' : ['W,4f', 'W,4p'],#['W,all'],#
+                              'supercell_size' : [2,1,1],
+                              'magnetic' : True})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th123_node',
                               'walltime_sec':  60*60})
 
-# W bcc structure 
+# W bcc structure
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
@@ -95,9 +104,9 @@ default = {'structure' : structure,
            }
 
 ####
-           
+
 inputs = {}
-     
+
 if args.wf_parameters is not None:
     inputs['wf_parameters'] = load_node(args.wf_parameters)
 else:
@@ -108,13 +117,15 @@ if args.structure is not None:
 else:
     # use default W
     inputs['structure'] = default['structure']
-    
+
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
 else:
-    inputs['calc_parameters'] = default['calc_parameters'] # bad if using other structures...
-    
- 
+    inputs['calc_parameters'] = parameters
+
+if args.fleurinp is not None:
+    inputs['fleurinp'] = load_node(args.fleurinp)
+
 if args.options is not None:
     inputs['options'] = load_node(args.options)
 else:
@@ -134,15 +145,14 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_eos_wc #####################")
+print("##################### TEST fleur_corehole_wc #####################")
 
 if submit_wc:
-    res = submit(fleur_eos_wc, **inputs)
-    print("##################### Submited fleur_eos_wc #####################")
+    res = submit(fleur_corehole_wc, **inputs)
+    print("##################### Submited fleur_corehole_wc #####################")
     print("Runtime info: {}".format(res))
-    print("##################### Finished submiting fleur_eos_wc #####################")
-
+    print("##################### Finished submiting fleur_corehole_wc #####################")
 else:
-    print("##################### Running fleur_eos_wc #####################")
-    res = run(fleur_eos_wc, **inputs)
-    print("##################### Finished running fleur_eos_wc #####################")
+    print("##################### Running fleur_corehole_wc #####################")
+    res = run(fleur_corehole_wc, **inputs)
+    print("##################### Finished running fleur_corehole_wc #####################")

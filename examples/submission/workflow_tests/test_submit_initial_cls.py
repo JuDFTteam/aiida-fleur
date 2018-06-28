@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the fleur_scf_wc for Si or some other material
+Here we run the fleur_intitial_cls_wc  on some material
 """
 import sys
 import os
@@ -20,21 +20,24 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+
+
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
-parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to'
-                 ' converge the chargedensity and optional the total energy. all arguments are pks, or uuids, codes can be names'))
+parser = argparse.ArgumentParser(description=('Calculate initial core-level shifts with FLEUR. all arguments are pks, or uuids, codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                         help='Some workflow parameters', required=False)
 parser.add_argument('--structure', type=int, dest='structure',
                         help='The crystal structure node', required=False)
 parser.add_argument('--calc_para', type=int, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
+parser.add_argument('--fleurinp', type=int, dest='fleurinp',
+                        help='FleurinpData from which to run the FLEUR calculation', required=False)
 parser.add_argument('--inpgen', type=int, dest='inpgen',
                         help='The inpgen code node to use', required=False)
 parser.add_argument('--fleur', type=int, dest='fleur',
@@ -58,8 +61,6 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
-                              'points' : 4})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th123_node',
@@ -89,32 +90,36 @@ parameters = ParameterData(dict={
                         }})
 
 default = {'structure' : structure,
-           'wf_parameters': wf_para,
            'options' : options,
            'calc_parameters' : parameters
            }
 
+
 ####
-           
+
 inputs = {}
-     
-if args.wf_parameters is not None:
-    inputs['wf_parameters'] = load_node(args.wf_parameters)
-else:
-    inputs['wf_parameters'] = default['wf_parameters']
 
 if args.structure is not None:
     inputs['structure'] = load_node(args.structure)
+    structure = inputs['structure']
 else:
     # use default W
     inputs['structure'] = default['structure']
-    
+
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
+    parameters = inputs['calc_parameters']
 else:
-    inputs['calc_parameters'] = default['calc_parameters'] # bad if using other structures...
-    
- 
+    inputs['calc_parameters'] = parameters
+    parameters.store()
+
+if args.wf_parameters is not None:
+    inputs['wf_parameters'] = load_node(args.wf_parameters)
+else:
+    wf_para = ParameterData(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
+    inputs['wf_parameters'] = wf_para
+
+
 if args.options is not None:
     inputs['options'] = load_node(args.options)
 else:
@@ -134,15 +139,14 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_eos_wc #####################")
+print("##################### TEST fleur_initial_cls_wc #####################")
 
 if submit_wc:
-    res = submit(fleur_eos_wc, **inputs)
-    print("##################### Submited fleur_eos_wc #####################")
+    res = submit(fleur_initial_cls_wc, **inputs)
+    print("##################### Submited fleur_initial_cls_wc #####################")
     print("Runtime info: {}".format(res))
-    print("##################### Finished submiting fleur_eos_wc #####################")
-
+    print("##################### Finished submiting fleur_initial_cls_wc #####################")
 else:
-    print("##################### Running fleur_eos_wc #####################")
-    res = run(fleur_eos_wc, **inputs)
-    print("##################### Finished running fleur_eos_wc #####################")
+    print("##################### Running fleur_initial_cls_wc #####################")
+    res = run(fleur_initial_cls_wc, **inputs)
+    print("##################### Finished running fleur_initial_cls_wc #####################")
