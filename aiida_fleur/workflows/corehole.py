@@ -42,7 +42,7 @@ from aiida_fleur.tools.StructureData_util import find_equi_atoms
 from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
-
+from aiida_fleur.tools.ParameterData_util import dict_merger
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
@@ -122,16 +122,6 @@ class fleur_corehole_wc(WorkChain):
                         'import_sys_environment' : False,
                         'environment_variables' : {}}    
 
-                        
-    ERROR_INVALID_INPUT_RESOURCES = 1
-    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
-    ERROR_INVALID_CODE_PROVIDED = 3
-    ERROR_INPGEN_CALCULATION_FAILED = 4
-    ERROR_CHANGING_FLEURINPUT_FAILED = 5
-    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
-    ERROR_FLEUR_CALCULATION_FALIED = 7
-    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
-    ERROR_IN_REFERENCE_CREATION = 9
      
     @classmethod
     def define(cls, spec):
@@ -179,6 +169,27 @@ class fleur_corehole_wc(WorkChain):
             cls.check_scf,
             cls.return_results
         )
+         
+        spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES',
+            message="The input resources are invalid.")
+        spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
+            message="Input resources are missing.")
+        spec.exit_code(3, 'ERROR_INVALID_CODE_PROVIDED',
+            message="The code provided is invalid, or not of the right kind.")
+        spec.exit_code(4, 'ERROR_INPGEN_CALCULATION_FAILED',
+            message="Inpgen calculation FAILED, check output")
+        spec.exit_code(5, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+            message="Changing of the FLEURINP data went wrong, check log.")
+        spec.exit_code(6, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+            message="The FLEUR input file for the calculation did not validate.")
+        spec.exit_code(7, 'ERROR_FLEUR_CALCULATION_FAiLED',
+            message="At least one FLEUR calculation FAILED, check the output and log.")
+        spec.exit_code(8, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
+            message=("At least one FLEUR calculation did not/could not reach the"
+                     "desired convergece Criteria, with the current parameters."))            
+        spec.exit_code(9, 'ERROR_IN_REFERENCE_CREATION',
+            message=("Something went wrong in the determiation what coreholes to "
+                    "calculate, probably the input format was not correct. Check log."))    
 
     def check_input(self):
         """
@@ -279,7 +290,7 @@ class fleur_corehole_wc(WorkChain):
         # Do we want to detect it with some spglib methods?
         self.ctx.supercell_boal = True
         needed = self.ctx.supercell_boal
-
+        # TODO, otherwise in the new system if something else is returned this might fail...?
         return needed
 
 
@@ -305,7 +316,10 @@ class fleur_corehole_wc(WorkChain):
         supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
-        new_calc = [supercell_s, calc_para]
+        if calc_para is None:
+            new_calc = supercell_s
+        else:
+            new_calc = [supercell_s, calc_para]
         self.ctx.calcs_ref_torun.append(new_calc)
         return
 
@@ -381,8 +395,9 @@ class fleur_corehole_wc(WorkChain):
 
         ##########
         # 1. Find out what atoms to put coreholes on
+        self.report('Atoms to calculate : {}'.format(atoms_toc))
         for atom_info in atoms_toc:
-            if isinstance(atom_info, basestring):
+            if isinstance(atom_info, (str, unicode)):#basestring):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
                     #coreholes_atoms = base_atoms_sites
@@ -437,8 +452,9 @@ class fleur_corehole_wc(WorkChain):
 
         #########
         # 2. now check what type of corelevel shall we create on those atoms
+        self.report('Corelevels to calculate : {}'.format(corelevels_toc))
         for corel in corelevels_toc:
-            if isinstance(corel, str):#basestring):
+            if isinstance(corel, (str, unicode)):#basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split("[, ;:-]", corel)
                 #print(elm_cl)
@@ -446,9 +462,11 @@ class fleur_corehole_wc(WorkChain):
                     pass
                     # something went wrong, wrong input
                     # TODO log, error and hint
-                    error = 'ERROR: corelevel was given in the wrong format: {}, should have len 2'.format(elm_cl)
+                    error = ("ERROR: corelevel was given in the wrong format: {},"
+                             "should have len 2. Hint hast to be the format "
+                             "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl))
                     self.control_end_wc(error)
-                    return self.ERROR_IN_REFERENCE_CREATION
+                    return self.exit_codes.ERROR_IN_REFERENCE_CREATION
                 else:
                     # we assume for now ['Element', 'corelevel'] i.e ['Be', '1s']
                     econfigs = []
@@ -492,7 +510,10 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['corelevel'] = all_corestates
                         dict_corelevel_elm['valence'] = all_changed_valence
                         dict_corelevel_elm['econfig'] = econfigs
-                        dict_corelevel[elm_cl[0]] = dict_corelevel_elm
+                        tempd = dict_corelevel.get(elm_cl[0], {})
+                        together = dict_merger(dict_corelevel_elm, tempd)
+                        pprint(together)
+                        dict_corelevel[elm_cl[0]] = together
                     else:
                         pass
                         #element or string provieded not in structure,
@@ -770,6 +791,7 @@ class fleur_corehole_wc(WorkChain):
         # now in parallel
         #print self.ctx.ref_calcs_torun
         i = 0 #
+        self.report('Calculations to launch : {}'.format(self.ctx.calcs_torun))
         for node in self.ctx.calcs_torun:
             #print node
             i = i+1
@@ -951,6 +973,8 @@ class fleur_corehole_wc(WorkChain):
         """
         self.ctx.successful = False
         self.ctx.abort = True
+        self.ctx.errors.append(errormsg)
+        self.report(errormsg)
         self.return_results()
         return
 
