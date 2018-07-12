@@ -92,7 +92,10 @@ class FleurCalculation(JobCalculation):
         self._STRUCTURE_FILE_NAME = 'struct.xcf'
         self._STARS_FILE_NAME = 'stars'
         self._WKF2_FILE_NAME = 'wkf2'
-
+        self._CDN_HDF5_FILE_NAME = 'cdn.hdf'
+        self._CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
+        
+        
         # special out files
         self._DOS_FILE_NAME = 'DOS.*'
         self._DOSINP_FILE_NAME = 'dosinp'
@@ -178,10 +181,14 @@ class FleurCalculation(JobCalculation):
         #after inpgen, before first chargedensity
         self._copy_filelist_inpgen = [self._INPXML_FILE_NAME]
 
-        #for after fleur SCF
-        self._copy_filelist_scf1 = [self._CDN1_FILE_NAME]
+        #for after fleur SCF [name, detination_name]
+        self._copy_filelist_scf1 = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME]]
+        self._copy_filelist_scf2 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME]]
         #self._INPXML_FILE_NAME, comes from fleurinpdata
-        self._copy_filelist_scf = [self._CDN1_FILE_NAME, self._INPXML_FILE_NAME]
+        self._copy_filelist_scf = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME],
+                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
+        self._copy_filelist_scf2_1 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME], 
+                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
         self._copy_filelist_scf_remote = [self._BROYD_FILE_NAME]
         self._copy_filelist3 = []
         self._copy_filelist3 = [self._INP_FILE_NAME,
@@ -316,7 +323,12 @@ class FleurCalculation(JobCalculation):
         :param inputdict: a dictionary with the input nodes, as they would
                 be returned by get_inputdata_dict (without the Code!)
         """
-
+        
+        # TODO how to check if code compiled with HDF5?
+        # Idea: in description of code can be written wirh what libs the code was compiled,
+        # and we check in the description for certain keywords... if we have the code node...
+        # also ggf, to be back comportable, the plugin should know the version number...
+        
         #   from aiida.common.utils import get_unique_filename, get_suggestion
 
         local_copy_list = []
@@ -336,6 +348,7 @@ class FleurCalculation(JobCalculation):
         #restart_flag = False
         fleurinpgen = False
         copy_remotely = True
+        with_hdf5 = False
 
         ##########################################
         ############# INPUT CHECK ################
@@ -345,7 +358,14 @@ class FleurCalculation(JobCalculation):
             code = inputdict.pop(self.get_linkname('code'))
         except KeyError:
             raise InputValidationError("No code specified for this calculation")
-
+        
+        codesdesc = code.description
+        # TODO ggf also check settings
+        if codesdesc is not None:
+            if 'hdf5' or 'Hdf5' or 'HDF5' in codesdesc:
+                with_hdf5 = True
+            else:
+                with_hdf5 = False
         # a Fleur calc can be created from a fleurinpData alone
         #(then no parent is needed) all files are in the repo, but usually it is
         # a child of a inpgen calc or an other fleur calc (some or all files are
@@ -473,7 +493,7 @@ class FleurCalculation(JobCalculation):
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
             if modes['forces']:
-                print 'FORCES!!!'
+                print('FORCES!!!')
                 mode_retrieved_filelist.append(self._NEW_XMlINP_FILE_NAME)
                 mode_retrieved_filelist.append(self._FORCE_FILE_NAME)
             if modes['ldau']:
@@ -496,10 +516,14 @@ class FleurCalculation(JobCalculation):
                         os.path.join(outfolderpath, 'path', file1),
                         os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
-                for file1 in self._copy_filelist_scf:
+                if with_hdf5:
+                    copylist = self._copy_filelist_scf2_1
+                else:
+                    copylist = self._copy_filelist_scf               
+                for file1 in copylist:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1),
-                        os.path.join(file1)))
+                        os.path.join(outfolderpath, 'path', file1[0]),
+                        os.path.join(file1[1])))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
             elif fleurinpgen and has_fleurinp:
@@ -507,10 +531,14 @@ class FleurCalculation(JobCalculation):
                 pass
             elif not fleurinpgen and has_fleurinp:
                 # input file is already taken care of
-                for file1 in self._copy_filelist_scf1:
+                if with_hdf5:
+                    copylist = self._copy_filelist_scf2
+                else:
+                    copylist = self._copy_filelist_scf1
+                for file1 in copylist:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1),
-                        os.path.join(file1)))
+                        os.path.join(outfolderpath, 'path', file1[0]),
+                        os.path.join(file1[1])))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,
@@ -571,10 +599,13 @@ class FleurCalculation(JobCalculation):
         retrieve_list.append(self._INPXML_FILE_NAME)
         #calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
         retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
-        retrieve_list.append(self._CDN1_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
         #calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)
         retrieve_list.append(self._OUT_FILE_NAME)
+        if with_hdf5:
+            retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
+        else:
+            retrieve_list.append(self._CDN1_FILE_NAME)
         #calcinfo.retrieve_list.append(self._INP_FILE_NAME)
         #calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)
         #calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)
@@ -610,10 +641,14 @@ class FleurCalculation(JobCalculation):
         cmdline_params = []#, "-wtime", "{}".format(walltime_sec)]"-xml"
         #walltime_sec = self.get_max_wallclock_seconds()
         #print('walltime: {}'.format(walltime_sec))
+        if with_hdf5:
+            cmdline_params.append("-last_extra")
+
         if walltime_sec:
             walltime_min = max(1, walltime_sec/60)
             cmdline_params.append("-wtime")
             cmdline_params.append("{}".format(walltime_min))
+        
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
