@@ -25,7 +25,7 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.run import submit
+from aiida.work.launch import submit
 from aiida.work import workfunction as wf
 from aiida.common.datastructures import calc_states
 
@@ -892,7 +892,7 @@ def create_scf_result_node(**kwargs):
         if key == 'outpara': #  should be alwasys there
             outpara = val
     outdict = {}
-    outputnode = outpara.copy()
+    outputnode = outpara.clone()
     outputnode.label = 'output_scf_wc_para'
     outputnode.description = ('Contains self-consistency results and '
                              'information of an fleur_scf_wc run.')

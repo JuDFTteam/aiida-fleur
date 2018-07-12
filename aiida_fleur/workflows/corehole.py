@@ -998,7 +998,7 @@ def create_corehole_result_node(**kwargs):#*args):
     """
     outdict = {}
     outpara = kwargs.get('results_node', {})
-    outdict['output_corehole_wc_para'] = outpara.copy()
+    outdict['output_corehole_wc_para'] = outpara.clone()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}

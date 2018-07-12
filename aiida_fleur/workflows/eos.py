@@ -456,7 +456,7 @@ def create_eos_result_node(**kwargs):
     """
     outdict = {}
     outpara = kwargs.get('results_node', {})
-    outdict['output_eos_wc_para'] = outpara.copy()
+    outdict['output_eos_wc_para'] = outpara.clone()
     # copy, because we rather produce the same node twice
     # then have a circle in the database for now...
     outputdict = outpara.get_dict()
