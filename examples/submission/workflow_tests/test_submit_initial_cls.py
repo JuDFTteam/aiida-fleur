@@ -63,7 +63,7 @@ print(args)
 ### Defaults ###
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th123_node',
+                              'queue_name' : 'th1',#23_node',
                               'walltime_sec':  60*60})
 
 # W bcc structure 

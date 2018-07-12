@@ -68,7 +68,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'serial' : False})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th123_node',
+                              'queue_name' : 'th1',#23_node',
                               'walltime_sec':  60*60})
 
 # W bcc structure 
@@ -117,8 +117,8 @@ else:
     
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
-#else:
-#    inputs['calc_parameters'] = default['calc_parameters']
+else:
+    inputs['calc_parameters'] = default['calc_parameters']
 
 if args.fleurinp is not None:
     inputs['fleurinp'] = load_node(args.fleurinp)

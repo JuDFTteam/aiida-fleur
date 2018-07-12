@@ -62,7 +62,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 4,
                               'points' : 4})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th123_node',
+                              'queue_name' : 'th1',#23_node',
                               'walltime_sec':  60*60})
 
 # W bcc structure 

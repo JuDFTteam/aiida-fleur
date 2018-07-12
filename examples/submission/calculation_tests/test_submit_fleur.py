@@ -19,7 +19,7 @@ from aiida.orm import DataFactory
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
 # invoke the mpirun command in the submission script)
-run_in_serial_mode = True#False
+run_in_serial_mode = False
 
 ################################################################
 
@@ -46,7 +46,7 @@ except IndexError:
     codename = None
 
 queue = None
-queue = 'th123_node'
+#queue = 'th123_node'
 # queue = "th1_small"
 settings = None
 #####
@@ -56,7 +56,7 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 #TODO: how to make smart path?
 # get where tests folder is, then relative path
 #inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
-inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
+inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/examples/inp_xml_files/W/inp.xml'
 fleurinp = FleurinpData(files = [inpxmlfile])
 
 ## For remote codes, it is not necessary to manually set the computer,
@@ -67,17 +67,18 @@ fleurinp = FleurinpData(files = [inpxmlfile])
 calc = code.new_calc()
 calc.label = "Test Fleur fleur_MPI"
 calc.description = "Test calculation of the Fleur code"
-calc.set_max_wallclock_seconds(300)  # 5 min
+calc.set_max_wallclock_seconds(10*60)  # 5 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
 #calc.set_resources({"num_machines": 1})
 if run_in_serial_mode:
     calc.set_withmpi(False)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
-calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 12})
+calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 24})
 #calc.set_resources({"tot_num_mpiprocs" : 8})
 #calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -a intelmpi")
 #calc.set_custom_scheduler_commands("#BSUB -P test-clx \n#BSUB -a intelmpi")
+calc.set_custom_scheduler_commands("#SBATCH --partition=batch")
 
 if queue is not None:
     calc.set_queue_name(queue)
