@@ -26,7 +26,7 @@ from aiida.orm import Code, DataFactory, Group
 from aiida.work.workchain import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
-from aiida.work import submit
+from aiida.work.launch import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
 
@@ -49,8 +49,6 @@ class fleur_delta_wc(WorkChain):
     _workflowversion = "0.3.2"
     _wf_default = {}
 
-    def __init__(self, *args, **kwargs):
-        super(fleur_delta_wc, self).__init__(*args, **kwargs)
 
     @classmethod
     def define(cls, spec):
@@ -63,11 +61,15 @@ class fleur_delta_wc(WorkChain):
                                                'joblimit' : 100,
                                                'part' : [1,2,3,4],
                                                'points' : 7,
-                                               'step' : 0.02,
-                                               'options' : {
-                                               'queue_name' : '',
-                                               'options' : {'resources' : {"num_machines": 1},
-                                               'walltime_sec' : int(5.5*3600)}}}))
+                                               'step' : 0.02}))
+        spec.input("options", valid_type=ParameterData, required=False, 
+                   default=ParameterData(dict={
+                            'resources': {"num_machines": 1},
+                            'walltime_sec': 60*60,
+                            'queue_name': '',
+                            'custom_scheduler_commands' : '',
+                            'import_sys_environment' : False,
+                            'environment_variables' : {}}))
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
@@ -101,20 +103,16 @@ class fleur_delta_wc(WorkChain):
 
         # check if right codes
         wf_dict = self.inputs.wf_parameters.get_dict()
-        options_dict = wf_dict.get('options', {'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)})
+        options_dict = self.inputs.get('options', ParameterData(dict={'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)}))
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
             'wf_parameters':
                 {'points' : wf_dict.get('points', 7),
                  'step' : wf_dict.get('step', 0.02),
-                 'guess' : 1.0,
-                 'options' : {
-                 'resources' : options_dict.get('resources', {"num_machines": 1}),
-                 'walltime_sec':  options_dict.get('walltime_sec', int(5.5*3600)),
-                 'queue_name' : wf_dict.get('queue_name', '')},
-                 'serial' : wf_dict.get('serial', False)
-             }}
+                 'guess' : 1.0},
+            'options' : options_dict
+             }
         self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
         self.ctx.ncalc = 1 # init
         self.get_calcs_from_groups()
@@ -123,8 +121,8 @@ class fleur_delta_wc(WorkChain):
         self.ctx.labels = []
         #self.ctx.calcs_to_run = calcs
         self.ctx.ncalcs = len(self.ctx.calcs_to_run)
-        print self.ctx.ncalcs
-        print self.ctx.ncalc
+        print(self.ctx.ncalcs)
+        print(self.ctx.ncalc)
         estimated_jobs = self.ctx.ncalc*wf_dict.get('points', 5)
         joblimit = wf_dict.get('joblimit', 90)
         self.ctx.eos_run_steps = 1
@@ -295,14 +293,14 @@ class fleur_delta_wc(WorkChain):
             description = '|delta| fleur_eos_wc on {}'.format(formula)
             if para:
                 eos_future = submit(fleur_eos_wc,
-                                wf_parameters=inputs['wc_eos_para'], structure=struc,
+                                wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
-                                _label=label, _description=description)
+                                label=label, description=description)
             else: # TODO: run eos_wc_simple
                 eos_future = submit(fleur_eos_wc,
-                                wf_parameters=inputs['wc_eos_para'], structure=struc,
+                                wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'],
-                                _label=label, _description=description)
+                                label=label, description=description)
             self.report('launching fleur_eos_wc<{}> on structure {} with parameter {}'
                         ''.format(eos_future.pid, struc.pk, para.pk))
             label = formula
@@ -357,7 +355,7 @@ class fleur_delta_wc(WorkChain):
         #inputs['calc_parameters'] = self.inputs.calc_parameters
         inputs['inpgen'] = self.ctx.inputs_eos.get('inpgen')
         inputs['fleur'] = self.ctx.inputs_eos.get('fleur')
-
+        inputs['options'] = self.ctx.inputs_eos.get('options')
         return inputs
 
     def extract_results_eos(self):
@@ -486,7 +484,7 @@ class fleur_delta_wc(WorkChain):
 
         delta_file = SingleData.filename = self.ctx.outfilepath
 
-        print delta_file
+        print(delta_file)
 
         # output must be aiida Data types.
         outnodedict = {}
@@ -556,7 +554,7 @@ def create_delta_result_node(**kwargs):#*args):
     """
     outdict = {}
     outpara =  kwargs.get('results_node', {})
-    outdict['output_delta_wc_para'] = outpara.copy()
+    outdict['output_delta_wc_para'] = outpara.clone()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}
