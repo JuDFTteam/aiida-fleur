@@ -78,6 +78,7 @@ def plot_fleur(*args, **kwargs):
             show_dict = val
     #    # the rest we ignore for know
     #Just call set plot defaults
+    # TODO, or rather parse it onto plot functions...?
     set_plot_defaults(**kwargs)   
      
     for arg in args:
@@ -99,7 +100,7 @@ def plot_fleur_sn(node, show_dict=False, save=False):
     if isinstance(node, int):#pk
         node = load_node(node)
     
-    if isinstance(node, str): #uuid
+    if isinstance(node, (str, unicode)): #uuid
         node = load_node(node) #try
     
     if isinstance(node, Node):
@@ -160,7 +161,7 @@ def plot_fleur_mn(nodelist, save=False):
         # first find out what we have then how to visualize
         if isinstance(node, int):#pk
             node = load_node(node)
-        if isinstance(node, str): #uuid
+        if isinstance(node, (str, unicode)): #uuid
             node = load_node(node) #try
             
         if isinstance(node, Node):
@@ -273,13 +274,15 @@ def plot_fleur_eos_wc(node, labels=[]):
             plotlables = []
             
             for i, nd in enumerate(node):
-                plotlables.append(r'simulation data {}'.format(i))
-                plotlables.append(r'fit results {}'.format(i))
                 outpara = nd.get_dict()
+                volume_gs = outpara.get('volume_gs')
+                scale_gs = outpara.get(u'scaling_gs')
                 total_e = outpara.get('total_energy')
                 total_e_norm = np.array(total_e) - total_e[0]
                 Total_energy.append(total_e_norm)
-                scaling.append(outpara.get('scaling'))                
+                scaling.append(outpara.get('scaling'))  
+                plotlables.append(r'gs_vol: {:.3} A^3, gs_scale {:.3} , data {}'.format(volume_gs, scale_gs, i))
+                plotlables.append(r'fit results {}'.format(i))
             plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables)
             return # TODO
         else:
