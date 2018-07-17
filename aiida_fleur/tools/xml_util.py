@@ -18,9 +18,7 @@ by the Fleur code and the fleur plugin.
 # xpath returns []. Do we want this behavior?
 # TODO finish implementation of create=False
 # TODO: no aiida imports
-from aiida import load_dbenv, is_dbenv_loaded
-if not is_dbenv_loaded():
-    load_dbenv()
+
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
