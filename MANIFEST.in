@@ -1,6 +1,10 @@
 
 
 include aiida_fleur/fleur_schema/input/*/*.xsd
-
 include aiida_fleur/tests/run*
-include aiida_fleur/tess/files/*/*
+recursive-include aiida_fleur/tests/files/ *
+include setup.json
+include setup_requirements.txt
+include AUTHORS.txt
+include CHANGELOG.md
+include LICENSE.txt
