@@ -60,7 +60,6 @@ def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     dict1 = ParameterData1.get_dict()
     dict2 = ParameterData2.get_dict()
 
-    print dict1.keys()
     for key in dict1.keys():
         if 'atom' in key:
             val = dict1.pop(key)
@@ -109,7 +108,7 @@ def merge_parameters(ParameterDataList, overwrite=True):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print 'Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter)
+            print('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter))
 
     return paremeter_data_new
 

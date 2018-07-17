@@ -149,9 +149,9 @@ def delete_nodes(pks_to_delete):
         all_pks_to_delete.update(models.DbNode.objects.filter(
             parents__in=pks_to_delete).values_list('pk', flat=True))
 
-    print "I am going to delete {} nodes, including ALL THE CHILDREN".format(
-        len(all_pks_to_delete))
-    print "of the nodes you specified. Do you want to continue? [y/N]"
+    print("I am going to delete {} nodes, including ALL THE CHILDREN"
+          "of the nodes you specified. Do you want to continue? [y/N]"
+          "".format(len(all_pks_to_delete)))
     answer = raw_input()
 
     if answer.strip().lower() == 'y':

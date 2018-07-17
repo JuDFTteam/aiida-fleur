@@ -77,7 +77,7 @@ def is_primitive(structure):
     prints False if the structure can be futher refinded.
     """
     refinded_cell = find_primitive_cell(structure)
-    
+
     prim = False
     if refinded_cell.cell == structure.cell:
         prim = True
@@ -86,8 +86,8 @@ def is_primitive(structure):
 @wf
 def rescale(inp_structure, scale):
     """
-    Rescales a crystal structures Volume, atoms stay at their same realtive postions, 
-    therefore the absolut postions change. 
+    Rescales a crystal structures Volume, atoms stay at their same realtive postions,
+    therefore the absolut postions change.
     Keeps the provanance in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
@@ -101,8 +101,8 @@ def rescale(inp_structure, scale):
 
 def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
     """
-    Rescales a crystal structures Volume, atoms stay at their same realtive postions, 
-    therefore the absolut postions change. 
+    Rescales a crystal structures Volume, atoms stay at their same realtive postions,
+    therefore the absolut postions change.
     DOES NOT keep the provanence in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
@@ -218,7 +218,7 @@ def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         for j in range(1,na3): # these sites/atoms are already added
             pos = [pos_o[i] + j * old_a3[i] for i in range(0,len(old_a3))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
-    
+
     formula = inp_structure.get_formula()
     new_structure.label = 'supercell of {}'.format(formula)
     new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
@@ -267,7 +267,7 @@ def abs_to_rel_f(vector, cell, pbc):
             new_rel_pos_f = [new_xy[0], new_xy[1], postionR[2]]
             return new_rel_pos_f
         else:
-            print 'FLEUR can not handle this type of film coordinate'
+            print('FLEUR can not handle this type of film coordinate')
     else:
         return False
 
@@ -298,10 +298,8 @@ def rel_to_abs_f(vector, cell):
     if len(vector) == 3:
         postionR =  np.array(vector)
         postionR_f =  np.array(postionR[:2])
-        #print postionR_f
         cell_np = np.array(cell)
         cell_np = np.array(cell_np[0:2, 0:2])
-        #print cell_np
         new_xy = [i for i in np.matmul(postionR_f, cell_np)]
         new_abs_pos_f = [new_xy[0], new_xy[1], postionR[2]]
         return new_abs_pos_f
@@ -380,7 +378,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     new_parameterd = None
     struc = is_structure(structure)
     if not struc:
-        print 'Error, no structure given'
+        print('Error, no structure given')
         # throw error?
 
     cell = struc.cell
@@ -428,19 +426,16 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
             else:
                 symbol_count[symbol] = 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                #print(symbol_new_kinds_names)
                 if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
                     newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
                 else:
                     newkindname = '{}{}'.format(symbol, symbol_count[symbol])
-            #print(newkindname)
             new_kind = Kind(name=newkindname, symbols=symbol)
             new_structure.append_kind(new_kind)
 
             # now we have to add an atom list to parameterData with the corresponding id.
             if parameterData:
                 id_a =  symbol_count[symbol]#'{}.{}'.format(charge, symbol_count[symbol])
-                #print 'id: {}'.format(id)
                 for key, val in para.iteritems():
                     if 'atom' in key:
                         if val.get('element', None) == symbol:
@@ -476,8 +471,6 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
             if not kind_name in new_structure.get_kind_names():
                 new_structure.append_kind(kind)
         new_structure.append_site(Site(kind_name=newkindname, position=pos))
-
-    #print 'natoms: {}, nkinds: {}'.format(natoms, len(new_structure.get_kind_names()))
 
     if parameterData:
         para_new = ParameterData(dict=new_parameterd)
@@ -580,7 +573,6 @@ def move_atoms_incell(structure, vector):
     for site in sites:
         pos = site.position
         new_pos = np.array(pos) + np.array(vector)
-        #print new_pos
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
         new_structure.label = structure.label
@@ -666,7 +658,7 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
                        lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
                        max_normal_search=max_normal_search, symmetrize=symmetrize)#, reorient_lattice=reorient_lattice)
     for slab in all_slabs:
-        print slab
+        #print(slab)
         #slab2 = #slab.get_orthogonal_c_slab()
         film_struc = StructureData(pymatgen_structure=slab2)
         film_struc.pbc = (True, True, False)
@@ -748,7 +740,6 @@ def center_film(structure):
     #    shift = [0,0, -middle]
     shift = [0,0, (sites[0].position[2]-sites[-1].position[2])/2.0]
 
-    #print shift
     return move_atoms_incell(sorted_struc, shift)
 
 
@@ -769,9 +760,7 @@ def sort_atoms_z_value(structure):
     new_site_list = []
     for site in sites:
         new_site_list.append([site, site.position[2]])
-    #pprint(new_site_list)
     sorted_sites = sorted(new_site_list, key=lambda position: position[1])
-    #pprint(sorted_sites)
     for site in sorted_sites:
         new_structure.append_site(site[0])
 

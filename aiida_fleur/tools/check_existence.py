@@ -12,10 +12,14 @@
 ###############################################################################
 
 """
-DO NOT USE, this is crab so far. The development was stoped because this is done with AiiDA 'caching' now.
+DO NOT USE, this is crab so far. The development was stoped because this is done 
+with AiiDA 'caching' now.
 
 Here are methods to check the existence of something in the database
 example if a (successful) SCF with the same inputs exists
+
+Since cashing is not there for data yet, and below are some basic querries I 
+leave the code here for now.
 """
 from aiida.orm import DataFactory
 from aiida.orm import QueryBuilder
@@ -43,7 +47,8 @@ def check_existence_calc(input_nodes, successful=True):
        filters={'state' : {'==':'FINISHED'}})
 
     for idx, uuid in enumerate(inputnodesuuid):
-        qb.append(Node, input_of='calc', filters={'uuid':uuid}, tag='input_{}'.format(idx))
+        qb.append(Node, input_of='calc', filters={'uuid':uuid}, 
+                  tag='input_{}'.format(idx))
 
     qb.order_by({JobCalculation:'ctime'})
     res = qb.all()
@@ -173,7 +178,7 @@ def check_existence(target_nodetype, input_nodes, successful=False):
             target_nodetype,
             output_of='input')
     res = qb.all()
-    print len(res)
+    print(len(res))
     if res:
         return res[0][0].ouputs()
     else:
@@ -208,7 +213,7 @@ def check_existence_calc(input_nodes, successful=True):
             output_of='input')
 
     res = qb.all()
-    print len(res)
+    print(len(res))
     if res:
         return res[0][0].ouputs()
     else:
@@ -242,7 +247,7 @@ def check_existence_wf(target_nodetype, input_nodes, successful=True):
             target_nodetype,
             output_of='input')
     res = qb.all()
-    print len(res)
+    print(len(res))
     if res:
         return res[0][0].ouputs()
     else:

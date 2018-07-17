@@ -149,7 +149,6 @@ class FleurinpModifier(object):
         '''
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
             #fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
-            print 'in set_inpchanges'
             return fleurinp_tree_copy
         '''
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
@@ -162,7 +161,6 @@ class FleurinpModifier(object):
                                 It works like dict.update(), adding new keys and
                                 overwriting existing keys.
             """
-            #print 'in set_inpchanges'
             from aiida_fleur.tools.xml_util import write_new_fleur_xmlinp_file, get_inpxml_file_structure
 
             #TODO if we still want tracking that way, have to get fleurinp in argument
@@ -182,10 +180,10 @@ class FleurinpModifier(object):
                #schema file for validation will be loaded later
                pass
             elif self._schema_file_path != None:
-                print ('Warning: The User set the XMLSchema file path manually, your'
+                print('Warning: The User set the XMLSchema file path manually, your'
                       'inp.xml will be evaluated! If it fails it is your own fault!')
             else:
-                print ('Warning: No XMLSchema file was provided, your inp.xml file '
+                print('Warning: No XMLSchema file was provided, your inp.xml file '
                       'will not be evaluated and parsed! (I should never get here)')
 
             #read in tree
@@ -206,7 +204,6 @@ class FleurinpModifier(object):
 
             tree = fleurinp_tree_copy
             new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
-            #print new_kpo
             new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
 
             return new_tree
@@ -214,19 +211,19 @@ class FleurinpModifier(object):
         '''
         def set_species1(fleurinp_tree_copy, species_name, attributedict):
             #fleurinp_tree_copy = set_species(fleurinp_tree_copy , species_name, attributedict)
-            print 'in set_species'
+            print('in set_species')
             return fleurinp_tree_copy
 
         def change_atom1(fleurinp_tree_copy, attrib, value, position=None, species=None):
             #fleurinp_tree_copy = change_atom(fleurinp_tree_copy, attrib, value, position=None, species=None)
 
-            print 'in change_atom'
+            print('in change_atom')
             return fleurinp_tree_copy
 
         def set_xpath1(fleurinp_tree_copy, xpath, value):
             #fleurinp_tree_copy = set_xpath(fleurinp_tree_copy, xpath, value)
 
-            print 'in set_xpath'
+            print('in set_xpath')
             return fleurinp_tree_copy
         '''
 
@@ -260,7 +257,6 @@ class FleurinpModifier(object):
             except KeyError:
                 raise ValueError("Unknown task {}".format(task[0]))
 
-            #print task[1:]
             workingtree = action(workingtree, *task[1:])
             if schema_tree:
                 if not xmlschema.validate(fleurinp_tree_copy):
@@ -269,7 +265,6 @@ class FleurinpModifier(object):
                     print('change not valid: {}'.format(task[1:]))
                 else:
                     pass
-                    #print 'change validated'
         return workingtree
 
     def get_avail_actions(self):
@@ -387,7 +382,7 @@ class FleurinpModifier(object):
             xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print = True)
             print(xmltreestring)
         return tree
-        #print self.apply_modifications(self._original.get_dict(), self._tasks)
+        self.logger.debug(self.apply_modifications(self._original.get_dict(), self._tasks))
 
     def changes(self):
         from pprint import pprint
@@ -422,16 +417,16 @@ if __name__ == "__main__":
     orig = P(dict={'a': 1, 'b': True, 'c': "aaa"}).store()
 
 
-    print "Original: {}".format(orig.pk)
-    #print json.dumps(orig.get_dict(), indent=2)
+    print("Original: {}".format(orig.pk))
+    #print(json.dumps(orig.get_dict(), indent=2))
 
 
     modifier = fleurinpModifier(orig)
 
 
     new = modifier.freeze()
-    print "new: {}".format(new.pk)
-    #print json.dumps(new.get_dict(), indent=2)
+    print("new: {}".format(new.pk))
+    #print(json.dumps(new.get_dict(), indent=2))
     '''
 
 

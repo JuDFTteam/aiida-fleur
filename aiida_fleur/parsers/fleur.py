@@ -116,7 +116,6 @@ class FleurParser(Parser):
             has_xml_outfile = True
 
         # check if all files expected are there for the calculation
-        #print self._should_retrieve
         for filel in self._should_retrieve:
             if filel not in list_of_files:
                 successful = False
@@ -360,7 +359,6 @@ def parse_xmlout_file(outxmlfile):
         # get all iterations in out.xml file
         iteration_nodes = eval_xpath2(root, iteration_xpath)
         nIteration = len(iteration_nodes)
-        #print nIteration
         data_exists = True
 
         # parse only last stable interation
@@ -393,10 +391,10 @@ def parse_xmlout_file(outxmlfile):
             simple_data = {}
 
         # TODO int he future add here the warnings retunred from parse_simple_outnode
-        # Currently Fleur warnings an errors are not written to the out.xml 
+        # Currently Fleur warnings an errors are not written to the out.xml
         # should they be lists or dicts
         warnings={'info': {}, 'debug' : {}, 'warning' : {}, 'error' : {}}
-        
+
         simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath)) +
                                           len(eval_xpath2(root, absPos_xpath)) +
                                           len(eval_xpath2(root, filmPos_xpath)))
@@ -428,7 +426,7 @@ def parse_xmlout_file(outxmlfile):
         else:
             starttimes = [0,0,0]
             msg = 'Startime was unparsed, inp.xml prob not complete, do not believe the walltime!'
-            if data_exists:         
+            if data_exists:
                 parser_info_out['parser_warnings'].append(msg)
 
         endtime = eval_xpath(root, end_time_xpath)
@@ -466,7 +464,7 @@ def parse_xmlout_file(outxmlfile):
         warnings['warning'] = {}#TODO
         warnings['error'] = {}#TODO
         simple_data['warnings'] = warnings
-        
+
         return simple_data
 
     # TODO find a way to import these from xml_util, but make the parser logger work...
@@ -728,8 +726,9 @@ def parse_xmlout_file(outxmlfile):
                     value_to_save.append(value_to_savet)
                 suc = True # TODO individual or common error message?
             else:
-                print 'I dont know the type you gave me {}'.format(type)
-                # TODO log error
+                #self.logger.error('I dont know the type you gave me {}'.format(type))
+                pass
+                # TODO log error, self is not known here...
             if suc:
                 dict[value_name] = value_to_save
             else:
@@ -805,7 +804,7 @@ def parse_xmlout_file(outxmlfile):
 
         elif jspin == 2:
             charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
-            
+
             if charge_densitys:# otherwise we get a keyerror if calculation failed.
                 charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
                 charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
@@ -863,7 +862,6 @@ def parse_xmlout_file(outxmlfile):
             # TODO atomtype dependence
             #moment = get_xml_attribute(
             #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
-            #print moment
             #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
 
             #spinup = get_xml_attribute(
@@ -886,7 +884,6 @@ def parse_xmlout_file(outxmlfile):
         #forces atomtype dependend
         forces = eval_xpath2(iteration_node, forces_total_xpath)
         # length should be ntypes
-        #print forces
         largest_force = -0.0
         for force in forces:
             atomtype, success = convert_to_int(get_xml_attribute(force, atomtype_name))

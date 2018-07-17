@@ -56,10 +56,8 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
                     # remember id is atomic number.some int
                     if (id and float(id) == float(val.get('id', -1))):
                         val.update({'econfig' : econfig})
-                        #print 'here1'
                         break
                     elif not id:
-                        #print 'here2'
                         val.update({'econfig' : econfig})
                     else:
                         pass
@@ -128,7 +126,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
 
     # test input.
     if not isinstance(fleurinp, FleurinpData):
-        print 'No fleurinp Data given to "create_valence_corehole"'
+        print('No fleurinp Data given to "create_valence_corehole"')
         return None # TODO throw error?
 
     if coreconfig != 'same':
@@ -136,10 +134,8 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
 
     if valenceconfig != 'same':
         new_valence = True
-    #print stateocc
 
     species_tags = fleurinp.get_tag(species_xpath)
-    #print species_tags
     for speci in species_tags:
         if get_xml_attribute(speci, 'name') == species:
             # change
@@ -149,11 +145,9 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
             occupations = eval_xpath2(econfig, 'stateOccupation')
 
             for key, val in stateocc.iteritems():
-                #print key
                 added = False
                 for occ in occupations:
                     name = get_xml_attribute(occ, 'state')
-                    #print name
                     if name == key:
                         added = True
                         # override and break (can occur only once)
@@ -173,20 +167,18 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
     change_dict3 = {'valenceElectrons' : ''}
 
 
-
-
     return fleurinp
 
 
 
 def write_change(xmltree, changelist_xpath):
-
-
+    """
+    applies the changes from the changelist to the xml tree
+    """
     xmltree_new = xmltree
     for element in changelist_xpath:
         xpath = element[0]
         value = element[1]
-        #print element
     return xmltree_new
 
 

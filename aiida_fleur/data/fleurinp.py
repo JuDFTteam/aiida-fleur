@@ -828,7 +828,7 @@ class FleurinpData(Data):
                 parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
                 tree = etree.parse(inpxmlfile, parser)
             else: #schema not there, parse without
-                print 'parsing inp.xml without XMLSchema'
+                print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
 
             root = tree.getroot()

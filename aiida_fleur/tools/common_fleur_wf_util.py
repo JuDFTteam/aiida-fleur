@@ -32,14 +32,14 @@ def convert_formula_to_formula_unit(formula):
     g = nelements[0]
     for a2 in nelements:
         g = gcd(g,a2)
-    
+
     formula_unit_string = ''
     for key, val in element_count_dict.iteritems():
         new_val = int(val/g)
         if new_val == 1:
             new_val = ''
         formula_unit_string = formula_unit_string + '{}{}'.format(key, new_val)
-        
+
     return formula_unit_string
 # test convert_formula_to_formula_unit('Be4W2')
 # Be2W
@@ -73,13 +73,13 @@ def get_natoms_element(formula):
 def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
     """
     Converts unit cell ratios into atom ratios.
-    
+
     len(ratio) == len(formulas) (== len(error_ratio))
     ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be', [0.1, 0.1, 0.1])
     """
     import numpy as np
-    
-    
+
+
     atompro = []
     atompro_err = []
     if not (len(ratio) == len(formulas)):
@@ -93,12 +93,12 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
     atompro = np.array(ratio)*np.array(n_atoms_formula)
     total = sum(atompro)
     atompro = atompro/total
-    
+
     if len(error_ratio):
         atompro_err_t = np.array(error_ratio)*np.array(n_atoms_formula)
         e_sum = np.sqrt(sum(atompro_err_t**2))
-        atompro_err = 1/total*(np.sqrt(atompro_err_t**2 + (atompro*e_sum)**2))        
-        
+        atompro_err = 1/total*(np.sqrt(atompro_err_t**2 + (atompro*e_sum)**2))
+
     return atompro, atompro_err
 
 # test
@@ -111,20 +111,20 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
 def calc_stoi(unitcellratios, formulas, error_ratio=[]):
     """
     Calculate the Stoichiometry with errors from a given unit cell ratio, formulas.
-    
+
     Example:
     calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], [0.1, 0.01, 0.1])
     ({'Be': 12.583333333333334, 'Ti': 1.0}, {'Be': 0.12621369924887876, 'Ti': 0.0012256517540566825})
     calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'])
     ({'Be': 12.583333333333334, 'Ti': 1.0}, {})
     """
-    
+
     import numpy as np
 
     stoi = {}
     if not (len(unitcellratios) == len(formulas)):
         return
-    
+
     errors_stoi = {}
     for i, formula in enumerate(formulas):
         res = get_natoms_element(formula)
@@ -134,7 +134,7 @@ def calc_stoi(unitcellratios, formulas, error_ratio=[]):
             if len(error_ratio):
                 errors = errors_stoi.get(element, 0)
                 errors_stoi[element] = errors + val*val*error_ratio[i]*error_ratio[i]
-    
+
     # make smallest number always one.
     vals = stoi.values()
     minv = min(vals)
@@ -325,7 +325,6 @@ def determine_reactions(formula, available_data):
             productstring = productstring + '{}+'.format(entry)
 
         productstring = productstring[:-1]
-        #print productstring
         constructed_products.append(productstring)
         pos_reaction = '{}->{}'.format(formula, productstring)
         bal_reaction = balance_equation(pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True)
@@ -338,16 +337,20 @@ def determine_reactions(formula, available_data):
     return reactions
 
 # test reac = determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W'])
-#print reac ['1*Be12W->1*Be12W', '1*Be12W->1*Be2W+10*Be', '2*Be12W->1*Be2W+1*Be22W', '1*Be12W->12*Be+1*W', '11*Be12W->5*W+6*Be22W']
+#print(reac ['1*Be12W->1*Be12W', '1*Be12W->1*Be2W+10*Be', '2*Be12W->1*Be2W+1*Be22W',
+#             '1*Be12W->12*Be+1*W', '11*Be12W->5*W+6*Be22W'])
 
-#reac = determine_reactions('Be12Ti', ['Be12Ti', 'Be17Ti2', 'BeTi', 'Ti', 'Be', 'Be2Ti', 'Be8Ti4'])
-#print reac ['1*Be12Ti->1*Be12Ti', '2*Be12Ti->1*Be17Ti2+7*Be', '1*Be12Ti->1*BeTi+11*Be', '1*Be12Ti->1*Ti+12*Be', '1*Be12Ti->10*Be+1*Be2Ti', '4*Be12Ti->40*Be+1*Be8Ti4']
+#reac = determine_reactions('Be12Ti', ['Be12Ti', 'Be17Ti2', 'BeTi', 'Ti', 'Be',
+#                                       'Be2Ti', 'Be8Ti4'])
+#print(reac ['1*Be12Ti->1*Be12Ti', '2*Be12Ti->1*Be17Ti2+7*Be', '1*Be12Ti->1*BeTi+11*Be',
+#             '1*Be12Ti->1*Ti+12*Be', '1*Be12Ti->10*Be+1*Be2Ti', '4*Be12Ti->40*Be+1*Be8Ti4'])
 
 
 def convert_eq_to_dict(equationstring):
     """
     Converts an equation string to a dictionary
-    convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') -> {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
+    convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') ->
+    {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
     """
     eq_dict = {'products': {}, 'educts' : {}}
     product_dict = {}
@@ -366,7 +369,6 @@ def convert_eq_to_dict(equationstring):
 
     eq_dict['products'] = product_dict
     eq_dict['educts'] = educt_dict
-    #print eq_dict
     return eq_dict
 
 # test convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be')
@@ -459,14 +461,12 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     if k:# if a solution is found multiply by gcd
         # TODO? check if solution has linear dependence: and evaluate
         #for c in k.values():
-        #    print str(c)
         #    for char in list(letters):
         #        if char in str(c):
-        #            print 'here'
+        #             pass
         N=[]#[k[Ys[s]]for s in sorted(Ys)]
         for s in sorted(Ys):
             n = k[Ys[s]]
-            #print n
             # idea: check if char in n, then linear depended, then
             try: # since solver gives also a linear depended solution if correct, but code fails then
                 if n<0 and not allow_negativ: # We allow for 0 but might be an other case to think about
@@ -477,12 +477,11 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
             if n==0 and not allow_zero:
                 return None
             N.append(n)
-        #print N
-        g=N[0]
+        g = N[0]
         for a1, a2 in zip(N[0::2],N[0::2]):
             g=gcd(g,a2)
-        N=[i/g for i in N]
-        pM=lambda c: str(c)+'*'# if c!=1 else ''
+        N = [i/g for i in N]
+        pM = lambda c: str(c)+'*'# if c!=1 else ''
         return '->'.join('+'.join(pM(N.pop(0))+str(t) for t in p.split('+')) for p in eq.split('->'))
     else:
         return None
@@ -490,10 +489,10 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
 
 # test
 #print(balance_equation("C7H16+O2 -> CO2+H2O"))
-#print balance_equation("Be12W->Be2W+W+Be")#+Be12W+Be+Be22W")
-#print balance_equation("Be12WO->Be2WO+W+Be+O2")#+Be12W+Be+Be22W")
-#print balance_equation("Be12W->Be22W+Be12W")
-#print balance_equation("Be12W->Be12W")
+#print(balance_equation("Be12W->Be2W+W+Be")#+Be12W+Be+Be22W"))
+#print(balance_equation("Be12WO->Be2WO+W+Be+O2")#+Be12W+Be+Be22W"))
+#print(balance_equation("Be12W->Be22W+Be12W"))
+#print(balance_equation("Be12W->Be12W"))
 
 #1*C7H16+11*O2 ->7* CO2+8*H2O
 #None
@@ -521,7 +520,7 @@ def check_eos_energies(energylist):
             abnormalityindexlist.append(i)
             print(x,y,z)
             print('annormly detected')
-        
+
     return abnormality, abnormalityindexlist
 
 #total_energy = [ -1, -2, -3 ,-2,-4,-3,-2,-1]
