@@ -273,9 +273,7 @@ class FleurinputgenCalculation(JobCalculation):
                         " update _possible_params. ".format(para, namelist))
                 if para in string_replace:
                     #TODO check if its in the parameter dict
-                    #print para
                     paramdic[para] = convert_to_fortran_string(paramdic[para])
-                    #print "{}".format(paramdic[para])
                 # things that are in string replace can never be a bool
                 # Otherwise input where someone given the title 'F' would fail...
                 elif paramdic[para] in replacer_values_bool:
@@ -293,7 +291,7 @@ class FleurinputgenCalculation(JobCalculation):
                 own_lattice = True
                 structure = inputdict.pop(self.get_linkname('structure'), None)
                 if structure is not None: #two structures given?
-                    #which one should be prepared? TODO: print warning or even error
+                    #which one should be prepared? TODO: log warning or even error
                     if self._use_aiida_structure:
                         if not isinstance(structure, StructureData):
                             raise InputValidationError("structure is not of type"
@@ -416,7 +414,7 @@ class FleurinputgenCalculation(JobCalculation):
                 # per default we use relative coordinates in Fleur
                 # we have to scale back to atomic units from angstrom
                 pos = site.position
-                #print 'pos {}'.format(pos)
+
                 if bulk:
                     vector_rel = abs_to_rel(pos, cell)
                 elif film:
@@ -427,7 +425,6 @@ class FleurinputgenCalculation(JobCalculation):
                     "\n".format(atomic_number_name,
                                 vector_rel[0], vector_rel[1],
                                 vector_rel[2]))
-                #print atomic_positions_card_list
                 #TODO check format
             # we write it later, since we do not know what natoms is before the loop...
             atomic_positions_card_list.append("    {0:3}\n".format(natoms))

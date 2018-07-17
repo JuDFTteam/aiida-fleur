@@ -58,7 +58,6 @@ class FleurCalculation(JobCalculation):
         #fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
         #'inp.xml' # this has to change the file is under FleurinpData
         self._DEFAULT_OUTPUT_FILE = 'out.xml'
-        #print self._DEFAULT_INPUT_FILE
 
         # Name of all files in FLEUR
         # TODO think also to oursource this in a FleurCalc structure, and add
@@ -94,8 +93,8 @@ class FleurCalculation(JobCalculation):
         self._WKF2_FILE_NAME = 'wkf2'
         self._CDN_HDF5_FILE_NAME = 'cdn.hdf'
         self._CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
-        
-        
+
+
         # special out files
         self._DOS_FILE_NAME = 'DOS.*'
         self._DOSINP_FILE_NAME = 'dosinp'
@@ -187,7 +186,7 @@ class FleurCalculation(JobCalculation):
         #self._INPXML_FILE_NAME, comes from fleurinpdata
         self._copy_filelist_scf = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME],
                                    [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
-        self._copy_filelist_scf2_1 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME], 
+        self._copy_filelist_scf2_1 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME],
                                    [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
         self._copy_filelist_scf_remote = [self._BROYD_FILE_NAME]
         self._copy_filelist3 = []
@@ -323,12 +322,12 @@ class FleurCalculation(JobCalculation):
         :param inputdict: a dictionary with the input nodes, as they would
                 be returned by get_inputdata_dict (without the Code!)
         """
-        
+
         # TODO how to check if code compiled with HDF5?
         # Idea: in description of code can be written wirh what libs the code was compiled,
         # and we check in the description for certain keywords... if we have the code node...
         # also ggf, to be back comportable, the plugin should know the version number...
-        
+
         #   from aiida.common.utils import get_unique_filename, get_suggestion
 
         local_copy_list = []
@@ -358,7 +357,7 @@ class FleurCalculation(JobCalculation):
             code = inputdict.pop(self.get_linkname('code'))
         except KeyError:
             raise InputValidationError("No code specified for this calculation")
-        
+
         codesdesc = code.description
         # TODO ggf also check settings
         if codesdesc is not None:
@@ -385,7 +384,7 @@ class FleurCalculation(JobCalculation):
             has_fleurinp = True
         parent_calc_folder = inputdict.pop(self.get_linkname('parent_folder'),
                                            None)
-        #print parent_calc_folder
+
         if parent_calc_folder is None:
             has_parent = False
             if not has_fleurinp:
@@ -408,7 +407,7 @@ class FleurCalculation(JobCalculation):
                     "".format(n_parents, "" if n_parents == 0 else "s"))
             parent_calc = parent_calcs[0]
             has_parent = True
-            #print parent_calc
+
             # check that it is a valid parent
             #self._check_valid_parent(parent_calc)
 
@@ -456,7 +455,6 @@ class FleurCalculation(JobCalculation):
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
-        #print settings_dict
         # Here, there should be no other inputs
         if inputdict:
             raise InputValidationError(
@@ -509,7 +507,6 @@ class FleurCalculation(JobCalculation):
             outfolderpath = parent_calc.out.retrieved.folder.abspath
             self.logger.info("out folder path {}".format(outfolderpath))
 
-            #print outfolderpath
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
                     local_copy_list.append((
@@ -519,7 +516,7 @@ class FleurCalculation(JobCalculation):
                 if with_hdf5:
                     copylist = self._copy_filelist_scf2_1
                 else:
-                    copylist = self._copy_filelist_scf               
+                    copylist = self._copy_filelist_scf
                 for file1 in copylist:
                     local_copy_list.append((
                         os.path.join(outfolderpath, 'path', file1[0]),
@@ -571,7 +568,7 @@ class FleurCalculation(JobCalculation):
                         parent_calc_folder.get_computer().uuid,
                         os.path.join(parent_calc_folder.get_remote_path(), file1),
                         self._OUTPUT_FOLDER))
-                #print remote_copy_list
+
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
 
 
@@ -584,7 +581,7 @@ class FleurCalculation(JobCalculation):
         #cmdline_params = settings_dict.pop('CMDLINE', [])
         #calcinfo.cmdline_params = (list(cmdline_params)
         #                           + ["-in", self._INPUT_FILE_NAME])
-        #print local_copy_list
+
         self.logger.info("local copy file list {}".format(local_copy_list))
 
         calcinfo.local_copy_list = local_copy_list
@@ -613,7 +610,7 @@ class FleurCalculation(JobCalculation):
 
         # if certain things are modefied, flags set,
         #other files should be retrieved, example DOS.x...
-        #print "mode_retrieved_filelist", repr(mode_retrieved_filelist)
+
         for mode_file in mode_retrieved_filelist:
             retrieve_list.append(mode_file)
         #print('retrieve_list: {}'.format(retrieve_list))
@@ -648,7 +645,7 @@ class FleurCalculation(JobCalculation):
             walltime_min = max(1, walltime_sec/60)
             cmdline_params.append("-wtime")
             cmdline_params.append("{}".format(walltime_min))
-        
+
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -715,11 +712,9 @@ class FleurCalculation(JobCalculation):
         if not isinstance(fleurinp, FleurinpData):
             raise InputValidationError("The FleurinpData node given is not of type"
                                            " FleurinpData.")
-        #print fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-        #print self._DEFAULT_INPUT_FILE
+
         self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
         # somehow this is not working...
-        #print self._DEFAULT_INPUT_FILE
         self.use_fleurinpdata(fleurinp)
 
 
