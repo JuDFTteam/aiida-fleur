@@ -21,11 +21,11 @@ from aiida.orm import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
+from aiida.comman.constants import bohr_to_ang
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
 
-bohr_a = 0.52917721092#A # TODO import from somewhere
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 
@@ -184,8 +184,8 @@ class FleurinputgenCalculation(JobCalculation):
         # Scaling comes from the Structure
         # but we have to convert from Angstroem to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0] #
-        scaling_lat = 1.#/bohr_a
-        scaling_pos = 1./bohr_a # Angstrom to atomic
+        scaling_lat = 1.#/bohr_to_ang
+        scaling_pos = 1./bohr_to_ang # Angstrom to atomic
         own_lattice = False #not self._use_aiida_structure
 
         # The inpfile gen is run in serial TODO: How to do this by default?
@@ -363,7 +363,7 @@ class FleurinputgenCalculation(JobCalculation):
         if not own_lattice:
             cell = structure.cell
             for vector in cell:
-                scaled = [a*scaling_pos for a  in vector]#scaling_pos=1./bohr_a
+                scaled = [a*scaling_pos for a  in vector]#scaling_pos=1./bohr_to_ang
                 cell_parameters_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
                                          "\n".format(scaled[0], scaled[1], scaled[2]))
             scaling_factor_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
