@@ -379,7 +379,7 @@ class FleurinpModifier(object):
             tree = self.apply_modifications(tree, self._tasks)
 
         if display:
-            xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print = True)
+            xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print=True)
             print(xmltreestring)
         return tree
         self.logger.debug(self.apply_modifications(self._original.get_dict(), self._tasks))
