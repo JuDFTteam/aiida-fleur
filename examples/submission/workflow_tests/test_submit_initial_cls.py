@@ -64,7 +64,7 @@ print(args)
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
-                              'walltime_sec':  60*60})
+                              'max_wallclock_seconds':  60*60})
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A

@@ -17,12 +17,13 @@ FLEURINP=1916 # Tungesten
 OPTIONS=4129 # claix
 OPTIONS3=4272 # JURECA 1 node full mpi
 OPTIONS4=4286 # JURECA 1 node 4 mpi 6 openmp
+SPTIONS1=49278 #iff
 #OPTIONS5
 REMOTE2=1921 # W on claix
 
 # on iff
 
-#verdi run test_submit_scf.py --fleur $FLEUR_CODE --inpgen $INPGEN_CODE --structure $STRUCTURE --submit $SUBMIT
+verdi run test_submit_scf.py --fleur $FLEUR_CODE --inpgen $INPGEN_CODE --structure $STRUCTURE --submit $SUBMIT
 #verdi run test_submit_eos.py --fleur $FLEUR_CODE --inpgen $INPGEN_CODE --structure $STRUCTURE --submit $SUBMIT
 #verdi run test_submit_initial_cls.py --fleur $FLEUR_CODE --inpgen $INPGEN_CODE --structure $STRUCTURE --submit $SUBMIT
 #verdi run test_submit_corehole.py --fleur $FLEUR_CODE --inpgen $INPGEN_CODE --structure $STRUCTURE --submit $SUBMIT

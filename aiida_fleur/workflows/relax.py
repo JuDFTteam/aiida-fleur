@@ -82,7 +82,7 @@ class fleur_relax_wc(WorkChain):
         # set values, or defaults, default: always converge charge density, crit < 0.00002, max 4 fleur runs
         self.ctx.max_number_runs = self.inputs.wf_parameters.get_dict().get('relax_runmax', 4)
         self.ctx.max_force_cycle = self.inputs.wf_parameters.get_dict().get('max_force_cycle', 4)
-        print 'start'
+        self.report('starting relaxation workchain')
 
     def converge_scf(self):
         """
@@ -91,11 +91,9 @@ class fleur_relax_wc(WorkChain):
         # run a convergence worklfow
         # Comment: Here we wait, because of run,
         # maybe using a future and submit instead might be better
-        #print 'ctx, before scf {} {}'.format(ctx, [a for a in self.ctx])
         inputs = self.get_inputs_scf(self.ctx)
 
         if self.ctx.last_calc2:
-            #print 'inputs for convergnce2: {}'.format(inputs)
             res = run(fleur_scf_wc,
                       wf_parameters=inputs['wf_parameters'],
                       fleurinp=inputs['fleurinp'],
@@ -109,11 +107,8 @@ class fleur_relax_wc(WorkChain):
         else:
             res = run(fleur_scf_wc, wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], calc_parameters=inputs['calc_parameters'], inpgen = inputs['inpgen'], fleur=inputs['fleur'] )#inputs)#
-        #print 'ctx, after scf {} {}'.format(ctx, [a for a in self.ctx])
 
-        #print 'output of convergence: {}'.format(res)
         self.ctx.last_calc2 = res#.get('remote_folder', None)
-        #print res
         #return ResultToContext(last_calc2=res)
 
     def get_inputs_scf(self):
@@ -124,8 +119,6 @@ class fleur_relax_wc(WorkChain):
         # produce the inputs for a convergence worklfow
         # if last calculation
         # create input from that
-        print 'getting inputs for scf'
-        #print 'last calc: {} '.format(ctx.last_calc2)
         if self.ctx.last_calc2:
             # get fleurinpData from inp_new.xml
             inputs['wf_parameters'] = self.inputs.wf_parameters
@@ -168,7 +161,7 @@ class fleur_relax_wc(WorkChain):
             fleurinp_new = fleurinp.copy()
         else: # warning
             fleurinp_new = None
-            print 'no fleurinp data was found in last_calc2'
+            self.report('no fleurinp data was found in last_calc2')
         if False: # TODO something other specified in wf parameters
             change_dict = {'l_f' : True}
         else: # relax every atom in all direction specified in inp.xml
@@ -195,7 +188,7 @@ class fleur_relax_wc(WorkChain):
         #else:
         #    inputs._options.queue_name = 'th1'
         inputs._options.withmpi = False # for now
-        print 'Relax structure with Fleur, cycle: {}'.format(self.ctx.loop_count2)
+        self.report('Relax structure with Fleur, cycle: {}'.format(self.ctx.loop_count2))
         future = self.submit(FleurProcess, inputs)
 
         self.ctx.calcs.append(future)
@@ -210,16 +203,14 @@ class fleur_relax_wc(WorkChain):
         forces_converged = False
         energy_converged = False
         largest_force = self.ctx.last_calc2['output_parameters'].get_dict().get('force_largest')
-        print 'largest_force: {}'.format(largest_force)
+        self.report('largest_force: {}'.format(largest_force))
         if self.inputs.wf_parameters.get_dict().get('converge_density', True):
-            #print self.ctx.last_calc2['output_parameters'].get_dict()
             if self.inputs.wf_parameters.get_dict().get('force_criterion', 0.00002) >= largest_force:
                 forces_converged = True
 
 
         # TODO?
         if self.inputs.wf_parameters.get_dict().get('converge_energy', True):
-            #print self.ctx.last_calc2['output_parameters'].dict.energy_hartree
             #if self.inputs.wf_parameters.get_dict().get('energy_criterion', 0.0002) >= self.ctx.last_calc2['output_parameters'].dict.energy_hartree:
                 #last_energy: # energy converged
             energy_converged = True
@@ -242,11 +233,11 @@ class fleur_relax_wc(WorkChain):
         largest_force = self.ctx.last_calc2['output_parameters'].get_dict().get('force_largest')
 
         if self.ctx.successful2:
-            print 'Done, Des wors, forces converged'
-            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force)
+            self.report('Done, Des wors, forces converged')
+            self.report('Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force))
         else: # loopcount reached
-            print 'Done, I reached the number of forces cycles, system is not relaxed enough.'
-            print 'Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force)
+            self.report('Done, I reached the number of forces cycles, system is not relaxed enough.')
+            self.report('Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force))
         outdict = self.ctx.last_calc2
         for k, v in outdict.iteritems():
             self.out(k, v)        # return success, and the last calculation outputs

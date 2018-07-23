@@ -43,25 +43,27 @@ class fleur_band_wc(WorkChain):
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
     _workflowversion = "0.3.2"
-
+    
+    _default_options = {'resources': {"num_machines": 1},
+                        'max_wallclock_seconds': 60*60,
+                        'queue_name': '',
+                        'custom_scheduler_commands' : '',
+                        #'max_memory_kb' : None,
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}
+    _default_wf_para = {'kpath' : 'auto',
+                        'nkpts' : 800,
+                        'sigma' : 0.005,
+                        'emin' : -0.50,
+                        'emax' :  0.90}
+    
     @classmethod
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'kpath' : 'auto',
-                                               'nkpts' : 800,
-                                               'sigma' : 0.005,
-                                               'emin' : -0.50,
-                                               'emax' :  0.90}))
+                   default=ParameterData(dict=cls._default_wf_para))
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
-                            'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
-                            'queue_name': '',
-                            'custom_scheduler_commands' : '',
-                            #'max_memory_kb' : None,
-                            'import_sys_environment' : False,
-                            'environment_variables' : {}}))
+                   default=ParameterData(dict=cls._default_wf_para))
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
@@ -71,7 +73,6 @@ class fleur_band_wc(WorkChain):
             cls.run_fleur,
             cls.return_results
         )
-        #spec.dynamic_output()
 
 
     def start(self):
@@ -145,8 +146,6 @@ class fleur_band_wc(WorkChain):
         code = self.inputs.fleur
         options = self.ctx.options
         
-        options["max_wallclock_seconds"]  = self.ctx.options.get('walltime_sec', 60*60)
-        options.pop('walltime_sec')
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)

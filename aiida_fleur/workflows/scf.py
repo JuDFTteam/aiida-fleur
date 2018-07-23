@@ -94,7 +94,7 @@ class fleur_scf_wc(WorkChain):
     #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
     _default_options = {
                         'resources' : {"num_machines": 1},
-                        'walltime_sec' : 6*60*60,
+                        'max_wallclock_seconds' : 6*60*60,
                         'queue_name' : '',
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
@@ -115,36 +115,37 @@ class fleur_scf_wc(WorkChain):
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'fleur_runmax': 4,
-                                               'density_criterion' : 0.00002,
-                                               'energy_criterion' : 0.002,
-                                               'converge_density' : True,
-                                               'converge_energy' : False,
+                   default=ParameterData(dict=cls._wf_default))
+                                              #'fleur_runmax': 4,
+                                               #'density_criterion' : 0.00002,
+                                               #'energy_criterion' : 0.002,
+                                               #'converge_density' : True,
+                                               #'converge_energy' : False,
                                                #'reuse' : True,
                                                #'options' : {
                                                #    'resources': {"num_machines": 1},
-                                               #    'walltime_sec': 60*60,
+                                               #    'max_wallclock_seconds': 60*60,
                                                #    'queue_name': '',
                                                #    'custom_scheduler_commands' : '',
                                                #    #'max_memory_kb' : None,
                                                #    'import_sys_environment' : False,
                                                #    'environment_variables' : {}},
-                                               'serial' : False,
-                                               'itmax_per_run' : 30,
-                                               'inpxml_changes' : [],
-                                               }))
+                                               #'serial' : False,
+                                               #'itmax_per_run' : 30,
+                                               #'inpxml_changes' : [],
+                                               #}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
-                            'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
-                            'queue_name': '',
-                            'custom_scheduler_commands' : '',
+                   default=ParameterData(dict=cls._default_options))#{
+                            #'resources': {"num_machines": 1},
+                            #'max_wallclock_seconds': 60*60,
+                            #'queue_name': '',
+                            #'custom_scheduler_commands' : '',
                             #'max_memory_kb' : None,
-                            'import_sys_environment' : False,
-                            'environment_variables' : {}}))
+                            #'import_sys_environment' : False,
+                            #'environment_variables' : {}}))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -167,15 +168,15 @@ class fleur_scf_wc(WorkChain):
         spec.output('fleurinp', valid_type=FleurInpData)
         spec.output('output_scf_wc_para', valid_type=ParameterData)
         spec.output('last_fleur_calc_output', valid_type=ParameterData)
+
+
         
     def start(self):
         """
         init context and some parameters
         """
         self.report('INFO: started convergence workflow version {}\n'
-                    #'INFO: Workchain node identifiers: {}'
-                    ''.format(self._workflowversion))#, self.uuid))#, ProcessRegistry().current_calc_node))
-                # currently buggy...
+                    ''.format(self._workflowversion))
 
         ####### init    #######
 
@@ -197,13 +198,17 @@ class fleur_scf_wc(WorkChain):
         # set values, or defaults
         defaultoptions = self._default_options
         #options = wf_dict.get('options', defaultoptions)
+
         if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
+            
         for key, val in defaultoptions.iteritems():
             options[key] = options.get(key, val)
         self.ctx.options = options
+        
+        
         #self.report('options: {}'.format(self.ctx.options))
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
@@ -319,7 +324,7 @@ class fleur_scf_wc(WorkChain):
         else:
             params = None
         
-        options = {"max_wallclock_seconds" : int(self.ctx.options.get('walltime_sec')),
+        options = {"max_wallclock_seconds" : int(self.ctx.options.get('max_wallclock_seconds')),
                    "resources" : self.ctx.options.get('resources', {"num_machines": 1}),
                    "queue_name" : self.ctx.options.get('queue_name', '')}
         # TODO do not use the same option for inpgen as for FLEUR... so far we ignore the others...
@@ -415,7 +420,7 @@ class fleur_scf_wc(WorkChain):
                                            'files_not_to_retrieve': [],
                                            'files_copy_remotely': [],
                                            'files_not_copy_remotely': [],
-                                           'commandline_options': ["-wtime", "{}".format(self.ctx.options['walltime_sec'])],
+                                           'commandline_options': ["-wtime", "{}".format(self.ctx.options['max_wallclock_seconds'])],
                                            'blaha' : ['bla']})
         '''
         if self.ctx['last_calc']:
@@ -437,15 +442,7 @@ class fleur_scf_wc(WorkChain):
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
-        options.pop('walltime_sec')
-        options["max_wallclock_seconds"] =  self.ctx.options['walltime_sec']
-        #{"max_wallclock_seconds": self.ctx.options['walltime_sec'],
-        #           "resources": self.ctx.options['resources',
-        #           "queue_name" : self.ctx.options['queue',
-        #           "environment_variables" : self.ctx.options["environment_variables"],
-        #           "max_memory_kb" : self.ctx.options["max_memory_kb"],
-        #           "import_sys_environment" : self.ctx.options["import_sys_environment"]
-        #           }#,
+
         
         inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         future = submit(inputs_builder)

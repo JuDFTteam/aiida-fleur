@@ -75,21 +75,22 @@ class fleur_initial_cls_wc(WorkChain):
     'dos_para' : 'default'
     """
 
-    _workflowversion = "0.3.3"
-    _default_wf_para = {'structure_ref' : {},
-                        #'references' : {'calculate' : 'all'},
-                        'relax' : True,
-                        'relax_mode': 'QE Fleur',
-                        'relax_para' : 'default',
-                        'scf_para' : 'default',
-                        'same_para' : True,
-                        'serial' : False}
+    _workflowversion = "0.3.4"
+    _default_wf_para = {'references' : {},
+                       'relax' : True,
+                       'relax_mode': 'Fleur',
+                       'relax_para' : 'default',
+                       'scf_para' : 'default',
+                       'same_para' : True,
+                       'serial' : True}
 
-    _default_options = {
-                        'resources' : {"num_machines": 1},
-                        'walltime_sec' : 6*60*60,
-                        'queue_name' : None,
-                        'custom_scheduler_commands' : ''}
+    _default_options = {'resources' : {"num_machines": 1},
+                        'max_wallclock_seconds' : 6*60*60,
+                        'queue_name' : '',
+                        'custom_scheduler_commands' : '',
+                        #'max_memory_kb' : None,
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}
     
                         
     ERROR_INVALID_INPUT_RESOURCES = 1
@@ -107,29 +108,15 @@ class fleur_initial_cls_wc(WorkChain):
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                       'references' : {},
-                       'relax' : True,
-                       'relax_mode': 'Fleur',
-                       'relax_para' : 'default',
-                       'scf_para' : 'default',
-                       'same_para' : True,
-                       'serial' : True}))
-                       #TODO_default_wf_para out of here#
+                   default=ParameterData(dict=cls._default_wf_para))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
-                            'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
-                            'queue_name': '',
-                            'custom_scheduler_commands' : '',
-                            #'max_memory_kb' : None,
-                            'import_sys_environment' : False,
-                            'environment_variables' : {}}))
+                   default=ParameterData(dict=cls._default_options))
+
         spec.outline(
             cls.check_input,
             cls.get_references,
