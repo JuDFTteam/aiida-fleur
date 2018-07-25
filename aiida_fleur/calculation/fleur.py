@@ -361,7 +361,7 @@ class FleurCalculation(JobCalculation):
         codesdesc = code.description
         # TODO ggf also check settings
         if codesdesc is not None:
-            if 'hdf5' or 'Hdf5' or 'HDF5' in codesdesc:
+            if ('hdf5' or 'Hdf5' or 'HDF5') in codesdesc:
                 with_hdf5 = True
             else:
                 with_hdf5 = False
@@ -601,6 +601,7 @@ class FleurCalculation(JobCalculation):
         retrieve_list.append(self._OUT_FILE_NAME)
         if with_hdf5:
             retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
+            retrieve_list.append(self._CDN1_FILE_NAME) # only for now because somthing is buggy
         else:
             retrieve_list.append(self._CDN1_FILE_NAME)
         #calcinfo.retrieve_list.append(self._INP_FILE_NAME)
