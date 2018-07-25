@@ -101,7 +101,7 @@ class fleur_corehole_wc(WorkChain):
             'scf_para' : 'default',    # wf parameter dict for the scfs
             'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
             'resources' : {"num_machines": 1},# resources per job
-            'walltime_sec' : 6*60*60,    # walltime per job
+            'max_wallclock_seconds' : 6*60*60,    # walltime per job
             'queue_name' : '',       # what queue to submit to
             'serial' : True,           # run fleur in serial, or parallel?
             #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
@@ -116,7 +116,7 @@ class fleur_corehole_wc(WorkChain):
     _workflowversion = "0.3.2"
     _default_options = {
                         'resources' : {"num_machines": 1},
-                        'walltime_sec' : 6*60*60,
+                        'max_wallclock_seconds' : 6*60*60,
                         'queue_name' : '',
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
@@ -151,7 +151,7 @@ class fleur_corehole_wc(WorkChain):
         spec.input("options", valid_type=ParameterData, required=False, 
                    default=ParameterData(dict={
                             'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
+                            'max_wallclock_seconds': 60*60,
                             'queue_name': '',
                             'custom_scheduler_commands' : '',
                             'import_sys_environment' : False,

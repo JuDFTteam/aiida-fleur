@@ -82,7 +82,7 @@ class fleur_initial_cls_wc(WorkChain):
                        'relax_para' : 'default',
                        'scf_para' : 'default',
                        'same_para' : True,
-                       'serial' : True}
+                       'serial' : False}
 
     _default_options = {'resources' : {"num_machines": 1},
                         'max_wallclock_seconds' : 6*60*60,

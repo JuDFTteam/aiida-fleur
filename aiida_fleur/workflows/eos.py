@@ -60,7 +60,7 @@ class fleur_eos_wc(WorkChain):
 
     _default_options = {
                         'resources' : {"num_machines": 1},
-                        'walltime_sec' : 6*60*60,
+                        'max_wallclock_seconds' : 6*60*60,
                         'queue_name' : '',
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
@@ -97,7 +97,7 @@ class fleur_eos_wc(WorkChain):
         spec.input("options", valid_type=ParameterData, required=False, 
                    default=ParameterData(dict={
                             'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
+                            'max_wallclock_seconds': 60*60,
                             'queue_name': '',
                             'custom_scheduler_commands' : '',
                             'import_sys_environment' : False,
