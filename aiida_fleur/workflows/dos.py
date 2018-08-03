@@ -45,27 +45,28 @@ class fleur_dos_wc(WorkChain):
 
     _workflowversion = "0.3.2"
 
+    _default_options = {'resources': {"num_machines": 1},
+                        'max_wallclock_seconds': 60*60,
+                        'queue_name': '',
+                        'custom_scheduler_commands' : '',
+                        #'max_memory_kb' : None,
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}
+    _default_wf_para = {'tria' : True,
+                        'nkpts' : 800,
+                        'sigma' : 0.005,
+                        'emin' : -0.30,
+                        'emax' :  0.80}    
+    
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
-                                         'tria' : True,
-                                         'nkpts' : 800,
-                                         'sigma' : 0.005,
-                                         'emin' : -0.30,
-                                         'emax' :  0.80}))#
+                   default=ParameterData(dict=cls._default_wf_para))#
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
-                            'resources': {"num_machines": 1},
-                            'walltime_sec': 60*60,
-                            'queue_name': '',
-                            'custom_scheduler_commands' : '',
-                            #'max_memory_kb' : None,
-                            'import_sys_environment' : False,
-                            'environment_variables' : {}}))
+                   default=ParameterData(dict={cls._default_options}))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
         spec.input("inpgen", valid_type=Code, required=False)
@@ -102,15 +103,7 @@ class fleur_dos_wc(WorkChain):
 
         # set values, or defaults
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*60)
-        #self.ctx.queue = wf_dict.get('queue_name', None)
-        #self.ctx.options = wf_dict.get('options', {
-        #                                 'resources' :  {"num_machines": 1}, 
-        #                                 'walltime_sec':  10*60
-        #                                 })
 
-        
         inputs = self.inputs
         if 'options' in inputs:
             self.ctx.options = inputs.options.get_dict()
@@ -171,9 +164,6 @@ class fleur_dos_wc(WorkChain):
         code = self.inputs.fleur
 
         options = self.ctx.options
-        
-        options["max_wallclock_seconds"]  = self.ctx.options.get('walltime_sec', 60*60)
-        options.pop('walltime_sec')
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurProcess, **inputs)
