@@ -570,6 +570,12 @@ class FleurCalculation(JobCalculation):
                         self._OUTPUT_FOLDER))
 
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
+        
+        #  Prepare self._JUDFT_WARN_ONLY_INFO_FILE_NAME and upload
+        # local_copy_list.append
+        warn_only_filename = tempfolder.get_abs_path(self._JUDFT_WARN_ONLY_INFO_FILE_NAME)
+        with open(warn_only_filename, 'w') as infile:
+            infile.write("\n")
 
 
         ########## MAKE CALCINFO ###########
