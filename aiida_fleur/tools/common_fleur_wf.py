@@ -110,6 +110,8 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
             options = {}
         options['withmpi'] = False # for now
         #TODO not every machine/scheduler type takes number of machines
+        #  lsf takes number of total_mpi_procs,slurm and psb take num_machinces,\
+        # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {"num_machines": 1}
 
     if settings:

@@ -42,7 +42,7 @@ econfiguration = {
     19: {'mass': 39.0983, 'name': 'Potassium', 'symbol': 'K', 'econfig': '[Ne] 3s2 | 3p6 4s1 '},
     20: {'mass': 40.078, 'name': 'Calcium', 'symbol': 'Ca', 'econfig': '[Ne] 3s2 | 3p6 4s2 '},
     21: {'mass': 44.955912, 'name': 'Scandium', 'symbol': 'Sc', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d1'},
-    22: {'mass': 47.867, 'name': 'Titanium', 'symbol': 'Ti', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d2'},
+    22: {'mass': 47.867, 'name': 'Titanium', 'symbol': 'Ti', 'econfig': '[Ne] | 3s2 3p6 4s2 3d2'},
     23: {'mass': 50.9415, 'name': 'Vanadium', 'symbol': 'V', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d3'},
     24: {'mass': 51.9961, 'name': 'Chromium', 'symbol': 'Cr', 'econfig': '[Ne] 3s2 3p6 | 4s1 3d5'},
     25: {'mass': 54.938045, 'name': 'Manganese', 'symbol': 'Mn', 'econfig': '[Ne] 3s2 3p6 | 4s2 3d5'},
