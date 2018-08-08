@@ -66,7 +66,7 @@ class fleur_dos_wc(WorkChain):
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={cls._default_options}))
+                   default=ParameterData(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
         spec.input("inpgen", valid_type=Code, required=False)
