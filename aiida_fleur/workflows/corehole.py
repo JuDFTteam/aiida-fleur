@@ -29,9 +29,9 @@ from pprint import pprint
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Int
 from aiida.work.workchain import WorkChain, if_, ToContext
-from aiida.work.launch import submit
+from aiida.work.run import submit
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workfunctions import workfunction as wf
+from aiida.work import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import supercell

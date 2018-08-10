@@ -33,7 +33,7 @@ from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
-from aiida.work.workfunctions import workfunction as wf
+from aiida.work import workfunction as wf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA

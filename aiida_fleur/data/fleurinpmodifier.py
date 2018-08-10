@@ -24,7 +24,7 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.orm import DataFactory
 #from aiida.workflows2.wf import wf
-from aiida.work.workfunctions import workfunction as wf
+from aiida.work import workfunction as wf
 
 FleurinpData = DataFactory('fleur.fleurinp')
 
@@ -397,8 +397,8 @@ class FleurinpModifier(object):
         out = self.modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
-            label='fleurinp modifier',
-            description='This workfunction modified an Fleurinpdataobject')
+            _label='fleurinp modifier',
+            _description='This workfunction modified an Fleurinpdataobject')
         return out
 
     def undo(self, all=False):

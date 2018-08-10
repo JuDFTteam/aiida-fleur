@@ -26,7 +26,7 @@ from aiida.orm import Code, DataFactory, Group
 from aiida.work.workchain import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.work import workfunction as wf
-from aiida.work.launch import submit
+from aiida.work.run import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
 

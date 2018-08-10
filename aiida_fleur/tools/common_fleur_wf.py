@@ -79,7 +79,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     '''
     get the input for a FLEUR calc
     '''
-    inputs = FleurProcess.get_builder()#get_inputs_template()
+    inputs = FleurProcess.get_inputs_template()
     #print('Template fleur {} '.format(inputs))
     if remote:
         inputs.parent_folder = remote
@@ -97,13 +97,13 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     #        inputs.options[key] = val
 
     if description:
-        inputs.description = description
+        inputs._description = description
     else:
-        inputs.description = ''
+        inputs._description = ''
     if label:
-        inputs.label = label
+        inputs._label = label
     else:
-        inputs.label = ''
+        inputs._label = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -146,7 +146,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     """
     get the input for a inpgen calc
     """
-    inputs = FleurinpProcess.get_builder()#.get_inputs_template()
+    inputs = FleurinpProcess.get_inputs_template()
     #print('Template inpgen {} '.format(inputs))
 
     if structure:
@@ -164,14 +164,14 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
         
     if description:
-        inputs.description = description
+        inputs._description = description
     else:
-        inputs.description = ''
+        inputs._description = ''
 
     if label:
-        inputs.label = label
+        inputs._label = label
     else:
-        inputs.label = ''
+        inputs._label = ''
 
     if not options:
         options = {}

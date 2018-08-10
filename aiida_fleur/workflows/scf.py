@@ -25,7 +25,7 @@ from lxml.etree import XMLSyntaxError
 
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.launch import submit
+from aiida.work.run import submit
 from aiida.work import workfunction as wf
 from aiida.common.datastructures import calc_states
 

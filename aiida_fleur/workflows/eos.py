@@ -23,8 +23,8 @@ import numpy as np
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Float
 from aiida.work.workchain import WorkChain, ToContext#,Outputs
-from aiida.work.workfunctions import workfunction as wf
-from aiida.work.launch import submit
+from aiida.work import workfunction as wf
+from aiida.work.run import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode

@@ -12,7 +12,7 @@
 
 # Here we test if the interfaces of the workflows are still the same
 import pytest
-
+'''
 @pytest.mark.usefixtures("aiida_env")
 class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
     """
@@ -112,3 +112,5 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
         
         builder = fleur_optimize_parameters_wc.get_builder()
+
+'''

@@ -21,7 +21,7 @@ from ase.io import *
 from aiida.orm import DataFactory
 from aiida.orm import load_node
 from aiida.orm.data.structure import Site, Kind
-from aiida.work.workfunctions import workfunction as wf
+from aiida.work import workfunction as wf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 
