@@ -425,18 +425,18 @@ class fleur_initial_cls_wc(WorkChain):
             scf_label = 'cls|scf_wc main'
             scf_description = 'cls|scf of the main structure'
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                              inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                             label=scf_label, description=scf_description)#
+                             _label=scf_label, _description=scf_description)#
             #elif isinstance(node, FleurinpData):
             #    res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):#(StructureData, ParameterData)):
                 if len(node) == 2:
-                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
+                    res = submit(fleur_scf_wc, wf_parameters=wf_parameters,
                                  structure=node[0], calc_parameters=node[1], options=options,
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                 label=scf_label, description=scf_description)
+                                 _label=scf_label, _description=scf_description)
                 else:
                     self.report('ERROR: something in calcs_torun which I do not'
                                 'recognize, list has not 2 entries: {}'.format(node))
@@ -546,17 +546,17 @@ class fleur_initial_cls_wc(WorkChain):
                                ''.format(self.ctx.elements[i]))
             #print node
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                              inpgen = self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                             label=scf_label, description=scf_description)#
+                             _label=scf_label, _description=scf_description)#
             #elif isinstance(node, FleurinpData):
             #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):#(StructureData, ParameterData)):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters,
                              structure=node[0], calc_parameters=node[1], options=options,
                              inpgen = self.inputs.inpgen, fleur=self.inputs.fleur,
-                             label=scf_label, description=scf_description)#
+                             _label=scf_label, _description=scf_description)#
             else:
                 self.report('WARNING: something in calcs_torun which I do not reconise: {}'.format(node))
                 continue

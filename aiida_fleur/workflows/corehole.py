@@ -308,8 +308,8 @@ class fleur_corehole_wc(WorkChain):
                         Int(supercell_base[0]),
                         Int(supercell_base[1]),
                         Int(supercell_base[2]),
-                        label=u'supercell_wf',
-                        description=description)
+                        _label=u'supercell_wf',
+                        _description=description)
 
         # overwrite label and description of new structure
         supercell_s.label = '{}x{}x{} of {}'.format(supercell_base[0], supercell_base[1], supercell_base[2], self.ctx.base_structure_relax.uuid)
@@ -711,19 +711,19 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                          label=scf_label, description=scf_desc)#
+                          _label=scf_label, _description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                          label=scf_label, _description=scf_desc)#
+                          _label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
-                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
+                    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
                                  calc_parameters=node[1], structure=node[0],
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                 label=scf_label, description=scf_desc)#
+                                 _label=scf_label, _description=scf_desc)#
                 else:
                     self.report('WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
             else:
@@ -804,20 +804,20 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                          label=scf_label, description=scf_desc)#
+                          _label=scf_label, _description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                          label=scf_label, description=scf_desc)#
+                          _label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
                     if isinstance(node[2], ParameterData):
-                        res = self.submit(fleur_scf_wc, wf_parameters=node[2],
+                        res = submit(fleur_scf_wc, wf_parameters=node[2],
                                      calc_parameters=node[1], structure=node[0], options=options,
                                      inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                     label=scf_label, description=scf_desc)#
+                                     _label=scf_label, _description=scf_desc)#
             else:
                 self.report('ERROR: Something in run_scfs which I do not recognize: {}'.format(node))
                 continue

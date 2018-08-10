@@ -19,7 +19,7 @@ import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.work.run import submit, run
 from aiida_fleur.workflows.eos import fleur_eos_wc
 from pprint import pprint
 ################################################################
