@@ -84,13 +84,13 @@ class fleur_initial_cls_wc(WorkChain):
                        'same_para' : True,
                        'serial' : False}
 
-    _default_options = {'resources' : {"num_machines": 1},
-                        'max_wallclock_seconds' : 6*60*60,
-                        'queue_name' : '',
-                        'custom_scheduler_commands' : '',
+    _default_options = {u'resources' : {"num_machines": 1},
+                        u'max_wallclock_seconds' : 6*60*60,
+                        u'queue_name' : u'',
+                        u'custom_scheduler_commands' : u'',
                         #'max_memory_kb' : None,
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
+                        u'import_sys_environment' : False,
+                        u'environment_variables' : {}}
     
                         
     ERROR_INVALID_INPUT_RESOURCES = 1

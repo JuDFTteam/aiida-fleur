@@ -59,12 +59,12 @@ class fleur_eos_wc(WorkChain):
     _workflowversion = "0.3.3"
 
     _default_options = {
-                        'resources' : {"num_machines": 1},
-                        'max_wallclock_seconds' : 6*60*60,
-                        'queue_name' : '',
-                        'custom_scheduler_commands' : '',
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}    
+                        u'resources' : {"num_machines": 1},
+                        u'max_wallclock_seconds' : 6*60*60,
+                        u'queue_name' : u'',
+                        u'custom_scheduler_commands' : u'',
+                        u'import_sys_environment' : False,
+                        u'environment_variables' : {}}    
 
                         
     ERROR_INVALID_INPUT_RESOURCES = 1
