@@ -170,26 +170,26 @@ class fleur_corehole_wc(WorkChain):
             cls.return_results
         )
          
-        spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES',
-            message="The input resources are invalid.")
-        spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-            message="Input resources are missing.")
-        spec.exit_code(3, 'ERROR_INVALID_CODE_PROVIDED',
-            message="The code provided is invalid, or not of the right kind.")
-        spec.exit_code(4, 'ERROR_INPGEN_CALCULATION_FAILED',
-            message="Inpgen calculation FAILED, check output")
-        spec.exit_code(5, 'ERROR_CHANGING_FLEURINPUT_FAILED',
-            message="Changing of the FLEURINP data went wrong, check log.")
-        spec.exit_code(6, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
-            message="The FLEUR input file for the calculation did not validate.")
-        spec.exit_code(7, 'ERROR_FLEUR_CALCULATION_FAiLED',
-            message="At least one FLEUR calculation FAILED, check the output and log.")
-        spec.exit_code(8, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-            message=("At least one FLEUR calculation did not/could not reach the"
-                     "desired convergece Criteria, with the current parameters."))            
-        spec.exit_code(9, 'ERROR_IN_REFERENCE_CREATION',
-            message=("Something went wrong in the determiation what coreholes to "
-                    "calculate, probably the input format was not correct. Check log."))    
+        #spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES',
+        #    message="The input resources are invalid.")
+        #spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
+        #    message="Input resources are missing.")
+        #spec.exit_code(3, 'ERROR_INVALID_CODE_PROVIDED',
+        #    message="The code provided is invalid, or not of the right kind.")
+        #spec.exit_code(4, 'ERROR_INPGEN_CALCULATION_FAILED',
+        #    message="Inpgen calculation FAILED, check output")
+        #spec.exit_code(5, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        #    message="Changing of the FLEURINP data went wrong, check log.")
+        #spec.exit_code(6, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        #    message="The FLEUR input file for the calculation did not validate.")
+        #spec.exit_code(7, 'ERROR_FLEUR_CALCULATION_FAiLED',
+        #    message="At least one FLEUR calculation FAILED, check the output and log.")
+        #spec.exit_code(8, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
+        #    message=("At least one FLEUR calculation did not/could not reach the"
+        #             "desired convergece Criteria, with the current parameters."))            
+        #spec.exit_code(9, 'ERROR_IN_REFERENCE_CREATION',
+        #    message=("Something went wrong in the determiation what coreholes to "
+        #            "calculate, probably the input format was not correct. Check log."))    
 
     def check_input(self):
         """
@@ -466,7 +466,7 @@ class fleur_corehole_wc(WorkChain):
                              "should have len 2. Hint hast to be the format "
                              "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl))
                     self.control_end_wc(error)
-                    return self.exit_codes.ERROR_IN_REFERENCE_CREATION
+                    return 2#self.exit_codes.ERROR_IN_REFERENCE_CREATION
                 else:
                     # we assume for now ['Element', 'corelevel'] i.e ['Be', '1s']
                     econfigs = []
