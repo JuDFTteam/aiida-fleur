@@ -839,7 +839,7 @@ def create_initcls_result_node(**kwargs):
 
     outdict = {}
     outpara = kwargs.get('results_node', {})
-    outdict['output_initial_cls_wc_para'] = outpara.clone()
+    outdict['output_initial_cls_wc_para'] = outpara.copy()#clone()
     # copy, because we rather produce the same node twice then have a circle in the database for now...
     #output_para = args[0]
     #return {'output_eos_wc_para'}

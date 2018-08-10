@@ -238,7 +238,7 @@ class fleur_eos_wc(WorkChain):
             #                  label=label_c,
             #                  description=description)
             #time.sleep(5)
-            res = self.submit(fleur_scf_wc, **inputs)
+            res = submit(fleur_scf_wc, **inputs)
             self.ctx.labels.append(label)
             calcs[label] = res
 
@@ -456,7 +456,7 @@ def create_eos_result_node(**kwargs):
     """
     outdict = {}
     outpara = kwargs.get('results_node', {})
-    outdict['output_eos_wc_para'] = outpara.clone()
+    outdict['output_eos_wc_para'] = outpara.copy()#clone()
     # copy, because we rather produce the same node twice
     # then have a circle in the database for now...
     outputdict = outpara.get_dict()

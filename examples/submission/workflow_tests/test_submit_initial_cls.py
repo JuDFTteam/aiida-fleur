@@ -19,7 +19,7 @@ import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.work.run import submit, run
 from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
 
@@ -62,9 +62,9 @@ print(args)
 
 ### Defaults ###
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
-                              'max_wallclock_seconds':  60*60})
+options = ParameterData(dict={u'resources' : {"num_machines": 1},
+                              u'queue_name' : u'th1',#23_node',
+                              u'max_wallclock_seconds':  60*60})
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A

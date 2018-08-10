@@ -6,11 +6,11 @@
 # the materials and all other parameter are definded in the submission tests...
 
 
-FLEUR_CODE=1599 #iff
+FLEUR_CODE=7652 #iff
 FLEUR_CODE2=1596 # claix
 FLEUR_CODE3=4892 #4892 dev 4260 release# JURECA
-INPGEN_CODE=1598 # mac
-STRUCTURE=1604
+INPGEN_CODE=7550 # iff
+STRUCTURE=138 #1604
 SUBMIT=true
 REMOTE=1921 #Tungesten on iff003
 FLEURINP=1916 # Tungesten

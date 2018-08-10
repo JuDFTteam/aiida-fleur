@@ -61,9 +61,9 @@ print(args)
 wf_para = ParameterData(dict={'fleur_runmax' : 4, 
                               'points' : 4})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
-                              'max_wallclock_seconds':  60*60})
+options = ParameterData(dict={u'resources' : {"num_machines": 1},
+                              u'queue_name' : u'th1',#23_node',
+                              u'max_wallclock_seconds':  60*60})
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A

@@ -28,7 +28,8 @@ from aiida.work.workchain import WorkChain, while_, if_, ToContext
 from aiida.work.run import submit
 from aiida.work import workfunction as wf
 from aiida.common.datastructures import calc_states
-
+from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -38,6 +39,8 @@ RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
+FleurProcess = FleurCalculation.process()
+FleurinpProcess = FleurinputgenCalculation.process()
 
 class fleur_scf_wc(WorkChain):
     """
@@ -93,12 +96,12 @@ class fleur_scf_wc(WorkChain):
     #_default_wc_label = u'fleur_scf_wc'
     #_default_wc_description = u'fleur_scf_wc: Fleur self consistensy cycle workchain, converges the total energy.'
     _default_options = {
-                        'resources' : {"num_machines": 1},
-                        'max_wallclock_seconds' : 6*60*60,
-                        'queue_name' : '',
-                        'custom_scheduler_commands' : '',
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
+                        u'resources' : {"num_machines": 1},
+                        u'max_wallclock_seconds' : 6*60*60,
+                        u'queue_name' : u'',
+                        u'custom_scheduler_commands' : u'',
+                        u'import_sys_environment' : False,
+                        u'environment_variables' : {}}
     
     # 0 is the usual return status of each step and the workchain
     ERROR_INVALID_INPUT_RESOURCES = 1
@@ -209,7 +212,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.options = options
         
         
-        #self.report('options: {}'.format(self.ctx.options))
+        self.report('options: {}'.format(self.ctx.options))
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
@@ -329,10 +332,10 @@ class fleur_scf_wc(WorkChain):
                    "queue_name" : self.ctx.options.get('queue_name', '')}
         # TODO do not use the same option for inpgen as for FLEUR... so far we ignore the others...
         # clean Idea might be to provide second inpgen options, currenly for our purposes not nessesary...
-
+        self.report(options)
         inputs_build = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
         self.report('INFO: run inpgen')
-        future = self.submit(inputs_build)
+        future = submit(FleurinpProcess, **inputs_build)
 
         return ToContext(inpgen=future, last_calc=future)
 
@@ -445,7 +448,7 @@ class fleur_scf_wc(WorkChain):
 
         
         inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-        future = submit(inputs_builder)
+        future = submit(FleurProcess, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
@@ -889,7 +892,7 @@ def create_scf_result_node(**kwargs):
         if key == 'outpara': #  should be alwasys there
             outpara = val
     outdict = {}
-    outputnode = outpara.clone()
+    outputnode = outpara.copy()#clone()
     outputnode.label = 'output_scf_wc_para'
     outputnode.description = ('Contains self-consistency results and '
                              'information of an fleur_scf_wc run.')

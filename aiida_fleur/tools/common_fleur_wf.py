@@ -23,8 +23,8 @@ RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = CalculationFactory('fleur.fleur')
-FleurinpProcess = CalculationFactory('fleur.inpgen')
+FleurProcess = CalculationFactory('fleur.fleur').process()
+FleurinpProcess = CalculationFactory('fleur.inpgen').process()
 
 
 def is_code(code):
@@ -75,10 +75,86 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False, **kwargs):
-    '''
+
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
+    """
     get the input for a FLEUR calc
-    '''
+    """
+    inputs = FleurProcess.get_inputs_template()
+    #print('Template fleur {} '.format(inputs))
+    if remote:
+        inputs.parent_folder = remote
+    if code:
+        inputs.code = code
+    if fleurinp:
+        inputs.fleurinpdata = fleurinp
+
+    for key, val in options.iteritems():
+        if val==None:
+            continue
+        else:
+            inputs._options[key] = val
+
+    if description:
+        inputs['_description'] = description
+    else:
+        inputs['_description'] = ''
+    if label:
+        inputs['_label'] = label
+    else:
+        inputs['_label'] = ''
+    #TODO check  if code is parallel version?
+    if serial:
+        inputs._options.withmpi = False # for now
+        inputs._options.resources = {"num_machines": 1}
+
+    if settings:
+        inputs.settings = settings
+    
+    return inputs
+
+
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None):
+    """
+    get the input for a inpgen calc
+    """
+    inputs = FleurinpProcess.get_inputs_template()
+    #print('Template inpgen {} '.format(inputs))
+
+    if structure:
+        inputs.structure = structure
+    if inpgencode:
+        inputs.code = inpgencode
+    if params:
+        inputs.parameters = params
+    for key, val in options.iteritems():
+        if val==None:
+            #leave them out, otherwise the dict schema won't validate
+            continue
+        else:
+            inputs._options[key] = val
+
+    if description:
+        inputs['_description'] = description
+    else:
+        inputs['_description'] = ''
+
+    if label:
+        inputs['_label'] = label
+    else:
+        inputs['_label'] = ''
+
+    #inpgen run always serial
+    inputs._options.withmpi = False # for now
+    inputs._options.resources = {"num_machines": 1}
+    #print(inputs)
+    return inputs
+
+'''
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False, **kwargs):
+    """
+    get the input for a FLEUR calc
+    """
     inputs = FleurProcess.get_inputs_template()
     #print('Template fleur {} '.format(inputs))
     if remote:
@@ -118,12 +194,12 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs.settings = settings
 
     if options:
-        inputs.options = options
+        inputs._options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.iteritems(): 
     #    inputs[key] = val
-    '''
+    """
     options = {
     "max_wallclock_seconds": int,
     "resources": dict,
@@ -138,7 +214,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     "max_memory_kb": int,
     "prepend_text": unicode,
     "append_text": unicode}
-    '''
+    """
     return inputs
 
 
@@ -176,18 +252,18 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     if not options:
         options = {}
     #inpgen run always serial
-    options['withmpi'] = False # for now
-    options['resources'] = {"num_machines": 1}
+    options[u'withmpi'] = False # for now
+    options[u'resources'] = {u"num_machines": 1}
     #print(inputs)
     if options:
-        inputs.options = options
+        inputs._options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.items():
     #    inputs[key] = val
     
     return inputs
-
+'''
 
 
 
