@@ -544,11 +544,7 @@ class FleurCalculation(JobCalculation):
                 #print('copy files remotely')
 
                 # from fleurmodes
-                if modes['pot8']:
-                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
-                    filelist_tocopy_remote.append(self._POT_FILE_NAME)
-                #    #filelist_tocopy_remote.append(self._POT2_FILE_NAME)
-                elif modes['dos']:
+                if modes['dos']:
                     pass
                 elif modes['band']:
                     pass

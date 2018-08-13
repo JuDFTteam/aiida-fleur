@@ -414,14 +414,12 @@ class FleurinpData(Data):
         # For now they are hardcoded.
         #    'dos': '/fleurInput/output',
         #    'band': '/fleurInput/output',
-        #    'pot8': '/fleurInput/calculationSetup/expertModes',
         #    'jspins': '/fleurInput/calculationSetup/magnetism',
-        fleur_modes = {'jspins' : '', 'dos' : '', 'band' : '', 'pot8' : '', 'ldau' : '', 'forces' : ''}
+        fleur_modes = {'jspins' : '', 'dos' : '', 'band' : '', 'ldau' : '', 'forces' : ''}
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins'] #['fleurInput']
             fleur_modes['dos'] = self.inp_dict['output']['dos']#'fleurInput']
             fleur_modes['band'] = self.inp_dict['output']['band']
-            fleur_modes['pot8'] = self.inp_dict['calculationSetup']['expertModes']['pot8']
             fleur_modes['forces'] = self.inp_dict['calculationSetup']['geometryOptimization']['l_f']
             ldau = False # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
