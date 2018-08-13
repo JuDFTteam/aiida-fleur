@@ -520,7 +520,7 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['econfig'] = econfigs
                         tempd = dict_corelevel.get(elm_cl[0], {})
                         together = dict_merger(dict_corelevel_elm, tempd)
-                        pprint(together)
+                        #pprint(together)
                         dict_corelevel[elm_cl[0]] = together
                     else:
                         pass
@@ -553,7 +553,7 @@ class fleur_corehole_wc(WorkChain):
                     #print(econfig)
                     state_tag_list = get_state_occ(econfig, corehole=cl_dict.get('corelevel')[i], valence=cl_dict.get('valence')[i], ch_occ=hole_charge)
                     attributedict = {'electronConfig' : {'stateOccupation' : state_tag_list}}
-                    pprint(state_tag_list)
+                    #pprint(state_tag_list)
                     change = ('set_species' , {'species_name' : change_kind, 'attributedict' : attributedict, 'create' : False})
                     fleurinp_change.append(change)
                     if correct_val_charge: # only needed in certain methods
@@ -577,7 +577,7 @@ class fleur_corehole_wc(WorkChain):
                     if self.ctx.magnetic: # Do a collinear magentic calculation
                         charge_change = ('set_inpchanges', {'change_dict' : {'jspins' : 2}})
                         fleurinp_change.append(charge_change)
-                    #self.report('{}'.format(fleurinp_change))
+                    self.report('{}'.format(fleurinp_change))
                     # because there might be already some kinds and another number is right...
                     # repacking of sites, because input to a workfunction, otherwise not storeable...
                     corehole = {'site' : {'kind_name' : kind,#site.kind_name,
@@ -607,8 +607,8 @@ class fleur_corehole_wc(WorkChain):
             moved_struc = ret_dict['moved_struc']
             calc_para = ret_dict['hole_para']
             #print('calc_para:')
-            pprint(calc_para.get_dict())
-            pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
+            #pprint(calc_para.get_dict())
+            #pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
             # create_wf para or write in last line what should be in 'fleur_change'
             #  for scf, which with the changes in the inp.xml needed
             para = self.ctx.scf_para.copy() # Otherwise inline edit... What about Provenance? TODO check
@@ -624,7 +624,8 @@ class fleur_corehole_wc(WorkChain):
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
-        #self.report('INFO: end of create coreholes')
+        self.report('INFO: end of create coreholes')
+        return
     '''
     def run_scf2(self):
         """
@@ -675,7 +676,7 @@ class fleur_corehole_wc(WorkChain):
 
         i = 0
         for node in self.ctx.calcs_ref_torun: # usually just 1, but we leave the default.
-            print node
+            #print node
             i = i+1
             if isinstance(node, StructureData):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
@@ -685,7 +686,7 @@ class fleur_corehole_wc(WorkChain):
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, tuple):
                 if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
-                    print(node[1].get_dict())
+                    #print(node[1].get_dict())
                     res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0],
                                 inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
                 else:
