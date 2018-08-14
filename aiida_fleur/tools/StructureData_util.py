@@ -122,6 +122,7 @@ def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF,
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell()*np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
+    rescaled_structure.label = u'{}  rescaled {}'.format(scale, structure.uuid)
 
     return rescaled_structure
 
