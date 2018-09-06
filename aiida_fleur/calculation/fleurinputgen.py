@@ -537,7 +537,8 @@ class FleurinputgenCalculation(JobCalculation):
             calcinfo.retrieve_list.append(file1)
 
         codeinfo = CodeInfo()
-        cmdline_params = ["-explicit", "-electronConfig"] # TODO? let the user decide -electronconfig?
+        cmdline_params = ["-explicit"]#, "-electronConfig"] # TODO? let the user decide -electronconfig?
+        # econfig write out of defaults is still buggy... but for core level workflows it is quite essential
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
