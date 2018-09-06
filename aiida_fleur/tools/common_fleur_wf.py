@@ -267,6 +267,88 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
 
 
+def choose_resources_fleur(nkpt, natm, max_resources={"num_machines": 1}, ncores_per_node=24, memmory_gb=120):
+    """
+    """
+    # if claix, ram and cpus:
+    # if jureca 
+    # if jureca booster
+    # 
+    from aiida_fleur.tools.decide_ncore import gcd
+    
+    ncores_per_node = ncores_per_node
+    memmory_gb = memmory_gb
+    warnings = []
+    
+    # for fleur
+    if natm > 1000:
+        nodes = 64*nkpt # total nodes
+        mpi_per_node = 2
+        openmp = ncores_per_node/mpi_per_node
+    elif natm > 500:
+        nodes = 16*nkpt # total nodes
+        mpi_per_node = 2
+        openmp = ncores_per_node/mpi_per_node
+    elif natm > 200:
+        nodes = 4*nkpt # total nodes
+        mpi_per_node = 4
+        openmp = ncores_per_node/mpi_per_node
+    elif natm > 80:
+        if nkpt < 10:
+            nodes = 2*nkpt # total nodes
+            mpi_per_node = 4
+            openmp = ncores_per_node/mpi_per_node
+        elif nkpt < 100:
+            nodes = nkpt # total nodes
+            mpi_per_node = 4
+            openmp = ncores_per_node/mpi_per_node        
+        else:
+            factor = 1
+            nodes = nkpt/factor # total nodes
+            mpi_per_node = 4
+            openmp = ncores_per_node/mpi_per_node
+    elif natm < 10:
+        factor = gcd(ncores_per_node, nkpt)
+        nodes = 1
+        mpi_per_node = factor
+        openmp = ncores_per_node/mpi_per_node          
+    else:
+        if nkpt < 10:
+            factor = gcd(ncores_per_node, nkpt)
+            nodes = 1
+            mpi_per_node = factor
+            openmp = ncores_per_node/mpi_per_node
+        else:
+            factor = gcd(ncores_per_node, nkpt)
+            nodes = nkpt/factor
+            mpi_per_node = factor
+            openmp = ncores_per_node/mpi_per_node  
+            
+    #print nodes
+    #print mpi_per_node
+    #print openmp
+    
+    if max_resources:
+        max_numnodes = max_resources.get('num_machines', None)
+        max_mpiproc = max_resources.get("tot_num_mpiprocs", None)
+        if (max_numnodes is not None) and (max_mpiproc is None):
+            if max_numnodes < nodes:
+                warning = ('The max number of provided compute nodes {} is less then the recommened {}'
+                      ', consider providing more resouces for this calculation'
+                      'or using less kpoints.'.format(max_numnodes, nodes))
+                nodes = max_numnodes
+                warnings.append(warning)
+                print(warning)
+        elif max_mpiproc is not None:
+            mpiproc = mpi_per_node*nodes
+            if mpiproc >= max_mpiproc:
+                nodes = max_mpiproc/mpi_per_node # should be at least 1...
+            # else everything is fine
+        else:
+            max_number_total_mpi_proc =  max_resources.get('num_machines', None)
+            
+    return nodes, mpi_per_node, openmp, warnings
+
 def get_scheduler_extras(code, resources, extras={}, project='jara0172'):
     """
     This is a utilty function with the goal to make prepare the right resource and scheduler extras for a given computer.
