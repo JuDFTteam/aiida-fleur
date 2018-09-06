@@ -621,11 +621,19 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
             wf_parameters = ParameterData(dict=wf_parameter)
+            #wf_parameters.store()
+            ################
+            # in aiida_0.12 they have to be stored, otherwise they canno tbe recovered in the next step
+            wf_parameters.store()
+            moved_struc.store()
+            calc_para.store()
+            ############
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
         self.report('INFO: end of create coreholes')
         return
+
     '''
     def run_scf2(self):
         """
