@@ -84,14 +84,14 @@ def plot_fleur(*args, **kwargs):
     for arg in args:
         if isinstance(arg, list):
             # try plot together
-            plot_fleur_mn(arg, save=save)                           
+            plot_fleur_mn(arg, save=save)#, **kwargs) # not yet ready...                           
         else:
             #print(arg)
             # plot alone
-            plot_fleur_sn(arg, show_dict=show_dict, save=save)
+            plot_fleur_sn(arg, show_dict=show_dict, save=save)#, **kwargs) # not yet ready... 
             
 
-def plot_fleur_sn(node, show_dict=False, save=False):
+def plot_fleur_sn(node, show_dict=False, save=False, **kwargs):
     """
     This methods takes any single AiiDA node and starts the standard visualisation for
     if it finds one
@@ -136,7 +136,7 @@ def plot_fleur_sn(node, show_dict=False, save=False):
     #else say I do not know
 
 
-def plot_fleur_mn(nodelist, save=False):
+def plot_fleur_mn(nodelist, save=False, **kwargs):
     """
     This methods takes any amount of AiiDA node as a list and starts 
     the standard visualisation for it, if it finds one.
@@ -193,7 +193,7 @@ def plot_fleur_mn(nodelist, save=False):
         except KeyError:
             print('Sorry, I do not know how to visualize these nodes (multiplot): {} {}'.format(node_key, nodelist))            
             continue
-        plot_res = plotf(nodelist, labels=node_labels)
+        plot_res = plotf(nodelist, labels=node_labels, **kwargs)
 
 
 
@@ -201,7 +201,7 @@ def plot_fleur_mn(nodelist, save=False):
 ## general plot routine  ##
 ###########################
 
-def plot_fleur_scf_wc(nodes, labels=[]):
+def plot_fleur_scf_wc(nodes, labels=[], **kwargs):
     """
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
@@ -221,25 +221,32 @@ def plot_fleur_scf_wc(nodes, labels=[]):
     iterations = []
     distance_all_n = []
     total_energy_n =[]
-    
+
     for node in nodes:
         iteration = []
         output_d = node.get_dict()
         total_energy = output_d.get('total_energy_all')
         distance_all = output_d.get('distance_charge_all')
-        iteration_total = output_d.get('iterations_total')        
+        iteration_total = output_d.get('iterations_total')  
         for i in range(1, len(total_energy)+1):
-            iteration.append(iteration_total - len(total_energy) + i)
+            iteration.append(iteration_total - len(total_energy) + i)      
+        if len(distance_all) != len(iteration):
+            # magneic calculation
+            # plot only spin one # TODO different spin plot?
+            distance_all = [distance_all[i] for i in range(0,len(distance_all), 2)]
+
         iterations.append(iteration)
         distance_all_n.append(distance_all)
         total_energy_n.append(total_energy)
+        
+        
     #plot_convergence_results(distance_all, total_energy, iteration)
     if labels:
-        plot_convergence_results_m(distance_all_n, total_energy_n, iterations, plot_labels=labels)        
+        plot_convergence_results_m(distance_all_n, total_energy_n, iterations, plot_labels=labels, **kwargs)        
     else:
-        plot_convergence_results_m(distance_all_n, total_energy_n, iterations)
+        plot_convergence_results_m(distance_all_n, total_energy_n, iterations, **kwargs)
 
-def plot_fleur_dos_wc(node, labels=[]):
+def plot_fleur_dos_wc(node, labels=[], **kwargs):
     """
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
@@ -260,7 +267,7 @@ def plot_fleur_dos_wc(node, labels=[]):
     else:
         print('Could not retrieve dos file path from output node')
         
-def plot_fleur_eos_wc(node, labels=[]):
+def plot_fleur_eos_wc(node, labels=[], **kwargs):
     """
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
@@ -303,7 +310,7 @@ def plot_fleur_eos_wc(node, labels=[]):
     plot_lattice_constant(Total_energy, scaling)#, fit_y)
     return
 
-def plot_fleur_band_wc(node, labels=[]):
+def plot_fleur_band_wc(node, labels=[], **kwargs):
     """
     This methods takes an AiiDA output parameter node from a band structure
     workchain and plots a simple band structure
@@ -327,7 +334,7 @@ def plot_fleur_band_wc(node, labels=[]):
     else:
         print('Could not retrieve dos file path from output node')    
 
-def plot_fleur_relax_wc(node, labels=[]):
+def plot_fleur_relax_wc(node, labels=[], **kwargs):
     """
     This methods takes an AiiDA output parameter node from a relaxation
     workchain and plots some information about atom movements and forces
@@ -336,7 +343,7 @@ def plot_fleur_relax_wc(node, labels=[]):
     
     #plot_relaxation_results
 
-def plot_fleur_corehole_wc(nodes, labels=[]):
+def plot_fleur_corehole_wc(nodes, labels=[], **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a corehole
     workchain and plots some information about Binding energies
