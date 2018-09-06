@@ -20,6 +20,7 @@ cylce management of a FLEUR calculation with AiiDA.
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs, how?
+import re
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
@@ -32,7 +33,7 @@ from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, choose_resources_fleur
 from aiida_fleur.tools.xml_util import eval_xpath2
 
 RemoteData = DataFactory('remote')
@@ -79,17 +80,20 @@ class fleur_scf_wc(WorkChain):
     1. This workflow does not work with local codes!
     """
 
-    _workflowversion = "0.2.1"
-    _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
+    _workflowversion = "0.3.0"
+    _wf_default = {'fleur_runmax': 4,              # Maximum number of fleur jobs/starts (defauld 80 iterations per start)
                    'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
                    'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
                    'converge_density' : True,      # converge the charge density
                    'converge_energy' : False,      # converge the total energy (usually converged before density)
+                   'refine_resources' : True,      # Tries to choose an optimal parallelisation call for a fleur calculation within the resources provieded, from the input, if set to True. 
+                                                   # If False, force to use given resources and parallelisation.
                    #'resue' : True,                 # AiiDA fastforwarding (currently not there yet
                    'serial' : False,                # execute fleur with mpi or without
                    #'label' : 'fleur_scf_wc',        # label for the workchain node and all sporned calculations by the wc
                    #'description' : 'Fleur self consistensy cycle workchain', # description (see label)
-                   'itmax_per_run' : 30,
+                   'itmax_per_run' : 80,
+                   'maxiterbroyd' : 8,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
                                                     # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
@@ -216,7 +220,8 @@ class fleur_scf_wc(WorkChain):
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
-        self.ctx.default_itmax = wf_dict.get('itmax_per_run', 30)
+        self.ctx.default_itmax = wf_dict.get('itmax_per_run', 80)
+        self.ctx.refine_resources = wf_dict.get('refine_resources', True)
 
         # return para/vars
         self.ctx.successful = False
@@ -240,6 +245,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.fleurinp = None
         self.ctx.formula = ''
         self.ctx.total_wall_time = 0
+        self.ctx.last_charge_density = None
         
     def validate_input(self):
         """
@@ -318,6 +324,7 @@ class fleur_scf_wc(WorkChain):
         """
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
+        self.ctx.natoms = len(structure.sites)
         label = 'scf: inpgen'
         description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
 
@@ -366,7 +373,8 @@ class fleur_scf_wc(WorkChain):
             fleurmode = FleurinpModifier(fleurin)
             if not converge_te:
                 dist = wf_dict.get('density_criterion', 0.00002)
-                fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance' : dist})
+                maxbroyd = wf_dict.get('maxiterbroyd', 8)
+                fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance' : dist, 'maxIterBroyd' : maxbroyd})
             avail_ac_dict = fleurmode.get_avail_actions()
 
             # apply further user dependend changes
@@ -415,6 +423,55 @@ class fleur_scf_wc(WorkChain):
 
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
+        
+        # TODO: ggf move the resource refinement somewhere else should be done only once, and maybe again if some parameters were changed in fleurinp
+        if self.ctx.refine_resources:
+            options = self.ctx.options.copy()
+            # get_kpts # TODO: try to do this more efficient... also this can fail...
+            kpt = fleurin.get_kpointsdata_nwf(fleurin)
+            kpt_shape = kpt.get_shape('kpoints')
+            nkpt = kpt_shape[0]
+            # TODO; get computer memmory and ncores per node from computer and scheduler
+            if not self.ctx.natoms:
+              structure = fleurin.get_structuredata_nwf(fleurin)
+              self.ctx.natoms = len(structure.sites)
+            resources = options.get('resources', {"num_machines": 1})
+            ncores_per_node = 24 # TODO
+            memmory_gb = 120 # TODO
+            optimal_res = choose_resources_fleur(nkpt=nkpt, natm=self.ctx.natoms, max_resources=resources, ncores_per_node=ncores_per_node, memmory_gb=memmory_gb)
+            #optimal_res: nodes, mpi_per node, openmp_num_thread, warnings
+            
+            option_keys = options.keys()
+            res_keys = resources.keys()
+            if 'tot_num_mpiprocs' in res_keys:
+                new_resources = {'tot_num_mpiprocs' : optimal_res[0]*optimal_res[1]}
+                if 'num_mpiprocs_per_machine' in res_keys:
+                    new_resources['num_mpiprocs_per_machine'] = optimal_res[1]
+                options['resources'] = new_resources
+            elif 'num_machines' in res_keys:
+                new_resources = {'num_machines' : optimal_res[0]}
+                options['resources'] = new_resources
+            
+            if 'custom_scheduler_commands' in option_keys:
+                sched_comd = options['custom_scheduler_commands']
+                if 'span[ptile=' in sched_comd:
+                    sched_comd = re.sub('ptile=\d?\d', 'ptile={}'.format(optimal_res[1]), sched_comd)
+                options['custom_scheduler_commands'] = sched_comd
+                
+            if 'environment_variables' in option_keys:
+                environment_variables = options['environment_variables']
+                environment_variables['OMP_NUM_THREADS'] = str(optimal_res[2])
+                options['environment_variables'] = environment_variables
+            
+            if 'max_memory_kb' in option_keys:
+                max_memory_kb = int(memmory_gb*1000/optimal_res[1])
+                options['max_memory_kb'] = max_memory_kb
+            
+            self.ctx.options = options
+            self.report('changed options to {}'.format(options))
+        else:
+            options = self.ctx.options.copy()
+        
         '''
         if 'settings' in self.inputs:
             settings = self.input.settings
@@ -444,7 +501,7 @@ class fleur_scf_wc(WorkChain):
             description = '{} fleur run {}, fleurinp given'.format(self.ctx.description_wf, self.ctx.loop_count+1)
 
         code = self.inputs.fleur
-        options = self.ctx.options.copy()
+
 
         
         inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
@@ -600,6 +657,7 @@ class fleur_scf_wc(WorkChain):
             # magnetic system
             last_charge_density = self.ctx.last_calc.out.output_parameters.dict.overall_charge_density
             # divide by 2?
+        self.ctx.last_charge_density = last_charge_density
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
                 density_converged = True
@@ -653,7 +711,7 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['material'] = self.ctx.formula
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
-        outputnode_dict['distance_charge'] = last_calc_out_dict.get('charge_density', None)
+        outputnode_dict['distance_charge'] = self.ctx.last_charge_density #last_calc_out_dict.get('charge_density', None)
         outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
