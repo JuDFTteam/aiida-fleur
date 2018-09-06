@@ -361,7 +361,11 @@ class FleurCalculation(JobCalculation):
         codesdesc = code.description
         # TODO ggf also check settings
         if codesdesc is not None:
-            if ('hdf5' or 'Hdf5' or 'HDF5') in codesdesc:
+            if 'hdf5' in codesdesc: #or 'Hdf5' or 'HDF5') in codesdesc:
+                with_hdf5 = True
+            elif 'Hdf5' in codesdesc:
+                with_hdf5 = True
+            elif 'HDF5' in codesdesc:
                 with_hdf5 = True
             else:
                 with_hdf5 = False
