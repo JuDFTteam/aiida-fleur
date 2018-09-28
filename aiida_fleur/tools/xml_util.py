@@ -1216,8 +1216,8 @@ def get_inpxml_file_structure():
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
                            'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count')
-    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
-                             'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
+    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 
+                             'phi', 'xa', 'thetad', 'epsdisp', 'epsforce', 'preconditioning_param',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
@@ -1316,6 +1316,7 @@ def get_inpxml_file_structure():
         'itmax' : '/fleurInput/calculationSetup/scfLoop',
         'minDistance' : '/fleurInput/calculationSetup/scfLoop',
         'maxIterBroyd': '/fleurInput/calculationSetup/scfLoop',
+        'preconditioning_param' : '/fleurInput/calculationSetup/scfLoop',
         'imix': '/fleurInput/calculationSetup/scfLoop',
         'alpha': '/fleurInput/calculationSetup/scfLoop',
         'spinf': '/fleurInput/calculationSetup/scfLoop',
