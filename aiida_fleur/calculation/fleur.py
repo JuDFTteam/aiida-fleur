@@ -395,7 +395,7 @@ class FleurCalculation(JobCalculation):
                 raise InputValidationError(
                     "No parent calculation found and no fleurinp data "
                     "given, need either one or both for a "
-                    "'fleurcalculation'.")
+                    "fleurcalculation.")
         else: #
             if not isinstance(parent_calc_folder, RemoteData):
                 raise InputValidationError("parent_calc_folder, if specified,"
@@ -456,7 +456,7 @@ class FleurCalculation(JobCalculation):
         for key in settings_dict.keys():
             if key not in self._settings_keys:
                 #TODO warrning
-                self.logger.info("settings dict key {} for Fleur calculation"
+                self.logger.info(u"settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
         # Here, there should be no other inputs
@@ -473,7 +473,9 @@ class FleurCalculation(JobCalculation):
         # END OF INITIAL INPUT CHECK #
 
 
-        # file copy stuff TODO check in fleur input
+        # file copy stuff TODO check in fleur input (fleur modes tries to do this. but it is incomplete.
+        # also what file fleur produces changes currently a lot...
+        
         if has_fleurinp:
             self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
 
@@ -509,7 +511,7 @@ class FleurCalculation(JobCalculation):
             # copy the right files #TODO check first if file, exist and throw
             # warning, now this will throw an error
             outfolderpath = parent_calc.out.retrieved.folder.abspath
-            self.logger.info("out folder path {}".format(outfolderpath))
+            self.logger.info(u"out folder path {}".format(outfolderpath))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
@@ -592,7 +594,7 @@ class FleurCalculation(JobCalculation):
         #calcinfo.cmdline_params = (list(cmdline_params)
         #                           + ["-in", self._INPUT_FILE_NAME])
 
-        self.logger.info("local copy file list {}".format(local_copy_list))
+        self.logger.info(u"local copy file list {}".format(local_copy_list))
 
         calcinfo.local_copy_list = local_copy_list
         calcinfo.remote_copy_list = remote_copy_list
@@ -661,7 +663,12 @@ class FleurCalculation(JobCalculation):
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
             cmdline_params.append(command)
-
+        
+        # Error tracking
+        #cmdline_params.append("-g")
+        #cmdline_params.append("-traceback")
+        #cmdline_params.append("-debugtime")
+        
         codeinfo.cmdline_params = list(cmdline_params)
         # + ["<", self._INPXML_FILE_NAME,
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]

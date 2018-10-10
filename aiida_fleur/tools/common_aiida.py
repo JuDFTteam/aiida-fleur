@@ -24,6 +24,7 @@ create_group
 """
 # TODO import, export of descriptions, and labels...?
 import json
+
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.querybuilder import QueryBuilder, Node
 from aiida.orm import Group
@@ -300,6 +301,8 @@ def get_nodes_from_group(group, return_format='uuid'):
             nodes.append(node.uuid)
         elif return_format == 'pk':
             nodes.append(node.pk)
+        elif return_format == 'node':
+            nodes.append(node)
 
     return nodes
 

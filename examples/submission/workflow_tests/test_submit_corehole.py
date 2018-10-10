@@ -142,7 +142,7 @@ submit_wc = False
 if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
-
+#submit_wc = False
 #builder = fleur_scf_wc.get_builder()
 
 print("##################### TEST fleur_corehole_wc #####################")

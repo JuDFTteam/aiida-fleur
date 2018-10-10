@@ -29,7 +29,7 @@ from aiida.work import workfunction as wf
 from aiida.work.run import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
-
+from aiida_fleur.tools.common_fleur_wf import get_paranode
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
@@ -561,34 +561,7 @@ def create_delta_result_node(**kwargs):#*args):
     return outdict
 
 
-def get_paranode(struc, para_nodes):
-    """
-    find out if a parameter node for a structure is in para_nodes
-    (currently very creedy, but lists are small (100x100) but maybe reduce database accesses)
-    """
 
-    suuid = struc.uuid
-    formula = struc.get_formula()
-    element = formula.translate(None, digits)
-    #print para_nodes
-    for para in para_nodes:
-        struc_uuid = para.get_extra('struc_uuid', None)
-        para_form = para.get_extra('formula', None)
-        para_ele = para.get_extra('element', None)
-        if suuid == struc_uuid:
-            return para
-        elif formula == para_form:
-            return para
-        elif element == para_ele:
-            return para
-        elif element == para_form:
-            return para
-        else:
-            pass
-            #Do something else (test if parameters for a certain element are there)
-            #....
-    # we found no parameter node for the given structure therefore return none
-    return None
 
 def write_delta_file(result_dict):
     pass

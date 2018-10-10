@@ -100,18 +100,18 @@ class FleurParser(Parser):
         try:
             out_folder = retrieved[self._calc._get_linkname_retrieved()]
         except KeyError:
-            self.logger.error("No retrieved folder found")
+            self.logger.error(u"No retrieved folder found")
             return False, ()
 
         # check what is inside the folder
         list_of_files = out_folder.get_folder_list()
-        self.logger.info("file list {}".format(list_of_files))
+        self.logger.info(u"file list {}".format(list_of_files))
 
         # has output xml file, otherwise error
         if self._calc._OUTXML_FILE_NAME not in list_of_files:
             successful = False
             self.logger.error(
-                "XML out not found '{}'".format(self._calc._OUTXML_FILE_NAME))
+                u"XML out not found {}".format(self._calc._OUTXML_FILE_NAME))
         else:
             has_xml_outfile = True
 
@@ -120,7 +120,7 @@ class FleurParser(Parser):
             if filel not in list_of_files:
                 successful = False
                 self.logger.warning(
-                    "'{}' file not found in retrived folder, it"
+                    u"{} file not found in retrived folder, it"
                     " was probable not created by fleur".format(filel))
 
         # check if something was written to the error file
@@ -130,17 +130,17 @@ class FleurParser(Parser):
             # read
             error_file_lines = ''
             try:
-                with open(errorfile, 'r') as efile:
+                with open(errorfile, 'r') as efile:# encoding="utf-8"
                     error_file_lines = efile.read()  # Note: read(), not readlines()
             except IOError:
                 self.logger.error(
-                    "Failed to open error file: {}.".format(errorfile))
+                    u"Failed to open error file: {}.".format(errorfile))
 
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
                 self.logger.warning(
-                    "The following was written into std error and piped to {} : \n {}"
-                    "".format(self._calc._ERROR_FILE_NAME, error_file_lines))
+                    u"The following was written into std error and piped to {} : \n {}"
+                    "".format(self._calc._ERROR_FILE_NAME, unicode(error_file_lines.replace("'", ""), encoding="utf-8")))
 
                 if 'OK' in error_file_lines: # if judft-error # TODO maybe change.
                     successful = True
@@ -160,7 +160,7 @@ class FleurParser(Parser):
 
         #if a new inp.xml file was created (new stucture)
         if self._calc._NEW_XMlINP_FILE_NAME in list_of_files:
-            self.logger.error("new inp.xml file found in retrieved folder")
+            self.logger.error(u"new inp.xml file found in retrieved folder")
             has_new_xmlinp_file = True
         # add files which should also be there in addition to default_files.
 
@@ -172,7 +172,10 @@ class FleurParser(Parser):
             outxmlfile = os.path.join(
                 out_folder.get_abs_path('.'), self._calc._OUTXML_FILE_NAME)
             simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile)
-
+            if not success:
+                # if the parsing is not smoothly we mark the calculation as FAILED...
+                successful = False
+                
             # Call routines for output node creation
             if simpledata:
                 outputdata = dict(simpledata.items() + parser_info.items())
@@ -201,7 +204,7 @@ class FleurParser(Parser):
 
             # if structure changed, create new fleurinpdata of new inp.xml file.
             # and parse the structure
-
+ 
         # optional parse other files
 
         # DOS
@@ -210,7 +213,7 @@ class FleurParser(Parser):
                 out_folder.get_abs_path('.'), self._calc._DOS_FILE_NAME)
             #if dos_file is not None:
             try:
-                with open(dos_file, 'r') as dosf:
+                with open(dos_file, 'r') as dosf:#, encoding="utf-8"
                     dos_lines = dosf.read()  # Note: read() and not readlines()
             except IOError:
                 raise FleurOutputParsingError(
@@ -227,7 +230,7 @@ class FleurParser(Parser):
 
             #if band_file is not None:
             try:
-                with open(band_file, 'r') as bandf:
+                with open(band_file, 'r') as bandf: #, encoding="utf-8"
                     bands_lines = bandf.read()  # Note: read() and not readlines()
             except IOError:
                 raise FleurOutputParsingError(
@@ -241,7 +244,7 @@ class FleurParser(Parser):
                 out_folder.get_abs_path('.'), self._calc._NEW_XMlINP_FILE_NAME)
             new_fleurinpData = FleurinpData()
             new_fleurinpData.set_file(new_inpxmlfile, dst_filename= 'inp.xml')
-            self.logger.info('New FleurinpData initialized')
+            self.logger.info(u'New FleurinpData initialized')
             link_name = 'fleurinpData'#self.get_linkname_outparams()# accessible via c.res
             new_nodes_list.append((link_name, new_fleurinpData))
 
@@ -281,8 +284,8 @@ def parse_xmlout_file(outxmlfile):
     except etree.XMLSyntaxError:
         outfile_broken = True
         parser_info_out['parser_warnings'].append(
-            'The out.xml file is broken I try to repair it.')
-
+            'The out.xml file is broken I try to repair it. Also I mark the parsing as failed.')
+        successful = False
 
     if outfile_broken:
         #repair xmlfile and try to parse what is possible.
@@ -407,7 +410,7 @@ def parse_xmlout_file(outxmlfile):
 
         title = eval_xpath(root, title_xpath)
         if title:
-            title = str(title).strip()
+            title = u'{}'.format(title).encode('utf-8').strip() #str(title).strip()
         simple_data['title'] = title
         simple_data['creator_name'] = eval_xpath(root, creator_name_xpath)
         simple_data['creator_target_architecture'] = eval_xpath(root, creator_target_architecture_xpath)
@@ -425,7 +428,7 @@ def parse_xmlout_file(outxmlfile):
             starttimes = starttime.split(':')
         else:
             starttimes = [0,0,0]
-            msg = 'Startime was unparsed, inp.xml prob not complete, do not believe the walltime!'
+            msg = u'Startime was unparsed, inp.xml prob not complete, do not believe the walltime!'
             if data_exists:
                 parser_info_out['parser_warnings'].append(msg)
 
@@ -705,7 +708,7 @@ def parse_xmlout_file(outxmlfile):
                 value_to_save, suc = convert_to_int(value)
             elif value_type == 'str':
                 suc = True
-                value_to_save = value
+                value_to_save = u'{}'.format(value).encode('utf-8') #.strip() #str(title).strip()
                 #value_to_save, suc = convert_to_str(value)
             elif value_type =='list':
                 suc = True

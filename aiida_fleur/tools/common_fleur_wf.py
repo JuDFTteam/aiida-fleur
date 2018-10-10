@@ -15,7 +15,7 @@ In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
-
+from string import digits
 from aiida.orm import DataFactory, Node, load_node, CalculationFactory
 
 KpointsData =  DataFactory('array.kpoints')
@@ -269,6 +269,14 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
 def choose_resources_fleur(nkpt, natm, max_resources={"num_machines": 1}, ncores_per_node=24, memmory_gb=120):
     """
+    nkpt: int, number of kpoints
+    natm: int, number of atoms in the cell (for basis estimation, i.e number (valence) of electrons)
+    max_resources: dict, maximum computing resource to choose from
+    ncores_per_node, int how many cores are there per node
+    memmory_gb: how much memmory in GB is there on one node?
+    
+    # TODO has to be refinded for > 1 node systems (larger) systems and memmory requirements
+    # often to many nodes are currently chooses for a medium system
     """
     # if claix, ram and cpus:
     # if jureca 
@@ -307,13 +315,13 @@ def choose_resources_fleur(nkpt, natm, max_resources={"num_machines": 1}, ncores
             nodes = nkpt/factor # total nodes
             mpi_per_node = 4
             openmp = ncores_per_node/mpi_per_node
-    elif natm < 10:
+    elif natm < 30:
         factor = gcd(ncores_per_node, nkpt)
         nodes = 1
         mpi_per_node = factor
         openmp = ncores_per_node/mpi_per_node          
     else:
-        if nkpt < 10:
+        if nkpt < 20:
             factor = gcd(ncores_per_node, nkpt)
             nodes = 1
             mpi_per_node = factor
@@ -725,4 +733,35 @@ def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
 def cost_ratio(total_costs, walltime_sec, ncores):
     ratio = total_costs/(walltime_sec*ncores)
     return ratio
+    
+    
+    
+def get_paranode(struc, para_nodes):
+    """
+    find out if a parameter node for a structure is in para_nodes
+    (currently very creedy, but lists are small (100x100) but maybe reduce database accesses)
+    """
+
+    suuid = struc.uuid
+    formula = struc.get_formula()
+    element = formula.translate(None, digits)
+    #print para_nodes
+    for para in para_nodes:
+        struc_uuid = para.get_extra('struc_uuid', None)
+        para_form = para.get_extra('formula', None)
+        para_ele = para.get_extra('element', None)
+        if suuid == struc_uuid:
+            return para
+        elif formula == para_form:
+            return para
+        elif element == para_ele:
+            return para
+        elif element == para_form:
+            return para
+        else:
+            pass
+            #Do something else (test if parameters for a certain element are there)
+            #....
+    # we found no parameter node for the given structure therefore return none
+    return None
     
