@@ -77,11 +77,11 @@ def test_parse_xmlout_file_broken_xmlout_file():
     expected_parser_info_out = {
         'last_iteration_parsed': 15,
         'parser_info': 'AiiDA Fleur Parser v0.1beta',
-        'parser_warnings': ['The out.xml file is broken I try to repair it.',
+        'parser_warnings': ['The out.xml file is broken I try to repair it. Also I mark the parsing as failed.',
                            'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
          'unparsed': []}
     
-    assert successful == True
+    assert successful == False
     assert 15 == parser_info_out['last_iteration_parsed']
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
@@ -103,7 +103,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
     expected_parser_info_out = {
          'last_iteration_parsed': 1,
          'parser_info': 'AiiDA Fleur Parser v0.1beta',
-         'parser_warnings': ['The out.xml file is broken I try to repair it.',
+         'parser_warnings': ['The out.xml file is broken I try to repair it. Also I mark the parsing as failed.',
                              'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
                              'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
                              'Could not convert: "None" to float, TypeError',
@@ -137,7 +137,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
                       {'fermi_energy': None, 'iteration': '    1'},
                       {'charge_density': None, 'iteration': '    1'}]}
     
-    assert successful == True
+    assert successful == False
     assert 1 == parser_info_out['last_iteration_parsed']
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
@@ -197,9 +197,10 @@ def test_parse_xmlout_file_empty_file():
         
     expected_parser_info_out = {
          'parser_info': 'AiiDA Fleur Parser v0.1beta',
-         'parser_warnings': ['The out.xml file is broken I try to repair it.',
+         'parser_warnings': ['The out.xml file is broken I try to repair it. Also I mark the parsing as failed.',
                              'Skipping the parsing of the xml file. Repairing was not possible.'],
          'unparsed': []}
+
 
     assert successful == False
     assert expected_parser_info_out == parser_info_out
