@@ -1,6 +1,6 @@
-=========================
-Source code Documentation
-=========================
+
+Source code Documentation (API reference)
+=========================================
 
 
 Fleur input generator plug-in
@@ -18,6 +18,20 @@ Fleurinputgen Parser
    :members:
 
 
+Fleur-code plugin
++++++++++++++++++
+
+Fleur Calculation
+-----------------
+.. automodule:: aiida_fleur.calculation.fleur
+   :members:
+
+Fleur Parser
+------------
+.. automodule:: aiida_fleur.parsers.fleur
+   :members:
+
+   
 Fleur input Data structure
 ++++++++++++++++++++++++++
 
@@ -34,18 +48,6 @@ Fleurinp modifier
 .. automodule:: aiida_fleur.data.fleurinpmodifier
    :members:
 
-Fleur-code plugin
-+++++++++++++++++
-
-Fleur Calculation
------------------
-.. automodule:: aiida_fleur.calculation.fleur
-   :members:
-
-Fleur Parser
-------------
-.. automodule:: aiida_fleur.parsers.fleur
-   :members:
 
 Workflows/Workchains
 ++++++++++++++++++++
@@ -101,6 +103,11 @@ delta: Calculates a Delta Factor
 Fleur tools/utility
 +++++++++++++++++++
 
+Dealing with XML Schema files
+-----------------------------
+
+.. automodule:: aiida_fleur.fleur_schema.schemafile_index 
+
 Structure Data util
 -------------------
 
@@ -138,11 +145,26 @@ Corehole/level utility
 .. automodule:: aiida_fleur.tools.extract_corelevels
    :members:
 
+.. automodule:: aiida_fleur.tools.element_econfig_list
+   :members:
+
 Common aiida utility
 --------------------
 
 .. automodule:: aiida_fleur.tools.common_aiida
    :members:
+
+Reading in Cif files
+--------------------
+
+.. automodule:: aiida_fleur.tools.read_cif_folder
+   :members:
+
+IO routines
+-----------
+
+.. automodule:: aiida_fleur.tools.io_routines
+
 
 Common utitlity for fleur workchains
 ------------------------------------
@@ -150,4 +172,6 @@ Common utitlity for fleur workchains
 .. automodule:: aiida_fleur.tools.common_fleur_wf
    :members:
    
+.. automodule:: aiida_fleur.tools.common_fleur_wf_util
+   :members:
 

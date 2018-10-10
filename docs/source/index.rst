@@ -3,9 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-
-Welcome to the AiiDA-FLEUR 's documentation!
-++++++++++++++++++++++++++++++++++++++++++++
+Welcome to the `AiiDA-FLEUR`_'s documentation!
+##############################################
 
 
 .. figure:: images/fleur.png
@@ -20,27 +19,20 @@ Welcome to the AiiDA-FLEUR 's documentation!
 
 .. _AiiDA: http://www.aiida.net
 .. _FLEUR: http://www.flapw.de
-
-..
-
-  
-..
+.. _AIIDA-FLEUR: https://github.com/broeder-j/aiida-fleur
+.. _registry: https://aiidateam.github.io/aiida-registry
 
 
-
-
-The aiida-fleur python package enables the use of the all-electron DFT code Fleur (http://www.flapw.de) with the AiiDA framework (http://www.aiida.net).
-The package contains plugins for the Fleur code, inpgen and a datastructure. Further it contains basic workflows and utility. 
-It stands under the MIT license and is available under (https://github.com/broeder-j/aiida-fleur). 
+The aiida-fleur python package enables the use of the all-electron DFT code Fleur (http://www.flapw.de) with the `AiiDA`_ framework (http://www.aiida.net).
+The package contains plugins for the `FLEUR`_ code, inputgenerator and a datastructure. Further it contains basic workflows and utility. 
+It open source under the MIT license and is available under (https://github.com/broeder-j/aiida-fleur). 
 It is developed within the MaX EU Center of Excellence (www.max-center.eu) at Forschungszentrum Jülich GmbH (http://www.fz-juelich.de/pgi/pgi-1/DE/Home/home_node.html), (IAS-1/PGI-1), Germany.
-
-.. note:: On these pages is the documentation of the aiida-fleur source code, some design description, usuage examples and tutorials of the plugin. For futher PGI-1 interal hints go to the Fleur wiki.
+Check out the AiiDA `registry`_ to find out more about what other packages for AiiDA exists, that might be helpful for you.
 
 If you use this package please cite:
 
 * for the plugin and workflows: (to come)
 * for fleur: http:/www.flapw.de 
-
 
 Requirements to use this code:
 ------------------------------
@@ -52,137 +44,57 @@ Other packages (in addition to all requirements of AiiDA):
 
 * lxml
 * ase
-
-Acknowledgments:
-----------------
-
-We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
-We also thank the AiiDA team for their help.
+* masci-tools
 
 Installation Instructions:
 --------------------------
 
-From the aiida-fleur folder use::
+Install from pypi the latest release::
+
+    $ pip install aiida-fleur
+
+
+or from the aiida-fleur source folder any branch::
 
     $ pip install .
     # or which is very useful to keep track of the changes (developers)
     $ pip install -e . 
 
-To uninstall use::
+Acknowledgments:
+----------------
 
-    $ pip uninstall aiida-fleur
+We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
+We thank the AiiDA team for their help and work. Also the vial exchange with developers of AiiDA packages for other codes was inspireing.
 
-Soon (When package on pypi)::
-
-    $ pip install aiida-fleur
-
-Alternative (old):
-The python source files of the plug-in have to be placed in the AiiDA source code in certain places. 
-You might use the copy_plugin_files.sh script to do so.
-
-To test wether the installation was successful use::
-
-$ verdi calculation plugins
-
-   # example output:
-
-   ## Pass as a further parameter one (or more) plugin names
-   ## to get more details on a given plugin.
-   * codtools.cifcellcontents
-   * codtools.cifcodcheck
-   * codtools.cifcodnumbers
-   * codtools.ciffilter
-   * codtools.cifsplitprimitive
-   * quantumespresso.cp
-   * quantumespresso.pw
-   * quantumespresso.pwimmigrant
-   * simpleplugins.templatereplace
-   ...
-   * fleur.fleur
-   * fleur.inpgen
-   * fleur.scf
-   * fleur.eos
-   * fleur.band
-   * fleur.dos
-
-You should see fleur.* in the list
-
-
-
-Contents:
----------
-
-The Fleur plug-in
-=================
+User's Guide
+############
 
 .. toctree::
    :maxdepth: 4
 
-   plugin/fleur_plugin
-..
-   examples
+   user_guide/index
 
-Common Fleur Workflows
-======================
-
-.. toctree::
-   :maxdepth: 4
-
-   workflows/index
-..
-   utility
-   tests
-   code  
-   examples
-
-Guides/tutorials
-================
-.. toctree::
-   :maxdepth: 4
-
-   guides/guides
-..
-  installation
-  run inpgen
-  run fleur
-  change fleurinp
-  extract results
-
-
-Tools and utility
-=================
-
-.. toctree::
-   :maxdepth: 4
-   
-   tools/tools
-..
-  plugin/utility
-
-FAQ
-===
-
-.. toctree::
-   :maxdepth: 4
-   
-   plugin/hints_faq
-
-Source code documentation
-=========================
+  
+Developer's Guide
+#################
 
 .. toctree::
    :maxdepth: 4
 
-   code
+   devel_guide/index
 
-..   
-   utility
-   workflows
-   documentation_fleur_plugin
+Module reference (API)
+######################
+
+.. toctree::
+   :maxdepth: 4
+
+   module_guide/code
+      
 
 
 Indices and tables
-------------------
+##################
 
 * :ref:`genindex`
 * :ref:`modindex`
