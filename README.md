@@ -26,7 +26,8 @@ See license file.
 The plug-in and the workflows will only work with a Fleur version using xml files as I/O.  
 For example check out the Fleur version released withing MAX.
 
-**WARNING:** This is a beta version, which runs, but is still under development.  
+**WARNING:** This version runs, but is still under heavy development.
+Restructurings are
 For anything contact j.broeder@fz-juelich.de and feel free to write issues and contribute.
 
 
@@ -60,6 +61,8 @@ eos | Calculate and Equation of States (Lattice constant) with FLEUR
 dos | Calculate a Density of States (DOS) with FLEUR
 bands | Calculate a Band structure with FLEUR
 relax | Relaxation of a crystal structure with FLEUR
+initial_cls | initial corelevel shifts and formation energies with FLEUR
+corehole | Workflow for corehole calculations, calculation of Binding energies with FLEUR
 
 See the AiiDA documentation for general info about the AiiDA workflow system or how to write workflows.
 
@@ -73,6 +76,9 @@ merge_parameter.py | Methods to handle parameterData nodes, i.e merge them. Whic
 xml_util.py | All xml functions that are used, by parsers and other tools are in here. Some are 'general' some a very specific to Fleur.
 read_cif.py | This can be used as stand-alone to create StructureData nodes from .cif files from an directory tree. 
 
+Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository, 
+which is a dependency of aiida-fleur.
+
 ## Installation Instructions <a name="Installation"></a>
 
 From the aiida-fleur folder use:
@@ -85,13 +91,9 @@ To uninstall use:
 
     $ pip uninstall aiida-fleur
 
-Soon (When package on pypi):
+ Latest package release from PyPI:
 
     $ pip install aiida-fleur
-
-Alternative (old):
-The python source files of the plug-in have to be placed in the AiiDA source code in certain places. 
-You might use the copy_plugin_files.sh script to do so.
 
 To test wether the installation was successful use:
 ```bash
@@ -102,25 +104,17 @@ $ verdi calculation plugins
 
    ## Pass as a further parameter one (or more) plugin names
    ## to get more details on a given plugin.
-   * codtools.cifcellcontents
-   * codtools.cifcodcheck
-   * codtools.cifcodnumbers
-   * codtools.ciffilter
-   * codtools.cifsplitprimitive
-   * quantumespresso.cp
-   * quantumespresso.pw
-   * quantumespresso.pwimmigrant
-   * simpleplugins.templatereplace
    ...
    * fleur.fleur
    * fleur.inpgen
-   * fleur.scf
-   * fleur.eos
-   * fleur.band
-   * fleur.dos
+
 ```
 You should see fleur.* in the list
 
+Also running the test set once is recommented.
+Under aiida_fleur/tests/:
+
+    $ ./run_all.sh
 
 ## Files/Contents
 A short sum up of the most important classes and where to find them, how to import them.
@@ -143,9 +137,9 @@ FleurParser: aiida_fleur.parsers.fleur.py
 #### XML Schema Files:
 in fleur_schema folder
 
-The Fleur code needs a XMLSchema file, the plugin searches (walks) for them in your PYTHONPATH.  
-Therefore **make sure that the plugin folder is under your PYTHONPATH env variable.**   
-If nothing works add a path to search_path in fleurinp.py (hack).
+The Fleur code needs a XMLSchema file, the package comes with the usual fleur schema files.
+The code looks in the fleur_schema/input folder for file versions that fit to the FLEUR input.
+Further the plugin looks in our pythonpath if it does not find any matching schema files in this defaul location.
 
 ___
 ### Workflows/workchains:
@@ -173,15 +167,23 @@ Requirements are listed in 'requirements.txt'.
 
 * aiida_core  
 * lxml  
-* ase  
+* ase 
+* pymatgen
+* masci-tools
+optional
+
+* pytest
+* pytest-cov
+* matplotlib
 
 Mainly AiiDA:
 
-1. Download from [www.aiida.net/?page_id=264](www.aiida.net -> Download)
-2. install and setup -> [http://aiida-core.readthedocs.org/en/stable/](aiida's documentation)
+1. Download from [www.aiida.net -> Download](www.aiida.net)
+2. install and setup -> [aiida's documentation](http://aiida-core.readthedocs.org/en/stable)
 
-For easy ploting we recommend installing 'plot_methods':
-https://bitbucket.org/broeder-j/plot_methods
+Easy plotting and other useful routines that do not depend on aiida_core are part of 
+the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository. 
+
 
 ## Further Information <a name="FurtherInfo"></a>
 
@@ -192,10 +194,14 @@ Usage examples are shown in 'examples'.
 
 ## Acknowledgements
 
-This work is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>)
-funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>), as well as by the [MaX 
+Besides the Forschungszentrum Juelich, this work is supported by the [MaX 
 European Centre of Excellence](<http://www.max-centre.eu/>) funded by the Horizon 2020 EINFRA-5 program,
 Grant No. 676598.
 
-![MARVEL](miscellaneous/logos/MARVEL.png)   
-![MaX](miscellaneous/logos/MaX.png)
+For this work essential is AiiDA, which itself is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>) funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>).
+
+
+![MaX](docs/source/images/MaX.png)
+
+
+

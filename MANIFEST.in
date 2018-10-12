@@ -8,3 +8,4 @@ include setup_requirements.txt
 include AUTHORS.txt
 include CHANGELOG.md
 include LICENSE.txt
+recursive-include docs *
