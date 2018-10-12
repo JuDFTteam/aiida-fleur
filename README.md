@@ -151,6 +151,9 @@ fleur_eos_wc | aiida_fleur.workflows.eos.py
 fleur_dos_wc | aiida_fleur.workflows.dos.py
 fleur_band_wc | aiida_fleur.workflows.band.py
 fleur_relax_wc | aiida_fleur.workflows.relax.py
+fleur_initial_cls_wc | aiida_fleur.workflows.initial_cls.py
+fleur_corehole_wc | aiida_fleur.workflows.corehole.py
+
 
 
 ### Utility under '/aiida_fleur/tools/':
@@ -170,8 +173,8 @@ Requirements are listed in 'requirements.txt'.
 * ase 
 * pymatgen
 * masci-tools
-optional
 
+optional
 * pytest
 * pytest-cov
 * matplotlib
@@ -201,7 +204,7 @@ Grant No. 676598.
 For this work essential is AiiDA, which itself is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>) funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>).
 
 
-![MaX](docs/source/images/MaX.png)
+![MaX](miscellaneous/logos/MaX.png)
 
 
 
