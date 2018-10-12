@@ -27,7 +27,7 @@
             "pytest-cov >= 2.5.0",
             "pytest >= 2.9",
             "pgtest",
-            "numpy>=1.14.3",
+            "numpy==1.14.3",
             "sympy",
             "masci-tools"
     ],
