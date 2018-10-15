@@ -60,6 +60,29 @@ or from the aiida-fleur source folder any branch::
     # or which is very useful to keep track of the changes (developers)
     $ pip install -e . 
 
+AiiDA-package Layout:
+---------------------
+
+#. Fleur input generator (link)
+#. FleurinpData structure (link)
+#. Fleur code (link)
+
+The overall plugin for Fleur consists out of three AiiDA plugins. One for the Fleur input generator (inpgen), one datastructure (fleurinpData) representing the inp.xml file and a plugin for the Fleur code (fleur, fleur_MPI). See www.flapw.de.
+Other codes from the Fleur family (GFleur) or which build ontop (Spex) are
+not supported.
+
+The package also contains workflows
+
+#. Fleur scf
+#. Fleur dos
+#. Fleur band
+#. Fleur eos
+#. Fleur initial corelevel shifts
+#. Fleur corehole
+
+Further the package contains AiiDA dependend tools around the workflows and plugins.
+All tools dependend on aiida-core are moved to the masci-tools repository.
+    
 Acknowledgments:
 ----------------
 
@@ -72,7 +95,7 @@ User's Guide
 .. toctree::
    :maxdepth: 4
 
-   user_guide/index
+   user_guide/ug_index
 
   
 Developer's Guide
@@ -81,7 +104,7 @@ Developer's Guide
 .. toctree::
    :maxdepth: 4
 
-   devel_guide/index
+   devel_guide/dg_index
 
 Module reference (API)
 ######################
