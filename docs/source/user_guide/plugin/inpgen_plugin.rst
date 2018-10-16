@@ -1,23 +1,22 @@
 Description
------------
+'''''''''''
 The input generator plug-in is capable of running the Fleur input generator (inpgen) with all its features, except crystal structure creation (we did not want to support that).
 For a calculation it is enough to specify a StructureData node and the code and a FleurinputData object with default parameters, from which one can run a Fleur calculation, will be created.
 
 Supported codes versions
-------------------------
+''''''''''''''''''''''''
 * It is tested from Fleur v0.27 (MAX release 1.0) onwards, but it should work
   for all inpgen versions.
 
 Sketch of nodes
----------------
+'''''''''''''''
 
 .. image:: images/fleurinpgen_calc.png
-    :width: 60%
+    :width: 100%
     :align: center
-    :height: 300px
 
 Inputs
-------
+''''''
 
 * **code**, class :py:class:`Code <aiida.orm.Code>`, the Code node of an inpgen executable
 
@@ -55,7 +54,7 @@ so far not allowed/supported::
 
 
 Outputs
--------
+'''''''
 
 There are several output nodes that can be created by the inpgen plugin, according to the calculation details.
 All output nodes can be accessed with the ``calculation.out`` method.
@@ -76,7 +75,7 @@ All output nodes can be accessed with the ``calculation.out`` method.
   * output information (some information parsed from the out file)
   
 Additional advanced features
-----------------------------
+''''''''''''''''''''''''''''
 
 While the input link with name 'calc_parameters' is used for the content of the 
 namelists and parameters of the inpgen input file, additional parameters for changing the plugin behavior, can be specified in the 'settings' input, also of type ParameterData.

@@ -17,11 +17,19 @@ Getting started
 Calculation Plugins
 +++++++++++++++++++
 
+Fleur inpgen plugin
+===================
 
 .. toctree::
    :maxdepth: 4
    
    ./plugin/inpgen_plugin
+   
+Fleur-code plugin
+===================   
+.. toctree::
+   :maxdepth: 4
+   
    ./plugin/fleurcode_plugin
 
 Data Plugins
@@ -42,6 +50,16 @@ Workflows/Workchains
    :maxdepth: 4
    
    ./workflows/wc_index
+   
+   
+Package specific verdi commands
++++++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 4
+   
+   ./cmd/cmd_index
+Currently there are no
    
 
 Tools
