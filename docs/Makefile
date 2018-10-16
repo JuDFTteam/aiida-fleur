@@ -38,6 +38,12 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+
+## Runs with nitty-pick and converting warnings into errors to 
+## make sure the documentation is properly written
+customdefault:
+	$(SPHINXBUILD) -b html -nW $(ALLSPHINXOPTS)clean $(BUILDDIR)/html
+
 clean:
 	-rm -r $(BUILDDIR)
 
