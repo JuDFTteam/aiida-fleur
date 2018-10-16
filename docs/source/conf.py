@@ -41,12 +41,13 @@ needs_sphinx = '1.5'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.mathjax',
               'sphinx.ext.doctest', 
               'sphinx.ext.todo', 
               'sphinx.ext.coverage',  
-              'sphinx.ext.imgmath',
               'sphinx.ext.ifconfig', 
+              'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode']
 
 todo_include_todos = True
@@ -199,7 +200,7 @@ html_static_path = ['_static']
 #html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-#html_show_sourcelink = True
+html_show_sourcelink = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #html_show_sphinx = True
@@ -210,10 +211,16 @@ html_static_path = ['_static']
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-#html_use_opensearch = ''
+html_use_opensearch = 'http://aiida-fleur.readthedocs.io'
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = None
+
+# Language to be used for generating the HTML full-text search index.
+# Sphinx supports the following languages:
+#   'da', 'de', 'en', 'es', 'fi', 'fr', 'hu', 'it', 'ja'
+#   'nl', 'no', 'pt', 'ro', 'ru', 'sv', 'tr'
+html_search_language = 'en'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'aiida-fleurdoc'
