@@ -2,4 +2,4 @@ setuptools>34
 lxml>=3.6.4
 aiida>=0.12.0
 masci-tools
-
+ase
