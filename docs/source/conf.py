@@ -14,7 +14,7 @@
 
 import sys
 import os
-
+import time
 # Following 3 lines avoid the need of importing load_dbenv() for compiling the
 # documentation -> works also without verdi install
 sys.path.append( os.path.join( os.path.split(__file__)[0],
@@ -237,7 +237,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
-   author.replade(',',r'\and'), 'manual'),
+   author.replace(',',r'\and'), 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
