@@ -153,7 +153,7 @@ reference to the source code. The search is your friend.
 .. toctree::
    :maxdepth: 4
 
-   module_guide/code
+   module_guide/mg_index
       
 
 

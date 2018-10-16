@@ -1,8 +1,4 @@
 
-Source code Documentation (API reference)
-=========================================
-
-
 Fleur input generator plug-in
 +++++++++++++++++++++++++++++
 
@@ -11,6 +7,7 @@ Fleurinputgen Calculation
 -------------------------
 .. automodule:: aiida_fleur.calculation.fleurinputgen
    :members:
+
 
 Fleurinputgen Parser
 --------------------
@@ -26,6 +23,7 @@ Fleur Calculation
 .. automodule:: aiida_fleur.calculation.fleur
    :members:
 
+   
 Fleur Parser
 ------------
 .. automodule:: aiida_fleur.parsers.fleur
@@ -47,7 +45,6 @@ Fleurinp modifier
 
 .. automodule:: aiida_fleur.data.fleurinpmodifier
    :members:
-
 
 Workflows/Workchains
 ++++++++++++++++++++
