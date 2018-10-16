@@ -1,6 +1,6 @@
 
 User's guide
-------------
+============
 
 This is the AiiDA-FLEUR user's guide.
 
@@ -18,7 +18,7 @@ Calculation Plugins
 +++++++++++++++++++
 
 Fleur inpgen plugin
-===================
+-------------------
 
 .. toctree::
    :maxdepth: 4
@@ -26,7 +26,7 @@ Fleur inpgen plugin
    ./plugin/inpgen_plugin
    
 Fleur-code plugin
-===================   
+-----------------   
 .. toctree::
    :maxdepth: 4
    
@@ -59,7 +59,6 @@ Package specific verdi commands
    :maxdepth: 4
    
    ./cmd/cmd_index
-Currently there are no
    
 
 Tools

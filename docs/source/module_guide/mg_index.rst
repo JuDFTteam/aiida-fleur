@@ -3,6 +3,7 @@ Source code Documentation (API reference)
 =========================================
 
 .. toctree::
-    :maxdepth:3
+    :maxdepth: 3
     
-     code
+    code
+    tools

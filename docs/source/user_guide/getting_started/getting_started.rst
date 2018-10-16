@@ -1,11 +1,11 @@
 Lets get started
 
 Installation of AiiDA-FLEUR
-===========================
++++++++++++++++++++++++++++
 
 
 Run automated tests
-'''''''''''''''''''
+-------------------
 
 After you have installed aiida-fleur it is always a good idea to run 
 the automated standard test set once to check on the installation.
@@ -54,7 +54,7 @@ but newer FLEUR releases force you to migrate to a newer aiida-fleur version.
 
 
 Usage recommendations
-=====================
++++++++++++++++++++++
 
 This plugin enables you to do your DFT work with FLEUR in pure python code.
 You can interact with AiiDA via python scripts, interactive shells, 
@@ -64,7 +64,7 @@ You can interact with AiiDA via python scripts, interactive shells,
 
 
 Tutorials
-=========
++++++++++
 
 Basic AiiDA tutorials:
 ''''''''''''''''''''''

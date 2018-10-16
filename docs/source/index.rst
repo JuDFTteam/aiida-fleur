@@ -39,7 +39,7 @@ If you use this package please cite:
 * for fleur: http:/www.flapw.de 
 
 Pictures/Project usage examples:
---------------------------------
+================================
 
 
 Example 1: AiiDA graph visualization of a small database containing about 130 000 nodes
@@ -65,7 +65,7 @@ Example 3: FLAPW muffin tin radii for all materials (>820000) in the `OQMD`_ .
 Some projects which used aiida-fleur include: ...
 
 Requirements to use this code:
-------------------------------
+==============================
 
 * A running AiiDA version (and postgresql database)
 * Executables of the Fleur code
@@ -77,7 +77,7 @@ Other packages (in addition to all requirements of AiiDA):
 * masci-tools
 
 Installation Instructions:
---------------------------
+==========================
 
 Install from pypi the latest release::
 
@@ -91,7 +91,7 @@ or from the aiida-fleur source folder any branch::
     $ pip install -e . 
 
 AiiDA-package Layout:
----------------------
+=====================
 
 #. Fleur input generator (link)
 #. FleurinpData structure (link)
@@ -117,7 +117,7 @@ to be available to other non AiiDA related projects and tools.
 
 
 Acknowledgments:
-----------------
+================
 
 We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
 We thank the AiiDA team for their help and work. Also the vial exchange with developers of AiiDA packages for other codes was inspireing.
