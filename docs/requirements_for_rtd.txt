@@ -1,5 +1,6 @@
 setuptools>34
 lxml>=3.6.4
-aiida>=1.0.0
+aiida>=0.12.0
+git+https://github.com/aiidateam/aiida_core.git@v1.0.0a3
 masci-tools
 ase
