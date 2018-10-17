@@ -1,7 +1,7 @@
 __author__: Jens Broeder (j.broeder@fz-juelich.de)
 
-Here are some guidlines for writting FLEUR workflows/workchains and AiiDA in general.
-Keep in mind that a workflow is REAL SOFTWARE which will be used by others and build ontop and NOT a script.
+Here are some guidelines for writing FLEUR workflows/workchains and AiiDA in general.
+Keep in mind that a workflow is REAL SOFTWARE which will be used by others and build on top and NOT a script.
 
 
 ########################
@@ -18,9 +18,9 @@ make it modular, and import the method (goes along with point 2.).
 
 4. Try to keep the workflow context clean! (this part will always be saved and visible, there people track what is going on.
 
-5. Write clear report statements in the worklow report.
+5. Write clear report statements in the workflow report.
 
-6. ggf one has to think about resource managment.
+6. ggf one has to think about resource management.
 i.e if a big system needs to be calculated and the user says use x hundred cores,
 and in the workflow simulations on very small systems need to be done, it makes no
 sense to submit a job with the same huge amount
@@ -28,15 +28,15 @@ sense to submit a job with the same huge amount
 
 7. ERROR handling:
 
-Error handling is very important and might take a lot of effort. Write at least an outline (named: inspect_xx, handle_xx), which skeleton for all the errors (treated or not). (look at the aiida QE workflows as example)
-Now iterative put every time you ancounter a 'crash' because something failed (usually variable/node acess stuff), the corresponding code in a try block and call your handler.
+Error handling is very important and might take a lot of effort. Write at least an outline (named: inspect_xx, handle_xx), which skeleton for all the errors (treated or not). (look at the AiiDA QE workflows as example)
+Now iterative put every time you encounter a 'crash' because something failed (usually variable/node access stuff), the corresponding code in a try block and call your handler.
 Use self.abort('message') to clearly terminate the workflow in the case something went wrong and it makes no sense to continue.
 
 Keep in mind, your workflow should never:
 
 7.1 end up in a while true (because of a calculation or subworkflow failure)
 7.2 crash with at a later point because a calculation or subworkflow failed.
-(The user won't understand so easly what append, also this makes it impossible to build useful error handling of your workflow ontop (when using your workflow as a subworkflow))
+(The user won't understand so easily what append, also this makes it impossible to build useful error handling of your workflow on top (when using your workflow as a subworkflow))
 ....
 
 
@@ -46,12 +46,12 @@ Keep in mind, your workflow should never:
 
 FLEUR Specific:
 
-1. Output nodes of a workflow has the nameing convention 'output_name_description'
+1. Output nodes of a workflow has the naming convention 'output_name_description'
    i.e 'output_scf_wc_para'
 
 2. Every workflow should give back one parameter output node named 'output_wfname_para'
-   which contains all the 'physical results' the workflow is designd to provide,
-   or at least information to acces these results direclty (if stored in files and so on)
+   which contains all the 'physical results' the workflow is designed to provide,
+   or at least information to access these results directly (if stored in files and so on)
    further the node should contain valuable information to make sense/judge the quality of the data.
 
    Try to design this node in a way that if you take a look at it, you understand
@@ -63,9 +63,9 @@ FLEUR Specific:
 
 3. so far name Fleur workflows/workchains name: fleur_name_wc
 
-4. (advanced) group workflow internal(between) calculations and add extras to calcualtion. (that way one can extract them from global querries, if need.
+4. (advanced) group workflow internal(between) calculations and add extras to calculation. (that way one can extract them from global queries, if need.
 
-5. Write base subworkchains, that take all Parameters as given, but do their task very well and then write workchains ontop of these.
+5. Write base subworkchains, that take all Parameters as given, but do their task very well and then write workchains on top of these.
    Which then can use workchains to optimize the parameters for Fleur.
 
 6. Outsource methods to test for calculation failure, that you have only one routine in all workchains, that you can improve

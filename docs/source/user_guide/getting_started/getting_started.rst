@@ -1,11 +1,11 @@
 Lets get started
 
 Installation of AiiDA-FLEUR
-+++++++++++++++++++++++++++
+---------------------------
 
 
 Run automated tests
--------------------
+'''''''''''''''''''
 
 After you have installed aiida-fleur it is always a good idea to run 
 the automated standard test set once to check on the installation.

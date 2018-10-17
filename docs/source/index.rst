@@ -23,8 +23,8 @@ Welcome to the `AiiDA-FLEUR`_'s documentation!
 .. _registry: https://aiidateam.github.io/aiida-registry
 .. _OQMD: http://oqmd.org
 
-The aiida-fleur python package enables the use of the all-electron DFT code Fleur (http://www.flapw.de) with the `AiiDA`_ framework (http://www.aiida.net).
-This enables Many-task/High-throuput simulations with an all-electron DFT code.
+The aiida-fleur python package enables the use of the all-electron Density functional theory (DFT) code Fleur (http://www.flapw.de) with the `AiiDA`_ framework (http://www.aiida.net).
+This enables Many-task/High-throuput electronic structure simulations with an all-electron DFT code.
 The package contains plugins for the `FLEUR`_ code, inputgenerator and a datastructure. Further it contains basic workflows and utility. 
 It is open source under the MIT license and is available under (https://github.com/broeder-j/aiida-fleur). 
 The package is developed within the MaX EU Center of Excellence (www.max-center.eu) at Forschungszentrum Jülich GmbH (http://www.fz-juelich.de/pgi/pgi-1/DE/Home/home_node.html), (IAS-1/PGI-1), Germany.
@@ -38,29 +38,65 @@ If you use this package please cite:
 * for the plugin and workflows: (to be published)
 * for fleur: http:/www.flapw.de 
 
-Pictures/Project usage examples:
-================================
+Features, Illustrations, Usage examples:
+========================================
 
 
-Example 1: AiiDA graph visualization of a small database containing about 130 000 nodes
-from Fleur calculations
+.. topic:: Example 1, Full Provenance tracking trough AiiDA: 
 
-.. figure:: images/aiida_work2_ed.png
-    :width: 100 %
-    :align: center
+    AiiDA graph visualization of a small database containing about 130 000 nodes
+    from Fleur calculations. (Visualized with Gephi)
+    
+    .. figure:: images/aiida_work2_ed.png
+        :width: 100 %
+        :align: center
 
-Example 2: Fleur SCF runs on 1362 different Binary systems managed by the scf workchain
+.. topic:: Example 2, Material screening: 
 
-.. figure:: images/convergence_all_MP_metals.png
-    :width: 100 %
-    :align: center
+    Fleur SCF convergence of 1362 different screened Binary systems managed by the scf workchain
+    
+    .. figure:: images/convergence_all_MP_metals.png
+        :width: 100 %
+        :align: center
 
   
-Example 3: FLAPW muffin tin radii for all materials (>820000) in the `OQMD`_ .
+.. topic:: Example 3 Method robustness, tuning: 
 
-.. figure:: images/all_rmts_oqmd.png
-    :width: 100 %
-    :align: center
+    FLAPW muffin tin radii for all materials (>820000) in the `OQMD`_ .
+    
+    .. figure:: images/all_rmts_oqmd.png
+        :width: 100 %
+        :align: center
+        
+    
+.. topic:: Example 4, DFT Code Interoperability: 
+
+    If an DFT code has an AiiDA plugin, 
+    one can run successiv calculations with different codes. 
+    For example perform a structure relaxation with VASP or Quantum Espresso and run some all-electron FLEUR workflow on the output structure.
+    
+    .. figure:: images/plot_fleur_capabilities.png
+        :width: 100 %
+        :align: center
+  
+.. topic:: Example 5, Quick Visualizations:
+
+    AiiDA-FLEUR contains one function ('plot_fleur') to get a quick visualization of some database node(s). 
+    For example quick convergence plot of one or several SCF runs in your scripts, or notebook.::
+    
+       plot_fleur(scf_node)
+    
+    .. figure:: images/plot_fleur_scf1.png
+        :width: 80 %
+        :align: center
+    
+    ::
+    
+       plot_fleur(scf_node_list)
+    
+    .. figure:: images/plot_fleur_scf_m1.png
+        :width: 80 %
+        :align: center  
     
 Some projects which used aiida-fleur include: ...
 
