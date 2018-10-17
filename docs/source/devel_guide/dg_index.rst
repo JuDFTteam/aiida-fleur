@@ -1,4 +1,3 @@
-
 Developer's guide
 =================
 
@@ -26,6 +25,8 @@ workflows     All workchain/workflow classes, each has its own file.
 
 
 The example folder contains currently some small manual examples, tutorials, calculation and workchain submission tests.
+Documentation is fully contained within the docs folder. The rest of the files are needed
+for python packaging or contineous integration things.
 
 Automated tests
 +++++++++++++++
@@ -217,8 +218,8 @@ FLEUR specific desgin suggestions, conventions:
 #. Outsource methods to test for calculation failure, that you have only one routine in all workchains, that one can improve
 
 
-Entrypoints:
-++++++++++++
+Entrypoints
++++++++++++
 
 In order to make AiiDA aware of any classes (plugins) like (calculations, parsers, data, workchains, workflows, commandline)
 the python entrypoint system is used. Therefore, you have to register any  of the above classes as an entrypoint in the 'setup.json' file.
@@ -256,7 +257,24 @@ The package name has to be reserved/registerd in the AiiDA registry, because ent
 The right handside has the form 'module_path:class_name'.
 
 
-Other information:
-++++++++++++++++++
+Other information
++++++++++++++++++
 
 Google python guide, doing releases, pypi, packaging, git basics, issues, ...
+
+Useful to know
+--------------
+
+1. pip -e is your friend::
+
+    pip install -e package_dir
+
+Always install python packages you are working on with -e, this way the new version is used, if the files are changed, as long as the '.pyc' files are updated.
+
+2. In jupyter/python use the magic::
+   
+   %load_ext autoreload
+   %autoreload 2
+   
+This will import your classes everytime anew. Otherwise they are not reimportet if they have already importet. This is very useful for development work.
+
