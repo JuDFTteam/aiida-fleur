@@ -2,8 +2,7 @@ dist: trusty
 #sudo: required
 language: python
 
-python: 
-    - "2.7"
+python: 2.7
 
 notifications:
   slack:
@@ -13,7 +12,7 @@ services:
     - postgresql
 
 addons:
-    postgresql: "11"
+    postgresql: "9.5"
 
 #cache: pip
 
@@ -31,9 +30,10 @@ install:
 
 env:
     - TEST_TYPE="unittests"
-    - TEST_TYPE="docs"
+    #- TEST_TYPE="docs"
 
-script: .ci/test_script.sh
+script: cd ./aiida_fleur/tests/ && ./run_all.sh 
+#.ci/test_script.sh
 
 git:
   depth: 3
