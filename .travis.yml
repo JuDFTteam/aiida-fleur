@@ -10,9 +10,7 @@ notifications:
     on_success: never
 
 services:
-    - rabbitmq
     - postgresql
-    - docker
 
 addons:
     postgresql: "9.5"
