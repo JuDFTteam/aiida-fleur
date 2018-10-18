@@ -1,18 +1,33 @@
 dist: trusty
-#sudo: required
+sudo: required
 language: python
 
-python: 2.7
+python: 
+    - "2.7"
 
 notifications:
   slack:
     on_success: never
 
 services:
+    - rabbitmq
     - postgresql
+    - docker
 
 addons:
     postgresql: "9.5"
+    apt:
+        packages:
+            - postgresql-server-dev-9.5
+            - texlive-base
+            - texlive-generic-recommended
+            - texlive-fonts-recommended
+            - texlive-latex-base
+            - texlive-latex-recommended
+            - texlive-latex-extra
+            - dvipng
+            - dvidvi
+            - graphviz
 
 #cache: pip
 
@@ -30,7 +45,7 @@ install:
 
 env:
     - TEST_TYPE="unittests"
-
+    - TEST_TYPE="docs"
 script: cd ./aiida_fleur/tests/ && ./run_all.sh
 
 git:
