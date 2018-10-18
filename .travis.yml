@@ -14,17 +14,6 @@ services:
 
 addons:
     postgresql: "9.5"
-    apt:
-        packages:
-            - texlive-base
-            - texlive-generic-recommended
-            - texlive-fonts-recommended
-            - texlive-latex-base
-            - texlive-latex-recommended
-            - texlive-latex-extra
-            - dvipng
-            - dvidvi
-            - graphviz
 
 #cache: pip
 
