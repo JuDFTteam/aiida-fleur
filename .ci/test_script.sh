@@ -4,7 +4,7 @@
 set -ev
 
 # Needed on Jenkins
-if [ -e ~/.bashrc ] ; then source ~/.bashrc ; fi
+#if [ -e ~/.bashrc ] ; then source ~/.bashrc ; fi
 
 case "$TEST_TYPE" in
     docs)

@@ -13,7 +13,7 @@ services:
     - postgresql
 
 addons:
-    postgresql: "9.5"
+    postgresql: "11"
 
 #cache: pip
 
