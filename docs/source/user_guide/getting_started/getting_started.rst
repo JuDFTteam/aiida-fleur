@@ -1,11 +1,56 @@
+Getting started
+===============
+
 Lets get started
 
 Installation of AiiDA-FLEUR
 ---------------------------
+.. _downloading: https://github.com/broeder-j/aiida-fleur
+.. _AiiDA: https://aiida-core.readthedocs.io/en/stable/
 
+On all platforms, first setup a python virtual environment to install aiida_core in it.
+Make sure that you have a database (postgresql) and everything else that AiiDA requirers setup.
+This is all exlained in detail in the `AiiDA`_ documentation.
+From the aiida-fleur source folder of the latest release or develop version (after `downloading`_ the code, recommended) use::
 
-Run automated tests
-'''''''''''''''''''
+    (env)$ pip install .
+    # or which is very useful to keep track of the changes (developers)
+    (env)$ pip install -e .
+
+To uninstall use::
+
+    (env)$ pip uninstall aiida-fleur
+
+Or install lates release version from pypi:
+
+    (env)$ pip install aiida-fleur
+
+    
+Test installation
+^^^^^^^^^^^^^^^^^
+
+To test rather the aiida-fleur installation was successful use::
+
+    (env)$ verdi calculation plugins
+    
+Example output::
+
+    * codtools.cifcellcontents
+    * codtools.cifcodcheck
+    * codtools.cifcodnumbers
+    * codtools.ciffilter
+    * codtools.cifsplitprimitive
+    * quantumespresso.cp
+    * quantumespresso.pw
+    * quantumespresso.pwimmigrant
+    * simpleplugins.templatereplace
+    ...
+    * fleur.fleur
+    * fleur.inpgen
+
+Pass as a further parameter one (or more) plugin names
+to get more details on a given plugin.
+
 
 After you have installed aiida-fleur it is always a good idea to run 
 the automated standard test set once to check on the installation.
@@ -54,46 +99,56 @@ but newer FLEUR releases force you to migrate to a newer aiida-fleur version.
 
 
 Usage recommendations
-+++++++++++++++++++++
+---------------------
 
 This plugin enables you to do your DFT work with FLEUR in pure python code.
 You can interact with AiiDA via python scripts, interactive shells, 
 (ipython, python, verdi shell) and you can use your favorite python tools.
 
 
-
-
 Tutorials
-+++++++++
+---------
 
 Basic AiiDA tutorials:
-''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^
 If you are not familiar with the basics of AiiDA yet, you might want to checkout
 the `AiiDA youtube tutorials. <https://www.youtube.com/channel/UC-NZvRRQ5VzT2wKE5DM1N3A/playlists>`_
 The jupyter notebooks from the tutorials you will find `here <https://github.com/aiidateam/aiida_demos>`_ on github,
 where you can also try them out in binder.
 
 
+How calculation plugins work:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Run inpgen calculation tutorial
-'''''''''''''''''''''''''''''''
+"""""""""""""""""""""""""""""""
+
 sorry, not uploaded yet
 
 Run fleur calculation tutorial
-''''''''''''''''''''''''''''''
+""""""""""""""""""""""""""""""
 sorry, not uploaded yet
 
+Running workflows:
+^^^^^^^^^^^^^^^^^^
 
 Run fleur SCF tutorial
-''''''''''''''''''''''
+""""""""""""""""""""""
 sorry, not uploaded yet
-
 
 Run fleur eos tutorial
-''''''''''''''''''''''
+""""""""""""""""""""""
 sorry, not uploaded yet
-
 
 Run fleur bandstructure/dos tutorial
-''''''''''''''''''''''''''''''''''''
+""""""""""""""""""""""""""""""""""""
 sorry, not uploaded yet
+
+Data extraction and evaluation:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+General calculation, workflow
+"""""""""""""""""""""""""""""
+
+Total database
+""""""""""""""

@@ -1,13 +1,13 @@
-Basic Workflows
-^^^^^^^^^^^^^^^
+.. Basic Workflows
+.. ===============
 
 .. toctree::
    :maxdepth: 4
 
    workflows
 
-More advanced Workflows
-^^^^^^^^^^^^^^^^^^^^^^^
+.. More advanced Workflows
+.. =======================
 
 .. toctree::
    :maxdepth: 4

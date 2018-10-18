@@ -260,7 +260,7 @@ The right handside has the form 'module_path:class_name'.
 Other information
 +++++++++++++++++
 
-Google python guide, doing releases, pypi, packaging, git basics, issues, ...
+Google python guide, doing releases, pypi, packaging, git basics, issues, aiida logs, loglevel, ...
 
 Useful to know
 --------------

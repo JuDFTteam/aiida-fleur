@@ -1,5 +1,5 @@
 FleurinpData
-++++++++++++
+============
 
 Description/Features
 --------------------
@@ -75,7 +75,7 @@ If the search takes to long (os.walk) your pythonpath contains many directories,
 (In the future there might be a method use_schema, to force the use of a certain schema.)
 
 Fleurinpmodifier
-++++++++++++++++
+================
 
 Description
 -----------

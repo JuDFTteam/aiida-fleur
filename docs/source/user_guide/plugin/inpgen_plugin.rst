@@ -30,9 +30,6 @@ Inputs
 
   .. literalinclude:: parameter_example.py
 
-  3. with soc
-  'soc' : {'theta' : 0.0, 'phi' : 0.0}
-
 
 .. note:: The ‘&atom’ namelist can occur several times in inpgen input (each key can occur only ones in a python dictionary). The plugin will reconize any namelist which contains the chars ‘atom’.
 

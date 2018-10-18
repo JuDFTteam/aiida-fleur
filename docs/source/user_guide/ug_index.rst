@@ -1,12 +1,12 @@
-
+************
 User's guide
-============
+************
 
 This is the AiiDA-FLEUR user's guide.
 
 
 Getting started
-+++++++++++++++
+===============
 
 
 .. toctree::
@@ -15,7 +15,7 @@ Getting started
    ./getting_started/getting_started
    
 Calculation Plugins
-+++++++++++++++++++
+===================
 
 Fleur inpgen plugin
 -------------------
@@ -33,7 +33,7 @@ Fleur-code plugin
    ./plugin/fleurcode_plugin
 
 Data Plugins
-++++++++++++
+============
 
 .. toctree::
    :maxdepth: 4
@@ -43,7 +43,7 @@ Data Plugins
 
 
 Workflows/Workchains
-++++++++++++++++++++
+====================
 
 
 .. toctree::
@@ -53,7 +53,7 @@ Workflows/Workchains
    
    
 Package specific verdi commands
-+++++++++++++++++++++++++++++++
+===============================
 
 .. toctree::
    :maxdepth: 4
@@ -62,7 +62,7 @@ Package specific verdi commands
    
 
 Tools
-+++++
+=====
 
 .. toctree::
    :maxdepth: 4
@@ -71,7 +71,7 @@ Tools
 
 
 FAQ
-+++
+===
 
 .. toctree::
    :maxdepth: 4

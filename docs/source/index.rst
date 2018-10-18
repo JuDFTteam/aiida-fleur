@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+##############################################
 Welcome to the `AiiDA-FLEUR`_'s documentation!
 ##############################################
 
@@ -38,8 +39,9 @@ If you use this package please cite:
 * for the plugin and workflows: (to be published)
 * for fleur: http:/www.flapw.de 
 
+****************************************
 Features, Illustrations, Usage examples:
-========================================
+****************************************
 
 
 .. topic:: Example 1, Full Provenance tracking trough AiiDA: 
@@ -100,6 +102,11 @@ Features, Illustrations, Usage examples:
     
 Some projects which used aiida-fleur include: ...
 
+**************
+Basic overview
+**************
+
+
 Requirements to use this code:
 ==============================
 
@@ -158,8 +165,9 @@ Acknowledgments:
 We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598)
 We thank the AiiDA team for their help and work. Also the vial exchange with developers of AiiDA packages for other codes was inspireing.
 
+************
 User's Guide
-############
+************
 
 Everything you need for using AiiDA-FLEUR
 
@@ -168,9 +176,9 @@ Everything you need for using AiiDA-FLEUR
 
    user_guide/ug_index
 
-  
+*****************
 Developer's Guide
-#################
+*****************
 
 Some things to notice for AiiDA-FLEUR developers.
 Conventions, programming style, Integrated testing, things that should not be forgotten
@@ -180,8 +188,9 @@ Conventions, programming style, Integrated testing, things that should not be fo
 
    devel_guide/dg_index
 
+**********************
 Module reference (API)
-######################
+**********************
 
 Automatic generated documentation for all modules, classes and functions with
 reference to the source code. The search is your friend.
@@ -190,11 +199,12 @@ reference to the source code. The search is your friend.
    :maxdepth: 4
 
    module_guide/mg_index
+..   apidoc/aiida_fleur
       
 
-
+******************
 Indices and tables
-##################
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`

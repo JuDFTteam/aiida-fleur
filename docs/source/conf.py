@@ -303,8 +303,8 @@ else:
     settings.BACKEND = "django"
     settings.AIIDADB_PROFILE = "default"
 
-'''
 
+'''
 def run_apidoc(_):
     """Runs sphinx-apidoc when building the documentation.
 
@@ -346,6 +346,7 @@ def run_apidoc(_):
 def setup(app):
     app.connect('builder-inited', run_apidoc)
 '''
+
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
