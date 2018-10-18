@@ -1,5 +1,5 @@
 dist: trusty
-sudo: required
+#sudo: required
 language: python
 
 python: 
@@ -16,7 +16,6 @@ addons:
     postgresql: "9.5"
     apt:
         packages:
-            - postgresql-server-dev-9.5
             - texlive-base
             - texlive-generic-recommended
             - texlive-fonts-recommended
