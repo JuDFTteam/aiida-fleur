@@ -46,7 +46,8 @@ install:
 env:
     - TEST_TYPE="unittests"
     - TEST_TYPE="docs"
-script: cd ./aiida_fleur/tests/ && ./run_all.sh
+
+script: .ci/test_script.sh
 
 git:
   depth: 3
