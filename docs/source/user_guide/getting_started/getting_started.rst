@@ -114,7 +114,8 @@ Basic AiiDA tutorials:
 If you are not familiar with the basics of AiiDA yet, you might want to checkout
 the `AiiDA youtube tutorials. <https://www.youtube.com/channel/UC-NZvRRQ5VzT2wKE5DM1N3A/playlists>`_
 The jupyter notebooks from the tutorials you will find `here <https://github.com/aiidateam/aiida_demos>`_ on github,
-where you can also try them out in binder.
+where you can also try them out in binder. 
+Virtual machines for tutorials and tutorial manuals you find `here <http://www.aiida.net/tutorials/>`_.
 
 
 How calculation plugins work:

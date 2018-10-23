@@ -1,12 +1,12 @@
-Fleur self-consistency field workflow
--------------------------------------
+Fleur initial core-level shifts workflow
+----------------------------------------
 
 Class name, import from:
   ::
 
-    from aiida_fleur.workflows.scf import fleur_scf_wc
+    from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
     #or 
-    WorkflowFactory('fleur.scf')
+    WorkflowFactory('fleur.init_cls')
 
 Description/Purpose:
   Converges the charge density and/or the total energy of a given system, 
@@ -27,12 +27,11 @@ Inputs:
   * ``wf_parameters`` (*ParameterData*, optional): Some settings of the workflow behavior (e.g. convergence criterion, maximum number of Fleur jobs..)
   
   * ``structure`` (*StructureData*, path 1): Crystal structure data node.
-  * ``calc_parameters`` (*ParameterData*, optional): Specify the FLAPW parameters, used by inpgen
+  * ``calc_parameters`` (*str*, optional): Longer description of the workflow
     
-  * ``fleurinp`` (*FleurinpData*, path 2): Fleur input data object representing the fleur input files.
+  * ``fleurinp`` (*FleurinpData*, path 2): Label of the workflow
   * ``remote_data`` (*RemoteData*, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS run
-  
-  * ``options``  (*ParameterData*, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
+
   * ``settings`` (*ParameterData*, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
     
 Returns nodes:

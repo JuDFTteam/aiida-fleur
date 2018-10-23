@@ -1,9 +1,3 @@
-Basic Workflows
-===============
-
-
-Here describe the basic workflows and how to use them. (Bejond the source code documenation)
-
 General design
 --------------
 
@@ -38,3 +32,44 @@ Fleur self-consistency field workflow
    
    ./scf_wc
    
+Fleur dos/band workflows
+------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   ./dos_band_wc
+   
+
+Fleur equation of states (eos) workflows
+----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   ./eos_wc
+   
+Fleur initial core-level shifts workflow
+----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   ./initial_cls_wc
+
+   
+Fleur core-hole workflow
+------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   ./corehole_wc
+   
+   
+#. Fleur scf
+#. Fleur dos
+#. Fleur band
+#. Fleur eos
+#. Fleur initial corelevel shifts
+#. Fleur corehole

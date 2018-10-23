@@ -1,12 +1,12 @@
-Fleur self-consistency field workflow
--------------------------------------
+Fleur core-hole workflow
+------------------------
 
 Class name, import from:
   ::
 
-    from aiida_fleur.workflows.scf import fleur_scf_wc
+    from aiida_fleur.workflows.corehole import fleur_corehole_wc
     #or 
-    WorkflowFactory('fleur.scf')
+    WorkflowFactory('fleur.corehole')
 
 Description/Purpose:
   Converges the charge density and/or the total energy of a given system, 
@@ -27,12 +27,11 @@ Inputs:
   * ``wf_parameters`` (*ParameterData*, optional): Some settings of the workflow behavior (e.g. convergence criterion, maximum number of Fleur jobs..)
   
   * ``structure`` (*StructureData*, path 1): Crystal structure data node.
-  * ``calc_parameters`` (*ParameterData*, optional): Specify the FLAPW parameters, used by inpgen
+  * ``calc_parameters`` (*str*, optional): Longer description of the workflow
     
-  * ``fleurinp`` (*FleurinpData*, path 2): Fleur input data object representing the fleur input files.
-  * ``remote_data`` (*RemoteData*, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS run
-  
-  * ``options``  (*ParameterData*, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
+  * ``fleurinp`` (*FleurinpData*, path 2): Label of the workflow
+  * ``remote_data`` (*RemoteData*, optional): The remote folder of the (converged) calculation whose output potential is used as input for the DOS run
+
   * ``settings`` (*ParameterData*, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
     
 Returns nodes:
@@ -42,7 +41,7 @@ Returns nodes:
   * ``last_fleur_calc_output`` (*ParameterData*) Output node of last Fleur calculation is returned.
     
 Layout:
-  .. figure:: /images/Workchain_charts_scf_wc.png
+  .. figure:: /images/Workchain_charts_corehole_wc.png
     :width: 50 %
     :align: center
 
@@ -51,44 +50,15 @@ Database Node graph:
     
     from aiida_fleur.tools.graph_fleur import draw_graph
     
-    draw_graph(50816)
+    draw_graph(30528)
     
-  .. figure:: /images/scf_50816.pdf
+  .. figure:: /images/corehole_si_30528.pdf
     :width: 100 %
     :align: center
         
 Plot_fleur visualization:
-  Single node
-  
-  .. code-block:: python
-    
-    from aiida_fleur.tools.plot import plot_fleur
-    
-    plot_fleur(50816)
-    
-  .. figure:: /images/plot_fleur_scf1.png
-    :width: 60 %
-    :align: center
-
-  .. figure:: /images/plot_fleur_scf2.png
-    :width: 60 %
-    :align: center
-
-  Multi node
-  
-  .. code-block:: python
-    
-    from aiida_fleur.tools.plot import plot_fleur
-    
-    plot_fleur(scf_pk_list)
-     
-  .. figure:: /images/plot_fleur_scf_m1.png
-    :width: 60 %
-    :align: center
-
-  .. figure:: /images/plot_fleur_scf_m2.png
-    :width: 60 %
-    :align: center
+  Currently there is no visualization directly implemented for plot fleur.
+  Through there 
 
 Example usage:
   .. include:: ../../../../examples/tutorial/workflows/tutorial_submit_scf.py
