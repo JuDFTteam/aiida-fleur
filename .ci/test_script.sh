@@ -12,7 +12,7 @@ case "$TEST_TYPE" in
         # -C change to 'docs' directory before doing anything
         # -n to warn about all missing references
         # -W to convert warnings in errors
-        SPHINXOPTS="-nW" make -C docs
+        SPHINXOPTS="-nW" make html -C docs
         ;;
     tests)
         # make sure we have the correct pg_ctl in our path for pgtest, to prevent issue #1722
