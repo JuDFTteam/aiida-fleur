@@ -8,8 +8,8 @@ notifications:
   slack:
     on_success: never
 
-services:
-    - postgresql
+#services:
+#    - postgresql
 
 addons:
     postgresql: "9.5"
