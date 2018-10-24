@@ -19,6 +19,7 @@ addons:
 before_install:  # copied from pgtest's travis.yml
     - sudo apt-get install locate
     - sudo service postgresql stop
+    - pg_dropcluster --stop 9.2 main
     - sudo apt-get remove -y postgresql
     - sudo apt-get install postgresql
     - sudo updatedb
