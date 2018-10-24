@@ -8,30 +8,30 @@ notifications:
   slack:
     on_success: never
 
-#services:
-#    - postgresql
+services:
+  - postgresql
 
 addons:
-    postgresql: "9.5"
+  postgresql: "9.6"
 
 #cache: pip
 
 before_install:  # copied from pgtest's travis.yml
-    - sudo apt-get install locate
-    - sudo service postgresql stop
-    - pg_dropcluster --stop 9.2 main
-    - sudo apt-get remove -y postgresql
-    - sudo apt-get install postgresql
-    - sudo updatedb
+  - sudo apt-get install locate
+  - sudo service postgresql stop
+  - sudo pg_dropcluster --stop 9.2 main
+  - sudo apt-get remove -q 'postgresql-*'
+  - sudo apt-get install postgresql
+  - sudo updatedb
 
 install:
-    - pip install -U pip wheel setuptools
-    - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing]
-    - pip install -e .
+  - pip install -U pip wheel setuptools
+  - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing]
+  - pip install -e .
 
 env:
-    - TEST_TYPE="unittests"
-    #- TEST_TYPE="docs"
+  - TEST_TYPE="unittests"
+  #- TEST_TYPE="docs"
 
 script: cd ./aiida_fleur/tests/ && ./run_all.sh 
 #.ci/test_script.sh
