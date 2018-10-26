@@ -8,7 +8,8 @@ Class name, import from:
     #or 
     WorkflowFactory('fleur.init_cls')
 
-Description/Purpose:
+Description/Purpose
+^^^^^^^^^^^^^^^^^^^
   Converges the charge density and/or the total energy of a given system, 
   or stops because the maximum allowed retries are reached.
     
@@ -21,7 +22,8 @@ Description/Purpose:
     resources the workflow is allowed to allocate for one simulation (job).
     You can turn off this feature by setting ``determine_resources = False`` in the ``wf_parameters``.
     
-Inputs:
+Input nodes
+^^^^^^^^^^^
   * ``fleur`` (*aiida.orm.Code*): Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen`` (*aiida.orm.Code*): Inpgen code using the ``fleur.inpgen`` plugin
   * ``wf_parameters`` (*ParameterData*, optional): Some settings of the workflow behavior (e.g. convergence criterion, maximum number of Fleur jobs..)
@@ -34,18 +36,21 @@ Inputs:
 
   * ``settings`` (*ParameterData*, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
     
-Returns nodes:
+Returns nodes
+^^^^^^^^^^^^^
   * ``output_scf_wc_para`` (*ParameterData*): Information of workflow results like success, last result node, list with convergence behavior
 
   * ``fleurinp`` (*FleurinpData*) Input node used is retunred.
   * ``last_fleur_calc_output`` (*ParameterData*) Output node of last Fleur calculation is returned.
     
-Layout:
+Layout
+^^^^^^
   .. figure:: /images/Workchain_charts_scf_wc.png
     :width: 50 %
     :align: center
 
-Database Node graph:
+Database Node graph
+^^^^^^^^^^^^^^^^^^^
   .. code-block:: python
     
     from aiida_fleur.tools.graph_fleur import draw_graph
@@ -56,7 +61,8 @@ Database Node graph:
     :width: 100 %
     :align: center
         
-Plot_fleur visualization:
+Plot_fleur visualization
+^^^^^^^^^^^^^^^^^^^^^^^^
   Single node
   
   .. code-block:: python
@@ -89,14 +95,17 @@ Plot_fleur visualization:
     :width: 60 %
     :align: center
 
-Example usage:
+Example usage
+^^^^^^^^^^^^^
   .. include:: ../../../../examples/tutorial/workflows/tutorial_submit_scf.py
      :literal:
 
      
-Output node example:
+Output node example
+^^^^^^^^^^^^^^^^^^^
   .. include:: /images/scf_wc_outputnode.py
      :literal:
 
-Error handling:
+Error handling
+^^^^^^^^^^^^^^
   Still has to be documented

@@ -1,3 +1,8 @@
+.. _inpgen_plugin:
+
+Fleur input generator plugin
+============================
+
 Description
 '''''''''''
 The input generator plug-in is capable of running the Fleur input generator (inpgen) with all its features, except crystal structure creation (we did not want to support that).

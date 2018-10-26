@@ -33,7 +33,9 @@ To test rather the aiida-fleur installation was successful use::
 
     (env)$ verdi calculation plugins
     
-Example output::
+Example output
+
+.. code-block:: shell
 
     * codtools.cifcellcontents
     * codtools.cifcodcheck
@@ -54,13 +56,17 @@ to get more details on a given plugin.
 
 After you have installed aiida-fleur it is always a good idea to run 
 the automated standard test set once to check on the installation.
-(for this make sure that postgres 'pg_ctl' command is in your path)::
+(for this make sure that postgres 'pg_ctl' command is in your path)
+
+.. code-block:: shell
 
   cd aiida_fleur/tests/
   ./run_all_cov.sh
 
 
-the output should look something like this::
+the output should look something like this
+
+.. code-block:: shell
 
     (env_aiida)% ./run_all.sh 
     ======================================= test session starts ================================

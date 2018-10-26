@@ -1,14 +1,29 @@
 Fleur self-consistency field workflow
 -------------------------------------
 
-Class name, import from:
-  ::
+* **Class**: :py:class:`~aiida_fleur.workflows.scf.Fleur_scf_wc`
+* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.scf``
+* **Workflow type**: Base workflow (lv 0)
+* **Aim**: Manage FLEUR SCF convergence
+* **Compuational demand**: 1-4 ``Fleur Job Calculations`` in serial
+* **Database footprint**: Outputnode with information, full provenance, ``~ 10+10*FLEUR Jobs`` nodes
+* **File repository footprint**: no addition to the ``JobCalculations`` run
+* **Additional Info**: Use alone or as subworkflow
+
+.. contents::
+
+
+Import Example:
+
+.. code-block:: python
 
     from aiida_fleur.workflows.scf import fleur_scf_wc
     #or 
     WorkflowFactory('fleur.scf')
 
-Description/Purpose:
+Description/Purpose
+^^^^^^^^^^^^^^^^^^^
+
   Converges the charge density and/or the total energy of a given system, 
   or stops because the maximum allowed retries are reached.
     
@@ -21,32 +36,39 @@ Description/Purpose:
     resources the workflow is allowed to allocate for one simulation (job).
     You can turn off this feature by setting ``determine_resources = False`` in the ``wf_parameters``.
     
-Inputs:
-  * ``fleur`` (*aiida.orm.Code*): Fleur code using the ``fleur.fleur`` plugin
-  * ``inpgen`` (*aiida.orm.Code*): Inpgen code using the ``fleur.inpgen`` plugin
-  * ``wf_parameters`` (*ParameterData*, optional): Some settings of the workflow behavior (e.g. convergence criterion, maximum number of Fleur jobs..)
+Input nodes
+^^^^^^^^^^^
+
+  * ``fleur`` (:py:class:`~aiida.orm.Code`): Fleur code using the ``fleur.fleur`` plugin
+  * ``inpgen`` (:py:class:`~aiida.orm.Code`): Inpgen code using the ``fleur.inpgen`` plugin
+  * ``wf_parameters`` (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): Some settings of the workflow behavior (e.g. convergence criterion, maximum number of Fleur jobs..)
   
-  * ``structure`` (*StructureData*, path 1): Crystal structure data node.
-  * ``calc_parameters`` (*ParameterData*, optional): Specify the FLAPW parameters, used by inpgen
+  * ``structure`` (:py:class:`~aiida.orm.data.structure.StructureData, path 1): Crystal structure data node.
+  * ``calc_parameters`` (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): Specify the FLAPW parameters, used by inpgen
     
-  * ``fleurinp`` (*FleurinpData*, path 2): Fleur input data object representing the fleur input files.
-  * ``remote_data`` (*RemoteData*, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS run
+  * ``fleurinp`` (:py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, path 2): Fleur input data object representing the fleur input files.
+  * ``remote_data`` (:py:class:`~aiida.orm.data.remote.RemoteData`, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS run
   
-  * ``options``  (*ParameterData*, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
-  * ``settings`` (*ParameterData*, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
+  * ``options``  (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
+  * ``settings`` (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
     
-Returns nodes:
+Returns nodes
+^^^^^^^^^^^^^
+
   * ``output_scf_wc_para`` (*ParameterData*): Information of workflow results like success, last result node, list with convergence behavior
 
   * ``fleurinp`` (*FleurinpData*) Input node used is retunred.
   * ``last_fleur_calc_output`` (*ParameterData*) Output node of last Fleur calculation is returned.
     
-Layout:
+Layout
+^^^^^^
+
   .. figure:: /images/Workchain_charts_scf_wc.png
     :width: 50 %
     :align: center
 
-Database Node graph:
+Database Node graph
+^^^^^^^^^^^^^^^^^^^
   .. code-block:: python
     
     from aiida_fleur.tools.graph_fleur import draw_graph
@@ -57,7 +79,8 @@ Database Node graph:
     :width: 100 %
     :align: center
         
-Plot_fleur visualization:
+Plot_fleur visualization
+^^^^^^^^^^^^^^^^^^^^^^^^
   Single node
   
   .. code-block:: python
@@ -90,14 +113,17 @@ Plot_fleur visualization:
     :width: 60 %
     :align: center
 
-Example usage:
+Example usage
+^^^^^^^^^^^^^
   .. include:: ../../../../examples/tutorial/workflows/tutorial_submit_scf.py
      :literal:
 
      
-Output node example:
+Output node example
+^^^^^^^^^^^^^^^^^^^
   .. include:: /images/scf_wc_outputnode.py
      :literal:
 
-Error handling:
+Error handling
+^^^^^^^^^^^^^^
   Still has to be documented

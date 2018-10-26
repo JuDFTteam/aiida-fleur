@@ -1,3 +1,9 @@
+.. _fleurcode_plugin:
+
+FLEUR code plugin
+=================
+
+
 Description
 '''''''''''
 Use the plugin to support inputs of the Fleur code i.e. the 'fleur' and 'fleur_MPI' executable.

@@ -1,5 +1,15 @@
+.. _fleurinp_data:
+
 FleurinpData
 ============
+
+* **Class**: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
+* **String to pass to the** :py:func:`~aiida.orm.utils.DataFactory`: ``fleur.fleurinp``
+* **Aim**: store input files for the FLEUR code and provide userfriendly editing.
+* **What is stored in the database**: the filenames, a parsed inp.xml files as nested dictionary
+* **What is stored in the file repository**: inp.xml file and optional other files.
+* **Additional functionality**: Provide userfriendly methods. Connected to structure and Kpoints AiiDA data structures
+
 
 Description/Features
 --------------------
@@ -23,7 +33,7 @@ For more detailed information about the methods see below and check the module c
 Initialization::
 
   from aiida_fleur.data.fleurinp import FleurinpData
-  # or FleurinpData = DataFacotry('fleur.fleurinp)
+  # or FleurinpData = DataFacotry('fleur.fleurinp')
   
   F = FleurinpData('path_to_inp.xml_file')
   #or 
@@ -91,6 +101,7 @@ code example::
   
   from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
   
+  F = FleurinpData('path_to_inp.xml_file')
   fm = FleurinpModifier(F)
   fm.set_inpchanges({'dos' : True, 'Kmax': 3.9 })
   fm.show()

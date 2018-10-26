@@ -11,7 +11,8 @@
 ###############################################################################
 
 """
-Here we run the fleur_scf_wc for W or some other material
+Here we run the fleur_eos_wc for @ or some other material
+
 Layout:
 
 1. Database env load, Import, create base classes
@@ -28,10 +29,12 @@ if not is_dbenv_loaded():
 
 from aiida.orm import DataFactory, load_node, Code
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.eos import fleur_eos_wc
 
 ParameterData = DataFactory('parameter')
+FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
+
 
 #######################    
 # 2. Creation/loding of input nodes
@@ -44,8 +47,8 @@ inpgen_code = Code.get_from_string(inpgen_label)
 
 ### Create wf_parameters (optional) and options
 wf_para = ParameterData(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,
-                              'serial' : False})
+                              'points' : 4,
+                              'guess' : 1.0})
 
 options = ParameterData(dict={'resources' : {"num_machines": 1},
                               'queue_name' : '',
@@ -86,15 +89,15 @@ inputs['structure'] = structure
 inputs['calc_parameters'] = parameters
 inputs['fleur'] = fleur_code
 inputs['inpgen'] = inpgen_code
-inputs['description'] = 'test fleur_scf_wc run on W'
-inputs['label'] = 'test on W'
+inputs['description'] = 'test fleur_eos_wc run on W'
+inputs['label'] = 'eos test on W'
 inputs['options'] = options
 
 # submit workchain to the daemon
 # Noice that the nodes we created before are not yet stored in the database, 
 # but AiiDA will do so automaticly when we launch the workchain. 
 # To reuse nodes it might be a good idea, to save them before by hand and then load them 
-res = submit(fleur_scf_wc, **inputs)
+res = submit(fleur_eos_wc, **inputs)
 
 # You can also run the workflow in the python interpreter as blocking
-#res = run(fleur_scf_wc, **inputs)
+#res = run(fleur_eos_wc, **inputs)
