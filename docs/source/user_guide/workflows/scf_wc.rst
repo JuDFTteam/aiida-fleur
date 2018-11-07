@@ -59,7 +59,25 @@ Returns nodes
 
   * ``fleurinp`` (*FleurinpData*) Input node used is retunred.
   * ``last_fleur_calc_output`` (*ParameterData*) Output node of last Fleur calculation is returned.
-    
+ 
+Default inputs
+^^^^^^^^^^^^^^
+Workflow paremters.
+
+.. code-block:: python
+
+    wf_parameters_dict = {'fleur_runmax': 4,       # Maximum number of fleur jobs/starts (default 30 iterations per start)
+                   'density_criterion' : 0.00002,  # Stop if charge denisty is converged below this value
+                   'energy_criterion' : 0.002,     # if converge energy run also this total energy convergered below this value
+                   'converge_density' : True,      # converge the charge density
+                   'converge_energy' : False,      # converge the total energy (usually converged before density)
+                   #'caching' : True,              # AiiDA fastforwarding (currently not there yet)
+                   'serial' : False,               # execute fleur with mpi or without
+                   'itmax_per_run' : 30,           # Maximum iterations run for one Fleur job
+                   'inpxml_changes' : [],          # (expert) List of further changes applied to the inp.xml after the inpgen run
+                   }                               # tuples (function_name, [parameters]), have to be the function names supported by fleurinpmodifier
+                          
+   
 Layout
 ^^^^^^
 
