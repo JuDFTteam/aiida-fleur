@@ -42,7 +42,7 @@ class fleur_band_wc(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.2"
+    _workflowversion = "0.3.3"
     
     _default_options = {'resources': {"num_machines": 1},
                         'max_wallclock_seconds': 60*60,
@@ -207,7 +207,7 @@ class fleur_band_wc(WorkChain):
         #or if spin =2
         #outdict['output_band1'] = bandstructurenode1
         #outdict['output_band2'] = bandstructurenode1
-        outdict['output_band_wf_para'] = outputnode
+        outdict['output_band_wc_para'] = outputnode
         #print outdict
         for key, val in outdict.iteritems():
             self.out(key, val)

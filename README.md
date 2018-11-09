@@ -95,7 +95,7 @@ Or install lates release version from pypi:
     $ pip install aiida-fleur
 
 ### Test Installation
-To test wether the installation was successful use:
+To test rather the installation was successful use:
 ```bash
 $ verdi calculation plugins
 ```

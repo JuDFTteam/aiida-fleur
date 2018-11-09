@@ -1,22 +1,46 @@
+.. _fleurcode_plugin:
+
+FLEUR code plugin
+=================
+
+
 Description
------------
+'''''''''''
 Use the plugin to support inputs of the Fleur code i.e. the 'fleur' and 'fleur_MPI' executable.
 
 Supported codes
----------------
+'''''''''''''''
 * tested from Fleur v0.27 (MAX release 1.0) onwards. It is NOT back compatible to
   version v0.26 and earlier, because the I/O has changed completely and the plugin
   relies on the xml I/O.
 
+Not (yet) supported code features
+'''''''''''''''''''''''''''''''''
+
+* sparning multiple fleur calculation with on execution of fleur in a certain subdir structure
+  (on can parse the commandline switches, but it will fail, because the subdirs have to be prepared on the machine.)
+* 1D, not supported by the plugin, but currently also not testest in Fleur 0.27
+  (in principal possible, some plugin functionalities have to be updated.)
+
+
+Partially supported yet
+.......................
+
+* LDA+U, not tested yet, in principal possible, but user has to take care of copying the files, nothing parsed to output
+* Noncolinear Magnetism, not tested yet, in principal possible, but user has to take care of copying the extra files, not all information is parsed.
+* Jijs same as nonco.
+* Hybrid functionals same as noco
+* Wannier 90 same as noco
+  
+  
 Sketch of nodes
----------------
+'''''''''''''''
 .. image:: images/fleur_calc.png
-    :width: 60%
+    :width: 100%
     :align: center
-    :height: 300px
 
 Inputs
-------
+''''''
 * **fleurinp**, class :py:class:`fleurinpData <aiida.orm.data.fleurinp>`
   Data structure which represents the inp.xml file everything a Fleur calculation needs.
   For more information see fleurinpData. 
@@ -25,7 +49,7 @@ Inputs
   copied in the scratch of the new calculation.
 
 Outputs
--------
+'''''''
 
 * **fleurinp**, class :py:class:`fleurinpData <aiida.orm.data.fleurinp>` (optional)
   Data structure that represents the inp.xml file and provides useful methods.
@@ -44,17 +68,37 @@ an example output node:
 .. note:: The 'simple' output node will evolve. A draft of a second complexer output node which contains informations of all iterations and atomtypes exists, but a dictionary is not the optimal structure for this. For now this is postponed. In any case if you want to parse something from the out.xml checkout the methods in xml_util.
   
 Errors
-------
+''''''
 
 Errors of the parsing are reported in the log of the calculation (accessible 
 with the ``verdi calculation logshow`` command). 
-Everything that Fleur writes into stderr is shown here, i.e all JuDFT error messages.
-                                                                  
+Everything that Fleur writes into stderr is also shown here, i.e all JuDFT error messages.
+Example::
+
+    (env_aiida)% verdi calculation logshow 50891
+    *** 50891 [scf: fleur run 1]: FAILED
+    *** Scheduler output:
+    *** 2 LOG MESSAGES:
+    +-> WARNING at 2018-08-15 09:15:39.563297+00:00
+    | The following was written into std error and piped to out.error : 
+    |   
+    |     0**************juDFT-Error*****************
+    |    0Error message:E-field too big or No. of e- not correct
+    |    0Error occurred in subroutine:efield
+    |     0*****************************************
+    | 
+    |  
+    |  Terminating all MPI processes.
+    |  Note: This is a normal procedure.
+    |        Error messages in the following lines can be ignored.
+    |  
+    | application called MPI_Abort(MPI_COMM_WORLD, 0) - process 0
+                                                                      
 Moreover, all warnings and errors written by Fleur in the out.xml file are stored in the ParameterData under the key ``warnings``, and are accessible with ``Calculation.res.warnings``.
 
 
 Additional advanced features
-----------------------------
+''''''''''''''''''''''''''''
 
 In general see the Fleur documenation: www.flapw.de
 
@@ -82,7 +126,13 @@ as a string in a list, as follows::
 
 The default command-line of a fleur execution of the plugin looks like this for the torque scheduler:: 
 
-'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-xmlInput' '-wtime' 'XXXXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
+'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
+
+If the code node description contains 'hdf5' in some form, the plugin will use per default hdf5, it will only copy the last hdf5 density back, not the full cdn.hdf file.
+The Fleur execution line becomes in this case::
+
+'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-last_extra' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
+
   
 Retrieving more files
 .....................
@@ -139,20 +189,3 @@ If you know that for your calculation do not need some files which are copied pe
   }
   
   
-Not supported code features
----------------------------
-
-* sparning multiple fleur calculation with on execution of fleur in a certain subdir structure
-(on can parse the commandline switches, but it will fail.)
-* 1D, not supported by the plugin, but currently also not testest in Fleur 0.27
-(in principal possible, some plugin functionalities have to be updated.)
-
-
-partially supported yet
-.......................
-
-* LDA+U, not tested yet, in principal possible, but user has to take care of copying the files, nothing parsed to output
-* Noncolinear Magnetism, not tested yet, in principal possible, but user has to take care of copying the extra files, not all information is parsed.
-* Jijs same as nonco.
-* Hybrid functionals same as noco
-* Wannier 90 same as noco

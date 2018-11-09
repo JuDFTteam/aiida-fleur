@@ -1,5 +1,8 @@
+pip>=10.0
 setuptools>34
 lxml>=3.6.4
 aiida>=0.12.0
+git+https://github.com/broeder-j/aiida_core.git@develop
 masci-tools
-
+ase
+pymatgen

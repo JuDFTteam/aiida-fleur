@@ -43,7 +43,7 @@ class fleur_dos_wc(WorkChain):
     defaults : tria = True, nkpts = 800, sigma=0.005, emin= -0.3, emax = 0.8
     """
 
-    _workflowversion = "0.3.2"
+    _workflowversion = "0.3.3"
 
     _default_options = {'resources': {"num_machines": 1},
                         'max_wallclock_seconds': 60*60,
@@ -69,7 +69,7 @@ class fleur_dos_wc(WorkChain):
                    default=ParameterData(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
-        spec.input("inpgen", valid_type=Code, required=False)
+        #spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
             cls.start,
@@ -202,6 +202,7 @@ class fleur_dos_wc(WorkChain):
         #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
         #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['dosfile'] = dosfilepath
+        # add nkpoints, emin, emax, sigma, tria
 
         #print outputnode_dict
         outputnode = ParameterData(dict=outputnode_dict)
@@ -212,7 +213,7 @@ class fleur_dos_wc(WorkChain):
         #or if spin =2
         #outdict['output_band1'] = dosnode1
         #outdict['output_band2'] = dosnode2
-        outdict['output_dos_wf_para'] = outputnode
+        outdict['output_dos_wc_para'] = outputnode
         #print outdict
         for k, v in outdict.iteritems():
             self.out(k, v)
