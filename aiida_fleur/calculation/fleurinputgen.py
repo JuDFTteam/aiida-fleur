@@ -482,7 +482,10 @@ class FleurinputgenCalculation(JobCalculation):
                         namels_name = 'atom'
                     infile.write("&{0}\n".format(namels_name))
                     if namels_name in val_only_namelist:
-                        for k, val in sorted(namelist.iteritems()):
+                        reversed = False
+                        if namels_name == 'soc':
+                            reversed = True
+                        for k, val in sorted(namelist.iteritems(), reverse=reversed):
                             infile.write(get_input_data_text(k, val, True, mapping=None))
                     else:
                         for k, val in sorted(namelist.iteritems()):
