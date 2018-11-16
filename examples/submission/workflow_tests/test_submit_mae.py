@@ -47,26 +47,18 @@ args = parser.parse_args()
 
 print(args)
 
-# load_the nodes if arguments are there, or use default.
-#nodes_dict = {}
-#for key, val in vars(args).iteritems():
-#    print(key, val)
-#    if val is not None:
-#        val_new = load_node(val)
-#    else:
-#        val_new = val# default[key]
-#    nodes_dict[key] = val_new
-
 ### Defaults ###
 wf_para = ParameterData(dict={'fleur_runmax' : 5,
-                              'sqa_ref' : 'x',
+                              'itmax_per_run' : 30,
+                              'density_criterion' : 0.00005,
                               'force_th' : True,
-                              'serial' : False
+                              'serial' : False,
+                              'inpxml_changes' : []
                         })
 
 options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
-                              'queue_name' : 'devel',#23_node',
-                              'max_wallclock_seconds':  60*60})
+                              'queue_name' : 'devel',
+                              'max_wallclock_seconds':  1*10*60})
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A
@@ -132,7 +124,7 @@ if args.inpgen is not None:
 
 submit_wc = False
 if args.submit is not None:
-    submit_wc = submit
+    submit_wc = args.submit
 pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()

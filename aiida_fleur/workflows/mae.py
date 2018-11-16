@@ -15,6 +15,12 @@
     Magnetic Anisotropy Energy.
     This workflow consists of modifyed parts of scf and eos workflows.
 """
+#TODO
+'''
+For force theorem branch:
+1) check if reference converge calculation fail; raise error
+2) check if force theorem calculations fail; raise error
+'''
 
 from aiida.work.workchain import WorkChain, ToContext, if_
 from aiida.work.launch import submit
@@ -80,7 +86,7 @@ class fleur_mae_wc(WorkChain):
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("options", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._default_options))
-        spec.input("settings", valid_type=ParameterData, required=False)
+        #spec.input("settings", valid_type=ParameterData, required=False)
                                                                               
         spec.outline(
             cls.start,
