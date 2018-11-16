@@ -40,7 +40,7 @@ class fleur_mae_wc(WorkChain):
 
     _default_options = {
                         'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
-                        'max_wallclock_seconds' : 6*60*60,
+                        'max_wallclock_seconds' : 2*60*60,
                         'queue_name' : '',
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
@@ -93,9 +93,7 @@ class fleur_mae_wc(WorkChain):
             ),
         )
 
-        spec.output('MAE_x', valid_type=Float)
-        spec.output('MAE_y', valid_type=Float)
-        spec.output('MAE_z', valid_type=Float)
+        spec.output('out', valid_type=ParameterData)
 
     def start(self):
         """
@@ -173,12 +171,13 @@ class fleur_mae_wc(WorkChain):
 
     def validate_input(self):
         """
-        Choose the branch of MAE calculation: straightforward scf (return False)
-        or force theorem (return True)
-        Create the list of SQAs. If it is a force theorem calculation,
-        symmetry has to be broken using SQA not patallel to high symmetry direction.
-        The SQA will be changed before FLEUR execution.
-        In case of converge, list of SQA corresponding to x y and z directions.
+        Choose the branch of MAE calculation:
+            a) converge charge density for three orthogonal SQAs (x, y and z directions)
+            b) 1) converge charge density for SQA that brakes the symmetry (theta=0.1, phi=0.1)
+               2) use the force theorem to find energies for SQAs along x, y and z directions
+        SQA = x: theta = pi/2, phi = 0
+        SQA = y: theta = pi/2, phi = pi/2
+        SQA = z: theta = 0,    phi = 0
         """
         if self.ctx.wf_dict['force_th']:
             self.ctx.inpgen_soc = {'xyz' : ['0.1', '0.1']}
@@ -188,37 +187,30 @@ class fleur_mae_wc(WorkChain):
 
     def converge_scf(self):
         """
-        Converge magnetic structure with SOC to get
-        a reference for force theorem calculations
+        Converge charge density with SOC.
+        Depending on a branch of MAE calculation, submit a single Fleur calculation to obtain
+        a reference for further force theorem calculations or
+        submit thee Fleur calculations to converge charge density for SQA = x, y and z directions.
         """
-        self.ctx.labels = []
         inputs = {}
         for key, socs in self.ctx.inpgen_soc.iteritems():
             inputs[key] = self.get_inputs_scf()
             inputs[key]['calc_parameters']['soc'] = {'theta' : socs[0], 'phi' : socs[1]}
-            if key == 'xyz':
-                try:
-                    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
-                except KeyError:
-                    inputs[key]['wf_parameters']['inpxml_changes'] = [(u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}})]
-            else:
+            #if key == 'xyz':
+            #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            #else:
             #TODO in case of converge calculation in appends 3 times
-                inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
             inputs[key]['wf_parameters'] = ParameterData(dict=inputs[key]['wf_parameters'])
             inputs[key]['calc_parameters'] = ParameterData(dict=inputs[key]['calc_parameters'])
             inputs[key]['options'] = ParameterData(dict=inputs[key]['options'])
-            print "#############################################"
-            print inputs[key]['options'].get_dict()
-            print inputs[key]['calc_parameters'].get_dict()
-            print inputs[key]['wf_parameters'].get_dict()
-            print "#############################################"
             res = self.submit(fleur_scf_wc, **inputs[key])
-            self.ctx.labels.append(key)
             self.to_context(**{key:res})
     
     def get_inputs_scf(self):
         """
-        Initialize inputs for scf workflow: wf_param, options, calculation parameters, codes, struture
+        Initialize inputs for scf workflow:
+        wf_param, options, calculation parameters, codes, structure
         """
         inputs = {}
 
@@ -229,6 +221,7 @@ class fleur_mae_wc(WorkChain):
         for key in self._scf_keys:
             scf_wf_param[key] = self.ctx.wf_dict.get(key)
         inputs['wf_parameters'] = scf_wf_param
+        
         inputs['options'] = self.ctx.options
         
         #Try to retrieve calculaion parameters from inputs
@@ -236,12 +229,12 @@ class fleur_mae_wc(WorkChain):
             calc_para = self.inputs.calc_parameters.get_dict()
         except AttributeError:
             calc_para = {}
-
         inputs['calc_parameters'] = calc_para
 
         #Initialize codes
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
+        #Initialize the strucutre
         inputs['structure'] = self.inputs.structure
 
         return inputs
@@ -352,7 +345,6 @@ class fleur_mae_wc(WorkChain):
         print "MAE ZZZZZ"
         print self.ctx['force_z'].out.output_parameters.dict.energy# - self.ctx['xyz'].get_outputs_dict()['output_scf_wc_para'].get_dict()['total_energy']
         
-        natoms = len(self.inputs.structure.sites)
         t_energydict = {}
         t_energydict['MAE_x'] = self.ctx['force_x'].out.output_parameters.dict.energy
         t_energydict['MAE_y'] = self.ctx['force_y'].out.output_parameters.dict.energy
@@ -370,7 +362,6 @@ class fleur_mae_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'natoms' : natoms,
                'total_energy': t_energydict,
                'total_energy_units' : self.ctx['force_z'].out.output_parameters.dict.energy_units,
                'calculations' : [],#self.ctx.calcs1,
@@ -391,10 +382,9 @@ class fleur_mae_wc(WorkChain):
         distancedict ={}
         t_energydict = {}
         outnodedict = {}
-        natoms = len(self.inputs.structure.sites)
         htr2eV = 27.21138602
         
-        for label in self.ctx.labels:
+        for label in ['x', 'y', 'z']:
             calc = self.ctx[label]
             try:
                 outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
@@ -424,6 +414,7 @@ class fleur_mae_wc(WorkChain):
             t_energydict[label] = t_e
             distancedict[label] = dis
         
+        #Find a minimal value of MAE and count it as 0
         labelmin = 'z'
         for labels in ['y', 'x']:
             try:
@@ -431,7 +422,6 @@ class fleur_mae_wc(WorkChain):
                     labelmin = labels
             except KeyError:
                 pass
-
         minenergy = t_energydict[labelmin]
 
         for key, val in t_energydict.iteritems():
@@ -440,11 +430,10 @@ class fleur_mae_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'natoms' : natoms,
-               'total_energy': t_energydict,
-               'total_energy_units' : e_u,
-               'calculations' : [],#self.ctx.calcs1,
-               'scf_wfs' : [],#self.converge_scf_uuids,
+               'MAE_X' : t_energydict['x'],
+               'MAE_y' : t_energydict['y'],
+               'MAE_z' : t_energydict['z'],
+               'MAE_units' : e_u,
                'distance_charge' : distancedict,
                'distance_charge_units' : dis_u,
                'successful' : self.ctx.successful,
@@ -457,13 +446,8 @@ class fleur_mae_wc(WorkChain):
         else:
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
 
-        # output must be aiida Data types.
-        #outnode = ParameterData(dict=out)
-
         # create link to workchain node
-        self.out('MAE_x', Float(out['total_energy']['x']))
-        self.out('MAE_y', Float(out['total_energy']['y']))
-        self.out('MAE_z', Float(out['total_energy']['z']))
+        self.out('out', ParameterData(dict=out))
 
     def control_end_wc(self, errormsg):
         """
