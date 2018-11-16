@@ -13,6 +13,7 @@
 """
     In this module you find the workflow 'fleur_mae_wc' for the calculation of
     Magnetic Anisotropy Energy.
+    This workflow consists of modifyed parts of scf and eos workflows.
 """
 
 from aiida.work.workchain import WorkChain, ToContext, if_
@@ -68,6 +69,7 @@ class fleur_mae_wc(WorkChain):
     ERROR_CALCULATION_INVALID_INPUT_FILE = 6
     ERROR_FLEUR_CALCULATION_FALIED = 7
     ERROR_CONVERGENCE_NOT_ARCHIVED = 8
+    ERROR_REFERENCE_CALCULATION_FAILED = 9
 
     @classmethod
     def define(cls, spec):
@@ -232,12 +234,13 @@ class fleur_mae_wc(WorkChain):
         self.report('INFO: run change_fleurinp')
         try:
             fleurin = self.ctx['xyz'].out.fleurinp
-            print "TOOOK FLEURINP FORM LAST CONVERGE"
         except AttributeError:
-            error = 'No fleurinpData found, inpgen failed'
+            error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
             self.control_end_wc(error)
-            return self.ERROR_INPGEN_CALCULATION_FAILED
+            return self.ERROR_REFERENCE_CALCULATION_FAILED
 
+        #Change SQA from the reference to x, y or z direction.
+        #Set itmax = 1
         if SQA_direction == 'x':
             fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 1.57079, u'phi' : 0.0, u'itmax' : 1}})]
         elif SQA_direction == 'y':
@@ -245,8 +248,9 @@ class fleur_mae_wc(WorkChain):
         elif SQA_direction == 'z':
             fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 0.0, u'phi' : 0.0, u'itmax' : 1}})]
 
+        #This part of code was copied from scf workflow. If it contains bugs,
+        #they also has to be fixed in scf wf
         if fchanges:# change inp.xml file
-            fleurmode = FleurinpModifier(fleurin)
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
 
@@ -289,33 +293,29 @@ class fleur_mae_wc(WorkChain):
     def mae_force(self):
         """
         Calculate energy of a system with given SQA
-        using the force theorem
+        using the force theorem. Converged reference stores in self.ctx['xyz'].
         """
-        self.report('INFO: run FORCE THEOREM CALCULATION')
+        self.report('INFO: run Force theorem calculations')
 
         for SQA_direction in ['x', 'y', 'z']:
             self.change_fleurinp(SQA_direction)
             fleurin = self.ctx.fleurinp
 
-            settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*'],
-                                           'commandline_options': ["-wtime", "{}".format(self.ctx.options['max_wallclock_seconds'])],
-                                           })
+            #Do not copy broyd* files from the parent
+            settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
         
-            a = load_node(self.ctx['xyz'].pk)
-            for i in a.called:
+            #Retrieve remote folder of the reference calculation
+            scf_ref_node = load_node(self.ctx['xyz'].pk)
+            for i in scf_ref_node.called:
                 if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
                     remote_old = i.out.remote_folder
-            print '#################'
-            print remote_old
-            #remote_old=None
             
-            label = 'FORCE'
-            description = 'This is a force theorem calculation'
+            label = 'Force_{}'.format(SQA_direction)
+            description = 'This is a force theorem calculation for {} SQA'.format(SQA_direction)
 
             code = self.inputs.fleur
             options = self.ctx.options.copy()
 
-        
             inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=False)
             future = submit(inputs_builder)
             key = 'force_{}'.format(SQA_direction)
@@ -323,18 +323,14 @@ class fleur_mae_wc(WorkChain):
 
     def get_res_force(self):
         
-        print "MAE XXXXX"
-        print self.ctx['force_x'].out.output_parameters.dict.energy# - self.ctx['xyz'].get_outputs_dict()['output_scf_wc_para'].get_dict()['total_energy']
-        print "MAE YYYYY"
-        print self.ctx['force_y'].out.output_parameters.dict.energy# - self.ctx['xyz'].get_outputs_dict()['output_scf_wc_para'].get_dict()['total_energy']
-        print "MAE ZZZZZ"
-        print self.ctx['force_z'].out.output_parameters.dict.energy# - self.ctx['xyz'].get_outputs_dict()['output_scf_wc_para'].get_dict()['total_energy']
-        
+        htr2eV = 27.21138602
         t_energydict = {}
         t_energydict['MAE_x'] = self.ctx['force_x'].out.output_parameters.dict.energy
         t_energydict['MAE_y'] = self.ctx['force_y'].out.output_parameters.dict.energy
         t_energydict['MAE_z'] = self.ctx['force_z'].out.output_parameters.dict.energy
+        e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
         
+        #Find a minimal value of MAE and count it as 0
         labelmin = 'MAE_z'
         for labels in ['MAE_y', 'MAE_x']:
             if t_energydict[labels] < t_energydict[labels]:
@@ -343,22 +339,22 @@ class fleur_mae_wc(WorkChain):
 
         for key, val in t_energydict.iteritems():
             t_energydict[key] = t_energydict[key] - minenergy
+            if e_u == 'Htr' or 'htr':
+                t_energydict[key] = t_energydict[key] * htr2eV
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'total_energy': t_energydict,
-               'total_energy_units' : self.ctx['force_z'].out.output_parameters.dict.energy_units,
-               'calculations' : [],#self.ctx.calcs1,
-               'scf_wfs' : [],#self.converge_scf_uuids,
+               'MAE_x' : t_energydict['MAE_x'],
+               'MAE_y' : t_energydict['MAE_y'],
+               'MAE_z' : t_energydict['MAE_z'],
+               'MAE_units' : e_u,
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors}
         
-        self.out('MAE_x', Float(out['total_energy']['MAE_x']))
-        self.out('MAE_y', Float(out['total_energy']['MAE_y']))
-        self.out('MAE_z', Float(out['total_energy']['MAE_z']))
+        self.out('out', ParameterData(dict=out))
 
     def get_results_converge(self):
         """
@@ -394,10 +390,7 @@ class fleur_mae_wc(WorkChain):
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr2eV
-            dis = outpara.get('distance_charge', float('nan'))
-            dis_u = outpara.get('distance_charge_units')
             t_energydict[label] = t_e
-            distancedict[label] = dis
         
         #Find a minimal value of MAE and count it as 0
         labelmin = 'z'
@@ -415,12 +408,10 @@ class fleur_mae_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_X' : t_energydict['x'],
+               'MAE_x' : t_energydict['x'],
                'MAE_y' : t_energydict['y'],
                'MAE_z' : t_energydict['z'],
                'MAE_units' : e_u,
-               'distance_charge' : distancedict,
-               'distance_charge_units' : dis_u,
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
@@ -447,6 +438,7 @@ class fleur_mae_wc(WorkChain):
         
         return
 
+'''
 @wf
 def create_mae_result_node(**kwargs):
     """
@@ -469,3 +461,4 @@ def create_mae_result_node(**kwargs):
     #    outdict['gs_structure'] = gs_structure
 
     return outdict
+'''
