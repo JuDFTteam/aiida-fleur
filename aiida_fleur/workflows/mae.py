@@ -47,7 +47,7 @@ class fleur_mae_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   'sqa_ref' : 'x',                  # Spin Quantization Axis acting as a reference for force theorem calculations
+                   #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
                    'force_th' : True,               #Use the force theorem (True) or converge
                    'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
@@ -68,7 +68,6 @@ class fleur_mae_wc(WorkChain):
     ERROR_CALCULATION_INVALID_INPUT_FILE = 6
     ERROR_FLEUR_CALCULATION_FALIED = 7
     ERROR_CONVERGENCE_NOT_ARCHIVED = 8
-    ERROR_WRONG_SQA_PROVIDED = 9
 
     @classmethod
     def define(cls, spec):
@@ -97,7 +96,7 @@ class fleur_mae_wc(WorkChain):
 
     def start(self):
         """
-        Retrieve and initialize paramters of the WorkFlow
+        Retrieve and initialize paramters of the WorkChain
         """
         self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
                     ''.format(self._workflowversion))
@@ -108,37 +107,23 @@ class fleur_mae_wc(WorkChain):
         self.ctx.errors = []
 
         #Retrieve WorkFlow parameters,
-        #initialize the directory using defaults if no wf paramters are given by user
+        #initialize the dictionary using defaults if no wf paramters are given by user
         wf_default = self._wf_default
-        a = ParameterData(dict = wf_default)
         
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
         
-        #extend options given by user using defaults
+        #extend wf parameters given by user using defaults
         for key, val in wf_default.iteritems():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
-
-        if self.ctx.wf_dict['sqa_ref'] == 'z':
-            self.ctx.theta = 0.0
-            self.ctx.phi = 0.0
-        elif self.ctx.wf_dict['sqa_ref'] == 'x':
-            self.ctx.theta = 1.57079
-            self.ctx.phi = 0.0
-        elif self.ctx.wf_dict['sqa_ref'] == 'y':
-            self.ctx.theta = 1.57079
-            self.ctx.phi = 1.57079
-        else:
-            error = ("sqa_ref has to be equal to x, y or z.")
-            self.control_end_wc(error)
-            return self.ERROR_WRONG_SQA_PROVIDED
         
         #Retrieve calculation options,
-        #initialize the directory using defaults if no options are given by user
+        #initialize the dictionary using defaults if no options are given by user
         defaultoptions = self._default_options
+        
         if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
         else:
