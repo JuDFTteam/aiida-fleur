@@ -339,7 +339,7 @@ class fleur_mae_wc(WorkChain):
         #Find a minimal value of MAE and count it as 0
         labelmin = 'MAE_z'
         for labels in ['MAE_y', 'MAE_x']:
-            if t_energydict[labels] < t_energydict[labels]:
+            if t_energydict[labels] < t_energydict[labelmin]:
                 labelmin = labels
         minenergy = t_energydict[labelmin]
 
@@ -402,7 +402,7 @@ class fleur_mae_wc(WorkChain):
         labelmin = 'z'
         for labels in ['y', 'x']:
             try:
-                if t_energydict[labels] < t_energydict[labels]:
+                if t_energydict[labels] < t_energydict[labelmin]:
                     labelmin = labels
             except KeyError:
                 pass

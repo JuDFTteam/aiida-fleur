@@ -49,38 +49,60 @@ print(args)
 
 ### Defaults ###
 wf_para = ParameterData(dict={'fleur_runmax' : 5,
-                              'itmax_per_run' : 30,
+                              'itmax_per_run' : 35,
                               'density_criterion' : 0.00005,
                               'force_th' : True,
                               'serial' : False,
                               'inpxml_changes' : []
                         })
 
-options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                               'queue_name' : 'devel',
-                              'max_wallclock_seconds':  1*10*60})
-
+                              'max_wallclock_seconds':  60*60+40*60})
+'''
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
+'''
+
+bohr_a_0= 0.52917721092 # A
+a = 7.497*bohr_a_0
+cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
+structure = StructureData(cell=cell)
+structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
+structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
+structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
+structure.pbc = (True, True, False)
+
 parameters = ParameterData(dict={
                   'atom':{
-                        'element' : 'W',
-                        'jri' : 833,
-                        'rmt' : 2.3,
-                        'dx' : 0.015,
+                        'element' : 'Pt',
+                        #'jri' : 833,
+                        #'rmt' : 2.3,
+                        #'dx' : 0.015,
                         'lmax' : 8,
-                        'lo' : '5p',
-                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        #'lo' : '5p',
+                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        },
+                    'atom2':{
+                        'element' : 'Fe',
+                        #'jri' : 833,
+                        #'rmt' : 2.3,
+                        #'dx' : 0.015,
+                        'lmax' : 8,
+                        #'lo' : '5p',
+                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
                         },
                   'comp': {
-                        'kmax': 3.0,
+                        'kmax': 3.8,
                         },
                   'kpt': {
-                        'nkpt': 300,
+                        'div1': 20,
+                        'div2' : 24,
+                        'div3' : 1
                         }})
 
 default = {'structure' : structure,
@@ -124,20 +146,20 @@ if args.inpgen is not None:
 
 submit_wc = False
 if args.submit is not None:
-    submit_wc = args.submit
+    submit_wc = submit
 pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_eos_wc #####################")
+print("##################### TEST fleur_mae_wc #####################")
 
 if submit_wc:
     res = submit(fleur_mae_wc, **inputs)
-    print("##################### Submited fleur_eos_wc #####################")
+    print("##################### Submited fleur_mae_wc #####################")
     print("Runtime info: {}".format(res))
-    print("##################### Finished submiting fleur_eos_wc #####################")
+    print("##################### Finished submiting fleur_mae_wc #####################")
 
 else:
-    print("##################### Running fleur_eos_wc #####################")
+    print("##################### Running fleur_mae_wc #####################")
     res = run(fleur_mae_wc, **inputs)
-    print("##################### Finished running fleur_eos_wc #####################")
+    print("##################### Finished running fleur_mae_wc #####################")
