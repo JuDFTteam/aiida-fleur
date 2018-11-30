@@ -322,7 +322,7 @@ class fleur_mae_wc(WorkChain):
             code = self.inputs.fleur
             options = self.ctx.options.copy()
 
-            inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=False)
+            inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
             future = submit(inputs_builder)
             key = 'force_{}'.format(SQA_direction)
             self.to_context(**{key:future})
