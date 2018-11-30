@@ -1123,8 +1123,8 @@ def inpxml_todict(parent, xmlstr):
                 return_dict[key] = str(return_dict[key])
             elif key in float_attributes_once1 or (key in float_attributes_several1):
                 # TODO pressision?
-                return_dict[key] = float(return_dict[key])
-                #pass
+                #return_dict[key] = float(return_dict[key])
+                pass
             elif key in pos_text1:
                 # TODO, prob not nessesary, since taken care of below check,
                 pass

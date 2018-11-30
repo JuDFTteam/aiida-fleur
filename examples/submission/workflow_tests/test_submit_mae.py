@@ -48,61 +48,38 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 5,
-                              'itmax_per_run' : 35,
-                              'density_criterion' : 0.00005,
+wf_para = ParameterData(dict={'fleur_runmax' : 14,
+                              'itmax_per_run' : 3,
+                              'density_criterion' : 0.002,
                               'force_th' : True,
-                              'serial' : False,
+                              'serial' : True,
                               'inpxml_changes' : []
                         })
 
 options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  60*60+40*60})
-'''
-# W bcc structure 
+# W bcc structure
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
-'''
-
-bohr_a_0= 0.52917721092 # A
-a = 7.497*bohr_a_0
-cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
-structure = StructureData(cell=cell)
-structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
-structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
-structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
-structure.pbc = (True, True, False)
-
 parameters = ParameterData(dict={
                   'atom':{
-                        'element' : 'Pt',
-                        #'jri' : 833,
-                        #'rmt' : 2.3,
-                        #'dx' : 0.015,
+                        'element' : 'W',
+                        'jri' : 833,
+                        'rmt' : 2.3,
+                        'dx' : 0.015,
                         'lmax' : 8,
-                        #'lo' : '5p',
-                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                        },
-                    'atom2':{
-                        'element' : 'Fe',
-                        #'jri' : 833,
-                        #'rmt' : 2.3,
-                        #'dx' : 0.015,
-                        'lmax' : 8,
-                        #'lo' : '5p',
-                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        'lo' : '5p',
+                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
                         },
                   'comp': {
-                        'kmax': 3.8,
+                        'kmax': 3.0,
                         },
                   'kpt': {
-                        'div1': 20,
-                        'div2' : 24,
-                        'div3' : 1
+                        'nkpt': 100,
                         }})
 
 default = {'structure' : structure,

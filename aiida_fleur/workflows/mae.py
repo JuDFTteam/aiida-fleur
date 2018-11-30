@@ -232,7 +232,7 @@ class fleur_mae_wc(WorkChain):
 
         return inputs
 
-    def change_fleurinp(self, SQA_direction):
+    def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
         calculation.
@@ -245,14 +245,7 @@ class fleur_mae_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        #Change SQA from the reference to x, y or z direction.
-        #Set itmax = 1
-        if SQA_direction == 'x':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 1.57079, u'phi' : 0.0, u'itmax' : 1}})]
-        elif SQA_direction == 'y':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 1.57079, u'phi' : 1.57079, u'itmax' : 1}})]
-        elif SQA_direction == 'z':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 0.0, u'phi' : 0.0, u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', u'0.0 1.57079 1.57079')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', u'0.0 0.0 1.57079')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
 
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -274,7 +267,10 @@ class fleur_mae_wc(WorkChain):
                     return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
-                    method(**para)
+                    if function==u'set_inpchanges':
+                        method(**para)
+                    else:
+                        method(*para)
 
             # validate?
             apply_c = True
@@ -303,38 +299,37 @@ class fleur_mae_wc(WorkChain):
         """
         self.report('INFO: run Force theorem calculations')
 
-        for SQA_direction in ['x', 'y', 'z']:
-            self.change_fleurinp(SQA_direction)
-            fleurin = self.ctx.fleurinp
+        self.change_fleurinp()
+        fleurin = self.ctx.fleurinp
 
-            #Do not copy broyd* files from the parent
-            settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+        #Do not copy broyd* files from the parent
+        settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+    
+        #Retrieve remote folder of the reference calculation
+        scf_ref_node = load_node(self.ctx['xyz'].pk)
+        for i in scf_ref_node.called:
+            if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
+                remote_old = i.out.remote_folder
         
-            #Retrieve remote folder of the reference calculation
-            scf_ref_node = load_node(self.ctx['xyz'].pk)
-            for i in scf_ref_node.called:
-                if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
-                    remote_old = i.out.remote_folder
-            
-            label = 'Force_{}'.format(SQA_direction)
-            description = 'This is a force theorem calculation for {} SQA'.format(SQA_direction)
+        label = 'Force_theorem_calculation'
+        description = 'This is a force theorem calculation for all SQA'
 
-            code = self.inputs.fleur
-            options = self.ctx.options.copy()
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
 
-            inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=False)
-            future = submit(inputs_builder)
-            key = 'force_{}'.format(SQA_direction)
-            self.to_context(**{key:future})
+        inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
+        future = self.submit(inputs_builder)
+        return ToContext(forr=future)
 
     def get_res_force(self):
         
         htr2eV = 27.21138602
         t_energydict = {}
-        t_energydict['MAE_x'] = self.ctx['force_x'].out.output_parameters.dict.energy
-        t_energydict['MAE_y'] = self.ctx['force_y'].out.output_parameters.dict.energy
-        t_energydict['MAE_z'] = self.ctx['force_z'].out.output_parameters.dict.energy
-        e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+        t_energydict['MAE_x'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[0]
+        t_energydict['MAE_y'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[1]
+        t_energydict['MAE_z'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[2]
+        #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+        e_u = 'Htr'
         
         #Find a minimal value of MAE and count it as 0
         labelmin = 'MAE_z'
