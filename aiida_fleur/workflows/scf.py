@@ -445,7 +445,7 @@ class fleur_scf_wc(WorkChain):
 
         
         inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-        future = submit(inputs_builder)
+        future = self.submit(inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
