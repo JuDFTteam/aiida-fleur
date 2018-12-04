@@ -740,7 +740,20 @@ def parse_xmlout_file(outxmlfile):
                      'iteration' : get_xml_attribute(iteration_node, interation_current_number_name)})
 
 
-        if eval_xpath(iteration_node, mae_force_theta_xpath) == []:
+        if eval_xpath(iteration_node, mae_force_theta_xpath) != []:
+            #extract force theorem parameters
+            mae_force_theta = eval_xpath(iteration_node, mae_force_theta_xpath)
+            write_simple_outnode(
+                    mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
+                    
+            mae_force_evSum = eval_xpath(iteration_node, mae_force_evSum_xpath)
+            write_simple_outnode(
+                    mae_force_evSum, 'list_floats', 'mae_force_evSum', simple_data)
+                    
+            mae_force_phi = eval_xpath(iteration_node, mae_force_phi_xpath)
+            write_simple_outnode(
+                    mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
+        else:
             # total energy
             units_e = get_xml_attribute(
                 eval_xpath(iteration_node, totalenergy_xpath), units_name)
@@ -933,19 +946,6 @@ def parse_xmlout_file(outxmlfile):
 
             write_simple_outnode(
                 largest_force, 'float', 'force_largest', simple_data)
-        else:
-            #extract force theorem parameters
-            mae_force_theta = eval_xpath(iteration_node, mae_force_theta_xpath)
-            write_simple_outnode(
-                    mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
-                    
-            mae_force_evSum = eval_xpath(iteration_node, mae_force_evSum_xpath)
-            write_simple_outnode(
-                    mae_force_evSum, 'list_floats', 'mae_force_evSum', simple_data)
-                    
-            mae_force_phi = eval_xpath(iteration_node, mae_force_phi_xpath)
-            write_simple_outnode(
-                    mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
 
         return simple_data
 
