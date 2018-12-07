@@ -275,6 +275,8 @@ def choose_resources_fleur(nkpt, natm, max_resources={"num_machines": 1}, ncores
     ncores_per_node, int how many cores are there per node
     memmory_gb: how much memmory in GB is there on one node?
     
+    returns nodes, mpi_per_node, openmp, warnings: int, int, int, list
+ 
     # TODO has to be refinded for > 1 node systems (larger) systems and memmory requirements
     # often to many nodes are currently chooses for a medium system
     """
@@ -350,7 +352,7 @@ def choose_resources_fleur(nkpt, natm, max_resources={"num_machines": 1}, ncores
         elif max_mpiproc is not None:
             mpiproc = mpi_per_node*nodes
             if mpiproc >= max_mpiproc:
-                nodes = max_mpiproc/mpi_per_node # should be at least 1...
+                nodes = max(max_mpiproc/mpi_per_node,1) # should be at least 1...
             # else everything is fine
         else:
             max_number_total_mpi_proc =  max_resources.get('num_machines', None)

@@ -28,6 +28,7 @@ from aiida.work.run import submit
 from aiida.work.workchain import ToContext, WorkChain, if_
 from aiida.work import workfunction as wf
 from aiida.orm import Code, DataFactory, CalculationFactory, load_node, Group
+from aiida.orm import WorkCalculation
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -179,6 +180,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
+        self.ctx.ref_calcs_res_given = []
 
         defaultoptions = self._default_options
         if self.inputs.options:
@@ -308,6 +310,9 @@ class fleur_initial_cls_wc(WorkChain):
                 elif isinstance(ref_el_node, ParameterData):
                     #extract from workflow output TODO
                     self.ctx.ref_cl_energies[elem] = {}
+                elif isinstance(ref_el_node, WorkCalculation):
+                    # we assume it is an scf_wc.. TODO: test
+                    self.ctx.ref_calcs_res_given.append(ref_el_node)
                 elif isinstance(ref_el_node, FleurinpData):
                     # add to calculations
                     #enforced parameters, add directly to run queue
@@ -641,7 +646,7 @@ class fleur_initial_cls_wc(WorkChain):
         all_CLS = {}
         # get results from calc
         calcs = self.ctx.calcs_res
-        ref_calcs = []#self.ctx.ref_calcs_res
+        ref_calcs = self.ctx.ref_calcs_res_given #[]#self.ctx.ref_calcs_res
         #print (self.ctx.ref_labels)
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
@@ -796,6 +801,11 @@ class fleur_initial_cls_wc(WorkChain):
         calc = self.ctx.calcs_res
         calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
         outnodedict['input_structure']  = calc_dict
+
+
+        for i, calc in enumerate(self.ctx.ref_calcs_res_given):
+            calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
+            outnodedict['ref_{}'.format(i)]  = calc_dict
 
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]

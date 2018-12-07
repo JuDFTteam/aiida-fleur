@@ -433,11 +433,11 @@ class fleur_scf_wc(WorkChain):
             nkpt = kpt_shape[0]
             # TODO; get computer memmory and ncores per node from computer and scheduler
             if not self.ctx.natoms:
-              structure = fleurin.get_structuredata_nwf(fleurin)
-              self.ctx.natoms = len(structure.sites)
+                structure = fleurin.get_structuredata_nwf(fleurin)
+                self.ctx.natoms = len(structure.sites)
             resources = options.get(u'resources', {u"num_machines": 1})
-            ncores_per_node = 12 #24 # TODO
-            memmory_gb = 20 #120 # TODO
+            ncores_per_node = 24 # TODO
+            memmory_gb = 120 # TODO
             optimal_res = choose_resources_fleur(nkpt=nkpt, natm=self.ctx.natoms, max_resources=resources, ncores_per_node=ncores_per_node, memmory_gb=memmory_gb)
             #optimal_res: nodes, mpi_per node, openmp_num_thread, warnings
             

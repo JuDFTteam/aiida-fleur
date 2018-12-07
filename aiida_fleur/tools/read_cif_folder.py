@@ -19,7 +19,8 @@ from a folder and store the structures in the database.
 # set. Might make a difference for
 # structure visualization, because cif file has more information
 # also keep connection to ICSD id number
-
+# TODO: setting extras of the nodes due to something in the cif files is not possible with this...
+# would be nice if one could parse a function which takes the individual cif file path to save somthing in the extras
 import os
 
 from aiida.orm import DataFactory
@@ -123,6 +124,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
                 else:
                     struc.set_extra('specification', extra)
             struc.set_extra('formula', formula)
+            struc.set_extra('filepath', filepaths[i])
             structuredatas2.append(struc)
         else:
             struc = struc_from_cif(new_cif[0])
