@@ -1,5 +1,5 @@
 {
-    "version" : "0.6.1",
+    "version" : "0.6.2",
     "name" : "aiida-fleur",
     "url" : "https://github.com/broeder-j/aiida-fleur",
     "license" : "MIT License, see LICENSE.txt file.",
@@ -22,13 +22,15 @@
         ],
     "reentry_register" : true,
     "install_requires" : [
-            "aiida-core <= 0.12.3[atomic_tools]",
-            "lxml >= 3.6.4",
-            "pytest-cov >= 2.5.0",
+            "aiida-core<=0.12.3[atomic_tools]",
+            "lxml>=3.6.4",
+            "pytest-cov>=2.5.0",
             "pytest",
             "pgtest",
             "sympy",
-            "masci-tools"
+            "masci-tools",
+            "ase",
+            "pymatgen"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib",
