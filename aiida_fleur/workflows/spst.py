@@ -1,0 +1,331 @@
+# -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+
+"""
+    In this module you find the workflow 'fleur_spst_wc' for the calculation of
+    Spin Stiffness.
+    This workflow consists of modifyed parts of scf and eos workflows.
+"""
+
+from aiida.work.workchain import WorkChain, ToContext
+from aiida.work.launch import submit
+from aiida.orm.data.base import Float
+from aiida.work.workfunctions import workfunction as wf
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida.orm import Code, DataFactory, load_node
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida.common.datastructures import calc_states
+
+StructureData = DataFactory('structure')
+RemoteData = DataFactory('remote')
+ParameterData = DataFactory('parameter')
+FleurInpData = DataFactory('fleur.fleurinp')
+
+class fleur_spst_wc(WorkChain):
+    """
+        This workflow calculates the Spin Stifness of a thin structure.
+    """
+    
+    _workflowversion = "0.1.0a"
+
+    _default_options = {
+                        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+                        'max_wallclock_seconds' : 2*60*60,
+                        'queue_name' : '',
+                        'custom_scheduler_commands' : '',
+                        'import_sys_environment' : False,
+                        'environment_variables' : {}}
+    
+    _wf_default = {
+                   #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
+                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
+                   'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
+                   'serial' : False,                # execute fleur with mpi or without
+                   'itmax_per_run' : 30,
+                   'x' : 1.0,
+                   'y' : 0.0,
+                   'z' : 0.0,
+    #do not allow an user to change inp-file manually
+                   'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
+                   }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
+                                                    # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
+    #Specify the list of scf wf paramters to be trasfered into scf wf
+    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']
+
+    ERROR_INVALID_INPUT_RESOURCES = 1
+    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
+    ERROR_INVALID_CODE_PROVIDED = 3
+    ERROR_INPGEN_CALCULATION_FAILED = 4
+    ERROR_CHANGING_FLEURINPUT_FAILED = 5
+    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
+    ERROR_FLEUR_CALCULATION_FALIED = 7
+    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
+    ERROR_REFERENCE_CALCULATION_FAILED = 9
+
+    @classmethod
+    def define(cls, spec):
+        super(fleur_spst_wc, cls).define(spec)
+        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._wf_default))
+        spec.input("structure", valid_type=StructureData, required=True)
+        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("inpgen", valid_type=Code, required=True)
+        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("options", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._default_options))
+        #spec.input("settings", valid_type=ParameterData, required=False)
+                                                                              
+        spec.outline(
+            cls.start,
+            cls.converge_scf,
+            cls.force_sp_sp,
+            cls.get_results,
+        )
+
+        spec.output('out', valid_type=ParameterData)
+
+    def start(self):
+        """
+        Retrieve and initialize paramters of the WorkChain
+        """
+        self.report('INFO: started Spin Stiffness calculation workflow version {}\n'
+                    ''.format(self._workflowversion))
+                    
+        self.ctx.successful = True
+        self.ctx.info = []
+        self.ctx.warnings = []
+        self.ctx.errors = []
+
+        #Retrieve WorkFlow parameters,
+        #initialize the dictionary using defaults if no wf paramters are given by user
+        wf_default = self._wf_default
+        
+        if 'wf_parameters' in self.inputs:
+            wf_dict = self.inputs.wf_parameters.get_dict()
+        else:
+            wf_dict = wf_default
+        
+        #extend wf parameters given by user using defaults
+        for key, val in wf_default.iteritems():
+            wf_dict[key] = wf_dict.get(key, val)
+        self.ctx.wf_dict = wf_dict
+        
+        #Retrieve calculation options,
+        #initialize the dictionary using defaults if no options are given by user
+        defaultoptions = self._default_options
+        
+        if 'options' in self.inputs:
+            options = self.inputs.options.get_dict()
+        else:
+            options = defaultoptions
+        
+        #extend options given by user using defaults
+        for key, val in defaultoptions.iteritems():
+            options[key] = options.get(key, val)
+        self.ctx.options = options
+
+        #Check if user gave valid inpgen and fleur execulatbles
+        inputs = self.inputs
+        if 'inpgen' in inputs:
+            try:
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for inpgen of FLEUR does not "
+                         "use the plugin fleur.inpgen")
+                self.control_end_wc(error)
+                return self.ERROR_INVALID_CODE_PROVIDED
+
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for FLEUR does not "
+                         "use the plugin fleur.fleur")
+                self.control_end_wc(error)
+                return self.ERROR_INVALID_CODE_PROVIDED
+
+    def converge_scf(self):
+        """
+        Converge charge density for collinear case which is a reference for futher
+        spin spiral calculations.
+        Since SOC is not included, there is no difference between x, y and z SQA diections.
+        Thus z direction is chosen.
+        """
+        inputs = {}
+        inputs = self.get_inputs_scf()
+        inputs['calc_parameters']['qss'] = {'x' : 0.125, 'y' : 0.0, 'z': 0.0}
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : '0.0 0.0 0.0'}}))
+        inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
+        inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
+        inputs['options'] = ParameterData(dict=inputs['options'])
+        res = self.submit(fleur_scf_wc, **inputs)
+        return ToContext(reference=res)
+    
+    def get_inputs_scf(self):
+        """
+        Initialize inputs for scf workflow:
+        wf_param, options, calculation parameters, codes, structure
+        """
+        inputs = {}
+
+        # Retrieve scf wf parameters and options form inputs
+        #Note that SPST wf parameters contain more information than needed for scf
+        #Note: by the time this function is executed, wf_dict is initialized by inputs or defaults
+        scf_wf_param = {}
+        for key in self._scf_keys:
+            scf_wf_param[key] = self.ctx.wf_dict.get(key)
+        inputs['wf_parameters'] = scf_wf_param
+        
+        inputs['options'] = self.ctx.options
+        
+        #Try to retrieve calculaion parameters from inputs
+        try:
+            calc_para = self.inputs.calc_parameters.get_dict()
+        except AttributeError:
+            calc_para = {}
+        inputs['calc_parameters'] = calc_para
+
+        #Initialize codes
+        inputs['inpgen'] = self.inputs.inpgen
+        inputs['fleur'] = self.inputs.fleur
+        #Initialize the strucutre
+        inputs['structure'] = self.inputs.structure
+
+        return inputs
+    
+   
+    def change_fleurinp(self):
+        """
+        This routine sets somethings in the fleurinp file before running a fleur
+        calculation.
+        """
+        self.report('INFO: run change_fleurinp')
+        try:
+            fleurin = self.ctx.reference.out.fleurinp
+        except AttributeError:
+            error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
+            self.control_end_wc(error)
+            return self.ERROR_REFERENCE_CALCULATION_FAILED
+
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/q[1]', '0 0 0')), (u'create_tag', (u'/fleurInput/forceTheorem', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/q[2]', '0.1 0 0')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        
+        #This part of code was copied from scf workflow. If it contains bugs,
+        #they also has to be fixed in scf wf
+        if fchanges:# change inp.xml file
+            fleurmode = FleurinpModifier(fleurin)
+            avail_ac_dict = fleurmode.get_avail_actions()
+
+            # apply further user dependend changes
+            for change in fchanges:
+                function = change[0]
+                para = change[1]
+                method = avail_ac_dict.get(function, None)
+                if not method:
+                    error = ("ERROR: Input 'inpxml_changes', function {} "
+                                "is not known to fleurinpmodifier class, "
+                                "plaese check/test your input. I abort..."
+                                "".format(method))
+                    self.control_end_wc(error)
+                    return self.ERROR_CHANGING_FLEURINPUT_FAILED
+
+                else:# apply change
+                    if function==u'set_inpchanges':
+                        method(**para)
+                    else:
+                        method(*para)
+
+            # validate?
+            apply_c = True
+            try:
+                fleurmode.show(display=False, validate=True)
+            except XMLSyntaxError:
+                error = ('ERROR: input, user wanted inp.xml changes did not validate')
+                #fleurmode.show(display=True)#, validate=True)
+                self.report(error)
+                apply_c = False
+                return self.ERROR_CALCULATION_INVALID_INPUT_FILE
+            
+            # apply
+            if apply_c:
+                out = fleurmode.freeze()
+                self.ctx.fleurinp = out
+            return
+        else: # otherwise do not change the inp.xml
+            self.ctx.fleurinp = fleurin
+            return
+
+    def force_sp_sp(self):
+        '''
+        This routine uses the force theorem to calculate energies dispersion of
+        spin spirals. The force theorem calculations implemented into the FLEUR
+        code. Hence a single iteration FLEUR input file having <forceTheorem> tag
+        has to be created and submitted.
+        '''
+        self.report('INFO: run Force theorem calculations')
+
+        self.change_fleurinp()
+        fleurin = self.ctx.fleurinp
+
+        #Do not copy broyd* files from the parent
+        settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+    
+        #Retrieve remote folder of the reference calculation
+        scf_ref_node = load_node(self.ctx.reference.pk)
+        for i in scf_ref_node.called:
+            if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
+                remote_old = i.out.remote_folder
+        
+        label = 'Force_theorem_calculation'
+        description = 'This is a force theorem calculation for all SQA'
+
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+
+        inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
+        future = self.submit(inputs_builder)
+        return ToContext(forr=future)
+
+    def get_results(self):
+       
+        htr2eV = 27.21138602
+        t_energydict = {}
+        t_energydict['MAE_x'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[0]
+        t_energydict['MAE_y'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[1]
+        t_energydict['MAE_z'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[2]
+        #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+        e_u = 'Htr'
+        
+        #Find a minimal value of MAE and count it as 0
+        labelmin = 'MAE_z'
+        for labels in ['MAE_y', 'MAE_x']:
+            if t_energydict[labels] < t_energydict[labelmin]:
+                labelmin = labels
+        minenergy = t_energydict[labelmin]
+
+        for key, val in t_energydict.iteritems():
+            t_energydict[key] = t_energydict[key] - minenergy
+            if e_u == 'Htr' or 'htr':
+                t_energydict[key] = t_energydict[key] * htr2eV
+        
+        out = {'workflow_name' : self.__class__.__name__,
+               'workflow_version' : self._workflowversion,
+               'initial_structure': self.inputs.structure.uuid,
+               'MAE_x' : t_energydict['MAE_x'],
+               'MAE_y' : t_energydict['MAE_y'],
+               'MAE_z' : t_energydict['MAE_z'],
+               'MAE_units' : e_u,
+               'successful' : self.ctx.successful,
+               'info' : self.ctx.info,
+               'warnings' : self.ctx.warnings,
+               'errors' : self.ctx.errors}
+        
+        self.out('out', ParameterData(dict=out))
