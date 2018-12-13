@@ -54,10 +54,10 @@ class fleur_mae_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
-                   'use_soc_ref' : False,
+                   'sqa_ref' : [0.1, 0.1],         # SQA for a reference calculation for the FT branch
+                   'use_soc_ref' : False,           #True, if use SOC in reference calculation for the FT branch
                    'force_th' : True,               #Use the force theorem (True) or converge
-                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
+                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts 
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
@@ -174,7 +174,7 @@ class fleur_mae_wc(WorkChain):
         SQA = z: theta = 0,    phi = 0
         """
         if self.ctx.wf_dict['force_th']:
-            self.ctx.inpgen_soc = {'xyz' : ['0.1', '0.1']}
+            self.ctx.inpgen_soc = {'xyz' : self.ctx.wf_dict.get('sqa_ref')}
         else:
             self.ctx.inpgen_soc = {'z' : ['0.0', '0.0'], 'x' : ['1.57079', '0.0'], 'y' : ['1.57079', '1.57079']}
         return self.ctx.wf_dict['force_th']
