@@ -184,7 +184,11 @@ class fleur_mae_wc(WorkChain):
         if self.ctx.wf_dict['force_th']:
             self.ctx.inpgen_soc = {'xyz' : self.ctx.wf_dict.get('sqa_ref')}
         else:
-            self.ctx.inpgen_soc = {'z' : ['0.0', '0.0'], 'x' : ['1.57079', '0.0'], 'y' : ['1.57079', '1.57079']}
+            sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
+            sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
+            self.ctx.inpgen_soc = {}
+            for i in range(len(sqa_theta)):
+                self.ctx.inpgen_soc['dir_{}'.format(i)] = [sqa_theta[i], sqa_phi[i]]
         return self.ctx.wf_dict['force_th']
 
     def converge_scf(self):
@@ -374,7 +378,7 @@ class fleur_mae_wc(WorkChain):
         outnodedict = {}
         htr2eV = 27.21138602
         
-        for label in ['x', 'y', 'z']:
+        for label, cont in self.ctx.inpgen_soc.iteritems():
             calc = self.ctx[label]
             try:
                 outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
@@ -392,7 +396,7 @@ class fleur_mae_wc(WorkChain):
                 # bzw implement and scf_handler,
                 #TODO also if not perfect converged, results might be good
                 message = ('One SCF workflow was not successful: {}'.format(label))
-                self.ctx.warning.append(message)
+                self.ctx.warnings.append(message)
                 self.ctx.successful = False
             
             t_e = outpara.get('total_energy', float('nan'))
@@ -402,8 +406,8 @@ class fleur_mae_wc(WorkChain):
             t_energydict[label] = t_e
         
         #Find a minimal value of MAE and count it as 0
-        labelmin = 'z'
-        for labels in ['y', 'x']:
+        labelmin = 'dir_0'
+        for labels, cont in self.ctx.inpgen_soc.iteritems():
             try:
                 if t_energydict[labels] < t_energydict[labelmin]:
                     labelmin = labels
@@ -417,10 +421,10 @@ class fleur_mae_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_x' : t_energydict['x'],
-               'MAE_y' : t_energydict['y'],
-               'MAE_z' : t_energydict['z'],
-               'MAE_units' : e_u,
+               'maes' : [y for x,y in t_energydict.iteritems()],
+               'theta' : self.ctx.wf_dict.get('sqas_theta').split(),
+               'phi' : self.ctx.wf_dict.get('sqas_phi').split(),
+               'MAE_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
