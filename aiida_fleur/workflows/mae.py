@@ -55,6 +55,7 @@ class fleur_mae_wc(WorkChain):
     
     _wf_default = {
                    #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
+                   'use_soc_ref' : False,
                    'force_th' : True,               #Use the force theorem (True) or converge
                    'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
@@ -189,8 +190,8 @@ class fleur_mae_wc(WorkChain):
         for key, socs in self.ctx.inpgen_soc.iteritems():
             inputs[key] = self.get_inputs_scf()
             inputs[key]['calc_parameters']['soc'] = {'theta' : socs[0], 'phi' : socs[1]}
-            #if key == 'xyz':
-            #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            if (key == 'xyz') and not (self.ctx.wf_dict.get('use_soc_ref')):
+                inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
             #else:
             #TODO in case of converge calculation in appends 3 times
             #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
