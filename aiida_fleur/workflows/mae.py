@@ -57,7 +57,9 @@ class fleur_mae_wc(WorkChain):
                    'sqa_ref' : [0.1, 0.1],         # SQA for a reference calculation for the FT branch
                    'use_soc_ref' : False,           #True, if use SOC in reference calculation for the FT branch
                    'force_th' : True,               #Use the force theorem (True) or converge
-                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts 
+                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts
+                   'sqas_theta' : '0.0 1.57079 1.57079',
+                   'sqas_phi' : '0.0 0.0 1.57079',
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
@@ -128,6 +130,12 @@ class fleur_mae_wc(WorkChain):
         for key, val in wf_default.iteritems():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
+        
+        #Check if sqas_theta and sqas_phi have the same length
+        if (len(self.ctx.wf_dict.get('sqas_theta').split()) != len(self.ctx.wf_dict.get('sqas_phi').split())):
+            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            self.control_end_wc(error)
+            return self.ERROR_INVALID_INPUT_RESOURCES
         
         #Retrieve calculation options,
         #initialize the dictionary using defaults if no options are given by user
@@ -246,7 +254,7 @@ class fleur_mae_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', u'0.0 1.57079 1.57079')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', u'0.0 0.0 1.57079')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', self.ctx.wf_dict.get('sqas_theta'))), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', self.ctx.wf_dict.get('sqas_phi'))), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
 
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -325,32 +333,31 @@ class fleur_mae_wc(WorkChain):
     def get_res_force(self):
         
         htr2eV = 27.21138602
-        t_energydict = {}
-        t_energydict['MAE_x'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[0]
-        t_energydict['MAE_y'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[1]
-        t_energydict['MAE_z'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[2]
+        t_energydict = self.ctx.forr.out.output_parameters.dict.mae_force_evSum
+        mae_thetas = self.ctx.forr.out.output_parameters.dict.mae_force_theta
+        mae_phis = self.ctx.forr.out.output_parameters.dict.mae_force_phi
         #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
         e_u = 'Htr'
         
         #Find a minimal value of MAE and count it as 0
-        labelmin = 'MAE_z'
-        for labels in ['MAE_y', 'MAE_x']:
+        labelmin = 0
+        for labels in range(1, len(t_energydict)):
             if t_energydict[labels] < t_energydict[labelmin]:
                 labelmin = labels
         minenergy = t_energydict[labelmin]
 
-        for key, val in t_energydict.iteritems():
-            t_energydict[key] = t_energydict[key] - minenergy
+        for labels in range(len(t_energydict)):
+            t_energydict[labels] = t_energydict[labels] - minenergy
             if e_u == 'Htr' or 'htr':
-                t_energydict[key] = t_energydict[key] * htr2eV
+                t_energydict[labels] = t_energydict[labels] * htr2eV
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_x' : t_energydict['MAE_x'],
-               'MAE_y' : t_energydict['MAE_y'],
-               'MAE_z' : t_energydict['MAE_z'],
-               'MAE_units' : e_u,
+               'maes' : t_energydict,
+               'theta' : mae_thetas,
+               'phi' : mae_phis,
+               'mae_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
