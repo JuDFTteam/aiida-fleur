@@ -188,7 +188,7 @@ class fleur_mae_wc(WorkChain):
             sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
             self.ctx.inpgen_soc = {}
             for i in range(len(sqa_theta)):
-                self.ctx.inpgen_soc['dir_{}'.format(i)] = [sqa_theta[i], sqa_phi[i]]
+                self.ctx.inpgen_soc['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])] = [sqa_theta[i], sqa_phi[i]]
         return self.ctx.wf_dict['force_th']
 
     def converge_scf(self):
@@ -358,6 +358,7 @@ class fleur_mae_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
+               'is_it_force_theorem' : True,
                'maes' : t_energydict,
                'theta' : mae_thetas,
                'phi' : mae_phis,
@@ -405,8 +406,11 @@ class fleur_mae_wc(WorkChain):
                 t_e = t_e * htr2eV
             t_energydict[label] = t_e
         
+        sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
+        sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
+        
         #Find a minimal value of MAE and count it as 0
-        labelmin = 'dir_0'
+        labelmin = 'theta_{}_phi_{}'.format(sqa_theta[0], sqa_phi[0])
         for labels, cont in self.ctx.inpgen_soc.iteritems():
             try:
                 if t_energydict[labels] < t_energydict[labelmin]:
@@ -418,12 +422,18 @@ class fleur_mae_wc(WorkChain):
         for key, val in t_energydict.iteritems():
             t_energydict[key] = t_energydict[key] - minenergy
         
+        #Make sure that meas are in right order that correspont to the order of thetas and phis
+        maes_ordered_list = []
+        for i in range(len(sqa_theta)):
+            maes_ordered_list.append(t_energydict['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])])
+        
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'maes' : [y for x,y in t_energydict.iteritems()],
-               'theta' : self.ctx.wf_dict.get('sqas_theta').split(),
-               'phi' : self.ctx.wf_dict.get('sqas_phi').split(),
+               'is_it_force_theorem' : False,
+               'maes' : maes_ordered_list,
+               'theta' : sqa_theta,
+               'phi' : sqa_phi,
                'MAE_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
