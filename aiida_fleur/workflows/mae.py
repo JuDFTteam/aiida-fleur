@@ -400,40 +400,57 @@ class fleur_mae_wc(WorkChain):
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
             
-            t_e = outpara.get('total_energy', float('nan'))
+            t_e = outpara.get('total_energy', 'failed')
+            if not (type(t_e) is float):
+                self.ctx.successful = False
+                message = ('Did not manage to extract float total energy from one SCF worflow: {}'.format(label))
+                self.ctx.warnings.append(message)
+                continue
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr2eV
             t_energydict[label] = t_e
         
-        sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
-        sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
-        
-        #Find a minimal value of MAE and count it as 0
-        labelmin = 'theta_{}_phi_{}'.format(sqa_theta[0], sqa_phi[0])
-        for labels, cont in self.ctx.inpgen_soc.iteritems():
-            try:
-                if t_energydict[labels] < t_energydict[labelmin]:
-                    labelmin = labels
-            except KeyError:
-                pass
-        minenergy = t_energydict[labelmin]
+        if len(t_energydict):
+            #Find a minimal value of MAE and count it as 0
+            labelmin = t_energydict.keys()[0]
+            for labels in t_energydict.keys():
+                try:
+                    if t_energydict[labels] < t_energydict[labelmin]:
+                        labelmin = labels
+                except KeyError:
+                    pass
+            minenergy = t_energydict[labelmin]
 
-        for key, val in t_energydict.iteritems():
-            t_energydict[key] = t_energydict[key] - minenergy
+            for key in t_energydict.keys():
+                t_energydict[key] = t_energydict[key] - minenergy
         
         #Make sure that meas are in right order that correspont to the order of thetas and phis
         maes_ordered_list = []
+        theta_ordered_list = []
+        phi_ordered_list = []
+        failed_theta = []
+        failed_phi = []
+        sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
+        sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
         for i in range(len(sqa_theta)):
-            maes_ordered_list.append(t_energydict['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])])
+            if 'theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i]) in t_energydict:
+                maes_ordered_list.append(t_energydict['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])])
+                theta_ordered_list.append(sqa_theta[i])
+                phi_ordered_list.append(sqa_phi[i])
+            else:
+                failed_theta.append(sqa_theta[i])
+                failed_phi.append(sqa_phi[i])
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
                'is_it_force_theorem' : False,
                'maes' : maes_ordered_list,
-               'theta' : sqa_theta,
-               'phi' : sqa_phi,
+               'theta' : theta_ordered_list,
+               'phi' : phi_ordered_list,
+               'failed_theta' : failed_theta,
+               'failed_phi' : failed_phi,
                'MAE_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
