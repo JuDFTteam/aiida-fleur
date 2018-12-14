@@ -142,7 +142,7 @@ class FleurParser(Parser):
                     "The following was written into std error and piped to {} : \n {}"
                     "".format(self._calc._ERROR_FILE_NAME, error_file_lines))
 
-                if 'OK' in error_file_lines: # if judft-error # TODO maybe change.
+                if 'Run finished successfully' in error_file_lines: # if judft-error # TODO maybe change.
                     successful = True
                 else:
                     successful = False
