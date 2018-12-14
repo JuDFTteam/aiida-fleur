@@ -48,11 +48,15 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 14,
-                              'itmax_per_run' : 3,
+wf_para = ParameterData(dict={'fleur_runmax' : 2,
+                              'itmax_per_run' : 35,
                               'density_criterion' : 0.002,
                               'force_th' : True,
-                              'serial' : True,
+                              'use_soc_ref' : True,
+                              'sqas_theta' : '1.57079 0.0 0.1 0.2512',
+                              'sqas_phi' : '1.57079 0.0 0.3 0.252',
+                              'sqa_ref' : [0.2, 0.22],
+                              'serial' : False,
                               'inpxml_changes' : []
                         })
 
