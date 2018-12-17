@@ -310,6 +310,30 @@ class fleur_mae_wc(WorkChain):
         Calculate energy of a system with given SQA
         using the force theorem. Converged reference stores in self.ctx['xyz'].
         """
+        calc = self.ctx['xyz']
+        try:
+            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
+        except KeyError:
+            message = ('The reference SCF calculation failed, no scf output node.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        
+        if not outpara.get('successful', False):
+            message = ('The reference SCF calculation was not successful.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        t_e = outpara.get('total_energy', 'failed')
+        if not (type(t_e) is float):
+            self.ctx.successful = False
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
+            self.ctx.errors.append(message)
+            return
+
         self.report('INFO: run Force theorem calculations')
 
         self.change_fleurinp()
@@ -319,10 +343,16 @@ class fleur_mae_wc(WorkChain):
         settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
-        scf_ref_node = load_node(self.ctx['xyz'].pk)
+        scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
             if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
-                remote_old = i.out.remote_folder
+                try:
+                    remote_old = i.out.remote_folder
+                except AttributeError:
+                    message = ('Found no remote folder of the referece scf calculation.')
+                    self.ctx.warnings.append(message)
+                    #self.ctx.successful = False
+                    remote_old = None
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
@@ -335,25 +365,36 @@ class fleur_mae_wc(WorkChain):
         return ToContext(forr=future)
 
     def get_res_force(self):
-        
+        t_energydict = []
+        mae_thetas = []
+        mae_phis = []
         htr2eV = 27.21138602
-        t_energydict = self.ctx.forr.out.output_parameters.dict.mae_force_evSum
-        mae_thetas = self.ctx.forr.out.output_parameters.dict.mae_force_theta
-        mae_phis = self.ctx.forr.out.output_parameters.dict.mae_force_phi
-        #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-        e_u = 'Htr'
-        
-        #Find a minimal value of MAE and count it as 0
-        labelmin = 0
-        for labels in range(1, len(t_energydict)):
-            if t_energydict[labels] < t_energydict[labelmin]:
-                labelmin = labels
-        minenergy = t_energydict[labelmin]
+        #at this point self.ctx.successful == True if the reference calculation is OK
+        #the force theorem calculation is checked inside if
+        if (self.ctx.successful):
+            try:
+                t_energydict = self.ctx.forr.out.output_parameters.dict.mae_force_evSum
+                mae_thetas = self.ctx.forr.out.output_parameters.dict.mae_force_theta
+                mae_phis = self.ctx.forr.out.output_parameters.dict.mae_force_phi
+                #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+                e_u = 'Htr'
+                
+                #Find a minimal value of MAE and count it as 0
+                labelmin = 0
+                for labels in range(1, len(t_energydict)):
+                    if t_energydict[labels] < t_energydict[labelmin]:
+                        labelmin = labels
+                minenergy = t_energydict[labelmin]
 
-        for labels in range(len(t_energydict)):
-            t_energydict[labels] = t_energydict[labels] - minenergy
-            if e_u == 'Htr' or 'htr':
-                t_energydict[labels] = t_energydict[labels] * htr2eV
+                for labels in range(len(t_energydict)):
+                    t_energydict[labels] = t_energydict[labels] - minenergy
+                    if e_u == 'Htr' or 'htr':
+                        t_energydict[labels] = t_energydict[labels] * htr2eV
+        
+            except AttributeError:
+                self.ctx.successful = False
+                message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                self.ctx.errors.append(message)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
