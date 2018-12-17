@@ -371,30 +371,44 @@ class fleur_mae_wc(WorkChain):
         htr2eV = 27.21138602
         #at this point self.ctx.successful == True if the reference calculation is OK
         #the force theorem calculation is checked inside if
-        if (self.ctx.successful):
+        if self.ctx.successful:
             try:
-                t_energydict = self.ctx.forr.out.output_parameters.dict.mae_force_evSum
-                mae_thetas = self.ctx.forr.out.output_parameters.dict.mae_force_theta
-                mae_phis = self.ctx.forr.out.output_parameters.dict.mae_force_phi
-                #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-                e_u = 'Htr'
-                
-                #Find a minimal value of MAE and count it as 0
-                labelmin = 0
-                for labels in range(1, len(t_energydict)):
-                    if t_energydict[labels] < t_energydict[labelmin]:
-                        labelmin = labels
-                minenergy = t_energydict[labelmin]
-
-                for labels in range(len(t_energydict)):
-                    t_energydict[labels] = t_energydict[labels] - minenergy
-                    if e_u == 'Htr' or 'htr':
-                        t_energydict[labels] = t_energydict[labels] * htr2eV
-        
+                calculation = self.ctx.forr
+                calc_state = calculation.get_state()
+                if calc_state != calc_states.FINISHED:
+                    self.ctx.successful = False
+                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
+                            'in state {}'.format(calc_state))
+                    self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False
-                message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
                 self.ctx.errors.append(message)
+
+            if self.ctx.successful:
+                try:
+                    t_energydict = calculation.out.output_parameters.dict.mae_force_evSum
+                    mae_thetas = calculation.out.output_parameters.dict.mae_force_theta
+                    mae_phis = calculation.out.output_parameters.dict.mae_force_phi
+                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+                    e_u = 'Htr'
+                    
+                    #Find a minimal value of MAE and count it as 0
+                    labelmin = 0
+                    for labels in range(1, len(t_energydict)):
+                        if t_energydict[labels] < t_energydict[labelmin]:
+                            labelmin = labels
+                    minenergy = t_energydict[labelmin]
+
+                    for labels in range(len(t_energydict)):
+                        t_energydict[labels] = t_energydict[labels] - minenergy
+                        if e_u == 'Htr' or 'htr':
+                            t_energydict[labels] = t_energydict[labels] * htr2eV
+            
+                except AttributeError:
+                    self.ctx.successful = False
+                    message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                    self.ctx.errors.append(message)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
