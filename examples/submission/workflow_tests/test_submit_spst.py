@@ -20,7 +20,7 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.mae import fleur_mae_wc
+from aiida_fleur.workflows.spst import fleur_spst_wc
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('parameter')
@@ -48,15 +48,11 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 2,
+wf_para = ParameterData(dict={'fleur_runmax' : 14,
                               'itmax_per_run' : 35,
                               'density_criterion' : 0.002,
                               'force_th' : True,
-                              'use_soc_ref' : True,
-                              'sqas_theta' : '1.57079 0.0 0.1 0.2512',
-                              'sqas_phi' : '1.57079 0.0 0.3 0.252',
-                              'sqa_ref' : [0.2, 0.22],
-                              'serial' : False,
+                              'serial' : True,
                               'inpxml_changes' : []
                         })
 
@@ -64,7 +60,7 @@ options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_pe
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  60*60+40*60})
 '''
-# W bcc structure
+#W bcc structure
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
@@ -124,7 +120,6 @@ parameters = ParameterData(dict={
                         'div3' : 1
                         }})
 
-
 default = {'structure' : structure,
            'wf_parameters': wf_para,
            'options' : options,
@@ -171,15 +166,15 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_mae_wc #####################")
+print("##################### TEST fleur_spst_wc #####################")
 
 if submit_wc:
-    res = submit(fleur_mae_wc, **inputs)
-    print("##################### Submited fleur_mae_wc #####################")
+    res = submit(fleur_spst_wc, **inputs)
+    print("##################### Submited fleur_spst_wc #####################")
     print("Runtime info: {}".format(res))
-    print("##################### Finished submiting fleur_mae_wc #####################")
+    print("##################### Finished submiting fleur_spst_wc #####################")
 
 else:
-    print("##################### Running fleur_mae_wc #####################")
-    res = run(fleur_mae_wc, **inputs)
-    print("##################### Finished running fleur_mae_wc #####################")
+    print("##################### Running fleur_spst_wc #####################")
+    res = run(fleur_spst_wc, **inputs)
+    print("##################### Finished running fleur_spst_wc #####################")

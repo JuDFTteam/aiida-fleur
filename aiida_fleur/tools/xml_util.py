@@ -1123,8 +1123,8 @@ def inpxml_todict(parent, xmlstr):
                 return_dict[key] = str(return_dict[key])
             elif key in float_attributes_once1 or (key in float_attributes_several1):
                 # TODO pressision?
-                return_dict[key] = float(return_dict[key])
-                #pass
+                #return_dict[key] = float(return_dict[key])
+                pass
             elif key in pos_text1:
                 # TODO, prob not nessesary, since taken care of below check,
                 pass
@@ -1253,7 +1253,7 @@ def get_inpxml_file_structure():
     tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint')
 
     all_text = {'comment' : 1, 'relPos' : 3, 'filmPos' : 3, 'absPos' : 3,
-                'row-1': 3, 'row-2':3, 'row-3' :3, 'a1': 1}
+                'row-1': 3, 'row-2':3, 'row-3' :3, 'a1': 1, 'qss' : 3}
     #TODO all these (without comment) are floats, or float tuples.
     #Should be converted to this in the databas
     # changing the Bravais matrix should rather not be allowed I guess
@@ -1267,6 +1267,7 @@ def get_inpxml_file_structure():
         'relPos': '/fleurInput/atomGroups/atomGroup/relPos',
         'filmPos': '/fleurInput/atomGroups/atomGroup/filmPos',
         'absPos': '/fleurInput/atomGroups/atomGroup/absPos',
+        'qss' : '/fleurInput/calculationSetup/nocoParams/qss',
         'row-1': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-2': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-3': '/fleurInput/cell/bulkLattice/bravaisMatrix',
@@ -1403,6 +1404,7 @@ def get_inpxml_file_structure():
         '/fleurInput/calculationSetup/kPointMesh',
         '/fleurInput/cell/symmetry',
         '/fleurInput/cell/bravaisMatrix',
+        '/fleurInput/calculationSetup/nocoParams',
         '/fleurInput/xcFunctional',
         '/fleurInput/xcFunctional/xcParams',
         '/fleurInput/atomSpecies/species',

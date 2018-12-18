@@ -54,9 +54,12 @@ class fleur_mae_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
+                   'sqa_ref' : [0.1, 0.1],         # SQA for a reference calculation for the FT branch
+                   'use_soc_ref' : False,           #True, if use SOC in reference calculation for the FT branch
                    'force_th' : True,               #Use the force theorem (True) or converge
-                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
+                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts
+                   'sqas_theta' : '0.0 1.57079 1.57079',
+                   'sqas_phi' : '0.0 0.0 1.57079',
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
@@ -128,6 +131,12 @@ class fleur_mae_wc(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
         
+        #Check if sqas_theta and sqas_phi have the same length
+        if (len(self.ctx.wf_dict.get('sqas_theta').split()) != len(self.ctx.wf_dict.get('sqas_phi').split())):
+            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            self.control_end_wc(error)
+            return self.ERROR_INVALID_INPUT_RESOURCES
+        
         #Retrieve calculation options,
         #initialize the dictionary using defaults if no options are given by user
         defaultoptions = self._default_options
@@ -173,9 +182,13 @@ class fleur_mae_wc(WorkChain):
         SQA = z: theta = 0,    phi = 0
         """
         if self.ctx.wf_dict['force_th']:
-            self.ctx.inpgen_soc = {'xyz' : ['0.1', '0.1']}
+            self.ctx.inpgen_soc = {'xyz' : self.ctx.wf_dict.get('sqa_ref')}
         else:
-            self.ctx.inpgen_soc = {'z' : ['0.0', '0.0'], 'x' : ['1.57079', '0.0'], 'y' : ['1.57079', '1.57079']}
+            sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
+            sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
+            self.ctx.inpgen_soc = {}
+            for i in range(len(sqa_theta)):
+                self.ctx.inpgen_soc['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])] = [sqa_theta[i], sqa_phi[i]]
         return self.ctx.wf_dict['force_th']
 
     def converge_scf(self):
@@ -189,8 +202,8 @@ class fleur_mae_wc(WorkChain):
         for key, socs in self.ctx.inpgen_soc.iteritems():
             inputs[key] = self.get_inputs_scf()
             inputs[key]['calc_parameters']['soc'] = {'theta' : socs[0], 'phi' : socs[1]}
-            #if key == 'xyz':
-            #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            if (key == 'xyz') and not (self.ctx.wf_dict.get('use_soc_ref')):
+                inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
             #else:
             #TODO in case of converge calculation in appends 3 times
             #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
@@ -232,7 +245,7 @@ class fleur_mae_wc(WorkChain):
 
         return inputs
 
-    def change_fleurinp(self, SQA_direction):
+    def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
         calculation.
@@ -245,14 +258,7 @@ class fleur_mae_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        #Change SQA from the reference to x, y or z direction.
-        #Set itmax = 1
-        if SQA_direction == 'x':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 1.57079, u'phi' : 0.0, u'itmax' : 1}})]
-        elif SQA_direction == 'y':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 1.57079, u'phi' : 1.57079, u'itmax' : 1}})]
-        elif SQA_direction == 'z':
-            fchanges = [(u'set_inpchanges', {u'change_dict' : {u'theta' : 0.0, u'phi' : 0.0, u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', self.ctx.wf_dict.get('sqas_theta'))), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', self.ctx.wf_dict.get('sqas_phi'))), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
 
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -274,7 +280,10 @@ class fleur_mae_wc(WorkChain):
                     return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
-                    method(**para)
+                    if function==u'set_inpchanges':
+                        method(**para)
+                    else:
+                        method(*para)
 
             # validate?
             apply_c = True
@@ -301,60 +310,114 @@ class fleur_mae_wc(WorkChain):
         Calculate energy of a system with given SQA
         using the force theorem. Converged reference stores in self.ctx['xyz'].
         """
+        calc = self.ctx['xyz']
+        try:
+            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
+        except KeyError:
+            message = ('The reference SCF calculation failed, no scf output node.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        
+        if not outpara.get('successful', False):
+            message = ('The reference SCF calculation was not successful.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        t_e = outpara.get('total_energy', 'failed')
+        if not (type(t_e) is float):
+            self.ctx.successful = False
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
+            self.ctx.errors.append(message)
+            return
+
         self.report('INFO: run Force theorem calculations')
 
-        for SQA_direction in ['x', 'y', 'z']:
-            self.change_fleurinp(SQA_direction)
-            fleurin = self.ctx.fleurinp
+        self.change_fleurinp()
+        fleurin = self.ctx.fleurinp
 
-            #Do not copy broyd* files from the parent
-            settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
-        
-            #Retrieve remote folder of the reference calculation
-            scf_ref_node = load_node(self.ctx['xyz'].pk)
-            for i in scf_ref_node.called:
-                if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
+        #Do not copy broyd* files from the parent
+        settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+    
+        #Retrieve remote folder of the reference calculation
+        scf_ref_node = load_node(calc.pk)
+        for i in scf_ref_node.called:
+            if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
+                try:
                     remote_old = i.out.remote_folder
-            
-            label = 'Force_{}'.format(SQA_direction)
-            description = 'This is a force theorem calculation for {} SQA'.format(SQA_direction)
+                except AttributeError:
+                    message = ('Found no remote folder of the referece scf calculation.')
+                    self.ctx.warnings.append(message)
+                    #self.ctx.successful = False
+                    remote_old = None
+        
+        label = 'Force_theorem_calculation'
+        description = 'This is a force theorem calculation for all SQA'
 
-            code = self.inputs.fleur
-            options = self.ctx.options.copy()
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
 
-            inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=False)
-            future = submit(inputs_builder)
-            key = 'force_{}'.format(SQA_direction)
-            self.to_context(**{key:future})
+        inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
+        future = self.submit(inputs_builder)
+        return ToContext(forr=future)
 
     def get_res_force(self):
-        
+        t_energydict = []
+        mae_thetas = []
+        mae_phis = []
         htr2eV = 27.21138602
-        t_energydict = {}
-        t_energydict['MAE_x'] = self.ctx['force_x'].out.output_parameters.dict.energy
-        t_energydict['MAE_y'] = self.ctx['force_y'].out.output_parameters.dict.energy
-        t_energydict['MAE_z'] = self.ctx['force_z'].out.output_parameters.dict.energy
-        e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-        
-        #Find a minimal value of MAE and count it as 0
-        labelmin = 'MAE_z'
-        for labels in ['MAE_y', 'MAE_x']:
-            if t_energydict[labels] < t_energydict[labelmin]:
-                labelmin = labels
-        minenergy = t_energydict[labelmin]
+        #at this point self.ctx.successful == True if the reference calculation is OK
+        #the force theorem calculation is checked inside if
+        if self.ctx.successful:
+            try:
+                calculation = self.ctx.forr
+                calc_state = calculation.get_state()
+                if calc_state != calc_states.FINISHED:
+                    self.ctx.successful = False
+                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
+                            'in state {}'.format(calc_state))
+                    self.ctx.errors.append(message)
+            except AttributeError:
+                self.ctx.successful = False
+                message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
+                self.ctx.errors.append(message)
 
-        for key, val in t_energydict.iteritems():
-            t_energydict[key] = t_energydict[key] - minenergy
-            if e_u == 'Htr' or 'htr':
-                t_energydict[key] = t_energydict[key] * htr2eV
+            if self.ctx.successful:
+                try:
+                    t_energydict = calculation.out.output_parameters.dict.mae_force_evSum
+                    mae_thetas = calculation.out.output_parameters.dict.mae_force_theta
+                    mae_phis = calculation.out.output_parameters.dict.mae_force_phi
+                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+                    e_u = 'Htr'
+                    
+                    #Find a minimal value of MAE and count it as 0
+                    labelmin = 0
+                    for labels in range(1, len(t_energydict)):
+                        if t_energydict[labels] < t_energydict[labelmin]:
+                            labelmin = labels
+                    minenergy = t_energydict[labelmin]
+
+                    for labels in range(len(t_energydict)):
+                        t_energydict[labels] = t_energydict[labels] - minenergy
+                        if e_u == 'Htr' or 'htr':
+                            t_energydict[labels] = t_energydict[labels] * htr2eV
+            
+                except AttributeError:
+                    self.ctx.successful = False
+                    message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                    self.ctx.errors.append(message)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_x' : t_energydict['MAE_x'],
-               'MAE_y' : t_energydict['MAE_y'],
-               'MAE_z' : t_energydict['MAE_z'],
-               'MAE_units' : e_u,
+               'is_it_force_theorem' : True,
+               'maes' : t_energydict,
+               'theta' : mae_thetas,
+               'phi' : mae_phis,
+               'mae_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
@@ -371,7 +434,7 @@ class fleur_mae_wc(WorkChain):
         outnodedict = {}
         htr2eV = 27.21138602
         
-        for label in ['x', 'y', 'z']:
+        for label, cont in self.ctx.inpgen_soc.iteritems():
             calc = self.ctx[label]
             try:
                 outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
@@ -389,35 +452,61 @@ class fleur_mae_wc(WorkChain):
                 # bzw implement and scf_handler,
                 #TODO also if not perfect converged, results might be good
                 message = ('One SCF workflow was not successful: {}'.format(label))
-                self.ctx.warning.append(message)
+                self.ctx.warnings.append(message)
                 self.ctx.successful = False
             
-            t_e = outpara.get('total_energy', float('nan'))
+            t_e = outpara.get('total_energy', 'failed')
+            if not (type(t_e) is float):
+                self.ctx.successful = False
+                message = ('Did not manage to extract float total energy from one SCF worflow: {}'.format(label))
+                self.ctx.warnings.append(message)
+                continue
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr2eV
             t_energydict[label] = t_e
         
-        #Find a minimal value of MAE and count it as 0
-        labelmin = 'z'
-        for labels in ['y', 'x']:
-            try:
-                if t_energydict[labels] < t_energydict[labelmin]:
-                    labelmin = labels
-            except KeyError:
-                pass
-        minenergy = t_energydict[labelmin]
+        if len(t_energydict):
+            #Find a minimal value of MAE and count it as 0
+            labelmin = t_energydict.keys()[0]
+            for labels in t_energydict.keys():
+                try:
+                    if t_energydict[labels] < t_energydict[labelmin]:
+                        labelmin = labels
+                except KeyError:
+                    pass
+            minenergy = t_energydict[labelmin]
 
-        for key, val in t_energydict.iteritems():
-            t_energydict[key] = t_energydict[key] - minenergy
+            for key in t_energydict.keys():
+                t_energydict[key] = t_energydict[key] - minenergy
+        
+        #Make sure that meas are in right order that correspont to the order of thetas and phis
+        maes_ordered_list = []
+        theta_ordered_list = []
+        phi_ordered_list = []
+        failed_theta = []
+        failed_phi = []
+        sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
+        sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
+        for i in range(len(sqa_theta)):
+            if 'theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i]) in t_energydict:
+                maes_ordered_list.append(t_energydict['theta_{}_phi_{}'.format(sqa_theta[i], sqa_phi[i])])
+                theta_ordered_list.append(sqa_theta[i])
+                phi_ordered_list.append(sqa_phi[i])
+            else:
+                failed_theta.append(sqa_theta[i])
+                failed_phi.append(sqa_phi[i])
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_x' : t_energydict['x'],
-               'MAE_y' : t_energydict['y'],
-               'MAE_z' : t_energydict['z'],
-               'MAE_units' : e_u,
+               'is_it_force_theorem' : False,
+               'maes' : maes_ordered_list,
+               'theta' : theta_ordered_list,
+               'phi' : phi_ordered_list,
+               'failed_theta' : failed_theta,
+               'failed_phi' : failed_phi,
+               'MAE_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,

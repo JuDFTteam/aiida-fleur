@@ -59,6 +59,7 @@
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
             "fleur.corelevel = aiida_fleur.workflows.corelevel:fleur_corelevel_wc",
             "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc"
+	    "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc"
         ]
     }
 }
