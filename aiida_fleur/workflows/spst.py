@@ -53,6 +53,10 @@ class fleur_spst_wc(WorkChain):
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
                    'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
+                   'q_vectors': ['0.125 0.0 0.0',
+                                 '0.125 0.125 0.0',
+                                 '0.250 0.125 0.0',
+                                 '0.250 0.250 0.0'],
     #do not allow an user to change inp-file manually
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
@@ -214,7 +218,14 @@ class fleur_spst_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.0 0.0 ', False, 0)), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')),  (u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.125 0.0 ', False, 1)), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')),
+                    (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion'))]
+        
+        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
+            fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')))
+            fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', vectors, False, i)))
+
+        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}}))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
