@@ -747,11 +747,11 @@ def parse_xmlout_file(outxmlfile):
 
         if eval_xpath(iteration_node, mae_force_theta_xpath) != []:
             #extract force theorem parameters
-            mae_force_theta = eval_xpath(iteration_node, mae_force_theta_xpath)
+            mae_force_theta = eval_xpath2(iteration_node, mae_force_theta_xpath)
             write_simple_outnode(
                     mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
                     
-            mae_force_evSum = eval_xpath(iteration_node, mae_force_evSum_xpath)
+            mae_force_evSum = eval_xpath2(iteration_node, mae_force_evSum_xpath)
             write_simple_outnode(
                     mae_force_evSum, 'list_floats', 'mae_force_evSum', simple_data)
                     
