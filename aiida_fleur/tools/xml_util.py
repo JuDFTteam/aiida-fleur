@@ -360,6 +360,22 @@ def xml_set_text(xmltree, xpathn, text, create=False, place_index=None, tag_orde
         node[0].text = text
     #return xmltree
 
+def xml_set_text_occ(xmltree, xpathn, text, create=False, occ=0, place_index=None, tag_order=None):
+    """
+    Routine sets the text of a tag in the xml file
+    Input: an etree a xpath from root to the tag and the text
+    Output: none, an etree
+    example:
+    xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
+    but also cordinates and Bravais Matrix!:
+    xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos', '1.20000 PI/3 5.1-MYCrazyCostant')
+    """
+
+    root = xmltree.getroot()
+    node = eval_xpath3(root, xpathn, create=create, place_index=place_index, tag_order=tag_order)
+    if node:
+        node[occ].text = text
+
 def xml_set_all_text(xmltree, xpathn, text, create=False):
     """
     Routine sets the text of a tag in the xml file

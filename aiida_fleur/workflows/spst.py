@@ -214,7 +214,7 @@ class fleur_spst_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.0 0.0 ')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.0 0.0 ', False, 0)), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')),  (u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.125 0.0 ', False, 1)), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -345,10 +345,11 @@ class fleur_spst_wc(WorkChain):
             if self.ctx.successful:
                 try:
                     t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
+                    spst_q = calculation.out.output_parameters.dict.spst_force_q
                     #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
                     e_u = 'Htr'
                     
-                    #Find a minimal value of MAE and count it as 0
+                    #Find a minimal value of SpSp and count it as 0
                     labelmin = 0
                     for labels in range(1, len(t_energydict)):
                         if t_energydict[labels] < t_energydict[labelmin]:
@@ -371,7 +372,7 @@ class fleur_spst_wc(WorkChain):
                'is_it_force_theorem' : True,
                'energies' : t_energydict,
                'q_vectors' : spst_q,
-               'mae_units' : 'eV',
+               'energy_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
