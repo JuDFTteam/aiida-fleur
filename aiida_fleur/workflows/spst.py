@@ -48,14 +48,11 @@ class fleur_spst_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   #'sqa_ref' : ????,                  # Spin Quantization Axis acting as a reference for force theorem calculations
                    'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
-                   'x' : 1.0,
-                   'y' : 0.0,
-                   'z' : 0.0,
+                   'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
     #do not allow an user to change inp-file manually
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
@@ -162,8 +159,9 @@ class fleur_spst_wc(WorkChain):
         """
         inputs = {}
         inputs = self.get_inputs_scf()
-        inputs['calc_parameters']['qss'] = {'x' : 0.125, 'y' : 0.0, 'z': 0.0}
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : '0.0 0.0 0.0'}}))
+        inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
+        inputs['wf_parameters']['inpxml_changes'] = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.0 0.0 0.0 '))]
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.125 0.125 0.0 ', u'alpha' : 0.02}}))
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -216,7 +214,7 @@ class fleur_spst_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/q[1]', '0 0 0')), (u'create_tag', (u'/fleurInput/forceTheorem', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/q[2]', '0.1 0 0')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.125 0.0 0.0 ')), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -270,6 +268,30 @@ class fleur_spst_wc(WorkChain):
         code. Hence a single iteration FLEUR input file having <forceTheorem> tag
         has to be created and submitted.
         '''
+        calc = self.ctx.reference
+        try:
+            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
+        except KeyError:
+            message = ('The reference SCF calculation failed, no scf output node.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        
+        if not outpara.get('successful', False):
+            message = ('The reference SCF calculation was not successful.')
+            self.ctx.errors.append(message)
+            self.ctx.successful = False
+            return
+        
+        t_e = outpara.get('total_energy', 'failed')
+        if not (type(t_e) is float):
+            self.ctx.successful = False
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
+            self.ctx.errors.append(message)
+            return
+
         self.report('INFO: run Force theorem calculations')
 
         self.change_fleurinp()
@@ -279,10 +301,16 @@ class fleur_spst_wc(WorkChain):
         settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
-        scf_ref_node = load_node(self.ctx.reference.pk)
+        scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
             if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
-                remote_old = i.out.remote_folder
+                try:
+                    remote_old = i.out.remote_folder
+                except AttributeError:
+                    message = ('Found no remote folder of the referece scf calculation.')
+                    self.ctx.warnings.append(message)
+                    #self.ctx.successful = False
+                    remote_old = None
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
@@ -295,37 +323,58 @@ class fleur_spst_wc(WorkChain):
         return ToContext(forr=future)
 
     def get_results(self):
-       
+        t_energydict = []
+        spst_q = []
         htr2eV = 27.21138602
-        t_energydict = {}
-        t_energydict['MAE_x'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[0]
-        t_energydict['MAE_y'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[1]
-        t_energydict['MAE_z'] = self.ctx.forr.out.output_parameters.dict.mae_force_evSum[2]
-        #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-        e_u = 'Htr'
-        
-        #Find a minimal value of MAE and count it as 0
-        labelmin = 'MAE_z'
-        for labels in ['MAE_y', 'MAE_x']:
-            if t_energydict[labels] < t_energydict[labelmin]:
-                labelmin = labels
-        minenergy = t_energydict[labelmin]
+        #at this point self.ctx.successful == True if the reference calculation is OK
+        #the force theorem calculation is checked inside if
+        if self.ctx.successful:
+            try:
+                calculation = self.ctx.forr
+                calc_state = calculation.get_state()
+                if calc_state != calc_states.FINISHED:
+                    self.ctx.successful = False
+                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
+                            'in state {}'.format(calc_state))
+                    self.ctx.errors.append(message)
+            except AttributeError:
+                self.ctx.successful = False
+                message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
+                self.ctx.errors.append(message)
 
-        for key, val in t_energydict.iteritems():
-            t_energydict[key] = t_energydict[key] - minenergy
-            if e_u == 'Htr' or 'htr':
-                t_energydict[key] = t_energydict[key] * htr2eV
+            if self.ctx.successful:
+                try:
+                    t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
+                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+                    e_u = 'Htr'
+                    
+                    #Find a minimal value of MAE and count it as 0
+                    labelmin = 0
+                    for labels in range(1, len(t_energydict)):
+                        if t_energydict[labels] < t_energydict[labelmin]:
+                            labelmin = labels
+                    minenergy = t_energydict[labelmin]
+
+                    for labels in range(len(t_energydict)):
+                        t_energydict[labels] = t_energydict[labels] - minenergy
+                        if e_u == 'Htr' or 'htr':
+                            t_energydict[labels] = t_energydict[labels] * htr2eV
+            
+                except AttributeError:
+                    self.ctx.successful = False
+                    message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                    self.ctx.errors.append(message)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'MAE_x' : t_energydict['MAE_x'],
-               'MAE_y' : t_energydict['MAE_y'],
-               'MAE_z' : t_energydict['MAE_z'],
-               'MAE_units' : e_u,
+               'is_it_force_theorem' : True,
+               'energies' : t_energydict,
+               'q_vectors' : spst_q,
+               'mae_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors}
-        
+       
         self.out('out', ParameterData(dict=out))

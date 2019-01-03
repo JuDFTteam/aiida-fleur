@@ -21,6 +21,7 @@ the parser. Makes testing and portability easier.
 # TODO: warnings
 import os
 #import numpy
+from lxml import etree
 from datetime import date
 from aiida.orm.data.parameter import ParameterData
 from aiida.parsers.parser import Parser
@@ -638,6 +639,10 @@ def parse_xmlout_file(outxmlfile):
         mae_force_phi_xpath = 'Forcetheorem_MAE/Angle/@phi'
         mae_force_evSum_xpath = 'Forcetheorem_MAE/Angle/@ev-sum'
         
+        spst_force_xpath = 'Forcetheorem_SSDISP/@qvectors'
+        spst_force_q_xpath = 'Forcetheorem_SSDISP/Entry/@q'
+        spst_force_evSum_xpath = 'Forcetheorem_SSDISP/Entry/@ev-sum'
+        
         spinupcharge_name = 'spinUpCharge'
         spindowncharge_name = 'spinDownCharge'
         moment_name = 'moment'
@@ -753,6 +758,14 @@ def parse_xmlout_file(outxmlfile):
             mae_force_phi = eval_xpath(iteration_node, mae_force_phi_xpath)
             write_simple_outnode(
                     mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
+        elif eval_xpath(iteration_node, spst_force_xpath) != []:
+            spst_force_q = eval_xpath2(iteration_node, spst_force_q_xpath)
+            write_simple_outnode(
+                    spst_force_q, 'list_floats', 'spst_force_q', simple_data)
+                    
+            spst_force_evSum = eval_xpath2(iteration_node, spst_force_evSum_xpath)
+            write_simple_outnode(
+                    spst_force_evSum, 'list_floats', 'spst_force_evSum', simple_data)
         else:
             # total energy
             units_e = get_xml_attribute(
