@@ -381,7 +381,10 @@ class fleur_scf_wc(WorkChain):
                         return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                     else:# apply change
-                        method(**para)
+                        if function==u'set_inpchanges':
+                            method(**para)
+                        else:
+                            method(*para)
 
             # validate?
             apply_c = True
