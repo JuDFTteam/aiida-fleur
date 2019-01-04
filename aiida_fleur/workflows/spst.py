@@ -356,7 +356,6 @@ class fleur_spst_wc(WorkChain):
             if self.ctx.successful:
                 try:
                     t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
-                    spst_q = calculation.out.output_parameters.dict.spst_force_q
                     #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
                     e_u = 'Htr'
                     
@@ -382,7 +381,7 @@ class fleur_spst_wc(WorkChain):
                'initial_structure': self.inputs.structure.uuid,
                'is_it_force_theorem' : True,
                'energies' : t_energydict,
-               'q_vectors' : spst_q,
+               'q_vectors' : self.ctx.wf_dict['q_vectors'],
                'energy_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
