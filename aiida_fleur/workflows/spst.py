@@ -376,7 +376,7 @@ class fleur_spst_wc(WorkChain):
                     message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
                     self.ctx.errors.append(message)
         
-        stiff, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
+        stiff, intercept, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
@@ -390,6 +390,7 @@ class fleur_spst_wc(WorkChain):
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors,
                'spin_stiffness' : stiff,
+               'incc' : intercept,
                'rec_lamda_square' : rec_lamda_square,
                'r2' : r2 }
        
@@ -416,4 +417,4 @@ def quadratic_fit(energies, q_vectors, structure):
         rec_period_length = q_mag_glob / 2.0 / np.pi
         rec_period_lengths_sq.append((rec_period_length**2, energies[i]))
     slope, intercept, r_value, p_value, std_err = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
-    return slope, r_value**2, rec_period_lengths_sq
+    return slope, intercept, r_value**2, rec_period_lengths_sq
