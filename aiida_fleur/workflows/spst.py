@@ -376,6 +376,8 @@ class fleur_spst_wc(WorkChain):
                     message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
                     self.ctx.errors.append(message)
         
+        stiff, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
+        
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
@@ -386,6 +388,32 @@ class fleur_spst_wc(WorkChain):
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
-               'errors' : self.ctx.errors}
+               'errors' : self.ctx.errors,
+               'spin_stiffness' : stiff,
+               'rec_lamda_square' : rec_lamda_square,
+               'r2' : r2 }
        
         self.out('out', ParameterData(dict=out))
+
+def quadratic_fit(energies, q_vectors, structure):
+    """
+    This function makes a quadratic fit to obtained data
+    First, bravias matrix in reciprocal space is obtained.
+    The magnitude of spin-spiral q-vector and square of reciprocal period length are calculated.
+    The lambda**(-2) - energy dependency is fitted linearly to obtain
+    the spin stiffness constant.
+    """
+    import numpy as np
+    from scipy.optimize import curve_fit
+    from scipy.stats import linregress
+    
+    real_space_column_matrix = np.array(structure.cell).T
+    rec_brav_row_matrix = 2.0 * np.pi * np.linalg.inv(real_space_column_matrix)
+    rec_period_lengths_sq = []
+    for i, q_relative in enumerate(q_vectors):
+        q_glob = np.dot(rec_brav_row_matrix, np.array([float(x) for x in q_relative.split()]))
+        q_mag_glob = np.linalg.norm(q_glob)
+        rec_period_length = q_mag_glob / 2.0 / np.pi
+        rec_period_lengths_sq.append((rec_period_length**2, energies[i]))
+    slope, intercept, r_value, p_value, std_err = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
+    return slope, r_value**2, rec_period_lengths_sq
