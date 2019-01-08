@@ -165,7 +165,7 @@ class fleur_spst_wc(WorkChain):
         inputs = self.get_inputs_scf()
         inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
         inputs['wf_parameters']['inpxml_changes'] = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.0 0.0 0.0 '))]
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.125 0.125 0.0 ', u'alpha' : 0.02}}))
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'alpha' : 0.02, u'l_noco' : False, u'ctail' : True}}))
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -223,9 +223,12 @@ class fleur_spst_wc(WorkChain):
         
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
             fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')))
+            #next change requires a q-vector, create flag and a position of the <q> tag
             fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', vectors, False, i)))
 
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}}))
+        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False}}))
+        #change beta parameter in all AtomGroups
+        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
