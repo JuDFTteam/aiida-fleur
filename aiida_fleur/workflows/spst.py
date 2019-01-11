@@ -360,7 +360,7 @@ class fleur_spst_wc(WorkChain):
                 try:
                     t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
                     #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-                    e_u = 'Htr'
+                    e_u = calculation.out.output_parameters.dict.energy_units
                     
                     #Find a minimal value of SpSp and count it as 0
                     labelmin = 0
@@ -408,7 +408,6 @@ def quadratic_fit(energies, q_vectors, structure):
     the spin stiffness constant.
     """
     import numpy as np
-    from scipy.optimize import curve_fit
     from scipy.stats import linregress
     
     real_space_column_matrix = np.array(structure.cell).T

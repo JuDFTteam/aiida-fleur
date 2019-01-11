@@ -377,7 +377,7 @@ class fleur_dmi_wc(WorkChain):
                     qs = [self.ctx.wf_dict['q_vectors'][x-1] for x in
                                                         calculation.out.output_parameters.dict.dmi_force_q]
                     #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-                    e_u = 'Htr'
+                    e_u = calculation.out.output_parameters.dict.energy_units
                     '''
                     #Find a minimal value of SpSp and count it as 0
                     labelmin = 0
@@ -401,11 +401,10 @@ class fleur_dmi_wc(WorkChain):
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'is_it_force_theorem' : True,
                'energies' : t_energydict,
                'q_vectors' : qs,
-               'thetas' : mae_thetas,
-               'phis' : mae_phis,
+               'theta' : mae_thetas,
+               'phi' : mae_phis,
                'energy_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
