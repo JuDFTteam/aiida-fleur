@@ -373,24 +373,20 @@ class fleur_dmi_wc(WorkChain):
                     mae_thetas = calculation.out.output_parameters.dict.dmi_force_theta
                     mae_phis = calculation.out.output_parameters.dict.dmi_force_phi
                     num_ang = calculation.out.output_parameters.dict.dmi_force_angles
-                    #qs = calculation.out.output_parameters.dict.dmi_force_q
+                    num_qs = calculation.out.output_parameters.dict.dmi_force_qs
                     qs = [self.ctx.wf_dict['q_vectors'][x-1] for x in
                                                         calculation.out.output_parameters.dict.dmi_force_q]
-                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
                     e_u = calculation.out.output_parameters.dict.energy_units
-                    '''
-                    #Find a minimal value of SpSp and count it as 0
-                    labelmin = 0
-                    for labels in range(1, len(t_energydict)):
-                        if t_energydict[labels] < t_energydict[labelmin]:
-                            labelmin = labels
-                    minenergy = t_energydict[labelmin]
-
-                    for labels in range(len(t_energydict)):
-                        t_energydict[labels] = t_energydict[labels] - minenergy
-                        if e_u == 'Htr' or 'htr':
+                    for i in range((num_qs-1)*(num_ang), -1, -num_ang):
+                        ref_enrg = t_energydict.pop(i)
+                        qs.pop(i)
+                        for k in range(i, i+num_ang-1, 1):
+                           print k
+                           t_energydict[k] -= ref_enrg
+                
+                    if e_u == 'Htr' or 'htr':
+                        for labels in range(len(t_energydict)):
                             t_energydict[labels] = t_energydict[labels] * htr2eV
-                    '''
             
                 except AttributeError:
                     self.ctx.successful = False
@@ -405,6 +401,7 @@ class fleur_dmi_wc(WorkChain):
                'q_vectors' : qs,
                'theta' : mae_thetas,
                'phi' : mae_phis,
+               'angles' : num_ang-1,
                'energy_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
