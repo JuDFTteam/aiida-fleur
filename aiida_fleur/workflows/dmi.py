@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-    In this module you find the workflow 'fleur_spst_wc' for the calculation of
+    In this module you find the workflow 'fleur_dmi_wc' for the calculation of
     Spin Stiffness.
     This workflow consists of modifyed parts of scf and eos workflows.
 """
@@ -32,9 +32,9 @@ RemoteData = DataFactory('remote')
 ParameterData = DataFactory('parameter')
 FleurInpData = DataFactory('fleur.fleurinp')
 
-class fleur_spst_wc(WorkChain):
+class fleur_dmi_wc(WorkChain):
     """
-        This workflow calculates the Spin Stifness of a thin structure.
+        This workflow calculates the DMI energy of a structure.
     """
     
     _workflowversion = "0.1.0a"
@@ -53,6 +53,8 @@ class fleur_spst_wc(WorkChain):
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
                    'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
+                   'sqas_theta' : '0.0 1.57079 1.57079',
+                   'sqas_phi' : '0.0 0.0 1.57079',
                    'q_vectors': ['0.125 0.0 0.0',
                                  '0.125 0.125 0.0',
                                  '0.250 0.125 0.0',
@@ -76,7 +78,7 @@ class fleur_spst_wc(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(fleur_spst_wc, cls).define(spec)
+        super(fleur_dmi_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._wf_default))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
@@ -84,7 +86,7 @@ class fleur_spst_wc(WorkChain):
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("options", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._default_options))
         #spec.input("settings", valid_type=ParameterData, required=False)
-                                                                              
+        
         spec.outline(
             cls.start,
             cls.converge_scf,
@@ -180,7 +182,7 @@ class fleur_spst_wc(WorkChain):
         inputs = {}
 
         # Retrieve scf wf parameters and options form inputs
-        #Note that SPST wf parameters contain more information than needed for scf
+        #Note that dmi wf parameters contain more information than needed for scf
         #Note: by the time this function is executed, wf_dict is initialized by inputs or defaults
         scf_wf_param = {}
         for key in self._scf_keys:
@@ -219,16 +221,19 @@ class fleur_spst_wc(WorkChain):
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
         fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')),
-                    (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion'))]
+                    (u'create_tag', (u'/fleurInput/forceTheorem', u'DMI')),
+                    (u'create_tag', (u'/fleurInput/forceTheorem/DMI', u'qVectors')),
+                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'theta', self.ctx.wf_dict.get('sqas_theta'))),
+                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'phi', self.ctx.wf_dict.get('sqas_phi'))),]
         
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')))
+            fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/DMI/qVectors', u'q')))
             #next change requires a q-vector, create flag and a position of the <q> tag
-            fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', vectors, False, i)))
+            fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/DMI/qVectors/q', vectors, False, i)))
 
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False}}))
         #change beta parameter in all AtomGroups
-        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
+        #fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -338,7 +343,7 @@ class fleur_spst_wc(WorkChain):
 
     def get_results(self):
         t_energydict = []
-        spst_q = []
+        dmi_q = []
         htr2eV = 27.21138602
         #at this point self.ctx.successful == True if the reference calculation is OK
         #the force theorem calculation is checked inside if
@@ -355,23 +360,32 @@ class fleur_spst_wc(WorkChain):
                 self.ctx.successful = False
                 message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
                 self.ctx.errors.append(message)
-
+            
+            t_energydict = []
+            mae_thetas = []
+            mae_phis = []
+            num_ang = []
+            qs = []
+    
             if self.ctx.successful:
                 try:
-                    t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
-                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
+                    t_energydict = calculation.out.output_parameters.dict.dmi_force_evSum
+                    mae_thetas = calculation.out.output_parameters.dict.dmi_force_theta
+                    mae_phis = calculation.out.output_parameters.dict.dmi_force_phi
+                    num_ang = calculation.out.output_parameters.dict.dmi_force_angles
+                    num_qs = calculation.out.output_parameters.dict.dmi_force_qs
+                    qs = [self.ctx.wf_dict['q_vectors'][x-1] for x in
+                                                        calculation.out.output_parameters.dict.dmi_force_q]
                     e_u = calculation.out.output_parameters.dict.energy_units
-                    
-                    #Find a minimal value of SpSp and count it as 0
-                    labelmin = 0
-                    for labels in range(1, len(t_energydict)):
-                        if t_energydict[labels] < t_energydict[labelmin]:
-                            labelmin = labels
-                    minenergy = t_energydict[labelmin]
-
-                    for labels in range(len(t_energydict)):
-                        t_energydict[labels] = t_energydict[labels] - minenergy
-                        if e_u == 'Htr' or 'htr':
+                    for i in range((num_qs-1)*(num_ang), -1, -num_ang):
+                        ref_enrg = t_energydict.pop(i)
+                        qs.pop(i)
+                        for k in range(i, i+num_ang-1, 1):
+                           print k
+                           t_energydict[k] -= ref_enrg
+                
+                    if e_u == 'Htr' or 'htr':
+                        for labels in range(len(t_energydict)):
                             t_energydict[labels] = t_energydict[labels] * htr2eV
             
                 except AttributeError:
@@ -379,26 +393,25 @@ class fleur_spst_wc(WorkChain):
                     message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
                     self.ctx.errors.append(message)
         
-        stiff, intercept, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'is_it_force_theorem' : True,
                'energies' : t_energydict,
-               'q_vectors' : self.ctx.wf_dict['q_vectors'],
+               'q_vectors' : qs,
+               'theta' : mae_thetas,
+               'phi' : mae_phis,
+               'angles' : num_ang-1,
                'energy_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors,
-               'spin_stiffness' : stiff,
-               'incc' : intercept,
-               'rec_lamda_square' : rec_lamda_square,
-               'r2' : r2 }
+                }
        
         self.out('out', ParameterData(dict=out))
 
+'''
 def quadratic_fit(energies, q_vectors, structure):
     """
     This function makes a quadratic fit to obtained data
@@ -420,3 +433,4 @@ def quadratic_fit(energies, q_vectors, structure):
         rec_period_lengths_sq.append((rec_period_length**2, energies[i]))
     slope, intercept, r_value, p_value, std_err = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
     return slope, intercept, r_value**2, rec_period_lengths_sq
+'''

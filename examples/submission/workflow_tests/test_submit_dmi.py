@@ -20,7 +20,7 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.orm import DataFactory, load_node
 from aiida.work.launch import submit, run
-from aiida_fleur.workflows.spst import fleur_spst_wc
+from aiida_fleur.workflows.dmi import fleur_dmi_wc
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('parameter')
@@ -50,19 +50,18 @@ print(args)
 ### Defaults ###
 wf_para = ParameterData(dict={'fleur_runmax' : 1,
                               'itmax_per_run' : 120,
-                              'density_criterion' : 0.02,
+                              'density_criterion' : 0.2,
                               'force_th' : True,
                               'serial' : False,
-                              'prop_dir' : [0.125, 0.125, 0.0],
-                              'q_vectors': ['0.125 0.125 0.0',
-                                            '0.0 0.0 0.0',
-                                            '0.250 0.250 0.0',
-                                            '0.375 0.375 0.0',
-                                            '0.500 0.500 0.0'],
+                              'sqas_theta' : '0.0 1.57079 1.57079',
+                              'sqas_phi' : '0.0 0.0 1.57079',
+                              'prop_dir' : [0.125, 0.15, 0.24],
+                              'q_vectors': ['0.0 0.0 0.0',
+                                            '0.0 0.0 0.0'],
                               'inpxml_changes' : []
                         })
 
-options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 16},
+options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  40*60})
 '''
@@ -141,9 +140,9 @@ parameters = ParameterData(dict={
                         'bmu' : 2.5,
                         },
                   'kpt': {
-                        'div1': 16,
-                        'div2' : 16,
-                        'div3' : 16
+                        'div1': 1,
+                        'div2' : 1,
+                        'div3' : 1
                         }})
 
 default = {'structure' : structure,
@@ -193,31 +192,15 @@ pprint(inputs)
 #builder = fleur_scf_wc.get_builder()
 #inputs['__return_pid'] = True
 
-print("##################### TEST fleur_spst_wc #####################")
+print("##################### TEST fleur_dmi_wc #####################")
 
 if submit_wc:
-    res = submit(fleur_spst_wc, **inputs)
-    print("##################### Submited fleur_spst_wc #####################")
+    res = submit(fleur_dmi_wc, **inputs)
+    print("##################### Submited fleur_dmi_wc #####################")
     print("Runtime info: {}".format(res))
-    print(res.pk)
-    print("##################### Finished submiting fleur_spst_wc #####################")
+    print("##################### Finished submiting fleur_dmi_wc #####################")
 
 else:
-    print("##################### Running fleur_spst_wc #####################")
-    res = run(fleur_spst_wc, **inputs)
-    print(res['out'].get_dict())
-    a = res['out'].get_dict()
-    import matplotlib
-    matplotlib.use('TkAgg')
-    import matplotlib.pyplot as plt
-    import numpy as np
-    x_data = [x[0] for x in a[u'rec_lamda_square']]
-    y_data = [x[1] for x in a[u'rec_lamda_square']]
-    plt.plot(x_data, y_data, 'o')
-    x_fitted = np.linspace(0,1.2*max(x_data),1000)
-    oo2 = [a[u'spin_stiffness']*x+a[u'incc'] for x in x_fitted]
-    plt.plot(x_fitted, oo2, label='fit')
-    plt.ylabel('Energy, eV')
-    plt.xlabel('lambda^(-2), A^(-2)')
-    plt.show()
-    print("##################### Finished running fleur_spst_wc #####################")
+    print("##################### Running fleur_dmi_wc #####################")
+    res = run(fleur_dmi_wc, **inputs)
+    print("##################### Finished running fleur_dmi_wc #####################")

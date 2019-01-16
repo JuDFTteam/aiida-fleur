@@ -94,7 +94,7 @@ class FleurinpModifier(object):
         lxml etree of inp.xml
         and task dictionary
         """
-        from aiida_fleur.tools.xml_util import xml_set_attribv_occ,xml_set_first_attribv,xml_set_all_attribv, xml_set_text, xml_set_all_text, create_tag, replace_tag, delete_tag, delete_att, set_species, change_atomgr_att#, set_inpchanges
+        from aiida_fleur.tools.xml_util import xml_set_attribv_occ,xml_set_first_attribv,xml_set_all_attribv, xml_set_text, xml_set_text_occ, xml_set_all_text, create_tag, replace_tag, delete_tag, delete_att, set_species, change_atomgr_att#, set_inpchanges
         from aiida_fleur.tools.xml_util import add_num_to_att
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=[0], create=False):
@@ -111,6 +111,10 @@ class FleurinpModifier(object):
 
         def xml_set_text1(fleurinp_tree_copy, xpathn, text, create=False):
             xml_set_text(fleurinp_tree_copy, xpathn, text, create=create)
+            return fleurinp_tree_copy
+
+        def xml_set_text_occ1(fleurinp_tree_copy, xpathn, text, create=False, occ=0):
+            xml_set_text_occ(fleurinp_tree_copy, xpathn, text, create=create, occ=occ)
             return fleurinp_tree_copy
 
         def xml_set_all_text1(fleurinp_tree_copy, xpathn, text, create=False):
@@ -232,6 +236,7 @@ class FleurinpModifier(object):
             'xml_set_first_attribv' : xml_set_first_attribv1,
             'xml_set_all_attribv' : xml_set_all_attribv1,
             'xml_set_text' : xml_set_text1,
+            'xml_set_text_occ' : xml_set_text_occ1,
             'xml_set_all_text' : xml_set_all_text1,
             'create_tag' : create_tag1,
             'replace_tag' : replace_tag1,
@@ -276,6 +281,7 @@ class FleurinpModifier(object):
             'xml_set_first_attribv' : self.xml_set_first_attribv,
             'xml_set_all_attribv' : self.xml_set_all_attribv,
             'xml_set_text' : self.xml_set_text,
+            'xml_set_text_occ' : self.xml_set_text_occ,
             'xml_set_all_text' : self.xml_set_all_text,
             'create_tag' : self.create_tag,
             'replace_tag' : self.replace_tag,
@@ -314,6 +320,9 @@ class FleurinpModifier(object):
 
     def xml_set_text(self, xpathn, text, create=False):
         self._tasks.append(('xml_set_text', xpathn, text, create))
+
+    def xml_set_text_occ(self, xpathn, text, create=False, occ=0):
+        self._tasks.append(('xml_set_text_occ', xpathn, text, create, occ))
 
     def xml_set_all_text(self, xpathn, text, create=False):
         self._tasks.append(('xml_set_all_text', xpathn, text, create))

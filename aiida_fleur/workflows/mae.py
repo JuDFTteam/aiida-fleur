@@ -391,7 +391,7 @@ class fleur_mae_wc(WorkChain):
                     mae_thetas = calculation.out.output_parameters.dict.mae_force_theta
                     mae_phis = calculation.out.output_parameters.dict.mae_force_phi
                     #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
-                    e_u = 'Htr'
+                    e_u = calculation.out.output_parameters.dict.energy_units
                     
                     #Find a minimal value of MAE and count it as 0
                     labelmin = 0
@@ -461,7 +461,7 @@ class fleur_mae_wc(WorkChain):
                 message = ('Did not manage to extract float total energy from one SCF worflow: {}'.format(label))
                 self.ctx.warnings.append(message)
                 continue
-            e_u = outpara.get('total_energy_units', 'eV')
+            e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr2eV
             t_energydict[label] = t_e
@@ -506,7 +506,7 @@ class fleur_mae_wc(WorkChain):
                'phi' : phi_ordered_list,
                'failed_theta' : failed_theta,
                'failed_phi' : failed_phi,
-               'MAE_units' : 'eV',
+               'mae_units' : 'eV',
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,

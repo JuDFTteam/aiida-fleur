@@ -381,7 +381,10 @@ class fleur_scf_wc(WorkChain):
                         return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                     else:# apply change
-                        method(**para)
+                        if function==u'set_inpchanges':
+                            method(**para)
+                        else:
+                            method(*para)
 
             # validate?
             apply_c = True
@@ -650,8 +653,12 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['material'] = self.ctx.formula
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
-        outputnode_dict['distance_charge'] = last_calc_out_dict.get('charge_density', None)
-        outputnode_dict['distance_charge_all'] = self.ctx.distance
+        try:
+            temp1 = last_calc_out_dict['charge_density']
+        except KeyError:
+            temp1 = last_calc_out_dict['overall_charge_density']
+        outputnode_dict['distance_charge'] = temp1
+        #outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
@@ -677,7 +684,7 @@ class fleur_scf_wc(WorkChain):
                         'is {} htr \n'.format(self.ctx.loop_count,
                                        last_calc_out_dict.get('number_of_iterations_total', None),
                                        self.ctx.total_wall_time,
-                                       last_calc_out_dict.get('charge_density', None), 
+                                       outputnode_dict['distance_charge'],
                                        self.ctx.energydiff))
 
         else: # Termination ok, but not converged yet...
@@ -695,7 +702,7 @@ class fleur_scf_wc(WorkChain):
                             ''.format(self.ctx.loop_count,
                             last_calc_out_dict.get('number_of_iterations_total', None),
                             self.ctx.total_wall_time,
-                            last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
+                            outputnode_dict['distance_charge'], self.ctx.energydiff))
 
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.

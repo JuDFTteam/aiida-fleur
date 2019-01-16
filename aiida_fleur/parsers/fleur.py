@@ -637,6 +637,21 @@ def parse_xmlout_file(outxmlfile):
         mae_force_theta_xpath = 'Forcetheorem_MAE/Angle/@theta'
         mae_force_phi_xpath = 'Forcetheorem_MAE/Angle/@phi'
         mae_force_evSum_xpath = 'Forcetheorem_MAE/Angle/@ev-sum'
+        mae_force_energ_units_xpath = 'Forcetheorem_Loop_MAE/sumValenceSingleParticleEnergies/@units'
+        
+        spst_force_xpath = 'Forcetheorem_SSDISP/@qvectors'
+        spst_force_q_xpath = 'Forcetheorem_SSDISP/Entry/@q'
+        spst_force_evSum_xpath = 'Forcetheorem_SSDISP/Entry/@ev-sum'
+        spst_force_energ_units_xpath = 'Forcetheorem_Loop_SSDISP/sumValenceSingleParticleEnergies/@units'
+        
+        dmi_force_xpath = 'Forcetheorem_DMI'
+        dmi_force_q_xpath = 'Forcetheorem_DMI/Entry/@q'
+        dmi_force_theta_xpath = 'Forcetheorem_DMI/Entry/@theta'
+        dmi_force_phi_xpath = 'Forcetheorem_DMI/Entry/@phi'
+        dmi_force_evSum_xpath = 'Forcetheorem_DMI/Entry/@ev-sum'
+        dmi_force_angles_xpath = 'Forcetheorem_DMI/@Angles'
+        dmi_force_qs_xpath = 'Forcetheorem_DMI/@qPoints'
+        dmi_force_energ_units_xpath = 'Forcetheorem_Loop_DMI/sumValenceSingleParticleEnergies/@units'
         
         spinupcharge_name = 'spinUpCharge'
         spindowncharge_name = 'spinDownCharge'
@@ -719,6 +734,12 @@ def parse_xmlout_file(outxmlfile):
                     value_to_savet, suct = convert_to_float(val)
                     value_to_save.append(value_to_savet)
                 suc = True # TODO individual or common error message?
+            elif value_type =='list_ints':
+                value_to_save = []
+                for val in value:
+                    value_to_savet, suct = convert_to_int(val)
+                    value_to_save.append(value_to_savet)
+                suc = True
             elif value_type =='list_list_floats':
                 value_to_save = []
                 for val in value:
@@ -741,18 +762,64 @@ def parse_xmlout_file(outxmlfile):
 
 
         if eval_xpath(iteration_node, mae_force_theta_xpath) != []:
-            #extract force theorem parameters
-            mae_force_theta = eval_xpath(iteration_node, mae_force_theta_xpath)
+            #extract MAE force theorem parameters
+            mae_force_theta = eval_xpath2(iteration_node, mae_force_theta_xpath)
             write_simple_outnode(
                     mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
                     
-            mae_force_evSum = eval_xpath(iteration_node, mae_force_evSum_xpath)
+            mae_force_evSum = eval_xpath2(iteration_node, mae_force_evSum_xpath)
             write_simple_outnode(
                     mae_force_evSum, 'list_floats', 'mae_force_evSum', simple_data)
                     
-            mae_force_phi = eval_xpath(iteration_node, mae_force_phi_xpath)
+            mae_force_phi = eval_xpath2(iteration_node, mae_force_phi_xpath)
             write_simple_outnode(
                     mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
+                    
+            units_e = eval_xpath2(iteration_node, mae_force_energ_units_xpath)
+            write_simple_outnode(
+                units_e[0], 'str', 'energy_units', simple_data)
+        elif eval_xpath(iteration_node, spst_force_xpath) != []:
+            #extract Spin spiral dispersion force theorem parameters
+            spst_force_q = eval_xpath2(iteration_node, spst_force_q_xpath)
+            write_simple_outnode(
+                    spst_force_q, 'list_floats', 'spst_force_q', simple_data)
+                    
+            spst_force_evSum = eval_xpath2(iteration_node, spst_force_evSum_xpath)
+            write_simple_outnode(
+                    spst_force_evSum, 'list_floats', 'spst_force_evSum', simple_data)
+        
+            units_e = eval_xpath2(iteration_node, spst_force_energ_units_xpath)
+            write_simple_outnode(
+                units_e[0], 'str', 'energy_units', simple_data)
+        elif eval_xpath(iteration_node, dmi_force_xpath) != []:
+            #extract DMI force theorem parameters
+            dmi_force_q = eval_xpath2(iteration_node, dmi_force_q_xpath)
+            write_simple_outnode(
+            dmi_force_q, 'list_ints', 'dmi_force_q', simple_data)
+                    
+            dmi_force_evSum = eval_xpath2(iteration_node, dmi_force_evSum_xpath)
+            write_simple_outnode(
+            dmi_force_evSum, 'list_floats', 'dmi_force_evSum', simple_data)
+            
+            dmi_force_theta = eval_xpath2(iteration_node, dmi_force_theta_xpath)
+            write_simple_outnode(
+                    dmi_force_theta, 'list_floats', 'dmi_force_theta', simple_data)
+                    
+            dmi_force_phi = eval_xpath2(iteration_node, dmi_force_phi_xpath)
+            write_simple_outnode(
+                    dmi_force_phi, 'list_floats', 'dmi_force_phi', simple_data)
+                    
+            dmi_force_angles = eval_xpath(iteration_node, dmi_force_angles_xpath)
+            write_simple_outnode(
+                    dmi_force_angles, 'int', 'dmi_force_angles', simple_data)
+                    
+            dmi_force_qs = eval_xpath(iteration_node, dmi_force_qs_xpath)
+            write_simple_outnode(
+                    dmi_force_qs, 'int', 'dmi_force_qs', simple_data)
+        
+            units_e = eval_xpath2(iteration_node, dmi_force_energ_units_xpath)
+            write_simple_outnode(
+                units_e[0], 'str', 'energy_units', simple_data)
         else:
             # total energy
             units_e = get_xml_attribute(
