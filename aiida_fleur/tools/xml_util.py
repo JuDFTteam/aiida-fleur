@@ -1225,7 +1225,7 @@ def get_inpxml_file_structure():
         'ctail', 'swsp', 'lflip', 'off', 'spav', 'l_soc', 'soc66', 'pot8',
         'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk', 'cdinf',
         'disp', 'vacdos', 'integ', 'star', 'iplot', 'score', 'plplot', 'slice',
-        'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f')
+        'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
 
     all_switches_several = ('calculate', 'flipSpin')
 
@@ -1284,6 +1284,7 @@ def get_inpxml_file_structure():
         'filmPos': '/fleurInput/atomGroups/atomGroup/filmPos',
         'absPos': '/fleurInput/atomGroups/atomGroup/absPos',
         'qss' : '/fleurInput/calculationSetup/nocoParams/qss',
+        'l_ss' : '/fleurInput/calculationSetup/nocoParams',
         'row-1': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-2': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-3': '/fleurInput/cell/bulkLattice/bravaisMatrix',
