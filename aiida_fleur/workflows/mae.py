@@ -206,7 +206,7 @@ class fleur_mae_wc(WorkChain):
                 inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
             #else:
             #TODO in case of converge calculation in appends 3 times
-            #    inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
             inputs[key]['wf_parameters'] = ParameterData(dict=inputs[key]['wf_parameters'])
             inputs[key]['calc_parameters'] = ParameterData(dict=inputs[key]['calc_parameters'])
             inputs[key]['options'] = ParameterData(dict=inputs[key]['options'])
@@ -375,10 +375,10 @@ class fleur_mae_wc(WorkChain):
             try:
                 calculation = self.ctx.forr
                 calc_state = calculation.get_state()
-                if calc_state != calc_states.FINISHED:
+                if calc_state != calc_states.FINISHED or calculation.exit_status != 0:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
-                            'in state {}'.format(calc_state))
+                            'in state {} with exit status {}'.format(calc_state, calculation.exit_status))
                     self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False

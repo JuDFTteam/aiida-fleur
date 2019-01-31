@@ -166,8 +166,7 @@ class fleur_dmi_wc(WorkChain):
         inputs = {}
         inputs = self.get_inputs_scf()
         inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
-        inputs['wf_parameters']['inpxml_changes'] = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion')), (u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')), (u'xml_set_text', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', ' 0.0 0.0 0.0 '))]
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'alpha' : 0.02, u'l_noco' : False, u'ctail' : True}}))
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'alpha' : 0.02, u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -231,9 +230,9 @@ class fleur_dmi_wc(WorkChain):
             #next change requires a q-vector, create flag and a position of the <q> tag
             fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/DMI/qVectors/q', vectors, False, i)))
 
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False}}))
+        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
         #change beta parameter in all AtomGroups
-        #fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
+        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -351,10 +350,10 @@ class fleur_dmi_wc(WorkChain):
             try:
                 calculation = self.ctx.forr
                 calc_state = calculation.get_state()
-                if calc_state != calc_states.FINISHED:
+                if calc_state != calc_states.FINISHED or calculation.exit_status != 0:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
-                            'in state {}'.format(calc_state))
+                            'in state {} with exit status {}'.format(calc_state, calculation.exit_status))
                     self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False
@@ -364,7 +363,8 @@ class fleur_dmi_wc(WorkChain):
             t_energydict = []
             mae_thetas = []
             mae_phis = []
-            num_ang = []
+            num_ang = 0
+            num_qs = 0
             qs = []
     
             if self.ctx.successful:
