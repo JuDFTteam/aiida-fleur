@@ -305,6 +305,27 @@ class fleur_mae_wc(WorkChain):
             self.ctx.fleurinp = fleurin
             return
 
+    def check_kpts(self, fleurinp):
+        """
+        This routine checks if the total number of requested cpus
+        is a factor of kpts and makes small optimisation.
+        """
+        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
+                      int(self.ctx.options['resources']['num_machines']),
+                      int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
+
+        if exit_code:
+        #TODO: make an error exit
+            pass
+        
+        if 'WARNING' in message:
+            self.ctx.warnings.append(message)
+        
+        self.report(message)
+
+        self.ctx.options['resources']['num_machines'] = adv_nodes
+        self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+
     def mae_force(self):
         """
         Calculate energy of a system with given SQA
@@ -338,6 +359,7 @@ class fleur_mae_wc(WorkChain):
 
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
+        self.check_kpts(fleurin)
 
         #Do not copy broyd* files from the parent
         settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})

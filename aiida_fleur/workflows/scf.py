@@ -155,7 +155,6 @@ class fleur_scf_wc(WorkChain):
             cls.start,
             if_(cls.validate_input)(
                 cls.run_fleurinpgen),
-            cls.check_kpts,
             cls.run_fleur, # are these first runs needed TODO
             cls.inspect_fleur, # are these first runs needed
             cls.get_res, # are these first runs needed
@@ -337,12 +336,12 @@ class fleur_scf_wc(WorkChain):
 
         return ToContext(inpgen=future, last_calc=future)
 
-    def check_kpts(self):
+    def check_kpts(self, fleurinp):
         """
         This routine checks if the total number of requested cpus
         is a factor of kpts and makes small optimisation.
         """
-        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(self.ctx['inpgen'].out.fleurinpData,
+        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
                       int(self.ctx.options['resources']['num_machines']),
                       int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
 
@@ -437,6 +436,8 @@ class fleur_scf_wc(WorkChain):
         
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
+        self.check_kpts(fleurin)
+        
         '''
         if 'settings' in self.inputs:
             settings = self.input.settings
