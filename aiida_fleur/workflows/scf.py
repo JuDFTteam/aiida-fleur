@@ -154,7 +154,8 @@ class fleur_scf_wc(WorkChain):
         spec.outline(
             cls.start,
             if_(cls.validate_input)(
-                cls.run_fleurinpgen),
+                cls.run_fleurinpgen,
+                cls.check_kpts),
             cls.run_fleur, # are these first runs needed TODO
             cls.inspect_fleur, # are these first runs needed
             cls.get_res, # are these first runs needed
@@ -336,6 +337,58 @@ class fleur_scf_wc(WorkChain):
 
         return ToContext(inpgen=future, last_calc=future)
 
+    def check_kpts(self):
+        """
+        This routine checks if the total number of requested cpus
+        is a factor of kpts and makes small optimisation.
+        """
+        #TODO: transfer this routine into common_fleur_wf.py?
+        from sympy.ntheory.factor_ import factorint, divisors
+        kpts = self.ctx['inpgen'].out.fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
+        kpts = int(kpts[0])
+        nodes = int(self.ctx.options['resources']['num_machines'])
+        cpus_per_node = int(self.ctx.options['resources']['num_mpiprocs_per_machine'])
+        divisors_kpts = divisors(kpts)
+        possible_nodes = [x for x in divisors_kpts if x<=nodes]
+        suggestions = []
+        for n_n in possible_nodes:
+            adviced_cpu_per_node = max([x for x in divisors(kpts/n_n) if x<=cpus_per_node])
+            suggestions.append((n_n, adviced_cpu_per_node))
+        
+        def best_criterion(suggestion):
+            """
+            The best setup uses as many as possible total number of
+            CPUs. If there are more than one such a setup, it is more efficient
+            to use less computations nodes.
+            """
+            return (suggestion[0]*suggestion[1], 1.0/suggestion[0])
+        
+        best_suggestion = max(suggestions, key=best_criterion)
+        if (float(best_suggestion[1])/cpus_per_node < 0.6):
+            self.ctx.options['resources']['num_mpiprocs_per_machine'] = best_suggestion[1]
+            self.ctx.options['resources']['num_machines'] = best_suggestion[0]
+            warning = ('WARNING: Changed the number of CPUs per node from {} to {}. '
+                            'Changed the number of nodes from {} to {}. '
+                            'Computational setup, needed for a given number k-points'
+                            ' provides less then 60% of node load.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0]))
+            self.ctx.warnings.append(warning)
+            self.report(warning)
+        elif (best_suggestion[1] == cpus_per_node):
+            if (best_suggestion[0] != nodes):
+                self.ctx.options['resources']['num_machines'] = best_suggestion[0]
+                warning = 'Changed the number of nodes from {} to {}'.format(nodes, best_suggestion[0])
+                self.ctx.warnings.append(warning)
+                self.report(warning)
+            else:
+                self.report('Computaional setup is perfect! Nodes: {}, CPUs per node {}.'.format(*best_suggestion))
+        else:
+            self.ctx.options['resources']['num_mpiprocs_per_machine'] = best_suggestion[1]
+            self.ctx.options['resources']['num_machines'] = best_suggestion[0]
+            warning = ('WARNING: Changed the number of CPUs per node from {} to {}. '
+                'Changed the number of nodes from {} to {}'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0]))
+            self.ctx.warnings.append(warning)
+            self.report(warning)
+
     def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
@@ -412,7 +465,7 @@ class fleur_scf_wc(WorkChain):
         run a FLEUR calculation
         """
         self.report('INFO: run FLEUR')
-
+        print destroy
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
         '''
@@ -656,7 +709,7 @@ class fleur_scf_wc(WorkChain):
         try:
             temp1 = last_calc_out_dict['charge_density']
         except KeyError:
-            temp1 = last_calc_out_dict['overall_charge_density']
+            temp1 = last_calc_out_dict.get('overall_charge_density', None)
         outputnode_dict['distance_charge'] = temp1
         #outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
