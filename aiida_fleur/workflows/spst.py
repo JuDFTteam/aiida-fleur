@@ -52,6 +52,7 @@ class fleur_spst_wc(WorkChain):
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
+                   'beta' : 0.000,
                    'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
                    'q_vectors': ['0.125 0.0 0.0',
                                  '0.125 0.125 0.0',
@@ -227,7 +228,7 @@ class fleur_spst_wc(WorkChain):
 
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
         #change beta parameter in all AtomGroups
-        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
+        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', self.ctx.wf_dict.get('beta'))]}, False, u'all')))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf

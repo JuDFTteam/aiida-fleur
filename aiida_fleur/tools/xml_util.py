@@ -826,10 +826,10 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
     for key, val in attributedict.iteritems():
         if key == 'force':
             for attrib, value in val:
-                xml_set_attribv_occ(fleurinp_tree_copy, xpathforce, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpathforce, attrib, value)
         elif key == 'nocoParams':
             for attrib, value in val:
-                xml_set_attribv_occ(fleurinp_tree_copy, xpathnocoParams, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpathnocoParams, attrib, value)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpathatmgroup, attrib, value)
 

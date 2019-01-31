@@ -52,6 +52,7 @@ class fleur_dmi_wc(WorkChain):
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
+                   'beta' : 0.000,
                    'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
                    'sqas_theta' : '0.0 1.57079 1.57079',
                    'sqas_phi' : '0.0 0.0 1.57079',
@@ -232,7 +233,7 @@ class fleur_dmi_wc(WorkChain):
 
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
         #change beta parameter in all AtomGroups
-        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', 1.570796)]}, False, u'all')))
+        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', self.ctx.wf_dict.get('beta'))]}, False, u'all')))
         
         #This part of code was copied from scf workflow. If it contains bugs,
         #they also has to be fixed in scf wf
@@ -403,7 +404,6 @@ class fleur_dmi_wc(WorkChain):
                         ref_enrg = t_energydict.pop(i)
                         qs.pop(i)
                         for k in range(i, i+num_ang-1, 1):
-                           print k
                            t_energydict[k] -= ref_enrg
                 
                     if e_u == 'Htr' or 'htr':
