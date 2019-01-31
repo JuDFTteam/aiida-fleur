@@ -568,3 +568,47 @@ def cost_ratio(total_costs, walltime_sec, ncores):
     ratio = total_costs/(walltime_sec*ncores)
     return ratio
     
+def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
+    """
+    This routine checks if the total number of requested cpus
+    is a factor of kpts and makes small optimisation.
+    """
+    #TODO: transfer this routine into common_fleur_wf.py?
+    from sympy.ntheory.factor_ import factorint, divisors
+    kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
+    kpts = int(kpts[0])
+    divisors_kpts = divisors(kpts)
+    possible_nodes = [x for x in divisors_kpts if x<=nodes]
+    suggestions = []
+    for n_n in possible_nodes:
+        adviced_cpu_per_node = max([x for x in divisors(kpts/n_n) if x<=cpus_per_node])
+        suggestions.append((n_n, adviced_cpu_per_node))
+    
+    def best_criterion(suggestion):
+        """
+        The best setup uses as many as possible total number of
+        CPUs. If there are more than one such a setup, it is more efficient
+        to use less computations nodes.
+        """
+        return (suggestion[0]*suggestion[1], 1.0/suggestion[0])
+    
+    best_suggestion = max(suggestions, key=best_criterion)
+    message = ''
+    exit_status = 0
+    
+    if (float(best_suggestion[1])/cpus_per_node < 0.6):
+        exit_status = 1
+        message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
+                        'Changed the number of nodes from {} to {}. '
+                        'Computational setup, needed for a given number k-points ({})'
+                        ' provides less then 60% of node load.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
+    elif (best_suggestion[1] == cpus_per_node):
+        if (best_suggestion[0] != nodes):
+            message = 'WARNING: Changed the number of nodes from {} to {}'.format(nodes, best_suggestion[0])
+        else:
+            message = 'Computaional setup is perfect! Nodes: {}, CPUs per node {}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1], kpts )
+    else:
+        message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
+            'Changed the number of nodes from {} to {}. Number of k-points is {}.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
+    return best_suggestion[0], best_suggestion[1], message, exit_status
+
