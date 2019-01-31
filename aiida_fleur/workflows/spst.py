@@ -21,7 +21,7 @@ from aiida.work.launch import submit
 from aiida.orm.data.base import Float
 from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.orm import Code, DataFactory, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
