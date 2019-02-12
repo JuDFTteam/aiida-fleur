@@ -63,6 +63,7 @@ class fleur_mae_wc(WorkChain):
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
+                   'soc_off' : [],
     #do not allow an user to change inp-file manually
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
@@ -206,7 +207,10 @@ class fleur_mae_wc(WorkChain):
                 inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
             #else:
             #TODO in case of converge calculation in appends 3 times
-            inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015}}))
+            inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015, u'fermiSmearingEnergy' : 0.0001}}))
+            #switch off SOC on an atom specie
+            for specie in self.ctx.wf_dict['soc_off']:
+                inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_species', (specie, {u'special' : {u'socscale' : 0.0}}, True)))
             inputs[key]['wf_parameters'] = ParameterData(dict=inputs[key]['wf_parameters'])
             inputs[key]['calc_parameters'] = ParameterData(dict=inputs[key]['calc_parameters'])
             inputs[key]['options'] = ParameterData(dict=inputs[key]['options'])

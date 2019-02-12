@@ -428,7 +428,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                             # if tagname of elements==tag:
                             tag_index = node_1.index(child)
                             try:
-                                node_1.insert(tag_index, newelement)
+                                node_1.insert(tag_index+1, newelement)
                             except ValueError as v:
                                 raise ValueError('{}. If this is a species, are'
                                     'you sure this species exists in your inp.xml?'
@@ -713,9 +713,10 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     xpathLDA_U = '{}/ldaU'.format(xpathspecies)
     xpathnocoParams = '{}/nocoParams'.format(xpathspecies)
     xpathnocoParamsqss = '{}/nocoParams/qss'.format(xpathspecies)
+    xpathSOCscale = '{}/special'.format(xpathspecies)
 
     # can we get this out of schema file?
-    species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'force', 'electronConfig', 'nocoParams', 'ldaU', 'lo']
+    species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force',  'electronConfig', 'nocoParams', 'ldaU', 'lo']
 
     #root = fleurinp_tree_copy.getroot()
     for key,val in attributedict.iteritems():
@@ -793,6 +794,10 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
         elif key == 'ldaU':
             for attrib, value in val.iteritems():
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathLDA_U, attrib, value, create=create)
+        elif key == 'special':
+            eval_xpath3(fleurinp_tree_copy, xpathSOCscale, create=True, place_index=species_seq.index('special'), tag_order=species_seq)
+            for attrib, value in val.iteritems():
+                xml_set_attribv_occ(fleurinp_tree_copy, xpathSOCscale, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpathspecies, attrib, value)
 
