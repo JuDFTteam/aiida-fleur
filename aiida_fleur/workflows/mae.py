@@ -15,17 +15,9 @@
     Magnetic Anisotropy Energy.
     This workflow consists of modifyed parts of scf and eos workflows.
 """
-#TODO
-'''
-For force theorem branch:
-1) check if reference converge calculation fail; raise error
-2) check if force theorem calculations fail; raise error
-'''
 
 from aiida.work.workchain import WorkChain, ToContext, if_
 from aiida.work.launch import submit
-from aiida.orm.data.base import Float
-from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -40,7 +32,7 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_mae_wc(WorkChain):
     """
-        This workflow calculates the Magnetic Anisotropy Energy of a thin structure.
+        This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
     
     _workflowversion = "0.1.0a"
@@ -54,22 +46,21 @@ class fleur_mae_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   'sqa_ref' : [0.1, 0.1],         # SQA for a reference calculation for the FT branch
+                   'sqa_ref' : [0.7, 0.7],         # SQA for a reference calculation for the FT branch
                    'use_soc_ref' : False,           #True, if use SOC in reference calculation for the FT branch
                    'force_th' : True,               #Use the force theorem (True) or converge
                    'fleur_runmax': 10,              # Maximum number of fleur jobs/starts
                    'sqas_theta' : '0.0 1.57079 1.57079',
                    'sqas_phi' : '0.0 0.0 1.57079',
+                   'alpha_mix' : 0.05,              #mixing parameter alpha
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
                    'soc_off' : [],
-    #do not allow an user to change inp-file manually
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
-                   }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
-                                                    # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
-    #Specify the list of scf wf paramters to be trasfered into scf wf
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']
+                   }
+
+    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes'] #a list of wf_params needed for scf workflow
 
     ERROR_INVALID_INPUT_RESOURCES = 1
     ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
@@ -131,6 +122,12 @@ class fleur_mae_wc(WorkChain):
         for key, val in wf_default.iteritems():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
+
+        #set up mixing parameter alpha
+        self.ctx.wf_dict['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : self.ctx.wf_dict['alpha_mix']}}))
+        #switch off SOC on an atom specie
+        for specie in self.ctx.wf_dict['soc_off']:
+                self.ctx.wf_dict['inpxml_changes'].append((u'set_species', (specie, {u'special' : {u'socscale' : 0.0}}, True)))
         
         #Check if sqas_theta and sqas_phi have the same length
         if (len(self.ctx.wf_dict.get('sqas_theta').split()) != len(self.ctx.wf_dict.get('sqas_phi').split())):
@@ -175,16 +172,18 @@ class fleur_mae_wc(WorkChain):
     def validate_input(self):
         """
         Choose the branch of MAE calculation:
-            a) converge charge density for three orthogonal SQAs (x, y and z directions)
-            b) 1) converge charge density for SQA that brakes the symmetry (theta=0.1, phi=0.1)
-               2) use the force theorem to find energies for SQAs along x, y and z directions
+            a) converge charge density for all given SQAs
+            b) 1) converge charge density for reference SQA given in wf_params
+               2) use the force theorem to find energies for all given SQAs
         SQA = x: theta = pi/2, phi = 0
         SQA = y: theta = pi/2, phi = pi/2
         SQA = z: theta = 0,    phi = 0
         """
         if self.ctx.wf_dict['force_th']:
+            #only a reference for force theorem calculations will be converged
             self.ctx.inpgen_soc = {'xyz' : self.ctx.wf_dict.get('sqa_ref')}
         else:
+            #all given SQAs will be converged
             sqa_theta = self.ctx.wf_dict.get('sqas_theta').split()
             sqa_phi = self.ctx.wf_dict.get('sqas_phi').split()
             self.ctx.inpgen_soc = {}
@@ -194,10 +193,10 @@ class fleur_mae_wc(WorkChain):
 
     def converge_scf(self):
         """
-        Converge charge density with SOC.
+        Converge charge density with or without SOC.
         Depending on a branch of MAE calculation, submit a single Fleur calculation to obtain
         a reference for further force theorem calculations or
-        submit thee Fleur calculations to converge charge density for SQA = x, y and z directions.
+        submit a set of Fleur calculations to converge charge density for all given SQAs.
         """
         inputs = {}
         for key, socs in self.ctx.inpgen_soc.iteritems():
@@ -205,12 +204,6 @@ class fleur_mae_wc(WorkChain):
             inputs[key]['calc_parameters']['soc'] = {'theta' : socs[0], 'phi' : socs[1]}
             if (key == 'xyz') and not (self.ctx.wf_dict.get('use_soc_ref')):
                 inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
-            #else:
-            #TODO in case of converge calculation in appends 3 times
-            inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : 0.015, u'fermiSmearingEnergy' : 0.0001}}))
-            #switch off SOC on an atom specie
-            for specie in self.ctx.wf_dict['soc_off']:
-                inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_species', (specie, {u'special' : {u'socscale' : 0.0}}, True)))
             inputs[key]['wf_parameters'] = ParameterData(dict=inputs[key]['wf_parameters'])
             inputs[key]['calc_parameters'] = ParameterData(dict=inputs[key]['calc_parameters'])
             inputs[key]['options'] = ParameterData(dict=inputs[key]['options'])
@@ -262,10 +255,11 @@ class fleur_mae_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', self.ctx.wf_dict.get('sqas_theta'))), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', self.ctx.wf_dict.get('sqas_phi'))), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})]
+        #copy default changes
+        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
+        #add forceTheorem tag into inp.xml
+        fchanges.extend([(u'create_tag', (u'/fleurInput', u'forceTheorem')), (u'create_tag', (u'/fleurInput/forceTheorem', u'MAE')), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'theta', self.ctx.wf_dict.get('sqas_theta'))), (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/MAE', u'phi', self.ctx.wf_dict.get('sqas_phi'))), (u'set_inpchanges', {u'change_dict' : {u'itmax' : 1}})])
 
-        #This part of code was copied from scf workflow. If it contains bugs,
-        #they also has to be fixed in scf wf
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
@@ -332,8 +326,8 @@ class fleur_mae_wc(WorkChain):
 
     def mae_force(self):
         """
-        Calculate energy of a system with given SQA
-        using the force theorem. Converged reference stores in self.ctx['xyz'].
+        Calculate energy of a system for given SQAs
+        using the force theorem. Converged reference is stored in self.ctx['xyz'].
         """
         calc = self.ctx['xyz']
         try:
@@ -377,6 +371,7 @@ class fleur_mae_wc(WorkChain):
                 except AttributeError:
                     message = ('Found no remote folder of the referece scf calculation.')
                     self.ctx.warnings.append(message)
+                    #TODO error handle
                     #self.ctx.successful = False
                     remote_old = None
         
@@ -396,7 +391,7 @@ class fleur_mae_wc(WorkChain):
         mae_phis = []
         htr2eV = 27.21138602
         #at this point self.ctx.successful == True if the reference calculation is OK
-        #the force theorem calculation is checked inside if
+        #the force theorem calculation is checked inside if clause
         if self.ctx.successful:
             try:
                 calculation = self.ctx.forr
@@ -416,7 +411,6 @@ class fleur_mae_wc(WorkChain):
                     t_energydict = calculation.out.output_parameters.dict.mae_force_evSum
                     mae_thetas = calculation.out.output_parameters.dict.mae_force_theta
                     mae_phis = calculation.out.output_parameters.dict.mae_force_phi
-                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
                     e_u = calculation.out.output_parameters.dict.energy_units
                     
                     #Find a minimal value of MAE and count it as 0

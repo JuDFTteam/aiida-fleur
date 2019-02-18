@@ -12,14 +12,11 @@
 
 """
     In this module you find the workflow 'fleur_dmi_wc' for the calculation of
-    Spin Stiffness.
-    This workflow consists of modifyed parts of scf and eos workflows.
+    Dzyaloshinskii-Moriya interaction energy in reciprocal space.
 """
 
 from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.launch import submit
-from aiida.orm.data.base import Float
-from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -34,7 +31,7 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_dmi_wc(WorkChain):
     """
-        This workflow calculates the DMI energy of a structure.
+        This workflow calculates DMI energy of a structure.
     """
     
     _workflowversion = "0.1.0a"
@@ -53,19 +50,19 @@ class fleur_dmi_wc(WorkChain):
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
                    'beta' : 0.000,
-                   'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
+                   'alpha_mix' : 0.015,              #mixing parameter alpha
                    'sqas_theta' : '0.0 1.57079 1.57079',
                    'sqas_phi' : '0.0 0.0 1.57079',
-                   'q_vectors': ['0.125 0.0 0.0',
-                                 '0.125 0.125 0.0',
-                                 '0.250 0.125 0.0',
-                                 '0.250 0.250 0.0'],
-    #do not allow an user to change inp-file manually
+                   'soc_off' : [],
+                   'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
+                   'q_vectors': ['0.0 0.0 0.0',
+                                 '0.125 0.0 0.0',
+                                 '0.250 0.0 0.0',
+                                 '0.375 0.0 0.0'],
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
-                   }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
-                                                    # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
-    #Specify the list of scf wf paramters to be trasfered into scf wf
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']
+                   }
+    
+    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']#a list of wf_params needed for scf workflow
 
     ERROR_INVALID_INPUT_RESOURCES = 1
     ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
@@ -123,6 +120,12 @@ class fleur_dmi_wc(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
         
+        #set up mixing parameter alpha
+        self.ctx.wf_dict['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : self.ctx.wf_dict['alpha_mix']}}))
+        #switch off SOC on an atom specie
+        for specie in self.ctx.wf_dict['soc_off']:
+                self.ctx.wf_dict['inpxml_changes'].append((u'set_species', (specie, {u'special' : {u'socscale' : 0.0}}, True)))
+        
         #Retrieve calculation options,
         #initialize the dictionary using defaults if no options are given by user
         defaultoptions = self._default_options
@@ -161,13 +164,13 @@ class fleur_dmi_wc(WorkChain):
         """
         Converge charge density for collinear case which is a reference for futher
         spin spiral calculations.
-        Since SOC is not included, there is no difference between x, y and z SQA diections.
-        Thus z direction is chosen.
         """
         inputs = {}
         inputs = self.get_inputs_scf()
+        #set proper propagation direction to reduce symmetry
         inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'alpha' : 0.02, u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
+        #change inp.xml to make a collinear calculation
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -220,11 +223,12 @@ class fleur_dmi_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')),
+        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
+        fchanges.extend([(u'create_tag', (u'/fleurInput', u'forceTheorem')),
                     (u'create_tag', (u'/fleurInput/forceTheorem', u'DMI')),
                     (u'create_tag', (u'/fleurInput/forceTheorem/DMI', u'qVectors')),
                     (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'theta', self.ctx.wf_dict.get('sqas_theta'))),
-                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'phi', self.ctx.wf_dict.get('sqas_phi'))),]
+                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'phi', self.ctx.wf_dict.get('sqas_phi')))])
         
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
             fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/DMI/qVectors', u'q')))
@@ -234,9 +238,7 @@ class fleur_dmi_wc(WorkChain):
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
         #change beta parameter in all AtomGroups
         fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', self.ctx.wf_dict.get('beta'))]}, False, u'all')))
-        
-        #This part of code was copied from scf workflow. If it contains bugs,
-        #they also has to be fixed in scf wf
+
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
@@ -303,10 +305,8 @@ class fleur_dmi_wc(WorkChain):
 
     def force_sp_sp(self):
         '''
-        This routine uses the force theorem to calculate energies dispersion of
-        spin spirals. The force theorem calculations implemented into the FLEUR
-        code. Hence a single iteration FLEUR input file having <forceTheorem> tag
-        has to be created and submitted.
+        This routine uses the force theorem to calculate energy dispersion of
+        spin spirals which is followed by DMI energy calculation.
         '''
         calc = self.ctx.reference
         try:
@@ -432,27 +432,3 @@ class fleur_dmi_wc(WorkChain):
                 }
        
         self.out('out', ParameterData(dict=out))
-
-'''
-def quadratic_fit(energies, q_vectors, structure):
-    """
-    This function makes a quadratic fit to obtained data
-    First, bravias matrix in reciprocal space is obtained.
-    The magnitude of spin-spiral q-vector and square of reciprocal period length are calculated.
-    The lambda**(-2) - energy dependency is fitted linearly to obtain
-    the spin stiffness constant.
-    """
-    import numpy as np
-    from scipy.stats import linregress
-    
-    real_space_column_matrix = np.array(structure.cell).T
-    rec_brav_row_matrix = 2.0 * np.pi * np.linalg.inv(real_space_column_matrix)
-    rec_period_lengths_sq = []
-    for i, q_relative in enumerate(q_vectors):
-        q_glob = np.dot(rec_brav_row_matrix, np.array([float(x) for x in q_relative.split()]))
-        q_mag_glob = np.linalg.norm(q_glob)
-        rec_period_length = q_mag_glob / 2.0 / np.pi
-        rec_period_lengths_sq.append((rec_period_length**2, energies[i]))
-    slope, intercept, r_value, p_value, std_err = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
-    return slope, intercept, r_value**2, rec_period_lengths_sq
-'''

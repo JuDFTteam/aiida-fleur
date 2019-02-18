@@ -12,14 +12,11 @@
 
 """
     In this module you find the workflow 'fleur_spst_wc' for the calculation of
-    Spin Stiffness.
-    This workflow consists of modifyed parts of scf and eos workflows.
+    spin spiral dispersion (SPin STiffness).
 """
 
 from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.launch import submit
-from aiida.orm.data.base import Float
-from aiida.work.workfunctions import workfunction as wf
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -34,7 +31,7 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_spst_wc(WorkChain):
     """
-        This workflow calculates the Spin Stifness of a thin structure.
+    This workflow calculates spin spiral dispersion of a structure.
     """
     
     _workflowversion = "0.1.0a"
@@ -53,17 +50,16 @@ class fleur_spst_wc(WorkChain):
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
                    'beta' : 0.000,
+                   'alpha_mix' : 0.015,              #mixing parameter alpha
                    'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
-                   'q_vectors': ['0.125 0.0 0.0',
-                                 '0.125 0.125 0.0',
-                                 '0.250 0.125 0.0',
-                                 '0.250 0.250 0.0'],
-    #do not allow an user to change inp-file manually
+                   'q_vectors': ['0.0 0.0 0.0',   #q_vectors to calculation via forceTheorem
+                                 '0.125 0.0 0.0',
+                                 '0.250 0.0 0.0',
+                                 '0.375 0.0 0.0'],
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
-                   }                                 # tuples (function_name, [parameters]), the ones from fleurinpmodifier
-                                                    # example: ('set_nkpts' , {'nkpts': 500,'gamma': False}) ! no checks made, there know what you are doing
-    #Specify the list of scf wf paramters to be trasfered into scf wf
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']
+                   }
+    
+    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes'] #a list of wf_params needed for scf workflow
 
     ERROR_INVALID_INPUT_RESOURCES = 1
     ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
@@ -121,6 +117,9 @@ class fleur_spst_wc(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
         
+        #set up mixing parameter alpha
+        self.ctx.wf_dict['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : self.ctx.wf_dict['alpha_mix']}}))
+        
         #Retrieve calculation options,
         #initialize the dictionary using defaults if no options are given by user
         defaultoptions = self._default_options
@@ -159,13 +158,13 @@ class fleur_spst_wc(WorkChain):
         """
         Converge charge density for collinear case which is a reference for futher
         spin spiral calculations.
-        Since SOC is not included, there is no difference between x, y and z SQA diections.
-        Thus z direction is chosen.
         """
         inputs = {}
         inputs = self.get_inputs_scf()
+        #set proper propagation direction to reduce symmetry
         inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'alpha' : 0.02, u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
+        #change inp.xml to make a collinear calculation
+        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -218,20 +217,21 @@ class fleur_spst_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
-        fchanges = [(u'create_tag', (u'/fleurInput', u'forceTheorem')),
-                    (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion'))]
+        #copy inpchanges from wf parameters
+        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
+        #create forceTheorem tags
+        fchanges.extend([(u'create_tag', (u'/fleurInput', u'forceTheorem')),
+                    (u'create_tag', (u'/fleurInput/forceTheorem', u'spinSpiralDispersion'))])
         
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
             fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/spinSpiralDispersion', u'q')))
-            #next change requires a q-vector, create flag and a position of the <q> tag
+            #next change requires a q-vector vectors, create flag False and a position of the <q> tag i
             fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/spinSpiralDispersion/q', vectors, False, i)))
 
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
         #change beta parameter in all AtomGroups
         fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', self.ctx.wf_dict.get('beta'))]}, False, u'all')))
         
-        #This part of code was copied from scf workflow. If it contains bugs,
-        #they also has to be fixed in scf wf
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
@@ -377,11 +377,11 @@ class fleur_spst_wc(WorkChain):
                 self.ctx.successful = False
                 message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
                 self.ctx.errors.append(message)
-
+        
+            #now self.ctx.successful == True if forceTheorem calculation is successful
             if self.ctx.successful:
                 try:
                     t_energydict = calculation.out.output_parameters.dict.spst_force_evSum
-                    #e_u = self.ctx['force_x'].out.output_parameters.dict.energy_units
                     e_u = calculation.out.output_parameters.dict.energy_units
                     
                     #Find a minimal value of SpSp and count it as 0
@@ -398,10 +398,10 @@ class fleur_spst_wc(WorkChain):
             
                 except AttributeError:
                     self.ctx.successful = False
-                    message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
+                    message = ('Did not manage to read evSum or energy units after FT calculation.')
                     self.ctx.errors.append(message)
         
-        stiff, intercept, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
+        #stiff, intercept, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
         
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
@@ -413,11 +413,12 @@ class fleur_spst_wc(WorkChain):
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
-               'errors' : self.ctx.errors,
-               'spin_stiffness' : stiff,
-               'incc' : intercept,
-               'rec_lamda_square' : rec_lamda_square,
-               'r2' : r2 }
+               'errors' : self.ctx.errors
+               #'spin_stiffness' : stiff,
+               #'incc' : intercept,
+               #'rec_lamda_square' : rec_lamda_square,
+               #'r2' : r2
+               }
        
         self.out('out', ParameterData(dict=out))
 
