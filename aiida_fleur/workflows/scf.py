@@ -266,6 +266,9 @@ class fleur_scf_wc(WorkChain):
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
                 return self.ERROR_INVALID_INPUT_RESOURCES
+        elif 'remote_data' in inputs:
+            run_inpgen = False
+            pass
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.control_end_wc(error)
@@ -368,6 +371,8 @@ class fleur_scf_wc(WorkChain):
             return 
         elif 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
+        elif 'remode_data' in self.inputs:
+            return None
         else:
             try:
                 fleurin = self.ctx['inpgen'].out.fleurinpData

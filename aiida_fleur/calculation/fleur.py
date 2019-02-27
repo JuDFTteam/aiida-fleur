@@ -643,6 +643,7 @@ class FleurCalculation(JobCalculation):
         #print('walltime: {}'.format(walltime_sec))
         if with_hdf5:
             cmdline_params.append("-last_extra")
+            cmdline_params.append("-no_send")
 
         if walltime_sec:
             walltime_min = max(1, walltime_sec/60)
