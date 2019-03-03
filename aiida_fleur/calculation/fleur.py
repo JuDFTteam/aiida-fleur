@@ -215,8 +215,8 @@ class FleurCalculation(JobCalculation):
 
         #possible settings_dict keys
         self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                               'additional_remotecopy_list', 'remove_from_remotecopy_list'
-                               'cmdline']
+                               'additional_remotecopy_list', 'remove_from_remotecopy_list',
+                               'cmdline', 'remove_from_localcopy_list']
         #possible modes?
         self._fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
                              'latticeCo', 'scf']
@@ -573,6 +573,11 @@ class FleurCalculation(JobCalculation):
         with open(warn_only_filename, 'w') as infile:
             infile.write("\n")
 
+        
+        #remove specified files from localcopy list
+        for file1 in settings_dict.get('remove_from_localcopy_list', []):
+            if file1 in local_copy_list:
+                local_copy_list.remove(file1)
 
         ########## MAKE CALCINFO ###########
 

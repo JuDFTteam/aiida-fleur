@@ -48,13 +48,13 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 1,
-                              'itmax_per_run' : 120,
-                              'density_criterion' : 0.0002,
+wf_para = ParameterData(dict={'fleur_runmax' : 2,
+                              'itmax_per_run' : 520,
+                              'density_criterion' : 0.00002,
                               'force_th' : True,
                               'serial' : False,
                               'alpha_mix' : 0.015,              #mixing parameter alpha
-                              'relax_iter' : 5,
+                              'relax_iter' : 10,
                               'relax_specie' : {'Pt-1' : 'FFF', 'Fe-1' : 'FFT'},
                               'force_criterion' : 0.002,
                               'inpxml_changes' : []
@@ -93,7 +93,7 @@ cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
 structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
-structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
+structure.append_atom(position=(0.,0.,1.99285*bohr_a_0), symbols='Fe')
 structure.pbc = (True, True, False)
 
 parameters = ParameterData(dict={

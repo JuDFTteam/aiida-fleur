@@ -52,7 +52,7 @@ class fleur_relax_wc(WorkChain):
                    'alpha_mix' : 0.015,              #mixing parameter alpha
                    'relax_iter' : 5,
                    'relax_specie' : {},
-                   'force_criterion' : 0.002,
+                   'force_criterion' : 0.00002,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }
     
@@ -104,6 +104,8 @@ class fleur_relax_wc(WorkChain):
         self.ctx.warnings = []
         self.ctx.errors = []
         
+        #Pre-initialization of some variables
+        self.ctx.loop_count = 0
         self.ctx.make_fleurinp = True
 
         #Retrieve WorkFlow parameters,
@@ -163,6 +165,7 @@ class fleur_relax_wc(WorkChain):
         """
         inputs = {}
         inputs = self.get_inputs_scf()
+        print inputs
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
         inputs['options'] = ParameterData(dict=inputs['options'])
@@ -205,8 +208,8 @@ class fleur_relax_wc(WorkChain):
         else:
             #use inp.xml from previous iteration
             inputs['remote_data'] = self.ctx.forr.out.remote_folder
-            inputs['fleurinp'] = None
-            inputs['settings'] = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*', 'cdn_last.hdf', 'cdn.hdf']})
+            inputs['settings'] = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})#, 'remove_from_localcopy_list': ['cdn_last.hdf']})
+            inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_f' : False}}))
 
         #Initialize codes
         inputs['fleur'] = self.inputs.fleur
@@ -228,16 +231,12 @@ class fleur_relax_wc(WorkChain):
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
         #copy inpchanges from wf parameters
-        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
+        fchanges = list(self.ctx.wf_dict.get('inpxml_changes', []))
         
         for specie,relax_dir in self.ctx.wf_dict.get('relax_specie').iteritems():
             fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))
         
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 2, u'minDistance' : self.ctx.wf_dict.get('density_criterion'), u'epsforce' : 0.1}}))
-        
-        print '##############'
-        print fchanges
-        print '##############'
+        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60, u'minDistance' : self.ctx.wf_dict.get('density_criterion'), u'epsforce' : self.ctx.wf_dict.get('force_criterion')}}))
         
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -381,18 +380,25 @@ class fleur_relax_wc(WorkChain):
         
             #now self.ctx.successful == True if forceTheorem calculation is successful
             #TODO change back
-            #if self.ctx.successful:
-            if 1:
+            if self.ctx.successful:
                 try:
-                    forces = calculation.out.output_parameters.dict.force_largest
-            
+                    self.ctx.forces = calculation.out.output_parameters.dict.force_largest
                 except AttributeError:
                     self.ctx.successful = False
                     message = ('Did not manage to read largest force.')
                     self.ctx.errors.append(message)
     
-        if abs(forces) < self.ctx.wf_dict['force_criterion']:
+        if abs(self.ctx.forces) < self.ctx.wf_dict['force_criterion']:
             return False
+
+        self.ctx.loop_count += 1
+
+        if (self.ctx.loop_count == self.ctx.wf_dict['relax_iter']):
+            self.ctx.successful = False
+            self.ctx.warnings.append('Did not manage to relax forces in given number of iterations')
+            return False
+
+        return True
         
     def return_results(self):
         
@@ -402,7 +408,9 @@ class fleur_relax_wc(WorkChain):
                'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
-               'errors' : self.ctx.errors
+               'errors' : self.ctx.errors,
+               'force' : self.ctx.forces,
+               'force_iter_made' : self.ctx.loop_count
                }
        
        #TODO create a fleurinp node

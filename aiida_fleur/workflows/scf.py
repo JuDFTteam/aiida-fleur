@@ -28,6 +28,7 @@ from aiida.work.workchain import WorkChain, while_, if_, ToContext
 from aiida.work.launch import submit
 from aiida.work import workfunction as wf
 from aiida.common.datastructures import calc_states
+import os
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
@@ -183,6 +184,7 @@ class fleur_scf_wc(WorkChain):
         # internal para /control para
         self.ctx.last_calc = None
         self.ctx.loop_count = 0
+        self.ctx.need_inpgen = True
         self.ctx.calcs = []
         self.ctx.abort = False
 
@@ -268,7 +270,6 @@ class fleur_scf_wc(WorkChain):
                 return self.ERROR_INVALID_INPUT_RESOURCES
         elif 'remote_data' in inputs:
             run_inpgen = False
-            pass
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.control_end_wc(error)
@@ -371,12 +372,15 @@ class fleur_scf_wc(WorkChain):
             return 
         elif 'fleurinp' in self.inputs:
             fleurin = self.inputs.fleurinp
-        elif 'remode_data' in self.inputs:
-            return None
+        elif 'remote_data' in self.inputs and not self.ctx.get('inpgen', None):
+            #In this case only an inp.xml file is given
+            #fleurinp data has to be generated from the inp.xml file to use change_fleurinp
+            self.ctx.need_inpgen = False
+            fleurin = FleurInpData(files=[os.path.join(self.inputs.remote_data.created_by.get_retrieved_node().get_abs_path(), 'path/inp.xml')])
         else:
             try:
                 fleurin = self.ctx['inpgen'].out.fleurinpData
-            except AttributeError:
+            except KeyError:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
                 return self.ERROR_INPGEN_CALCULATION_FAILED
@@ -745,6 +749,8 @@ class fleur_scf_wc(WorkChain):
 
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
+        elif not self.ctx.need_inpgen:
+            outdict['fleurinp'] = self.ctx.fleurinp
         else:
             try:
                 fleurinp = self.ctx['inpgen'].out.fleurinpData
