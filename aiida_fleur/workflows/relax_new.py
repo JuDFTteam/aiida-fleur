@@ -11,8 +11,7 @@
 ###############################################################################
 
 """
-    In this module you find the workflow 'fleur_relax_wc' for the calculation of
-    spin spiral dispersion (SPin STiffness).
+    In this module you find the workflow 'fleur_relax_wc' for geometry optimization.
 """
 
 from aiida.work.workchain import WorkChain, ToContext, while_
@@ -164,7 +163,7 @@ class fleur_relax_wc(WorkChain):
         Converge charge density for collinear case.
         """
         inputs = {}
-        inputs = self.get_inputs_scf()
+        inputs = self.get_inputs_scf().deepcopy()
         print inputs
         inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
@@ -231,12 +230,12 @@ class fleur_relax_wc(WorkChain):
             return self.ERROR_REFERENCE_CALCULATION_FAILED
 
         #copy inpchanges from wf parameters
-        fchanges = list(self.ctx.wf_dict.get('inpxml_changes', []))
+        fchanges = list(self.ctx.wf_dict['inpxml_changes'])
         
         for specie,relax_dir in self.ctx.wf_dict.get('relax_specie').iteritems():
             fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))
         
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60, u'minDistance' : self.ctx.wf_dict.get('density_criterion'), u'epsforce' : self.ctx.wf_dict.get('force_criterion')}}))
+        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60}}))#, u'epsforce' : self.ctx.wf_dict.get('force_criterion')}}))
         
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)

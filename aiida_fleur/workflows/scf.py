@@ -184,7 +184,6 @@ class fleur_scf_wc(WorkChain):
         # internal para /control para
         self.ctx.last_calc = None
         self.ctx.loop_count = 0
-        self.ctx.need_inpgen = True
         self.ctx.calcs = []
         self.ctx.abort = False
 
@@ -246,11 +245,11 @@ class fleur_scf_wc(WorkChain):
         # return True means run inpgen if false run fleur directly
         """
 
-        run_inpgen = True
+        self.ctx.run_inpgen = True
         inputs = self.inputs
 
         if 'fleurinp' in inputs:
-            run_inpgen = False
+            self.ctx.run_inpgen = False
             if 'structure' in inputs:
                 warning = 'WARNING: Ignoring Structure input, because Fleurinp was given'
                 self.ctx.warnings.append(warning)
@@ -269,7 +268,7 @@ class fleur_scf_wc(WorkChain):
                 self.report(error)
                 return self.ERROR_INVALID_INPUT_RESOURCES
         elif 'remote_data' in inputs:
-            run_inpgen = False
+            self.ctx.run_inpgen = False
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.control_end_wc(error)
@@ -310,7 +309,7 @@ class fleur_scf_wc(WorkChain):
                     self.control_end_wc(error)
                     self.ERROR_INVALID_INPUT_RESOURCES
 
-        return run_inpgen
+        return self.ctx.run_inpgen
 
 
     def run_fleurinpgen(self):
@@ -375,7 +374,6 @@ class fleur_scf_wc(WorkChain):
         elif 'remote_data' in self.inputs and not self.ctx.get('inpgen', None):
             #In this case only an inp.xml file is given
             #fleurinp data has to be generated from the inp.xml file to use change_fleurinp
-            self.ctx.need_inpgen = False
             fleurin = FleurInpData(files=[os.path.join(self.inputs.remote_data.created_by.get_retrieved_node().get_abs_path(), 'path/inp.xml')])
         else:
             try:
@@ -749,7 +747,8 @@ class fleur_scf_wc(WorkChain):
 
         if 'fleurinp' in self.inputs:
             outdict['fleurinp'] = self.inputs.fleurinp
-        elif not self.ctx.need_inpgen:
+        elif not self.ctx.run_inpgen:
+            #in this case an output fleurinp node will contain a fleurinp version which was changed according to inpxml_changes
             outdict['fleurinp'] = self.ctx.fleurinp
         else:
             try:
