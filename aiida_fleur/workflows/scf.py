@@ -31,7 +31,7 @@ from aiida.common.datastructures import calc_states
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, optimize_calc_options
 from aiida_fleur.tools.xml_util import eval_xpath2
 
 RemoteData = DataFactory('remote')
@@ -336,6 +336,27 @@ class fleur_scf_wc(WorkChain):
 
         return ToContext(inpgen=future, last_calc=future)
 
+    def check_kpts(self, fleurinp):
+        """
+        This routine checks if the total number of requested cpus
+        is a factor of kpts and makes small optimisation.
+        """
+        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
+                      int(self.ctx.options['resources']['num_machines']),
+                      int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
+
+        if exit_code:
+        #TODO: make an error exit
+            pass
+        
+        if 'WARNING' in message:
+            self.ctx.warnings.append(message)
+        
+        self.report(message)
+
+        self.ctx.options['resources']['num_machines'] = adv_nodes
+        self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+
     def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
@@ -381,7 +402,10 @@ class fleur_scf_wc(WorkChain):
                         return self.ERROR_CHANGING_FLEURINPUT_FAILED
 
                     else:# apply change
-                        method(**para)
+                        if function==u'set_inpchanges':
+                            method(**para)
+                        else:
+                            method(*para)
 
             # validate?
             apply_c = True
@@ -409,9 +433,11 @@ class fleur_scf_wc(WorkChain):
         run a FLEUR calculation
         """
         self.report('INFO: run FLEUR')
-
+        
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
+        self.check_kpts(fleurin)
+        
         '''
         if 'settings' in self.inputs:
             settings = self.input.settings
@@ -650,7 +676,11 @@ class fleur_scf_wc(WorkChain):
         outputnode_dict['material'] = self.ctx.formula
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
-        outputnode_dict['distance_charge'] = last_calc_out_dict.get('charge_density', None)
+        try:
+            temp1 = last_calc_out_dict['charge_density']
+        except KeyError:
+            temp1 = last_calc_out_dict.get('overall_charge_density', None)
+        outputnode_dict['distance_charge'] = temp1
         outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
@@ -677,7 +707,7 @@ class fleur_scf_wc(WorkChain):
                         'is {} htr \n'.format(self.ctx.loop_count,
                                        last_calc_out_dict.get('number_of_iterations_total', None),
                                        self.ctx.total_wall_time,
-                                       last_calc_out_dict.get('charge_density', None), 
+                                       outputnode_dict['distance_charge'],
                                        self.ctx.energydiff))
 
         else: # Termination ok, but not converged yet...
@@ -695,7 +725,7 @@ class fleur_scf_wc(WorkChain):
                             ''.format(self.ctx.loop_count,
                             last_calc_out_dict.get('number_of_iterations_total', None),
                             self.ctx.total_wall_time,
-                            last_calc_out_dict.get('charge_density', None), self.ctx.energydiff))
+                            outputnode_dict['distance_charge'], self.ctx.energydiff))
 
         #also lognotes, which then can be parsed from subworkflow too workflow, list of calculations involved (pks, and uuids),
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.

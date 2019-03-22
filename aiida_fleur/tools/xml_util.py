@@ -360,6 +360,22 @@ def xml_set_text(xmltree, xpathn, text, create=False, place_index=None, tag_orde
         node[0].text = text
     #return xmltree
 
+def xml_set_text_occ(xmltree, xpathn, text, create=False, occ=0, place_index=None, tag_order=None):
+    """
+    Routine sets the text of a tag in the xml file
+    Input: an etree a xpath from root to the tag and the text
+    Output: none, an etree
+    example:
+    xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
+    but also cordinates and Bravais Matrix!:
+    xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos', '1.20000 PI/3 5.1-MYCrazyCostant')
+    """
+
+    root = xmltree.getroot()
+    node = eval_xpath3(root, xpathn, create=create, place_index=place_index, tag_order=tag_order)
+    if node:
+        node[occ].text = text
+
 def xml_set_all_text(xmltree, xpathn, text, create=False):
     """
     Routine sets the text of a tag in the xml file
@@ -412,7 +428,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index = None, tag
                             # if tagname of elements==tag:
                             tag_index = node_1.index(child)
                             try:
-                                node_1.insert(tag_index, newelement)
+                                node_1.insert(tag_index+1, newelement)
                             except ValueError as v:
                                 raise ValueError('{}. If this is a species, are'
                                     'you sure this species exists in your inp.xml?'
@@ -697,9 +713,10 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     xpathLDA_U = '{}/ldaU'.format(xpathspecies)
     xpathnocoParams = '{}/nocoParams'.format(xpathspecies)
     xpathnocoParamsqss = '{}/nocoParams/qss'.format(xpathspecies)
+    xpathSOCscale = '{}/special'.format(xpathspecies)
 
     # can we get this out of schema file?
-    species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'force', 'electronConfig', 'nocoParams', 'ldaU', 'lo']
+    species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force',  'electronConfig', 'nocoParams', 'ldaU', 'lo']
 
     #root = fleurinp_tree_copy.getroot()
     for key,val in attributedict.iteritems():
@@ -777,6 +794,10 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
         elif key == 'ldaU':
             for attrib, value in val.iteritems():
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathLDA_U, attrib, value, create=create)
+        elif key == 'special':
+            eval_xpath3(fleurinp_tree_copy, xpathSOCscale, create=True, place_index=species_seq.index('special'), tag_order=species_seq)
+            for attrib, value in val.iteritems():
+                xml_set_attribv_occ(fleurinp_tree_copy, xpathSOCscale, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpathspecies, attrib, value)
 
@@ -810,10 +831,10 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
     for key, val in attributedict.iteritems():
         if key == 'force':
             for attrib, value in val:
-                xml_set_attribv_occ(fleurinp_tree_copy, xpathforce, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpathforce, attrib, value)
         elif key == 'nocoParams':
             for attrib, value in val:
-                xml_set_attribv_occ(fleurinp_tree_copy, xpathnocoParams, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpathnocoParams, attrib, value)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpathatmgroup, attrib, value)
 
@@ -1123,8 +1144,8 @@ def inpxml_todict(parent, xmlstr):
                 return_dict[key] = str(return_dict[key])
             elif key in float_attributes_once1 or (key in float_attributes_several1):
                 # TODO pressision?
-                return_dict[key] = float(return_dict[key])
-                #pass
+                #return_dict[key] = float(return_dict[key])
+                pass
             elif key in pos_text1:
                 # TODO, prob not nessesary, since taken care of below check,
                 pass
@@ -1209,7 +1230,7 @@ def get_inpxml_file_structure():
         'ctail', 'swsp', 'lflip', 'off', 'spav', 'l_soc', 'soc66', 'pot8',
         'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk', 'cdinf',
         'disp', 'vacdos', 'integ', 'star', 'iplot', 'score', 'plplot', 'slice',
-        'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f')
+        'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
 
     all_switches_several = ('calculate', 'flipSpin')
 
@@ -1253,7 +1274,7 @@ def get_inpxml_file_structure():
     tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint')
 
     all_text = {'comment' : 1, 'relPos' : 3, 'filmPos' : 3, 'absPos' : 3,
-                'row-1': 3, 'row-2':3, 'row-3' :3, 'a1': 1}
+                'row-1': 3, 'row-2':3, 'row-3' :3, 'a1': 1, 'qss' : 3}
     #TODO all these (without comment) are floats, or float tuples.
     #Should be converted to this in the databas
     # changing the Bravais matrix should rather not be allowed I guess
@@ -1267,6 +1288,8 @@ def get_inpxml_file_structure():
         'relPos': '/fleurInput/atomGroups/atomGroup/relPos',
         'filmPos': '/fleurInput/atomGroups/atomGroup/filmPos',
         'absPos': '/fleurInput/atomGroups/atomGroup/absPos',
+        'qss' : '/fleurInput/calculationSetup/nocoParams/qss',
+        'l_ss' : '/fleurInput/calculationSetup/nocoParams',
         'row-1': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-2': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-3': '/fleurInput/cell/bulkLattice/bravaisMatrix',
@@ -1403,6 +1426,7 @@ def get_inpxml_file_structure():
         '/fleurInput/calculationSetup/kPointMesh',
         '/fleurInput/cell/symmetry',
         '/fleurInput/cell/bravaisMatrix',
+        '/fleurInput/calculationSetup/nocoParams',
         '/fleurInput/xcFunctional',
         '/fleurInput/xcFunctional/xcParams',
         '/fleurInput/atomSpecies/species',

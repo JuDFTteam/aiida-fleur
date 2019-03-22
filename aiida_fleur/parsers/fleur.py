@@ -142,7 +142,7 @@ class FleurParser(Parser):
                     "The following was written into std error and piped to {} : \n {}"
                     "".format(self._calc._ERROR_FILE_NAME, error_file_lines))
 
-                if 'OK' in error_file_lines: # if judft-error # TODO maybe change.
+                if 'Run finished successfully' in error_file_lines: # if judft-error # TODO maybe change.
                     successful = True
                 else:
                     successful = False
@@ -634,7 +634,25 @@ def parse_xmlout_file(outxmlfile):
         orbmagneticmoments_spinupcharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinUpCharge'
         orbmagneticmoments_spindowncharge_xpath = 'orbitalMagneticMomentsInMTSpheres/orbMagMoment/@spinDownCharge'
 
-
+        mae_force_theta_xpath = 'Forcetheorem_MAE/Angle/@theta'
+        mae_force_phi_xpath = 'Forcetheorem_MAE/Angle/@phi'
+        mae_force_evSum_xpath = 'Forcetheorem_MAE/Angle/@ev-sum'
+        mae_force_energ_units_xpath = 'Forcetheorem_Loop_MAE/sumValenceSingleParticleEnergies/@units'
+        
+        spst_force_xpath = 'Forcetheorem_SSDISP/@qvectors'
+        spst_force_q_xpath = 'Forcetheorem_SSDISP/Entry/@q'
+        spst_force_evSum_xpath = 'Forcetheorem_SSDISP/Entry/@ev-sum'
+        spst_force_energ_units_xpath = 'Forcetheorem_Loop_SSDISP/sumValenceSingleParticleEnergies/@units'
+        
+        dmi_force_xpath = 'Forcetheorem_DMI'
+        dmi_force_q_xpath = 'Forcetheorem_DMI/Entry/@q'
+        dmi_force_theta_xpath = 'Forcetheorem_DMI/Entry/@theta'
+        dmi_force_phi_xpath = 'Forcetheorem_DMI/Entry/@phi'
+        dmi_force_evSum_xpath = 'Forcetheorem_DMI/Entry/@ev-sum'
+        dmi_force_angles_xpath = 'Forcetheorem_DMI/@Angles'
+        dmi_force_qs_xpath = 'Forcetheorem_DMI/@qPoints'
+        dmi_force_energ_units_xpath = 'Forcetheorem_Loop_DMI/sumValenceSingleParticleEnergies/@units'
+        
         spinupcharge_name = 'spinUpCharge'
         spindowncharge_name = 'spinDownCharge'
         moment_name = 'moment'
@@ -716,6 +734,12 @@ def parse_xmlout_file(outxmlfile):
                     value_to_savet, suct = convert_to_float(val)
                     value_to_save.append(value_to_savet)
                 suc = True # TODO individual or common error message?
+            elif value_type =='list_ints':
+                value_to_save = []
+                for val in value:
+                    value_to_savet, suct = convert_to_int(val)
+                    value_to_save.append(value_to_savet)
+                suc = True
             elif value_type =='list_list_floats':
                 value_to_save = []
                 for val in value:
@@ -737,198 +761,258 @@ def parse_xmlout_file(outxmlfile):
                      'iteration' : get_xml_attribute(iteration_node, interation_current_number_name)})
 
 
-        # total energy
-        units_e = get_xml_attribute(
-            eval_xpath(iteration_node, totalenergy_xpath), units_name)
-        write_simple_outnode(
-            units_e, 'str', 'energy_hartree_units', simple_data)
-
-        tE_htr = get_xml_attribute(
-            eval_xpath(iteration_node, totalenergy_xpath), value_name)
-        write_simple_outnode(tE_htr, 'float', 'energy_hartree', simple_data)
-
-        write_simple_outnode(
-            convert_htr_to_ev(tE_htr), 'float', 'energy', simple_data)
-        write_simple_outnode('eV', 'str', 'energy_units', simple_data)
-
-        sumofeigenvalues = get_xml_attribute(
-            eval_xpath(iteration_node, sumofeigenvalues_xpath), value_name)
-        write_simple_outnode(
-            sumofeigenvalues, 'float', 'sum_of_eigenvalues', simple_data)
-
-        coreElectrons = get_xml_attribute(
-            eval_xpath(iteration_node, core_electrons_xpath), value_name)
-        write_simple_outnode(
-            coreElectrons, 'float', 'energy_core_electrons', simple_data)
-
-        valenceElectrons = get_xml_attribute(
-            eval_xpath(iteration_node, valence_electrons_xpath), value_name)
-        write_simple_outnode(
-            valenceElectrons, 'float', 'energy_valence_electrons', simple_data)
-
-        ch_d_xc_d_inte = get_xml_attribute(
-            eval_xpath(iteration_node, chargeden_xc_den_integral_xpath), value_name)
-        write_simple_outnode(
-            ch_d_xc_d_inte, 'float', 'charge_den_xc_den_integral', simple_data)
-
-        # bandgap
-        units_bandgap = get_xml_attribute(
-            eval_xpath(iteration_node, bandgap_xpath), units_name)
-        write_simple_outnode(units_bandgap, 'str', 'bandgap_units', simple_data)
-
-        bandgap = get_xml_attribute(
-            eval_xpath(iteration_node, bandgap_xpath), value_name)
-        write_simple_outnode(bandgap, 'float', 'bandgap', simple_data)
-
-        # fermi
-        fermi_energy = get_xml_attribute(
-            eval_xpath(iteration_node, fermi_energy_xpath), value_name)
-        write_simple_outnode(fermi_energy, 'float', 'fermi_energy', simple_data)
-        units_fermi_energy = get_xml_attribute(
-            eval_xpath(iteration_node, fermi_energy_xpath), units_name)
-        write_simple_outnode(
-            units_fermi_energy, 'str', 'fermi_energy_units', simple_data)
-
-        # density convergence
-        units = get_xml_attribute(
-            eval_xpath(iteration_node, densityconvergence_xpath), units_name)
-        write_simple_outnode(
-            units, 'str', 'density_convergence_units', simple_data)
-
-
-        if jspin == 1:
-            charge_density = get_xml_attribute(
-                eval_xpath(iteration_node, chargedensity_xpath), distance_name)
+        if eval_xpath(iteration_node, mae_force_theta_xpath) != []:
+            #extract MAE force theorem parameters
+            mae_force_theta = eval_xpath2(iteration_node, mae_force_theta_xpath)
             write_simple_outnode(
-                charge_density, 'float', 'charge_density', simple_data)
-
-        elif jspin == 2:
-            charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
-
-            if charge_densitys:# otherwise we get a keyerror if calculation failed.
-                charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
-                charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
-            else: # Is non a problem?
-                charge_density1 = None
-                charge_density2 = None
+                    mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
+                    
+            mae_force_evSum = eval_xpath2(iteration_node, mae_force_evSum_xpath)
             write_simple_outnode(
-                charge_density1, 'float', 'charge_density1', simple_data)
+                    mae_force_evSum, 'list_floats', 'mae_force_evSum', simple_data)
+                    
+            mae_force_phi = eval_xpath2(iteration_node, mae_force_phi_xpath)
             write_simple_outnode(
-                charge_density2, 'float', 'charge_density2', simple_data)
-
-            spin_density = get_xml_attribute(
-                eval_xpath(iteration_node, spindensity_xpath), distance_name)
+                    mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
+                    
+            units_e = eval_xpath2(iteration_node, mae_force_energ_units_xpath)
             write_simple_outnode(
-                spin_density, 'float', 'spin_density', simple_data)
-
-            overall_charge_density = get_xml_attribute(
-                eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+                units_e[0], 'str', 'energy_units', simple_data)
+        elif eval_xpath(iteration_node, spst_force_xpath) != []:
+            #extract Spin spiral dispersion force theorem parameters
+            spst_force_q = eval_xpath2(iteration_node, spst_force_q_xpath)
             write_simple_outnode(
-                overall_charge_density, 'float', 'overall_charge_density', simple_data)
-
-            # magnetic moments            #TODO orbMag Moment
-            m_units = get_xml_attribute(
-                eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
+                    spst_force_q, 'list_floats', 'spst_force_q', simple_data)
+                    
+            spst_force_evSum = eval_xpath2(iteration_node, spst_force_evSum_xpath)
             write_simple_outnode(
-                m_units, 'str', 'magnetic_moment_units', simple_data)
+                    spst_force_evSum, 'list_floats', 'spst_force_evSum', simple_data)
+        
+            units_e = eval_xpath2(iteration_node, spst_force_energ_units_xpath)
             write_simple_outnode(
-                m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
-
-            moments = eval_xpath(iteration_node, magneticmoments_xpath)
+                units_e[0], 'str', 'energy_units', simple_data)
+        elif eval_xpath(iteration_node, dmi_force_xpath) != []:
+            #extract DMI force theorem parameters
+            dmi_force_q = eval_xpath2(iteration_node, dmi_force_q_xpath)
             write_simple_outnode(
-                moments, 'list_floats', 'magnetic_moments', simple_data)
-
-            spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)
+            dmi_force_q, 'list_ints', 'dmi_force_q', simple_data)
+                    
+            dmi_force_evSum = eval_xpath2(iteration_node, dmi_force_evSum_xpath)
             write_simple_outnode(
-                spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
-
-            spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
+            dmi_force_evSum, 'list_floats', 'dmi_force_evSum', simple_data)
+            
+            dmi_force_theta = eval_xpath2(iteration_node, dmi_force_theta_xpath)
             write_simple_outnode(
-                spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
-
-            #orbital magnetic moments
-            orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
+                    dmi_force_theta, 'list_floats', 'dmi_force_theta', simple_data)
+                    
+            dmi_force_phi = eval_xpath2(iteration_node, dmi_force_phi_xpath)
             write_simple_outnode(
-                orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
-
-            orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)
+                    dmi_force_phi, 'list_floats', 'dmi_force_phi', simple_data)
+                    
+            dmi_force_angles = eval_xpath(iteration_node, dmi_force_angles_xpath)
             write_simple_outnode(
-                orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data)
-
-            orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
+                    dmi_force_angles, 'int', 'dmi_force_angles', simple_data)
+                    
+            dmi_force_qs = eval_xpath(iteration_node, dmi_force_qs_xpath)
             write_simple_outnode(
-                orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
-
-            # TODO atomtype dependence
-            #moment = get_xml_attribute(
-            #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
-            #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
-
-            #spinup = get_xml_attribute(
-            #    eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
-            #write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
-
-            #spindown = get_xml_attribute(
-            #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
-            #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-
-            #Total charges, total magentic moment
-
-        # total iterations
-        number_of_iterations_total = get_xml_attribute(
-            eval_xpath(iteration_node, iteration_xpath), overall_number_name)
-        write_simple_outnode(
-            number_of_iterations_total, 'int', 'number_of_iterations_total', simple_data)
-
-
-        #forces atomtype dependend
-        forces = eval_xpath2(iteration_node, forces_total_xpath)
-        # length should be ntypes
-        largest_force = -0.0
-        for force in forces:
-            atomtype, success = convert_to_int(get_xml_attribute(force, atomtype_name))
-
-            forces_unit = get_xml_attribute(
-                eval_xpath(iteration_node, forces_units_xpath), units_name)
-            write_simple_outnode(forces_unit, 'str', 'force_units', simple_data)
-
-            force_x = get_xml_attribute(force, f_x_name)
+                    dmi_force_qs, 'int', 'dmi_force_qs', simple_data)
+        
+            units_e = eval_xpath2(iteration_node, dmi_force_energ_units_xpath)
             write_simple_outnode(
-                force_x, 'float', 'force_x_type{}'.format(atomtype), simple_data)
-
-            force_y = get_xml_attribute(force, f_y_name)
+                units_e[0], 'str', 'energy_units', simple_data)
+        else:
+            # total energy
+            units_e = get_xml_attribute(
+                eval_xpath(iteration_node, totalenergy_xpath), units_name)
             write_simple_outnode(
-                force_y, 'float', 'force_y_type{}'.format(atomtype), simple_data)
+                units_e, 'str', 'energy_hartree_units', simple_data)
 
-            force_z = get_xml_attribute(force, f_z_name)
+            tE_htr = get_xml_attribute(
+                eval_xpath(iteration_node, totalenergy_xpath), value_name)
+            write_simple_outnode(tE_htr, 'float', 'energy_hartree', simple_data)
+
             write_simple_outnode(
-                force_z, 'float', 'force_z_type{}'.format(atomtype), simple_data)
+                convert_htr_to_ev(tE_htr), 'float', 'energy', simple_data)
+            write_simple_outnode('eV', 'str', 'energy_units', simple_data)
 
-
-            force_xf, suc1 = convert_to_float(force_x)
-            force_yf, suc2 = convert_to_float(force_y)
-            force_zf, suc3 = convert_to_float(force_z)
-
-            if suc1 and suc2 and suc3:
-                if abs(force_xf) > largest_force:
-                    largest_force = abs(force_xf)
-                if abs(force_yf) > largest_force:
-                    largest_force = abs(force_yf)
-                if abs(force_zf) > largest_force:
-                    largest_force = abs(force_zf)
-
-            pos_x = get_xml_attribute(force, new_x_name)
+            sumofeigenvalues = get_xml_attribute(
+                eval_xpath(iteration_node, sumofeigenvalues_xpath), value_name)
             write_simple_outnode(
-                pos_x, 'float', 'abspos_x_type{}'.format(atomtype), simple_data)
-            pos_y = get_xml_attribute(force, new_y_name)
-            write_simple_outnode(
-                pos_y, 'float', 'abspos_y_type{}'.format(atomtype), simple_data)
-            pos_z = get_xml_attribute(force, new_z_name)
-            write_simple_outnode(
-                pos_z, 'float', 'abspos_z_type{}'.format(atomtype), simple_data)
+                sumofeigenvalues, 'float', 'sum_of_eigenvalues', simple_data)
 
-        write_simple_outnode(
-            largest_force, 'float', 'force_largest', simple_data)
+            coreElectrons = get_xml_attribute(
+                eval_xpath(iteration_node, core_electrons_xpath), value_name)
+            write_simple_outnode(
+                coreElectrons, 'float', 'energy_core_electrons', simple_data)
+
+            valenceElectrons = get_xml_attribute(
+                eval_xpath(iteration_node, valence_electrons_xpath), value_name)
+            write_simple_outnode(
+                valenceElectrons, 'float', 'energy_valence_electrons', simple_data)
+
+            ch_d_xc_d_inte = get_xml_attribute(
+                eval_xpath(iteration_node, chargeden_xc_den_integral_xpath), value_name)
+            write_simple_outnode(
+                ch_d_xc_d_inte, 'float', 'charge_den_xc_den_integral', simple_data)
+
+            # bandgap
+            units_bandgap = get_xml_attribute(
+                eval_xpath(iteration_node, bandgap_xpath), units_name)
+            write_simple_outnode(units_bandgap, 'str', 'bandgap_units', simple_data)
+
+            bandgap = get_xml_attribute(
+                eval_xpath(iteration_node, bandgap_xpath), value_name)
+            write_simple_outnode(bandgap, 'float', 'bandgap', simple_data)
+
+            # fermi
+            fermi_energy = get_xml_attribute(
+                eval_xpath(iteration_node, fermi_energy_xpath), value_name)
+            write_simple_outnode(fermi_energy, 'float', 'fermi_energy', simple_data)
+            units_fermi_energy = get_xml_attribute(
+                eval_xpath(iteration_node, fermi_energy_xpath), units_name)
+            write_simple_outnode(
+                units_fermi_energy, 'str', 'fermi_energy_units', simple_data)
+
+            # density convergence
+            units = get_xml_attribute(
+                eval_xpath(iteration_node, densityconvergence_xpath), units_name)
+            write_simple_outnode(
+                units, 'str', 'density_convergence_units', simple_data)
+
+
+            if jspin == 1:
+                charge_density = get_xml_attribute(
+                    eval_xpath(iteration_node, chargedensity_xpath), distance_name)
+                write_simple_outnode(
+                    charge_density, 'float', 'charge_density', simple_data)
+
+            elif jspin == 2:
+                charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
+
+                if charge_densitys:# otherwise we get a keyerror if calculation failed.
+                    charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+                    charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
+                else: # Is non a problem?
+                    charge_density1 = None
+                    charge_density2 = None
+                write_simple_outnode(
+                    charge_density1, 'float', 'charge_density1', simple_data)
+                write_simple_outnode(
+                    charge_density2, 'float', 'charge_density2', simple_data)
+
+                spin_density = get_xml_attribute(
+                    eval_xpath(iteration_node, spindensity_xpath), distance_name)
+                write_simple_outnode(
+                    spin_density, 'float', 'spin_density', simple_data)
+
+                overall_charge_density = get_xml_attribute(
+                    eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+                write_simple_outnode(
+                    overall_charge_density, 'float', 'overall_charge_density', simple_data)
+
+                # magnetic moments            #TODO orbMag Moment
+                m_units = get_xml_attribute(
+                    eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
+                write_simple_outnode(
+                    m_units, 'str', 'magnetic_moment_units', simple_data)
+                write_simple_outnode(
+                    m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
+
+                moments = eval_xpath(iteration_node, magneticmoments_xpath)
+                write_simple_outnode(
+                    moments, 'list_floats', 'magnetic_moments', simple_data)
+
+                spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)
+                write_simple_outnode(
+                    spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
+
+                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
+                write_simple_outnode(
+                    spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
+
+                #orbital magnetic moments
+                orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
+                write_simple_outnode(
+                    orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
+
+                orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)
+                write_simple_outnode(
+                    orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data)
+
+                orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
+                write_simple_outnode(
+                    orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
+
+                # TODO atomtype dependence
+                #moment = get_xml_attribute(
+                #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
+                #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
+
+                #spinup = get_xml_attribute(
+                #    eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
+                #write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
+
+                #spindown = get_xml_attribute(
+                #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
+                #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
+
+                #Total charges, total magentic moment
+
+            # total iterations
+            number_of_iterations_total = get_xml_attribute(
+                eval_xpath(iteration_node, iteration_xpath), overall_number_name)
+            write_simple_outnode(
+                number_of_iterations_total, 'int', 'number_of_iterations_total', simple_data)
+
+
+            #forces atomtype dependend
+            forces = eval_xpath2(iteration_node, forces_total_xpath)
+            # length should be ntypes
+            largest_force = -0.0
+            for force in forces:
+                atomtype, success = convert_to_int(get_xml_attribute(force, atomtype_name))
+
+                forces_unit = get_xml_attribute(
+                    eval_xpath(iteration_node, forces_units_xpath), units_name)
+                write_simple_outnode(forces_unit, 'str', 'force_units', simple_data)
+
+                force_x = get_xml_attribute(force, f_x_name)
+                write_simple_outnode(
+                    force_x, 'float', 'force_x_type{}'.format(atomtype), simple_data)
+
+                force_y = get_xml_attribute(force, f_y_name)
+                write_simple_outnode(
+                    force_y, 'float', 'force_y_type{}'.format(atomtype), simple_data)
+
+                force_z = get_xml_attribute(force, f_z_name)
+                write_simple_outnode(
+                    force_z, 'float', 'force_z_type{}'.format(atomtype), simple_data)
+
+
+                force_xf, suc1 = convert_to_float(force_x)
+                force_yf, suc2 = convert_to_float(force_y)
+                force_zf, suc3 = convert_to_float(force_z)
+
+                if suc1 and suc2 and suc3:
+                    if abs(force_xf) > largest_force:
+                        largest_force = abs(force_xf)
+                    if abs(force_yf) > largest_force:
+                        largest_force = abs(force_yf)
+                    if abs(force_zf) > largest_force:
+                        largest_force = abs(force_zf)
+
+                pos_x = get_xml_attribute(force, new_x_name)
+                write_simple_outnode(
+                    pos_x, 'float', 'abspos_x_type{}'.format(atomtype), simple_data)
+                pos_y = get_xml_attribute(force, new_y_name)
+                write_simple_outnode(
+                    pos_y, 'float', 'abspos_y_type{}'.format(atomtype), simple_data)
+                pos_z = get_xml_attribute(force, new_z_name)
+                write_simple_outnode(
+                    pos_z, 'float', 'abspos_z_type{}'.format(atomtype), simple_data)
+
+            write_simple_outnode(
+                largest_force, 'float', 'force_largest', simple_data)
 
         return simple_data
 

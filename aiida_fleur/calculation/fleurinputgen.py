@@ -540,7 +540,7 @@ class FleurinputgenCalculation(JobCalculation):
             calcinfo.retrieve_list.append(file1)
 
         codeinfo = CodeInfo()
-        cmdline_params = ["-explicit", "-electronConfig"] # TODO? let the user decide -electronconfig?
+        cmdline_params = ["-explicit"]#, "-electronConfig"] # TODO? let the user decide -electronconfig?
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
