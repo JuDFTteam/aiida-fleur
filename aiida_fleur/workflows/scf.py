@@ -681,7 +681,7 @@ class fleur_scf_wc(WorkChain):
         except KeyError:
             temp1 = last_calc_out_dict.get('overall_charge_density', None)
         outputnode_dict['distance_charge'] = temp1
-        #outputnode_dict['distance_charge_all'] = self.ctx.distance
+        outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
