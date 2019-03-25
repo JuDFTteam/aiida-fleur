@@ -29,7 +29,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()

@@ -10,7 +10,7 @@ from __future__ import absolute_import
 def test_create_group():
    from aiida_fleur.tools.common_aiida import create_group
    from aiida.orm import DataFactory, Group
-   ParameterData = DataFactory('parameter')
+   ParameterData = DataFactory('dict')
 
    para = ParameterData(dict={})
    # para.store()

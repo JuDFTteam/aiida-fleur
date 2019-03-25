@@ -15,7 +15,7 @@ from aiida.orm import load_node
 from pprint import pprint
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 KpointsData = DataFactory('array.kpoints')
 
 FleurInpCalc = CalculationFactory('fleur.inpgen')

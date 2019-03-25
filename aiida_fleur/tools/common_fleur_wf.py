@@ -23,7 +23,7 @@ import six
 
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = CalculationFactory('fleur.fleur')

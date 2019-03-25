@@ -26,7 +26,7 @@ from aiida.orm import load_node
 from aiida.orm.data.base import Bool
 from aiida.work import workfunction as wf
 
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     """

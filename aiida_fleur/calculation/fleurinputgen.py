@@ -30,7 +30,7 @@ import six
 from six.moves import zip
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 class FleurinputgenCalculation(JobCalculation):
     """

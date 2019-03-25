@@ -33,7 +33,7 @@ from six.moves import range
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 

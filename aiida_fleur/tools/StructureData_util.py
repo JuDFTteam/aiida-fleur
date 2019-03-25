@@ -31,7 +31,7 @@ from six.moves import range
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 
 def is_structure(structure):
@@ -375,7 +375,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     #if wanted make individual kind for that atom
     #kind names will be atomsymbol+number
     #create new structure with new kinds and atoms
-    #Param = DataFactory('parameter')
+    #Param = DataFactory('dict')
     symbol_count = {} # Counts the atom symbol occurence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
     replace_siteN = [] # all site integers to be replaced

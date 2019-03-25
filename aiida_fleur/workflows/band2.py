@@ -36,7 +36,7 @@ from seekpath.aiidawrappers import get_path, get_explicit_k_path
 import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 RemoteData = DataFactory('remote')
 KpointsData = DataFactory('array.kpoints')
 FleurinpData = DataFactory('fleur.fleurinp')

@@ -47,7 +47,7 @@ from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_
 from aiida_fleur.tools.ParameterData_util import dict_merger, extract_elementpara
 import six
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 

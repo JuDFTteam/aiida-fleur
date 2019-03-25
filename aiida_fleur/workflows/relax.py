@@ -33,7 +33,7 @@ import six
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_relax_wc(WorkChain):

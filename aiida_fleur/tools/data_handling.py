@@ -23,7 +23,7 @@ from aiida.orm.querybuilder import QueryBuilder as QB
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 
 

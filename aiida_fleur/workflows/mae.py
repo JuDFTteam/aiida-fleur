@@ -30,7 +30,7 @@ from six.moves import range
 
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_mae_wc(WorkChain):

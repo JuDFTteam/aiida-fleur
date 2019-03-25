@@ -34,7 +34,7 @@ from six.moves import input
 
 
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 

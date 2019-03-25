@@ -27,7 +27,7 @@ import six
 from six.moves import range
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 
 class dummy_wc(WorkChain):

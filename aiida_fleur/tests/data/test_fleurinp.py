@@ -113,7 +113,7 @@ def test_fleurinp_parameterdata_extraction(inpxmlfilepath):
     """
     from aiida.orm import DataFactory
     
-    ParameterData = DataFactory('parameter')
+    ParameterData = DataFactory('dict')
     fleurinp = DataFactory('fleur.fleurinp')
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
