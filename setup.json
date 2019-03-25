@@ -1,14 +1,20 @@
 {
-    "version" : "0.6.1",
+    "version" : "1.0.0",
     "name" : "aiida-fleur",
-    "url" : "https://github.com/broeder-j/aiida-fleur",
+    "url" : "https://github.com/JuDFTteam/aiida-fleur",
     "license" : "MIT License, see LICENSE.txt file.",
-    "author" : "Jens Broeder",
+    "author" : "JuDFTteam",
     "author_email" : "j.broeder@fz-juelich.de",
     "description" : "Python FLEUR simulation package containing an AiiDA Plugin for running the FLEUR-code and its input generator. Plus some workflows and utility",
     "classifiers" : [
         "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Development Status :: 4 - Beta",
         "Environment :: Plugins",
         "Intended Audience :: Science/Research",
@@ -22,14 +28,15 @@
         ],
     "reentry_register" : true,
     "install_requires" : [
-            "aiida-core >= 0.12.0[atomic_tools]",
+            "aiida-core >= 1.0.0b1[atomic_tools]",
             "lxml >= 3.6.4",
             "pytest-cov >= 2.5.0",
             "pytest >= 2.9",
             "pgtest",
             "numpy>=1.16.0",
             "sympy",
-            "masci-tools"
+            "masci-tools",
+            "future"
     ],
     "extras_require" : {
             "graphs ": ["matplotlib",
