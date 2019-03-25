@@ -39,9 +39,17 @@
             "future"
     ],
     "extras_require" : {
-            "graphs ": ["matplotlib",
-                        "masci-tools"]
-        },
+        "graphs ": [
+            "matplotlib",
+            "masci-tools"
+        ],
+        "pre-commit": [
+            "pre-commit==1.11.0",
+            "yapf==0.24.0",
+            "prospector==0.12.11",
+            "pylint==1.9.3"
+        ]
+    },
     "entry_points" : {
         "aiida.calculations" : [
             "fleur.fleur = aiida_fleur.calculation.fleur:FleurCalculation",
