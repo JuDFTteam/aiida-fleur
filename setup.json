@@ -27,7 +27,7 @@
             "pytest-cov >= 2.5.0",
             "pytest >= 2.9",
             "pgtest",
-            "numpy==1.14.3",
+            "numpy>=1.16.0",
             "sympy",
             "masci-tools"
     ],
@@ -58,8 +58,8 @@
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
             "fleur.corelevel = aiida_fleur.workflows.corelevel:fleur_corelevel_wc",
-            "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc"
-	    "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc"
+            "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc",
+	    "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc",
 	    "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc"
         ]
     }
