@@ -3,6 +3,7 @@
 This test runs the fleur_convergence workflow for path 1
 """
 #TODO: overall tests, should create the nodes they use in the db.
+from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')

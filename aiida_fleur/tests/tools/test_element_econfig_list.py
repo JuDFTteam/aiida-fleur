@@ -1,6 +1,7 @@
 
 
 # get_econfig
+from __future__ import absolute_import
 def test_get_econfig_W():
     from aiida_fleur.tools.element_econfig_list import get_econfig
 

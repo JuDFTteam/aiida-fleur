@@ -22,12 +22,14 @@ This module, contains the crystal structure relaxation workflow for FLEUR.
 #from ase import *
 #from ase.lattice.surface import *
 #from ase.io import *
+from __future__ import absolute_import
 from aiida.orm import Code, DataFactory, load_node
 from aiida.work.workchain import WorkChain, while_, if_, ToContext
 from aiida.work.run import run, submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
+import six
 
 
 StructureData = DataFactory('structure')
@@ -239,6 +241,6 @@ class fleur_relax_wc(WorkChain):
             self.report('Done, I reached the number of forces cycles, system is not relaxed enough.')
             self.report('Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force))
         outdict = self.ctx.last_calc2
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)        # return success, and the last calculation outputs
         # ouput must be aiida Data types.

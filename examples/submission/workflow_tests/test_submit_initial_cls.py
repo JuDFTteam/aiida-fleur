@@ -13,6 +13,8 @@
 """
 Here we run the fleur_intitial_cls_wc  on some material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
@@ -144,7 +146,7 @@ print("##################### TEST fleur_initial_cls_wc #####################")
 if submit_wc:
     res = submit(fleur_initial_cls_wc, **inputs)
     print("##################### Submited fleur_initial_cls_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_initial_cls_wc #####################")
 else:
     print("##################### Running fleur_initial_cls_wc #####################")

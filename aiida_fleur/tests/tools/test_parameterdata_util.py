@@ -1,6 +1,7 @@
 
 
 # dict_merger
+from __future__ import absolute_import
 def test_dict_merger_interface_dicts_lists_str_int():
     from aiida_fleur.tools.ParameterData_util import dict_merger
 

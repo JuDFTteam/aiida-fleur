@@ -13,9 +13,12 @@
 """
 You find the usual binding_energy for all elements in the periodic table.
 """
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida.common.constants import elements as PeriodicTableElements
+import six
 
-atomic_numbers = {data['symbol'] : num for num,data in PeriodicTableElements.iteritems()}
+atomic_numbers = {data['symbol'] : num for num,data in six.iteritems(PeriodicTableElements)}
 
 # TODO
 # FLEUR econfig=[core states|valence states]
@@ -165,9 +168,9 @@ def get_econfig(element, full=False):
             return econ
         else:
             return econ
-    elif isinstance(element, basestring):# str):
+    elif isinstance(element, six.string_types):# str):
         atomic_names = {data['symbol']: num for num,
-                         data in econfiguration.iteritems()}
+                         data in six.iteritems(econfiguration)}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
@@ -197,7 +200,7 @@ def get_coreconfig(element, full=False):
             return econ.split('|')[0].rstrip()
     elif isinstance(element, str):
         atomic_names = {data['symbol']: num for num,
-                         data in econfiguration.iteritems()}
+                         data in six.iteritems(econfiguration)}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:

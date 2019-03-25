@@ -20,6 +20,7 @@ cylce management of a FLEUR calculation with AiiDA.
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs, how?
+from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
@@ -33,6 +34,7 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, optimize_calc_options
 from aiida_fleur.tools.xml_util import eval_xpath2
+import six
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
@@ -204,7 +206,7 @@ class fleur_scf_wc(WorkChain):
         else:
             options = defaultoptions
             
-        for key, val in defaultoptions.iteritems():
+        for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
         
@@ -751,7 +753,7 @@ class fleur_scf_wc(WorkChain):
             outdict['last_fleur_calc_output'] = last_calc_out
 
         #outdict['output_scf_wc_para'] = outputnode
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 
@@ -915,7 +917,7 @@ def create_scf_result_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in kwargs.iteritems():
+    for key, val in six.iteritems(kwargs):
         if key == 'outpara': #  should be alwasys there
             outpara = val
     outdict = {}

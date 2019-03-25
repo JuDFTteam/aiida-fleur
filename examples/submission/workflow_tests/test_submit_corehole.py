@@ -13,6 +13,8 @@
 """
 Here we run the fleur_corehole_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
@@ -150,7 +152,7 @@ print("##################### TEST fleur_corehole_wc #####################")
 if submit_wc:
     res = submit(fleur_corehole_wc, **inputs)
     print("##################### Submited fleur_corehole_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_corehole_wc #####################")
 else:
     print("##################### Running fleur_corehole_wc #####################")

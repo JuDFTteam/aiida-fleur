@@ -19,10 +19,14 @@ by the Fleur code and the fleur plugin.
 # TODO finish implementation of create=False
 # TODO: no aiida imports
 
+from __future__ import absolute_import
+from __future__ import print_function
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from aiida.common.exceptions import InputValidationError
+import six
+from six.moves import range
 
 #from somewhere import ValidationError/InputValidationError
 #some error, that does not depend on aiida
@@ -719,15 +723,15 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     species_seq = ['mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force',  'electronConfig', 'nocoParams', 'ldaU', 'lo']
 
     #root = fleurinp_tree_copy.getroot()
-    for key,val in attributedict.iteritems():
+    for key,val in six.iteritems(attributedict):
         if key == 'mtSphere': # always in inp.xml
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathmt, attrib, value)
         elif key == 'atomicCutoffs': # always in inp.xml
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathatomicCutoffs, attrib, value)
         elif key == 'energyParameters': # always in inp.xml
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathenergyParameters, attrib, value)
         elif key == 'lo': # optional in inp.xml
             #policy: we DELETE all LOs, and create new ones from the given parameters.
@@ -738,7 +742,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
             # there can be multible LO tags, so I expect either one or a list
             if isinstance(val,dict):
-                for attrib, value in val.iteritems():
+                for attrib, value in six.iteritems(val):
                     xml_set_attribv_occ(fleurinp_tree_copy, xpathlo, attrib, value, create=create)
             else:# I expect a list of dicts
                 #lonodes = eval_xpath3(root, xpathlo)#, create=True, place_index=species_seq.index('lo'), tag_order=species_seq)
@@ -748,7 +752,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                 for j in range(0,los_need):
                     create_tag(fleurinp_tree_copy, xpathspecies, 'lo')#, place_index=species_seq.index('lo'), tag_order=species_seq)
                 for i, lodict in enumerate(val):
-                    for attrib, value in lodict.iteritems():
+                    for attrib, value in six.iteritems(lodict):
                         xml_set_attribv_occ(fleurinp_tree_copy, xpathlo, attrib, value, occ=[i])
 
         elif key == 'electronConfig':
@@ -757,7 +761,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             eval_xpath3(fleurinp_tree_copy, xpathelectronConfig, create=True, place_index=species_seq.index('electronConfig'), tag_order=species_seq)
 
             for tag in ['coreConfig', 'valenceConfig', 'stateOccupation']:
-                for etag, edictlist in val.iteritems():
+                for etag, edictlist in six.iteritems(val):
                     if not etag == tag:
                         continue
                     if etag=='stateOccupation':# there can be multiple times stateOccupation
@@ -768,7 +772,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                             parent.remove(occ)
                         if isinstance(edictlist,dict):
                             #print('here')
-                            for attrib, value in edictlist.iteritems():
+                            for attrib, value in six.iteritems(edictlist):
                                 xml_set_attribv_occ(fleurinp_tree_copy, xpathcoreocc, attrib, value, create=create)
                         else:# I expect a list of dicts
                             #occnodes = eval_xpath3(root, xpathcoreocc)
@@ -779,24 +783,24 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                                 create_tag(fleurinp_tree_copy, xpathelectronConfig, 'stateOccupation', create=create)
                             for i, occdict in enumerate(edictlist):
                                 #override them one after one
-                                for attrib, value in occdict.iteritems():
+                                for attrib, value in six.iteritems(occdict):
                                     xml_set_attribv_occ(fleurinp_tree_copy, xpathcoreocc, attrib, value, occ=[i])
 
                     else:
                         xpathconfig = xpathelectronConfig + '/{}'.format(etag)
                         xml_set_text(fleurinp_tree_copy, xpathconfig, edictlist, create=create, place_index=species_seq.index('electronConfig'), tag_order = species_seq)
         elif key == 'nocoParams':
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 if attrib == 'qss':
                     xml_set_text(fleurinp_tree_copy, xpathnocoParamsqss, attrib, value)
                 else:
                    xml_set_attribv_occ(fleurinp_tree_copy, xpathnocoParams, attrib, value)
         elif key == 'ldaU':
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathLDA_U, attrib, value, create=create)
         elif key == 'special':
             eval_xpath3(fleurinp_tree_copy, xpathSOCscale, create=True, place_index=species_seq.index('special'), tag_order=species_seq)
-            for attrib, value in val.iteritems():
+            for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpathSOCscale, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpathspecies, attrib, value)
@@ -828,7 +832,7 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
             xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
 
 
-    for key, val in attributedict.iteritems():
+    for key, val in six.iteritems(attributedict):
         if key == 'force':
             for attrib, value in val:
                 xml_set_all_attribv(fleurinp_tree_copy, xpathforce, attrib, value)
@@ -994,10 +998,10 @@ def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings' : 
                     'I recieved "{}", maybe the attribute does not exist'
                     ''.format(attributename, node, attrib_value))
             else:
-                print(
+                print((
                     'Can not get attributename: "{}" from node "{}", '
                     'because node is not an element of etree.'
-                    ''.format(attributename, node))
+                    ''.format(attributename, node)))
             return None
     else: # something doesn't work here, some nodes get through here
         if parser_info_out:
@@ -1006,10 +1010,10 @@ def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings' : 
                 'because node is not an element of etree.'
                 ''.format(attributename, node))
         else:
-            print(
+            print((
                 'Can not get attributename: "{}" from node "{}", '
                 'because node is not an element of etree.'
-                ''.format(attributename, node))
+                ''.format(attributename, node)))
         return None
 
 
@@ -1129,8 +1133,8 @@ def inpxml_todict(parent, xmlstr):
     #expertkey1 = xmlstructure[13]
 
     return_dict = {}
-    if parent.items():
-        return_dict = dict(parent.items())
+    if list(parent.items()):
+        return_dict = dict(list(parent.items()))
         # Now we have to convert lazy fortan style into pretty things for the Database
         for key in return_dict:
             if key in pos_switch_once1 or (key in pos_switch_several1):

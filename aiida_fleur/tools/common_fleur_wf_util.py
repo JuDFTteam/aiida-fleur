@@ -16,6 +16,11 @@ depend on AiiDA classes, therefore can be used without loading the dbenv.
 Util that does depend on AiiDA classes should go somewhere else.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+import six
+from six.moves import range
+from six.moves import zip
 def convert_formula_to_formula_unit(formula):
     """
     Converts a formula to the smalles chemical formula unit
@@ -28,13 +33,13 @@ def convert_formula_to_formula_unit(formula):
     # find greatest common divider of values
     # form formula unit string
     element_count_dict = get_natoms_element(formula)
-    nelements = element_count_dict.values()
+    nelements = list(element_count_dict.values())
     g = nelements[0]
     for a2 in nelements:
         g = gcd(g,a2)
 
     formula_unit_string = ''
-    for key, val in element_count_dict.iteritems():
+    for key, val in six.iteritems(element_count_dict):
         new_val = int(val/g)
         if new_val == 1:
             new_val = ''
@@ -128,7 +133,7 @@ def calc_stoi(unitcellratios, formulas, error_ratio=[]):
     errors_stoi = {}
     for i, formula in enumerate(formulas):
         res = get_natoms_element(formula)
-        for element, val in res.iteritems():
+        for element, val in six.iteritems(res):
             stoi_elm = stoi.get(element, 0)
             stoi[element] = stoi_elm + val*unitcellratios[i]
             if len(error_ratio):
@@ -136,11 +141,11 @@ def calc_stoi(unitcellratios, formulas, error_ratio=[]):
                 errors_stoi[element] = errors + val*val*error_ratio[i]*error_ratio[i]
 
     # make smallest number always one.
-    vals = stoi.values()
+    vals = list(stoi.values())
     minv = min(vals)
-    keymin = stoi.keys()[vals.index(minv)]
+    keymin = list(stoi.keys())[vals.index(minv)]
     norm_stoi = {}
-    for key, val in stoi.iteritems():
+    for key, val in six.iteritems(stoi):
         norm_stoi[key] = stoi[key]/minv
         if len(error_ratio):
             errors_stoi[key] = 1/stoi[keymin]*np.sqrt((errors_stoi[key]**2 + (stoi[key]/stoi[keymin]*errors_stoi[keymin])**2))
@@ -165,7 +170,7 @@ def get_atomprocent(formula):
     form_dict_new = {}
     form_dict = get_natoms_element(formula)
     ntotal = sum(form_dict.values())
-    for key, val in form_dict.iteritems():
+    for key, val in six.iteritems(form_dict):
         val_new = float(val)/ntotal
         form_dict_new[key] = val_new
     return form_dict_new
@@ -211,20 +216,20 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     #for key, val in ref_struc_te_dict.iteritems():
     ##    elem_n = get_natoms_element(key)
     #    ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
-    ref_el_norm = ref_struc_te_dict_norm.keys()
+    ref_el_norm = list(ref_struc_te_dict_norm.keys())
 
-    for formula, tE in struc_te_dict.iteritems():
+    for formula, tE in six.iteritems(struc_te_dict):
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
         print(ntotal)
         eform = tE#abs(tE)
-        for elem, count in elements_count.iteritems():
+        for elem, count in six.iteritems(elements_count):
             if elem in ref_el_norm:
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
-                print('Reference energy missing for element {}. '
+                print(('Reference energy missing for element {}. '
                       'You need to provide reference energies for all elements in you compound.'
-                       ''.format(elem))
+                       ''.format(elem)))
         eform_dict[formula] = eform/ntotal
         eform_list.append(eform/ntotal)
     return eform_list, eform_dict
@@ -290,7 +295,7 @@ def powerset(L):
     """
     import itertools
     pset = []
-    for n in xrange(len(L) + 1):
+    for n in range(len(L) + 1):
         for sset in itertools.combinations(L, n):
             pset.append(sset)
     return pset
@@ -388,23 +393,23 @@ def get_enhalpy_of_equation(reaction, formenergydict):
     educt_energy = 0
     product_energy = 0
 
-    for compound, factor in reac_dict.get('educts', {}).iteritems():
+    for compound, factor in six.iteritems(reac_dict.get('educts', {})):
         compound_e = 0
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print('Formation energy of compound {} not given in {}.'
-                  'I abort...'.format(compound, formenergydict))
+            print(('Formation energy of compound {} not given in {}.'
+                  'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             return None
         educt_energy = educt_energy + factor*compound_e
 
-    for compound, factor in reac_dict.get('products', {}).iteritems():
+    for compound, factor in six.iteritems(reac_dict.get('products', {})):
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print('Formation energy of compound {} not given in {}.'
-                  'I abort...'.format(compound, formenergydict))
+            print(('Formation energy of compound {} not given in {}.'
+                  'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             return None
         product_energy = product_energy + factor*compound_e
@@ -518,7 +523,7 @@ def check_eos_energies(energylist):
         if x < y > z:
             abnormality = True
             abnormalityindexlist.append(i)
-            print(x,y,z)
+            print((x,y,z))
             print('annormly detected')
 
     return abnormality, abnormalityindexlist

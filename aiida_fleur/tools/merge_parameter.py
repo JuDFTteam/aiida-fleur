@@ -19,6 +19,8 @@ This might also be of interest for other all-ellectron codes
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida.orm import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
 from aiida.orm.data.base import Bool
@@ -108,7 +110,7 @@ def merge_parameters(ParameterDataList, overwrite=True):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter))
+            print(('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter)))
 
     return paremeter_data_new
 

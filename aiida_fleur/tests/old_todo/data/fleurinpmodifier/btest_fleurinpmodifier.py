@@ -3,6 +3,8 @@
 """
 This test tries to create a fleurinpdata and to modefy it
 """
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -23,12 +25,12 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 
 path = os.getcwd()#path.realpath(__file__)
-print path
+print(path)
 filepath = path + '/inp.xml'  
 #'/Users/broeder/aiida/scratch/broeder/aiida_run2/ff/4c/c14d-8a1b-40b3-af95-400e23002bcb/inp.xml'
 
 new_fleurinpData = FleurInpData(files= [filepath])
-print new_fleurinpData.get_file_abs_path('inp.xml')
+print(new_fleurinpData.get_file_abs_path('inp.xml'))
 #new_fleurinpData.store()
 
 #new_fleurinpData= load_node(6)
@@ -110,10 +112,10 @@ new_e.set('type', "SCLO")
 #fleurmode.changes()
 fleurmode.show(validate=True)#, display=False)
 
-print fleurmode._original
-print fleurmode._tasks
+print(fleurmode._original)
+print(fleurmode._tasks)
 out=''#fleurmode.freeze()
 
-print 'out: {}'.format(out)
-print 'in: {}'.format(new_fleurinpData)
+print('out: {}'.format(out))
+print('in: {}'.format(new_fleurinpData))
 

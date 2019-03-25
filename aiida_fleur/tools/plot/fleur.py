@@ -22,6 +22,8 @@ if this evolves.
 # TODO but allow to optional parse information for saving and title,
 #  (that user can put pks or structure formulas in there)
 
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 #import matplotlib.pyplot as pp
 #from masci_tools.vis.plot_methods import *
@@ -30,6 +32,8 @@ from aiida.orm import load_node
 from aiida.orm.calculation.work import WorkCalculation
 from aiida.orm import Node
 from pprint import pprint
+import six
+from six.moves import range
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
@@ -71,7 +75,7 @@ def plot_fleur(*args, **kwargs):
 
     save = False
     show_dict = False
-    for key, val in kwargs.iteritems():    
+    for key, val in six.iteritems(kwargs):    
         if key=='save':
            save=val
         if key=='show_dict':
@@ -100,13 +104,13 @@ def plot_fleur_sn(node, show_dict=False, save=False):
     if isinstance(node, int):#pk
         node = load_node(node)
     
-    if isinstance(node, (str, unicode)): #uuid
+    if isinstance(node, (str, six.text_type)): #uuid
         node = load_node(node) #try
     
     if isinstance(node, Node):
         if isinstance(node, WorkCalculation):
             output_dict = node.get_outputs_dict()
-            keys = output_dict.keys()
+            keys = list(output_dict.keys())
             for key in keys:
                 if 'output_' in key:
                     if 'wc' in key or 'wf' in key:
@@ -119,15 +123,15 @@ def plot_fleur_sn(node, show_dict=False, save=False):
             try:
                 plotf = functions_dict[workflow_name]
             except KeyError:
-                print('Sorry, I do not know how to visualize this workflow: {}, node {}. Please implement me in plot_fleur_aiida!'.format(workflow_name, node))            
+                print(('Sorry, I do not know how to visualize this workflow: {}, node {}. Please implement me in plot_fleur_aiida!'.format(workflow_name, node)))            
                 if show_dict:
                     pprint(p_dict)
                 return
             plotf(node)
         else:
-            print('I do not know how to visualize this node: {}, type {}'.format(node, type(node)))
+            print(('I do not know how to visualize this node: {}, type {}'.format(node, type(node))))
     else:
-        print('The node provided: {}, type {} is not an AiiDA object'.format(node, type(node)))
+        print(('The node provided: {}, type {} is not an AiiDA object'.format(node, type(node))))
     # check if AiiDa node
     #check what type of node
     # if workfunction, get certain output node
@@ -153,7 +157,7 @@ def plot_fleur_mn(nodelist, save=False):
     ###    
     
     if not isinstance(nodelist, list):
-        print('The nodelist provided: {}, type {} is not a list. I abort'.format(nodelist, type(nodelist)))
+        print(('The nodelist provided: {}, type {} is not a list. I abort'.format(nodelist, type(nodelist))))
         return None
     
     node_labels = []
@@ -161,14 +165,14 @@ def plot_fleur_mn(nodelist, save=False):
         # first find out what we have then how to visualize
         if isinstance(node, int):#pk
             node = load_node(node)
-        if isinstance(node, (str, unicode)): #uuid
+        if isinstance(node, (str, six.text_type)): #uuid
             node = load_node(node) #try
             
         if isinstance(node, Node):
             node_labels.append(node.label)
             if isinstance(node, WorkCalculation):
                 output_dict = node.get_outputs_dict()
-                keys = output_dict.keys()
+                keys = list(output_dict.keys())
                 for key in keys:
                     if 'output_' in key:
                         if 'wc' in key or 'wf' in key:
@@ -182,16 +186,16 @@ def plot_fleur_mn(nodelist, save=False):
                 cur_list.append(node)  
                 all_nodes[workflow_name] = cur_list
             else:
-                print('I do not know how to visualize this node: {}, type {} from the nodelist {}'.format(node, type(node), nodelist))
+                print(('I do not know how to visualize this node: {}, type {} from the nodelist {}'.format(node, type(node), nodelist)))
         else:
-            print('The node provided: {} of type {} in the nodelist {} is not an AiiDA object'.format(node, type(node), nodelist))    
+            print(('The node provided: {} of type {} in the nodelist {} is not an AiiDA object'.format(node, type(node), nodelist)))    
   
     #print(all_nodes)
-    for node_key, nodelist in all_nodes.iteritems():
+    for node_key, nodelist in six.iteritems(all_nodes):
         try:
             plotf = functions_dict[node_key]
         except KeyError:
-            print('Sorry, I do not know how to visualize these nodes (multiplot): {} {}'.format(node_key, nodelist))            
+            print(('Sorry, I do not know how to visualize these nodes (multiplot): {} {}'.format(node_key, nodelist)))            
             continue
         plot_res = plotf(nodelist, labels=node_labels)
 
@@ -379,7 +383,7 @@ def clear_dict_empty_lists(to_clear_dict):
     if not isinstance(to_clear_dict, dict):
         return to_clear_dict
 
-    for key, value in to_clear_dict.iteritems():
+    for key, value in six.iteritems(to_clear_dict):
         if value:
             new_value = clear_dict_empty_lists(value)
             if new_value:

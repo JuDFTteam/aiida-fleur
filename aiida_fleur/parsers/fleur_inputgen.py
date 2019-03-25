@@ -20,6 +20,7 @@ that they might be useful to external tools
 """
 #TODO: maybe something from the out files should be saved in the db
 
+from __future__ import absolute_import
 import os
 from aiida.parsers.parser import Parser
 from aiida_fleur.data.fleurinp import FleurinpData

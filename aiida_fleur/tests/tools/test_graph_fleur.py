@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # test the fleur specific graph gernation routine
+from __future__ import absolute_import
 import pytest
 
 # These tests need dot/graphviz... which is not autoinstalled in the python env... so far

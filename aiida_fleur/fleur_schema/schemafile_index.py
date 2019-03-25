@@ -13,6 +13,7 @@
 This file is just were to hardcode some schema file paths
 """
 
+from __future__ import absolute_import
 import os
 
 # any additional schema file add here, plugin will find them

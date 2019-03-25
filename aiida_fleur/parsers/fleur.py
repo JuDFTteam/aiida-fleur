@@ -19,6 +19,7 @@ the parser. Makes testing and portability easier.
 # TODO: cleanup
 # TODO: move methods to utils, xml or other
 # TODO: warnings
+from __future__ import absolute_import
 import os
 #import numpy
 from datetime import date
@@ -175,13 +176,13 @@ class FleurParser(Parser):
 
             # Call routines for output node creation
             if simpledata:
-                outputdata = dict(simpledata.items() + parser_info.items())
+                outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
                 outxml_params = ParameterData(dict=outputdata)
                 link_name = self.get_linkname_outparams()# accessible via c.res
                 new_nodes_list.append((link_name, outxml_params))
 
             if complexdata:
-                parameter_data = dict(complexdata.items() + parser_info.items())
+                parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
                 outxml_params_complex = ParameterData(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 new_nodes_list.append((link_name, outxml_params_complex))

@@ -18,6 +18,8 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 # parameter node finding is not optimal.
 
 # TODO several eos starts wich only 20 structures to limit jobs throughput
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from string import digits
 from pprint import pprint
@@ -29,6 +31,7 @@ from aiida.work import workfunction as wf
 from aiida.work import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
+import six
 
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
@@ -116,8 +119,8 @@ class fleur_delta_wc(WorkChain):
         self.ctx.labels = []
         #self.ctx.calcs_to_run = calcs
         self.ctx.ncalcs = len(self.ctx.calcs_to_run)
-        print self.ctx.ncalcs
-        print self.ctx.ncalc
+        print(self.ctx.ncalcs)
+        print(self.ctx.ncalc)
         estimated_jobs = self.ctx.ncalc*wf_dict.get('points', 5)
         joblimit = wf_dict.get('joblimit', 90)
         self.ctx.eos_run_steps = 1
@@ -278,8 +281,8 @@ class fleur_delta_wc(WorkChain):
         inputs = self.get_inputs_eos()
 
 
-        print(self.ctx.minindex)
-        print(self.ctx.maxindex)
+        print((self.ctx.minindex))
+        print((self.ctx.maxindex))
 
         for struc, para in self.ctx.calcs_to_run[self.ctx.minindex:self.ctx.maxindex]:#0:0]:#
             #print para
@@ -475,7 +478,7 @@ class fleur_delta_wc(WorkChain):
 
         delta_file = SingleData.filename = self.ctx.outfilepath
 
-        print delta_file
+        print(delta_file)
 
         # output must be aiida Data types.
         outnodedict = {}
@@ -500,7 +503,7 @@ class fleur_delta_wc(WorkChain):
         outdict['output_delta_wc_para'] = outputnode.get('output_delta_wc_para')
         #outdict['delta_file'] = delta_file
         #print outdict
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 '''
 if __name__ == "__main__":

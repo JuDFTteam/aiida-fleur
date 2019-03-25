@@ -18,6 +18,8 @@ Input plug-in for a FLEUR ciculation. fleur.x
 # think about exception. warning policy.
 # TODO maybe allow only single file names not *
 # TODO maybe check the settings key values, make a list of all fleur files?
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 #from lxml import etree
 #from lxml.etree import XMLSyntaxError
@@ -459,7 +461,7 @@ class FleurCalculation(JobCalculation):
         if inputdict:
             raise InputValidationError(
                 "The following input data nodes are "
-                "unrecognized: {}".format(inputdict.keys()))
+                "unrecognized: {}".format(list(inputdict.keys())))
 
         #TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData.

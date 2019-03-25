@@ -2,6 +2,7 @@
 """
 This test runs the Fleur band workflow
 """
+from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')

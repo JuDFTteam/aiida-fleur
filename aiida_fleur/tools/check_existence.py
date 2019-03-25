@@ -21,6 +21,7 @@ example if a (successful) SCF with the same inputs exists
 Since cashing is not there for data yet, and below are some basic querries I 
 leave the code here for now.
 """
+from __future__ import absolute_import
 from aiida.orm import DataFactory
 from aiida.orm import QueryBuilder
 from aiida.orm.calculation.job import JobCalculation

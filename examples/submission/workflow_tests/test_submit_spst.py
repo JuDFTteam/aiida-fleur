@@ -13,6 +13,8 @@
 """
 Here we run the fleur_scf_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
@@ -198,14 +200,14 @@ print("##################### TEST fleur_spst_wc #####################")
 if submit_wc:
     res = submit(fleur_spst_wc, **inputs)
     print("##################### Submited fleur_spst_wc #####################")
-    print("Runtime info: {}".format(res))
-    print(res.pk)
+    print(("Runtime info: {}".format(res)))
+    print((res.pk))
     print("##################### Finished submiting fleur_spst_wc #####################")
 
 else:
     print("##################### Running fleur_spst_wc #####################")
     res = run(fleur_spst_wc, **inputs)
-    print(res['out'].get_dict())
+    print((res['out'].get_dict()))
     a = res['out'].get_dict()
     import matplotlib
     matplotlib.use('TkAgg')

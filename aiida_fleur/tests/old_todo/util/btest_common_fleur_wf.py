@@ -3,6 +3,8 @@
 """
 In here we put all things (methods) that are common to workflows 
 """
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -34,11 +36,11 @@ codeuuid = 'ba86d8f3-fd47-4776-ac75-bad7009dfa67'
 codeNode = load_node(1)
 nocode = load_node(2254)
 
-print is_code(codeNode)
-print is_code(codename)
-print is_code(codepk)
+print(is_code(codeNode))
+print(is_code(codename))
+print(is_code(codepk))
 #print is_code(codeuuid)
-print is_code(nocode)
+print(is_code(nocode))
 #print is_code(Code)
 
 # test get_inputs_inpgen
@@ -59,7 +61,7 @@ options = { "max_wallclock_seconds": 360,
             "prepend_text": 'this is a test',
             "append_text": 'this was a test'}
 inp = get_inputs_fleur(codeNode, remote, fleurinp, options, serial=False)
-print inp
+print(inp)
 
 inputs = {}
 options2 = {"max_wallclock_seconds": 360,
@@ -67,7 +69,7 @@ options2 = {"max_wallclock_seconds": 360,
 inputs = get_inputs_fleur(codeNode, remote, fleurinp, options2, serial=True)
 #print inputs
 #future = submit(FleurProcess, **inputs)
-print 'run Fleur'
+print('run Fleur')
 
 
 # test get inputs_fleur
@@ -78,4 +80,4 @@ options2 = {"max_wallclock_seconds": 360,
             "resources": {"num_machines": 1}}
 inputs = get_inputs_inpgen(structure, inpgencode, options2, params=None)
 future = submit(InpgenProcess, **inputs)
-print 'run inpgen'
+print('run inpgen')

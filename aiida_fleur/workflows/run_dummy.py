@@ -11,6 +11,7 @@
 ###############################################################################
 
 # import dummy_wc from where ever it is
+from __future__ import absolute_import
 from aiida_fleur.workflows.dummy import dummy_wc
 from pprint import pprint
 from aiida.orm.data.base import Str

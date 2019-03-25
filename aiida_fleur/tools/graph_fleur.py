@@ -13,7 +13,9 @@
 This code extents the original draw_graph method from  https://github.com/aiidateam/aiida_core
 It uses common colors to visualize the aiida-fleur nodes
 """
+from __future__ import absolute_import
 import os, tempfile
+import six
 
 def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='dot',
         include_calculation_inputs=False, include_calculation_outputs=False):
@@ -53,7 +55,7 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
         """
         if kwargs:
             additional_params = ",{}".format(
-                ",".join('{}="{}"'.format(k, v) for k, v in kwargs.iteritems()))
+                ",".join('{}="{}"'.format(k, v) for k, v in six.iteritems(kwargs)))
         else:
             additional_params = ""
 
@@ -191,11 +193,11 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     fd, fname = tempfile.mkstemp(suffix='.dot')
     with open(fname, 'w') as fout:
         fout.write("digraph G {\n")
-        for l_name, l_values in links.iteritems():
+        for l_name, l_values in six.iteritems(links):
             fout.write('    {}\n'.format(l_values))
-        for n_name, n_values in nodes.iteritems():
+        for n_name, n_values in six.iteritems(nodes):
             fout.write("    {}\n".format(n_values))
-        for n_name, n_values in additional_nodes.iteritems():
+        for n_name, n_values in six.iteritems(additional_nodes):
             fout.write("    {}\n".format(n_values))
         fout.write("}\n")
 

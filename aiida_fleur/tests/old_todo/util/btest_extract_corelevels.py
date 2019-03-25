@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
+from six.moves import range
 if not is_dbenv_loaded():
     load_dbenv()
 import sys,os
@@ -59,7 +62,7 @@ outxmlfile = test_outxmlfiles[0]
 corelevels, atomtypes = extract_corelevels(outxmlfile)
 #print corelevels
 for i in range(0,len(corelevels[0][1]['corestates'])):
-    print corelevels[0][1]['corestates'][i]['energy']
+    print(corelevels[0][1]['corestates'][i]['energy'])
 
 print(calcs_pks)
 for calc in calcs_pks:
@@ -71,5 +74,5 @@ for calc in calcs_pks:
     pprint(atypes)
     for i in range(0,len(corelevels[1][0]['corestates'])):
         #print corelevels[3][1]['corestates'][i]['energy']
-        print corelevels[1][0]['corestates'][i]['energy']
-print("--- %s seconds ---" % (time.time() - start_time))
+        print(corelevels[1][0]['corestates'][i]['energy'])
+print(("--- %s seconds ---" % (time.time() - start_time)))

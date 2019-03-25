@@ -17,6 +17,7 @@ nodes, or data-mine go in here
 """
 
 #import time
+from __future__ import absolute_import
 from aiida.orm import DataFactory, Node, load_node
 from aiida.orm.querybuilder import QueryBuilder as QB
 

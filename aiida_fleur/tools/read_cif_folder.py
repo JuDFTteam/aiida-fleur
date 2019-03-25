@@ -20,10 +20,13 @@ from a folder and store the structures in the database.
 # structure visualization, because cif file has more information
 # also keep connection to ICSD id number
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from aiida.orm import DataFactory
 from aiida.work import workfunction as wf
+from six.moves import range
 #from ase.io import cif
 
 cifdata = DataFactory('cif')
@@ -80,7 +83,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
                 filepaths.append(filepath)
 
     nfiles = len(filenames)
-    print '{} cif-files found in folder "{}" '.format(nfiles, parent_cif_folder)
+    print('{} cif-files found in folder "{}" '.format(nfiles, parent_cif_folder))
 
     structuredatas = []
 
@@ -92,8 +95,8 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     for i in range(nfiles):
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
-        except Exception, emessage:
-            print('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage))
+        except Exception as emessage:
+            print(('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage)))
             continue
         #print new_cif
         if new_cif[1]:
@@ -147,7 +150,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         file1 = os.open(logfile_name, os.O_RDWR|os.O_CREAT)
         os.write(file1, infofilestring)
         os.close(file1)
-    print '{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count)
+    print('{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count))
 
     return structuredatas2, filenames2
 

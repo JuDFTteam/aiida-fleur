@@ -7,7 +7,10 @@ energies and corelevel shifts with different methods.
 'divide and conquer'
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
+import six
 if not is_dbenv_loaded():
     load_dbenv()
 
@@ -106,9 +109,9 @@ class fleur_corehole_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
-        print("Workchain node identifiers: {}"
-              "".format(ProcessRegistry().current_calc_node))
+        print(('started bands workflow version {}'.format(self._workflowversion)))
+        print(("Workchain node identifiers: {}"
+              "".format(ProcessRegistry().current_calc_node)))
 
     def relaxation_needed(self):
         """
@@ -193,7 +196,7 @@ class fleur_corehole_wc(WorkChain):
 
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
-            print self.ctx.queue
+            print(self.ctx.queue)
         # if code local use
         #if self.inputs.fleur.is_local():
         #    inputs._options.computer = computer
@@ -216,7 +219,7 @@ class fleur_corehole_wc(WorkChain):
         inputs = self.get_inputs_fleur()
         #print inputs
         future = submit(FleurProcess, **inputs)
-        print 'run Fleur in band workflow'
+        print('run Fleur in band workflow')
 
         return ToContext(last_calc=future)
 
@@ -226,8 +229,8 @@ class fleur_corehole_wc(WorkChain):
         '''
         # TODO more here
         print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+        print(('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc)))
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -236,13 +239,13 @@ class fleur_corehole_wc(WorkChain):
         # TODO this should be easier...
         last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path')
         bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print bandfilepath
+        print(bandfilepath)
         #bandfilepath = "path to bandfile" # Array?
         if os.path.isfile(bandfilepath):
             self.ctx.successful = True
         else:
             bandfilepath = None
-            print '!NO bandstructure file was found, something went wrong!'
+            print('!NO bandstructure file was found, something went wrong!')
         #TODO corret efermi:
         # get efermi from last calculation
         efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
@@ -269,5 +272,5 @@ class fleur_corehole_wc(WorkChain):
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)

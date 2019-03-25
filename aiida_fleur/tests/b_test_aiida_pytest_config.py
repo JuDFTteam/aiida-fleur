@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import io
 
 from aiida_pytest.contextmanagers import redirect_stdout

@@ -19,6 +19,8 @@ energies and corelevel shifts with different methods.
 # TODO alow certain kpoint path, or kpoint node, so far auto
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
@@ -30,6 +32,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.work.workchain import while_, if_
 from aiida_fleur.tools.create_corehole import create_corehole
+import six
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -112,7 +115,7 @@ class fleur_corelevel_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
+        print(('started bands workflow version {}'.format(self._workflowversion)))
         print("Workchain node identifiers: ")#{}"
               #"".format(ProcessRegistry().current_calc_node))
 
@@ -175,7 +178,7 @@ class fleur_corelevel_wc(WorkChain):
 
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
-            print(self.ctx.queue)
+            print((self.ctx.queue))
         # if code local use
         #if self.inputs.fleur.is_local():
         #    inputs._options.computer = computer
@@ -208,8 +211,8 @@ class fleur_corelevel_wc(WorkChain):
         '''
         # TODO more here
         print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+        print(('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc)))
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -251,5 +254,5 @@ class fleur_corelevel_wc(WorkChain):
         outdict = {}
         outdict['band_out'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)

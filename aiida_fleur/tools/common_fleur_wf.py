@@ -16,7 +16,10 @@ depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida.orm import DataFactory, Node, load_node, CalculationFactory
+import six
 
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
@@ -355,7 +358,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
     formenergy_dict ={}
-    for compound, uuid in workchain_dict.iteritems():
+    for compound, uuid in six.iteritems(workchain_dict):
         # TODO ggf get formation energy from ouput node, or extras
         if isinstance(uuid, float):# allow to give values
             formenergy_dict[compound] = uuid
@@ -378,7 +381,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except:
                             ouputnode = None
                             formenergy = None
-                            print('WARNING: ouput node of {} not found. I skip'.format(n))
+                            print(('WARNING: ouput node of {} not found. I skip'.format(n)))
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -448,13 +451,13 @@ def performance_extract_calcs(calcs):
             calc = load_node(calc)
         count = count + 1
         pk = calc.pk
-        print(count, pk)
+        print((count, pk))
         res = calc.res
         res_keys = list(res)
         try:
             efermi = res.fermi_energy
         except AttributeError:
-            print('skipping {}, {}'.format(pk, calc.uuid))
+            print(('skipping {}, {}'.format(pk, calc.uuid)))
             continue # we skip these entries
             efermi = -10000
 
@@ -463,14 +466,14 @@ def performance_extract_calcs(calcs):
         except AttributeError:
             gap = -10000   
             continue
-            print('skipping 2 {}, {}'.format(pk, calc.uuid))
+            print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
 
 
         try:
             energy = res.energy
         except AttributeError:
             energy = 0.0
-            print('skipping 3 {}, {}'.format(pk, calc.uuid))
+            print(('skipping 3 {}, {}'.format(pk, calc.uuid)))
             continue
 
         data_dict['bandgap'].append(gap)        

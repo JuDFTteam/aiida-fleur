@@ -10,6 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
+from __future__ import absolute_import
 import pytest
 import os
 

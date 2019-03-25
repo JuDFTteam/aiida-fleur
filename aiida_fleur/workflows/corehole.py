@@ -23,6 +23,8 @@ energies and corelevel shifts with different methods.
 # TODO corelevel workflow, rename species of 0,0,0 position in inp.xml
 
 #import os.path
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import numpy as np
 from pprint import pprint
@@ -43,6 +45,7 @@ from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.ParameterData_util import dict_merger, extract_elementpara
+import six
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 RemoteData = DataFactory('remote')
@@ -237,7 +240,7 @@ class fleur_corehole_wc(WorkChain):
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
-        for key, val in defaultoptions.iteritems():
+        for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
         
@@ -397,7 +400,7 @@ class fleur_corehole_wc(WorkChain):
         # 1. Find out what atoms to put coreholes on
         self.report('Atoms to calculate : {}'.format(atoms_toc))
         for atom_info in atoms_toc:
-            if isinstance(atom_info, (str, unicode)):#basestring):
+            if isinstance(atom_info, (str, six.text_type)):#basestring):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
                     #coreholes_atoms = base_atoms_sites
@@ -454,7 +457,7 @@ class fleur_corehole_wc(WorkChain):
         # 2. now check what type of corelevel shall we create on those atoms
         self.report('Corelevels to calculate : {}'.format(corelevels_toc))
         for corel in corelevels_toc:
-            if isinstance(corel, (str, unicode)):#basestring):
+            if isinstance(corel, (str, six.text_type)):#basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split("[, ;:-]", corel)
                 #print(elm_cl)
@@ -966,7 +969,7 @@ class fleur_corehole_wc(WorkChain):
         #outdict = {}
         #outdict['output_eos_wc_para'] = ouputnode
 
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)
         msg = ('INFO: fleur_corehole_wc workflow Done')
         self.report(msg)

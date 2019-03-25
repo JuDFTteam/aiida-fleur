@@ -13,6 +13,8 @@
 """
 Here we run the fleur_scf_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
@@ -197,7 +199,7 @@ print("##################### TEST fleur_dmi_wc #####################")
 if submit_wc:
     res = submit(fleur_dmi_wc, **inputs)
     print("##################### Submited fleur_dmi_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_dmi_wc #####################")
 
 else:

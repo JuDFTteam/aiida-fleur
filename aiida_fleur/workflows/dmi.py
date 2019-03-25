@@ -15,6 +15,7 @@
     Dzyaloshinskii-Moriya interaction energy in reciprocal space.
 """
 
+from __future__ import absolute_import
 from aiida.work.workchain import WorkChain, ToContext
 from aiida.work.launch import submit
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -23,6 +24,8 @@ from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.orm import Code, DataFactory, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.common.datastructures import calc_states
+import six
+from six.moves import range
 
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
@@ -116,7 +119,7 @@ class fleur_dmi_wc(WorkChain):
             wf_dict = wf_default
         
         #extend wf parameters given by user using defaults
-        for key, val in wf_default.iteritems():
+        for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
         
@@ -136,7 +139,7 @@ class fleur_dmi_wc(WorkChain):
             options = defaultoptions
         
         #extend options given by user using defaults
-        for key, val in defaultoptions.iteritems():
+        for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
 

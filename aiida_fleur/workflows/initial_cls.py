@@ -23,6 +23,7 @@ corelevel shifts with different methods.
 # TODO: maybe launch all scfs at the same time
 # TODO: gives only a warning currently if ref not found.
 # but should lead to error if no ref is found for what should be calculated
+from __future__ import absolute_import
 from string import digits
 from aiida.work.run import submit
 from aiida.work.workchain import ToContext, WorkChain, if_
@@ -33,6 +34,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
+import six
 
 
 StructureData = DataFactory('structure')
@@ -185,7 +187,7 @@ class fleur_initial_cls_wc(WorkChain):
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
-        for key, val in defaultoptions.iteritems():
+        for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -504,7 +506,7 @@ class fleur_initial_cls_wc(WorkChain):
         #self.ctx.ref_calcs_torun.append(ref_el)
 
         # for entry in ref[elem] find parameter node
-        for elm, struc in self.ctx.ref.iteritems():
+        for elm, struc in six.iteritems(self.ctx.ref):
             #print(elm, struc)
             #self.ctx.ref_calcs_torun.append(ref_el)
             pass
@@ -663,7 +665,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         #first substract efermi from corelevel of reference structures
         # TODO check if both values, corelevel and efermi are in eV
-        for compound, atomtypes_list in ref_atomtypes.iteritems():
+        for compound, atomtypes_list in six.iteritems(ref_atomtypes):
             # atomtype_list contains a list of dicts of all atomtypes from compound x
             # get corelevels of compound x
             cls_all_atomtyps = ref_all_corelevel[compound]
@@ -683,7 +685,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         #now substract efermi from corelevel of compound structure
         #and calculate core level shifts
-        for compound, cls_atomtypes_list in all_corelevel.iteritems():
+        for compound, cls_atomtypes_list in six.iteritems(all_corelevel):
             #init, otherwise other types will override
             for i, atomtype in enumerate(atomtypes[compound]):
                 elm = atomtype.get('element', None)
@@ -721,15 +723,15 @@ class fleur_initial_cls_wc(WorkChain):
         # have been calculated.
         # convert total_en dict to list, why?
         total_en_list =[]
-        for key, val in total_en.iteritems():
+        for key, val in six.iteritems(total_en):
             total_en_list.append([key, val])
         if self.ctx.calculate_formation_energy:
             # the reference total energy is for the whole structure with several atoms,
             # we need it per atom
             ref_total_en_norm = {}
-            for key, val in ref_total_en.iteritems():
+            for key, val in six.iteritems(ref_total_en):
                 elm_dict = get_natoms_element(key)
-                ref_total_en_norm[elm_dict.keys()[0]] = 1.0* val/elm_dict.values()[0]
+                ref_total_en_norm[list(elm_dict.keys())[0]] = 1.0* val/list(elm_dict.values())[0]
             #print ref_total_en_norm
             #print total_en
             
@@ -760,31 +762,31 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['material'] = efermi.keys()[0]
+        outputnode_dict['material'] = list(efermi.keys())[0]
         outputnode_dict['corelevel_energies'] = cl
         outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl
         outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
-        outputnode_dict['reference_fermi_energy'] = ref_efermi.values()
-        outputnode_dict['reference_fermi_energy_des'] = ref_efermi.keys()
-        outputnode_dict['fermi_energy'] = efermi.values()[0]
+        outputnode_dict['reference_fermi_energy'] = list(ref_efermi.values())
+        outputnode_dict['reference_fermi_energy_des'] = list(ref_efermi.keys())
+        outputnode_dict['fermi_energy'] = list(efermi.values())[0]
         outputnode_dict['fermi_energy_units'] = 'htr'
         outputnode_dict['corelevelshifts'] = cls
         outputnode_dict['corelevelshifts_units'] = 'htr'
         outputnode_dict['binding_energy_convention'] = 'negativ'
         #outputnode_dict['coresetup'] = []#cls
         #outputnode_dict['reference_coresetup'] = []#cls
-        outputnode_dict['bandgap'] = gap.values()[0]
+        outputnode_dict['bandgap'] = list(gap.values())[0]
         outputnode_dict['bandgap_units'] = 'htr'
-        outputnode_dict['reference_bandgaps'] = ref_gap.values()
-        outputnode_dict['reference_bandgaps_des'] = ref_gap.keys()
+        outputnode_dict['reference_bandgaps'] = list(ref_gap.values())
+        outputnode_dict['reference_bandgaps_des'] = list(ref_gap.keys())
         outputnode_dict['atomtypes'] = at
         outputnode_dict['formation_energy'] = formE
         outputnode_dict['formation_energy_units'] = 'eV/atom'
-        outputnode_dict['total_energy'] = tE.values()[0]
+        outputnode_dict['total_energy'] = list(tE.values())[0]
         outputnode_dict['total_energy_units'] = 'eV'
-        outputnode_dict['total_energy_ref'] = tE_ref.values()
-        outputnode_dict['total_energy_ref_des'] = tE_ref.keys()
+        outputnode_dict['total_energy_ref'] = list(tE_ref.values())
+        outputnode_dict['total_energy_ref_des'] = list(tE_ref.keys())
         #outputnode = ParameterData(dict=outputnode_dict)
 
         # To have to ouput node linked to the calculation output nodes
@@ -807,7 +809,7 @@ class fleur_initial_cls_wc(WorkChain):
         #outdict = {}
         #outdict['output_initial_cls_wc_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)
         msg = ('INFO: Initial_state_CLS workflow Done')
         self.report(msg)
@@ -1132,10 +1134,10 @@ def clshifts_to_be(coreleveldict, reference_dict):
     """
 
     return_corelevel_dict = {}
-    for elem, corelevel_dict in coreleveldict.iteritems():
+    for elem, corelevel_dict in six.iteritems(coreleveldict):
         ref_el = reference_dict.get(elem, {})
         return_corelevel_dict[elem] = {}
-        for corelevel_name, corelevel_list in corelevel_dict.iteritems():
+        for corelevel_name, corelevel_list in six.iteritems(corelevel_dict):
             ref_cl = ref_el.get(corelevel_name, [])
             be_all = []
             nref = len(ref_cl)

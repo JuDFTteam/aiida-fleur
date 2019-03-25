@@ -19,6 +19,8 @@ of an equation of state
 #  half number of iteration if you are close to be converged. (therefore one can start with 18 iterations, and if thats not enough run agian 9 or something)
 #from sys import argv
 #import time
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Float
@@ -29,6 +31,8 @@ from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
+import six
+from six.moves import range
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -404,7 +408,7 @@ class fleur_eos_wc(WorkChain):
         returndict['output_eos_wc_structure'] = outputstructure
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)
 
             

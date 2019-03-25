@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from matplotlib.backends import _macosx
 import matplotlib.pyplot as pp
@@ -28,15 +30,15 @@ W_bcc_id2 = 24422
 W_fcc_id = 24
 
 W_bcc = load_node(W_bcc_id)
-print 'StructureData used:\n{}'.format(W_bcc)
-print 'cell: {}\n'.format(W_bcc.cell)
-print 'sites: {}\n'.format(W_bcc.sites)
+print('StructureData used:\n{}'.format(W_bcc))
+print('cell: {}\n'.format(W_bcc.cell))
+print('sites: {}\n'.format(W_bcc.sites))
 
 # create a Parameternode or load one from the DB
 W_para_id = 24507#without soc soc:24424
 W_para = load_node(W_para_id)
 
-print 'ParamterNode used:'
+print('ParamterNode used:')
 pprint(W_para.get_dict())
 
 ###############################

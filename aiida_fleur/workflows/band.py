@@ -16,6 +16,8 @@ electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 # TODO alternative parse a structure and run scf
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain, ToContext
@@ -24,6 +26,7 @@ from aiida.work.run import submit
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+import six
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -209,5 +212,5 @@ class fleur_band_wc(WorkChain):
         #outdict['output_band2'] = bandstructurenode1
         outdict['output_band_wc_para'] = outputnode
         #print outdict
-        for key, val in outdict.iteritems():
+        for key, val in six.iteritems(outdict):
             self.out(key, val)

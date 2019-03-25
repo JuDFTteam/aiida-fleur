@@ -18,6 +18,8 @@ electron bandstructure from a given structure data node with seekpath.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 # TODO alternative parse a structure and run scf
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
 from aiida.orm import Code, DataFactory
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
@@ -31,6 +33,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from seekpath.aiidawrappers import get_path, get_explicit_k_path
+import six
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -89,7 +92,7 @@ class fleur_band2_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
+        print(('started bands workflow version {}'.format(self._workflowversion)))
         print("Workchain node identifiers: ")#{}"
               #"".format(ProcessRegistry().current_calc_node))
 
@@ -191,8 +194,8 @@ class fleur_band2_wc(WorkChain):
         '''
         # TODO more here
         print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+        print(('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc)))
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -201,13 +204,13 @@ class fleur_band2_wc(WorkChain):
         # TODO this should be easier...
         last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
         bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print bandfilepath
+        print(bandfilepath)
         #bandfilepath = "path to bandfile" # Array?
         if os.path.isfile(bandfilepath):
             self.ctx.successful = True
         else:
             bandfilepath = None
-            print '!NO bandstructure file was found, something went wrong!'
+            print('!NO bandstructure file was found, something went wrong!')
         #TODO corret efermi:
         # get efermi from last calculation
         efermi1 = self.inputs.remote.get_inputs()[-1].res.fermi_energy
@@ -240,7 +243,7 @@ class fleur_band2_wc(WorkChain):
         #outdict['output_band2'] = bandstructurenode1
         outdict['output_band_wf_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)
 
 

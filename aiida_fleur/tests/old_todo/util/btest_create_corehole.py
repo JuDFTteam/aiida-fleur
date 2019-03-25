@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -89,10 +91,10 @@ valenceconfig = 'same'
 #pprint(fleurinp.inp_dict)
 
 new_inp = create_corehole_fleurinp(fleurinp, species, stateocc)
-print new_inp
+print(new_inp)
 
 etree = ''
 change = [(1,2)]
 res = write_change(etree, change)
 #res.write('.outtree')
-print res
+print(res)

@@ -15,6 +15,7 @@ contains verdi commands for the scf workchain
 in general these should become options of verdi aiida-fleur workchains 
 """
 
+from __future__ import absolute_import
 import click
 
 

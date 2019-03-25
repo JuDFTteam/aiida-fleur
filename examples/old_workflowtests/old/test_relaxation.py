@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -34,7 +36,7 @@ code2 = Code.get_from_string(codename2)
 computer = Computer.get(computer_name)
 
 s = load_node(14204)#13586)#137)# Be13586, W 137
-print s.sites
+print(s.sites)
 #print s.cell
 parameters = load_node(13496)# Be 13496, W 13161
 wf_para = ParameterData(dict={'relax_runmax' : 5, 'density_criterion' : 0.0000001, 'max_force_cycle' : 9})

@@ -24,6 +24,8 @@ manipulation plus methods for extration of AiiDA data structures.
 #TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 from lxml import etree
@@ -281,7 +283,7 @@ class FleurinpData(Data):
             schemafile_paths, found = self.find_schema(inp_version_number)
 
 
-            if (self._schema_file_path is None) or (self.inp_userchanges.has_key('fleurInputVersion')): #(not)
+            if (self._schema_file_path is None) or ('fleurInputVersion' in self.inp_userchanges): #(not)
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not(found):
                     raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
@@ -935,7 +937,7 @@ class FleurinpData(Data):
 
         # write new inp.xml, schema evaluation will be done when the file gets added
         new_tree.write(inpxmlfile)
-        print('wrote tree to' + str(inpxmlfile))
+        print(('wrote tree to' + str(inpxmlfile)))
 
         # delete old inp.xml file, not needed anymore
         #TODO maybe do some checks before

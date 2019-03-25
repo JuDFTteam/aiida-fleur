@@ -11,6 +11,7 @@
 ###############################################################################
 
 # Here we test if the interfaces of the workflows are still the same
+from __future__ import absolute_import
 import pytest
 
 @pytest.mark.usefixtures("aiida_env")

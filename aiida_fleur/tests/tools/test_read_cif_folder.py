@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import pytest
 
 
@@ -15,7 +17,7 @@ def test_read_cif_folder_interface(aiida_env):
     # preparation
     
     cif_folderpath = os.path.abspath('../files/cif/')
-    print cif_folderpath
+    print(cif_folderpath)
     #read_in
     structure_data, filenames = read_cif_folder(path=os.getcwd(), rekursive=True,
                                                 store=False, log=False,

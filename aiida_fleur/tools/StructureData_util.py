@@ -15,6 +15,8 @@ Collection of utility routines dealing with StructureData objects
 """
 #TODO move imports to workfuncitons namespace?
 
+from __future__ import absolute_import
+from __future__ import print_function
 from ase import *
 from ase.lattice.surface import *
 from ase.io import *
@@ -24,6 +26,8 @@ from aiida.orm.data.structure import Site, Kind
 from aiida.work.workfunctions import workfunction as wf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
+import six
+from six.moves import range
 
 
 StructureData = DataFactory('structure')
@@ -365,7 +369,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     from aiida.common.constants import elements as PeriodicTableElements
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}
+                           data in six.iteritems(PeriodicTableElements)}
 
     #get all atoms, get the symbol of the atom
     #if wanted make individual kind for that atom
@@ -437,7 +441,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
             # now we have to add an atom list to parameterData with the corresponding id.
             if parameterData:
                 id_a =  symbol_count[symbol]#'{}.{}'.format(charge, symbol_count[symbol])
-                for key, val in para.iteritems():
+                for key, val in six.iteritems(para):
                     if 'atom' in key:
                         if val.get('element', None) == symbol:
                             if id_a and id_a == val.get('id', None):

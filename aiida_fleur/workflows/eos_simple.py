@@ -15,6 +15,7 @@ In this module you find the workflow 'fleur_eos_wc_simple' for the calculation o
 of an equation of state, with only the structure and optional wc parameters as input
 """
 
+from __future__ import absolute_import
 import numpy as np
 from aiida.orm import Code, DataFactory, load_node
 from aiida.orm.data.base import Float
@@ -27,6 +28,8 @@ from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
 from aiida_fleur.workflows.eos import fleur_eos_wc, eos_structures
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
+from six.moves import range
 
 
 StructureData = DataFactory('structure')
@@ -223,5 +226,5 @@ class fleur_eos_wc_simple(WorkChain):
 
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)

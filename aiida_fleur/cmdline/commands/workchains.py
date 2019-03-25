@@ -15,6 +15,7 @@ contains verdi commands that are useful for fleur workchains
 """
 
 
+from __future__ import absolute_import
 import click
 
 

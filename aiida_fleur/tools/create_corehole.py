@@ -10,7 +10,10 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida.orm import DataFactory
+import six
 
 
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
@@ -34,7 +37,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     from aiida.common.constants import elements as PeriodicTableElements
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}
+                           data in six.iteritems(PeriodicTableElements)}
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -50,7 +53,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     #count = 0
     if parameterData:
         new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
-        for key, val in new_parameterd.iteritems():
+        for key, val in six.iteritems(new_parameterd):
             if 'atom' in key:
                 if val.get('element', None) == symbol:
                     # remember id is atomic number.some int
@@ -144,7 +147,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
             valenceconfig = eval_xpath2(econfig, 'valenceConfig')
             occupations = eval_xpath2(econfig, 'stateOccupation')
 
-            for key, val in stateocc.iteritems():
+            for key, val in six.iteritems(stateocc):
                 added = False
                 for occ in occupations:
                     name = get_xml_attribute(occ, 'state')

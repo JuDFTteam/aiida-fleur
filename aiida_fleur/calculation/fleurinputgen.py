@@ -16,6 +16,7 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
+from __future__ import absolute_import
 from aiida.orm.calculation.job import JobCalculation
 from aiida.orm import DataFactory
 from aiida.common.exceptions import InputValidationError
@@ -25,6 +26,8 @@ from aiida.common.constants import bohr_to_ang
 from aiida.common.utils import classproperty
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
+import six
+from six.moves import zip
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -162,7 +165,7 @@ class FleurinputgenCalculation(JobCalculation):
         # Get the connection between coordination number and element symbol
         # maybe do in a differnt way
         _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}
+                           data in six.iteritems(PeriodicTableElements)}
 
         possible_namelists = self._possible_namelists
         possible_params = self._possible_params
@@ -247,12 +250,12 @@ class FleurinputgenCalculation(JobCalculation):
         #                   for k, val in input_params.iteritems()}
         #input_params_keys = input_params.keys()
 
-        if 'title' in input_params.keys():
+        if 'title' in list(input_params.keys()):
             self._inp_title = input_params.pop('title')
         #TODO validate type of values of the input parameter keys ?
 
         #check input_parameters
-        for namelist, paramdic in input_params.iteritems():
+        for namelist, paramdic in six.iteritems(input_params):
             if 'atom' in namelist: # this namelist can be specified more often
                 # special atom namelist needs to be set for writing,
                 #  but insert it in the right spot!
@@ -287,7 +290,7 @@ class FleurinputgenCalculation(JobCalculation):
 
 
             #in fleur it is possible to give a lattice namelist
-            if 'lattice' in input_params.keys():
+            if 'lattice' in list(input_params.keys()):
                 own_lattice = True
                 structure = inputdict.pop(self.get_linkname('structure'), None)
                 if structure is not None: #two structures given?
@@ -345,7 +348,7 @@ class FleurinputgenCalculation(JobCalculation):
         if inputdict:
             raise InputValidationError(
                 "The following input data nodes are "
-                "unrecognized: {}".format(inputdict.keys()))
+                "unrecognized: {}".format(list(inputdict.keys())))
 
         ##############################
         # END OF INITIAL INPUT CHECK #
@@ -461,7 +464,7 @@ class FleurinputgenCalculation(JobCalculation):
             # namelist content; set to {} if not present, so that we leave an
             # empty namelist
             namelist = input_params.pop('input', {})
-            for k, val in sorted(namelist.iteritems()):
+            for k, val in sorted(six.iteritems(namelist)):
                 infile.write(get_input_data_text(k, val, False, mapping=None))
             infile.write("/\n")
 
@@ -485,10 +488,10 @@ class FleurinputgenCalculation(JobCalculation):
                         reversed = False
                         if namels_name == 'soc':
                             reversed = True
-                        for k, val in sorted(namelist.iteritems(), reverse=reversed):
+                        for k, val in sorted(six.iteritems(namelist), reverse=reversed):
                             infile.write(get_input_data_text(k, val, True, mapping=None))
                     else:
-                        for k, val in sorted(namelist.iteritems()):
+                        for k, val in sorted(six.iteritems(namelist)):
                             infile.write(get_input_data_text(k, val, False, mapping=None))
                     infile.write("/\n")
             #infile.write(kpoints_card)
@@ -498,7 +501,7 @@ class FleurinputgenCalculation(JobCalculation):
                 "input_params leftover: The following namelists are specified"
                 " in input_params, but are "
                 "not valid namelists for the current type of calculation: "
-                "{}".format(",".join(input_params.keys())))
+                "{}".format(",".join(list(input_params.keys()))))
 
 
         calcinfo = CalcInfo()
@@ -616,7 +619,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
         # second is the actual line. This is used at the end to
         # resort everything.
         list_of_strings = []
-        for elemk, itemval in val.iteritems():
+        for elemk, itemval in six.iteritems(val):
             try:
                 idx = mapping[elemk]
             except KeyError:
@@ -629,7 +632,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
 
         # I first have to resort, then to remove the index from the first
         # column, finally to join the strings
-        list_of_strings = zip(*sorted(list_of_strings))[1]
+        list_of_strings = list(zip(*sorted(list_of_strings)))[1]
         return "".join(list_of_strings)
     elif hasattr(val, '__iter__'):
         if value_only:
@@ -661,7 +664,7 @@ def _lowercase_dict(dic, dict_name):
     from collections import Counter
 
     if isinstance(dic, dict):
-        new_dict = dict((str(k).lower(), val) for k, val in dic.iteritems())
+        new_dict = dict((str(k).lower(), val) for k, val in six.iteritems(dic))
         if len(new_dict) != len(dic):
             num_items = Counter(str(k).lower() for k in dic.keys())
             double_keys = ",".join([k for k, val in num_items if val > 1])

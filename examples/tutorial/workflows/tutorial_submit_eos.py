@@ -23,6 +23,7 @@ Layout:
 #######################
 # 1. Load the database environment. Imports and base class creation
 
+from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()

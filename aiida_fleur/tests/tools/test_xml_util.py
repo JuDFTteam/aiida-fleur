@@ -1,6 +1,7 @@
 
 
 # xml_set_attribv_occ
+from __future__ import absolute_import
 def test_xml_set_attribv_occ():
     from aiida_fleur.tools.xml_util import xml_set_attribv_occ
     pass

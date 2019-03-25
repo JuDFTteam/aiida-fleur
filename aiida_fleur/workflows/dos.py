@@ -14,6 +14,8 @@
 This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
 
 from aiida.orm import Code, DataFactory
@@ -24,6 +26,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -215,5 +218,5 @@ class fleur_dos_wc(WorkChain):
         #outdict['output_band2'] = dosnode2
         outdict['output_dos_wc_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)

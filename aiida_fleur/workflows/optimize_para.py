@@ -16,6 +16,7 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 """
 
 #import numpy as np
+from __future__ import absolute_import
 from aiida.orm import Code, DataFactory#, load_node
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
@@ -28,6 +29,7 @@ from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
 
 
 RemoteData = DataFactory('remote')
@@ -216,7 +218,7 @@ class fleur_optimize_parameters_wc(WorkChain):
 
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):

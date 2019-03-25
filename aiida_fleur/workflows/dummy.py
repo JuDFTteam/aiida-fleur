@@ -13,6 +13,8 @@
 """
 A dummy workchain to test nested workchains
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from aiida.orm import Code, DataFactory
 from aiida.work.workchain import WorkChain
@@ -21,6 +23,8 @@ from aiida.work.workchain import ToContext
 from aiida.work.process_registry import ProcessRegistry
 from aiida.work.workchain import Outputs
 from aiida.orm.data.base import Str
+import six
+from six.moves import range
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -93,7 +97,7 @@ class dummy_wc(WorkChain):
         subout = '{} | {} | {}, {}'.format(self.ctx.sub1, self.ctx.sub2, self.ctx.sub31, self.ctx.sub32)
         self.report(subout)
         outdict = {'out_dummy_wc' : Str('wonderful dummy_wc')}
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 
@@ -127,7 +131,7 @@ class sub_dummy_wc(WorkChain):
         message = 'generating output nodes sub_dummy'
         self.report(message)
         outdict = {'out_sub_dummy_wc' : Str('wonderful sub_dummy_wc')}
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 

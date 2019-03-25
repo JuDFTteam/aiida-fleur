@@ -14,6 +14,9 @@
 This contains code snippets and utility useful for dealing with parameter data nodes
 commonly used by the fleur plugin and workflows
 """
+from __future__ import print_function
+from __future__ import absolute_import
+import six
 
 def extract_elementpara(parameter_dict, element):
     """
@@ -24,7 +27,7 @@ def extract_elementpara(parameter_dict, element):
                                 the atom parameters for the given element
     """
     element_para_dict = {}
-    for key, val in parameter_dict.iteritems():
+    for key, val in six.iteritems(parameter_dict):
         if 'atom' in key:
             if val.get('element', '') == element:
                 element_para_dict[key] = val
@@ -49,8 +52,8 @@ def dict_merger(dict1, dict2):
     if not dict2:
         return dict1
 
-    keys1 = dict1.keys()
-    keys2 = dict2.keys()
+    keys1 = list(dict1.keys())
+    keys2 = list(dict2.keys())
 
     # add uncommon
     for key in keys2:
@@ -58,7 +61,7 @@ def dict_merger(dict1, dict2):
             new_dict[key] = dict2[key]
 
     # merge common
-    for key, val in dict1.iteritems():
+    for key, val in six.iteritems(dict1):
         if isinstance(val, dict):
             new_dict[key] = dict_merger(val, dict2.get(key, {}))
         elif isinstance(val, list):
@@ -70,5 +73,5 @@ def dict_merger(dict1, dict2):
         elif isinstance(val, float):
             new_dict[key] = val + dict2.get(key, 0.0)
         else:
-            print("don't know what to do with element : {}".format(key))
+            print(("don't know what to do with element : {}".format(key)))
     return new_dict

@@ -13,6 +13,7 @@
 """
 Contains verdi commands for fleurinpdata
 """
+from __future__ import absolute_import
 import click
 
 # this will get replaced by data_plug.group

@@ -17,6 +17,8 @@ fleurinpdata objects in a way which keeps the proverance.
 # TODO implement undo
 # TODO general clean up
 # TODO discuss design again what is really needed and the default way to du things
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 from lxml import etree
@@ -267,7 +269,7 @@ class FleurinpModifier(object):
                 if not xmlschema.validate(fleurinp_tree_copy):
                     pass# do something to get nice error message
                     # TODO maybe even delete wrong task
-                    print('change not valid: {}'.format(task[1:]))
+                    print(('change not valid: {}'.format(task[1:])))
                 else:
                     pass
         return workingtree
