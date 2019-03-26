@@ -41,188 +41,301 @@ class FleurCalculation(CalcJob):
     Main DFT code of the FLEUR code
     For more information about the FLEUR-code family, go to http://www.flapw.de/
     """
-    def _init_internal_params(self):
-        super(FleurCalculation, self)._init_internal_params()
 
-        ######### Only this should be to be maintained! #########
+    super(FleurCalculation, self)._init_internal_params()
 
-        # Default fleur output parser
-        self._default_parser = 'fleur.fleurparser'
-        #self._default_parser = 'fleur.fleur'
+    ######### Only this should be to be maintained! #########
 
-        # should a kpt node be used or fleur generate the mesh?
-        self._use_kpoints = False
-        self._INPXML_FILE_NAME = 'inp.xml'
+    # should a kpt node be used or fleur generate the mesh?
+    _DEFAULT_use_kpoints = False
+    _DEFAULT_INPXML_FILE_NAME = 'inp.xml'
 
-        # Default input and output files
-        self._DEFAULT_INPUT_FILE = 'inp.xml'#self._set_INPXML_FILE_PATH()
-        #self._FLEURINPDATA_FOLDER
-        #fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-        #'inp.xml' # this has to change the file is under FleurinpData
-        self._DEFAULT_OUTPUT_FILE = 'out.xml'
+    # Default input and output files
+    _DEFAULT_INPUT_FILE = 'inp.xml'#_DEFAULT_set_INPXML_FILE_PATH()
+    #_DEFAULT_FLEURINPDATA_FOLDER
+    #fleurinp.get_file_abs_path(_DEFAULT_INPXML_FILE_NAME)
+    #'inp.xml' # this has to change the file is under FleurinpData
+    _DEFAULT_OUTPUT_FILE = 'out.xml'
 
-        # Name of all files in FLEUR
-        # TODO think also to oursource this in a FleurCalc structure, and add
-        # as info when what file has to be copied
+    # Name of all files in FLEUR
+    # TODO think also to oursource this in a FleurCalc structure, and add
+    # as info when what file has to be copied
 
-        # these will be shown in AiiDA
-        self._OUTPUT_FILE_NAME = 'aiida.out' # Shell output
-        self._INPUT_FILE_NAME = 'inp.xml'
-        #fleur file names:
+    # these will be shown in AiiDA
+    _DEFAULT_OUTPUT_FILE_NAME = 'aiida.out' # Shell output
+    _DEFAULT_INPUT_FILE_NAME = 'inp.xml'
+    #fleur file names:
 
-        # needed for calc
+    # needed for calc
 
-        self._OUTXML_FILE_NAME = 'out.xml'
-        self._INP_FILE_NAME = 'inp'
-        self._ENPARA_FILE_NAME = 'enpara'
-        self._SYMOUT_FILE_NAME = 'sym.out'
-        self._CDN1_FILE_NAME = 'cdn1'
-        self._SHELLOUTPUT_FILE_NAME = 'shell.out'
-        self._ERROR_FILE_NAME = 'out.error'
-         # other
-        self._OUT_FILE_NAME = 'out'
-        self._CDNC_FILE_NAME = 'cdnc' # core charge density
-        self._TIME_INFO_FILE_NAME = 'time.info'
-        self._KPTS_FILE_NAME = 'kpts'
-        self._QPTS_FILE_NAME = 'qpts'
-        self._PLOT_INP_FILE_NAME = 'plot_inp'
-        self._BROYD_FILE_NAME = 'broyd*'
-        self._POT_FILE_NAME = 'pot*'
-        self._POT1_FILE_NAME = 'pottot'
-        self._POT2_FILE_NAME = 'potcoul'
-        self._STRUCTURE_FILE_NAME = 'struct.xcf'
-        self._STARS_FILE_NAME = 'stars'
-        self._WKF2_FILE_NAME = 'wkf2'
-        self._CDN_HDF5_FILE_NAME = 'cdn.hdf'
-        self._CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
+    _DEFAULT_OUTXML_FILE_NAME = 'out.xml'
+    _DEFAULT_INP_FILE_NAME = 'inp'
+    _DEFAULT_ENPARA_FILE_NAME = 'enpara'
+    _DEFAULT_SYMOUT_FILE_NAME = 'sym.out'
+    _DEFAULT_CDN1_FILE_NAME = 'cdn1'
+    _DEFAULT_SHELLOUTPUT_FILE_NAME = 'shell.out'
+    _DEFAULT_ERROR_FILE_NAME = 'out.error'
+     # other
+    _DEFAULT_OUT_FILE_NAME = 'out'
+    _DEFAULT_CDNC_FILE_NAME = 'cdnc' # core charge density
+    _DEFAULT_TIME_INFO_FILE_NAME = 'time.info'
+    _DEFAULT_KPTS_FILE_NAME = 'kpts'
+    _DEFAULT_QPTS_FILE_NAME = 'qpts'
+    _DEFAULT_PLOT_INP_FILE_NAME = 'plot_inp'
+    _DEFAULT_BROYD_FILE_NAME = 'broyd*'
+    _DEFAULT_POT_FILE_NAME = 'pot*'
+    _DEFAULT_POT1_FILE_NAME = 'pottot'
+    _DEFAULT_POT2_FILE_NAME = 'potcoul'
+    _DEFAULT_STRUCTURE_FILE_NAME = 'struct.xcf'
+    _DEFAULT_STARS_FILE_NAME = 'stars'
+    _DEFAULT_WKF2_FILE_NAME = 'wkf2'
+    _DEFAULT_CDN_HDF5_FILE_NAME = 'cdn.hdf'
+    _DEFAULT_CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
 
 
-        # special out files
-        self._DOS_FILE_NAME = 'DOS.*'
-        self._DOSINP_FILE_NAME = 'dosinp'
-        self._BAND_GNU_FILE_NAME = 'band.gnu'
-        self._BAND_FILE_NAME = 'bands.*'
-        self._NEW_XMlINP_FILE_NAME = 'inp_new.xml'
+    # special out files
+    _DEFAULT_DOS_FILE_NAME = 'DOS.*'
+    _DEFAULT_DOSINP_FILE_NAME = 'dosinp'
+    _DEFAULT_BAND_GNU_FILE_NAME = 'band.gnu'
+    _DEFAULT_BAND_FILE_NAME = 'bands.*'
+    _DEFAULT_NEW_XMlINP_FILE_NAME = 'inp_new.xml'
 
-        # helper files
-        self._FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
-        self._JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
-        self._QFIX_FILE_NAME = 'qfix'
-
-
-        # forces and relaxation files
-        self._FORCE_FILE_NAME = 'forces.dat'
-
-        # jij files
-        self._JENERG_FILE_NAME = 'jenerg'
-        self._MCINP_FILE_NAME = 'MCinp'
-        self._QPTSINFO_FILE_NAME = 'qptsinfo'
-        self._SHELL_FILE_NAME = 'shells'
-        self._JCONST_FILE_NAME = 'jconst'
-
-        # files for lda+U
-        self._NMMPMAT_FILE_NAME = 'n_mmp_mat'
-
-        # files for hybrid functionals
-        self._COULOMB1_FILE_NAME = 'coulomb1'
-        self._MIXBAS_FILE_NAME = 'mixbas'
-        self._CMT_FIlE_NAME = 'cmt'
-        self._CZ_FILE_NAME = 'cz'
-        self._OLAP_FILE_NAME = 'olap'
-        self._VR0_FILE_NAME = 'vr0'
-
-        # files non-collinear calculation
-        self._RHOMAT_INP_FILE_NAME = 'rhomat_inp'
-        self._RHOMAT_OUT_FILE_NAME = 'rhomat_out'
-        self._CDN_FILE_NAME = 'cdn'
-        self._DIROFMAG_FILE_NAME = 'dirofmag'
-
-        # files for Wannier 90
-        self._W90KPTS_FILE_NAME = 'w90kpts'
-        self._PROJ_FILE_NAME = 'proj'
-        self._WANN_INP_FILE_NAME = 'wann_inp'
-        self._BKPTS_FILE_NAME = 'bkpts'
-        self._WFMMN_FILE_NAME = 'WF*.mmn'
-        self._WFAMN_FILE_NAME = 'WF*.amn'
-        self._WFWIN_FILE_NAME = 'WF*.win'
-        self._WFWOUT_FILE_NAME = 'WF*.wout'
-        self._UNK_FILE_NAME = 'UNK*'
-        self._KPTSMAP_FILE_NAME = 'kptsmap'
-        self._PROJGEN_INP_FILE_NAME = 'projgen_inp'
-        self._IONS_FILE_NAME = 'IONS'
-        self._POLARIZATION_OUT_FILE_NAME = 'polarization_out'
-        self._HOPPING_FILE_NAME = 'hopping.*'
-        self._WF1HSOMTX_FILE_NAME = 'WF1.hsomtx'
-        self._RSSOCMAT_FILE_NAME = 'rssocmat.1'
-        self._RSNABLA_FILE_NAME = 'rsnabla.*'
-        self._WFNABL_FILE_NAME = 'WF*.nabl'
-
-        # copy file lists. I rather dont like this.
-        # Might gives rise to a lot of possible erros, if files or not there,
-        #or Fleur did not created same, or at some point they will not be
-        # deleted remotely.
-
-        ########## Policy
-        # we store everything needed for a further run in the local repository
-        #(inp.xml, cdn1), also all important results files.
-        # these will ALWAYS be copied from the local repository to the maschine
-        # If a parent calculation exists, other files will be copied remotely
-        #######
-
-        #all possible files first chargedensity
-        self._copy_filelist1 = []
-        self._copy_filelist1 = [self._INP_FILE_NAME,
-                                self._ENPARA_FILE_NAME,
-                                self._SYMOUT_FILE_NAME,
-                                self._CDN1_FILE_NAME,
-                                self._KPTS_FILE_NAME,
-                                self._STARS_FILE_NAME,
-                                self._WKF2_FILE_NAME]
-
-        #after inpgen, before first chargedensity
-        self._copy_filelist_inpgen = [self._INPXML_FILE_NAME]
-
-        #for after fleur SCF [name, detination_name]
-        self._copy_filelist_scf1 = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME]]
-        self._copy_filelist_scf2 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME]]
-        #self._INPXML_FILE_NAME, comes from fleurinpdata
-        self._copy_filelist_scf = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME],
-                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
-        self._copy_filelist_scf2_1 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME],
-                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
-        self._copy_filelist_scf_remote = [self._BROYD_FILE_NAME]
-        self._copy_filelist3 = []
-        self._copy_filelist3 = [self._INP_FILE_NAME,
-                                self._ENPARA_FILE_NAME,
-                                self._SYMOUT_FILE_NAME,
-                                self._CDN1_FILE_NAME,
-                                self._KPTS_FILE_NAME,
-                                self._STARS_FILE_NAME,
-                                self._WKF2_FILE_NAME,
-                                self._BROYD_FILE_NAME,
-                                self._OUT_FILE_NAME,
-                                self._POT_FILE_NAME]
-
-        #files need for rerun
-        self._copy_filelist3 = []
-        self._copy_filelist_dos = [self._INPXML_FILE_NAME,
-                                   self._CDN1_FILE_NAME]
-        self._copy_filelist_band = [self._INPXML_FILE_NAME,
-                                    self._POT_FILE_NAME,
-                                    self._CDN1_FILE_NAME]
+    # helper files
+    _DEFAULT_FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
+    _DEFAULT_JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
+    _DEFAULT_QFIX_FILE_NAME = 'qfix'
 
 
-        self._copy_filelist_hybrid = []
-        self._copy_filelist_jij = []
+    # forces and relaxation files
+    _DEFAULT_FORCE_FILE_NAME = 'forces.dat'
 
-        #possible settings_dict keys
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                               'additional_remotecopy_list', 'remove_from_remotecopy_list'
-                               'cmdline']
-        #possible modes?
-        self._fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
-                             'latticeCo', 'scf']
-    #_DEFAULT_INPUT_FILE = 'inp.xml'
+    # jij files
+    _DEFAULT_JENERG_FILE_NAME = 'jenerg'
+    _DEFAULT_MCINP_FILE_NAME = 'MCinp'
+    _DEFAULT_QPTSINFO_FILE_NAME = 'qptsinfo'
+    _DEFAULT_SHELL_FILE_NAME = 'shells'
+    _DEFAULT_JCONST_FILE_NAME = 'jconst'
+
+    # files for lda+U
+    _DEFAULT_NMMPMAT_FILE_NAME = 'n_mmp_mat'
+
+    # files for hybrid functionals
+    _DEFAULT_COULOMB1_FILE_NAME = 'coulomb1'
+    _DEFAULT_MIXBAS_FILE_NAME = 'mixbas'
+    _DEFAULT_CMT_FIlE_NAME = 'cmt'
+    _DEFAULT_CZ_FILE_NAME = 'cz'
+    _DEFAULT_OLAP_FILE_NAME = 'olap'
+    _DEFAULT_VR0_FILE_NAME = 'vr0'
+
+    # files non-collinear calculation
+    _DEFAULT_RHOMAT_INP_FILE_NAME = 'rhomat_inp'
+    _DEFAULT_RHOMAT_OUT_FILE_NAME = 'rhomat_out'
+    _DEFAULT_CDN_FILE_NAME = 'cdn'
+    _DEFAULT_DIROFMAG_FILE_NAME = 'dirofmag'
+
+    # files for Wannier 90
+    _DEFAULT_W90KPTS_FILE_NAME = 'w90kpts'
+    _DEFAULT_PROJ_FILE_NAME = 'proj'
+    _DEFAULT_WANN_INP_FILE_NAME = 'wann_inp'
+    _DEFAULT_BKPTS_FILE_NAME = 'bkpts'
+    _DEFAULT_WFMMN_FILE_NAME = 'WF*.mmn'
+    _DEFAULT_WFAMN_FILE_NAME = 'WF*.amn'
+    _DEFAULT_WFWIN_FILE_NAME = 'WF*.win'
+    _DEFAULT_WFWOUT_FILE_NAME = 'WF*.wout'
+    _DEFAULT_UNK_FILE_NAME = 'UNK*'
+    _DEFAULT_KPTSMAP_FILE_NAME = 'kptsmap'
+    _DEFAULT_PROJGEN_INP_FILE_NAME = 'projgen_inp'
+    _DEFAULT_IONS_FILE_NAME = 'IONS'
+    _DEFAULT_POLARIZATION_OUT_FILE_NAME = 'polarization_out'
+    _DEFAULT_HOPPING_FILE_NAME = 'hopping.*'
+    _DEFAULT_WF1HSOMTX_FILE_NAME = 'WF1.hsomtx'
+    _DEFAULT_RSSOCMAT_FILE_NAME = 'rssocmat.1'
+    _DEFAULT_RSNABLA_FILE_NAME = 'rsnabla.*'
+    _DEFAULT_WFNABL_FILE_NAME = 'WF*.nabl'
+
+    # copy file lists. I rather dont like this.
+    # Might gives rise to a lot of possible erros, if files or not there,
+    #or Fleur did not created same, or at some point they will not be
+    # deleted remotely.
+
+    ########## Policy
+    # we store everything needed for a further run in the local repository
+    #(inp.xml, cdn1), also all important results files.
+    # these will ALWAYS be copied from the local repository to the maschine
+    # If a parent calculation exists, other files will be copied remotely
+    #######
+
+    #all possible files first chargedensity
+    _DEFAULT_copy_filelist1 = [_DEFAULT_INP_FILE_NAME,
+                            _DEFAULT_ENPARA_FILE_NAME,
+                            _DEFAULT_SYMOUT_FILE_NAME,
+                            _DEFAULT_CDN1_FILE_NAME,
+                            _DEFAULT_KPTS_FILE_NAME,
+                            _DEFAULT_STARS_FILE_NAME,
+                            _DEFAULT_WKF2_FILE_NAME]
+
+    #after inpgen, before first chargedensity
+    _DEFAULT_copy_filelist_inpgen = [_DEFAULT_INPXML_FILE_NAME]
+
+    #for after fleur SCF [name, detination_name]
+    _DEFAULT_copy_filelist_scf1 = [[_DEFAULT_CDN1_FILE_NAME, _DEFAULT_CDN1_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf2 = [[_DEFAULT_CDN_LAST_HDF5_FILE_NAME, _DEFAULT_CDN_HDF5_FILE_NAME]]
+    #_DEFAULT_INPXML_FILE_NAME, comes from fleurinpdata
+    _DEFAULT_copy_filelist_scf = [[_DEFAULT_CDN1_FILE_NAME, _DEFAULT_CDN1_FILE_NAME],
+                               [_DEFAULT_INPXML_FILE_NAME, _DEFAULT_INPXML_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf2_1 = [[_DEFAULT_CDN_LAST_HDF5_FILE_NAME, _DEFAULT_CDN_HDF5_FILE_NAME],
+                               [_DEFAULT_INPXML_FILE_NAME, _DEFAULT_INPXML_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf_remote = [_DEFAULT_BROYD_FILE_NAME]
+    _DEFAULT_copy_filelist3 = [_DEFAULT_INP_FILE_NAME,
+                            _DEFAULT_ENPARA_FILE_NAME,
+                            _DEFAULT_SYMOUT_FILE_NAME,
+                            _DEFAULT_CDN1_FILE_NAME,
+                            _DEFAULT_KPTS_FILE_NAME,
+                            _DEFAULT_STARS_FILE_NAME,
+                            _DEFAULT_WKF2_FILE_NAME,
+                            _DEFAULT_BROYD_FILE_NAME,
+                            _DEFAULT_OUT_FILE_NAME,
+                            _DEFAULT_POT_FILE_NAME]
+
+    #files need for rerun
+    _DEFAULT_copy_filelist_dos = [_DEFAULT_INPXML_FILE_NAME,
+                               _DEFAULT_CDN1_FILE_NAME]
+    _DEFAULT_copy_filelist_band = [_DEFAULT_INPXML_FILE_NAME,
+                                _DEFAULT_POT_FILE_NAME,
+                                _DEFAULT_CDN1_FILE_NAME]
+
+
+    _DEFAULT_copy_filelist_hybrid = []
+    _DEFAULT_copy_filelist_jij = []
+
+    #possible settings_dict keys
+    _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
+                           'additional_remotecopy_list', 'remove_from_remotecopy_list'
+                           'cmdline']
+    #possible modes?
+    _DEFAULT_fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
+                         'latticeCo', 'scf']
+#_DEFAULT_INPUT_FILE = 'inp.xml'
+    
+    @classmethod
+    def define(cls, spec):
+        super(FleurCalculation, cls).define(spec)
+        
+        spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._DEFAULT_use_kpoints)
+        spec.input('metadata.options.inpxml_file_name', valid_type=type(True), default=cls._DEFAULT_INPXML_FILE_NAME)
+        
+        #default input and output files
+        spec.input('metadata.options.default_input_file', valid_type=type(True), default=cls._DEFAULT_INPUT_FILE)
+        spec.input('metadata.options.output_file', valid_type=type(True), default=cls._DEFAULT_OUTPUT_FILE)
+        
+        #these will be shown in AiiDA
+        spec.input('metadata.options.output_file_name', valid_type=type(True), default=cls._DEFAULT_OUTPUT_FILE_NAME)
+        spec.input('metadata.options.input_file_name', valid_type=type(True), default=cls._DEFAULT_INPUT_FILE_NAME)
+        
+        #needed for calc
+        spec.input('metadata.options.outxml_file_name', valid_type=type(True), default=cls._DEFAULT_OUTXML_FILE_NAME)
+        spec.input('metadata.options.inp_file_name', valid_type=type(True), default=cls._DEFAULT_INP_FILE_NAME)
+        spec.input('metadata.options.enpara_file_name', valid_type=type(True), default=cls._DEFAULT_ENPARA_FILE_NAME)
+        spec.input('metadata.options.symout_file_name', valid_type=type(True), default=cls._DEFAULT_SYMOUT_FILE_NAME)
+        spec.input('metadata.options.cdn1_file_name', valid_type=type(True), default=cls._DEFAULT_CDN1_FILE_NAME)
+        spec.input('metadata.options.shellout_file_name', valid_type=type(True), default=cls._DEFAULT_SHELLOUTPUT_FILE_NAME)
+        spec.input('metadata.options.error_file_name', valid_type=type(True), default=cls._DEFAULT_ERROR_FILE_NAME)
+        #other
+        spec.input('metadata.options.out_file_name', valid_type=type(True), default=cls._DEFAULT_OUT_FILE_NAME)
+        spec.input('metadata.options.cdnc_file_name', valid_type=type(True), default=cls._DEFAULT_CDNC_FILE_NAME)
+        spec.input('metadata.options.time_info_file_name', valid_type=type(True), default=cls._DEFAULT_TIME_INFO_FILE_NAME)
+        spec.input('metadata.options.kpts_file_name', valid_type=type(True), default=cls._DEFAULT_KPTS_FILE_NAME)
+        spec.input('metadata.options.qpts_file_name', valid_type=type(True), default=cls._DEFAULT_QPTS_FILE_NAME)
+        spec.input('metadata.options.plot_inp_file_name', valid_type=type(True), default=cls._DEFAULT_PLOT_INP_FILE_NAME)
+        spec.input('metadata.options.broyd_file_name', valid_type=type(True), default=cls._DEFAULT_BROYD_FILE_NAME)
+        spec.input('metadata.options.pot_file_name', valid_type=type(True), default=cls._DEFAULT_POT_FILE_NAME)
+        spec.input('metadata.options.pot1_file_name', valid_type=type(True), default=cls._DEFAULT_POT1_FILE_NAME)
+        spec.input('metadata.options.pot2_file_name', valid_type=type(True), default=cls._DEFAULT_POT2_FILE_NAME)
+        spec.input('metadata.options.structure_file_name', valid_type=type(True), default=cls._DEFAULT_STRUCTURE_FILE_NAME)
+        spec.input('metadata.options.stars_file_name', valid_type=type(True), default=cls._DEFAULT_STARS_FILE_NAME)
+        spec.input('metadata.options.wkf2_file_name', valid_type=type(True), default=cls._DEFAULT_WKF2_FILE_NAME)
+        spec.input('metadata.options.cdn_hdf5_file_name', valid_type=type(True), default=cls._DEFAULT_CDN_HDF5_FILE_NAME)
+        spec.input('metadata.options.cdn_last_hdf5_file_name', valid_type=type(True), default=cls._DEFAULT_CDN_LAST_HDF5_FILE_NAME)
+        
+        #special out files
+        spec.input('metadata.options.dos_file_name', valid_type=type(True), default=cls._DEFAULT_DOS_FILE_NAME)
+        spec.input('metadata.options.dosinp_file_name', valid_type=type(True), default=cls._DEFAULT_DOSINP_FILE_NAME)
+        spec.input('metadata.options.band_gnu_file_name', valid_type=type(True), default=cls._DEFAULT_BAND_GNU_FILE_NAME)
+        spec.input('metadata.options.band_file_name', valid_type=type(True), default=cls._DEFAULT_BAND_FILE_NAME)
+        spec.input('metadata.options.new_xmlinp_file_name', valid_type=type(True), default=cls._DEFAULT_NEW_XMlINP_FILE_NAME)
+        
+        #helper files
+        spec.input('metadata.options.fleur_warn_only_info_file_name', valid_type=type(True), default=cls._DEFAULT_FLEUR_WARN_ONLY_INFO_FILE_NAME)
+        spec.input('metadata.options.judft_warn_only_info_file_name', valid_type=type(True), default=cls._DEFAULT_JUDFT_WARN_ONLY_INFO_FILE_NAME)
+        spec.input('metadata.options.qfix_file_name', valid_type=type(True), default=cls._DEFAULT_QFIX_FILE_NAME)
+        
+        #forces and relaxation forces
+        spec.input('metadata.options.force_file_name', valid_type=type(True), default=cls._DEFAULT_FORCE_FILE_NAME)
+        
+        #jij files
+        spec.input('metadata.options.default_jenerg_file_name', valid_type=type(True), default=cls._DEFAULT_JENERG_FILE_NAME)
+        spec.input('metadata.options.mcinp_file_name', valid_type=type(True), default=cls._DEFAULT_MCINP_FILE_NAME)
+        spec.input('metadata.options.qptsinfo_file_name', valid_type=type(True), default=cls._DEFAULT_QPTSINFO_FILE_NAME)
+        spec.input('metadata.options.shell_file_name', valid_type=type(True), default=cls._DEFAULT_SHELL_FILE_NAME)
+        spec.input('metadata.options.jconst_file_name', valid_type=type(True), default=cls._DEFAULT_JCONST_FILE_NAME)
+        
+        #files for LDA+U
+        spec.input('metadata.options.nmmpmat_file_name', valid_type=type(True), default=cls._DEFAULT_NMMPMAT_FILE_NAME)
+        
+        #files for hybrid functionals
+        spec.input('metadata.options.coulomb1_file_name', valid_type=type(True), default=cls._DEFAULT_COULOMB1_FILE_NAME)
+        spec.input('metadata.options.mixbas_file_name', valid_type=type(True), default=cls._DEFAULT_MIXBAS_FILE_NAME)
+        spec.input('metadata.options.cmt_file_name', valid_type=type(True), default=cls._DEFAULT_CMT_FIlE_NAME)
+        spec.input('metadata.options.cz_file_name', valid_type=type(True), default=cls._DEFAULT_CZ_FILE_NAME)
+        spec.input('metadata.options.olap_file_name', valid_type=type(True), default=cls._DEFAULT_OLAP_FILE_NAME)
+        spec.input('metadata.options.vr0_file_name', valid_type=type(True), default=cls._DEFAULT_VR0_FILE_NAME)
+        
+        #files non-collinear calculation
+        spec.input('metadata.options.rhomat_inp_file_name', valid_type=type(True), default=cls._DEFAULT_RHOMAT_INP_FILE_NAME)
+        spec.input('metadata.options.rhomat_out_file_name', valid_type=type(True), default=cls._DEFAULT_RHOMAT_OUT_FILE_NAME)
+        spec.input('metadata.options.cdn_file_name', valid_type=type(True), default=cls._DEFAULT_CDN_FILE_NAME)
+        spec.input('metadata.options.dirofmag_file_name', valid_type=type(True), default=cls._DEFAULT_DIROFMAG_FILE_NAME)
+        
+        #files for Wannier 90
+        spec.input('metadata.options.w90kpts_file_name', valid_type=type(True), default=cls._DEFAULT_W90KPTS_FILE_NAME)
+        spec.input('metadata.options.proj_file_name', valid_type=type(True), default=cls._DEFAULT_PROJ_FILE_NAME)
+        spec.input('metadata.options.wann_inp_file_name', valid_type=type(True), default=cls._DEFAULT_WANN_INP_FILE_NAME)
+        spec.input('metadata.options.bkpts_file_name', valid_type=type(True), default=cls._DEFAULT_BKPTS_FILE_NAME)
+        spec.input('metadata.options.wfmmn_file_name', valid_type=type(True), default=cls._DEFAULT_WFMMN_FILE_NAME)
+        spec.input('metadata.options.wfamn_file_name', valid_type=type(True), default=cls._DEFAULT_WFAMN_FILE_NAME)
+        spec.input('metadata.options.wfwin_file_name', valid_type=type(True), default=cls._DEFAULT_WFWIN_FILE_NAME)
+        spec.input('metadata.options.wfwout_file_name', valid_type=type(True), default=cls._DEFAULT_WFWOUT_FILE_NAME)
+        spec.input('metadata.options.unk_file_name', valid_type=type(True), default=cls._DEFAULT_UNK_FILE_NAME)
+        spec.input('metadata.options.kptsmap_file_name', valid_type=type(True), default=cls._DEFAULT_KPTSMAP_FILE_NAME)
+        spec.input('metadata.options.projgen_inp_file_name', valid_type=type(True), default=cls._DEFAULT_PROJGEN_INP_FILE_NAME)
+        spec.input('metadata.options.ions_file_name', valid_type=type(True), default=cls._DEFAULT_IONS_FILE_NAME)
+        spec.input('metadata.options.polarization_out_file_name', valid_type=type(True), default=cls._DEFAULT_POLARIZATION_OUT_FILE_NAME)
+        spec.input('metadata.options.hopping_file_name', valid_type=type(True), default=cls._DEFAULT_HOPPING_FILE_NAME)
+        spec.input('metadata.options.wf1hsomtx_file_name', valid_type=type(True), default=cls._DEFAULT_WF1HSOMTX_FILE_NAME)
+        spec.input('metadata.options.rssocmat_file_name', valid_type=type(True), default=cls._DEFAULT_RSSOCMAT_FILE_NAME)
+        spec.input('metadata.options.rsnabla_file_name', valid_type=type(True), default=cls._DEFAULT_RSNABLA_FILE_NAME)
+        spec.input('metadata.options.wfnabl_file_name', valid_type=type(True), default=cls._DEFAULT_WFNABL_FILE_NAME)
+        
+        #filelists
+        spec.input('metadata.options.copy_filelist1', valid_type=type(True), default=cls._DEFAULT_copy_filelist1)
+        spec.input('metadata.options.copy_filelist_inpgen', valid_type=type(True), default=cls._DEFAULT_copy_filelist_inpgen)
+        
+        spec.input('metadata.options.copy_filelist_scf1', valid_type=type(True), default=cls._DEFAULT_copy_filelist_scf1)
+        spec.input('metadata.options.copy_filelist_scf2', valid_type=type(True), default=cls._DEFAULT_copy_filelist_scf2)
+        spec.input('metadata.options.copy_filelist_scf', valid_type=type(True), default=cls._DEFAULT_copy_filelist_scf)
+        spec.input('metadata.options.copy_filelist_scf2_1', valid_type=type(True), default=cls._DEFAULT_copy_filelist_scf2_1)
+        spec.input('metadata.options.copy_filelist_scf_remote', valid_type=type(True), default=cls._DEFAULT_copy_filelist_scf_remote)
+        spec.input('metadata.options.copy_filelist3', valid_type=type(True), default=cls._DEFAULT_copy_filelist3)
+        spec.input('metadata.options.copy_filelist_dos', valid_type=type(True), default=cls._DEFAULT_copy_filelist_dos)
+        spec.input('metadata.options.copy_filelist_band', valid_type=type(True), default=cls._DEFAULT_copy_filelist_band)
+        spec.input('metadata.options.copy_filelist_hybrid', valid_type=type(True), default=cls._DEFAULT_copy_filelist_hybrid)
+        spec.input('metadata.options.copy_filelist_jij', valid_type=type(True), default=cls._DEFAULT_copy_filelist_jij)
+        spec.input('metadata.options.setting_keys', valid_type=type(True), default=cls._DEFAULT_settings_keys)
+        spec.input('metadata.options.fleur_modes', valid_type=type(True), default=cls._DEFAULT_fleur_modes)
+        
+        #parser
+        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
+    
     @classproperty
     def _use_methods(cls):
         """
