@@ -333,65 +333,26 @@ class FleurCalculation(CalcJob):
         spec.input('metadata.options.setting_keys', valid_type=type(True), default=cls._DEFAULT_settings_keys)
         spec.input('metadata.options.fleur_modes', valid_type=type(True), default=cls._DEFAULT_fleur_modes)
         
+        #inputs transfered from _use_methods (pre 1.0.0b1)
+        spec.input('fleurinpdata', valid_type=FleurinpData,
+            help="Use a FleruinpData node that specifies the input parameters"
+                    "usually copy from the parent calculation, basicly makes"
+                    "the inp.xml file visible in the db and makes sure it has "
+                    "the files needed.")
+        spec.input('parent_calc_folder', valid_type=RemoteData,
+            help="Use a remote or local repository folder as parent folder "
+                    "(also for restarts and similar). It should contain all the "
+                    "needed files for a Fleur calc, only edited files should be "
+                    "uploaded from the repository.")
+        spec.input('settings', valid_type=Dict,
+            help="This parameter data node is used to specify for some "
+                    "advanced features how the plugin behaves. You can add files"
+                    "the retrieve list, or add command line switches, "
+                    "for all available features here check the documentation.")
+        
         #parser
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
     
-    @classproperty
-    def _use_methods(cls):
-        """
-        Extend the parent _use_methods with further keys.
-        """
-        retdict = JobCalculation._use_methods
-        retdict.update({
-            "fleurinpdata": {
-                'valid_types': FleurinpData,
-                'additional_parameter': None,
-                'linkname': 'fleurinpdata',
-                'docstring': (
-                    "Use a FleruinpData node that specifies the input parameters"
-                    "usually copy from the parent calculation, basicly makes"
-                    "the inp.xml file visible in the db and makes sure it has "
-                    "the files needed."),
-                },
-            "parent_folder": {
-                'valid_types': RemoteData,
-                'additional_parameter': None,
-                'linkname': 'parent_calc_folder',
-                'docstring': (
-                    "Use a remote or local repository folder as parent folder "
-                    "(also for restarts and similar). It should contain all the "
-                    "needed files for a Fleur calc, only edited files should be "
-                    "uploaded from the repository."),
-                },
-            "settings": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': (
-                    "This parameter data node is used to specify for some "
-                    "advanced features how the plugin behaves. You can add files"
-                    "the retrieve list, or add command line switches, "
-                    "for all available features here check the documentation."),
-
-            }})
-            #
-            #"parent_calc":{
-            #   'valid_types': (FleurinputgenCalculation, FleurCalculation),
-            #   'additional_parameter': None,
-            #   'linkname': 'parent_calc',
-            #   'docstring': ("Use a parent calculation from which to copy"
-            #                 "files, and so on."),
-            #
-            #  },
-            #"kpoints" : {
-            #   'valid_types': KpointsData,
-            #   'additional_parameter': None,
-            #   'linkname': 'kpoints',
-            #   'docstring': "Connect to k-point node from inpgen or other calc.",
-            #   }
-
-
-        return retdict
 
     @classproperty
     def _OUTPUT_FOLDER(cls):
@@ -558,9 +519,9 @@ class FleurCalculation(CalcJob):
         if settings is None:
             settings_dict = {}
         else:
-            if not isinstance(settings, ParameterData):
+            if not isinstance(settings, Dict):
                 raise InputValidationError("settings, if specified, must be of "
-                                           "type ParameterData")
+                                           "type Dict")
             else:
                 settings_dict = settings.get_dict()
         #check for for allowed keys, ignor unknown keys but warn.
