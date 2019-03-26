@@ -60,7 +60,8 @@ class FleurinpModifier(object):
 
         new_fleurinp = original.copy()
         # TODO test if file is there!
-        inpxmlfile = new_fleurinp.get_file_abs_path('inp.xml')
+        #inpxmlfile = new_fleurinp.get_file_abs_path('inp.xml')
+        inpxmlfile = new_fleurinp.open(key='inp.xml')
         modification_tasks = modifications.get_dict()['tasks']
 
         xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
@@ -364,7 +365,8 @@ class FleurinpModifier(object):
 
     def validate(self):
         #print('in validate')
-        inpxmlfile = self._original.get_file_abs_path('inp.xml')
+        #inpxmlfile = self._original.get_file_abs_path('inp.xml')
+        inpxmlfile = self._original.open(key='inp.xml')
         tree = etree.parse(inpxmlfile)
 
         try:# could be not found or on another computer...
@@ -385,7 +387,8 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            inpxmlfile = self._original.get_file_abs_path('inp.xml')
+            #inpxmlfile = self._original.get_file_abs_path('inp.xml')
+            inpxmlfile = self._original.open(key='inp.xml')
             tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
