@@ -42,7 +42,6 @@ class FleurCalculation(CalcJob):
     For more information about the FLEUR-code family, go to http://www.flapw.de/
     """
 
-    super(FleurCalculation, self)._init_internal_params()
 
     ######### Only this should be to be maintained! #########
 
