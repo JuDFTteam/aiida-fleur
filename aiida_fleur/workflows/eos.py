@@ -24,7 +24,7 @@ from __future__ import print_function
 import numpy as np
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.orm.nodes.base import Float
+from aiida.orm import Float
 from aiida.engine import WorkChain, ToContext#,Outputs
 from aiida.engine import workfunction as wf
 from aiida.engine import submit

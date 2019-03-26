@@ -37,15 +37,16 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     # until the connected part of the graph that contains the root_pk is fully explored.
     # TODO this command deserves to be improved, with options and further subcommands
 
-    from aiida.orm.calculation import Calculation
-    from aiida.engine.calculation.job import CalcJob
-    from aiida.orm.code import Code
-    from aiida.orm.node import Node
+    from aiida.orm import CalculationNode as Calculation
+    from aiida.engine import CalcJob
+    from aiida.orm import Code
+    from aiida.orm import Node
     from aiida.common.links import LinkType
     from aiida.orm.querybuilder import QueryBuilder
-    from aiida.orm.nodes.structure import StructureData
-    from aiida.orm.nodes.parameter import Dict
-
+    from aiida.plugins import DataFactory
+    
+    Dict = DataFactory('dict')
+    StructureData = DataFactory('structure')
     def draw_node_settings(node, **kwargs):
         """
         Returns a string with all infos needed in a .dot file  to define a node of a graph.

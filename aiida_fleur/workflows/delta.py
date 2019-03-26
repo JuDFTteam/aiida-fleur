@@ -24,7 +24,8 @@ import os
 from string import digits
 #from pprint import pprint
 
-from aiida.plugins import Code, DataFactory, Group
+from aiida.plugins import DataFactory
+from aiida.orm import Code, Group
 from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import workfunction as wf

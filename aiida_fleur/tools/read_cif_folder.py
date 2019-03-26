@@ -71,7 +71,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
         for root, dirs, files in os.walk(parent_cif_folder):
             for file1 in files:
                 if file1.endswith(".cif"):
-                    filenames.append(file)
+                    filenames.append(file1)
                     filepath = os.path.join(root, file1)
                     filepaths.append(filepath)
     else:

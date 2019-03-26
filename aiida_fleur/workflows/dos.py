@@ -18,7 +18,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os.path
 
-from aiida.plugins import Code, DataFactory
+from aiida.plugins import DataFactory
+from aiida.orm import Code
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry

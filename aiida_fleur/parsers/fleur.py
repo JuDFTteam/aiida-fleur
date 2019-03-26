@@ -23,13 +23,14 @@ from __future__ import absolute_import
 import os
 #import numpy
 from datetime import date
-from aiida.orm.nodes.parameter import Dict
 from aiida.parsers.parser import Parser
-from aiida.orm.nodes.array.bands import BandsData
+from aiida.plugins import DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.parsers import FleurOutputParsingError
-from aiida_fleur.data.fleurinp import FleurinpData
 
+Dict = DataFactory('dict')
+FleurinpData = DataFactory('fleur.fleurinp')
+BandsData = DataFactory('array.bands')
 
 class FleurParser(Parser):
     """

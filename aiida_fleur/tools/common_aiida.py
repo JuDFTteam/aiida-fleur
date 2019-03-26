@@ -28,8 +28,8 @@ from __future__ import print_function
 import json
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.orm.querybuilder import QueryBuilder, Node
-from aiida.orm import Group
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm import Group, Node
 import six
 from six.moves import input
 

@@ -54,14 +54,14 @@ class TestAiida_fleur_entrypoints:
     # Parsers
 
     def test_inpgen_parser_entry_point(aiida_env):
-        from aiida.parsers import ParserFactory
+        from aiida.engine import ParserFactory
         from aiida_fleur.parsers.fleur_inputgen import Fleur_inputgenParser
 
         parser = ParserFactory('fleur.fleurinpgenparser')
         assert parser == Fleur_inputgenParser
 
     def test_fleur_parser_entry_point(aiida_env):
-        from aiida.parsers import ParserFactory
+        from aiida.engine import ParserFactory
         from aiida_fleur.parsers.fleur import FleurParser
 
         parser = ParserFactory('fleur.fleurparser')
@@ -71,28 +71,28 @@ class TestAiida_fleur_entrypoints:
     # Workflows/workchains
 
     def test_fleur_scf_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.scf import fleur_scf_wc
         
         workflow = WorkflowFactory('fleur.scf')
         assert workflow == fleur_scf_wc
         
     def test_fleur_dos_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.dos import fleur_dos_wc
         
         workflow = WorkflowFactory('fleur.dos')
         assert workflow == fleur_dos_wc
         
     def test_fleur_band_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.band import fleur_band_wc
         
         workflow = WorkflowFactory('fleur.band')
         assert workflow == fleur_band_wc
 
     def test_fleur_eos_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.eos import fleur_eos_wc
         
         workflow = WorkflowFactory('fleur.eos')
@@ -100,14 +100,14 @@ class TestAiida_fleur_entrypoints:
     
     # this entry point has currently a problem...
     def test_fleur_inital_cls_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
         workflow = WorkflowFactory('fleur.init_cls')
         assert workflow == fleur_initial_cls_wc
         
     def test_fleur_corehole_wc_entry_point(aiida_env):
-        from aiida.orm import WorkflowFactory
+        from aiida.engine import WorkflowFactory
         from aiida_fleur.workflows.corehole import fleur_corehole_wc
         
         workflow = WorkflowFactory('fleur.corehole')

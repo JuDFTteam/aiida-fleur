@@ -640,7 +640,7 @@ class FleurinpData(Data):
         This is NOT a workfunction and does not keep the provenance!
         :return: KpointsData node
         """
-        from aiida.orm.nodes.array.kpoints import KpointsData
+        from aiida.orm import KpointsData
 
 
         #HINT, TODO:? in this routine, the 'cell' you might get in an other way
@@ -862,7 +862,7 @@ class FleurinpData(Data):
         KpointsDataNode with weights. In the future FLEUR might recalculate them.
         :params: KpointsData node
         """
-        from aiida.orm.nodes.array.kpoints import KpointsData
+        from aiida.orm import KpointsData
         #from aiida.common.exceptions import InputValidationError
 
         #TODO: This is probably broken and should be moved to fleurinpmodifier
