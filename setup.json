@@ -36,7 +36,8 @@
             "numpy>=1.16.0",
             "sympy",
             "masci-tools",
-            "future"
+            "future",
+            "ase"
     ],
     "extras_require" : {
         "graphs ": [
