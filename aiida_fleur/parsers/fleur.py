@@ -70,7 +70,7 @@ class FleurParser(Parser):
         return 'output_complex'
 
 
-    def parse_with_retrieved(self, retrieved):
+    def parse(self, **kwargs):
         """
         Receives in input a dictionary of retrieved nodes.
         Does all the logic here. Checks presents of files.
@@ -100,17 +100,18 @@ class FleurParser(Parser):
         # select the folder object
         # Check that the retrieved folder is there
         try:
-            out_folder = retrieved[self._calc._get_linkname_retrieved()]
-        except KeyError:
+            output_folder = self.retrieved
+        except exceptions.NotExistent:
+            #return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
             self.logger.error("No retrieved folder found")
             return False, ()
 
         # check what is inside the folder
-        list_of_files = out_folder.get_folder_list()
+        list_of_files = output_folder._repository.list_object_names()
         self.logger.info("file list {}".format(list_of_files))
 
         # has output xml file, otherwise error
-        if self._calc._OUTXML_FILE_NAME not in list_of_files:
+        if self.node.get_attribute('outxml_file_name') not in list_of_files:
             successful = False
             self.logger.error(
                 "XML out not found '{}'".format(self._calc._OUTXML_FILE_NAME))
@@ -126,7 +127,7 @@ class FleurParser(Parser):
                     " was probable not created by fleur".format(filel))
 
         # check if something was written to the error file
-        if self._calc._ERROR_FILE_NAME in list_of_files:
+        if self.node.get_attribute('error_file_name') in list_of_files:
             errorfile = os.path.join(out_folder.get_abs_path('.'),
                                      self._calc._ERROR_FILE_NAME)
             # read
@@ -142,7 +143,7 @@ class FleurParser(Parser):
             if error_file_lines:
                 self.logger.warning(
                     "The following was written into std error and piped to {} : \n {}"
-                    "".format(self._calc._ERROR_FILE_NAME, error_file_lines))
+                    "".format(self.node.get_attribute('error_file_name'), error_file_lines))
 
                 if 'Run finished successfully' in error_file_lines: # if judft-error # TODO maybe change.
                     successful = True
@@ -155,13 +156,13 @@ class FleurParser(Parser):
         #what about other files?
         #check input dict
 
-        if self._calc._DOS_FILE_NAME in list_of_files:
+        if self.node.get_attribute('dos_file_name') in list_of_files:
             has_dos = True
-        if self._calc._BAND_FILE_NAME in list_of_files:
+        if self.node.get_attribute('band_file_name') in list_of_files:
             has_bands = True
 
         #if a new inp.xml file was created (new stucture)
-        if self._calc._NEW_XMlINP_FILE_NAME in list_of_files:
+        if self.node.get_attribute('new_xmlinp_file_name') in list_of_files:
             self.logger.error("new inp.xml file found in retrieved folder")
             has_new_xmlinp_file = True
         # add files which should also be there in addition to default_files.
@@ -172,7 +173,7 @@ class FleurParser(Parser):
         if has_xml_outfile:
             # get outfile path and call xml out parser
             outxmlfile = os.path.join(
-                out_folder.get_abs_path('.'), self._calc._OUTXML_FILE_NAME)
+                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('outxml_file_name'))
             simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile)
 
             # Call routines for output node creation
@@ -209,7 +210,7 @@ class FleurParser(Parser):
         # DOS
         if has_dos_file:
             dos_file = os.path.join(
-                out_folder.get_abs_path('.'), self._calc._DOS_FILE_NAME)
+                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('dos_file_name'))
             #if dos_file is not None:
             try:
                 with open(dos_file, 'r') as dosf:
@@ -225,7 +226,7 @@ class FleurParser(Parser):
         if has_bands_file:
             # TODO be carefull there might be two files.
             band_file = os.path.join(
-                out_folder.get_abs_path('.'), self._calc._BAND_FILE_NAME)
+                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('band_file_name'))
 
             #if band_file is not None:
             try:
@@ -240,7 +241,7 @@ class FleurParser(Parser):
                 # save array
         if has_new_xmlinp_file:
             new_inpxmlfile = os.path.join(
-                out_folder.get_abs_path('.'), self._calc._NEW_XMlINP_FILE_NAME)
+                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('new_xmlinp_file_name'))
             new_fleurinpData = FleurinpData()
             new_fleurinpData.set_file(new_inpxmlfile, dst_filename= 'inp.xml')
             self.logger.info('New FleurinpData initialized')

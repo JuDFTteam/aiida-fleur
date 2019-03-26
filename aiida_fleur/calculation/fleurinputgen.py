@@ -30,7 +30,7 @@ import six
 from six.moves import zip
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 
 class FleurinputgenCalculation(CalcJob):
     """
@@ -39,32 +39,26 @@ class FleurinputgenCalculation(CalcJob):
     """
     #### (Maintain) if inputgen keys change ####
 
-    def _init_internal_params(self):
-        super(FleurinputgenCalculation, self)._init_internal_params()
+    # Default input and output files
+    _DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
+    _DEFAULT_OUTPUT_FILE = 'out' #'shell.out' #will be shown with outputcat
 
-        # Default fleur output parser
-        self._default_parser = 'fleur.fleurinpgenparser'
-
-        # Default input and output files
-        self._DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
-        self._DEFAULT_OUTPUT_FILE = 'out' #'shell.out' #will be shown with outputcat
-
-        # created file names, some needed for Fleur calc
-        self._INPXML_FILE_NAME = 'inp.xml'
-        self._INPUT_FILE_NAME = 'aiida.in'
-        self._SHELLOUT_FILE_NAME = 'shell.out'
-        self._OUTPUT_FILE_NAME = 'out'
-        self._ERROR_FILE_NAME = 'out.error'
-        self._STRUCT_FILE_NAME = 'struct.xsf'
-        '''
-        self._INP_FILE_NAME = 'inp'
-        self._ENPARA_FILE_NAME = 'enpara'
-        self._SYMOUT_FILE_NAME = 'sym.out'
-        self._FORT_FILE_NAME = 'fort93'
-        self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
-        '''
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                               'cmdline']
+    # created file names, some needed for Fleur calc
+    _DEFAULT_INPXML_FILE_NAME = 'inp.xml'
+    _DEFAULT_INPUT_FILE_NAME = 'aiida.in'
+    _DEFAULT_SHELLOUT_FILE_NAME = 'shell.out'
+    _DEFAULT_OUTPUT_FILE_NAME = 'out'
+    _DEFAULT_ERROR_FILE_NAME = 'out.error'
+    _DEFAULT_STRUCT_FILE_NAME = 'struct.xsf'
+    '''
+    _DEFAULT_INP_FILE_NAME = 'inp'
+    _DEFAULT_ENPARA_FILE_NAME = 'enpara'
+    _DEFAULT_SYMOUT_FILE_NAME = 'sym.out'
+    _DEFAULT_FORT_FILE_NAME = 'fort93'
+    _DEFAULT_CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
+    '''
+    _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
+                           'cmdline']
     # TODO switch all these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -111,44 +105,36 @@ class FleurinputgenCalculation(CalcJob):
     # Default title
     _inp_title = 'A Fleur input generator calulation with aiida'
 
+    @classmethod
+    def define(cls, spec):
+        super(FleurinputgenCalculation, cls).define(spec)
+        
+        #Default input and output files
+        spec.input('metadata.options.input_file', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE)
+        spec.input('metadata.options.output_file', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE)
 
-    @classproperty
-    def _use_methods(cls):
-        """
-        Extend the parent _use_methods with further keys.
-        specifies what nodes have to be in calculation TODO: decide what is
-        settings and what is parameters, sturcture might not be needed
-        if &lattice is defined in inp
-        """
-        retdict = JobCalculation._use_methods
-        retdict.update({
-            "structure": {
-                'valid_types': StructureData,
-                'additional_parameter': None,
-                'linkname': 'structure',
-                'docstring': "Choose the input structure to use",
-                },
-            "parameters": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'parameters',
-                'docstring': ("Use a node that specifies the input parameters "
-                              "for the namelists"),
-                },
-            "settings": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': (
-                    "This parameter data node is used to specify for some "
+        #created file names, some needed for Fleur calc
+        spec.input('metadata.options.inpxml_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPXML_FILE_NAME)
+        spec.input('metadata.options.input_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE_NAME)
+        spec.input('metadata.options.shellout_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELLOUT_FILE_NAME)
+        spec.input('metadata.options.output_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE_NAME)
+        spec.input('metadata.options.error_file_name', valid_type=six.string_types, default=cls._DEFAULT_ERROR_FILE_NAME)
+        spec.input('metadata.options.struct_file_name', valid_type=six.string_types, default=cls._DEFAULT_STRUCT_FILE_NAME)
+        spec.input('metadata.options.settings_keys', valid_type=list, default=cls._DEFAULT_settings_keys)
+        
+        #since 1.0.0b _use_methods is depricated
+        spec.input('structure', valid_type=StructureData, help = "Choose the input structure to use")
+        spec.input('parameters', valid_type=Dict, help = "Use a node that specifies the input parameters "
+                              "for the namelists")
+        spec.input('settings', valid_type=Dict, help = "This parameter data node is used to specify for some "
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
-                    "for all available features here check the documentation."),
-            }})
-        return retdict
+                    "for all available features here check the documentation.")
+                    
+        #parser
+        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurinpgenparser')
 
-
-    def _prepare_for_submission(self, tempfolder, inputdict):
+    def _prepare_for_submission(self, tempfolder):
         """
         This is the routine to be called when you want to create
         the input files for the inpgen with the plug-in.
@@ -199,14 +185,7 @@ class FleurinputgenCalculation(CalcJob):
         ##########################################
 
         # first check existence of structure and if 1D, 2D, 3D
-        try:
-            structure = inputdict.pop(self.get_linkname('structure'))
-        except KeyError:
-            raise InputValidationError("No structure specified for this"
-                                       " calculation")
-        if not isinstance(structure, StructureData):
-            raise InputValidationError(
-                       "structure is not of type StructureData")
+        structure = self.inputs.structure
 
         pbc = structure.pbc
         if False in pbc:
@@ -214,14 +193,15 @@ class FleurinputgenCalculation(CalcJob):
             film = True
 
         # check existence of parameters (optional)
-        parameters = inputdict.pop(self.get_linkname('parameters'), None)
+        if 'parameters' in self.inputs:
+            parameters = self.inputs.parameters
+        else:
+            parameters = None
+
         if parameters is None:
             # use default
             parameters_dict = {}
         else:
-            if not isinstance(parameters, ParameterData):
-                raise InputValidationError("parameters, if specified, must be of "
-                                           "type ParameterData")
             parameters_dict = _lowercase_dict(parameters.get_dict(),
                                               dict_name='parameters')
 
@@ -317,25 +297,19 @@ class FleurinputgenCalculation(CalcJob):
                 raise InputValidationError("kpoints is not of type KpointsData")
         '''
 
-        #TODO I think the code should not be in the input dict. check local,
-        # verus remote, codeinfos, one several codes..
-        try:
-            code = inputdict.pop(self.get_linkname('code'))
-        except KeyError:
-            raise InputValidationError("No code specified for this "
-                                       "calculation")
+        code = self.inputs.code
 
         # check existence of settings (optional)
-        settings = inputdict.pop(self.get_linkname('settings'), None)
-        #print('settings: {}'.format(settings))
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings
+        else:
+            settings = None
+
         if settings is None:
             settings_dict = {}
         else:
-            if not isinstance(settings, ParameterData):
-                raise InputValidationError("settings, if specified, must be of "
-                                           "type ParameterData")
-            else:
-                settings_dict = settings.get_dict()
+            settings_dict = settings.get_dict()
+
         #check for for allowed keys, ignor unknown keys but warn.
         for key in settings_dict.keys():
             if key not in self._settings_keys:
@@ -343,12 +317,6 @@ class FleurinputgenCalculation(CalcJob):
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
-
-        # Here, there should be no more parameters...
-        if inputdict:
-            raise InputValidationError(
-                "The following input data nodes are "
-                "unrecognized: {}".format(list(inputdict.keys())))
 
         ##############################
         # END OF INITIAL INPUT CHECK #

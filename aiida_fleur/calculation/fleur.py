@@ -43,7 +43,6 @@ class FleurCalculation(CalcJob):
     For more information about the FLEUR-code family, go to http://www.flapw.de/
     """
 
-
     ######### Only this should be to be maintained! #########
 
     # should a kpt node be used or fleur generate the mesh?
@@ -627,9 +626,10 @@ class FleurCalculation(CalcJob):
         
         #  Prepare self._JUDFT_WARN_ONLY_INFO_FILE_NAME and upload
         # local_copy_list.append
-        warn_only_filename = tempfolder.get_abs_path(self.inputs.metadata.options.judft_warn_only_info_file_name)
-        with open(warn_only_filename, 'w') as infile:
-            infile.write("\n")
+        #_JUDFT_WARN_ONLY_INFO_FILE_NAME depricated for now.
+        #warn_only_filename = tempfolder.get_abs_path(self.inputs.metadata.options.judft_warn_only_info_file_name)
+        #with open(warn_only_filename, 'w') as infile:
+        #    infile.write("\n")
 
 
         ########## MAKE CALCINFO ###########
