@@ -482,7 +482,7 @@ class FleurCalculation(CalcJob):
             allfiles = fleurinp.files
             for file1 in allfiles:
                 local_copy_list.append((
-                    fleurinp.get_file_abs_path(file1),
+                    fleurinp.uuid, file1,
                     file1))
             modes = fleurinp.get_fleur_modes()
 
@@ -506,13 +506,14 @@ class FleurCalculation(CalcJob):
         if has_parent:
             # copy the right files #TODO check first if file, exist and throw
             # warning, now this will throw an error
-            outfolderpath = parent_calc.out.retrieved.folder.abspath
+            outfolder_uuid = parent_calc.out.retrieved.uiid
             self.logger.info("out folder path {}".format(outfolderpath))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1),
+                        outfolder_uuid,
+                        os.path.join(file1),
                         os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
                 if with_hdf5:
@@ -521,7 +522,8 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_filelist_scf
                 for file1 in copylist:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1[0]),
+                        outfolder_uuid,
+                        os.path.join('path', file1[0]),
                         os.path.join(file1[1])))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
@@ -536,7 +538,8 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_filelist_scf1
                 for file1 in copylist:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1[0]),
+                        outfolder_uuid,
+                        os.path.join('path', file1[0]),
                         os.path.join(file1[1])))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
