@@ -334,12 +334,12 @@ class FleurCalculation(CalcJob):
         spec.input('metadata.options.fleur_modes', valid_type=type(True), default=cls._DEFAULT_fleur_modes)
         
         #inputs transfered from _use_methods (pre 1.0.0b1)
-        spec.input('fleurinpdata', valid_type=FleurinpData,
+        spec.input('fleurinpdata', valid_type=FleurinpData, required = False,
             help="Use a FleruinpData node that specifies the input parameters"
                     "usually copy from the parent calculation, basicly makes"
                     "the inp.xml file visible in the db and makes sure it has "
                     "the files needed.")
-        spec.input('parent_calc_folder', valid_type=RemoteData,
+        spec.input('parent_calc_folder', valid_type=RemoteData, required = False,
             help="Use a remote or local repository folder as parent folder "
                     "(also for restarts and similar). It should contain all the "
                     "needed files for a Fleur calc, only edited files should be "
@@ -387,7 +387,7 @@ class FleurCalculation(CalcJob):
         self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(
                                                          self._INPXML_FILE_NAME)
     '''
-    def _prepare_for_submission(self, tempfolder, inputdict):
+    def prepare_for_submission(self, tempfolder):
         """
         This is the routine to be called when you make a fleur calculation
         Here should be checked if all the files are there to run fleur.
@@ -395,8 +395,6 @@ class FleurCalculation(CalcJob):
 
         :param tempfolder: a aiida.common.folders.Folder subclass where
                            the plugin should put all its files.
-        :param inputdict: a dictionary with the input nodes, as they would
-                be returned by get_inputdata_dict (without the Code!)
         """
 
         # TODO how to check if code compiled with HDF5?
@@ -425,14 +423,8 @@ class FleurCalculation(CalcJob):
         copy_remotely = True
         with_hdf5 = False
 
-        ##########################################
-        ############# INPUT CHECK ################
-        ##########################################
-
-        try:
-            code = inputdict.pop(self.get_linkname('code'))
-        except KeyError:
-            raise InputValidationError("No code specified for this calculation")
+        #since 1.0.0b inputs are checked automatically
+        code = self.inputs.code
 
         codesdesc = code.description
         # TODO ggf also check settings
@@ -448,18 +440,22 @@ class FleurCalculation(CalcJob):
         #calculation does not need theoretical a new FleurinpData it could use
         #the one from the parent, but the plug-in desgin is in a way that it has
         # to be there and it just copies files if changes occured..
+        
+        if 'fleurinpdata' in self.inputs:
+            fleurinp = self.inputs.fleurinpdata
+        else:
+            fleurinp = None
 
-        fleurinp = inputdict.pop(self.get_linkname('fleurinpdata'), None)
         if fleurinp is None:
             #xml_inp_dict = {}
             has_fleurinp = False
         else:
-            if not isinstance(fleurinp, FleurinpData):
-                raise InputValidationError(
-                    "The FleurinpData node given is not of type FleurinpData.")
             has_fleurinp = True
-        parent_calc_folder = inputdict.pop(self.get_linkname('parent_folder'),
-                                           None)
+
+        if 'parent_folder' in self.inputs:
+            parent_calc_folder = self.inputs.parent_folder
+        else:
+            parent_calc_folder = None
 
         if parent_calc_folder is None:
             has_parent = False
@@ -468,13 +464,9 @@ class FleurCalculation(CalcJob):
                     "No parent calculation found and no fleurinp data "
                     "given, need either one or both for a "
                     "'fleurcalculation'.")
-        else: #
-            if not isinstance(parent_calc_folder, RemoteData):
-                raise InputValidationError("parent_calc_folder, if specified,"
-                                           "must be of type RemoteData")
-
+        else:
             # extract parent calculation
-            parent_calcs = parent_calc_folder.get_inputs(node_type=JobCalculation)
+            parent_calcs = parent_calc_folder.get_inputs(node_type=CalcJob)
             n_parents = len(parent_calcs)
             if n_parents != 1:
                 raise UniquenessError(
@@ -514,16 +506,17 @@ class FleurCalculation(CalcJob):
                     " a 'fleur calculation'.")
 
         # check existence of settings (optional)
-        settings = inputdict.pop(self.get_linkname('settings'), None)
-        #print('settings: {}'.format(settings))
+
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings
+        else:
+            settings = None
+
         if settings is None:
             settings_dict = {}
         else:
-            if not isinstance(settings, Dict):
-                raise InputValidationError("settings, if specified, must be of "
-                                           "type Dict")
-            else:
-                settings_dict = settings.get_dict()
+            settings_dict = settings.get_dict()
+
         #check for for allowed keys, ignor unknown keys but warn.
         for key in settings_dict.keys():
             if key not in self._settings_keys:
@@ -531,28 +524,14 @@ class FleurCalculation(CalcJob):
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
-        # Here, there should be no other inputs
-        if inputdict:
-            raise InputValidationError(
-                "The following input data nodes are "
-                "unrecognized: {}".format(list(inputdict.keys())))
 
         #TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData.
         # from where to copy
 
-        ##############################
-        # END OF INITIAL INPUT CHECK #
-
-
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
-            self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-
-            #local_copy_list.append((
-            #    fleurinp.get_file_abs_path(self._INPXML_FILE_NAME),
-            #    self._INPXML_FILE_NAME))
-            #copy ALL files from inp.xml
+            #add files belonging to fleurinp into local_copy_list
             allfiles = fleurinp.files
             for file1 in allfiles:
                 local_copy_list.append((
@@ -562,16 +541,16 @@ class FleurCalculation(CalcJob):
 
             # add files to mode_retrieved_filelist
             if modes['band']:
-                mode_retrieved_filelist.append(self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.band_file_name)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.band_gnu_file_name)
             if modes['dos']:
-                mode_retrieved_filelist.append(self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.dos_file_name)
             if modes['forces']:
                 print('FORCES!!!')
-                mode_retrieved_filelist.append(self._NEW_XMlINP_FILE_NAME)
-                mode_retrieved_filelist.append(self._FORCE_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.new_xmlinp_file_name)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.force_file_name)
             if modes['ldau']:
-                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.nmmpmat_file_name)
             #if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
             # if needed
@@ -584,16 +563,16 @@ class FleurCalculation(CalcJob):
             self.logger.info("out folder path {}".format(outfolderpath))
 
             if fleurinpgen and (not has_fleurinp):
-                for file1 in self._copy_filelist_inpgen:
+                for file1 in self.inputs.metadata.options.copy_filelist_inpgen:
                     local_copy_list.append((
                         outfolder_uuid,
                         os.path.join(file1),
                         os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
                 if with_hdf5:
-                    copylist = self._copy_filelist_scf2_1
+                    copylist = self.inputs.metadata.options.copy_filelist_scf2_1
                 else:
-                    copylist = self._copy_filelist_scf
+                    copylist = self.inputs.metadata.options.copy_filelist_scf
                 for file1 in copylist:
                     local_copy_list.append((
                         outfolder_uuid,
@@ -607,9 +586,9 @@ class FleurCalculation(CalcJob):
             elif not fleurinpgen and has_fleurinp:
                 # input file is already taken care of
                 if with_hdf5:
-                    copylist = self._copy_filelist_scf2
+                    copylist = self.inputs.metadata.options.copy_filelist_scf2
                 else:
-                    copylist = self._copy_filelist_scf1
+                    copylist = self.inputs.metadata.options.copy_filelist_scf1
                 for file1 in copylist:
                     local_copy_list.append((
                         outfolder_uuid,
@@ -628,7 +607,7 @@ class FleurCalculation(CalcJob):
                 elif modes['band']:
                     pass
                 else:
-                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                    filelist_tocopy_remote = filelist_tocopy_remote + self.inputs.metadata.options.copy_filelist_scf_remote
                 # from settings, user specified
                 #TODO check if list?
                 for file1 in settings_dict.get('additional_remotecopy_list', []):
@@ -642,13 +621,13 @@ class FleurCalculation(CalcJob):
                     remote_copy_list.append((
                         parent_calc_folder.get_computer().uuid,
                         os.path.join(parent_calc_folder.get_remote_path(), file1),
-                        self._OUTPUT_FOLDER))
+                        self.inputs.metadata.options.output_folder))
 
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
         
         #  Prepare self._JUDFT_WARN_ONLY_INFO_FILE_NAME and upload
         # local_copy_list.append
-        warn_only_filename = tempfolder.get_abs_path(self._JUDFT_WARN_ONLY_INFO_FILE_NAME)
+        warn_only_filename = tempfolder.get_abs_path(self.inputs.metadata.options.judft_warn_only_info_file_name)
         with open(warn_only_filename, 'w') as infile:
             infile.write("\n")
 
@@ -673,18 +652,18 @@ class FleurCalculation(CalcJob):
 
         # Retrieve by default the output file and the xml file
         retrieve_list = []
-        retrieve_list.append(self._OUTXML_FILE_NAME)
-        retrieve_list.append(self._INPXML_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.outxml_file_name)
+        retrieve_list.append(self.inputs.metadata.options.inpxml_file_name)
         #calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
-        retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
-        retrieve_list.append(self._ERROR_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.shelloutput_file_name)
+        retrieve_list.append(self.inputs.metadata.options.error_file_name)
         #calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)
-        retrieve_list.append(self._OUT_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.out_file_name)
         if with_hdf5:
-            retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
-            retrieve_list.append(self._CDN1_FILE_NAME) # only for now because somthing is buggy
+            retrieve_list.append(self.inputs.metadata.options.cdn_last_hdf5_file_name)
+            retrieve_list.append(self.inputs.metadata.options.cdn1_file_name) # only for now because somthing is buggy
         else:
-            retrieve_list.append(self._CDN1_FILE_NAME)
+            retrieve_list.append(self.inputs.metadata.options.cdn1_file_name)
         #calcinfo.retrieve_list.append(self._INP_FILE_NAME)
         #calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)
         #calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)
@@ -739,9 +718,9 @@ class FleurCalculation(CalcJob):
         codeinfo.code_uuid = code.uuid
         codeinfo.withmpi = self.get_withmpi()
         codeinfo.stdin_name = None#self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._SHELLOUTPUT_FILE_NAME
+        codeinfo.stdout_name = self.inputs.metadata.options.shelloutput_file_name
         #codeinfo.join_files = True
-        codeinfo.stderr_name = self._ERROR_FILE_NAME
+        codeinfo.stderr_name = self.inputs.metadata.options.error_file_name
 
         calcinfo.codes_info = [codeinfo]
         '''
@@ -841,3 +820,4 @@ class FleurCalculation(CalcJob):
         Used to create a WARN_ONLY file in the calculation dir
         """
         pass
+
