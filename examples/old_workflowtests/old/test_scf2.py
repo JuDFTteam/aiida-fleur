@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 #from aiida.work.run import async, run
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -28,7 +28,7 @@ codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
-wf_para = ParameterData(dict={'relax_runmax' : 4, 
+wf_para = Dict(dict={'relax_runmax' : 4, 
                               'density_criterion' : 0.0000002,
                               'energy_criterion' : 0.0005,
                               'converge_energy' : True, 

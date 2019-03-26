@@ -22,15 +22,15 @@ energies and corelevel shifts with different methods.
 from __future__ import absolute_import
 from __future__ import print_function
 import os.path
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext
+from aiida.plugins import Code, DataFactory
+from aiida.engine.workchain import WorkChain
+from aiida.engine.run import submit
+from aiida.engine.workchain import ToContext
 #from aiida.work.process_registry import ProcessRegistry
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.work.workchain import while_, if_
+from aiida.engine.workchain import while_, if_
 from aiida_fleur.tools.create_corehole import create_corehole
 import six
 
@@ -81,7 +81,7 @@ class fleur_corelevel_wc(WorkChain):
     def define(cls, spec):
         super(corelevel, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                                             'method' : 'initial',
                                             'atoms' : 'all',
                                             'references' : 'calculate',
@@ -250,7 +250,7 @@ class fleur_corelevel_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         outdict['band_out'] = outputnode
         #print outdict

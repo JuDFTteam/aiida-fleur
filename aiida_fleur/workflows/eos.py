@@ -22,11 +22,12 @@ of an equation of state
 from __future__ import absolute_import
 from __future__ import print_function
 import numpy as np
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.data.base import Float
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
-from aiida.work.workfunctions import workfunction as wf
-from aiida.work.launch import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm.nodes.base import Float
+from aiida.engine.workchain import WorkChain, ToContext#,Outputs
+from aiida.engine.processes.functions import workfunction as wf
+from aiida.engine.launch import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -89,7 +90,7 @@ class fleur_eos_wc(WorkChain):
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,
@@ -99,7 +100,7 @@ class fleur_eos_wc(WorkChain):
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'max_wallclock_seconds': 60*60,
                             'queue_name': '',
@@ -390,7 +391,7 @@ class fleur_eos_wc(WorkChain):
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
 
         # output must be aiida Data types.
-        outnode = ParameterData(dict=out)
+        outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...

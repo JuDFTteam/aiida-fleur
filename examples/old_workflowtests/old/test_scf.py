@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 from aiida_fleur.workflows.scf import fleur_scf_wc
 
@@ -31,13 +31,13 @@ code2 = Code.get_from_string(codename2)
 
 s = load_node(138)
 
-parameters = ParameterData(dict={})
+parameters = Dict(dict={})
 
-settings = ParameterData(dict={'files_to_retrieve' : [], 'files_not_to_retrieve': [], 
+settings = Dict(dict={'files_to_retrieve' : [], 'files_not_to_retrieve': [], 
                                'files_copy_remotely': [], 'files_not_copy_remotely': [],
                                'commandline_options': ["-wtime", "30"], 'blaha' : ['bla']})
     
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000001,#})
                               'queue_name' : 'th123_node',
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},

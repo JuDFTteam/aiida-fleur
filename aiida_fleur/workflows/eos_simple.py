@@ -17,12 +17,13 @@ of an equation of state, with only the structure and optional wc parameters as i
 
 from __future__ import absolute_import
 import numpy as np
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.data.base import Float
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm.nodes.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
+from aiida.engine.workchain import WorkChain, ToContext#,Outputs
 #from aiida.work import workfunction as wf
-from aiida.work.run import submit
+from aiida.engine.run import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
@@ -63,7 +64,7 @@ class fleur_eos_wc_simple(WorkChain):
     def define(cls, spec):
         super(fleur_eos_wc_simple, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,

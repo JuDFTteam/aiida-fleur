@@ -16,13 +16,13 @@ A dummy workchain to test nested workchains
 from __future__ import absolute_import
 from __future__ import print_function
 import time
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext
-from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import Outputs
-from aiida.orm.data.base import Str
+from aiida.plugins import Code, DataFactory
+from aiida.engine.workchain import WorkChain
+from aiida.engine.run import submit
+from aiida.engine.workchain import ToContext
+from aiida.engine.process_registry import ProcessRegistry
+from aiida.engine.workchain import Outputs
+from aiida.orm.nodes.base import Str
 import six
 from six.moves import range
 RemoteData = DataFactory('remote')

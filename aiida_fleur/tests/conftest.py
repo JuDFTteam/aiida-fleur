@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import pytest
-from aiida.utils.fixtures import fixture_manager
+from aiida.manage.fixtures import fixture_manager
 
 @pytest.fixture(scope='session')
 def aiida_env():

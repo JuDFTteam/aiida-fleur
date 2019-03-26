@@ -17,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.workflows.scf import fleur_scf_wc
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
@@ -61,7 +61,7 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
 fleurinp = FleurinpData(files = [inpxmlfile])
     
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000001,#})
                               'queue_name' : 'th123_node',
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},

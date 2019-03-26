@@ -14,7 +14,7 @@ def test_configure_from_file(configure):
 
 
 def test_db_flushed(configure):
-    from aiida.orm.data.base import Str
+    from aiida.orm.nodes.base import Str
     test_string = 'this string should not be present when the test run starts'
     tag = 'Test string tag'
     from aiida.orm.querybuilder import QueryBuilder

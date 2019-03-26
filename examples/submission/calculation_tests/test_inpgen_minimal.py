@@ -17,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 
 

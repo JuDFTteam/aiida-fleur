@@ -38,13 +38,13 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     # TODO this command deserves to be improved, with options and further subcommands
 
     from aiida.orm.calculation import Calculation
-    from aiida.orm.calculation.job import JobCalculation
+    from aiida.engine.calculation.job import CalcJob
     from aiida.orm.code import Code
     from aiida.orm.node import Node
     from aiida.common.links import LinkType
     from aiida.orm.querybuilder import QueryBuilder
-    from aiida.orm.data.structure import StructureData
-    from aiida.orm.data.parameter import ParameterData
+    from aiida.orm.nodes.structure import StructureData
+    from aiida.orm.nodes.parameter import Dict
 
     def draw_node_settings(node, **kwargs):
         """

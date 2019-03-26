@@ -6,7 +6,7 @@ from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 from aiida_fleur.workflows.eos import fleur_eos_wc
 StructureData = DataFactory('structure')
@@ -33,7 +33,7 @@ f = s.get_formula()
 #print s.get_formula()
 parameters = load_node(139)
 parameters = load_node(121) # Si
-wf_para = ParameterData(dict={'fleur_runmax': 4, 
+wf_para = Dict(dict={'fleur_runmax': 4, 
                                        'points' : 7, 
                                        'step' : 0.002, 
                                        'guess' : 1.00,

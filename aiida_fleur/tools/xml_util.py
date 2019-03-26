@@ -520,9 +520,9 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
 
     :return: ParameterData node
     """
-    from aiida.orm.data.parameter import ParameterData
+    from aiida.orm.nodes.parameter import Dict
     para_dict = get_inpgen_para_from_xml(inpxmlfile)
-    return ParameterData(dict=para_dict)
+    return Dict(dict=para_dict)
 
 def get_inpgen_para_from_xml(inpxmlfile):
     """

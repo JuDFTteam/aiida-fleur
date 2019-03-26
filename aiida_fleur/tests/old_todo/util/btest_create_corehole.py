@@ -16,7 +16,7 @@ import sys,os
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_fleur_ad.util.create_corehole import create_corehole, create_corehole_fleurinp, write_change
-from aiida.orm import Code, CalculationFactory, DataFactory
+from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
 from pprint import pprint
 from aiida_fleur.tools.StructureData_util import break_symmetry as bs
@@ -39,7 +39,7 @@ ids = []#13924]#, 13925]#, 13926, 13927, 13928, 13929, 13930, 13931, 13932, 1393
 
 kind ='W1'
 econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
-para1 = ParameterData(dict={
+para1 = Dict(dict={
                   'title': 'A test calculation of Tungsten',
                   'input': {
                        'film': False,

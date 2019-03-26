@@ -9,7 +9,7 @@ import sys,os
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError
 from pprint import pprint
-from aiida.orm import Code, DataFactory, CalculationFactory
+from aiida.plugins import Code, DataFactory, CalculationFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
 from pprint import pprint

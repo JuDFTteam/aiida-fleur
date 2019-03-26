@@ -17,12 +17,13 @@
 """
 
 from __future__ import absolute_import
-from aiida.work.workchain import WorkChain, ToContext, if_
-from aiida.work.launch import submit
+from aiida.engine.workchain import WorkChain, ToContext, if_
+from aiida.engine.launch import submit
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.orm import Code, DataFactory, load_node
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.common.datastructures import calc_states
 import six
@@ -78,12 +79,12 @@ class fleur_mae_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_mae_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._wf_default))
+        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=Dict(dict=cls._wf_default))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._default_options))
+        spec.input("options", valid_type=ParameterData, required=False, default=Dict(dict=cls._default_options))
         #spec.input("settings", valid_type=ParameterData, required=False)
                                                                               
         spec.outline(
@@ -207,9 +208,9 @@ class fleur_mae_wc(WorkChain):
             inputs[key]['calc_parameters']['soc'] = {'theta' : socs[0], 'phi' : socs[1]}
             if (key == 'xyz') and not (self.ctx.wf_dict.get('use_soc_ref')):
                 inputs[key]['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_soc' : False}}))
-            inputs[key]['wf_parameters'] = ParameterData(dict=inputs[key]['wf_parameters'])
-            inputs[key]['calc_parameters'] = ParameterData(dict=inputs[key]['calc_parameters'])
-            inputs[key]['options'] = ParameterData(dict=inputs[key]['options'])
+            inputs[key]['wf_parameters'] = Dict(dict=inputs[key]['wf_parameters'])
+            inputs[key]['calc_parameters'] = Dict(dict=inputs[key]['calc_parameters'])
+            inputs[key]['options'] = Dict(dict=inputs[key]['options'])
             res = self.submit(fleur_scf_wc, **inputs[key])
             self.to_context(**{key:res})
     
@@ -363,7 +364,7 @@ class fleur_mae_wc(WorkChain):
         self.check_kpts(fleurin)
 
         #Do not copy broyd* files from the parent
-        settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+        settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
         scf_ref_node = load_node(calc.pk)
@@ -446,7 +447,7 @@ class fleur_mae_wc(WorkChain):
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors}
         
-        self.out('out', ParameterData(dict=out))
+        self.out('out', Dict(dict=out))
 
     def get_results_converge(self):
         """
@@ -541,7 +542,7 @@ class fleur_mae_wc(WorkChain):
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
 
         # create link to workchain node
-        self.out('out', ParameterData(dict=out))
+        self.out('out', Dict(dict=out))
 
     def control_end_wc(self, errormsg):
         """

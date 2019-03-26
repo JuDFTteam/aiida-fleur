@@ -21,10 +21,10 @@ This might also be of interest for other all-ellectron codes
 
 from __future__ import absolute_import
 from __future__ import print_function
-from aiida.orm import Code, CalculationFactory, DataFactory
+from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
-from aiida.orm.data.base import Bool
-from aiida.work import workfunction as wf
+from aiida.orm.nodes.base import Bool
+from aiida.engine import workfunction as wf
 
 ParameterData = DataFactory('dict')
 
@@ -96,14 +96,14 @@ def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     # be carefull with atom namelist
 
 
-    return ParameterData(dict=new_dict)
+    return Dict(dict=new_dict)
 
 
 def merge_parameters(ParameterDataList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
-    paremeter_data_new = ParameterData(dict= {})
+    paremeter_data_new = Dict(dict= {})
 
     for i, parameter in enumerate(ParameterDataList):
         if isinstance(parameter, ParameterData):

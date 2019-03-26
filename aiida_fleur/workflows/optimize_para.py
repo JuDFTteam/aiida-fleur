@@ -17,12 +17,13 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 
 #import numpy as np
 from __future__ import absolute_import
-from aiida.orm import Code, DataFactory#, load_node
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
+from aiida.engine.workchain import WorkChain, ToContext#,Outputs
 #from aiida.work import workfunction as wf
-from aiida.work.run import submit
+from aiida.engine.run import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
@@ -68,7 +69,7 @@ class fleur_optimize_parameters_wc(WorkChain):
     def define(cls, spec):
         super(fleur_optimize_parameters_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                        'walltime_sec':  60*60,
                        'queue_name' : '',
@@ -203,7 +204,7 @@ class fleur_optimize_parameters_wc(WorkChain):
                'optimal_para' : optimal_parameters_uuid,
                'successful' : self.ctx.successful}
 
-        outnode = ParameterData(dict=out)
+        outnode = Dict(dict=out)
 
         returndict = {}
 

@@ -35,7 +35,7 @@ from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
-from aiida.work.workfunctions import workfunction as wf
+from aiida.engine.processes.functions import workfunction as wf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA
@@ -435,7 +435,7 @@ class FleurinpData(Data):
 
         :return: StructureData node, or None
         """
-        from aiida.orm.data.structure import StructureData
+        from aiida.orm.nodes.structure import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
 
         #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
@@ -640,7 +640,7 @@ class FleurinpData(Data):
         This is NOT a workfunction and does not keep the provenance!
         :return: KpointsData node
         """
-        from aiida.orm.data.array.kpoints import KpointsData
+        from aiida.orm.nodes.array.kpoints import KpointsData
 
 
         #HINT, TODO:? in this routine, the 'cell' you might get in an other way
@@ -862,7 +862,7 @@ class FleurinpData(Data):
         KpointsDataNode with weights. In the future FLEUR might recalculate them.
         :params: KpointsData node
         """
-        from aiida.orm.data.array.kpoints import KpointsData
+        from aiida.orm.nodes.array.kpoints import KpointsData
         #from aiida.common.exceptions import InputValidationError
 
         #TODO: This is probably broken and should be moved to fleurinpmodifier

@@ -21,13 +21,13 @@ electron bandstructure from a given structure data node with seekpath.
 from __future__ import absolute_import
 from __future__ import print_function
 import os.path
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
-from aiida.work.workchain import WorkChain
-from aiida.work.run import submit
-from aiida.work.workchain import if_
-from aiida.work.workchain import ToContext
-from aiida.work import workfunction as wf
+from aiida.engine.workchain import WorkChain
+from aiida.engine.run import submit
+from aiida.engine.workchain import if_
+from aiida.engine.workchain import ToContext
+from aiida.engine import workfunction as wf
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -61,7 +61,7 @@ class fleur_band2_wc(WorkChain):
     def define(cls, spec):
         super(fleur_band2_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                                          'kpath' : 'auto',
                                          'nkpts' : 800,
                                          'sigma' : 0.005,
@@ -233,7 +233,7 @@ class fleur_band2_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         #TODO parse Bandstructure
         #bandstructurenode = ''
@@ -258,7 +258,7 @@ def seekpath_structure(structure):
 
     primitive_structure = seekpath_info.pop('primitive_structure')
     conv_structure = seekpath_info.pop('conv_structure')
-    parameters = ParameterData(dict=seekpath_info)
+    parameters = Dict(dict=seekpath_info)
 
     result = {
         'parameters': parameters,

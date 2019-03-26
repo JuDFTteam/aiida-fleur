@@ -25,10 +25,11 @@ corelevel shifts with different methods.
 # but should lead to error if no ref is found for what should be calculated
 from __future__ import absolute_import
 from string import digits
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext, WorkChain, if_
-from aiida.work import workfunction as wf
-from aiida.orm import Code, DataFactory, CalculationFactory, load_node, Group
+from aiida.engine.run import submit
+from aiida.engine.workchain import ToContext, WorkChain, if_
+from aiida.engine import workfunction as wf
+from aiida.plugins import DataFactory, CalculationFactory, Group
+from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -110,14 +111,14 @@ class fleur_initial_cls_wc(WorkChain):
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._default_wf_para))
+                   default=Dict(dict=cls._default_wf_para))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_options))
+                   default=Dict(dict=cls._default_options))
 
         spec.outline(
             cls.check_input,
@@ -416,9 +417,9 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
         #wf_parameter['options'] = self.ctx.options        
-        wf_parameters = ParameterData(dict=wf_parameter)
+        wf_parameters = Dict(dict=wf_parameter)
         res_all = []
-        options = ParameterData(dict=self.ctx.options)
+        options = Dict(dict=self.ctx.options)
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         res = None
         #print(self.ctx.calcs_torun)
@@ -533,8 +534,8 @@ class fleur_initial_cls_wc(WorkChain):
         wf_parameter['serial'] = self.ctx.serial
         # TODO maybe use less resources, or default of one machine
         #wf_parameter['options'] = self.ctx.options 
-        wf_parameters = ParameterData(dict=wf_parameter)
-        options = ParameterData(dict=self.ctx.options)
+        wf_parameters = Dict(dict=wf_parameter)
+        options = Dict(dict=self.ctx.options)
 
         res_all = []
         calcs = {}
@@ -791,7 +792,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = ParameterData(dict=outputnode_dict)
+        outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, put in workfunction and make bullet proof.

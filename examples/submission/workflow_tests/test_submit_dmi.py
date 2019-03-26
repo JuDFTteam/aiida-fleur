@@ -20,8 +20,9 @@ import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine.launch import submit, run
 from aiida_fleur.workflows.dmi import fleur_dmi_wc
 from pprint import pprint
 ################################################################
@@ -50,7 +51,7 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 1,
+wf_para = Dict(dict={'fleur_runmax' : 1,
                               'itmax_per_run' : 120,
                               'density_criterion' : 0.2,
                               'force_th' : True,
@@ -63,7 +64,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 1,
                               'inpxml_changes' : []
                         })
 
-options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  40*60})
 '''
@@ -133,7 +134,7 @@ a = 3.4100000000*bohr_a_0
 cell = [[0.0,a,a],[a,0.0,a],[a,a,0.0]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='Fe')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'comp': {
                         'kmax': 3.4,
                         },

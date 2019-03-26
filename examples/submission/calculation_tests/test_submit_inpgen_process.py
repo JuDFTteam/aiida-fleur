@@ -17,9 +17,9 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory, CalculationFactory, load_node
+from aiida.plugins import DataFactory, CalculationFactory, load_node
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation# as calc
-from aiida.work.run import submit, run
+from aiida.engine.run import submit, run
 
 
 ################################################################
@@ -58,7 +58,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 s = StructureData(cell=cell)
 s.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,

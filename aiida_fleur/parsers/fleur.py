@@ -23,9 +23,9 @@ from __future__ import absolute_import
 import os
 #import numpy
 from datetime import date
-from aiida.orm.data.parameter import ParameterData
+from aiida.orm.nodes.parameter import Dict
 from aiida.parsers.parser import Parser
-from aiida.orm.data.array.bands import BandsData
+from aiida.orm.nodes.array.bands import BandsData
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.parsers import FleurOutputParsingError
 from aiida_fleur.data.fleurinp import FleurinpData
@@ -177,13 +177,13 @@ class FleurParser(Parser):
             # Call routines for output node creation
             if simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
-                outxml_params = ParameterData(dict=outputdata)
+                outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()# accessible via c.res
                 new_nodes_list.append((link_name, outxml_params))
 
             if complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
-                outxml_params_complex = ParameterData(dict=parameter_data)
+                outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 new_nodes_list.append((link_name, outxml_params_complex))
 

@@ -20,8 +20,9 @@ import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine.launch import submit, run
 from aiida_fleur.workflows.dos import fleur_dos_wc
 from pprint import pprint
 ################################################################
@@ -63,14 +64,14 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 4,
+wf_para = Dict(dict={'fleur_runmax' : 4,
                               'tria' : True,
                               'nkpts' : 800,
                               'sigma' : 0.005,
                               'emin' : -0.30, 
                               'emax' :  0.80})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
                               'max_wallclock_seconds':  60*60})
 

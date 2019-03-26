@@ -28,12 +28,13 @@ from __future__ import print_function
 import re
 import numpy as np
 from pprint import pprint
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.data.base import Int
-from aiida.work.workchain import WorkChain, if_, ToContext
-from aiida.work.launch import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm.nodes.base import Int
+from aiida.engine.workchain import WorkChain, if_, ToContext
+from aiida.engine.launch import submit
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workfunctions import workfunction as wf
+from aiida.engine.processes.functions import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import supercell
@@ -130,7 +131,7 @@ class fleur_corehole_wc(WorkChain):
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-            default=ParameterData(dict={
+            default=Dict(dict={
                 'method' : 'valence', # what method to use, default for valence to highest open shell
                 'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
                 'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
@@ -152,7 +153,7 @@ class fleur_corehole_wc(WorkChain):
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'max_wallclock_seconds': 60*60,
                             'queue_name': '',
@@ -601,7 +602,7 @@ class fleur_corehole_wc(WorkChain):
         calcs = []
         for corehole in corehole_to_create:
             para = self.ctx.ref_para
-            wf_para = ParameterData(dict=corehole)
+            wf_para = Dict(dict=corehole)
             #print(corehole)
             #print(base_supercell)
             #print(para)
@@ -623,7 +624,7 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter['serial'] = self.ctx.serial
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
-            wf_parameters = ParameterData(dict=wf_parameter)
+            wf_parameters = Dict(dict=wf_parameter)
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
@@ -669,8 +670,8 @@ class fleur_corehole_wc(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
-        wf_parameters = ParameterData(dict=wf_parameter)
-        options = ParameterData(dict=self.ctx.options)
+        wf_parameters = Dict(dict=wf_parameter)
+        options = Dict(dict=self.ctx.options)
 
         '''
         #res_all = []
@@ -793,8 +794,8 @@ class fleur_corehole_wc(WorkChain):
         wf_parameter['serial'] = self.ctx.serial
         #wf_parameter['queue_name'] = self.ctx.queue
         #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameters = ParameterData(dict=wf_parameter)
-        options = ParameterData(dict=self.ctx.options)
+        wf_parameters = Dict(dict=wf_parameter)
+        options = Dict(dict=self.ctx.options)
         #res_all = []
         calcs = {}
         scf_label = 'corehole_wc cell'
@@ -949,13 +950,13 @@ class fleur_corehole_wc(WorkChain):
         outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['hints'] = self.ctx.hints
 
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = ParameterData(dict=outputnode_dict)
+        outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, put in workfunction and make bullet proof.

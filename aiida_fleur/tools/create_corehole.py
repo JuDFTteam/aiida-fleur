@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 import six
 
 
@@ -73,7 +73,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
         else:
             new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig}}
 
-    new_parameter= ParameterData(dict=new_parameterd)
+    new_parameter= Dict(dict=new_parameterd)
     #if parameterData:
     #    new_parameter = merge_parameter(parameterData, new_parameter)
     return new_parameter#structure

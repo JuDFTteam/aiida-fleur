@@ -19,9 +19,9 @@ electron bandstructure.
 from __future__ import absolute_import
 from __future__ import print_function
 import os.path
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain, ToContext
-from aiida.work.run import submit
+from aiida.plugins import Code, DataFactory
+from aiida.engine.workchain import WorkChain, ToContext
+from aiida.engine.run import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -64,9 +64,9 @@ class fleur_band_wc(WorkChain):
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._default_wf_para))
+                   default=Dict(dict=cls._default_wf_para))
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_wf_para))
+                   default=Dict(dict=cls._default_wf_para))
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
@@ -202,7 +202,7 @@ class fleur_band_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         #TODO parse Bandstructure
         #bandstructurenode = ''

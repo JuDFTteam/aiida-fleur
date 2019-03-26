@@ -14,8 +14,8 @@
 from __future__ import absolute_import
 from aiida_fleur.workflows.dummy import dummy_wc
 from pprint import pprint
-from aiida.orm.data.base import Str
-from aiida.work.run import submit
+from aiida.orm.nodes.base import Str
+from aiida.engine.run import submit
 
 input_s = Str('hello world!')
 

@@ -23,12 +23,12 @@ class TestAiida_fleur_entrypoints:
     # Calculations
     
     def test_inpgen_calculation_entry_point(aiida_env):
-        from aiida.orm import CalculationFactory
+        from aiida.plugins import CalculationFactory
         inpgen_calculation = CalculationFactory('fleur.inpgen')
         assert inpgen_calculation is not None
 
     def test_fleur_calculation_entry_point(aiida_env):
-        from aiida.orm import CalculationFactory
+        from aiida.plugins import CalculationFactory
         
         fleur_calculation = CalculationFactory('fleur.fleur')
         assert fleur_calculation is not None
@@ -37,14 +37,14 @@ class TestAiida_fleur_entrypoints:
     # Data
     
     def test_fleur_fleurinpdata_entry_point(aiida_env):
-        from aiida.orm import DataFactory
+        from aiida.plugins import DataFactory
         from aiida_fleur.data.fleurinp import FleurinpData
     
         fleurinp = DataFactory('fleur.fleurinp')
         assert fleurinp == FleurinpData
 
     def test_fleur_fleurinpmodifier_entry_point(aiida_env):
-        from aiida.orm import DataFactory
+        from aiida.plugins import DataFactory
         from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
         fleurinpmod = DataFactory('fleur.fleurinpmodifier')

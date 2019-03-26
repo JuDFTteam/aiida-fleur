@@ -18,7 +18,8 @@ nodes, or data-mine go in here
 
 #import time
 from __future__ import absolute_import
-from aiida.orm import DataFactory, Node, load_node
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder as QB
 
 
@@ -218,7 +219,7 @@ def get_cif_file(node):
     returns [cif_filename, cif_uuid, cif_folder]
     """
     from aiida.orm.implementation.general.calculation.work import WorkCalculation
-    from aiida.orm.data.cif import CifData
+    from aiida.orm.nodes.cif import CifData
     inputs = node.get_inputs()
     name = 'wf_struc_from_cif'# TODO: Bad solution, not general for me currently enough
     cif_uuid, cif_filename, cif_folder = '','',''

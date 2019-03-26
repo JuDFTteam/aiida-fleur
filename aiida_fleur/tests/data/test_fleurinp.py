@@ -49,7 +49,7 @@ def test_fleurinp_valid_inpxml(inpxmlfilepath, aiida_env):
     """
     test if inp.xml file is reconnized as valid by fleur
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     fleurinp = DataFactory('fleur.fleurinp')
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
@@ -70,7 +70,7 @@ def test_fleurinp_non_valid_inpxml(inpxmlfilepath):
     """
     from aiida.common.exceptions import InputValidationError
     from lxml.etree import XMLSyntaxError
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     fleurinp = DataFactory('fleur.fleurinp')
     
@@ -87,7 +87,7 @@ def test_fleurinp_kpointsdata_extraction(inpxmlfilepath):
     Extract a kpointsData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid kpoints data
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     KpointsData = DataFactory('array.kpoints')
     fleurinp = DataFactory('fleur.fleurinp')
@@ -111,7 +111,7 @@ def test_fleurinp_parameterdata_extraction(inpxmlfilepath):
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid ParameterData. ggf if it can be used by inpgen  
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     ParameterData = DataFactory('dict')
     fleurinp = DataFactory('fleur.fleurinp')
@@ -131,7 +131,7 @@ def test_fleurinp_structuredata_extraction(inpxmlfilepath):
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid ParameterData.
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     StructureData = DataFactory('structure')
     fleurinp = DataFactory('fleur.fleurinp')
@@ -157,7 +157,7 @@ def test_fleurinp_single_value_modification(inpxmlfilepath):
     set kmax, itmax, minDistance in inp.xml input file of fleurinpdata to 
     10.2, 99, 0.000001, then check if it everything set
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
     

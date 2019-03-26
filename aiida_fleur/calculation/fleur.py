@@ -24,11 +24,11 @@ import os
 #from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
-from aiida.orm.calculation.job import JobCalculation
+from aiida.engine import CalcJob
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.orm.data.parameter import ParameterData
-from aiida.orm.data.remote import RemoteData
+from aiida.orm import Dict
+from aiida.orm import RemoteData
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError, ValidationError
@@ -36,7 +36,7 @@ from aiida.common.exceptions import UniquenessError
 
 
 
-class FleurCalculation(JobCalculation):
+class FleurCalculation(CalcJob):
     """
     Main DFT code of the FLEUR code
     For more information about the FLEUR-code family, go to http://www.flapw.de/

@@ -17,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.tools.StructureData_util import rel_to_abs
 
 ################################################################
@@ -59,7 +59,7 @@ Cr = StructureData(cell=cell)
 Cr.append_atom(position=(0.,0.,0.), symbols='Cr', name = 'Cr1')
 pos2 =rel_to_abs((1./2., 1./2., 1./2.), cell)
 Cr.append_atom(position=pos2, symbols='Cr', name = 'Cr2')
-Crp = ParameterData(dict={
+Crp = Dict(dict={
                   'title': 'Cr, bcc chromium, bulk, delta project',
                   'atom1':{'element' : 'Cr', 'id': '24.0', 'rmt' : 2.1, 'jri' : 981, 'lmax' : 12, 'lnonsph' : 6, 'lo' : '3s 3p', 'bmu':1.5},
                   'atom2':{'element' : 'Cr', 'id': '24.1', 'rmt' : 2.1, 'jri' : 981, 'lmax' : 12, 'lnonsph' : 6, 'lo' : '3s 3p', 'bmu':1.5},

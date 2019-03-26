@@ -8,7 +8,7 @@ from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from pprint import pprint
 from lxml import etree

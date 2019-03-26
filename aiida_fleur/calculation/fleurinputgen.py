@@ -17,8 +17,8 @@ and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
 from __future__ import absolute_import
-from aiida.orm.calculation.job import JobCalculation
-from aiida.orm import DataFactory
+from aiida.engine import CalcJob
+from aiida.plugins import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
@@ -32,7 +32,7 @@ from six.moves import zip
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('dict')
 
-class FleurinputgenCalculation(JobCalculation):
+class FleurinputgenCalculation(CalcJob):
     """
     JobCalculationClass for the Inputgenerator, which is a preprocessor for a FLEUR calculation. Here is implemented how an input file for 'inpgen' is written from AiiDA data objects.
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.

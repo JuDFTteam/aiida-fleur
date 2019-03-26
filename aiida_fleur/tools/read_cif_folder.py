@@ -24,8 +24,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 
-from aiida.orm import DataFactory
-from aiida.work import workfunction as wf
+from aiida.plugins import DataFactory
+from aiida.engine import workfunction as wf
 from six.moves import range
 #from ase.io import cif
 

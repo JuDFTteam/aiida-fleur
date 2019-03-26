@@ -27,7 +27,7 @@ from __future__ import print_function
 import numpy as np
 #import matplotlib.pyplot as pp
 #from masci_tools.vis.plot_methods import *
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 from aiida.orm.calculation.work import WorkCalculation
 from aiida.orm import Node

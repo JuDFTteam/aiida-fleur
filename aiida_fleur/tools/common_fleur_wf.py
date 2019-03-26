@@ -18,9 +18,10 @@ Util that does not depend on AiiDA classes should go somewhere else.
 
 from __future__ import absolute_import
 from __future__ import print_function
-from aiida.orm import DataFactory, Node, load_node, CalculationFactory
-import six
+from aiida.orm import Node, load_node
+from aiida.plugins import DataFactory, CalculationFactory
 
+import six
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
 ParameterData = DataFactory('dict')

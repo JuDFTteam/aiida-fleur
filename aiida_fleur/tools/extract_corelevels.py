@@ -24,7 +24,7 @@ import sys#,os
 from lxml import etree#, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError
 from pprint import pprint
-from aiida.orm import DataFactory, CalculationFactory
+from aiida.plugins import DataFactory, CalculationFactory
 #from aiida.orm import Computer
 from aiida.orm import load_node
 from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2

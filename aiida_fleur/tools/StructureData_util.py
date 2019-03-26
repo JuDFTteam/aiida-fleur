@@ -20,10 +20,10 @@ from __future__ import print_function
 from ase import *
 from ase.lattice.surface import *
 from ase.io import *
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida.orm import load_node
-from aiida.orm.data.structure import Site, Kind
-from aiida.work.workfunctions import workfunction as wf
+from aiida.orm.nodes.data.structure import Site, Kind
+from aiida.engine.processes.functions import workfunction as wf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 import six
@@ -31,7 +31,7 @@ from six.moves import range
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 
 
 def is_structure(structure):
@@ -312,7 +312,7 @@ def rel_to_abs_f(vector, cell):
         return False
 
 @wf
-def break_symmetry_wf(structure, wf_para, parameterData = ParameterData(dict={})):#, _label='break_symmetry_wf', _description='WF, Introduces certain kind objects in a crystal structure, and adapts the parameter node for inpgen accordingly. All kinds of the structure will become there own species.'):
+def break_symmetry_wf(structure, wf_para, parameterData = Dict(dict={})):#, _label='break_symmetry_wf', _description='WF, Introduces certain kind objects in a crystal structure, and adapts the parameter node for inpgen accordingly. All kinds of the structure will become there own species.'):
     """
     This is the workfunction of the routine break_symmetry, which
     introduces different 'kind objects' in a structure
@@ -478,7 +478,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
         new_structure.append_site(Site(kind_name=newkindname, position=pos))
 
     if parameterData:
-        para_new = ParameterData(dict=new_parameterd)
+        para_new = Dict(dict=new_parameterd)
     else:
         para_new = None
 

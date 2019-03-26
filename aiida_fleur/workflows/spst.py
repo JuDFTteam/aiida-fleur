@@ -16,12 +16,13 @@
 """
 
 from __future__ import absolute_import
-from aiida.work.workchain import WorkChain, ToContext
-from aiida.work.launch import submit
+from aiida.engine.workchain import WorkChain, ToContext
+from aiida.engine.launch import submit
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.orm import Code, DataFactory, load_node
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.common.datastructures import calc_states
 import six
@@ -77,12 +78,12 @@ class fleur_spst_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_spst_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._wf_default))
+        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=Dict(dict=cls._wf_default))
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=ParameterData, required=False, default=ParameterData(dict=cls._default_options))
+        spec.input("options", valid_type=ParameterData, required=False, default=Dict(dict=cls._default_options))
         #spec.input("settings", valid_type=ParameterData, required=False)
                                                                               
         spec.outline(
@@ -168,9 +169,9 @@ class fleur_spst_wc(WorkChain):
         inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
         #change inp.xml to make a collinear calculation
         inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
-        inputs['wf_parameters'] = ParameterData(dict=inputs['wf_parameters'])
-        inputs['calc_parameters'] = ParameterData(dict=inputs['calc_parameters'])
-        inputs['options'] = ParameterData(dict=inputs['options'])
+        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
+        inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
+        inputs['options'] = Dict(dict=inputs['options'])
         res = self.submit(fleur_scf_wc, **inputs)
         return ToContext(reference=res)
     
@@ -337,7 +338,7 @@ class fleur_spst_wc(WorkChain):
         self.check_kpts(fleurin)
 
         #Do not copy broyd* files from the parent
-        settings = ParameterData(dict={'remove_from_remotecopy_list': ['broyd*']})
+        settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
         scf_ref_node = load_node(calc.pk)
@@ -423,7 +424,7 @@ class fleur_spst_wc(WorkChain):
                #'r2' : r2
                }
        
-        self.out('out', ParameterData(dict=out))
+        self.out('out', Dict(dict=out))
 
 def quadratic_fit(energies, q_vectors, structure):
     """

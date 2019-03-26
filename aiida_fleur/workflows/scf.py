@@ -24,10 +24,10 @@ from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.launch import submit
-from aiida.work import workfunction as wf
+from aiida.plugins import Code, DataFactory
+from aiida.engine.workchain import WorkChain, while_, if_, ToContext
+from aiida.engine.launch import submit
+from aiida.engine import workfunction as wf
 from aiida.common.datastructures import calc_states
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -117,7 +117,7 @@ class fleur_scf_wc(WorkChain):
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._wf_default))
+                   default=Dict(dict=cls._wf_default))
                                               #'fleur_runmax': 4,
                                                #'density_criterion' : 0.00002,
                                                #'energy_criterion' : 0.002,
@@ -140,7 +140,7 @@ class fleur_scf_wc(WorkChain):
         spec.input("calc_parameters", valid_type=ParameterData, required=False)
         spec.input("settings", valid_type=ParameterData, required=False)
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_options))#{
+                   default=Dict(dict=cls._default_options))#{
                             #'resources': {"num_machines": 1},
                             #'max_wallclock_seconds': 60*60,
                             #'queue_name': '',
@@ -733,7 +733,7 @@ class fleur_scf_wc(WorkChain):
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
 
-        outputnode_t = ParameterData(dict=outputnode_dict)
+        outputnode_t = Dict(dict=outputnode_dict)
          # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
             outdict = create_scf_result_node(outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)

@@ -4,7 +4,7 @@ import pytest
 
 @pytest.fixture(scope='session')
 def aiida_profile():
-    from aiida.utils.fixtures import fixture_manager
+    from aiida.manage.fixtures import fixture_manager
     
     with fixture_manager() as fixture_mgr:
         fixture_mgr.create_profile()

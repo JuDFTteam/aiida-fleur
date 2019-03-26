@@ -24,11 +24,11 @@ import os
 from string import digits
 #from pprint import pprint
 
-from aiida.orm import Code, DataFactory, Group
-from aiida.work.workchain import WorkChain, ToContext#, while_
+from aiida.plugins import Code, DataFactory, Group
+from aiida.engine.workchain import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work import workfunction as wf
-from aiida.work.launch import submit
+from aiida.engine import workfunction as wf
+from aiida.engine.launch import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
 import six
@@ -57,7 +57,7 @@ class fleur_delta_wc(WorkChain):
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'struc_group': 'delta',
+                   default=Dict(dict={'struc_group': 'delta',
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
                                                #'group_label' : 'delta_eos',
@@ -66,7 +66,7 @@ class fleur_delta_wc(WorkChain):
                                                'points' : 7,
                                                'step' : 0.02}))
         spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
+                   default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'walltime_sec': 60*60,
                             'queue_name': '',
@@ -106,7 +106,7 @@ class fleur_delta_wc(WorkChain):
 
         # check if right codes
         wf_dict = self.inputs.wf_parameters.get_dict()
-        options_dict = self.inputs.get('options', ParameterData(dict={'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)}))
+        options_dict = self.inputs.get('options', Dict(dict={'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)}))
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
@@ -116,7 +116,7 @@ class fleur_delta_wc(WorkChain):
                  'guess' : 1.0},
             'options' : options_dict
              }
-        self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
+        self.ctx.wc_eos_para = Dict(dict=self.ctx.inputs_eos.get('wf_parameters'))
         self.ctx.ncalc = 1 # init
         self.get_calcs_from_groups()
         self.ctx.successful = True
@@ -491,7 +491,7 @@ class fleur_delta_wc(WorkChain):
 
         # output must be aiida Data types.
         outnodedict = {}
-        outnode = ParameterData(dict=outputnode_dict)
+        outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
         for label in self.ctx.labels:
             eos_res = self.ctx[label]

@@ -26,7 +26,8 @@ create_group
 from __future__ import absolute_import
 from __future__ import print_function
 import json
-from aiida.orm import Code, DataFactory, load_node
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder, Node
 from aiida.orm import Group
 import six

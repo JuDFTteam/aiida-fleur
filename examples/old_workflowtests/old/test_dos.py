@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 #from aiida.work.run import run
 from aiidai_fleur.workflows.dos import fleur_dos_wc

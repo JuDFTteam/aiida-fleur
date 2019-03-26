@@ -13,7 +13,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm.querybuilder import QueryBuilder as QB
-from aiida.orm import Node, User, DataFactory, Calculation, Computer, Code
+from aiida.plugins import Node, User, DataFactory, Calculation, Computer, Code
 from aiida.orm import load_node
 
 from aiida.tools.codespecific.fleur.StructureData_util import eos_structures
@@ -57,8 +57,8 @@ wf_dict = {'fleur_runmax' : 2, 'density_criterion' : 0.0000001, 'points' : point
 
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
-computer = Computer.get(computer_name)
-wf_para = ParameterData(dict=wf_dict)
+computer = Computer.objects.get(computer_name)
+wf_para = Dict(dict=wf_dict)
 
 #res = run(lattice_constant, wf_parameters=wf_para, structure=W_bcc,
 #                calc_parameters=W_para, inpgen = code, fleur=code2)

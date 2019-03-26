@@ -24,9 +24,9 @@ import re
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 #from aiida.workflows2.wf import wf
-from aiida.work.workfunctions import workfunction as wf
+from aiida.engine.processes.functions import workfunction as wf
 
 FleurinpData = DataFactory('fleur.fleurinp')
 

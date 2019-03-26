@@ -18,10 +18,10 @@ import json
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.orm import Code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.work.run import submit
-from aiida.orm.calculation.job import JobCalculation
+from aiida.engine.run import submit
+from aiida.engine.calculation.job import CalcJob
 
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
@@ -79,7 +79,7 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
         label = 'fleur_scf_benchmark_run_{}'.format(formula)
         description = 'Fleur benchmark run on system {} with resources {}'.format(formula, scf_para['resources'])
         print(('submitting {}'.format(label)))
-        res = submit(fleur_scf_wc, wf_parameters=ParameterData(dict=scf_para), fleurinp=fleurinp, fleur=code_node, _label=label, _description=description)
+        res = submit(fleur_scf_wc, wf_parameters=Dict(dict=scf_para), fleurinp=fleurinp, fleur=code_node, _label=label, _description=description)
         all_res.append(res)
     return all_res
 

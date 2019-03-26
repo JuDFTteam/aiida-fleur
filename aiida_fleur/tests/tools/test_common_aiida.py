@@ -9,10 +9,10 @@
 from __future__ import absolute_import
 def test_create_group():
    from aiida_fleur.tools.common_aiida import create_group
-   from aiida.orm import DataFactory, Group
+   from aiida.plugins import DataFactory, Group
    ParameterData = DataFactory('dict')
 
-   para = ParameterData(dict={})
+   para = Dict(dict={})
    # para.store()
    group = create_group([para.pk], 'test_group')
     
