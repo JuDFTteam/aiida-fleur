@@ -20,8 +20,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os.path
 from aiida.plugins import Code, DataFactory
-from aiida.engine.workchain import WorkChain, ToContext
-from aiida.engine.run import submit
+from aiida.engine import WorkChain, ToContext
+from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier

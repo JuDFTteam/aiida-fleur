@@ -16,14 +16,14 @@ if not is_dbenv_loaded():
 
 import os.path
 from aiida.plugins import Code, DataFactory
-from aiida.engine.workchain import WorkChain
-from aiida.engine.run import submit
-from aiida.engine.workchain import ToContext
+from aiida.engine import WorkChain
+from aiida.engine import submit
+from aiida.engine import ToContext
 from aiida.engine.process_registry import ProcessRegistry
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.engine.workchain import while_, if_
+from aiida.engine import while_, if_
 from aiida_fleur.tools.create_corehole import create_corehole
 
 StructureData = DataFactory('structure')

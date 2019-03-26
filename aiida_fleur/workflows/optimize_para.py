@@ -21,9 +21,9 @@ from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.engine.workchain import WorkChain, ToContext#,Outputs
+from aiida.engine import WorkChain, ToContext#,Outputs
 #from aiida.work import workfunction as wf
-from aiida.engine.run import submit
+from aiida.engine import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation

@@ -25,8 +25,8 @@ corelevel shifts with different methods.
 # but should lead to error if no ref is found for what should be calculated
 from __future__ import absolute_import
 from string import digits
-from aiida.engine.run import submit
-from aiida.engine.workchain import ToContext, WorkChain, if_
+from aiida.engine import submit
+from aiida.engine import ToContext, WorkChain, if_
 from aiida.engine import workfunction as wf
 from aiida.plugins import DataFactory, CalculationFactory, Group
 from aiida.orm import Code, load_node

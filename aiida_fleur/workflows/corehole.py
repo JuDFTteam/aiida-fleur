@@ -31,7 +31,7 @@ from pprint import pprint
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.orm.nodes.base import Int
-from aiida.engine.workchain import WorkChain, if_, ToContext
+from aiida.engine import WorkChain, if_, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine.processes.functions import workfunction as wf

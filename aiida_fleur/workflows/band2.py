@@ -23,10 +23,10 @@ from __future__ import print_function
 import os.path
 from aiida.plugins import Code, DataFactory
 #from aiida.tools.codespecific.fleur.queue_defaults import queue_defaults
-from aiida.engine.workchain import WorkChain
-from aiida.engine.run import submit
-from aiida.engine.workchain import if_
-from aiida.engine.workchain import ToContext
+from aiida.engine import WorkChain
+from aiida.engine import submit
+from aiida.engine import if_
+from aiida.engine import ToContext
 from aiida.engine import workfunction as wf
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation

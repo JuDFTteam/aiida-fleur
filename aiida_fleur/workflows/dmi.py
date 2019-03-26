@@ -16,7 +16,7 @@
 """
 
 from __future__ import absolute_import
-from aiida.engine.workchain import WorkChain, ToContext
+from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options

@@ -25,8 +25,8 @@ This module, contains the crystal structure relaxation workflow for FLEUR.
 from __future__ import absolute_import
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.engine.workchain import WorkChain, while_, if_, ToContext
-from aiida.engine.run import run, submit
+from aiida.engine import WorkChain, while_, if_, ToContext
+from aiida.engine import run, submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
