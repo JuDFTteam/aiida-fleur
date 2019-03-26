@@ -34,14 +34,14 @@ import six
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_relax_wc(WorkChain):
     """
     This workflow relaxes a structure with Fleur calculation.
 
-    :Params: a parameterData node,
+    :Params: a Dict node,
     :returns: Success, last result node, list with convergence behavior
     """
     # wf_parameters: { wf_convergence_para:{  'density_criterion', 'energy_criterion'} #'converge_density' = True, 'converge_energy'= True}, max_force_cycle, force_criterion
@@ -49,12 +49,12 @@ class fleur_relax_wc(WorkChain):
     @classmethod
     def _define(cls, spec):
         super(fleur_relax_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=True)
-                   #, required=False, default = ParameterData(
+        spec.input("wf_parameters", valid_type=Dict, required=True)
+                   #, required=False, default = Dict(
                    #dict={'relax_runmax' : 4, 'fleur_runmax' : 10, 'density_criterion' : 0.00002 , 'converge_density': True, 'converge_energy' : True, 'energy_criterion' : 0.00002})# htr
                    #{default=make_str('quantumespresso.pw')))
         spec.input("structure", valid_type=StructureData)#, required=False
-        spec.input("calc_parameters", valid_type=ParameterData)#, required=False
+        spec.input("calc_parameters", valid_type=Dict)#, required=False
         #spec.input("parent_calculation", valid_type=JobCalculation)#, required=False # either fleur or inpgen.
         spec.input("inpgen", valid_type=Code)#, required=False
         #spec.input("computer", valid_type=Computer)#, required=False, default=get_computer_from_string('iff003')

@@ -36,7 +36,7 @@ from seekpath.aiidawrappers import get_path, get_explicit_k_path
 import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 KpointsData = DataFactory('array.kpoints')
 FleurinpData = DataFactory('fleur.fleurinp')
@@ -60,7 +60,7 @@ class fleur_band2_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_band2_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={
                                          'kpath' : 'auto',
                                          'nkpts' : 800,
@@ -70,8 +70,8 @@ class fleur_band2_wc(WorkChain):
 
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.outline(
             cls.start,

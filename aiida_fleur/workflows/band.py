@@ -29,7 +29,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
@@ -63,9 +63,9 @@ class fleur_band_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_wf_para))
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("options", valid_type=Dict, required=False, 
                    default=Dict(dict=cls._default_wf_para))
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)

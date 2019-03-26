@@ -28,7 +28,7 @@ from aiida.plugins import Code, DataFactory, Group
 from aiida.engine.workchain import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import workfunction as wf
-from aiida.engine.launch import submit
+from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
 import six
@@ -39,7 +39,7 @@ import six
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 SingleData = DataFactory('singlefile')
 
@@ -56,7 +56,7 @@ class fleur_delta_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={'struc_group': 'delta',
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
@@ -65,7 +65,7 @@ class fleur_delta_wc(WorkChain):
                                                'part' : [1,2,3,4],
                                                'points' : 7,
                                                'step' : 0.02}))
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'walltime_sec': 60*60,
@@ -474,7 +474,7 @@ class fleur_delta_wc(WorkChain):
         outputnode_dict['volumes_units'] = 'A^3/per atom'
         outputnode_dict['delta_factor'] = {'Wien2K' : '', 'Fleur_026' : ''}
 
-        #outputnode = ParameterData(dict=outputnode_dict)
+        #outputnode = Dict(dict=outputnode_dict)
 
         if self.ctx.successful:
             self.report('INFO: Done, delta worklfow complete')
@@ -520,11 +520,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='SCF with FLEUR. workflow to'
                  ' converge the chargedensity and optional the total energy.')
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='The pseudopotential family', required=False)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)

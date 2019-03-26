@@ -18,7 +18,7 @@
 
 from __future__ import absolute_import
 from aiida.engine.workchain import WorkChain, ToContext, if_
-from aiida.engine.launch import submit
+from aiida.engine import submit
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -31,7 +31,7 @@ from six.moves import range
 
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_mae_wc(WorkChain):
@@ -79,13 +79,13 @@ class fleur_mae_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_mae_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False, default=Dict(dict=cls._wf_default))
+        spec.input("wf_parameters", valid_type=Dict, required=False, default=Dict(dict=cls._wf_default))
         spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=ParameterData, required=False, default=Dict(dict=cls._default_options))
-        #spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("options", valid_type=Dict, required=False, default=Dict(dict=cls._default_options))
+        #spec.input("settings", valid_type=Dict, required=False)
                                                                               
         spec.outline(
             cls.start,
@@ -99,7 +99,7 @@ class fleur_mae_wc(WorkChain):
             ),
         )
 
-        spec.output('out', valid_type=ParameterData)
+        spec.output('out', valid_type=Dict)
 
     def start(self):
         """

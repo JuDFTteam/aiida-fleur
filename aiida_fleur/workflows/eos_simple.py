@@ -34,7 +34,7 @@ from six.moves import range
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
@@ -44,13 +44,13 @@ class fleur_eos_wc_simple(WorkChain):
     calls it for the calculation of the equation of states of a structure.
 
 
-    :param wf_parameters: ParameterData node, optional, protocol specification will be parsed like this to fleur_eos_wc
+    :param wf_parameters: Dict node, optional, protocol specification will be parsed like this to fleur_eos_wc
     :param structure: StructureData node, bulk crystal structure
     :param inpgen: Code node,
     :param fleur: Code node,
 
 
-    :return output_eos_wc_para: ParameterData node of fleur_eos_wc, contains relevant output information.
+    :return output_eos_wc_para: Dict node of fleur_eos_wc, contains relevant output information.
     about general succces, fit results and so on.
 
     """
@@ -63,7 +63,7 @@ class fleur_eos_wc_simple(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc_simple, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,

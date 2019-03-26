@@ -24,11 +24,12 @@ from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida.plugins import Code, DataFactory
-from aiida.engine.workchain import WorkChain, while_, if_, ToContext
-from aiida.engine.launch import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code
+from aiida.engine.processes.workchains import WorkChain, while_, if_, ToContext
+from aiida.engine import submit
 from aiida.engine import workfunction as wf
-from aiida.common.datastructures import calc_states
+from aiida.common.datastructures import CalcJobState as calc_states
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
@@ -38,7 +39,7 @@ import six
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_scf_wc(WorkChain):
@@ -51,15 +52,15 @@ class fleur_scf_wc(WorkChain):
     (1) Start from a structure and run the inpgen first optional with calc_parameters
     (2) Start from a Fleur calculation, with optional remoteData
 
-    :param wf_parameters: (ParameterData), Workchain Spezifications
+    :param wf_parameters: (Dict), Workchain Spezifications
     :param structure: (StructureData), Crystal structure
-    :param calc_parameters: (ParameterData), Inpgen Parameters
+    :param calc_parameters: (Dict), Inpgen Parameters
     :param fleurinp: (FleurinpData), to start with a Fleur calculation
     :param remote_data: (RemoteData), from a Fleur calculation
     :param inpgen: (Code)
     :param fleur: (Code)
 
-    :return output_scf_wc_para: (ParameterData), Information of workflow results
+    :return output_scf_wc_para: (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
 
     minimum input example:
@@ -116,7 +117,7 @@ class fleur_scf_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict=cls._wf_default))
                                               #'fleur_runmax': 4,
                                                #'density_criterion' : 0.00002,
@@ -137,9 +138,9 @@ class fleur_scf_wc(WorkChain):
                                                #'inpxml_changes' : [],
                                                #}))
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("settings", valid_type=ParameterData, required=False)
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_options))#{
                             #'resources': {"num_machines": 1},
                             #'max_wallclock_seconds': 60*60,
@@ -168,8 +169,8 @@ class fleur_scf_wc(WorkChain):
         )
 
         spec.output('fleurinp', valid_type=FleurInpData)
-        spec.output('output_scf_wc_para', valid_type=ParameterData)
-        spec.output('last_fleur_calc_output', valid_type=ParameterData)
+        spec.output('output_scf_wc_para', valid_type=Dict)
+        spec.output('last_fleur_calc_output', valid_type=Dict)
 
 
         
@@ -444,7 +445,7 @@ class fleur_scf_wc(WorkChain):
         if 'settings' in self.inputs:
             settings = self.input.settings
         else:
-            settings = ParameterData(dict={'files_to_retrieve' : [],
+            settings = Dict(dict={'files_to_retrieve' : [],
                                            'files_not_to_retrieve': [],
                                            'files_copy_remotely': [],
                                            'files_not_copy_remotely': [],
@@ -860,11 +861,11 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to'
                  ' converge the chargedensity and optional the total energy. all arguments are pks, or uuids, codes can be names'))
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='Some workflow parameters', required=False)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)

@@ -27,7 +27,7 @@ from aiida.orm import Code, load_node
 from aiida.orm.nodes.base import Float
 from aiida.engine.workchain import WorkChain, ToContext#,Outputs
 from aiida.engine.processes.functions import workfunction as wf
-from aiida.engine.launch import submit
+from aiida.engine import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -36,7 +36,7 @@ import six
 from six.moves import range
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
@@ -47,14 +47,14 @@ class fleur_eos_wc(WorkChain):
     A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
-    :param wf_parameters: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
+    :param wf_parameters: Dict node, optional 'wf_parameters', protocol specifieing parameter dict
     :param structure: StructureData node, 'structure' crystal structure
-    :param calc_parameters: ParameterData node, optional 'calc_parameters' parameters for inpgen
+    :param calc_parameters: Dict node, optional 'calc_parameters' parameters for inpgen
     :param inpgen: Code node,
     :param fleur: Code node,
 
 
-    :return output_eos_wc_para: ParameterData node, contains relevant output information.
+    :return output_eos_wc_para: Dict node, contains relevant output information.
     about general succces, fit results and so on.
 
 
@@ -89,17 +89,17 @@ class fleur_eos_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,
                        'guess' : 1.00}))
         spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'max_wallclock_seconds': 60*60,
@@ -107,7 +107,7 @@ class fleur_eos_wc(WorkChain):
                             'custom_scheduler_commands' : '',
                             'import_sys_environment' : False,
                             'environment_variables' : {}}))
-        spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -269,7 +269,7 @@ class fleur_eos_wc(WorkChain):
         #    #para['queue_name'] = wf_para_dict.get('queue_name')
         #    para['serial'] = wf_para_dict.get('serial')
         #    #para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
-        #    inputs['wf_parameters'] = ParameterData(dict=para)
+        #    inputs['wf_parameters'] = Dict(dict=para)
         if 'options' in self.inputs:
             inputs['options'] = self.inputs.options
         try:
@@ -433,7 +433,7 @@ if __name__ == "__main__":
     # instead you need to use somehting that will load the nodes from pks or uuids
     # checkout what other aiida people do here
     parser = argparse.ArgumentParser(description='Equation of states workchain with Fleur. Does scf-cycles for a structure with different scaleings.')
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='Parameter data node, specifing workflow parameters', required=False)
     parser.add_argument('--inpgen', type=Code, dest='inpgen',
                         help='The inpgen code node to use', required=True)
@@ -441,7 +441,7 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=True)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     args = parser.parse_args()
     res = fleur_eos_wc.run(wf_parameters=args.wf_parameters,

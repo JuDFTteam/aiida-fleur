@@ -27,7 +27,7 @@ run_in_serial_mode = False#True#False
 queue = None
 
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 
 

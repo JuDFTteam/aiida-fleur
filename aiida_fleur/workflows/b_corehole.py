@@ -27,7 +27,7 @@ from aiida.engine.workchain import while_, if_
 from aiida_fleur.tools.create_corehole import create_corehole
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
@@ -39,7 +39,7 @@ class fleur_corehole_wc(WorkChain):
 
 
     '''
-    # wf_Parameters: ParameterData,
+    # wf_Parameters: Dict,
     '''
     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
     'Bes' : [W4f, Be1s]
@@ -72,7 +72,7 @@ class fleur_corehole_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={
                                             'method' : 'initial',
                                             'atoms' : 'all',
@@ -85,7 +85,7 @@ class fleur_corehole_wc(WorkChain):
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.outline(
             cls.check_input,
             if_(cls.relaxation_needed)(

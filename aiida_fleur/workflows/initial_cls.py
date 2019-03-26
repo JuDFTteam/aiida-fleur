@@ -39,7 +39,7 @@ import six
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
@@ -110,14 +110,14 @@ class fleur_initial_cls_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_wf_para))
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_options))
 
         spec.outline(
@@ -291,12 +291,12 @@ class fleur_initial_cls_wc(WorkChain):
                         self.ctx.abort = True
 
                 # expecting nodes and filling ref_calcs_torun
-                if isinstance(ref_el_node, list):#(StructureData, ParameterData)):
+                if isinstance(ref_el_node, list):#(StructureData, Dict)):
                     #enforced parameters, add directly to run queue
                     # TODO: if a scf with these parameters was already done link to it
                     # and extract the results instead of running the calculation again....
                     if len(ref_el_node) == 2:
-                        if isinstance(ref_el_node[0], StructureData) and isinstance(ref_el_node[1], ParameterData):
+                        if isinstance(ref_el_node[0], StructureData) and isinstance(ref_el_node[1], Dict):
                             self.ctx.ref_calcs_torun.append(ref_el_node)
                         else:
                             self.report('WARNING: I did not undestand the list with length 2 '
@@ -308,7 +308,7 @@ class fleur_initial_cls_wc(WorkChain):
                 elif isinstance(ref_el_node, FleurCalc):
                     #extract from fleur calc TODO
                     self.ctx.ref_cl_energies[elem] = {}
-                elif isinstance(ref_el_node, ParameterData):
+                elif isinstance(ref_el_node, Dict):
                     #extract from workflow output TODO
                     self.ctx.ref_cl_energies[elem] = {}
                 elif isinstance(ref_el_node, FleurinpData):
@@ -434,7 +434,7 @@ class fleur_initial_cls_wc(WorkChain):
             #elif isinstance(node, FleurinpData):
             #    res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, list):#(StructureData, ParameterData)):
+            elif isinstance(node, list):#(StructureData, Dict)):
                 if len(node) == 2:
                     res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
                                  structure=node[0], calc_parameters=node[1], options=options,
@@ -555,7 +555,7 @@ class fleur_initial_cls_wc(WorkChain):
             #elif isinstance(node, FleurinpData):
             #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, list):#(StructureData, ParameterData)):
+            elif isinstance(node, list):#(StructureData, Dict)):
                 res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
                              structure=node[0], calc_parameters=node[1], options=options,
                              inpgen = self.inputs.inpgen, fleur=self.inputs.fleur,
@@ -788,7 +788,7 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['total_energy_units'] = 'eV'
         outputnode_dict['total_energy_ref'] = list(tE_ref.values())
         outputnode_dict['total_energy_ref_des'] = list(tE_ref.keys())
-        #outputnode = ParameterData(dict=outputnode_dict)
+        #outputnode = Dict(dict=outputnode_dict)
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}

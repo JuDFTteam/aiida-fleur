@@ -32,7 +32,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.orm.nodes.base import Int
 from aiida.engine.workchain import WorkChain, if_, ToContext
-from aiida.engine.launch import submit
+from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine.processes.functions import workfunction as wf
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -45,10 +45,10 @@ from aiida_fleur.tools.StructureData_util import find_equi_atoms
 from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
-from aiida_fleur.tools.ParameterData_util import dict_merger, extract_elementpara
+from aiida_fleur.tools.Dict_util import dict_merger, extract_elementpara
 import six
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 
@@ -72,14 +72,14 @@ class fleur_corehole_wc(WorkChain):
 
     Also it is recommended to provide a calc parameter node for the structure
 
-    :Params: wf_parameters: parameterData node, specify, resources and what should be calculated
+    :Params: wf_parameters: Dict node, specify, resources and what should be calculated
     :Params: structure : structureData node, crystal structure
-    :Params: calc_parameters: parameterData node, inpgen parameters for the crystal structure
+    :Params: calc_parameters: Dict node, inpgen parameters for the crystal structure
     :Params: fleurinp:  fleurinpData node,
     :Params: inpgen: Code node,
     :Params: fleur: Code node,
 
-    :returns: output_corehole_wc_para: parameterData node,  successful=True if no error
+    :returns: output_corehole_wc_para: Dict node,  successful=True if no error
 
 
     :uses: workchains: fleur_scf_wc, fleur_relax_wc
@@ -130,7 +130,7 @@ class fleur_corehole_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
             default=Dict(dict={
                 'method' : 'valence', # what method to use, default for valence to highest open shell
                 'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
@@ -151,8 +151,8 @@ class fleur_corehole_wc(WorkChain):
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("options", valid_type=ParameterData, required=False, 
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'max_wallclock_seconds': 60*60,
@@ -688,7 +688,7 @@ class fleur_corehole_wc(WorkChain):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, tuple):
-                if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
+                if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
                     print(node[1].get_dict())
                     res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0],
                                 inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
@@ -723,7 +723,7 @@ class fleur_corehole_wc(WorkChain):
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
-                if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
+                if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
                     res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
                                  calc_parameters=node[1], structure=node[0],
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
@@ -816,8 +816,8 @@ class fleur_corehole_wc(WorkChain):
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, list):
-                if isinstance(node[0], StructureData) and isinstance(node[1], ParameterData):
-                    if isinstance(node[2], ParameterData):
+                if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
+                    if isinstance(node[2], Dict):
                         res = self.submit(fleur_scf_wc, wf_parameters=node[2],
                                      calc_parameters=node[1], structure=node[0], options=options,
                                      inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
@@ -1019,7 +1019,7 @@ def prepare_struc_corehole_wf(base_supercell, wf_para, para):#, _label='prepare_
     """
     workfunction which does all/some the structure+calcparameter manipulations together
     (therefore less nodes are produced and proverance is kept)
-    wf_para: ParameterData node dict: {'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}
+    wf_para: Dict node dict: {'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}
     """
     from aiida_fleur.tools.StructureData_util import move_atoms_incell
     #from aiida.orm.data.structure import Site
@@ -1036,7 +1036,7 @@ def prepare_struc_corehole_wf(base_supercell, wf_para, para):#, _label='prepare_
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    new_struc, new_para = break_symmetry(base_supercell, atoms=[], site=[], pos=[(pos[0], pos[1], pos[2])], new_kinds_names=new_kinds_names, parameterData=para)
+    new_struc, new_para = break_symmetry(base_supercell, atoms=[], site=[], pos=[(pos[0], pos[1], pos[2])], new_kinds_names=new_kinds_names, Dict=para)
     #kinds = new_struc.kinds
     #for kind in kinds:
     #    if kind.name == broke_kn:
@@ -1047,7 +1047,7 @@ def prepare_struc_corehole_wf(base_supercell, wf_para, para):#, _label='prepare_
     # Make sure to provide a parameter node otherwise create_corhole para won't work
     para = create_corehole_para(moved_struc, species_name,#wf_para_dict['kindname'],
                                 wf_para_dict['econfig'],
-                                parameterData=new_para, species_name=species_name)
+                                Dict=new_para, species_name=species_name)
 
     # return of a wf has to be dictionary of nodes...
     return {'moved_struc' : moved_struc, 'hole_para' : para}

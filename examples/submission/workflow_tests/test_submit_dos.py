@@ -22,11 +22,11 @@ import argparse
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
-from aiida.engine.launch import submit, run
+from aiida.engine import submit, run
 from aiida_fleur.workflows.dos import fleur_dos_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
