@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -37,8 +37,6 @@ RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-#FleurProcess = FleurCalculation.process()
-FleurinpProcess = FleurinputgenCalculation.process()
 
 
 class fleur_optimize_parameters_wc(WorkChain):
@@ -161,7 +159,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         inputs = get_inputs_inpgen(structure, inpgencode, options, label, 
                                    description, params=params)
         self.report('INFO: run inpgen')
-        future = submit(FleurinpProcess, **inputs)
+        future = submit(FleurinputgenCalculation, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
 

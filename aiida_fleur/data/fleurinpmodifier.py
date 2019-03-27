@@ -4,19 +4,18 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
 In this module is the Fleurinpmodefier class, which is used to manipulate
-fleurinpdata objects in a way which keeps the proverance.
+fleurinpdata objects in a way which keeps the provernance.
 """
 
-# TODO implement undo
 # TODO general clean up
-# TODO discuss design again what is really needed and the default way to du things
+# TODO discuss design again what is really needed and the default way to do things
 from __future__ import absolute_import
 from __future__ import print_function
 import os

@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -25,7 +25,7 @@ from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.common import calc_states
+from aiida.common import CalcJobState
 import six
 from six.moves import range
 
@@ -400,7 +400,7 @@ class fleur_mae_wc(WorkChain):
             try:
                 calculation = self.ctx.forr
                 calc_state = calculation.get_state()
-                if calc_state != calc_states.FINISHED or calculation.exit_status != 0:
+                if calc_state != CalcJobState.FINISHED or calculation.exit_status != 0:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
                             'in state {} with exit status {}'.format(calc_state, calculation.exit_status))

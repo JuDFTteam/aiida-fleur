@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -42,7 +42,6 @@ StructureData = DataFactory('structure')
 Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
 FleurCalc = CalculationFactory('fleur.fleur')
 
 
@@ -461,7 +460,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         '''
         inputs = get_inputs_fleur(code, remote, fleurin, options)
-        future = submit(FleurProcess, **inputs)
+        future = submit(FleurCalc, **inputs)
         self.ctx.loop_count = self.ctx.loop_count + 1
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
         self.ctx.calcs.append(future)

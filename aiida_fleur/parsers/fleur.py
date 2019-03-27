@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -284,8 +284,8 @@ def parse_xmlout_file(outxmlfile):
     except etree.XMLSyntaxError:
         outfile_broken = True
         parser_info_out['parser_warnings'].append(
-            'The out.xml file is broken I try to repair it.')
-
+            'The out.xml file is broken I try to repair it. Also I mark the parsing as failed.')
+        successful = False
 
     if outfile_broken:
         #repair xmlfile and try to parse what is possible.

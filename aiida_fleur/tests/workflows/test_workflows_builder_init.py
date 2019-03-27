@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -24,6 +24,8 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
     # structure, option, fleurinp, wfparameters
     # add to builder and see if he takes it
     # ggf if possible run initial step only, that the input is checked...
+    # In general the interfaces should be fixed and not changed. this is what 
+    # these tests are for, to test be aware of interface breaks 
     
     def test_fleur_scf_wc_init(aiida_env):
         """
@@ -113,3 +115,30 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
         
         builder = fleur_optimize_parameters_wc.get_builder()
+
+    
+    def test_fleur_mae_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.mae import fleur_mae_wc
+        
+        builder = fleur_mae_wc.get_builder()
+
+
+    def test_fleur_spst_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.spst import fleur_spst_wc
+        
+        builder = fleur_spst_wc.get_builder()
+
+
+    def test_fleur_dmi_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.dmi import fleur_dmi_wc
+        
+        builder = fleur_dmi_wc.get_builder()
