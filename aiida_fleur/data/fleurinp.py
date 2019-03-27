@@ -175,6 +175,7 @@ class FleurinpData(Data):
         """
         self.files = files
 
+
     def set_file(self, filename, dst_filename=None):
         """
         Add a file to the FleurinpData
@@ -182,6 +183,18 @@ class FleurinpData(Data):
         :param filename: absolute path to the file
         """
         self._add_path(filename, dst_filename=dst_filename)
+
+
+    def open(self, key='inp.xml', mode='r'):
+        """
+        Return an open file handle to the content of this data node.
+        
+        :param key: optional key within the repository, by default is the `inp.xml` set in the attributes
+        :param mode: the mode with which to open the file handle, default r
+        :return: a file handle in read mode
+	 """
+	
+        return super(FleurinpData, self).open(key, mode=mode)
 
     def get_content(self, filename='inp.xml'):
         """Return the content of the single file stored for this data node.
