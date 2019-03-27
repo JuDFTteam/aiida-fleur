@@ -183,21 +183,11 @@ class FleurinpData(Data):
         """
         self._add_path(filename, dst_filename=dst_filename)
 
-
-    def open(self, key='inp.xml', mode='r'):
-        """Return an open file handle to the content of this data node.
-        :param key: optional key within the repository, by default is the `filename` set in the attributes
-        :param mode: the mode with which to open the file handle
-        :return: a file handle in read mode
-        """
-
-        return self._repository.open(key, mode=mode)
-
     def get_content(self, filename='inp.xml'):
         """Return the content of the single file stored for this data node.
         :return: the string content of the file
         """
-        with self.open(key=filename) as handle:
+        with self.open(key=filename, mode='r') as handle:
             return handle.read()
 
 
@@ -392,7 +382,7 @@ class FleurinpData(Data):
 
         # read xmlinp file into an etree with autocomplition from schema
         #inpxmlfile = self.get_file_abs_path('inp.xml')
-        inpxmlfile = self.open(key='inp.xml')
+        inpxmlfile = self.open(key='inp.xml', mode='r')
         
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -845,7 +835,7 @@ class FleurinpData(Data):
 
         # read in inpxml
         #inpxmlfile = self.get_file_abs_path('inp.xml')#'./inp.xml'
-        inpxmlfile = self.open(key='inp.xml')
+        inpxmlfile = self.open(key='inp.xml', mode='r')
         new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
         inpxmlfile.close() # I don’t like this
         return new_parameters
@@ -1020,7 +1010,7 @@ class FleurinpData(Data):
         if 'inp.xml' in self.files:
             # read in inpxml
             #inpxmlfile = self.get_file_abs_path('inp.xml')
-            inpxmlfile = fleurinp.open(key='inp.xml')
+            inpxmlfile = self.open(key='inp.xml', mode='r')
             if self._schema_file_path: # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)
