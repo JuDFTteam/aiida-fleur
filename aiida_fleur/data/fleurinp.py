@@ -86,14 +86,14 @@ class FleurinpData(Data):
 
 
 
-        self._search_paths = []
+        search_paths = []
         ifolders = get_internal_search_paths()
         ischemas = get_schema_paths()
         for path in ischemas:
-             self._search_paths.append(path)
+             search_paths.append(path)
         for path in ifolders:
-             self._search_paths.append(path)
-        self._search_paths.append('./')
+             search_paths.append(path)
+        search_paths.append('./')
 
         # Now add also python path maybe will be decaptivated
         #if pythonpath is non existent catch error
@@ -103,12 +103,12 @@ class FleurinpData(Data):
              pythonpath = []
 
         for path in pythonpath[:]:
-            self._search_paths.append(path)
+            search_paths.append(path)
         
 
         self.set_attribute('_has_schema', False)
         self.set_attribute('_schema_file_path', None) 
-        
+        self.set_attribute('_search_paths', search_paths) 
         if files:
             self.set_files(files)
 
@@ -122,9 +122,16 @@ class FleurinpData(Data):
     @property
     def _schema_file_path(self):
         """
-        A string, which stores the absolute path to the schemafile fount
+        A string, which stores the absolute path to the schemafile found
         """
-        return self.get_attribute('_schema_file_path')#, None)
+        return self.get_attribute('_schema_file_path')
+
+    @property
+    def _search_paths(self):
+        """
+        A string, which stores the paths to search for  schemafiles
+        """
+        return self.get_attribute('_search_paths')
 
     @_has_schema.setter
     def _has_schema(self, boolean):
@@ -209,8 +216,9 @@ class FleurinpData(Data):
                 ## There was no file set
                 pass
         # remove from sandbox folder
-        if filename in self.get_folder_list():
-            super(FleurinpData, self).remove_path(filename)
+        if filename in self.list_object_names():#get_folder_list():
+            self.delete_object(filename)
+            #super(FleurinpData, self).remove_path(filename)
     
 
     # AiiDA API changed do not use abs_paths, you can get the content, or a file reader, 
@@ -290,7 +298,8 @@ class FleurinpData(Data):
             is_filelike = False
             
             if not os.path.isabs(file1):
-                raise ValueError("Pass an absolute path for file1: {}".format(file1))
+                file1 = os.path.abspath(file1)
+                #raise ValueError("Pass an absolute path for file1: {}".format(file1))
 
             if not os.path.isfile(file1):
                 raise ValueError("file1 must exist and must be a single file: {}".format(file1))
@@ -299,13 +308,13 @@ class FleurinpData(Data):
                 final_filename = os.path.split(file1)[1]
             else:
                 final_filename = dst_filename
-            key = final_filename
         else:
             is_filelike = True
-            key = os.path.basename(file.name)        
+            final_filename = os.path.basename(file1.name)        
 
 
-        
+        key = final_filename
+
         #super(FleurinpData, self).add_path(src_abs, final_filename)
         
         old_file_list = self.list_object_names()
@@ -330,8 +339,11 @@ class FleurinpData(Data):
         if final_filename == 'inp.xml':
             #get input file version number
             inp_version_number = None
-
-            inpfile = open(file1, 'r')
+            if is_filelike: # at this point it was read..
+                # TODO this does not work.. reading it now is []..
+                inpfile = file1       
+            else:
+                inpfile = open(file1, 'r')
             for line in inpfile.readlines():
                 if re.search('fleurInputVersion', line):
                     inp_version_number = re.findall(r'\d+.\d+', line)[0]
@@ -402,14 +414,6 @@ class FleurinpData(Data):
         self.set_attribute('inp_dict', inpxml_dict)
 
 
-    # tracing user changes
-    #@property
-    #def inp_userchanges(self):
-    #    """
-    #    Return the changes done by the user on the inp.xml file.
-    #    """
-    #    return self.get_attribute('inp_userchanges', {})
-
     # dict with inp paramters parsed from inp.xml
     @property
     def inp_dict(self):
@@ -419,21 +423,6 @@ class FleurinpData(Data):
         """
         return self.get_attribute('inp_dict', {})
 
-    #def copy(self):
-    #    """
-    #    Method to copy a FleurinpData and keep the proverance.
-    #    (because currently that is not default)
-    #    """
-    #    # TODO: do to clone() behavior of aiida 1.0 might be obsolete
-    #    # copy only the files not the user changes and so on.
-    #
-    #    filepath = []
-    #    for file in self.files:
-    #        filepath.append(self.get_file_abs_path(file))
-    #
-    #    new = FleurinpData(files=filepath)
-
-    #    return new
 
     # TODO better validation? other files, if has a schema
     def _validate(self):
@@ -813,7 +802,8 @@ class FleurinpData(Data):
             totalw = 0
             for weight in kpoints_weight:
                 totalw = totalw + weight
-            kps = KpointsData(cell=cell)
+            kps = KpointsData()
+            kps.set_cell(cell)
             kps.pbc = pbc1
 
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)

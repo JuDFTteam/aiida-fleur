@@ -24,7 +24,7 @@ def test_determine_formation_energy():
     from aiida_fleur.tools.common_fleur_wf_util import determine_formation_energy
     
     # form energy is per atom here...
-    form_en_exp = [-0.16666666666666666, 0.0]
+    form_en_exp = [0.0, -0.16666666666666666]
     form_en_dict_exp = {'Be2W': -0.16666666666666666, 'BeW': 0.0}
     form_en, form_en_dict = determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1})
     assert form_en == form_en_exp

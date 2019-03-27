@@ -57,7 +57,7 @@ class FleurinpModifier(object):
         # save inp.xml
         # store new fleurinp (copy)
 
-        new_fleurinp = original.copy()
+        new_fleurinp = original.clone()
         # TODO test if file is there!
         #inpxmlfile = new_fleurinp.get_file_abs_path('inp.xml')
         inpxmlfile = new_fleurinp.open(key='inp.xml')
@@ -75,14 +75,19 @@ class FleurinpModifier(object):
 
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
             modification_tasks=modification_tasks)
+        
+        # To include object store storage this prob has to be done differently
 
-        inpxmlfile = os.path.join(
-                         new_fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
-        new_fleurtree.write(inpxmlfile)
+        inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
+        inpxmlfile.close()
+        #inpxmlfile = os.path.join(
+        #                 new_fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
+
+        new_fleurtree.write(inpxmlfile_new)
 
         new_fleurinp.del_file('inp.xml')
-        new_fleurinp._add_path(str(inpxmlfile), 'inp.xml')
-        os.remove(inpxmlfile)
+        new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
+        os.remove(inpxmlfile_new)
 
         # default label and description
         new_fleurinp.label = 'mod_fleurinp'# {}'.format(original.label)
@@ -403,6 +408,10 @@ class FleurinpModifier(object):
         return self._tasks
 
     def freeze(self):
+        """
+        This method applies all the modifications to the input and 
+        returns a new stored fleurinpData object.
+        """
         modifications = DataFactory("dict")(dict={"tasks": self._tasks})
         modifications.description = u'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = u'Fleurinpdata modifications'
@@ -410,8 +419,8 @@ class FleurinpModifier(object):
         out = self.modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
-            label='fleurinp modifier',
-            description='This workfunction modified an Fleurinpdataobject')
+            metadata={'label' : 'fleurinp modifier',
+            'description' : 'This workfunction modified an Fleurinpdataobject'})
         return out
 
     def undo(self, all=False):
