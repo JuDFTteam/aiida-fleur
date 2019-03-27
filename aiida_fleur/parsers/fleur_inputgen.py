@@ -47,14 +47,10 @@ class Fleur_inputgenParser(Parser):
         """
         super(Fleur_inputgenParser, self).__init__(node)
         # these files should be at least present after success of inpgen
-        '''
-        #TODO retrieve this from inputs.metadata,options
-        self._default_files = {self.node.metadata.options.output_file_name, self.node.metadata.options.inpxml_file_name}
-        self._other_files = {self.node.metadata.options.shellout_file_name}
-        '''
-        
-        self._default_files = {FleurinputgenCalculation._DEFAULT_OUTPUT_FILE_NAME, FleurinputgenCalculation._DEFAULT_INPXML_FILE_NAME}
-        self._other_files = {FleurinputgenCalculation._DEFAULT_SHELLOUT_FILE_NAME}
+
+        self._default_files = {self.node.get_option('output_file_name'), self.node.get_option('inpxml_file_name')}
+        self._other_files = {self.node.get_option('shellout_file_name')}
+    
         #"enpara","inp","sym.out", "fort.93","struct.xsf"}
         #plus other special files? corelevels.xx, ... get from calc object
 
@@ -83,10 +79,10 @@ class Fleur_inputgenParser(Parser):
         self.logger.info("file list {}".format(list_of_files))
 
         #TODO: extract form metadata??
-        if FleurinputgenCalculation._DEFAULT_INPXML_FILE_NAME not in list_of_files:
+        if self.node.get_option('inpxml_file_name') not in list_of_files:
             successful = False
             self.logger.error(
-                "XML inp not found '{}'".format(FleurinputgenCalculation._INPXML_FILE_NAME))
+                "XML inp not found '{}'".format(self.node.get_option('inpxml_file_name')))
             return ExitCode(101)
         else:
             has_xml_inpfile = True
@@ -106,9 +102,9 @@ class Fleur_inputgenParser(Parser):
         #return successful,new_nodes_list
 
         new_nodes_list = []
-        if FleurinputgenCalculation._DEFAULT_ERROR_FILE_NAME in list_of_files:
+        if self.node.get_option('error_file_name') in list_of_files:
             try:
-                with output_folder.open(FleurinputgenCalculation._DEFAULT_ERROR_FILE_NAME, 'r') as efile:
+                with output_folder.open(self.node.get_option('error_file_name'), 'r') as efile:
                     error_file_lines = efile.read()# Note: read(),not readlines()
             except IOError:
                 self.logger.error(
@@ -117,7 +113,7 @@ class Fleur_inputgenParser(Parser):
             if error_file_lines:
                 self.logger.error(
                     "The following was written to the error file {} : \n '{}'"
-                    "".format(FleurinputgenCalculation._DEFAULT_ERROR_FILE_NAME, error_file_lines))
+                    "".format(self.node.get_option('error_file_name'), error_file_lines))
                 #has_error = True
                 successful = False
                 return ExitCode(101)
