@@ -94,7 +94,7 @@ def test_fleurinp_kpointsdata_extraction(inpxmlfilepath):
 
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    kptsd = fleurinp_tmp.get_kpointsdata_nwf(fleurinp_tmp)
+    kptsd = fleurinp_tmp.get_kpointsdata_ncf(fleurinp_tmp)
     
     if kptsd is not None:
         assert isinstance(kptsd, KpointsData)
@@ -117,7 +117,7 @@ def test_fleurinp_parameterdata_extraction(inpxmlfilepath):
     fleurinp = DataFactory('fleur.fleurinp')
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    param = fleurinp_tmp.get_parameterdata_nwf()
+    param = fleurinp_tmp.get_parameterdata_ncf()
     
     assert isinstance(param, ParameterData)
     
@@ -137,7 +137,7 @@ def test_fleurinp_structuredata_extraction(inpxmlfilepath):
     fleurinp = DataFactory('fleur.fleurinp')
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    struc = fleurinp_tmp.get_structuredata_nwf()
+    struc = fleurinp_tmp.get_structuredata_ncf()
 
     if struc is not None:
         assert isinstance(struc, StructureData)

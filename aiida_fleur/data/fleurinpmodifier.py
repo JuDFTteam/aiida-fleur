@@ -25,8 +25,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from aiida.plugins import DataFactory
-#from aiida.workflows2.wf import wf
-from aiida.engine.processes.functions import workfunction as wf
+from aiida.engine.processes.functions import calcfunction as cf
 
 FleurinpData = DataFactory('fleur.fleurinp')
 
@@ -40,10 +39,10 @@ class FleurinpModifier(object):
         self._tasks = []
 
     @staticmethod
-    @wf
+    @cf
     def modify_fleurinpdata(original, modifications):
         """
-        WF, original must be a fleurinp data, modifications a fleurinp data as well
+        CF, original must be a fleurinp data, modifications a fleurinp data as well
         modification a python dict of the form {'task':
 
         modifications parameter data of the form: {'tasks:
@@ -404,7 +403,7 @@ class FleurinpModifier(object):
         return self._tasks
 
     def freeze(self):
-        modifications = DataFactory("parameter")(dict={"tasks": self._tasks})
+        modifications = DataFactory("dict")(dict={"tasks": self._tasks})
         modifications.description = u'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = u'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance

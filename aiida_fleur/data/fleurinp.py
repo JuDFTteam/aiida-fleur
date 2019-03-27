@@ -23,6 +23,7 @@ manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 #TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
+# TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -36,7 +37,7 @@ from aiida.orm import Data
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
-from aiida.engine.processes.functions import workfunction as wf
+from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA
@@ -65,7 +66,7 @@ class FleurinpData(Data):
     start a new calculation from it.
     """
 
-    # serach in current folder and search in aiida source code
+    # search in current folder and search in aiida source code
     # we want to search in the Aiida source directory, get it from python path,
     # maybe better from somewhere else.
     #TODO: dont walk the whole python path, test if dir below is aiida?
@@ -82,9 +83,9 @@ class FleurinpData(Data):
         """
         files = kwargs.pop('files', None)
         super(FleurinpData, self).__init__(**kwargs)
-        if files:
-            self.set_files = files
- 
+
+
+
         self._search_paths = []
         ifolders = get_internal_search_paths()
         ischemas = get_schema_paths()
@@ -107,6 +108,9 @@ class FleurinpData(Data):
 
         self.set_attribute('_has_schema', False)
         self.set_attribute('_schema_file_path', None) 
+        
+        if files:
+            self.set_files(files)
 
     @property
     def _has_schema(self):
@@ -388,7 +392,7 @@ class FleurinpData(Data):
         #validate at parse time if file is invalid, to get nice error message
         if not xmlschema.validate(tree):
             tree = etree.parse(inpxmlfile, parser)
-
+        inpxmlfile.close()
         root = tree.getroot()
 
         # convert etree into python dictionary
@@ -487,16 +491,17 @@ class FleurinpData(Data):
         return fleur_modes
 
     #@staticmethod
-    def get_structuredata_nwf(fleurinp):
+    def get_structuredata_ncf(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file. not a workfunction
+        file. not a calcfunction
 
         :return: StructureData node, or None
         """
-        from aiida.orm.nodes.structure import StructureData
+        from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
-
+        
+        #StructureData = DataFactory(‘structure’)
         #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
         #therefore maintainance might be needed, if you want to circumvent this, you have
         #to get all the paths from somewhere.
@@ -538,7 +543,7 @@ class FleurinpData(Data):
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
-
+        inpxmlfile.close()
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -673,31 +678,31 @@ class FleurinpData(Data):
                 print('I should never get here, 1D not supported yet, '
                       'I only know relPos, absPos, filmPos')
                 #TODO throw error
-        # TODO DATA-DATA links are not wanted, you might want to use a wf instead
+        # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(fleurinp, label='fleurinp.structure', link_type=LinkType.CREATE)
         #label='fleurinp.structure'
         #return {label : struc}
         return struc
 
     @staticmethod
-    @wf
+    @cf
     def get_structuredata(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file. This is a workfunction and therefore keeps the provenance.
+        file. This is a calcfunction and therefore keeps the provenance.
 
         :return: StructureData node
         """
-        return fleurinp.get_structuredata_nwf(fleurinp)
+        return fleurinp.get_structuredata_ncf(fleurinp)
 
 
 
     @staticmethod
-    def get_kpointsdata_nwf(fleurinp):
+    def get_kpointsdata_ncf(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is NOT a workfunction and does not keep the provenance!
+        This is NOT a calcfunction and does not keep the provenance!
         :return: KpointsData node
         """
         from aiida.orm import KpointsData
@@ -747,7 +752,7 @@ class FleurinpData(Data):
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
-
+        inpxmlfile.close()
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -822,24 +827,24 @@ class FleurinpData(Data):
 
 
     @staticmethod
-    @wf
+    @cf
     def get_kpointsdata(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is a workfunction and does keep the provenance!
+        This is a calcfunction and does keep the provenance!
         :return: KpointsData node
         """
 
-        return fleurinp.get_kpointsdata_nwf(fleurinp)
+        return fleurinp.get_kpointsdata_ncf(fleurinp)
 
     # TODO: or move these outside...?
     #@staticmethod
-    def get_parameterdata_nwf(self):
+    def get_parameterdata_ncf(self):
         """
         This routine returns an AiiDA ParameterData type produced from the inp.xml
         file. This node can be used for inpgen.
-        This is NOT a workfunction and does NOT keep the provenance!
+        This is NOT a calcfunction and does NOT keep the provenance!
         :return: ParameterData node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
@@ -850,24 +855,24 @@ class FleurinpData(Data):
 
         # read in inpxml
         #inpxmlfile = self.get_file_abs_path('inp.xml')#'./inp.xml'
-        inpxmlfile = fleurinp.open(key='inp.xml')
+        inpxmlfile = self.open(key='inp.xml')
         new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
-
+        inpxmlfile.close() # I don’t like this
         return new_parameters
 
 
-    # Is there a way to give self to workfunctions?
+    # Is there a way to give self to calcfunctions?
     @staticmethod
-    @wf
+    @cf
     def get_parameterdata(fleurinp):
         """
         This routine returns an AiiDA ParameterData type produced from the inp.xml
         file. This node can be used for inpgen.
-        This is a workfunction and does keep the provenance!
+        This is a calcfunction and does keep the provenance!
         :return: ParameterData node
         """
 
-        return fleurinp.get_parameterdata_nwf()
+        return fleurinp.get_parameterdata_ncf()
 
 
 
@@ -891,7 +896,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             root = tree.getroot()
         else:
             raise InputValidationError(
@@ -912,10 +917,10 @@ class FleurinpData(Data):
         return fleurinp
     '''
 
-    @wf
+    @cf
     def set_kpointsdata(fleurinp_orgi, KpointsDataNode):
         """
-        This function writes the all the kpoints from a KpointsDataNode in the
+        This calc function writes the all the kpoints from a KpointsDataNode in the
         inp.xml file as a kpointslist. It replaces the Kpoints written in the
         inp.xml file.
 
@@ -964,7 +969,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             #root = tree.getroot()
         else:
             raise InputValidationError(
@@ -1034,7 +1039,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             root = tree.getroot()
         else:
             raise InputValidationError(
