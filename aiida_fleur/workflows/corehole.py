@@ -1090,7 +1090,7 @@ def extract_results_corehole(calcs):
             continue
         if calc.get_state() == 'FINISHED':
             # get out.xml file of calculation
-            outxml = calc.out.retrieved.folder.get_abs_path('path/out.xml')
+            outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
             #print outxml
             corelevels, atomtypes = extract_corelevels(outxml)
             #all_corelevels.append(core)

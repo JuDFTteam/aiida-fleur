@@ -253,7 +253,7 @@ class fleur_mae_wc(WorkChain):
         """
         self.report('INFO: run change_fleurinp')
         try:
-            fleurin = self.ctx['xyz'].out.fleurinp
+            fleurin = self.ctx['xyz'].outputs.fleurinp
         except AttributeError:
             error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
             self.control_end_wc(error)
@@ -371,7 +371,7 @@ class fleur_mae_wc(WorkChain):
         for i in scf_ref_node.called:
             if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
                 try:
-                    remote_old = i.out.remote_folder
+                    remote_old = i.outputs.remote_folder
                 except AttributeError:
                     message = ('Found no remote folder of the referece scf calculation.')
                     self.ctx.warnings.append(message)
@@ -412,10 +412,10 @@ class fleur_mae_wc(WorkChain):
 
             if self.ctx.successful:
                 try:
-                    t_energydict = calculation.out.output_parameters.dict.mae_force_evSum
-                    mae_thetas = calculation.out.output_parameters.dict.mae_force_theta
-                    mae_phis = calculation.out.output_parameters.dict.mae_force_phi
-                    e_u = calculation.out.output_parameters.dict.energy_units
+                    t_energydict = calculation.outputs.output_parameters.dict.mae_force_evSum
+                    mae_thetas = calculation.outputs.output_parameters.dict.mae_force_theta
+                    mae_phis = calculation.outputs.output_parameters.dict.mae_force_phi
+                    e_u = calculation.outputs.output_parameters.dict.energy_units
                     
                     #Find a minimal value of MAE and count it as 0
                     labelmin = 0
