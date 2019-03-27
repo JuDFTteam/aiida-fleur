@@ -191,7 +191,7 @@ class FleurinpData(Data):
         :return: a file handle in read mode
         """
 
-        return self._repository.open(key, mode=mode)
+        return self.open(key, mode=mode)
 
     def get_content(self, filename='inp.xml'):
         """Return the content of the single file stored for this data node.
@@ -1020,7 +1020,7 @@ class FleurinpData(Data):
         if 'inp.xml' in self.files:
             # read in inpxml
             #inpxmlfile = self.get_file_abs_path('inp.xml')
-            inpxmlfile = fleurinp.open(key='inp.xml')
+            inpxmlfile = self.open(key='inp.xml')
             if self._schema_file_path: # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)

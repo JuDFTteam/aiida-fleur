@@ -121,7 +121,11 @@ class Fleur_inputgenParser(Parser):
         if has_xml_inpfile:
             # read xmlinp file into an etree
             #TODO: INPXML_FILE_NAME has to be extracted from metadata.options
-            inpxmlfile = FleurinputgenCalculation._DEFAULT_INPXML_FILE_NAME
+            
+            #inpxmlfile = os.path.join(output_folder._repository._get_base_folder().abspath,
+            #self.node.get_option('inpxml_file_name'))
+            inpxmlfile = self.node.get_option('inpxml_file_name')
+           
             #tree = etree.parse(inpxmlfile)
             #root = tree.getroot()
 
