@@ -112,3 +112,24 @@ class TestAiida_fleur_entrypoints:
         
         workflow = WorkflowFactory('fleur.corehole')
         assert workflow == fleur_corehole_wc
+
+    def test_fleur_mae_wc_entry_point(aiida_env):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.mae import fleur_mae_wc
+        
+        workflow = WorkflowFactory('fleur.mae')
+        assert workflow == fleur_mae_wc
+
+    def test_fleur_spst_wc_entry_point(aiida_env):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.spst import fleur_spst_wc
+        
+        workflow = WorkflowFactory('fleur.spst')
+        assert workflow == fleur_spst_wc
+
+    def test_fleur_dmi_wc_entry_point(aiida_env):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.dmi import fleur_dmi_wc
+        
+        workflow = WorkflowFactory('fleur.dmi')
+        assert workflow == fleur_dmi_wc
