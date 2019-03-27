@@ -172,7 +172,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         """
 
         try:
-            fleurin = self.ctx['inpgen'].out.fleurinpData
+            fleurin = self.ctx['inpgen'].outputs.fleurinpData
         except AttributeError:
             error = 'No fleurinpData found, inpgen failed'
             self.control_end_wc(error)

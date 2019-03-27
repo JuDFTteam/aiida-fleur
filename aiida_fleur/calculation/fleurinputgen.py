@@ -126,7 +126,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.input('structure', valid_type=StructureData, help = "Choose the input structure to use")
         spec.input('parameters', valid_type=Dict, help = "Use a node that specifies the input parameters "
                               "for the namelists")
-        spec.input('settings', valid_type=Dict, help = "This parameter data node is used to specify for some "
+        spec.input('settings', valid_type=Dict, required = False, help = "This parameter data node is used to specify for some "
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
                     "for all available features here check the documentation.")
@@ -134,7 +134,7 @@ class FleurinputgenCalculation(CalcJob):
         #parser
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurinpgenparser')
 
-    def _prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, tempfolder):
         """
         This is the routine to be called when you want to create
         the input files for the inpgen with the plug-in.
@@ -364,7 +364,7 @@ class FleurinputgenCalculation(CalcJob):
             for site in structure.sites:
                 kind_name = site.kind_name
                 kind = structure.get_kind(kind_name)
-                if kind.has_vacancies():
+                if kind.has_vacancies:
                     # then we do not at atoms with weights smaller one
                     if kind.weights[0] <1.0:
                         natoms = natoms -1
@@ -419,7 +419,7 @@ class FleurinputgenCalculation(CalcJob):
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
 
-        input_filename = tempfolder.get_abs_path(self._INPUT_FILE_NAME)
+        input_filename = tempfolder.get_abs_path(self.inputs.metadata.options.input_file_name)
 
         with open(input_filename, 'w') as infile:
 
@@ -486,12 +486,12 @@ class FleurinputgenCalculation(CalcJob):
         # TODO: let the user specify?
         #settings_retrieve_list = settings_dict.pop(
         #                             'ADDITIONAL_RETRIEVE_LIST', [])
-        retrieve_list.append(self._INPXML_FILE_NAME)
-        retrieve_list.append(self._OUTPUT_FILE_NAME)
-        retrieve_list.append(self._SHELLOUT_FILE_NAME)
-        retrieve_list.append(self._ERROR_FILE_NAME)
-        retrieve_list.append(self._STRUCT_FILE_NAME)
-        retrieve_list.append(self._INPUT_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.inpxml_file_name)
+        retrieve_list.append(self.inputs.metadata.options.output_file_name)
+        retrieve_list.append(self.inputs.metadata.options.shellout_file_name)
+        retrieve_list.append(self.inputs.metadata.options.error_file_name)
+        retrieve_list.append(self.inputs.metadata.options.struct_file_name)
+        retrieve_list.append(self.inputs.metadata.options.input_file_name)
         #calcinfo.retrieve_list += settings_retrieve_list
         #calcinfo.retrieve_list += self._internal_retrieve_list
 
@@ -519,9 +519,9 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._SHELLOUT_FILE_NAME # shell output will be piped in file
-        codeinfo.stderr_name = self._ERROR_FILE_NAME # std error too
+        codeinfo.stdin_name = self.inputs.metadata.options.input_file_name
+        codeinfo.stdout_name = self.inputs.metadata.options.shellout_file_name # shell output will be piped in file
+        codeinfo.stderr_name = self.inputs.metadata.options.error_file_name # std error too
 
         calcinfo.codes_info = [codeinfo]
 
@@ -553,6 +553,33 @@ def write_inpgen_inputfile(structure_dict, parameter_dict):
     pass
 
 
+def conv_to_fortran(val, quote_strings=True):
+        """
+        :param val: the value to be read and converted to a Fortran-friendly string.
+        """
+        # Note that bool should come before integer, because a boolean matches also
+        # isinstance(...,int)
+        import numpy
+    
+        if isinstance(val, (bool, numpy.bool_)):
+            if val:
+                val_str = '.true.'
+            else:
+                val_str = '.false.'
+        elif isinstance(val, numbers.Integral):
+            val_str = "{:d}".format(val)
+        elif isinstance(val, numbers.Real):
+            val_str = ("{:18.10e}".format(val)).replace('e', 'd')
+        elif isinstance(val, six.string_types):
+            if quote_strings:
+                val_str = "'{!s}'".format(val)
+            else:
+                val_str = "{!s}".format(val)
+        else:
+            raise ValueError("Invalid value '{}' of type '{}' passed, accepts only bools, ints, floats and strings".format(
+                val, type(val)))
+    
+        return val_str
 
 def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur/ delete unnessesariy parts
     """
@@ -571,7 +598,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
             ``magn(2) = 0.1``. This parameter is ignored if 'val'
             is not a dictionary.
     """
-    from aiida.common.utils import conv_to_fortran
+    #from aiida.common.utils import conv_to_fortran
     # I don't try to do iterator=iter(val) and catch TypeError because
     # it would also match strings
     # I check first the dictionary, because it would also matc

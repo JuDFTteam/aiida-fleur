@@ -373,7 +373,7 @@ class fleur_scf_wc(WorkChain):
             fleurin = self.inputs.fleurinp
         else:
             try:
-                fleurin = self.ctx['inpgen'].out.fleurinpData
+                fleurin = self.ctx['inpgen'].outputs.fleurinpData
             except AttributeError:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
@@ -454,7 +454,7 @@ class fleur_scf_wc(WorkChain):
         '''
         if self.ctx['last_calc']:
             # will this fail if fleur before failed? try needed?
-            remote = self.ctx['last_calc'].out.remote_folder
+            remote = self.ctx['last_calc'].outputs.remote_folder
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
         else:
@@ -587,8 +587,8 @@ class fleur_scf_wc(WorkChain):
             '''
             #TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
-            outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
-            walltime = last_calc.out.output_parameters.dict.walltime
+            outxmlfile = last_calc.outputs.output_parameters.dict.outputfile_path
+            walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
             #outpara = last_calc.get('output_parameters', None)
@@ -621,10 +621,10 @@ class fleur_scf_wc(WorkChain):
         #last_charge_density = self.ctx.last_calc['output_parameters'].dict.charge_density
         # not a good fix for magnetic stuff, but for now, we want to test if the rest works.
         try:
-            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
+            last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.charge_density
         except AttributeError:
             # magnetic system
-            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.overall_charge_density
+            last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.overall_charge_density
             # divide by 2?
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
@@ -745,7 +745,7 @@ class fleur_scf_wc(WorkChain):
             outdict['fleurinp'] = self.inputs.fleurinp
         else:
             try:
-                fleurinp = self.ctx['inpgen'].out.fleurinpData
+                fleurinp = self.ctx['inpgen'].outputs.fleurinpData
             except AttributeError:
                 self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None

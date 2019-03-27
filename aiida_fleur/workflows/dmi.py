@@ -221,7 +221,7 @@ class fleur_dmi_wc(WorkChain):
         """
         self.report('INFO: run change_fleurinp')
         try:
-            fleurin = self.ctx.reference.out.fleurinp
+            fleurin = self.ctx.reference.outputs.fleurinp
         except AttributeError:
             error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
             self.control_end_wc(error)
@@ -350,7 +350,7 @@ class fleur_dmi_wc(WorkChain):
         for i in scf_ref_node.called:
             if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
                 try:
-                    remote_old = i.out.remote_folder
+                    remote_old = i.outputs.remote_folder
                 except AttributeError:
                     message = ('Found no remote folder of the referece scf calculation.')
                     self.ctx.warnings.append(message)
@@ -396,14 +396,14 @@ class fleur_dmi_wc(WorkChain):
     
             if self.ctx.successful:
                 try:
-                    t_energydict = calculation.out.output_parameters.dict.dmi_force_evSum
-                    mae_thetas = calculation.out.output_parameters.dict.dmi_force_theta
-                    mae_phis = calculation.out.output_parameters.dict.dmi_force_phi
-                    num_ang = calculation.out.output_parameters.dict.dmi_force_angles
-                    num_qs = calculation.out.output_parameters.dict.dmi_force_qs
+                    t_energydict = calculation.outputs.output_parameters.dict.dmi_force_evSum
+                    mae_thetas = calculation.outputs.output_parameters.dict.dmi_force_theta
+                    mae_phis = calculation.outputs.output_parameters.dict.dmi_force_phi
+                    num_ang = calculation.outputs.output_parameters.dict.dmi_force_angles
+                    num_qs = calculation.outputs.output_parameters.dict.dmi_force_qs
                     qs = [self.ctx.wf_dict['q_vectors'][x-1] for x in
-                                                        calculation.out.output_parameters.dict.dmi_force_q]
-                    e_u = calculation.out.output_parameters.dict.energy_units
+                                                        calculation.outputs.output_parameters.dict.dmi_force_q]
+                    e_u = calculation.outputs.output_parameters.dict.energy_units
                     for i in range((num_qs-1)*(num_ang), -1, -num_ang):
                         ref_enrg = t_energydict.pop(i)
                         qs.pop(i)

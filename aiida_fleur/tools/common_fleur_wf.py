@@ -101,13 +101,13 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     #        inputs.options[key] = val
 
     if description:
-        inputs.description = description
+        inputs.metadata.description = description
     else:
-        inputs.description = ''
+        inputs.metadata.description = ''
     if label:
-        inputs.label = label
+        inputs.metadata.label = label
     else:
-        inputs.label = ''
+        inputs.metadata.label = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -122,7 +122,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs.settings = settings
 
     if options:
-        inputs.options = options
+        inputs.metadata.options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.iteritems(): 
@@ -168,14 +168,14 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
         
     if description:
-        inputs.description = description
+        inputs.metadata.description = description
     else:
-        inputs.description = ''
+        inputs.metadata.description = ''
 
     if label:
-        inputs.label = label
+        inputs.metadata.label = label
     else:
-        inputs.label = ''
+        inputs.metadata.label = ''
 
     if not options:
         options = {}
@@ -184,7 +184,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     options['resources'] = {"num_machines": 1}
     #print(inputs)
     if options:
-        inputs.options = options
+        inputs.metadata.options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.items():
