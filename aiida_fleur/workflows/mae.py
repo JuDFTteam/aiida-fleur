@@ -25,7 +25,7 @@ from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.common.datastructures import calc_states
+from aiida.common import calc_states
 import six
 from six.moves import range
 
