@@ -20,13 +20,13 @@ addons:
 
 cache: pip
 
-before_install:  # copied from pgtest's travis.yml
-  - sudo apt-get install locate
-  - sudo service postgresql stop
-  #- sudo pg_dropcluster --stop 9.2 main
-  - sudo apt-get remove -q 'postgresql-*'
-  - sudo apt-get install postgresql
-  - sudo updatedb
+#before_install:  # copied from pgtest's travis.yml
+#  - sudo apt-get install locate
+#  #- sudo service postgresql stop
+#  #- sudo pg_dropcluster --stop 9.2 main
+#  #- sudo apt-get remove -q 'postgresql-*'
+#  #- sudo apt-get install postgresql
+#  - sudo updatedb
 
 install:
   - pip install -U pip==18.1 wheel setuptools
