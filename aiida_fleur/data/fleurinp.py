@@ -33,7 +33,7 @@ import six
 from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
-from aiida.orm import Data
+from aiida.orm import Data, Node
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
@@ -79,11 +79,14 @@ class FleurinpData(Data):
         """
         Initialize a fleurinp data object set the files given
         :param files: list of files paths to set
+        :param node: any other AiiDA node in form of node instance, pk, or uuid
+        (todo: maybe limit nodes to fleurinpdata and folder?, 
+        allow for list of nodes, because of file list?)
 
         """
         files = kwargs.pop('files', None)
+        node = kwargs.pop('node', None)
         super(FleurinpData, self).__init__(**kwargs)
-
 
 
         search_paths = []
@@ -110,7 +113,10 @@ class FleurinpData(Data):
         self.set_attribute('_schema_file_path', None) 
         self.set_attribute('_search_paths', search_paths) 
         if files:
-            self.set_files(files)
+            if node:
+                self.set_files(files, node=node)
+            else:
+                self.set_files(files)
 
     @property
     def _has_schema(self):
@@ -156,7 +162,7 @@ class FleurinpData(Data):
         return self.get_attribute('files', [])
 
     @files.setter
-    def files(self, filelist):
+    def files(self, filelist, node=None):
         """
         Add a list of files to FleurinpData.
         Alternative use setter method.
@@ -164,25 +170,25 @@ class FleurinpData(Data):
         :param files: list of filepaths
         """
         for file1 in filelist:
-            self.set_file(file1)
+            self.set_file(file1, node=node)
 
-    def set_files(self, files):
+    def set_files(self, files, node=None):
         """
         Add a list of files to FleurinpData
         Alternative setter
 
-        :param files: list of filepaths
+        :param files: list of filepaths abs, or relative
         """
-        self.files = files
+        for file1 in files:
+            self.set_file(file1, node=node)
 
-
-    def set_file(self, filename, dst_filename=None):
+    def set_file(self, filename, dst_filename=None, node=None):
         """
         Add a file to the FleurinpData
 
         :param filename: absolute path to the file
         """
-        self._add_path(filename, dst_filename=dst_filename)
+        self._add_path(filename, dst_filename=dst_filename, node=None)
 
 
     def open(self, key='inp.xml', mode='r'):
@@ -286,7 +292,7 @@ class FleurinpData(Data):
 
         return schemafile_paths, False
 
-    def _add_path(self, file1, dst_filename=None):
+    def _add_path(self, file1, dst_filename=None, node=None):
         """
         Add a single file to folder. The destination name can be different. inp.xml is a special case.
         file names are stored in the db, files in the repo.
@@ -297,6 +303,14 @@ class FleurinpData(Data):
 
         #old_file_list = self.get_folder_list()
         
+
+
+        if node:
+            if not isinstance(node, Node):
+                #try:
+                node = load_node(node)
+                #except
+
         if isinstance(file1, six.string_types):
             is_filelike = False
             
@@ -317,8 +331,6 @@ class FleurinpData(Data):
 
 
         key = final_filename
-
-        #super(FleurinpData, self).add_path(src_abs, final_filename)
         
         old_file_list = self.list_object_names()
         old_files_list = self.get_attribute('files', [])
@@ -333,6 +345,10 @@ class FleurinpData(Data):
         
         if is_filelike:
             self.put_object_from_filelike(file1, key)
+            if file1.closed:
+                file1 = self.open(file1.name, file1.mode)
+            else: #reset reading to 0
+                file1.seek(0)
         else:
             self.put_object_from_file(file1, key)
         
