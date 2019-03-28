@@ -14,7 +14,7 @@
     In this module you find the workflow 'fleur_dmi_wc' for the calculation of
     Dzyaloshinskii-Moriya interaction energy in reciprocal space.
 """
-
+# TODO: calculation states
 from __future__ import absolute_import
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
@@ -24,7 +24,7 @@ from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.common.datastructures import calc_states
+from aiida.common import CalcJobState
 import six
 from six.moves import range
 
@@ -377,7 +377,7 @@ class fleur_dmi_wc(WorkChain):
             try:
                 calculation = self.ctx.forr
                 calc_state = calculation.get_state()
-                if calc_state != calc_states.FINISHED or calculation.exit_status != 0:
+                if calc_state != CalcJobState.FINISHED or calculation.exit_status != 0:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
                             'in state {} with exit status {}'.format(calc_state, calculation.exit_status))

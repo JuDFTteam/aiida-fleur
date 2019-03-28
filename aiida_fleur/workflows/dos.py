@@ -33,7 +33,6 @@ StructureData = DataFactory('structure')
 Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
 
 
 class fleur_dos_wc(WorkChain):
@@ -170,7 +169,7 @@ class fleur_dos_wc(WorkChain):
         options = self.ctx.options
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = submit(FleurProcess, **inputs)
+        future = submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future) #calcs.append(future),
 

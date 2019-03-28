@@ -45,15 +45,15 @@ class fleur_optimize_parameters_wc(WorkChain):
     from a structure. For now, it runs inpgen on the structure and uses
     the Fleur defaults.
 
-    :param wf_parameters: ParameterData node, optional, protocol specification 
+    :param wf_parameters: Dict node, optional, protocol specification 
                           will be parsed like this to fleur_eos_wc
     :param structure: StructureData node, bulk crystal structure
     :param inpgen: Code node,
     :param fleur: Code node,
 
-    :return output_optimized_wc_para: ParameterData node, contains relevant output information
+    :return output_optimized_wc_para: Dict node, contains relevant output information
                                       about general succces.
-    :return optimized_para: ParameterData node usable by inpgen
+    :return optimized_para: Dict node usable by inpgen
     :return optimized_fleurinp: FleurinpData with optimized
 
     """
@@ -66,7 +66,7 @@ class fleur_optimize_parameters_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_optimize_parameters_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
+        spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict={
                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                        'walltime_sec':  60*60,
