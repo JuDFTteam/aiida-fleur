@@ -419,7 +419,7 @@ class FleurinpModifier(object):
             original=self._original,
             modifications=modifications,
             metadata={'label' : 'fleurinp modifier',
-            'description' : 'This workfunction modified an Fleurinpdataobject'})
+            'description' : 'This calcfunction modified an Fleurinpdataobject'})
         return out
 
     def undo(self, all=False):

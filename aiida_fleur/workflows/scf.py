@@ -28,7 +28,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import Code
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import submit
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 from aiida.common.datastructures import CalcJobState as calc_states
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -909,7 +909,7 @@ if __name__ == "__main__":
 '''
 
 
-@wf
+@cf
 def create_scf_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.

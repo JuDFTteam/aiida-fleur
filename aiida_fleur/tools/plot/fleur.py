@@ -134,7 +134,7 @@ def plot_fleur_sn(node, show_dict=False, save=False):
         print(('The node provided: {}, type {} is not an AiiDA object'.format(node, type(node))))
     # check if AiiDa node
     #check what type of node
-    # if workfunction, get certain output node
+    # if calcfunction, get certain output node
     #if parameterData, output node check if workflow name tag
     # if routine known plot,
     #else say I do not know

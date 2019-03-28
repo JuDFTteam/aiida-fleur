@@ -27,7 +27,7 @@ from __future__ import absolute_import
 from string import digits
 from aiida.engine import submit
 from aiida.engine import ToContext, WorkChain, if_
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import Code, load_node, Group
 from aiida.orm.querybuilder import QueryBuilder
@@ -794,7 +794,7 @@ class fleur_initial_cls_wc(WorkChain):
         outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
 
-        # TODO: bad design, put in workfunction and make bullet proof.
+        # TODO: bad design, put in calcfunction and make bullet proof.
         calc = self.ctx.calcs_res
         calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
         outnodedict['input_structure']  = calc_dict
@@ -829,7 +829,7 @@ class fleur_initial_cls_wc(WorkChain):
        
 
 
-@wf
+@cf
 def create_initcls_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
@@ -970,7 +970,7 @@ def extract_results(calcs):
 
         # TODO: maybe different, because it is prob know from before
         fleurinp = calc.inp.fleurinpdata
-        structure = fleurinp.get_structuredata_nwf()
+        structure = fleurinp.get_structuredata_ncf()
         compound = structure.get_formula()
         #print compound
         fermi_energies[compound] = efermi

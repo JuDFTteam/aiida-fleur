@@ -23,7 +23,7 @@ from ase.io import *
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.orm.nodes.data.structure import Site, Kind
-from aiida.engine.processes.functions import workfunction as wf
+from aiida.engine.processes.functions import calcfunction as cf
 import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 import six
@@ -87,7 +87,7 @@ def is_primitive(structure):
         prim = True
     return prim
 
-@wf
+@cf
 def rescale(inp_structure, scale):
     """
     Rescales a crystal structures Volume, atoms stay at their same realtive postions,
@@ -130,7 +130,7 @@ def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF,
 
     return rescaled_structure
 
-#@wf
+#@cf
 def rescale_xyz(inp_structure, scalevec):
     """
     rescales a structure a certain way...
@@ -138,7 +138,7 @@ def rescale_xyz(inp_structure, scalevec):
     pass
 
 
-@wf
+@cf
 def supercell(inp_structure, n_a1, n_a2, n_a3):
     """
     Creates a super cell from a StructureData node.
@@ -149,13 +149,13 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):
 
     :returns StructureData, Node with supercell
     """
-    superc = supercell_nwf(inp_structure, n_a1, n_a2, n_a3)
+    superc = supercell_ncf(inp_structure, n_a1, n_a2, n_a3)
 
     formula = inp_structure.get_formula()
     return superc
 
 
-def supercell_nwf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
+def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
     """
     Creates a super cell from a StructureData node.
     Does NOT keeps the provanance in the database.
@@ -311,10 +311,10 @@ def rel_to_abs_f(vector, cell):
     else:
         return False
 
-@wf
+@cf
 def break_symmetry_wf(structure, wf_para, parameterData = Dict(dict={})):#, _label='break_symmetry_wf', _description='WF, Introduces certain kind objects in a crystal structure, and adapts the parameter node for inpgen accordingly. All kinds of the structure will become there own species.'):
     """
-    This is the workfunction of the routine break_symmetry, which
+    This is the calcfunction of the routine break_symmetry, which
     introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
     If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
@@ -539,7 +539,7 @@ def get_spacegroup(structure):
     spacegroup = spglib.get_spacegroup(s_ase, symprec=1e-5)
     return spacegroup
 
-@wf
+@cf
 def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_wf', _description='WF, that moves all atoms in a unit cell by a given vector'):#Float1, Float2, Float3, test=None):
     """
     moves all atoms in a unit cell by a given vector
@@ -611,7 +611,7 @@ def find_primitive_cell(structure):
     new_structure.description =  structure.description + ' primitive cell'
     return new_structure
 
-@wf
+@cf
 def find_primitive_cell_wf(structure):
     """
     uses spglib find_primitive to find the primitive cell
@@ -709,7 +709,7 @@ def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=
 
     return film_struc
 
-@wf
+@cf
 def center_film_wf(structure):
     """
     Centers a film at z=0, keeps the provenance in the database

@@ -25,7 +25,7 @@ from __future__ import print_function
 import os
 
 from aiida.plugins import DataFactory
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 from six.moves import range
 #from ase.io import cif
 
@@ -155,7 +155,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     return structuredatas2, filenames2
 
 
-@wf
+@cf
 def wf_struc_from_cif(cif):
     asecell = cif.get_ase()
     struc = DataFactory('structure')(ase=asecell)

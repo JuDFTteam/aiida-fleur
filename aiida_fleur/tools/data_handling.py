@@ -36,7 +36,7 @@ def extract_structure_info(keys, structures=None):
     returns that information as a dict, which could be used for further evalation
     #keys = ['uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy', 
     'child_nodes', 'natoms', 'group', extras', 'label', 'description', 'cif_file', 
-    'cif_number', 'cif_uuid', 'cif_ref', 'workfunctions', 'band', 'dos', 'eos', 
+    'cif_number', 'cif_uuid', 'cif_ref', 'calcfunctions', 'band', 'dos', 'eos', 
     'init_cls', 'corehole', primitive]
 
     """
@@ -140,9 +140,9 @@ def extract_structure_info(keys, structures=None):
         if 'corehole' in keys:
             corehole = input_of_workcal('fleur_corehole_wc', struc)
             structure_dict['corehole'] = corehole 
-        if 'workfunctions' in keys:
-            workfunctions_uuid, workfunctions_name = input_of_workfunctions(struc)
-            structure_dict['workfunctions'] = [workfunctions_uuid, workfunctions_name] 
+        if 'calcfunctions' in keys:
+            calcfunctions_uuid, calcfunctions_name = input_of_calcfunctions(struc)
+            structure_dict['calcfunctions'] = [calcfunctions_uuid, calcfunctions_name] 
             
         structure_list.append(structure_dict)
         
@@ -186,10 +186,10 @@ def input_of_workcal(name, node):
                 process_uuids.append(out.uuid)
     return process_uuids
 
-def input_of_workfunctions(node, name=''):
+def input_of_calcfunctions(node, name=''):
     """
-    checks if a given node was input into a certain workfunction
-    and returns a list of workfunction uuids of workfunction with the given name
+    checks if a given node was input into a certain calcfunction
+    and returns a list of calcfunction uuids of calcfunction with the given name
     """
     from aiida.orm.implementation.general.calculation.work import WorkCalculation
     process_uuids = []

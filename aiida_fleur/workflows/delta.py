@@ -28,7 +28,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import Code, Group
 from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
@@ -546,7 +546,7 @@ if __name__ == "__main__":
                                 inpgen = args.inpgen,
                                 fleur=args.fleur)
 '''
-@wf
+@cf
 def create_delta_result_node(**kwargs):#*args):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.

@@ -26,7 +26,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.orm import Float
 from aiida.engine import WorkChain, ToContext#,Outputs
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
@@ -450,7 +450,7 @@ if __name__ == "__main__":
                            inpgen=args.inpgen, fleur=args.fleur)
 
 
-@wf
+@cf
 def create_eos_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.

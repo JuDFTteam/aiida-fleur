@@ -34,7 +34,7 @@ from aiida.orm import Int
 from aiida.engine import WorkChain, if_, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.engine.processes.functions import workfunction as wf
+from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.StructureData_util import supercell
@@ -83,7 +83,7 @@ class fleur_corehole_wc(WorkChain):
 
 
     :uses: workchains: fleur_scf_wc, fleur_relax_wc
-    :uses: workfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
+    :uses: calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
 
     minimum input example:
     1. Code1, Code2, Structure, (Parameters), (wf_parameters)
@@ -583,7 +583,7 @@ class fleur_corehole_wc(WorkChain):
                         fleurinp_change.append(charge_change)
                     #self.report('{}'.format(fleurinp_change))
                     # because there might be already some kinds and another number is right...
-                    # repacking of sites, because input to a workfunction, otherwise not storeable...
+                    # repacking of sites, because input to a calcfunction, otherwise not storeable...
                     corehole = {'site' : {'kind_name' : kind,#site.kind_name,
                                           'position' : site.position},
                                 'econfig' : econfig, 'kindname' : change_kind,
@@ -606,7 +606,7 @@ class fleur_corehole_wc(WorkChain):
             #print(corehole)
             #print(base_supercell)
             #print(para)
-            # all these steps can be workfunctions, we have grouped them all in one
+            # all these steps can be calcfunctions, we have grouped them all in one
             ret_dict = prepare_struc_corehole_wf(base_supercell, wf_para, para)
             moved_struc = ret_dict['moved_struc']
             calc_para = ret_dict['hole_para']
@@ -959,7 +959,7 @@ class fleur_corehole_wc(WorkChain):
         outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
 
-        # TODO: bad design, put in workfunction and make bullet proof.
+        # TODO: bad design, put in calcfunction and make bullet proof.
         for i, label in enumerate(self.ctx.labels):
             calc = self.ctx[label]
             calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
@@ -991,7 +991,7 @@ class fleur_corehole_wc(WorkChain):
         return
 
 
-@wf
+@cf
 def create_corehole_result_node(**kwargs):#*args):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
@@ -1014,10 +1014,10 @@ def create_corehole_result_node(**kwargs):#*args):
 #                                          'position' : site.position},
 #                               'econfig' : econfig, 'kindname' : kind,
 #                               'inpxml_changes' : fleurinp_change}
-@wf
+@cf
 def prepare_struc_corehole_wf(base_supercell, wf_para, para):#, _label='prepare_struc_corehole_wf', _description='WF, used in the corehole_wc, breaks the symmetry and moves the cell, prepares the inpgen parameters for a corehole.'):
     """
-    workfunction which does all/some the structure+calcparameter manipulations together
+    calcfunction which does all/some the structure+calcparameter manipulations together
     (therefore less nodes are produced and proverance is kept)
     wf_para: Dict node dict: {'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}
     """

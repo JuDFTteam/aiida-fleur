@@ -14,7 +14,7 @@
 This module, contains a method to merge parameterData nodes used by the FLEUR inpgen.
 This might also be of interest for other all-ellectron codes
 """
-# TODO this should be made an inline calculation or workfunction to
+# TODO this should be made an inline calculation or calcfunction to
 # keep the proverance!
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
@@ -24,7 +24,7 @@ from __future__ import print_function
 from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
 from aiida.orm.nodes.base import Bool
-from aiida.engine import workfunction as wf
+from aiida.engine import calcfunction as cf
 
 ParameterData = DataFactory('dict')
 
@@ -114,10 +114,10 @@ def merge_parameters(ParameterDataList, overwrite=True):
 
     return paremeter_data_new
 
-@wf
-def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
+@cf
+def merge_parameter_cf(ParameterData1, ParameterData2, overwrite=Bool(True)):
     """
-    workfunction of merge_parameters
+    calcfunction of merge_parameters
     """
     paremeter_data_new = merge_parameter(ParameterData1, ParameterData2, overwrite=overwrite)
 
@@ -127,10 +127,10 @@ def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
 # makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
 # I guess...
-@wf
+@cf
 def merge_parameters_wf(*ParameterDatas, overwrite=Bool(True)):
     """
-    workfunction of merge_parameters
+    calcfunction of merge_parameters
     """
     ParameterDataList = []
     for parameter in ParameterDatas:

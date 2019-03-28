@@ -558,7 +558,7 @@ class fleur_mae_wc(WorkChain):
         return
 
 '''
-@wf
+@cf
 def create_mae_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
