@@ -30,9 +30,8 @@ cache: pip
 
 install:
   - pip install -U pip==18.1 wheel setuptools
-  - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing]
-  - pip install -e .
-
+  - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing, docs]
+  - if [ "$TEST_TYPE" == "docs" ]; then pip install . && pip install -r docs/requirements_for_rtd.txt; else pip install .[all]; fi
 env:
   - TEST_TYPE="unittests"
   - TEST_TYPE="docs"
