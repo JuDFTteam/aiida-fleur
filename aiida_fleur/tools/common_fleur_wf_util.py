@@ -21,6 +21,7 @@ from __future__ import print_function
 import six
 from six.moves import range
 from six.moves import zip
+
 def convert_formula_to_formula_unit(formula):
     """
     Converts a formula to the smalles chemical formula unit
@@ -206,7 +207,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     (if the formula of the elements contains a number the total energy is devided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
-    eform_list = []
+    #eform_list = []
     eform_dict = {}
     #ref_el = ref_struc_te_dict.keys()
     ref_struc_te_dict_norm = ref_struc_te_dict#{}
@@ -231,8 +232,8 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
                       'You need to provide reference energies for all elements in you compound.'
                        ''.format(elem)))
         eform_dict[formula] = eform/ntotal
-        eform_list.append(eform/ntotal)
-    return eform_list, eform_dict
+        #eform_list.append(eform/ntotal)
+    return list(eform_dict.values()), eform_dict
 
 # test
 #determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1})
