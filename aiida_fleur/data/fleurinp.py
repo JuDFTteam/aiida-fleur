@@ -33,7 +33,7 @@ import six
 from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
-from aiida.orm import Data, Node
+from aiida.orm import Data, Node, load_node
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
@@ -188,7 +188,7 @@ class FleurinpData(Data):
 
         :param filename: absolute path to the file
         """
-        self._add_path(filename, dst_filename=dst_filename, node=None)
+        self._add_path(filename, dst_filename=dst_filename, node=node)
 
 
     def open(self, key='inp.xml', mode='r'):
@@ -310,6 +310,11 @@ class FleurinpData(Data):
                 #try:
                 node = load_node(node)
                 #except
+
+            if file1 in node.list_object_names():
+                file1 = node.open(file1, mode='r')
+            else:# throw error? you try to add something that is not there
+                pass
 
         if isinstance(file1, six.string_types):
             is_filelike = False
