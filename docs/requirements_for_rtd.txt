@@ -1,7 +1,7 @@
 pip>=18.0
 setuptools>34
 lxml>=3.6.4
-aiida_core
+aiida-core
 masci-tools
 ase
 pymatgen
