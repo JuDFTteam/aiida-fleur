@@ -237,7 +237,7 @@ class FleurCalculation(CalcJob):
         spec.input('metadata.options.enpara_file_name', valid_type=six.string_types, default=cls._DEFAULT_ENPARA_FILE_NAME)
         spec.input('metadata.options.symout_file_name', valid_type=six.string_types, default=cls._DEFAULT_SYMOUT_FILE_NAME)
         spec.input('metadata.options.cdn1_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDN1_FILE_NAME)
-        spec.input('metadata.options.shellout_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELLOUTPUT_FILE_NAME)
+        spec.input('metadata.options.shelloutput_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELLOUTPUT_FILE_NAME)
         spec.input('metadata.options.error_file_name', valid_type=six.string_types, default=cls._DEFAULT_ERROR_FILE_NAME)
         #other
         spec.input('metadata.options.out_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUT_FILE_NAME)
@@ -338,12 +338,12 @@ class FleurCalculation(CalcJob):
                     "usually copy from the parent calculation, basicly makes"
                     "the inp.xml file visible in the db and makes sure it has "
                     "the files needed.")
-        spec.input('parent_calc_folder', valid_type=RemoteData, required = False,
+        spec.input('parent_folder', valid_type=RemoteData, required = False,
             help="Use a remote or local repository folder as parent folder "
                     "(also for restarts and similar). It should contain all the "
                     "needed files for a Fleur calc, only edited files should be "
                     "uploaded from the repository.")
-        spec.input('settings', valid_type=Dict,
+        spec.input('settings', valid_type=Dict, required = False,
             help="This parameter data node is used to specify for some "
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
@@ -469,14 +469,16 @@ class FleurCalculation(CalcJob):
                     "'fleurcalculation'.")
         else:
             # extract parent calculation
-            parent_calcs = parent_calc_folder.get_inputs(node_type=CalcJob)
-            n_parents = len(parent_calcs)
-            if n_parents != 1:
-                raise UniquenessError(
-                    "Input RemoteData is child of {} "
-                    "calculation{}, while it should have a single parent"
-                    "".format(n_parents, "" if n_parents == 0 else "s"))
-            parent_calc = parent_calcs[0]
+            #assume that RemoteFolder has a single parent
+            #parent_calcs = parent_calc_folder.get_inputs(node_type=CalcJob)
+            #n_parents = len(parent_calcs)
+            #if n_parents != 1:
+            #    raise UniquenessError(
+            #        "Input RemoteData is child of {} "
+            #        "calculation{}, while it should have a single parent"
+            #        "".format(n_parents, "" if n_parents == 0 else "s"))
+            parent_calc = parent_calc_folder.get_incoming().all()[0].node
+            parent_calc_class = parent_calc.load_process_class()
             has_parent = True
 
             # check that it is a valid parent
@@ -487,19 +489,19 @@ class FleurCalculation(CalcJob):
             # check if folder from db given, or get folder from rep.
             # Parent calc does not has to be on the same computer.
 
-            if isinstance(parent_calc, FleurCalculation):
-                new_comp = self.get_computer()
-                old_comp = parent_calc.get_computer()
+            if parent_calc_class is FleurCalculation:
+                new_comp = self.node.computer
+                old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
                     #dont copy files, copy files localy
                     copy_remotely = False
                     #raise InputValidationError(
                     #    "FleurCalculation must be launched on the same computer"
                     #    " of the parent: {}".format(old_comp.get_name()))
-            elif isinstance(parent_calc, FleurinputgenCalculation):
+            elif parent_calc_class is FleurinputgenCalculation:
                 fleurinpgen = True
-                new_comp = self.get_computer()
-                old_comp = parent_calc.get_computer()
+                new_comp = self.node.computer
+                old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
                     #dont copy files, copy files localy
                     copy_remotely = False
@@ -562,8 +564,8 @@ class FleurCalculation(CalcJob):
         if has_parent:
             # copy the right files #TODO check first if file, exist and throw
             # warning, now this will throw an error
-            outfolder_uuid = parent_calc.out.retrieved.uiid
-            self.logger.info("out folder path {}".format(outfolderpath))
+            outfolder_uuid = parent_calc.outputs.retrieved.uuid
+            self.logger.info("out folder path {}".format(outfolder_uuid))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self.inputs.metadata.options.copy_filelist_inpgen:
@@ -697,11 +699,10 @@ class FleurCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # should look like: codepath -xmlInput < inp.xml > shell.out 2>&1
-        walltime_sec = self.get_max_wallclock_seconds()
+        walltime_sec = self.node.get_attribute('max_wallclock_seconds')
         #self.logger.info("!!!!!!!!!!!!!!!!!!! walltime_sec : {}"
         #                         "".format(walltime_sec))
         cmdline_params = []#, "-wtime", "{}".format(walltime_sec)]"-xml"
-        #walltime_sec = self.get_max_wallclock_seconds()
         #print('walltime: {}'.format(walltime_sec))
         if with_hdf5:
             cmdline_params.append("-last_extra")
@@ -720,7 +721,7 @@ class FleurCalculation(CalcJob):
         # + ["<", self._INPXML_FILE_NAME,
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
         codeinfo.code_uuid = code.uuid
-        codeinfo.withmpi = self.get_withmpi()
+        codeinfo.withmpi = self.node.get_attribute('max_wallclock_seconds')
         codeinfo.stdin_name = None#self._INPUT_FILE_NAME
         codeinfo.stdout_name = self.inputs.metadata.options.shelloutput_file_name
         #codeinfo.join_files = True

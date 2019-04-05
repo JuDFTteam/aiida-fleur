@@ -22,7 +22,7 @@ that they might be useful to external tools
 
 from __future__ import absolute_import
 import os
-from aiida.parsers.parser import Parser
+from aiida.parsers import Parser
 from aiida.engine import ExitCode
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
@@ -46,8 +46,8 @@ class Fleur_inputgenParser(Parser):
         Initialize the instance of Fleur_inputgenParser
         """
         super(Fleur_inputgenParser, self).__init__(node)
+        
         # these files should be at least present after success of inpgen
-
         self._default_files = {self.node.get_option('output_file_name'), self.node.get_option('inpxml_file_name')}
         self._other_files = {self.node.get_option('shellout_file_name')}
     
@@ -70,20 +70,22 @@ class Fleur_inputgenParser(Parser):
         try:
             output_folder = self.retrieved
         except exceptions.NotExistent:
-            return ExitCode(101)
-            #self.logger.error("No retrieved folder found")
-            #return False, ()
+            #TODO: exit_codes
+            #return ExitCode(101)
+            self.logger.error("No retrieved folder found")
+            return
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
         self.logger.info("file list {}".format(list_of_files))
 
-        #TODO: extract form metadata??
         if self.node.get_option('inpxml_file_name') not in list_of_files:
             successful = False
             self.logger.error(
                 "XML inp not found '{}'".format(self.node.get_option('inpxml_file_name')))
-            return ExitCode(101)
+            #TODO:exit_codes
+            #return ExitCode(101)
+            return
         else:
             has_xml_inpfile = True
 
@@ -101,7 +103,6 @@ class Fleur_inputgenParser(Parser):
         #new_nodes_list = [(link_name, output_data)]
         #return successful,new_nodes_list
 
-        new_nodes_list = []
         if self.node.get_option('error_file_name') in list_of_files:
             try:
                 with output_folder.open(self.node.get_option('error_file_name'), 'r') as efile:
@@ -146,5 +147,5 @@ class Fleur_inputgenParser(Parser):
             #, symoutfile, enparafile])
             
             self.logger.info('FleurinpData initialized')
-            self.out('fleurinpData', FleurinpData(files=[inpxmlfile]))
+            self.out('fleurinpData', FleurinpData(files=[inpxmlfile], node=output_folder))
 

@@ -23,7 +23,7 @@ from __future__ import absolute_import
 import os
 #import numpy
 from datetime import date
-from aiida.parsers.parser import Parser
+from aiida.parsers import Parser
 from aiida.plugins import DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.parsers import FleurOutputParsingError
@@ -49,13 +49,12 @@ class FleurParser(Parser):
         Initialize the instance of FleurParser
         """
         # check for valid input
-        if not isinstance(calc, FleurCalculation):
+        if not (calc.load_process_class() is FleurCalculation):
             raise FleurOutputParsingError("Input calculation for the FleurParser"
                                           "must be a FleurCalculation")
 
         # these files should be at least present after success of a Fleur run
-
-        self._default_files = {calc._OUTXML_FILE_NAME, calc._INPXML_FILE_NAME}
+        self._default_files = {calc.get_attribute('outxml_file_name'), calc.get_attribute('inpxml_file_name')}
         self._other_files = {}#"enpara","inp","sym.out", "cdn1", }
         #plus other special files? corelevels.xx, DOS.1 Bands.1 ...
         self._should_retrieve = []#calc.Calcinfo.retrieve_list()
@@ -68,9 +67,15 @@ class FleurParser(Parser):
         Node contains the Fleur output in a rather complex dictionary.
         """
         return 'output_complex'
+    
+    def get_linkname_outparams(self): #seems need to be implemented in the parser itself since 1.0.0b1
+        """
+        Returns the name of the link to the output_complex
+        Node contains the Fleur output in a rather complex dictionary.
+        """
+        return 'output_params'
 
-
-    def parse(self, **kwargs):
+    def parse(self, retrieved_temporary_folder, **kwargs):
         """
         Receives in input a dictionary of retrieved nodes.
         Does all the logic here. Checks presents of files.
@@ -102,19 +107,20 @@ class FleurParser(Parser):
         try:
             output_folder = self.retrieved
         except exceptions.NotExistent:
+            #TODO: exit codes
             #return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
             self.logger.error("No retrieved folder found")
             return False, ()
 
         # check what is inside the folder
-        list_of_files = output_folder._repository.list_object_names()
+        list_of_files = output_folder.list_object_names()
         self.logger.info("file list {}".format(list_of_files))
 
         # has output xml file, otherwise error
         if self.node.get_attribute('outxml_file_name') not in list_of_files:
             successful = False
             self.logger.error(
-                "XML out not found '{}'".format(self._calc._OUTXML_FILE_NAME))
+                "XML out not found '{}'".format(self.node.get_attribute('outxml_file_name')))
         else:
             has_xml_outfile = True
 
@@ -128,12 +134,11 @@ class FleurParser(Parser):
 
         # check if something was written to the error file
         if self.node.get_attribute('error_file_name') in list_of_files:
-            errorfile = os.path.join(out_folder.get_abs_path('.'),
-                                     self._calc._ERROR_FILE_NAME)
+            errorfile =  self.node.get_attribute('error_file_name')
             # read
             error_file_lines = ''
             try:
-                with open(errorfile, 'r') as efile:
+                with output_folder.open(errorfile, 'r') as efile:
                     error_file_lines = efile.read()  # Note: read(), not readlines()
             except IOError:
                 self.logger.error(
@@ -151,7 +156,8 @@ class FleurParser(Parser):
                     successful = False
 
         if successful == False:
-            return successful, ()
+            #TODO: exit codes
+            return
 
         #what about other files?
         #check input dict
@@ -171,16 +177,15 @@ class FleurParser(Parser):
         ####### Parse the files ########
 
         if has_xml_outfile:
-            # get outfile path and call xml out parser
-            outxmlfile = os.path.join(
-                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('outxml_file_name'))
-            simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile)
+            # open output file in a byte mode as lxml requires
+            outxmlfile_opened = output_folder.open(self.node.get_attribute('outxml_file_name'), 'b')
+            simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
 
             # Call routines for output node creation
             if simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
                 outxml_params = Dict(dict=outputdata)
-                link_name = self.get_linkname_outparams()# accessible via c.res
+                link_name = self.get_linkname_outparams()
                 new_nodes_list.append((link_name, outxml_params))
 
             if complexdata:
@@ -209,11 +214,10 @@ class FleurParser(Parser):
 
         # DOS
         if has_dos_file:
-            dos_file = os.path.join(
-                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('dos_file_name'))
+            dos_file = self.node.get_attribute('outxml_file_name')
             #if dos_file is not None:
             try:
-                with open(dos_file, 'r') as dosf:
+                with output_folder.open(dos_file, 'r') as dosf:
                     dos_lines = dosf.read()  # Note: read() and not readlines()
             except IOError:
                 raise FleurOutputParsingError(
@@ -225,12 +229,11 @@ class FleurParser(Parser):
         # Bands
         if has_bands_file:
             # TODO be carefull there might be two files.
-            band_file = os.path.join(
-                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('band_file_name'))
+            band_file = self.node.get_attribute('band_file_name')
 
             #if band_file is not None:
             try:
-                with open(band_file, 'r') as bandf:
+                with output_folder.open(band_file, 'r') as bandf:
                     bands_lines = bandf.read()  # Note: read() and not readlines()
             except IOError:
                 raise FleurOutputParsingError(
@@ -240,12 +243,11 @@ class FleurParser(Parser):
 
                 # save array
         if has_new_xmlinp_file:
-            new_inpxmlfile = os.path.join(
-                output_folder._repository._get_base_folder().abspath, self.node.get_attribute('new_xmlinp_file_name'))
+            new_inpxmlfile = self.node.get_attribute('new_xmlinp_file_name')
             new_fleurinpData = FleurinpData()
-            new_fleurinpData.set_file(new_inpxmlfile, dst_filename= 'inp.xml')
+            new_fleurinpData.set_file(new_inpxmlfile, dst_filename= 'inp.xml', node=output_folder)
             self.logger.info('New FleurinpData initialized')
-            link_name = 'fleurinpData'#self.get_linkname_outparams()# accessible via c.res
+            link_name = 'fleurinpData'
             new_nodes_list.append((link_name, new_fleurinpData))
 
         # Spectra
