@@ -24,6 +24,7 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
 from aiida.common.constants import bohr_to_ang
 from aiida.common.utils import classproperty
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
 import six
@@ -133,6 +134,9 @@ class FleurinputgenCalculation(CalcJob):
                     
         #parser
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurinpgenparser')
+
+        #declaration of outputs of the calclation
+        spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
     def prepare_for_submission(self, tempfolder):
         """

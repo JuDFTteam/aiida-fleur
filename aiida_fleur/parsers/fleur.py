@@ -73,7 +73,7 @@ class FleurParser(Parser):
         Returns the name of the link to the output_complex
         Node contains the Fleur output in a rather complex dictionary.
         """
-        return 'output_params'
+        return 'output_parameters'
 
     def parse(self, retrieved_temporary_folder, **kwargs):
         """
@@ -147,8 +147,8 @@ class FleurParser(Parser):
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
                 self.logger.warning(
-                    "The following was written into std error and piped to {} : \n {}"
-                    "".format(self.node.get_attribute('error_file_name'), error_file_lines))
+                    u'The following was written into std error and piped to {}'
+                    ' : \n {}'.format(errorfile, error_file_lines))
 
                 if 'Run finished successfully' in error_file_lines: # if judft-error # TODO maybe change.
                     successful = True
@@ -177,22 +177,24 @@ class FleurParser(Parser):
         ####### Parse the files ########
 
         if has_xml_outfile:
-            # open output file in a byte mode as lxml requires
-            outxmlfile_opened = output_folder.open(self.node.get_attribute('outxml_file_name'), 'b')
+            # open output file
+            outxmlfile_opened = output_folder.open(self.node.get_attribute('outxml_file_name'), 'r')
             simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
-
+            outxmlfile_opened.close()
+            
             # Call routines for output node creation
             if simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
+                self.out(link_name, outxml_params)
                 new_nodes_list.append((link_name, outxml_params))
 
             if complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
-                new_nodes_list.append((link_name, outxml_params_complex))
+                self.out(link_name, outxml_params)
 
             #greate new fleurinpData object if needed
 
@@ -214,7 +216,7 @@ class FleurParser(Parser):
 
         # DOS
         if has_dos_file:
-            dos_file = self.node.get_attribute('outxml_file_name')
+            dos_file = self.node.get_attribute('dos_file_name')
             #if dos_file is not None:
             try:
                 with output_folder.open(dos_file, 'r') as dosf:
@@ -248,11 +250,11 @@ class FleurParser(Parser):
             new_fleurinpData.set_file(new_inpxmlfile, dst_filename= 'inp.xml', node=output_folder)
             self.logger.info('New FleurinpData initialized')
             link_name = 'fleurinpData'
-            new_nodes_list.append((link_name, new_fleurinpData))
+            self.out(link_name, new_fleurinpData)
 
         # Spectra
 
-        return successful, new_nodes_list
+        #return ExitCode(0)
 
 def parse_xmlout_file(outxmlfile):
     """
@@ -1025,7 +1027,7 @@ def parse_xmlout_file(outxmlfile):
     if parse_xml:
         root = tree.getroot()
         simple_out = parse_simplexmlout_file(root, outfile_broken)
-        simple_out['outputfile_path'] = outxmlfile
+        #simple_out['outputfile_path'] = outxmlfile
         #TODO parse complex out
         complex_out = {} #parse_xmlout_file(root)
         return simple_out, complex_out, parser_info_out, successful

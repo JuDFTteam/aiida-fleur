@@ -352,6 +352,10 @@ class FleurCalculation(CalcJob):
         #parser
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
     
+        # declare outputs of the calculation
+        spec.output('output_parameters', valid_type=Dict, required=False)
+        spec.output('output_params_complex', valid_type=Dict, required=False)
+        spec.output('fleurinpData', valid_type=FleurinpData, required=False)
 
     @classproperty
     def _OUTPUT_FOLDER(cls):
@@ -524,11 +528,11 @@ class FleurCalculation(CalcJob):
 
         #check for for allowed keys, ignor unknown keys but warn.
         for key in settings_dict.keys():
-            if key not in self._settings_keys:
+            if key not in self.inputs.metadata.options.setting_keys:
                 #TODO warrning
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
-                                 "".format(key, self._settings_keys))
+                                 "".format(key, self.inputs.metadata.options.setting_keys))
 
         #TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData.
