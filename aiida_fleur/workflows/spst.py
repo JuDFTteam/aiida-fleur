@@ -23,6 +23,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_op
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
+from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.common.datastructures import CalcJobState as calc_states
 import six
@@ -309,14 +310,14 @@ class fleur_spst_wc(WorkChain):
         '''
         calc = self.ctx.reference
         try:
-            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
-        except KeyError:
+            outpara_check = calc.outputs.output_scf_wc_para
+        except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.ctx.errors.append(message)
             self.ctx.successful = False
             return
         
-        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        outpara = calc.outputs['output_scf_wc_para'].get_dict()
         
         if not outpara.get('successful', False):
             message = ('The reference SCF calculation was not successful.')
@@ -341,16 +342,20 @@ class fleur_spst_wc(WorkChain):
         settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
+        pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
-            if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
-                try:
-                    remote_old = i.outputs.remote_folder
-                except AttributeError:
-                    message = ('Found no remote folder of the referece scf calculation.')
-                    self.ctx.warnings.append(message)
-                    #self.ctx.successful = False
-                    remote_old = None
+            if i.node_type == u'process.calculation.calcjob.CalcJobNode.':
+                if i.load_process_class() is FleurCalculation:
+                    if pk_last < i.pk:
+                        pk_last = i.pk
+        try:
+            remote_old = load_node(pk_last).outputs.remote_folder
+        except AttributeError:
+            message = ('Found no remote folder of the referece scf calculation.')
+            self.ctx.warnings.append(message)
+            #self.ctx.successful = False
+            remote_old = None
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
@@ -371,11 +376,10 @@ class fleur_spst_wc(WorkChain):
         if self.ctx.successful:
             try:
                 calculation = self.ctx.forr
-                calc_state = calculation.get_state()
-                if calc_state != calc_states.FINISHED or calculation.exit_status != 0:
+                if calculation.exit_status != 0:
                     self.ctx.successful = False
-                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
-                            'in state {} with exit status {}'.format(calc_state, calculation.exit_status))
+                    message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
+                            'exit status {}'.format(calculation.exit_status))
                     self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False

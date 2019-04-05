@@ -499,15 +499,15 @@ class fleur_scf_wc(WorkChain):
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
             return self.ERROR_FLEUR_CALCULATION_FALIED
-        calc_state = calculation.get_state()
+        exit_status = calculation.exit_status
         #self.report('the state of the last calculation is: {}'.format(calc_state))
 
-        if calc_state != calc_states.FINISHED:
+        if exit_status != 0:
             error = ('ERROR: Last Fleur calculation failed somehow it is '
                     'in state {}'.format(calc_state))
             self.control_end_wc(error)
             return self.ERROR_FLEUR_CALCULATION_FALIED
-        elif calc_state == calc_states.FINISHED:
+        else:
             self.ctx.parse_last = True
 
         '''
@@ -587,13 +587,13 @@ class fleur_scf_wc(WorkChain):
             '''
             #TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
-            outxmlfile = last_calc.outputs.output_parameters.dict.outputfile_path
+            outxmlfile_opened = last_calc.get_retrieved_node().open(last_calc.get_attribute('outxml_file_name'), 'r')
             walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
             #outpara = last_calc.get('output_parameters', None)
             #outxmlfile = outpara.dict.outputfile_path
-            tree = etree.parse(outxmlfile)
+            tree = etree.parse(outxmlfile_opened)
             root = tree.getroot()
             energies = eval_xpath2(root, xpath_energy)
             for energy in energies:
@@ -602,6 +602,7 @@ class fleur_scf_wc(WorkChain):
             distances = eval_xpath2(root, xpath_distance)
             for distance in distances:
                 self.ctx.distance.append(float(distance))
+            outxmlfile_opened.close()
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -663,8 +664,8 @@ class fleur_scf_wc(WorkChain):
         except AttributeError:
             last_calc_uuid = None
         try: # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.out['output_parameters']
-            retrieved = self.ctx.last_calc.out['retrieved']
+            last_calc_out = self.ctx.last_calc.outputs['output_parameters']
+            retrieved = self.ctx.last_calc.outputs['retrieved']
             last_calc_out_dict = last_calc_out.get_dict()
         except KeyError:
             last_calc_out = None
