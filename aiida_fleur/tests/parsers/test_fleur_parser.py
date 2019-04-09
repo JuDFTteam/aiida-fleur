@@ -54,7 +54,7 @@ def test_parse_xmlout_file():
     expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.1beta',
                                 'parser_warnings': [],
                                 'unparsed': []}
-    simple_out.pop('outputfile_path') # otherwise test will fail on different installations
+    simple_out.pop('outputfile_path', None) # otherwise test will fail on different installations
     # also this should go away any way... 
     
     assert successful == True
