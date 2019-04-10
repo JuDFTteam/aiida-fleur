@@ -346,16 +346,20 @@ class fleur_dmi_wc(WorkChain):
         settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
     
         #Retrieve remote folder of the reference calculation
+        pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
-            if i.type == u'calculation.job.fleur.fleur.FleurCalculation.':
-                try:
-                    remote_old = i.outputs.remote_folder
-                except AttributeError:
-                    message = ('Found no remote folder of the referece scf calculation.')
-                    self.ctx.warnings.append(message)
-                    #self.ctx.successful = False
-                    remote_old = None
+            if i.node_type == u'process.calculation.calcjob.CalcJobNode.':
+                if i.process_class is FleurCalculation:
+                    if pk_last < i.pk:
+                        pk_last = i.pk
+        try:
+            remote_old = load_node(pk_last).outputs.remote_folder
+        except AttributeError:
+            message = ('Found no remote folder of the referece scf calculation.')
+            self.ctx.warnings.append(message)
+            #self.ctx.successful = False
+            remote_old = None
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'

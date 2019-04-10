@@ -18,14 +18,16 @@
 from __future__ import absolute_import
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.common.datastructures import CalcJobState as calc_states
+
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.common.datastructures import CalcJobState as calc_states
+
 import six
 from six.moves import range
 
@@ -346,7 +348,7 @@ class fleur_spst_wc(WorkChain):
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
             if i.node_type == u'process.calculation.calcjob.CalcJobNode.':
-                if i.load_process_class() is FleurCalculation:
+                if i.process_class is FleurCalculation:
                     if pk_last < i.pk:
                         pk_last = i.pk
         try:

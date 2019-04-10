@@ -482,7 +482,7 @@ class FleurCalculation(CalcJob):
             #        "calculation{}, while it should have a single parent"
             #        "".format(n_parents, "" if n_parents == 0 else "s"))
             parent_calc = parent_calc_folder.get_incoming().all()[0].node
-            parent_calc_class = parent_calc.load_process_class()
+            parent_calc_class = parent_calc.process_class
             has_parent = True
 
             # check that it is a valid parent
@@ -585,8 +585,8 @@ class FleurCalculation(CalcJob):
                 for file1 in copylist:
                     local_copy_list.append((
                         outfolder_uuid,
-                        os.path.join('path', file1[0]),
-                        os.path.join(file1[1])))
+                        file1[0],
+                       file1[1]))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
             elif fleurinpgen and has_fleurinp:
@@ -601,8 +601,8 @@ class FleurCalculation(CalcJob):
                 for file1 in copylist:
                     local_copy_list.append((
                         outfolder_uuid,
-                        os.path.join('path', file1[0]),
-                        os.path.join(file1[1])))
+                        file1[0],
+                        file1[1]))
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,

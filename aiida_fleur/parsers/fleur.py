@@ -49,7 +49,7 @@ class FleurParser(Parser):
         Initialize the instance of FleurParser
         """
         # check for valid input
-        if not (calc.load_process_class() is FleurCalculation):
+        if not (calc.process_class is FleurCalculation):
             raise FleurOutputParsingError("Input calculation for the FleurParser"
                                           "must be a FleurCalculation")
 
@@ -188,7 +188,6 @@ class FleurParser(Parser):
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
-                new_nodes_list.append((link_name, outxml_params))
 
             if complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
