@@ -33,8 +33,14 @@ install:
   - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing,docs]
   - if [ "$TEST_TYPE" == "docs" ]; then pip install . && pip install -r docs/requirements_for_rtd.txt; else pip install .; fi
 env:
-  - TEST_TYPE="unittests"
-  - TEST_TYPE="docs"
+  - TEST_AIIDA_BACKEND=django TEST_TYPE="unittests"
+  - TEST_AIIDA_BACKEND=django TEST_TYPE="docs"
+
+before_script:
+  - .ci/setup_profiles.sh
+
+before_script:
+  - .ci/setup_profiles.sh
 
 before_script:
   - .ci/setup_profiles.sh
