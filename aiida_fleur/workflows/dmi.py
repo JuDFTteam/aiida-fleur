@@ -376,8 +376,7 @@ class fleur_dmi_wc(WorkChain):
         if self.ctx.successful:
             try:
                 calculation = self.ctx.forr
-                calc_state = calculation.get_state()
-                if calc_state != CalcJobState.FINISHED or calculation.exit_status != 0:
+                if not calculation.is_finished_ok:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
                             'in state {} with exit status {}'.format(calc_state, calculation.exit_status))

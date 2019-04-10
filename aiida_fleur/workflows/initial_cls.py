@@ -926,7 +926,7 @@ def extract_results(calcs):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue
-        if calc.get_state() == 'FINISHED':
+        if calc.is_finished_ok:
             # get out.xml file of calculation
             outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
             #print outxml

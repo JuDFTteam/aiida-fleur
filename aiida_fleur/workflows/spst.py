@@ -376,7 +376,7 @@ class fleur_spst_wc(WorkChain):
         if self.ctx.successful:
             try:
                 calculation = self.ctx.forr
-                if calculation.exit_status != 0:
+                if not calculation.is_finished_ok:
                     self.ctx.successful = False
                     message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
                             'exit status {}'.format(calculation.exit_status))
