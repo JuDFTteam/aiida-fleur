@@ -36,6 +36,9 @@ env:
   - TEST_TYPE="unittests"
   - TEST_TYPE="docs"
 
+before_script:
+  - .ci/setup_profiles.sh
+
 script: 
   #cd ./aiida_fleur/tests/ && ./run_all.sh 
   .ci/test_script.sh
