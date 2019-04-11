@@ -19,13 +19,16 @@
 from __future__ import absolute_import
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.common import CalcJobState
+
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
+from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.common import CalcJobState
+
 import six
 from six.moves import range
 
@@ -335,14 +338,14 @@ class fleur_mae_wc(WorkChain):
         """
         calc = self.ctx['xyz']
         try:
-            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
+            outpara_node = calc.get_outputs_dict()['output_scf_wc_para']
         except KeyError:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.ctx.errors.append(message)
             self.ctx.successful = False
             return
         
-        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        outpara = outpara_node.get_dict()
         
         if not outpara.get('successful', False):
             message = ('The reference SCF calculation was not successful.')
@@ -402,10 +405,10 @@ class fleur_mae_wc(WorkChain):
         if self.ctx.successful:
             try:
                 calculation = self.ctx.forr
-                if calculation.exit_status != 0:
+                if not calculation.is_finished_ok:
                     self.ctx.successful = False
-                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
-                            'in state {} with exit status {}'.format(calc_state, calculation.exit_status))
+                    message = ('ERROR: Force theorem Fleur calculation failed '
+                            'with exit status {}'.format(calculation.exit_status))
                     self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False
@@ -455,12 +458,11 @@ class fleur_mae_wc(WorkChain):
         """
         Retrieve results of converge calculations
         """
-        distancedict ={}
         t_energydict = {}
         outnodedict = {}
         htr2eV = 27.21138602
         
-        for label, cont in six.iteritems(self.ctx.inpgen_soc):
+        for label in six.iterkeys(self.ctx.inpgen_soc):
             calc = self.ctx[label]
             try:
                 outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']

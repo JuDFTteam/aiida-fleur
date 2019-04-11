@@ -20,6 +20,7 @@ cylce management of a FLEUR calculation with AiiDA.
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs, how?
+#TODO: fix unproper initialisation of wf_param
 from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
@@ -119,36 +120,11 @@ class fleur_scf_wc(WorkChain):
         super(fleur_scf_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict=cls._wf_default))
-                                              #'fleur_runmax': 4,
-                                               #'density_criterion' : 0.00002,
-                                               #'energy_criterion' : 0.002,
-                                               #'converge_density' : True,
-                                               #'converge_energy' : False,
-                                               #'reuse' : True,
-                                               #'options' : {
-                                               #    'resources': {"num_machines": 1},
-                                               #    'max_wallclock_seconds': 60*60,
-                                               #    'queue_name': '',
-                                               #    'custom_scheduler_commands' : '',
-                                               #    #'max_memory_kb' : None,
-                                               #    'import_sys_environment' : False,
-                                               #    'environment_variables' : {}},
-                                               #'serial' : False,
-                                               #'itmax_per_run' : 30,
-                                               #'inpxml_changes' : [],
-                                               #}))
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("settings", valid_type=Dict, required=False)
         spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_options))#{
-                            #'resources': {"num_machines": 1},
-                            #'max_wallclock_seconds': 60*60,
-                            #'queue_name': '',
-                            #'custom_scheduler_commands' : '',
-                            #'max_memory_kb' : None,
-                            #'import_sys_environment' : False,
-                            #'environment_variables' : {}}))
+                   default=Dict(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -200,7 +176,6 @@ class fleur_scf_wc(WorkChain):
 
         # set values, or defaults
         defaultoptions = self._default_options
-        #options = wf_dict.get('options', defaultoptions)
 
         if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
@@ -225,11 +200,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.total_energy = []
         self.ctx.energydiff = 10000
         self.ctx.warnings = []#
-        #"warnings": {
         #"debug": {},
-        #"error": {},
-        #"info": {},
-        #"warning": {}
         self.ctx.errors = []
         self.ctx.info = []
         self.ctx.possible_info = [
@@ -502,9 +473,9 @@ class fleur_scf_wc(WorkChain):
         exit_status = calculation.exit_status
         #self.report('the state of the last calculation is: {}'.format(calc_state))
 
-        if exit_status != 0:
-            error = ('ERROR: Last Fleur calculation failed somehow it is '
-                    'in state {}'.format(calc_state))
+        if not calculation.is_finished_ok:
+            error = ('ERROR: Last Fleur calculation failed '
+                    'with exit status {}'.format(exit_status))
             self.control_end_wc(error)
             return self.ERROR_FLEUR_CALCULATION_FALIED
         else:

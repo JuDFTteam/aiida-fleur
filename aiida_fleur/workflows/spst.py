@@ -16,11 +16,13 @@
 """
 
 from __future__ import absolute_import
+from lxml.etree import XMLSyntaxError
+
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.common.datastructures import CalcJobState as calc_states
+from aiida.common import CalcJobState
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
@@ -312,14 +314,14 @@ class fleur_spst_wc(WorkChain):
         '''
         calc = self.ctx.reference
         try:
-            outpara_check = calc.outputs.output_scf_wc_para
+            outpara_node = calc.outputs.output_scf_wc_para
         except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.ctx.errors.append(message)
             self.ctx.successful = False
             return
         
-        outpara = calc.outputs['output_scf_wc_para'].get_dict()
+        outpara = outpara_node.get_dict()
         
         if not outpara.get('successful', False):
             message = ('The reference SCF calculation was not successful.')
@@ -371,7 +373,6 @@ class fleur_spst_wc(WorkChain):
 
     def get_results(self):
         t_energydict = []
-        spst_q = []
         htr2eV = 27.21138602
         #at this point self.ctx.successful == True if the reference calculation is OK
         #the force theorem calculation is checked inside if
@@ -451,5 +452,5 @@ def quadratic_fit(energies, q_vectors, structure):
         q_mag_glob = np.linalg.norm(q_glob)
         rec_period_length = q_mag_glob / 2.0 / np.pi
         rec_period_lengths_sq.append((rec_period_length**2, energies[i]))
-    slope, intercept, r_value, p_value, std_err = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
+    slope, intercept, r_value, _ = linregress([x[0] for x in rec_period_lengths_sq], [x[1] for x in rec_period_lengths_sq])
     return slope, intercept, r_value**2, rec_period_lengths_sq

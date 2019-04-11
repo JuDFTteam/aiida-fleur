@@ -18,13 +18,16 @@
 from __future__ import absolute_import
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
-from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida.common import CalcJobState
+
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.scf import fleur_scf_wc
+
 import six
 from six.moves import range
 
@@ -314,14 +317,14 @@ class fleur_dmi_wc(WorkChain):
         '''
         calc = self.ctx.reference
         try:
-            outpara_check = calc.get_outputs_dict()['output_scf_wc_para']
+            outpara_node = calc.get_outputs_dict()['output_scf_wc_para']
         except KeyError:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.ctx.errors.append(message)
             self.ctx.successful = False
             return
         
-        outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+        outpara = outpara_node.get_dict()
         
         if not outpara.get('successful', False):
             message = ('The reference SCF calculation was not successful.')
@@ -372,8 +375,6 @@ class fleur_dmi_wc(WorkChain):
         return ToContext(forr=future)
 
     def get_results(self):
-        t_energydict = []
-        dmi_q = []
         htr2eV = 27.21138602
         #at this point self.ctx.successful == True if the reference calculation is OK
         #the force theorem calculation is checked inside if
@@ -382,8 +383,8 @@ class fleur_dmi_wc(WorkChain):
                 calculation = self.ctx.forr
                 if not calculation.is_finished_ok:
                     self.ctx.successful = False
-                    message = ('ERROR: Force theorem Fleur calculation failed somehow it is '
-                            'in state {} with exit status {}'.format(calc_state, calculation.exit_status))
+                    message = ('ERROR: Force theorem Fleur calculation failed '
+                            'with exit status {}'.format(calculation.exit_status))
                     self.ctx.errors.append(message)
             except AttributeError:
                 self.ctx.successful = False
