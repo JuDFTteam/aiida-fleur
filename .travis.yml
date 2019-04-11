@@ -34,7 +34,8 @@ install:
   - if [ "$TEST_TYPE" == "docs" ]; then pip install . && pip install -r docs/requirements_for_rtd.txt; else pip install .; fi
 env:
   - TEST_AIIDA_BACKEND=django TEST_TYPE="unittests"
-  - TEST_AIIDA_BACKEND=django TEST_TYPE="docs"
+# Drop docs test until documentation is reworked
+#  - TEST_AIIDA_BACKEND=django TEST_TYPE="docs"
 
 before_script:
   - .ci/setup_profiles.sh
