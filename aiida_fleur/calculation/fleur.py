@@ -636,9 +636,9 @@ class FleurCalculation(CalcJob):
             
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
-                        parent_calc_folder.get_computer().uuid,
+                        parent_calc_folder.computer.uuid,
                         os.path.join(parent_calc_folder.get_remote_path(), file1),
-                        self.inputs.metadata.options.output_folder))
+                        self._OUTPUT_FOLDER))
 
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
         
