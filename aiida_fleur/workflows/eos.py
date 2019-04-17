@@ -300,14 +300,14 @@ class fleur_eos_wc(WorkChain):
         for label in self.ctx.labels:
             calc = self.ctx[label]
             try:
-                outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
+                outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
                 message = ('One SCF workflow failed, no scf output node: {}. I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
             
-            outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+            outpara = calc.outputs.output_scf_wc_para.get_dict()
 
             if not outpara.get('successful', False):
                 #TODO: maybe do something else here

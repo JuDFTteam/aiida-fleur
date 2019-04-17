@@ -22,6 +22,7 @@ from aiida.engine import submit
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.common import CalcJobState
+from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
@@ -338,8 +339,8 @@ class fleur_mae_wc(WorkChain):
         """
         calc = self.ctx['xyz']
         try:
-            outpara_node = calc.get_outputs_dict()['output_scf_wc_para']
-        except KeyError:
+            outpara_node = calc.outputs.output_scf_wc_para
+        except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.ctx.errors.append(message)
             self.ctx.successful = False

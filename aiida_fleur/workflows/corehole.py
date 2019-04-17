@@ -962,7 +962,7 @@ class fleur_corehole_wc(WorkChain):
         # TODO: bad design, put in calcfunction and make bullet proof.
         for i, label in enumerate(self.ctx.labels):
             calc = self.ctx[label]
-            calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
+            calc_dict = calc.outputs.output_scf_wc_para
             outnodedict[label] = calc_dict
 
         outdict = create_corehole_result_node(**outnodedict)
@@ -1064,7 +1064,7 @@ def extract_results_corehole(calcs):
     calc_uuids = []
     for calc in calcs:
         #print(calc)
-        calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
     #print(calc_uuids)
 
