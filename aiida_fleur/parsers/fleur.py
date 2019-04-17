@@ -188,11 +188,16 @@ class FleurParser(Parser):
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
-
-            if complexdata:
+            elif complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
+                self.out(link_name, outxml_params)
+            else:
+                self.logger.error("Something went wrong, neither simpledata nor complexdata found")
+                parameter_data = dict(list(parser_info.items()))
+                outxml_params = Dict(dict=parameter_data)
+                link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
 
             #greate new fleurinpData object if needed
