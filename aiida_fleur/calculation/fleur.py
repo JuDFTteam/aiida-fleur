@@ -356,6 +356,23 @@ class FleurCalculation(CalcJob):
         spec.output('output_parameters', valid_type=Dict, required=False)
         spec.output('output_params_complex', valid_type=Dict, required=False)
         spec.output('fleurinpData', valid_type=FleurinpData, required=False)
+        
+        #exit codes
+        spec.exit_code(
+            104, 'ERROR_WRONG_PARSER_INPUT', message='Parser class accepts FleurCalculation only.')
+        spec.exit_code(
+            105, 'ERROR_OPENING_OUTPUTS', message='One of output files can not be opened.')
+        spec.exit_code(
+            106, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
+        spec.exit_code(
+            107, 'ERROR_FLEUR_CALC_FAILED', message='FLEUR calculation failed.')
+        spec.exit_code(
+            108, 'ERROR_NO_OUTXML', message='XML output file was not found.')
+        spec.exit_code(
+            109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
+        spec.exit_code(
+            110, 'ERROR_XMLOUT_PARSING_FAILED', message='Parsing of XML output file was not successfull.')
+    
 
     @classproperty
     def _OUTPUT_FOLDER(cls):
@@ -474,14 +491,13 @@ class FleurCalculation(CalcJob):
         else:
             # extract parent calculation
             #assume that RemoteFolder has a single parent
-            #parent_calcs = parent_calc_folder.get_inputs(node_type=CalcJob)
-            #n_parents = len(parent_calcs)
-            #if n_parents != 1:
-            #    raise UniquenessError(
-            #        "Input RemoteData is child of {} "
-            #        "calculation{}, while it should have a single parent"
-            #        "".format(n_parents, "" if n_parents == 0 else "s"))
-            parent_calc = parent_calc_folder.get_incoming().all()[0].node
+            parent_calcs = parent_calc_folder.get_incoming(node_class=CalcJob).all()
+            n_parents = len(parent_calcs)
+            if n_parents != 1:
+                raise UniquenessError("Input RemoteData is child of {} "
+                    "calculation{}, while it should have a single parent"
+                    "".format(n_parents, "" if n_parents == 0 else "s"))
+            parent_calc = parent_calcs[0].node
             parent_calc_class = parent_calc.process_class
             has_parent = True
 
@@ -761,6 +777,7 @@ class FleurCalculation(CalcJob):
         '''
         return calcinfo
 
+'''
     def _check_valid_parent(self, calc):
         """
         Check that calc is a valid parent for a FleurCalculation.
@@ -837,4 +854,4 @@ class FleurCalculation(CalcJob):
         Used to create a WARN_ONLY file in the calculation dir
         """
         pass
-
+'''
