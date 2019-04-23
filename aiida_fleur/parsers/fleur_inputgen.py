@@ -62,7 +62,6 @@ class Fleur_inputgenParser(Parser):
         :return: a dictionary of AiiDA nodes for storing in the database.
         """
 
-        successful = True
         has_xml_inpfile = False
         
         # select the folder object
@@ -70,31 +69,26 @@ class Fleur_inputgenParser(Parser):
         try:
             output_folder = self.retrieved
         except exceptions.NotExistent:
-            #TODO: exit_codes
-            #return ExitCode(101)
             self.logger.error("No retrieved folder found")
-            return
+            return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
         self.logger.info("file list {}".format(list_of_files))
 
         if self.node.get_option('inpxml_file_name') not in list_of_files:
-            successful = False
             self.logger.error(
                 "XML inp not found '{}'".format(self.node.get_option('inpxml_file_name')))
-            #TODO:exit_codes
-            #return ExitCode(101)
-            return
+            return self.exit_codes.ERROR_NO_INPXML
         else:
             has_xml_inpfile = True
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                successful = False
-                self.logger.warning(
+                self.logger.error(
                     "'{}' file not found in retrived folder, it was probable "
                     "not created by inpgen".format(file1))
+                return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
         # TODO what about other files?
 
         # TODO parse out file of inpgen
@@ -115,16 +109,9 @@ class Fleur_inputgenParser(Parser):
                 self.logger.error(
                     "The following was written to the error file {} : \n '{}'"
                     "".format(self.node.get_option('error_file_name'), error_file_lines))
-                #has_error = True
-                successful = False
-                return ExitCode(101)
 
         if has_xml_inpfile:
             # read xmlinp file into an etree
-            #TODO: INPXML_FILE_NAME has to be extracted from metadata.options
-            
-            #inpxmlfile = os.path.join(output_folder._repository._get_base_folder().abspath,
-            #self.node.get_option('inpxml_file_name'))
             inpxmlfile = self.node.get_option('inpxml_file_name')
            
             #tree = etree.parse(inpxmlfile)

@@ -101,7 +101,7 @@ class FleurinputgenCalculation(CalcJob):
     # If two lattices are given, via the input &lattice
     # and the aiida structure prefare the aiida structure?
     # currently is not allow the use of &lattice
-    _use_aiida_structure = False
+    _use_aiida_structure = True
 
     # Default title
     _inp_title = 'A Fleur input generator calulation with aiida'
@@ -137,6 +137,22 @@ class FleurinputgenCalculation(CalcJob):
 
         #declaration of outputs of the calclation
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
+
+        #exit codes
+        spec.exit_code(
+            151, 'ERROR_WRONG_INPUT_PARAMS', message='Input parameters for inpgen contain unknown keys.')
+        spec.exit_code(
+            153, 'ERROR_ATOM_POSITION_NEEDED', message='Fleur lattice needs atom positions as input.')
+        spec.exit_code(
+            154, 'ERROR_INPUT_PARAMS_LEFTOVER', message='Excessive input parameters were specified.')
+        spec.exit_code(
+            106, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
+        spec.exit_code(
+            105, 'ERROR_OPENING_OUTPUTS', message='One of output files can not be opened.')
+        spec.exit_code(
+            155, 'ERROR_NO_INPXML', message='XML input file was not found.')
+        spec.exit_code(
+            109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
 
     def prepare_for_submission(self, tempfolder):
         """
@@ -280,9 +296,6 @@ class FleurinputgenCalculation(CalcJob):
                 if structure is not None: #two structures given?
                     #which one should be prepared? TODO: log warning or even error
                     if self._use_aiida_structure:
-                        if not isinstance(structure, StructureData):
-                            raise InputValidationError("structure is not of type"
-                                                       " StructureData")
                         input_params.pop('lattice', {})
                         own_lattice = False
 
