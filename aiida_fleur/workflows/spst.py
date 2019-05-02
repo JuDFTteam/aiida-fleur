@@ -23,6 +23,7 @@ from aiida.engine import submit
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.common import CalcJobState
+from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
@@ -96,10 +97,25 @@ class fleur_spst_wc(WorkChain):
             cls.converge_scf,
             cls.force_sp_sp,
             cls.get_results,
+            cls.return_results
         )
 
         spec.output('out', valid_type=Dict)
-
+    
+        #exit codes
+        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES', message="Invalid input, plaese check input configuration.")
+        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message="Some required inputs are missing.")
+        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED', message="Invalid code node specified, please check inpgen and fleur code nodes.")
+        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
+        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed.")
+        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE', message="Input file is corrupted after user's modifications.")
+        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED', message="Fleur calculation failed.")
+        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED', message="SCF cycle did not lead to convergence.")
+        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference calculation failed.")
+        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message="Found no reference calculation remote repository.")
+        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED', message="Force theorem calculation failed.")
+        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
+    
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
@@ -107,10 +123,10 @@ class fleur_spst_wc(WorkChain):
         self.report('INFO: started Spin Stiffness calculation workflow version {}\n'
                     ''.format(self._workflowversion))
                     
-        self.ctx.successful = True
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.energy_dict = []
 
         #Retrieve WorkFlow parameters,
         #initialize the dictionary using defaults if no wf paramters are given by user
@@ -152,7 +168,7 @@ class fleur_spst_wc(WorkChain):
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
             try:
@@ -161,7 +177,7 @@ class fleur_spst_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
     def converge_scf(self):
         """
@@ -222,9 +238,9 @@ class fleur_spst_wc(WorkChain):
         try:
             fleurin = self.ctx.reference.outputs.fleurinp
         except AttributeError:
-            error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
+            error = 'Fleurinp generated in the reference claculation is not found.'
             self.control_end_wc(error)
-            return self.ERROR_REFERENCE_CALCULATION_FAILED
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -256,7 +272,7 @@ class fleur_spst_wc(WorkChain):
                                 "plaese check/test your input. I abort..."
                                 "".format(method))
                     self.control_end_wc(error)
-                    return self.ERROR_CHANGING_FLEURINPUT_FAILED
+                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
                     if function==u'set_inpchanges':
@@ -271,9 +287,9 @@ class fleur_spst_wc(WorkChain):
             except XMLSyntaxError:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 #fleurmode.show(display=True)#, validate=True)
-                self.report(error)
+                self.control_end_wc(error)
                 apply_c = False
-                return self.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
             
             # apply
             if apply_c:
@@ -293,10 +309,6 @@ class fleur_spst_wc(WorkChain):
                       int(self.ctx.options['resources']['num_machines']),
                       int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
 
-        if exit_code:
-        #TODO: make an error exit
-            pass
-
         if 'WARNING' in message:
             self.ctx.warnings.append(message)
 
@@ -304,6 +316,8 @@ class fleur_spst_wc(WorkChain):
 
         self.ctx.options['resources']['num_machines'] = adv_nodes
         self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+        
+        return exit_code
 
     def force_sp_sp(self):
         '''
@@ -313,34 +327,34 @@ class fleur_spst_wc(WorkChain):
         has to be created and submitted.
         '''
         calc = self.ctx.reference
+        
+        if not calc.is_finished_ok:
+            message = ('The reference SCF calculation was not successful.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
+        
         try:
             outpara_node = calc.outputs.output_scf_wc_para
         except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
-            self.ctx.errors.append(message)
-            self.ctx.successful = False
-            return
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         
         outpara = outpara_node.get_dict()
         
-        if not outpara.get('successful', False):
-            message = ('The reference SCF calculation was not successful.')
-            self.ctx.errors.append(message)
-            self.ctx.successful = False
-            return
-        
         t_e = outpara.get('total_energy', 'failed')
         if not (type(t_e) is float):
-            self.ctx.successful = False
             message = ('Did not manage to extract float total energy from the reference SCF calculation.')
-            self.ctx.errors.append(message)
-            return
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         self.report('INFO: run Force theorem calculations')
 
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
-        self.check_kpts(fleurin)
+        if self.check_kpts(fleurin):
+            self.control_end_wc('ERROR: Not optimal computational resourses.')
+            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
 
         #Do not copy broyd* files from the parent
         settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
@@ -357,9 +371,8 @@ class fleur_spst_wc(WorkChain):
             remote_old = load_node(pk_last).outputs.remote_folder
         except AttributeError:
             message = ('Found no remote folder of the referece scf calculation.')
-            self.ctx.warnings.append(message)
-            #self.ctx.successful = False
-            remote_old = None
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
@@ -374,54 +387,51 @@ class fleur_spst_wc(WorkChain):
     def get_results(self):
         t_energydict = []
         htr2eV = 27.21138602
-        #at this point self.ctx.successful == True if the reference calculation is OK
-        #the force theorem calculation is checked inside if
-        if self.ctx.successful:
-            try:
-                calculation = self.ctx.forr
-                if not calculation.is_finished_ok:
-                    self.ctx.successful = False
-                    message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                            'exit status {}'.format(calculation.exit_status))
-                    self.ctx.errors.append(message)
-            except AttributeError:
-                self.ctx.successful = False
-                message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
-                self.ctx.errors.append(message)
-        
-            #now self.ctx.successful == True if forceTheorem calculation is successful
-            if self.ctx.successful:
-                try:
-                    t_energydict = calculation.outputs.output_parameters.dict.spst_force_evSum
-                    e_u = calculation.outputs.output_parameters.dict.energy_units
-                    
-                    #Find a minimal value of SpSp and count it as 0
-                    labelmin = 0
-                    for labels in range(1, len(t_energydict)):
-                        if t_energydict[labels] < t_energydict[labelmin]:
-                            labelmin = labels
-                    minenergy = t_energydict[labelmin]
-
-                    for labels in range(len(t_energydict)):
-                        t_energydict[labels] = t_energydict[labels] - minenergy
-                        if e_u == 'Htr' or 'htr':
-                            t_energydict[labels] = t_energydict[labels] * htr2eV
+        try:
+            calculation = self.ctx.forr
+            if not calculation.is_finished_ok:
+                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
+                        'exit status {}'.format(calculation.exit_status))
+                self.control_end_wc(message)
+                return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+        except AttributeError:
+            message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+    
+        try:
+            t_energydict = calculation.outputs.output_parameters.dict.spst_force_evSum
+            e_u = calculation.outputs.output_parameters.dict.energy_units
             
-                except AttributeError:
-                    self.ctx.successful = False
-                    message = ('Did not manage to read evSum or energy units after FT calculation.')
-                    self.ctx.errors.append(message)
+            #Find a minimal value of SpSp and count it as 0
+            labelmin = 0
+            for labels in range(1, len(t_energydict)):
+                if t_energydict[labels] < t_energydict[labelmin]:
+                    labelmin = labels
+            minenergy = t_energydict[labelmin]
+
+            for labels in range(len(t_energydict)):
+                t_energydict[labels] = t_energydict[labels] - minenergy
+                if e_u == 'Htr' or 'htr':
+                    t_energydict[labels] = t_energydict[labels] * htr2eV
+            self.ctx.energy_dict = t_energydict
+
+        except AttributeError:
+            message = ('Did not manage to read evSum or energy units after FT calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         
         #stiff, intercept, r2, rec_lamda_square = quadratic_fit(t_energydict, self.ctx.wf_dict['q_vectors'], self.inputs.structure)
-        
+
+    def return_results(self):
+    
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
                'is_it_force_theorem' : True,
-               'energies' : t_energydict,
+               'energies' : self.ctx.energy_dict,
                'q_vectors' : self.ctx.wf_dict['q_vectors'],
                'energy_units' : 'eV',
-               'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors
@@ -432,6 +442,16 @@ class fleur_spst_wc(WorkChain):
                }
        
         self.out('out', Dict(dict=out))
+
+
+    def control_end_wc(self, errormsg):
+        """
+        Controled way to shutdown the workchain. will initalize the output nodes
+        The shutdown of the workchain will has to be done afterwards
+        """
+        self.report(errormsg) # because return_results still fails somewhen
+        self.ctx.errors.append(errormsg)
+        self.return_results()
 
 def quadratic_fit(energies, q_vectors, structure):
     """
