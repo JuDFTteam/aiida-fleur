@@ -22,6 +22,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import six
+import io
 #from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
@@ -407,13 +408,13 @@ class FleurCalculation(CalcJob):
         self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(
                                                          self._INPXML_FILE_NAME)
     '''
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, folder):
         """
         This is the routine to be called when you make a fleur calculation
         Here should be checked if all the files are there to run fleur.
         And input files (inp.xml) can be modified.
 
-        :param tempfolder: a aiida.common.folders.Folder subclass where
+        :param folder: a aiida.common.folders.Folder subclass where
                            the plugin should put all its files.
         """
 
@@ -658,13 +659,9 @@ class FleurCalculation(CalcJob):
 
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
         
-        #  Prepare self._JUDFT_WARN_ONLY_INFO_FILE_NAME and upload
-        # local_copy_list.append
-        #_JUDFT_WARN_ONLY_INFO_FILE_NAME depricated for now.
-        #warn_only_filename = tempfolder.get_abs_path(self.inputs.metadata.options.judft_warn_only_info_file_name)
-        #with open(warn_only_filename, 'w') as infile:
-        #    infile.write("\n")
-
+        #create an JUDFT_WARN_ONLY file in the calculation folder
+        with io.StringIO(u'/n') as handle:
+            folder.create_file_from_filelike(handle, filename=self.inputs.metadata.options.judft_warn_only_info_file_name, mode='w')
 
         ########## MAKE CALCINFO ###########
 
