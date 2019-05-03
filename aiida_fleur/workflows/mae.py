@@ -70,16 +70,6 @@ class fleur_mae_wc(WorkChain):
 
     _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes'] #a list of wf_params needed for scf workflow
 
-    ERROR_INVALID_INPUT_RESOURCES = 1
-    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
-    ERROR_INVALID_CODE_PROVIDED = 3
-    ERROR_INPGEN_CALCULATION_FAILED = 4
-    ERROR_CHANGING_FLEURINPUT_FAILED = 5
-    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
-    ERROR_FLEUR_CALCULATION_FALIED = 7
-    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
-    ERROR_REFERENCE_CALCULATION_FAILED = 9
-
     @classmethod
     def define(cls, spec):
         super(fleur_mae_wc, cls).define(spec)
@@ -97,6 +87,7 @@ class fleur_mae_wc(WorkChain):
                 cls.converge_scf,
                 cls.mae_force,
                 cls.get_res_force,
+                cls.return_results_force,
             ).else_(
                 cls.converge_scf,
                 cls.get_results_converge,
@@ -105,6 +96,22 @@ class fleur_mae_wc(WorkChain):
 
         spec.output('out', valid_type=Dict)
 
+        #exit codes
+        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES', message="Invalid input, plaese check input configuration.")
+        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message="Some required inputs are missing.")
+        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED', message="Invalid code node specified, please check inpgen and fleur code nodes.")
+        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
+        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed.")
+        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE', message="Input file is corrupted after user's modifications.")
+        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED', message="Fleur calculation failed.")
+        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED', message="SCF cycle did not lead to convergence.")
+        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference calculation failed.")
+        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message="Found no reference calculation remote repository.")
+        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED', message="Force theorem calculation failed.")
+        spec.exit_code(312, 'ERROR_ALL_SQAS_FAILED', message="Convergence MAE calculation failed for all SQAs.")
+        spec.exit_code(313, 'ERROR_SOME_SQAS_FAILED', message="Convergence MAE calculation failed for some SQAs.")
+        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
+
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
@@ -112,10 +119,14 @@ class fleur_mae_wc(WorkChain):
         self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
                     ''.format(self._workflowversion))
                     
-        self.ctx.successful = True
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+        #defaults that will be written into the output node in case of failure
+        #note: convergence branch always generates defaults inside get_results_converge
+        self.ctx.t_energydict = []
+        self.ctx.mae_thetas = []
+        self.ctx.mae_phis = []
 
         #Retrieve WorkFlow parameters,
         #initialize the dictionary using defaults if no wf paramters are given by user
@@ -141,7 +152,7 @@ class fleur_mae_wc(WorkChain):
         if (len(self.ctx.wf_dict.get('sqas_theta').split()) != len(self.ctx.wf_dict.get('sqas_phi').split())):
             error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
             self.control_end_wc(error)
-            return self.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         
         #Retrieve calculation options,
         #initialize the dictionary using defaults if no options are given by user
@@ -166,7 +177,7 @@ class fleur_mae_wc(WorkChain):
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
             try:
@@ -175,7 +186,7 @@ class fleur_mae_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
     def validate_input(self):
         """
@@ -259,9 +270,9 @@ class fleur_mae_wc(WorkChain):
         try:
             fleurin = self.ctx['xyz'].outputs.fleurinp
         except AttributeError:
-            error = 'A force theorem calculation did not find fleur input generated be the reference claculation.'
+            error = 'Fleurinp generated in the reference claculation is not found.'
             self.control_end_wc(error)
-            return self.ERROR_REFERENCE_CALCULATION_FAILED
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         #copy default changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -283,7 +294,7 @@ class fleur_mae_wc(WorkChain):
                                 "plaese check/test your input. I abort..."
                                 "".format(method))
                     self.control_end_wc(error)
-                    return self.ERROR_CHANGING_FLEURINPUT_FAILED
+                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
                     if function==u'set_inpchanges':
@@ -300,7 +311,7 @@ class fleur_mae_wc(WorkChain):
                 #fleurmode.show(display=True)#, validate=True)
                 self.report(error)
                 apply_c = False
-                return self.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
             
             # apply
             if apply_c:
@@ -320,10 +331,6 @@ class fleur_mae_wc(WorkChain):
                       int(self.ctx.options['resources']['num_machines']),
                       int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
 
-        if exit_code:
-        #TODO: make an error exit
-            pass
-        
         if 'WARNING' in message:
             self.ctx.warnings.append(message)
         
@@ -331,6 +338,8 @@ class fleur_mae_wc(WorkChain):
 
         self.ctx.options['resources']['num_machines'] = adv_nodes
         self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+        
+        return exit_code
 
     def mae_force(self):
         """
@@ -338,34 +347,34 @@ class fleur_mae_wc(WorkChain):
         using the force theorem. Converged reference is stored in self.ctx['xyz'].
         """
         calc = self.ctx['xyz']
+        
+        if not calc.is_finished_ok:
+            message = ('The reference SCF calculation was not successful.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
+        
         try:
             outpara_node = calc.outputs.output_scf_wc_para
         except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
-            self.ctx.errors.append(message)
-            self.ctx.successful = False
-            return
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         
         outpara = outpara_node.get_dict()
         
-        if not outpara.get('successful', False):
-            message = ('The reference SCF calculation was not successful.')
-            self.ctx.errors.append(message)
-            self.ctx.successful = False
-            return
-        
         t_e = outpara.get('total_energy', 'failed')
         if not (type(t_e) is float):
-            self.ctx.successful = False
             message = ('Did not manage to extract float total energy from the reference SCF calculation.')
-            self.ctx.errors.append(message)
-            return
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         self.report('INFO: run Force theorem calculations')
 
         self.change_fleurinp()
         fleurin = self.ctx.fleurinp
-        self.check_kpts(fleurin)
+        if self.check_kpts(fleurin):
+            self.control_end_wc('ERROR: Not optimal computational resourses.')
+            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
 
         #Do not copy broyd* files from the parent
         settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
@@ -382,9 +391,8 @@ class fleur_mae_wc(WorkChain):
             remote_old = load_node(pk_last).outputs.remote_folder
         except AttributeError:
             message = ('Found no remote folder of the referece scf calculation.')
-            self.ctx.warnings.append(message)
-            #self.ctx.successful = False
-            remote_old = None
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
         
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
@@ -401,54 +409,56 @@ class fleur_mae_wc(WorkChain):
         mae_thetas = []
         mae_phis = []
         htr2eV = 27.21138602
-        #at this point self.ctx.successful == True if the reference calculation is OK
-        #the force theorem calculation is checked inside if clause
-        if self.ctx.successful:
-            try:
-                calculation = self.ctx.forr
-                if not calculation.is_finished_ok:
-                    self.ctx.successful = False
-                    message = ('ERROR: Force theorem Fleur calculation failed '
-                            'with exit status {}'.format(calculation.exit_status))
-                    self.ctx.errors.append(message)
-            except AttributeError:
-                self.ctx.successful = False
-                message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
-                self.ctx.errors.append(message)
 
-            if self.ctx.successful:
-                try:
-                    t_energydict = calculation.outputs.output_parameters.dict.mae_force_evSum
-                    mae_thetas = calculation.outputs.output_parameters.dict.mae_force_theta
-                    mae_phis = calculation.outputs.output_parameters.dict.mae_force_phi
-                    e_u = calculation.outputs.output_parameters.dict.energy_units
-                    
-                    #Find a minimal value of MAE and count it as 0
-                    labelmin = 0
-                    for labels in range(1, len(t_energydict)):
-                        if t_energydict[labels] < t_energydict[labelmin]:
-                            labelmin = labels
-                    minenergy = t_energydict[labelmin]
+        try:
+            calculation = self.ctx.forr
+            if not calculation.is_finished_ok:
+                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
+                        'exit status {}'.format(calculation.exit_status))
+                self.control_end_wc(message)
+                return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+        except AttributeError:
+            message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
-                    for labels in range(len(t_energydict)):
-                        t_energydict[labels] = t_energydict[labels] - minenergy
-                        if e_u == 'Htr' or 'htr':
-                            t_energydict[labels] = t_energydict[labels] * htr2eV
+        try:
+            t_energydict = calculation.outputs.output_parameters.dict.mae_force_evSum
+            mae_thetas = calculation.outputs.output_parameters.dict.mae_force_theta
+            mae_phis = calculation.outputs.output_parameters.dict.mae_force_phi
+            e_u = calculation.outputs.output_parameters.dict.energy_units
             
-                except AttributeError:
-                    self.ctx.successful = False
-                    message = ('Did not manage to read evSum, thetas or phis after FT calculation.')
-                    self.ctx.errors.append(message)
-        
+            #Find a minimal value of MAE and count it as 0
+            labelmin = 0
+            for labels in range(1, len(t_energydict)):
+                if t_energydict[labels] < t_energydict[labelmin]:
+                    labelmin = labels
+            minenergy = t_energydict[labelmin]
+
+            for labels in range(len(t_energydict)):
+                t_energydict[labels] = t_energydict[labels] - minenergy
+                if e_u == 'Htr' or 'htr':
+                    t_energydict[labels] = t_energydict[labels] * htr2eV
+    
+        except AttributeError:
+            message = ('Did not manage to read evSum or energy units after FT calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+
+        self.ctx.t_energydict = t_energydict
+        self.ctx.mae_thetas = mae_thetas
+        self.ctx.mae_phis = mae_phis
+    
+    def return_results_force(self):
+    
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
                'is_it_force_theorem' : True,
-               'maes' : t_energydict,
-               'theta' : mae_thetas,
-               'phi' : mae_phis,
+               'maes' : self.ctx.t_energydict,
+               'theta' : self.ctx.mae_thetas,
+               'phi' : self.ctx.mae_phis,
                'mae_units' : 'eV',
-               'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors}
@@ -465,28 +475,23 @@ class fleur_mae_wc(WorkChain):
         
         for label in six.iterkeys(self.ctx.inpgen_soc):
             calc = self.ctx[label]
+            
+            if not calc.is_finished_ok:
+                message = ('One SCF workflow was not successful: {}'.format(label))
+                self.ctx.warnings.append(message)
+                continue
+            
             try:
-                outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
+                outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
                 message = ('One SCF workflow failed, no scf output node: {}. I skip this one.'.format(label))
                 self.ctx.errors.append(message)
-                self.ctx.successful = False
                 continue
             
-            outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
-            
-            if not outpara.get('successful', False):
-                #TODO: maybe do something else here
-                # (exclude point and write a warning or so, or error treatment)
-                # bzw implement and scf_handler,
-                #TODO also if not perfect converged, results might be good
-                message = ('One SCF workflow was not successful: {}'.format(label))
-                self.ctx.warnings.append(message)
-                self.ctx.successful = False
+            outpara = calc.outputs.output_scf_wc_para.get_dict()
             
             t_e = outpara.get('total_energy', 'failed')
             if not (type(t_e) is float):
-                self.ctx.successful = False
                 message = ('Did not manage to extract float total energy from one SCF worflow: {}'.format(label))
                 self.ctx.warnings.append(message)
                 continue
@@ -536,31 +541,26 @@ class fleur_mae_wc(WorkChain):
                'failed_theta' : failed_theta,
                'failed_phi' : failed_phi,
                'mae_units' : 'eV',
-               'successful' : self.ctx.successful,
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors}
-   
-        if self.ctx.successful:
-            self.report('Done, Magnetic Anisotropy Energy calculation using convergence complete')
-        else:
-            self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
 
         # create link to workchain node
         self.out('out', Dict(dict=out))
+        
+        if len(t_energydict) == 0:
+            return self.exit_codes.ERROR_ALL_SQAS_FAILED
+        elif len(failed_theta) != 0:
+            return self.exit_codes.ERROR_SOME_SQAS_FAILED
 
     def control_end_wc(self, errormsg):
         """
         Controled way to shutdown the workchain. will initalize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
-        self.ctx.successful = False
-        self.ctx.abort = True
         self.report(errormsg) # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
-        self.return_results()
-        
-        return
+        self.return_results_force()
 
 '''
 @cf
