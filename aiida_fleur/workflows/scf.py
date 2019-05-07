@@ -165,6 +165,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.loop_count = 0
         self.ctx.calcs = []
         self.ctx.abort = False
+        self.ctx.last_charge_density = 1000
 
 
         # input para
@@ -344,7 +345,7 @@ class fleur_scf_wc(WorkChain):
         else:
             try:
                 fleurin = self.ctx['inpgen'].outputs.fleurinpData
-            except AttributeError:
+            except NotExistent:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
@@ -407,7 +408,10 @@ class fleur_scf_wc(WorkChain):
         """
         self.report('INFO: run FLEUR')
         
-        self.change_fleurinp()
+        status = self.change_fleurinp()
+        if not (status is None):
+            return status
+        
         fleurin = self.ctx.fleurinp
         if self.check_kpts(fleurin):
             self.control_end_wc('ERROR: Not optimal computational resourses.')
@@ -584,6 +588,18 @@ class fleur_scf_wc(WorkChain):
             self.control_end_wc(errormsg)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
             # otherwise this will lead to erros further down
+        
+        try:
+            self.ctx.last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.charge_density
+        except AttributeError:
+            # magnetic system
+            try:
+                self.ctx.last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.overall_charge_density
+                # divide by 2?
+            except AttributeError:
+                errormsg = 'ERROR: did not manage to extract charge density from the calculation'
+                self.control_end_wc(errormsg)
+                return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
 
     def condition(self):
         """
@@ -597,12 +613,7 @@ class fleur_scf_wc(WorkChain):
         inpwfp_dict = self.inputs.wf_parameters.get_dict()
         #last_charge_density = self.ctx.last_calc['output_parameters'].dict.charge_density
         # not a good fix for magnetic stuff, but for now, we want to test if the rest works.
-        try:
-            last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.charge_density
-        except AttributeError:
-            # magnetic system
-            last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.overall_charge_density
-            # divide by 2?
+        last_charge_density = self.ctx.last_charge_density
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
                 density_converged = True
@@ -734,7 +745,7 @@ class fleur_scf_wc(WorkChain):
         else:
             try:
                 fleurinp = self.ctx['inpgen'].outputs.fleurinpData
-            except AttributeError:
+            except NotExistent:
                 self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None
             outdict['fleurinp'] = fleurinp

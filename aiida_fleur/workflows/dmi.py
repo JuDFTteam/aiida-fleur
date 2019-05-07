@@ -237,7 +237,7 @@ class fleur_dmi_wc(WorkChain):
         self.report('INFO: run change_fleurinp')
         try:
             fleurin = self.ctx.reference.outputs.fleurinp
-        except AttributeError:
+        except NotExistent:
             error = 'Fleurinp generated in the reference claculation is not found.'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
@@ -349,7 +349,10 @@ class fleur_dmi_wc(WorkChain):
 
         self.report('INFO: run Force theorem calculations')
 
-        self.change_fleurinp()
+        status = self.change_fleurinp()
+        if not (status is None):
+            return status
+            
         fleurin = self.ctx.fleurinp
         if self.check_kpts(fleurin):
             self.control_end_wc('ERROR: Not optimal computational resourses.')
