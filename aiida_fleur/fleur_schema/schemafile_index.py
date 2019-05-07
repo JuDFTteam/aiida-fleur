@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import os
 
 # any additional schema file add here, plugin will find them
-schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', '.']
+schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', './input/0.29/FleurInputSchema.xsd', '.']
 
 
 package_directory = os.path.dirname(os.path.abspath(__file__))

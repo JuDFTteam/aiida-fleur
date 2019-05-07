@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="0.28">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="0.29">
 
    <xsd:element name="fleurInput" type="FleurInputType"/>
    
@@ -14,6 +14,7 @@
          <xsd:element name="atomGroups" type="AtomGroupsType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="output" type="OutputType"/>
 	 <xsd:element maxOccurs="1" minOccurs="0" name="forceTheorem" type="ForcetheoremType"/>
+	 <xsd:element maxOccurs="1" minOccurs="0" name="relaxation" type="RelaxationType"/>
       </xsd:all>
       <xsd:attribute name="fleurInputVersion" type="FleurVersionType" use="required"/>
    </xsd:complexType>
@@ -22,6 +23,7 @@
       <xsd:restriction base="xsd:string">
          <xsd:enumeration value="0.27"/>
          <xsd:enumeration value="0.28"/>
+         <xsd:enumeration value="0.29"/>
       </xsd:restriction>
    </xsd:simpleType>
 
@@ -50,8 +52,9 @@
          <xsd:element maxOccurs="1" minOccurs="0" name="expertModes" type="ExpertModeType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="geometryOptimization" type="GeometryOptimizerType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="ldaU" type="LdaUGeneralType"/>
+         <xsd:element maxOccurs="1" minOccurs="0" name="rdmft" type="RDMFTType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="spinSpiralQPointMesh" type="SpinSpiralQPointMeshType"/>
-         <xsd:element maxOccurs="1" minOccurs="0" name="eField" type="EFieldType"/>
+         <xsd:element maxOccurs="1" minOccurs="0" name="fields" type="FieldType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="energyParameterLimits" type="EnergyParameterLimitsType"/>
       </xsd:all>
    </xsd:complexType>
@@ -61,7 +64,11 @@
       <xsd:attribute name="elup" type="xsd:string"/>
    </xsd:complexType>
 
-   <xsd:complexType name="EFieldType">
+   <xsd:complexType name="FieldType">
+      <xsd:sequence>
+       <xsd:element maxOccurs="unbounded" minOccurs="0"  name="shape" type="xsd:string" />
+     </xsd:sequence>
+      <xsd:attribute default="0.0" name="b_field" type="xsd:string" use="optional"/>
       <xsd:attribute default="10.0" name="zsigma" type="xsd:string" use="optional"/>
       <xsd:attribute default="0.0" name="sig_b_1" type="xsd:string" use="optional"/>
       <xsd:attribute default="0.0" name="sig_b_2" type="xsd:string" use="optional"/>
@@ -85,6 +92,7 @@
       <xsd:attribute name="mix_b" type="xsd:string"/>
       <xsd:attribute default="0.0" name="thetaJ" type="xsd:string" use="optional"/>
       <xsd:attribute default="0" name="nsh" type="xsd:nonNegativeInteger" use="optional"/>
+      <xsd:attribute default="F" name="l_mtNocoPot" type="FleurBool" use="optional"/>
    </xsd:complexType>
 
    <xsd:complexType name="OneDParamType">
@@ -141,6 +149,7 @@
       <xsd:attribute default="F" name="l_J" type="FleurBool" use="optional"/>
       <xsd:attribute default="F" name="swsp" type="FleurBool" use="optional"/>
       <xsd:attribute default="F" name="lflip" type="FleurBool" use="optional"/>
+      <xsd:attribute default="0.0" name="fixed_moment" type="xsd:string" use="optional"/>
    </xsd:complexType>
 
    <xsd:simpleType name="SpinNumberType">
@@ -265,7 +274,8 @@
 
    <xsd:complexType name="XCFunctionalType">
      <xsd:sequence>
-         <xsd:element maxOccurs="1" minOccurs="0" name="libXC" type="XCLibXCType"/>
+         <xsd:element maxOccurs="1" minOccurs="0" name="LibXCID" type="XCLibXCIDType"/>
+         <xsd:element maxOccurs="1" minOccurs="0" name="LibXCName" type="XCLibXCNameType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="xcParams" type="XCParamsType"/>
          <xsd:element maxOccurs="1" minOccurs="0" name="ggaPrinting" type="GGAPrintingType"/>
       </xsd:sequence>
@@ -303,12 +313,16 @@
 	 <xsd:enumeration value="vhse"/>
 	 <xsd:enumeration value="lhse"/>
 	 <xsd:enumeration value="hf"/>
-	 <xsd:enumeration value="libxc"/>
+	 <xsd:enumeration value="LibXC"/>
       </xsd:restriction>
    </xsd:simpleType>
-   <xsd:complexType name="XCLibXCType">
+   <xsd:complexType name="XCLibXCIDType">
       <xsd:attribute name="exchange" type="xsd:integer" use="required"/>
       <xsd:attribute name="correlation" type="xsd:integer" use="required"/>
+   </xsd:complexType>
+   <xsd:complexType name="XCLibXCNameType">
+      <xsd:attribute name="exchange" type="xsd:string" use="required"/>
+      <xsd:attribute name="correlation" type="xsd:string" use="required"/>
    </xsd:complexType>
    <xsd:complexType name="XCParamsType">
       <xsd:attribute name="igrd" type="xsd:integer" use="required"/>
@@ -348,6 +362,8 @@
    <xsd:complexType name="SpecialType">
      <xsd:attribute name="lda" type="FleurBool" use="optional" default="F"/>
      <xsd:attribute name="socscale" type="ZeroToOneNumberType" use="optional" default="1.0"/>
+     <xsd:attribute name="b_field_mt" type="xsd:string" use="optional" default="0.0"/>
+     <xsd:attribute name="vca_charge" type="xsd:string" use="optional" default="0.0"/>
    </xsd:complexType>
 
 
@@ -515,6 +531,7 @@
             <xsd:element name="kPointList" type="KPointListType"/>
             <xsd:element name="kPointDensity" type="KPointDensityType"/>
          </xsd:choice>
+         <xsd:element maxOccurs="unbounded" minOccurs="0" name="altKPointSet" type="AltKPointSetType"/>
       </xsd:sequence>
       <xsd:attribute name="valenceElectrons" type="xsd:string" use="optional"/>
       <xsd:attribute default="hist" name="mode" type="BZIntegrationModeEnum" use="optional"/>
@@ -571,11 +588,12 @@
    
    <xsd:complexType name="GeometryOptimizerType">
       <xsd:attribute name="l_f" type="FleurBool" use="required"/>
-      <xsd:attribute name="xa" type="xsd:string" use="required"/>
-      <xsd:attribute name="thetad" type="xsd:string" use="required"/>
-      <xsd:attribute name="epsdisp" type="xsd:string" use="required"/>
-      <xsd:attribute name="epsforce" type="xsd:string" use="required"/>
-      <xsd:attribute name="qfix" type="FleurBool" use="optional"/>
+      <xsd:attribute name="forcealpha" type="xsd:string" use="optional" default="0" />
+      <xsd:attribute name="epsdisp" type="xsd:string" use="optional" default="0.001"/>
+      <xsd:attribute name="epsforce" type="xsd:string" use="optional" default="0.001"/>
+      <xsd:attribute name="forcemix" type="xsd:integer" use="optional" default="3" />
+      <xsd:attribute name="qfix" type="xsd:integer" use="optional" default="0" />
+      <xsd:attribute name="force_converged" type="xsd:string" use="optional" default="0.00001" />
    </xsd:complexType>
 
    <xsd:complexType name="LdaUGeneralType">
@@ -584,13 +602,34 @@
       <xsd:attribute default="1.00" name="spinf" type="xsd:double" use="optional"/>
    </xsd:complexType>
 
+   <xsd:complexType name="RDMFTType">
+      <xsd:attribute name="l_rdmft" type="FleurBool" use="required"/>
+      <xsd:attribute default="0.00001" name="occEps" type="xsd:double" use="optional"/>
+      <xsd:attribute name="statesBelow" type="xsd:positiveInteger" use="required"/>
+      <xsd:attribute name="statesAbove" type="xsd:positiveInteger" use="required"/>
+      <xsd:attribute name="functional" type="RDMFTFunctionalEnum" use="required"/>
+   </xsd:complexType>
+
    <xsd:complexType name="DOSOutputType">
       <xsd:attribute name="ndir" type="xsd:integer" use="required"/>
       <xsd:attribute name="minEnergy" type="xsd:string" use="required"/>
       <xsd:attribute name="maxEnergy" type="xsd:string" use="required"/>
       <xsd:attribute name="sigma" type="xsd:string" use="required"/>
    </xsd:complexType>
-   
+
+   <xsd:complexType name="AltKPointSetType">
+      <xsd:sequence>
+         <xsd:choice>
+            <xsd:element name="kPointMesh" type="KPointMeshType"/>
+            <xsd:element name="kPointCount" type="KPointCountType"/>
+            <xsd:element name="kPointList" type="KPointListType"/>
+            <xsd:element name="kPointDensity" type="KPointDensityType"/>
+            <xsd:element name="kPointListFile" type="KPointListFileType"/>
+         </xsd:choice>
+      </xsd:sequence>
+      <xsd:attribute name="purpose" type="KPointSetPurposeEnum" use="required"/>
+   </xsd:complexType>
+
    <xsd:complexType name="KPointMeshType">
       <xsd:attribute name="nx" type="xsd:positiveInteger" use="required"/>
       <xsd:attribute name="ny" type="xsd:positiveInteger" use="required"/>
@@ -620,6 +659,10 @@
       <xsd:attribute name="denY" type="xsd:double" use="required"/>
       <xsd:attribute name="denZ" type="xsd:double" use="required"/>
       <xsd:attribute name="gamma" type="FleurBool" use="required"/>
+   </xsd:complexType>
+
+   <xsd:complexType name="KPointListFileType">
+      <xsd:attribute name="filename" type="xsd:string" use="required"/>
    </xsd:complexType>
 
    <xsd:complexType name="SpecialPointType">
@@ -677,6 +720,11 @@
       <xsd:attribute name="eMax" type="xsd:double" use="required"/>
       <xsd:attribute name="numPoints" type="xsd:positiveInteger" use="required"/>
       <xsd:attribute default="F" name="verbose" type="FleurBool" use="optional"/>
+      <xsd:attribute default="10" name="nqphi" type="xsd:positiveInteger" use="optional"/>
+      <xsd:attribute default="10" name="nqr" type="xsd:positiveInteger" use="optional"/>
+      <xsd:attribute default="0.024" name="alpha_Ex" type="xsd:double" use="optional"/>
+      <xsd:attribute default="0.05" name="beta_Ex" type="xsd:double" use="optional"/>
+      <xsd:attribute default="155" name="I_initial" type="xsd:double" use="optional"/>      
    </xsd:complexType>
 
    <xsd:complexType name="MagneticCircularDichroismType">
@@ -702,6 +750,41 @@
       <xsd:attribute default="F" name="bsComf" type="FleurBool" use="optional"/>
       <xsd:attribute default="F" name="atomList" type="FleurBool" use="optional"/>
    </xsd:complexType>
+
+   <xsd:complexType name="RelaxationType">
+     <xsd:all>
+         <xsd:element maxOccurs="1" minOccurs="0" name="displacements" type="DisplacementType"/>
+         <xsd:element maxOccurs="1" minOccurs="0" name="relaxation-history" type="RelaxHistType"/>
+      </xsd:all>
+   </xsd:complexType>
+
+   <xsd:complexType name="DisplacementType">
+     <xsd:sequence>
+       <xsd:element maxOccurs="unbounded" minOccurs="1"  name="displace" type="DisplaceType" />
+     </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="DisplaceType">
+     <xsd:simpleContent>
+       <xsd:extension base="Double3DVecType">
+       </xsd:extension>
+     </xsd:simpleContent>
+   </xsd:complexType>
+
+   
+   <xsd:complexType name="RelaxHistType">
+     <xsd:sequence>
+       <xsd:element maxOccurs="unbounded" minOccurs="1"  name="step" type="RelaxStepType" />
+     </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="RelaxStepType">
+     <xsd:sequence>
+       <xsd:element maxOccurs="unbounded" minOccurs="1"  name="posforce" type="xsd:string" />
+     </xsd:sequence>
+      <xsd:attribute name="energy" type="xsd:string"/>
+   </xsd:complexType>
+
 
    <xsd:complexType name="ForcetheoremType">
      <xsd:choice>
@@ -848,6 +931,10 @@
          <xsd:enumeration value="Broyden1"/>
          <xsd:enumeration value="Broyden2"/>
          <xsd:enumeration value="Anderson"/>
+	 <xsd:enumeration value="Pulay"/>
+	 <xsd:enumeration value="rPulay"/>
+	 <xsd:enumeration value="pPulay"/>
+	 <xsd:enumeration value="aPulay"/>
       </xsd:restriction>
    </xsd:simpleType>
 
@@ -890,6 +977,19 @@
          <xsd:enumeration value="(6d3/2)"/>
          <xsd:enumeration value="(6d5/2)"/>
          <xsd:enumeration value="(7s1/2)"/>
+      </xsd:restriction>
+   </xsd:simpleType>
+
+   <xsd:simpleType name="KPointSetPurposeEnum">
+      <xsd:restriction base="xsd:string">
+         <xsd:enumeration value="bands"/>
+         <xsd:enumeration value="GW"/>
+      </xsd:restriction>
+   </xsd:simpleType>
+
+   <xsd:simpleType name="RDMFTFunctionalEnum">
+      <xsd:restriction base="xsd:string">
+         <xsd:enumeration value="Muller"/>
       </xsd:restriction>
    </xsd:simpleType>
 

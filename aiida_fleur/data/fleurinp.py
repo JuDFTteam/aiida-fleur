@@ -420,20 +420,21 @@ class FleurinpData(Data):
         
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
         #dtd_validation=True
 
-        tree = etree.parse(inpxmlfile)#, parser)
-        # there is a bug when validating at parsetime, therefore we only
-        #validate at parse time if file is invalid, to get nice error message
+        tree = etree.parse(inpxmlfile, parser)
+        #replace XInclude parts to validate against schema
+        tree.xinclude()
+        #check if it validates against the schema
         if not xmlschema.validate(tree):
-            tree = etree.parse(inpxmlfile, parser)
+            raise InputValidationError(
+                      "Input file is not validated against the schema.")
         inpxmlfile.close()
         root = tree.getroot()
 
         # convert etree into python dictionary
         inpxml_dict = inpxml_todict(root, inpxmlstructure)
-
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 

@@ -64,13 +64,16 @@ class FleurinpModifier(object):
 
         xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
 
-        tree = etree.parse(inpxmlfile)
+        tree = etree.parse(inpxmlfile, parser)
+        #replace XInclude parts to validate against schema
+        tree.xinclude()
         # there is a bug when validating at parsetime, therefore we only
         #validate at parse time if file is invalid, to get nice error message
         if not xmlschema.validate(tree):
-            tree = etree.parse(inpxmlfile, parser)
+            raise InputValidationError(
+                      "Input file is not validated against the schema.")
 
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
             modification_tasks=modification_tasks)
