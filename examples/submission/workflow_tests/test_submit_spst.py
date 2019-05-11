@@ -13,17 +13,20 @@
 """
 Here we run the fleur_scf_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine import submit, run
 from aiida_fleur.workflows.spst import fleur_spst_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -48,7 +51,7 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 1,
+wf_para = Dict(dict={'fleur_runmax' : 1,
                               'itmax_per_run' : 120,
                               'density_criterion' : 0.02,
                               'force_th' : True,
@@ -62,7 +65,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 1,
                               'inpxml_changes' : []
                         })
 
-options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 16},
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 16},
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  40*60})
 '''
@@ -132,7 +135,7 @@ a = 3.4100000000*bohr_a_0
 cell = [[0.0,a,a],[a,0.0,a],[a,a,0.0]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='Fe')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'comp': {
                         'kmax': 3.4,
                         },
@@ -198,14 +201,14 @@ print("##################### TEST fleur_spst_wc #####################")
 if submit_wc:
     res = submit(fleur_spst_wc, **inputs)
     print("##################### Submited fleur_spst_wc #####################")
-    print("Runtime info: {}".format(res))
-    print(res.pk)
+    print(("Runtime info: {}".format(res)))
+    print((res.pk))
     print("##################### Finished submiting fleur_spst_wc #####################")
 
 else:
     print("##################### Running fleur_spst_wc #####################")
     res = run(fleur_spst_wc, **inputs)
-    print(res['out'].get_dict())
+    print((res['out'].get_dict()))
     a = res['out'].get_dict()
     import matplotlib
     matplotlib.use('TkAgg')

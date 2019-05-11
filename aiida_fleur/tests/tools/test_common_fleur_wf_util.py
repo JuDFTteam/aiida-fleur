@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 
 # get_natoms_element
@@ -24,8 +25,8 @@ def test_determine_formation_energy():
     
     # form energy is per atom here...
     form_en_exp = [-0.16666666666666666, 0.0]
-    form_en_dict_exp = {'Be2W': -0.16666666666666666, 'BeW': 0.0}
-    form_en, form_en_dict = determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1})
+    form_en_dict_exp = {'BeW' : 0.0, 'Be2W': -0.16666666666666666}
+    form_en, form_en_dict = determine_formation_energy({'Be2W' : 2.5, 'BeW' : 2}, {'Be' : 1, 'W' : 1})
     assert form_en == form_en_exp
     assert form_en_dict == form_en_dict_exp
 

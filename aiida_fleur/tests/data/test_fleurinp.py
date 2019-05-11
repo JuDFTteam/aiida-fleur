@@ -4,12 +4,13 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
+from __future__ import absolute_import
 import pytest
 import os
 
@@ -48,7 +49,7 @@ def test_fleurinp_valid_inpxml(inpxmlfilepath, aiida_env):
     """
     test if inp.xml file is reconnized as valid by fleur
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     fleurinp = DataFactory('fleur.fleurinp')
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
@@ -69,7 +70,7 @@ def test_fleurinp_non_valid_inpxml(inpxmlfilepath):
     """
     from aiida.common.exceptions import InputValidationError
     from lxml.etree import XMLSyntaxError
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     fleurinp = DataFactory('fleur.fleurinp')
     
@@ -86,14 +87,14 @@ def test_fleurinp_kpointsdata_extraction(inpxmlfilepath):
     Extract a kpointsData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid kpoints data
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     KpointsData = DataFactory('array.kpoints')
     fleurinp = DataFactory('fleur.fleurinp')
 
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    kptsd = fleurinp_tmp.get_kpointsdata_nwf(fleurinp_tmp)
+    kptsd = fleurinp_tmp.get_kpointsdata_ncf(fleurinp_tmp)
     
     if kptsd is not None:
         assert isinstance(kptsd, KpointsData)
@@ -110,13 +111,13 @@ def test_fleurinp_parameterdata_extraction(inpxmlfilepath):
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid ParameterData. ggf if it can be used by inpgen  
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
-    ParameterData = DataFactory('parameter')
+    ParameterData = DataFactory('dict')
     fleurinp = DataFactory('fleur.fleurinp')
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    param = fleurinp_tmp.get_parameterdata_nwf()
+    param = fleurinp_tmp.get_parameterdata_ncf()
     
     assert isinstance(param, ParameterData)
     
@@ -130,13 +131,13 @@ def test_fleurinp_structuredata_extraction(inpxmlfilepath):
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if 
     the resulting node is a valid ParameterData.
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     
     StructureData = DataFactory('structure')
     fleurinp = DataFactory('fleur.fleurinp')
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    struc = fleurinp_tmp.get_structuredata_nwf()
+    struc = fleurinp_tmp.get_structuredata_ncf()
 
     if struc is not None:
         assert isinstance(struc, StructureData)
@@ -156,7 +157,7 @@ def test_fleurinp_single_value_modification(inpxmlfilepath):
     set kmax, itmax, minDistance in inp.xml input file of fleurinpdata to 
     10.2, 99, 0.000001, then check if it everything set
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
     

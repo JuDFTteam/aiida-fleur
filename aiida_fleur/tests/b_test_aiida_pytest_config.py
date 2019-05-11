@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import io
 
 from aiida_pytest.contextmanagers import redirect_stdout
@@ -13,7 +14,7 @@ def test_configure_from_file(configure):
 
 
 def test_db_flushed(configure):
-    from aiida.orm.data.base import Str
+    from aiida.orm.nodes.base import Str
     test_string = 'this string should not be present when the test run starts'
     tag = 'Test string tag'
     from aiida.orm.querybuilder import QueryBuilder

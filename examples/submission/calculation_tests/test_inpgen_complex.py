@@ -1,6 +1,8 @@
 #!/usr/bin/env runaiida
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -15,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.tools.StructureData_util import rel_to_abs
 
 ################################################################
@@ -32,8 +34,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print >> sys.stderr, ("The first parameter can only be either "
-                          "--send or --dont-send")
+    print(("The first parameter can only be either "
+                          "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -57,7 +59,7 @@ Cr = StructureData(cell=cell)
 Cr.append_atom(position=(0.,0.,0.), symbols='Cr', name = 'Cr1')
 pos2 =rel_to_abs((1./2., 1./2., 1./2.), cell)
 Cr.append_atom(position=pos2, symbols='Cr', name = 'Cr2')
-Crp = ParameterData(dict={
+Crp = Dict(dict={
                   'title': 'Cr, bcc chromium, bulk, delta project',
                   'atom1':{'element' : 'Cr', 'id': '24.0', 'rmt' : 2.1, 'jri' : 981, 'lmax' : 12, 'lnonsph' : 6, 'lo' : '3s 3p', 'bmu':1.5},
                   'atom2':{'element' : 'Cr', 'id': '24.1', 'rmt' : 2.1, 'jri' : 981, 'lmax' : 12, 'lnonsph' : 6, 'lo' : '3s 3p', 'bmu':1.5},
@@ -97,17 +99,17 @@ if settings is not None:
 
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print "Test_submit for calculation (uuid='{}')".format(
-        calc.uuid)
-    print "Submit file in {}".format(os.path.join(
+    print("Test_submit for calculation (uuid='{}')".format(
+        calc.uuid))
+    print("Submit file in {}".format(os.path.join(
         os.path.relpath(subfolder.abspath),
         script_filename
-    ))
+    )))
 else:
     calc.store_all()
-    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
     calc.submit()
-    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
 

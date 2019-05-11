@@ -2,7 +2,9 @@ dist: trusty
 sudo: required
 language: python
 
-python: 2.7
+python: 
+  - "2.7"
+  - "3.6"
 
 notifications:
   slack:
@@ -10,28 +12,33 @@ notifications:
 
 services:
   - postgresql
+  - rabbitmq
+  - docker
 
 addons:
   postgresql: "9.6"
 
 cache: pip
 
-before_install:  # copied from pgtest's travis.yml
-  - sudo apt-get install locate
-  - sudo service postgresql stop
-  #- sudo pg_dropcluster --stop 9.2 main
-  - sudo apt-get remove -q 'postgresql-*'
-  - sudo apt-get install postgresql
-  - sudo updatedb
+#before_install:  # copied from pgtest's travis.yml
+#  - sudo apt-get install locate
+#  #- sudo service postgresql stop
+#  #- sudo pg_dropcluster --stop 9.2 main
+#  #- sudo apt-get remove -q 'postgresql-*'
+#  #- sudo apt-get install postgresql
+#  - sudo updatedb
 
 install:
-  - pip install -U pip wheel setuptools
-  - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing]
-  - pip install -e .
-
+  - pip install -U pip==18.1 wheel setuptools
+  - pip install -e git+https://github.com/aiidateam/aiida_core@develop#egg=aiida-core[testing,docs]
+  - if [ "$TEST_TYPE" == "docs" ]; then pip install . && pip install -r docs/requirements_for_rtd.txt; else pip install .; fi
 env:
-  - TEST_TYPE="unittests"
-  - TEST_TYPE="docs"
+  - TEST_AIIDA_BACKEND=django TEST_TYPE="unittests"
+# Drop docs test until documentation is reworked
+#  - TEST_AIIDA_BACKEND=django TEST_TYPE="docs"
+
+before_script:
+  - .ci/setup_profiles.sh
 
 script: 
   #cd ./aiida_fleur/tests/ && ./run_all.sh 

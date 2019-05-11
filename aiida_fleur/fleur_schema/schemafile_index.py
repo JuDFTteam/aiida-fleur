@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -13,10 +13,11 @@
 This file is just were to hardcode some schema file paths
 """
 
+from __future__ import absolute_import
 import os
 
 # any additional schema file add here, plugin will find them
-schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', '.']
+schema_file_paths = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', './input/0.29/FleurInputSchema.xsd', '.']
 
 
 package_directory = os.path.dirname(os.path.abspath(__file__))

@@ -22,12 +22,14 @@ Layout:
 #######################
 # 1. Load the database environment. Imports and base class creation
 
+from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 
-from aiida.orm import DataFactory, load_node, Code
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.engine.launch import submit, run
 from aiida_fleur.workflows.scf import fleur_scf_wc
 
 ParameterData = DataFactory('parameter')
@@ -43,11 +45,11 @@ fleur_code =  Code.get_from_string(fleur_label)
 inpgen_code = Code.get_from_string(inpgen_label)
 
 ### Create wf_parameters (optional) and options
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000001,
                               'serial' : False})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : '',
                               'max_wallclock_seconds':  60*60})
 
@@ -59,7 +61,7 @@ structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
 
 # (optional) We specifi some FLAPW parameters for W
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,

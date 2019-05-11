@@ -13,17 +13,20 @@
 """
 Here we run the fleur_corehole_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine import submit, run
 from aiida_fleur.workflows.corehole import fleur_corehole_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
@@ -63,14 +66,14 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = ParameterData(dict={'method' : 'valence',
+wf_para = Dict(dict={'method' : 'valence',
                               'hole_charge' : 0.5,
                               'atoms' : ['all'],
                               'corelevel' : ['W,4f', 'W,4p'],#['W,all'],#
                               'supercell_size' : [2,1,1],
                               'magnetic' : True})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
                               'max_wallclock_seconds':  60*60})
 
@@ -80,7 +83,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -150,7 +153,7 @@ print("##################### TEST fleur_corehole_wc #####################")
 if submit_wc:
     res = submit(fleur_corehole_wc, **inputs)
     print("##################### Submited fleur_corehole_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_corehole_wc #####################")
 else:
     print("##################### Running fleur_corehole_wc #####################")

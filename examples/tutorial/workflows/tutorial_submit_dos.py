@@ -22,12 +22,14 @@ Layout:
 #######################
 # 1. Load the database environment. Imports and base class creation
 
+from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 
-from aiida.orm import DataFactory, load_node, Code
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.engine.launch import submit, run
 from aiida_fleur.workflows.dos import fleur_dos_wc
 
 ParameterData = DataFactory('parameter')
@@ -41,11 +43,11 @@ fleur_label = 'fleur@localhost'
 fleur_code =  Code.get_from_string(fleur_label)
 
 ### Create wf_parameters (optional) and options
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000001,
                               'serial' : False})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : '',
                               'max_wallclock_seconds':  60*60})
 

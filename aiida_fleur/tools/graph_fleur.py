@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -13,7 +13,9 @@
 This code extents the original draw_graph method from  https://github.com/aiidateam/aiida_core
 It uses common colors to visualize the aiida-fleur nodes
 """
+from __future__ import absolute_import
 import os, tempfile
+import six
 
 def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='dot',
         include_calculation_inputs=False, include_calculation_outputs=False):
@@ -35,15 +37,16 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     # until the connected part of the graph that contains the root_pk is fully explored.
     # TODO this command deserves to be improved, with options and further subcommands
 
-    from aiida.orm.calculation import Calculation
-    from aiida.orm.calculation.job import JobCalculation
-    from aiida.orm.code import Code
-    from aiida.orm.node import Node
+    from aiida.orm import CalculationNode as Calculation
+    from aiida.engine import CalcJob
+    from aiida.orm import Code
+    from aiida.orm import Node
     from aiida.common.links import LinkType
     from aiida.orm.querybuilder import QueryBuilder
-    from aiida.orm.data.structure import StructureData
-    from aiida.orm.data.parameter import ParameterData
-
+    from aiida.plugins import DataFactory
+    
+    Dict = DataFactory('dict')
+    StructureData = DataFactory('structure')
     def draw_node_settings(node, **kwargs):
         """
         Returns a string with all infos needed in a .dot file  to define a node of a graph.
@@ -53,7 +56,7 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
         """
         if kwargs:
             additional_params = ",{}".format(
-                ",".join('{}="{}"'.format(k, v) for k, v in kwargs.iteritems()))
+                ",".join('{}="{}"'.format(k, v) for k, v in six.iteritems(kwargs)))
         else:
             additional_params = ""
 
@@ -191,11 +194,11 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
     fd, fname = tempfile.mkstemp(suffix='.dot')
     with open(fname, 'w') as fout:
         fout.write("digraph G {\n")
-        for l_name, l_values in links.iteritems():
+        for l_name, l_values in six.iteritems(links):
             fout.write('    {}\n'.format(l_values))
-        for n_name, n_values in nodes.iteritems():
+        for n_name, n_values in six.iteritems(nodes):
             fout.write("    {}\n".format(n_values))
-        for n_name, n_values in additional_nodes.iteritems():
+        for n_name, n_values in six.iteritems(additional_nodes):
             fout.write("    {}\n".format(n_values))
         fout.write("}\n")
 

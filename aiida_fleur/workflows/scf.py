@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -20,24 +20,28 @@ cylce management of a FLEUR calculation with AiiDA.
 #TODO: other error handling, where is known what to do
 #TODO: test in each step if calculation before had a problem
 #TODO: maybe write dict schema for wf_parameter inputs, how?
+#TODO: fix unproper initialisation of wf_param
+from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.launch import submit
-from aiida.work import workfunction as wf
-from aiida.common.datastructures import calc_states
-import os
+from aiida.plugins import DataFactory
+from aiida.orm import Code
+from aiida.engine import WorkChain, while_, if_, ToContext
+from aiida.engine import submit
+from aiida.engine import calcfunction as cf
+from aiida.common.datastructures import CalcJobState as calc_states
+from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, optimize_calc_options
 from aiida_fleur.tools.xml_util import eval_xpath2
+import six
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_scf_wc(WorkChain):
@@ -50,15 +54,15 @@ class fleur_scf_wc(WorkChain):
     (1) Start from a structure and run the inpgen first optional with calc_parameters
     (2) Start from a Fleur calculation, with optional remoteData
 
-    :param wf_parameters: (ParameterData), Workchain Spezifications
+    :param wf_parameters: (Dict), Workchain Spezifications
     :param structure: (StructureData), Crystal structure
-    :param calc_parameters: (ParameterData), Inpgen Parameters
+    :param calc_parameters: (Dict), Inpgen Parameters
     :param fleurinp: (FleurinpData), to start with a Fleur calculation
     :param remote_data: (RemoteData), from a Fleur calculation
     :param inpgen: (Code)
     :param fleur: (Code)
 
-    :return output_scf_wc_para: (ParameterData), Information of workflow results
+    :return output_scf_wc_para: (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
 
     minimum input example:
@@ -100,53 +104,17 @@ class fleur_scf_wc(WorkChain):
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
                         'environment_variables' : {}}
-    
-    # 0 is the usual return status of each step and the workchain
-    ERROR_INVALID_INPUT_RESOURCES = 1
-    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
-    ERROR_INVALID_CODE_PROVIDED = 3
-    ERROR_INPGEN_CALCULATION_FAILED = 4
-    ERROR_CHANGING_FLEURINPUT_FAILED = 5
-    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
-    ERROR_FLEUR_CALCULATION_FALIED = 7
-    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
-    # loop count, not enough resources provided
 
     @classmethod
     def define(cls, spec):
         super(fleur_scf_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._wf_default))
-                                              #'fleur_runmax': 4,
-                                               #'density_criterion' : 0.00002,
-                                               #'energy_criterion' : 0.002,
-                                               #'converge_density' : True,
-                                               #'converge_energy' : False,
-                                               #'reuse' : True,
-                                               #'options' : {
-                                               #    'resources': {"num_machines": 1},
-                                               #    'max_wallclock_seconds': 60*60,
-                                               #    'queue_name': '',
-                                               #    'custom_scheduler_commands' : '',
-                                               #    #'max_memory_kb' : None,
-                                               #    'import_sys_environment' : False,
-                                               #    'environment_variables' : {}},
-                                               #'serial' : False,
-                                               #'itmax_per_run' : 30,
-                                               #'inpxml_changes' : [],
-                                               #}))
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._wf_default))
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("settings", valid_type=ParameterData, required=False)
-        spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_options))#{
-                            #'resources': {"num_machines": 1},
-                            #'max_wallclock_seconds': 60*60,
-                            #'queue_name': '',
-                            #'custom_scheduler_commands' : '',
-                            #'max_memory_kb' : None,
-                            #'import_sys_environment' : False,
-                            #'environment_variables' : {}}))
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
@@ -154,12 +122,14 @@ class fleur_scf_wc(WorkChain):
 
         spec.outline(
             cls.start,
-            if_(cls.validate_input)(
+            cls.validate_input,
+            if_(cls.fleurinpgen_needed)(
                 cls.run_fleurinpgen),
             cls.run_fleur, # are these first runs needed TODO
             cls.inspect_fleur, # are these first runs needed
             cls.get_res, # are these first runs needed
             while_(cls.condition)(
+                cls.loop_count, #see an exlanation why loop_count is inside the while_ body in loop_count description
                 cls.run_fleur,
                 cls.inspect_fleur,
                 cls.get_res),
@@ -167,11 +137,20 @@ class fleur_scf_wc(WorkChain):
         )
 
         spec.output('fleurinp', valid_type=FleurInpData)
-        spec.output('output_scf_wc_para', valid_type=ParameterData)
-        spec.output('last_fleur_calc_output', valid_type=ParameterData)
+        spec.output('output_scf_wc_para', valid_type=Dict)
+        spec.output('last_fleur_calc_output', valid_type=Dict)
+    
+        #exit codes
+        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES', message="Invalid input, plaese check input configuration.")
+        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message="Some required inputs are missing.")
+        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED', message="Invalid code node specified, please check inpgen and fleur code nodes.")
+        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
+        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed.")
+        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE', message="Input file is corrupted after user's modifications.")
+        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED', message="Fleur calculation failed.")
+        spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE', message="SCF cycle did not lead to convergence.")
+        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
 
-
-        
     def start(self):
         """
         init context and some parameters
@@ -186,6 +165,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.loop_count = 0
         self.ctx.calcs = []
         self.ctx.abort = False
+        self.ctx.last_charge_density = 1000
 
 
         # input para
@@ -198,14 +178,13 @@ class fleur_scf_wc(WorkChain):
 
         # set values, or defaults
         defaultoptions = self._default_options
-        #options = wf_dict.get('options', defaultoptions)
 
         if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
             
-        for key, val in defaultoptions.iteritems():
+        for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
         
@@ -223,11 +202,7 @@ class fleur_scf_wc(WorkChain):
         self.ctx.total_energy = []
         self.ctx.energydiff = 10000
         self.ctx.warnings = []#
-        #"warnings": {
         #"debug": {},
-        #"error": {},
-        #"info": {},
-        #"warning": {}
         self.ctx.errors = []
         self.ctx.info = []
         self.ctx.possible_info = [
@@ -266,13 +241,14 @@ class fleur_scf_wc(WorkChain):
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
-                return self.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.control_end_wc(error)
-            return self.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             
         if 'inpgen' in inputs:
             try:
@@ -281,7 +257,7 @@ class fleur_scf_wc(WorkChain):
                 error = ("The code you provided for inpgen of FLEUR does not "
                          "use the plugin fleur.inpgen")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
                 
         if 'fleur' in inputs:
             try:
@@ -290,7 +266,7 @@ class fleur_scf_wc(WorkChain):
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
-                return self.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # maybe ckeck here is unessesary...
         wf_dict = self.inputs.wf_parameters.get_dict()
@@ -307,10 +283,10 @@ class fleur_scf_wc(WorkChain):
                     error = ('ERROR: Wrong Input inpxml_changes wrong format of'
                              ': {} should be tuple of 2. I abort'.format(change))
                     self.control_end_wc(error)
-                    self.ERROR_INVALID_INPUT_RESOURCES
+                    return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
+    def fleurinpgen_needed(self):
         return self.ctx.run_inpgen
-
 
     def run_fleurinpgen(self):
         """
@@ -347,10 +323,6 @@ class fleur_scf_wc(WorkChain):
         adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
                       int(self.ctx.options['resources']['num_machines']),
                       int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
-
-        if exit_code:
-        #TODO: make an error exit
-            pass
         
         if 'WARNING' in message:
             self.ctx.warnings.append(message)
@@ -359,6 +331,8 @@ class fleur_scf_wc(WorkChain):
 
         self.ctx.options['resources']['num_machines'] = adv_nodes
         self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+        
+        return exit_code
 
     def change_fleurinp(self):
         """
@@ -377,11 +351,11 @@ class fleur_scf_wc(WorkChain):
             fleurin = FleurInpData(files=[os.path.join(self.inputs.remote_data.created_by.get_retrieved_node().get_abs_path(), 'path/inp.xml')])
         else:
             try:
-                fleurin = self.ctx['inpgen'].out.fleurinpData
-            except KeyError:
+                fleurin = self.ctx['inpgen'].outputs.fleurinpData
+            except NotExistent:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
-                return self.ERROR_INPGEN_CALCULATION_FAILED
+                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
 
         wf_dict = self.inputs.wf_parameters.get_dict()
         converge_te = wf_dict.get('converge_energy', False)
@@ -406,7 +380,7 @@ class fleur_scf_wc(WorkChain):
                                  "plaese check/test your input. I abort..."
                                  "".format(method))
                         self.control_end_wc(error)
-                        return self.ERROR_CHANGING_FLEURINPUT_FAILED
+                        return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                     else:# apply change
                         if function==u'set_inpchanges':
@@ -423,7 +397,7 @@ class fleur_scf_wc(WorkChain):
                 #fleurmode.show(display=True)#, validate=True)
                 self.report(error)
                 apply_c = False
-                return self.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
             
             # apply
             if apply_c:
@@ -441,15 +415,20 @@ class fleur_scf_wc(WorkChain):
         """
         self.report('INFO: run FLEUR')
         
-        self.change_fleurinp()
+        status = self.change_fleurinp()
+        if not (status is None):
+            return status
+        
         fleurin = self.ctx.fleurinp
-        self.check_kpts(fleurin)
+        if self.check_kpts(fleurin):
+            self.control_end_wc('ERROR: Not optimal computational resourses.')
+            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
         
         '''
         if 'settings' in self.inputs:
             settings = self.input.settings
         else:
-            settings = ParameterData(dict={'files_to_retrieve' : [],
+            settings = Dict(dict={'files_to_retrieve' : [],
                                            'files_not_to_retrieve': [],
                                            'files_copy_remotely': [],
                                            'files_not_copy_remotely': [],
@@ -458,7 +437,7 @@ class fleur_scf_wc(WorkChain):
         '''
         if self.ctx['last_calc']:
             # will this fail if fleur before failed? try needed?
-            remote = self.ctx['last_calc'].out.remote_folder
+            remote = self.ctx['last_calc'].outputs.remote_folder
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
         else:
@@ -478,7 +457,7 @@ class fleur_scf_wc(WorkChain):
 
         
         inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-        future = submit(inputs_builder)
+        future = self.submit(inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
@@ -496,25 +475,27 @@ class fleur_scf_wc(WorkChain):
         #                   calc_states.SUBMISSIONFAILED]
         #print(self.ctx['last_calc'])
         #self.report('I am in inspect_fleur')
+        self.report('INFO: inspect FLEUR')
         try:
             calculation = self.ctx.last_calc
         except AttributeError:
             self.ctx.parse_last = False
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
-            return self.ERROR_FLEUR_CALCULATION_FALIED
-        calc_state = calculation.get_state()
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+        exit_status = calculation.exit_status
         #self.report('the state of the last calculation is: {}'.format(calc_state))
 
-        if calc_state != calc_states.FINISHED:
-            error = ('ERROR: Last Fleur calculation failed somehow it is '
-                    'in state {}'.format(calc_state))
+        if not calculation.is_finished_ok:
+            error = ('ERROR: Last Fleur calculation failed '
+                    'with exit status {}'.format(exit_status))
             self.control_end_wc(error)
-            return self.ERROR_FLEUR_CALCULATION_FALIED
-        elif calc_state == calc_states.FINISHED:
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+        else:
             self.ctx.parse_last = True
 
         '''
+        #TODO: these retries have to be fixed/implemented using fleur calculation exit_codes
         # Done: successful convergence of last calculation
         if calculation.has_finished_ok():
             self.report('converged successfully after {} iterations'.format(self.ctx.iteration))
@@ -555,7 +536,9 @@ class fleur_scf_wc(WorkChain):
         """
         # TODO maybe do this different
         # or if complexer output node exists take from there.
-
+        
+        self.report('INFO: get results FLEUR')
+        
         xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance' # be aware of magnetism
         #densityconvergence_xpath = 'densityConvergence'
@@ -591,13 +574,13 @@ class fleur_scf_wc(WorkChain):
             '''
             #TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
-            outxmlfile = last_calc.out.output_parameters.dict.outputfile_path
-            walltime = last_calc.out.output_parameters.dict.walltime
+            outxmlfile_opened = last_calc.get_retrieved_node().open(last_calc.get_attribute('outxml_file_name'), 'r')
+            walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
             #outpara = last_calc.get('output_parameters', None)
             #outxmlfile = outpara.dict.outputfile_path
-            tree = etree.parse(outxmlfile)
+            tree = etree.parse(outxmlfile_opened)
             root = tree.getroot()
             energies = eval_xpath2(root, xpath_energy)
             for energy in energies:
@@ -606,17 +589,30 @@ class fleur_scf_wc(WorkChain):
             distances = eval_xpath2(root, xpath_distance)
             for distance in distances:
                 self.ctx.distance.append(float(distance))
+            outxmlfile_opened.close()
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
-            return self.ERROR_FLEUR_CALCULATION_FALIED
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
             # otherwise this will lead to erros further down
+        
+        try:
+            self.ctx.last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.charge_density
+        except AttributeError:
+            # magnetic system
+            try:
+                self.ctx.last_charge_density = self.ctx.last_calc.outputs.output_parameters.dict.overall_charge_density
+                # divide by 2?
+            except AttributeError:
+                errormsg = 'ERROR: did not manage to extract charge density from the calculation'
+                self.control_end_wc(errormsg)
+                return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
 
     def condition(self):
         """
         check convergence condition
         """
-
+        self.report('INFO: checking condition FLEUR')
         density_converged = False
         energy_converged = False
         # TODO do a test first if last_calculation was successful, otherwise,
@@ -624,12 +620,7 @@ class fleur_scf_wc(WorkChain):
         inpwfp_dict = self.inputs.wf_parameters.get_dict()
         #last_charge_density = self.ctx.last_calc['output_parameters'].dict.charge_density
         # not a good fix for magnetic stuff, but for now, we want to test if the rest works.
-        try:
-            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.charge_density
-        except AttributeError:
-            # magnetic system
-            last_charge_density = self.ctx.last_calc.out.output_parameters.dict.overall_charge_density
-            # divide by 2?
+        last_charge_density = self.ctx.last_charge_density
         if inpwfp_dict.get('converge_density', True):
             if inpwfp_dict.get('density_criterion', 0.00002) >= last_charge_density:
                 density_converged = True
@@ -649,12 +640,23 @@ class fleur_scf_wc(WorkChain):
         if density_converged and energy_converged:
             self.ctx.successful = True
             return False
-        elif self.ctx.loop_count >= self.ctx.max_number_runs:
-            self.ctx.successful = False
-            return False
         else:
             return True
 
+    def loop_count(self):
+        """
+        Exits the workchain if the number of iterations is exceeded.
+        
+        This loop count is separated from self.condition function since
+        it has to return ExitCode to interupt the workchain.
+        However, if a function returns an ExitCode inside a while_ statement,
+        the ouptut seem to be automatically converted to True
+        which does not interupt the workchain when needed.
+        """
+        if self.ctx.loop_count >= self.ctx.max_number_runs:
+            errormsg = 'ERROR: did not reach convergence in specified number of iterations'
+            self.control_end_wc(errormsg)
+            return self.exit_codes.ERROR_DID_NOT_CONVERGE
 
     def return_results(self):
         """
@@ -667,10 +669,10 @@ class fleur_scf_wc(WorkChain):
         except AttributeError:
             last_calc_uuid = None
         try: # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.out['output_parameters']
-            retrieved = self.ctx.last_calc.out['retrieved']
+            last_calc_out = self.ctx.last_calc.outputs['output_parameters']
+            retrieved = self.ctx.last_calc.outputs['retrieved']
             last_calc_out_dict = last_calc_out.get_dict()
-        except KeyError:
+        except NotExistent:
             last_calc_out = None
             last_calc_out_dict = {}
             retrieved = None
@@ -688,12 +690,12 @@ class fleur_scf_wc(WorkChain):
         except KeyError:
             temp1 = last_calc_out_dict.get('overall_charge_density', None)
         outputnode_dict['distance_charge'] = temp1
-        #outputnode_dict['distance_charge_all'] = self.ctx.distance
+        outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
         outputnode_dict['total_energy_units'] = 'Htr'
-        outputnode_dict['successful'] = self.ctx.successful
+        #outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
         outputnode_dict['total_wall_time_units'] = 'hours'
@@ -738,7 +740,7 @@ class fleur_scf_wc(WorkChain):
         #This node should contain everything you wish to plot, here iteration versus, total energy and distance.
 
 
-        outputnode_t = ParameterData(dict=outputnode_dict)
+        outputnode_t = Dict(dict=outputnode_dict)
          # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
             outdict = create_scf_result_node(outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)
@@ -752,8 +754,8 @@ class fleur_scf_wc(WorkChain):
             outdict['fleurinp'] = self.ctx.fleurinp
         else:
             try:
-                fleurinp = self.ctx['inpgen'].out.fleurinpData
-            except AttributeError:
+                fleurinp = self.ctx['inpgen'].outputs.fleurinpData
+            except NotExistent:
                 self.report('ERROR: No fleurinp, something was wrong with the inpgen calc')
                 fleurinp = None
             outdict['fleurinp'] = fleurinp
@@ -761,7 +763,7 @@ class fleur_scf_wc(WorkChain):
             outdict['last_fleur_calc_output'] = last_calc_out
 
         #outdict['output_scf_wc_para'] = outputnode
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 
@@ -858,8 +860,7 @@ class fleur_scf_wc(WorkChain):
         self.report(errormsg) # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
-        
-        return
+
 '''
 if __name__ == "__main__":
     import argparse
@@ -868,11 +869,11 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to'
                  ' converge the chargedensity and optional the total energy. all arguments are pks, or uuids, codes can be names'))
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='Some workflow parameters', required=False)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)
@@ -916,7 +917,7 @@ if __name__ == "__main__":
 '''
 
 
-@wf
+@cf
 def create_scf_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.
@@ -925,7 +926,7 @@ def create_scf_result_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in kwargs.iteritems():
+    for key, val in six.iteritems(kwargs):
         if key == 'outpara': #  should be alwasys there
             outpara = val
     outdict = {}

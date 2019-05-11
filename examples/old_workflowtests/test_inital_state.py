@@ -3,11 +3,13 @@
 This test runs the initial stae CLS workflow 
 """
 #TODO: overall tests, should create the nodes they use in the db.
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
     #load_dbenv(profile='aiida_test')
-from aiida.orm import Code, DataFactory
+from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
@@ -38,10 +40,10 @@ s2 =load_node(3100) #Be
 
 references = {'use' : {'Be' : s2.uuid, 'W' : s1.uuid}}
 print(references)
-parameters = ParameterData(dict={})
-parameters = ParameterData(dict={})
+parameters = Dict(dict={})
+parameters = Dict(dict={})
 
-wf_para = ParameterData(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4, 
                               'density_criterion' : 0.000002,#})
                               'queue_name' : 'th123_node',
                               'resources' : resources,

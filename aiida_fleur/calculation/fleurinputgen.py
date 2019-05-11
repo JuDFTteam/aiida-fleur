@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -16,52 +16,50 @@ The input generator for the Fleur code is a preprocessor
 and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
-from aiida.orm.calculation.job import JobCalculation
-from aiida.orm import DataFactory
+from __future__ import absolute_import
+from aiida.engine import CalcJob
+from aiida.plugins import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
 from aiida.common.constants import bohr_to_ang
 from aiida.common.utils import classproperty
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
+import six
+from six.moves import zip
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 
-class FleurinputgenCalculation(JobCalculation):
+class FleurinputgenCalculation(CalcJob):
     """
     JobCalculationClass for the Inputgenerator, which is a preprocessor for a FLEUR calculation. Here is implemented how an input file for 'inpgen' is written from AiiDA data objects.
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
     #### (Maintain) if inputgen keys change ####
 
-    def _init_internal_params(self):
-        super(FleurinputgenCalculation, self)._init_internal_params()
+    # Default input and output files
+    _DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
+    _DEFAULT_OUTPUT_FILE = 'out' #'shell.out' #will be shown with outputcat
 
-        # Default fleur output parser
-        self._default_parser = 'fleur.fleurinpgenparser'
-
-        # Default input and output files
-        self._DEFAULT_INPUT_FILE = 'aiida.in' # will be shown with inputcat
-        self._DEFAULT_OUTPUT_FILE = 'out' #'shell.out' #will be shown with outputcat
-
-        # created file names, some needed for Fleur calc
-        self._INPXML_FILE_NAME = 'inp.xml'
-        self._INPUT_FILE_NAME = 'aiida.in'
-        self._SHELLOUT_FILE_NAME = 'shell.out'
-        self._OUTPUT_FILE_NAME = 'out'
-        self._ERROR_FILE_NAME = 'out.error'
-        self._STRUCT_FILE_NAME = 'struct.xsf'
-        '''
-        self._INP_FILE_NAME = 'inp'
-        self._ENPARA_FILE_NAME = 'enpara'
-        self._SYMOUT_FILE_NAME = 'sym.out'
-        self._FORT_FILE_NAME = 'fort93'
-        self._CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
-        '''
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                               'cmdline']
+    # created file names, some needed for Fleur calc
+    _DEFAULT_INPXML_FILE_NAME = 'inp.xml'
+    _DEFAULT_INPUT_FILE_NAME = 'aiida.in'
+    _DEFAULT_SHELLOUT_FILE_NAME = 'shell.out'
+    _DEFAULT_OUTPUT_FILE_NAME = 'out'
+    _DEFAULT_ERROR_FILE_NAME = 'out.error'
+    _DEFAULT_STRUCT_FILE_NAME = 'struct.xsf'
+    '''
+    _DEFAULT_INP_FILE_NAME = 'inp'
+    _DEFAULT_ENPARA_FILE_NAME = 'enpara'
+    _DEFAULT_SYMOUT_FILE_NAME = 'sym.out'
+    _DEFAULT_FORT_FILE_NAME = 'fort93'
+    _DEFAULT_CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
+    '''
+    _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
+                           'cmdline']
     # TODO switch all these to init_interal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -103,49 +101,60 @@ class FleurinputgenCalculation(JobCalculation):
     # If two lattices are given, via the input &lattice
     # and the aiida structure prefare the aiida structure?
     # currently is not allow the use of &lattice
-    _use_aiida_structure = False
+    _use_aiida_structure = True
 
     # Default title
     _inp_title = 'A Fleur input generator calulation with aiida'
 
+    @classmethod
+    def define(cls, spec):
+        super(FleurinputgenCalculation, cls).define(spec)
+        
+        #Default input and output files
+        spec.input('metadata.options.input_file', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE)
+        spec.input('metadata.options.output_file', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE)
 
-    @classproperty
-    def _use_methods(cls):
-        """
-        Extend the parent _use_methods with further keys.
-        specifies what nodes have to be in calculation TODO: decide what is
-        settings and what is parameters, sturcture might not be needed
-        if &lattice is defined in inp
-        """
-        retdict = JobCalculation._use_methods
-        retdict.update({
-            "structure": {
-                'valid_types': StructureData,
-                'additional_parameter': None,
-                'linkname': 'structure',
-                'docstring': "Choose the input structure to use",
-                },
-            "parameters": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'parameters',
-                'docstring': ("Use a node that specifies the input parameters "
-                              "for the namelists"),
-                },
-            "settings": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': (
-                    "This parameter data node is used to specify for some "
+        #created file names, some needed for Fleur calc
+        spec.input('metadata.options.inpxml_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPXML_FILE_NAME)
+        spec.input('metadata.options.input_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE_NAME)
+        spec.input('metadata.options.shellout_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELLOUT_FILE_NAME)
+        spec.input('metadata.options.output_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE_NAME)
+        spec.input('metadata.options.error_file_name', valid_type=six.string_types, default=cls._DEFAULT_ERROR_FILE_NAME)
+        spec.input('metadata.options.struct_file_name', valid_type=six.string_types, default=cls._DEFAULT_STRUCT_FILE_NAME)
+        spec.input('metadata.options.settings_keys', valid_type=list, default=cls._DEFAULT_settings_keys)
+        
+        #since 1.0.0b _use_methods is depricated
+        spec.input('structure', valid_type=StructureData, help = "Choose the input structure to use")
+        spec.input('parameters', valid_type=Dict, help = "Use a node that specifies the input parameters "
+                              "for the namelists")
+        spec.input('settings', valid_type=Dict, required = False, help = "This parameter data node is used to specify for some "
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
-                    "for all available features here check the documentation."),
-            }})
-        return retdict
+                    "for all available features here check the documentation.")
+                    
+        #parser
+        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurinpgenparser')
 
+        #declaration of outputs of the calclation
+        spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
-    def _prepare_for_submission(self, tempfolder, inputdict):
+        #exit codes
+        spec.exit_code(
+            151, 'ERROR_WRONG_INPUT_PARAMS', message='Input parameters for inpgen contain unknown keys.')
+        spec.exit_code(
+            153, 'ERROR_ATOM_POSITION_NEEDED', message='Fleur lattice needs atom positions as input.')
+        spec.exit_code(
+            154, 'ERROR_INPUT_PARAMS_LEFTOVER', message='Excessive input parameters were specified.')
+        spec.exit_code(
+            106, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
+        spec.exit_code(
+            105, 'ERROR_OPENING_OUTPUTS', message='One of output files can not be opened.')
+        spec.exit_code(
+            155, 'ERROR_NO_INPXML', message='XML input file was not found.')
+        spec.exit_code(
+            109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
+
+    def prepare_for_submission(self, tempfolder):
         """
         This is the routine to be called when you want to create
         the input files for the inpgen with the plug-in.
@@ -162,7 +171,7 @@ class FleurinputgenCalculation(JobCalculation):
         # Get the connection between coordination number and element symbol
         # maybe do in a differnt way
         _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}
+                           data in six.iteritems(PeriodicTableElements)}
 
         possible_namelists = self._possible_namelists
         possible_params = self._possible_params
@@ -196,14 +205,7 @@ class FleurinputgenCalculation(JobCalculation):
         ##########################################
 
         # first check existence of structure and if 1D, 2D, 3D
-        try:
-            structure = inputdict.pop(self.get_linkname('structure'))
-        except KeyError:
-            raise InputValidationError("No structure specified for this"
-                                       " calculation")
-        if not isinstance(structure, StructureData):
-            raise InputValidationError(
-                       "structure is not of type StructureData")
+        structure = self.inputs.structure
 
         pbc = structure.pbc
         if False in pbc:
@@ -211,14 +213,15 @@ class FleurinputgenCalculation(JobCalculation):
             film = True
 
         # check existence of parameters (optional)
-        parameters = inputdict.pop(self.get_linkname('parameters'), None)
+        if 'parameters' in self.inputs:
+            parameters = self.inputs.parameters
+        else:
+            parameters = None
+
         if parameters is None:
             # use default
             parameters_dict = {}
         else:
-            if not isinstance(parameters, ParameterData):
-                raise InputValidationError("parameters, if specified, must be of "
-                                           "type ParameterData")
             parameters_dict = _lowercase_dict(parameters.get_dict(),
                                               dict_name='parameters')
 
@@ -247,12 +250,12 @@ class FleurinputgenCalculation(JobCalculation):
         #                   for k, val in input_params.iteritems()}
         #input_params_keys = input_params.keys()
 
-        if 'title' in input_params.keys():
+        if 'title' in list(input_params.keys()):
             self._inp_title = input_params.pop('title')
         #TODO validate type of values of the input parameter keys ?
 
         #check input_parameters
-        for namelist, paramdic in input_params.iteritems():
+        for namelist, paramdic in six.iteritems(input_params):
             if 'atom' in namelist: # this namelist can be specified more often
                 # special atom namelist needs to be set for writing,
                 #  but insert it in the right spot!
@@ -287,15 +290,12 @@ class FleurinputgenCalculation(JobCalculation):
 
 
             #in fleur it is possible to give a lattice namelist
-            if 'lattice' in input_params.keys():
+            if 'lattice' in list(input_params.keys()):
                 own_lattice = True
                 structure = inputdict.pop(self.get_linkname('structure'), None)
                 if structure is not None: #two structures given?
                     #which one should be prepared? TODO: log warning or even error
                     if self._use_aiida_structure:
-                        if not isinstance(structure, StructureData):
-                            raise InputValidationError("structure is not of type"
-                                                       " StructureData")
                         input_params.pop('lattice', {})
                         own_lattice = False
 
@@ -314,25 +314,19 @@ class FleurinputgenCalculation(JobCalculation):
                 raise InputValidationError("kpoints is not of type KpointsData")
         '''
 
-        #TODO I think the code should not be in the input dict. check local,
-        # verus remote, codeinfos, one several codes..
-        try:
-            code = inputdict.pop(self.get_linkname('code'))
-        except KeyError:
-            raise InputValidationError("No code specified for this "
-                                       "calculation")
+        code = self.inputs.code
 
         # check existence of settings (optional)
-        settings = inputdict.pop(self.get_linkname('settings'), None)
-        #print('settings: {}'.format(settings))
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings
+        else:
+            settings = None
+
         if settings is None:
             settings_dict = {}
         else:
-            if not isinstance(settings, ParameterData):
-                raise InputValidationError("settings, if specified, must be of "
-                                           "type ParameterData")
-            else:
-                settings_dict = settings.get_dict()
+            settings_dict = settings.get_dict()
+
         #check for for allowed keys, ignor unknown keys but warn.
         for key in settings_dict.keys():
             if key not in self._settings_keys:
@@ -340,12 +334,6 @@ class FleurinputgenCalculation(JobCalculation):
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
                                  "".format(key, self._settings_keys))
-
-        # Here, there should be no more parameters...
-        if inputdict:
-            raise InputValidationError(
-                "The following input data nodes are "
-                "unrecognized: {}".format(inputdict.keys()))
 
         ##############################
         # END OF INITIAL INPUT CHECK #
@@ -393,7 +381,7 @@ class FleurinputgenCalculation(JobCalculation):
             for site in structure.sites:
                 kind_name = site.kind_name
                 kind = structure.get_kind(kind_name)
-                if kind.has_vacancies():
+                if kind.has_vacancies:
                     # then we do not at atoms with weights smaller one
                     if kind.weights[0] <1.0:
                         natoms = natoms -1
@@ -448,7 +436,7 @@ class FleurinputgenCalculation(JobCalculation):
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
 
-        input_filename = tempfolder.get_abs_path(self._INPUT_FILE_NAME)
+        input_filename = tempfolder.get_abs_path(self.inputs.metadata.options.input_file_name)
 
         with open(input_filename, 'w') as infile:
 
@@ -461,7 +449,7 @@ class FleurinputgenCalculation(JobCalculation):
             # namelist content; set to {} if not present, so that we leave an
             # empty namelist
             namelist = input_params.pop('input', {})
-            for k, val in sorted(namelist.iteritems()):
+            for k, val in sorted(six.iteritems(namelist)):
                 infile.write(get_input_data_text(k, val, False, mapping=None))
             infile.write("/\n")
 
@@ -485,10 +473,10 @@ class FleurinputgenCalculation(JobCalculation):
                         reversed = False
                         if namels_name == 'soc':
                             reversed = True
-                        for k, val in sorted(namelist.iteritems(), reverse=reversed):
+                        for k, val in sorted(six.iteritems(namelist), reverse=reversed):
                             infile.write(get_input_data_text(k, val, True, mapping=None))
                     else:
-                        for k, val in sorted(namelist.iteritems()):
+                        for k, val in sorted(six.iteritems(namelist)):
                             infile.write(get_input_data_text(k, val, False, mapping=None))
                     infile.write("/\n")
             #infile.write(kpoints_card)
@@ -498,7 +486,7 @@ class FleurinputgenCalculation(JobCalculation):
                 "input_params leftover: The following namelists are specified"
                 " in input_params, but are "
                 "not valid namelists for the current type of calculation: "
-                "{}".format(",".join(input_params.keys())))
+                "{}".format(",".join(list(input_params.keys()))))
 
 
         calcinfo = CalcInfo()
@@ -515,12 +503,12 @@ class FleurinputgenCalculation(JobCalculation):
         # TODO: let the user specify?
         #settings_retrieve_list = settings_dict.pop(
         #                             'ADDITIONAL_RETRIEVE_LIST', [])
-        retrieve_list.append(self._INPXML_FILE_NAME)
-        retrieve_list.append(self._OUTPUT_FILE_NAME)
-        retrieve_list.append(self._SHELLOUT_FILE_NAME)
-        retrieve_list.append(self._ERROR_FILE_NAME)
-        retrieve_list.append(self._STRUCT_FILE_NAME)
-        retrieve_list.append(self._INPUT_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.inpxml_file_name)
+        retrieve_list.append(self.inputs.metadata.options.output_file_name)
+        retrieve_list.append(self.inputs.metadata.options.shellout_file_name)
+        retrieve_list.append(self.inputs.metadata.options.error_file_name)
+        retrieve_list.append(self.inputs.metadata.options.struct_file_name)
+        retrieve_list.append(self.inputs.metadata.options.input_file_name)
         #calcinfo.retrieve_list += settings_retrieve_list
         #calcinfo.retrieve_list += self._internal_retrieve_list
 
@@ -548,9 +536,9 @@ class FleurinputgenCalculation(JobCalculation):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._SHELLOUT_FILE_NAME # shell output will be piped in file
-        codeinfo.stderr_name = self._ERROR_FILE_NAME # std error too
+        codeinfo.stdin_name = self.inputs.metadata.options.input_file_name
+        codeinfo.stdout_name = self.inputs.metadata.options.shellout_file_name # shell output will be piped in file
+        codeinfo.stderr_name = self.inputs.metadata.options.error_file_name # std error too
 
         calcinfo.codes_info = [codeinfo]
 
@@ -582,6 +570,33 @@ def write_inpgen_inputfile(structure_dict, parameter_dict):
     pass
 
 
+def conv_to_fortran(val, quote_strings=True):
+        """
+        :param val: the value to be read and converted to a Fortran-friendly string.
+        """
+        # Note that bool should come before integer, because a boolean matches also
+        # isinstance(...,int)
+        import numpy
+    
+        if isinstance(val, (bool, numpy.bool_)):
+            if val:
+                val_str = '.true.'
+            else:
+                val_str = '.false.'
+        elif isinstance(val, numbers.Integral):
+            val_str = "{:d}".format(val)
+        elif isinstance(val, numbers.Real):
+            val_str = ("{:18.10e}".format(val)).replace('e', 'd')
+        elif isinstance(val, six.string_types):
+            if quote_strings:
+                val_str = "'{!s}'".format(val)
+            else:
+                val_str = "{!s}".format(val)
+        else:
+            raise ValueError("Invalid value '{}' of type '{}' passed, accepts only bools, ints, floats and strings".format(
+                val, type(val)))
+    
+        return val_str
 
 def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur/ delete unnessesariy parts
     """
@@ -600,7 +615,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
             ``magn(2) = 0.1``. This parameter is ignored if 'val'
             is not a dictionary.
     """
-    from aiida.common.utils import conv_to_fortran
+    #from aiida.common.utils import conv_to_fortran
     # I don't try to do iterator=iter(val) and catch TypeError because
     # it would also match strings
     # I check first the dictionary, because it would also matc
@@ -616,7 +631,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
         # second is the actual line. This is used at the end to
         # resort everything.
         list_of_strings = []
-        for elemk, itemval in val.iteritems():
+        for elemk, itemval in six.iteritems(val):
             try:
                 idx = mapping[elemk]
             except KeyError:
@@ -629,7 +644,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
 
         # I first have to resort, then to remove the index from the first
         # column, finally to join the strings
-        list_of_strings = zip(*sorted(list_of_strings))[1]
+        list_of_strings = list(zip(*sorted(list_of_strings)))[1]
         return "".join(list_of_strings)
     elif hasattr(val, '__iter__'):
         if value_only:
@@ -661,7 +676,7 @@ def _lowercase_dict(dic, dict_name):
     from collections import Counter
 
     if isinstance(dic, dict):
-        new_dict = dict((str(k).lower(), val) for k, val in dic.iteritems())
+        new_dict = dict((str(k).lower(), val) for k, val in six.iteritems(dic))
         if len(new_dict) != len(dic):
             num_items = Counter(str(k).lower() for k in dic.keys())
             double_keys = ",".join([k for k, val in num_items if val > 1])

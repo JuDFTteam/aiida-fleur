@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -14,22 +14,25 @@
 This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
 
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain, ToContext
-from aiida.work.run import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code
+from aiida.engine import WorkChain, ToContext
+from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
 
 
 class fleur_dos_wc(WorkChain):
@@ -61,12 +64,12 @@ class fleur_dos_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._default_wf_para))#
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
-        spec.input("settings", valid_type=ParameterData, required=False)
-        spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_options))
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._default_wf_para))#
+        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False, 
+                   default=Dict(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
         #spec.input("inpgen", valid_type=Code, required=False)
@@ -166,7 +169,7 @@ class fleur_dos_wc(WorkChain):
         options = self.ctx.options
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = submit(FleurProcess, **inputs)
+        future = submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future) #calcs.append(future),
 
@@ -205,7 +208,7 @@ class fleur_dos_wc(WorkChain):
         # add nkpoints, emin, emax, sigma, tria
 
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         #TODO parse dos to dosnode
         #dosnode = ''
@@ -215,5 +218,5 @@ class fleur_dos_wc(WorkChain):
         #outdict['output_band2'] = dosnode2
         outdict['output_dos_wc_para'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)

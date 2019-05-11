@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -20,6 +20,7 @@ You can modefy, adjudst this file to your needs
 # TODO: move computers dict somewhere else?
 # TODO find AiiDA solution for this
 
+from __future__ import print_function
 def queue_defaults(queue_name, computer=None):
     """
     In this class you specify defaults methods which you can use for workflows
@@ -32,7 +33,7 @@ def queue_defaults(queue_name, computer=None):
     ame)
     '''
     queue_resources = None
-    print queue_name
+    print(queue_name)
     computers = {
         'iff003':
             {'th1' : { 'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12}, 'walltime_sec' : 30 * 60 },

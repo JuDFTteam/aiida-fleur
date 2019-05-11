@@ -1,6 +1,8 @@
 #!/usr/bin/env runaiida
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -15,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory, CalculationFactory
+from aiida.plugins import DataFactory, CalculationFactory
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation as calc
 
 
@@ -33,8 +35,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print >> sys.stderr, ("The first parameter can only be either "
-                          "--send or --dont-send")
+    print(("The first parameter can only be either "
+                          "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -55,7 +57,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 s = StructureData(cell=cell)
 s.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -82,7 +84,7 @@ parameters = ParameterData(dict={
 
 calc = code.new_calc()
 #calc = CalculationFactory('fleur.inpgen')
-print calc, type(calc)
+print(calc, type(calc))
 calc.label = "Test Fleur inpgen"
 calc.description = "Test calculation of the Fleur input generator"
 calc.set_max_wallclock_seconds(300)  # 5 min
@@ -110,17 +112,17 @@ if settings is not None:
 
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print "Test_submit for calculation (uuid='{}')".format(
-        calc.uuid)
-    print "Submit file in {}".format(os.path.join(
+    print("Test_submit for calculation (uuid='{}')".format(
+        calc.uuid))
+    print("Submit file in {}".format(os.path.join(
         os.path.relpath(subfolder.abspath),
         script_filename
-    ))
+    )))
 else:
     calc.store_all()
-    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
     calc.submit()
-    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
 

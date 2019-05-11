@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 import sys,os 
-from aiida.orm import Code, DataFactory, Computer, load_node
-from aiida.work.run import async, run
+from aiida.plugins import Code, DataFactory, Computer, load_node
+from aiida.engine.run import async, run
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 
@@ -31,7 +33,7 @@ s.append_atom(position=(0.,0.,0.), symbols='Cu')
 
 # A structure would be enough, then the input generator will choose default values, 
 # if you want to set parameters you have to provide a ParameterData node with some namelists of the inpgen:
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                           'title': 'Cu, fcc copper, bulk, delta project',
                           'atom':{'element' : 'Cu', 'rmt' : 2.28, 'jri' : 981, 'lmax' : 12, 'lnonsph' : 6},
                           'comp': {'kmax': 5.0, 'gmaxxc' : 12.5, 'gmax' : 15.0},

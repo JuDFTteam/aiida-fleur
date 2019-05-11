@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -18,18 +18,21 @@ out.xml file of FLEUR.
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
 # or rather throw exception on lowest level and catch at higher levels?
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys#,os
 from lxml import etree#, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError
 from pprint import pprint
-from aiida.orm import DataFactory, CalculationFactory
+from aiida.plugins import DataFactory, CalculationFactory
 #from aiida.orm import Computer
 from aiida.orm import load_node
 from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
+import six
 #convert_to_float
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 KpointsData = DataFactory('array.kpoints')
 
 FleurInpCalc = CalculationFactory('fleur.inpgen')
@@ -379,22 +382,22 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
     """
     return_corelevel_dict = {}
 
-    for elem, corelevel_dict in coreleveldict.iteritems():
+    for elem, corelevel_dict in six.iteritems(coreleveldict):
         ref_el = reference_dict.get(elem, {})
 
         if not ref_el: # no refernce for that element given
             if warn:
-                print("WARNING: Reference for element: '{}' not given. "
-                      "I ignore these.".format(elem))
+                print(("WARNING: Reference for element: '{}' not given. "
+                      "I ignore these.".format(elem)))
             continue
 
         return_corelevel_dict[elem] = {}
-        for corelevel_name, corelevel_list in corelevel_dict.iteritems():
+        for corelevel_name, corelevel_list in six.iteritems(corelevel_dict):
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl: # no reference corelevel given for that element
                 if warn:
-                   print("WARNING: Reference corelevel '{}' for element: '{}' "
-                         "not given. I ignore these.".format(corelevel_name, elem))
+                   print(("WARNING: Reference corelevel '{}' for element: '{}' "
+                         "not given. I ignore these.".format(corelevel_name, elem)))
                 continue
             be_all = []
             nref = len(ref_cl)

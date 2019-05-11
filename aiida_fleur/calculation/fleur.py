@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -18,15 +18,19 @@ Input plug-in for a FLEUR ciculation. fleur.x
 # think about exception. warning policy.
 # TODO maybe allow only single file names not *
 # TODO maybe check the settings key values, make a list of all fleur files?
+from __future__ import absolute_import
+from __future__ import print_function
 import os
+import six
+import io
 #from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
-from aiida.orm.calculation.job import JobCalculation
+from aiida.engine import CalcJob
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.orm.data.parameter import ParameterData
-from aiida.orm.data.remote import RemoteData
+from aiida.orm import Dict
+from aiida.orm import RemoteData
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError, ValidationError
@@ -34,249 +38,342 @@ from aiida.common.exceptions import UniquenessError
 
 
 
-class FleurCalculation(JobCalculation):
+class FleurCalculation(CalcJob):
     """
     Main DFT code of the FLEUR code
     For more information about the FLEUR-code family, go to http://www.flapw.de/
     """
-    def _init_internal_params(self):
-        super(FleurCalculation, self)._init_internal_params()
+    
+    ######### Only this should be to be maintained! #########
 
-        ######### Only this should be to be maintained! #########
+    # should a kpt node be used or fleur generate the mesh?
+    _DEFAULT_use_kpoints = False
+    _DEFAULT_INPXML_FILE_NAME = 'inp.xml'
 
-        # Default fleur output parser
-        self._default_parser = 'fleur.fleurparser'
-        #self._default_parser = 'fleur.fleur'
+    # Default input and output files
+    _DEFAULT_INPUT_FILE = 'inp.xml'#_DEFAULT_set_INPXML_FILE_PATH()
+    #_DEFAULT_FLEURINPDATA_FOLDER
+    #fleurinp.get_file_abs_path(_DEFAULT_INPXML_FILE_NAME)
+    #'inp.xml' # this has to change the file is under FleurinpData
+    _DEFAULT_OUTPUT_FILE = 'out.xml'
 
-        # should a kpt node be used or fleur generate the mesh?
-        self._use_kpoints = False
-        self._INPXML_FILE_NAME = 'inp.xml'
+    # Name of all files in FLEUR
+    # TODO think also to oursource this in a FleurCalc structure, and add
+    # as info when what file has to be copied
 
-        # Default input and output files
-        self._DEFAULT_INPUT_FILE = 'inp.xml'#self._set_INPXML_FILE_PATH()
-        #self._FLEURINPDATA_FOLDER
-        #fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-        #'inp.xml' # this has to change the file is under FleurinpData
-        self._DEFAULT_OUTPUT_FILE = 'out.xml'
+    # these will be shown in AiiDA
+    _DEFAULT_OUTPUT_FILE_NAME = 'aiida.out' # Shell output
+    _DEFAULT_INPUT_FILE_NAME = 'inp.xml'
+    #fleur file names:
 
-        # Name of all files in FLEUR
-        # TODO think also to oursource this in a FleurCalc structure, and add
-        # as info when what file has to be copied
+    # needed for calc
 
-        # these will be shown in AiiDA
-        self._OUTPUT_FILE_NAME = 'aiida.out' # Shell output
-        self._INPUT_FILE_NAME = 'inp.xml'
-        #fleur file names:
-
-        # needed for calc
-
-        self._OUTXML_FILE_NAME = 'out.xml'
-        self._INP_FILE_NAME = 'inp'
-        self._ENPARA_FILE_NAME = 'enpara'
-        self._SYMOUT_FILE_NAME = 'sym.out'
-        self._CDN1_FILE_NAME = 'cdn1'
-        self._SHELLOUTPUT_FILE_NAME = 'shell.out'
-        self._ERROR_FILE_NAME = 'out.error'
-         # other
-        self._OUT_FILE_NAME = 'out'
-        self._CDNC_FILE_NAME = 'cdnc' # core charge density
-        self._TIME_INFO_FILE_NAME = 'time.info'
-        self._KPTS_FILE_NAME = 'kpts'
-        self._QPTS_FILE_NAME = 'qpts'
-        self._PLOT_INP_FILE_NAME = 'plot_inp'
-        self._BROYD_FILE_NAME = 'broyd*'
-        self._POT_FILE_NAME = 'pot*'
-        self._POT1_FILE_NAME = 'pottot'
-        self._POT2_FILE_NAME = 'potcoul'
-        self._STRUCTURE_FILE_NAME = 'struct.xcf'
-        self._STARS_FILE_NAME = 'stars'
-        self._WKF2_FILE_NAME = 'wkf2'
-        self._CDN_HDF5_FILE_NAME = 'cdn.hdf'
-        self._CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
+    _DEFAULT_OUTXML_FILE_NAME = 'out.xml'
+    _DEFAULT_INP_FILE_NAME = 'inp'
+    _DEFAULT_ENPARA_FILE_NAME = 'enpara'
+    _DEFAULT_SYMOUT_FILE_NAME = 'sym.out'
+    _DEFAULT_CDN1_FILE_NAME = 'cdn1'
+    _DEFAULT_SHELLOUTPUT_FILE_NAME = 'shell.out'
+    _DEFAULT_ERROR_FILE_NAME = 'out.error'
+     # other
+    _DEFAULT_OUT_FILE_NAME = 'out'
+    _DEFAULT_CDNC_FILE_NAME = 'cdnc' # core charge density
+    _DEFAULT_TIME_INFO_FILE_NAME = 'time.info'
+    _DEFAULT_KPTS_FILE_NAME = 'kpts'
+    _DEFAULT_QPTS_FILE_NAME = 'qpts'
+    _DEFAULT_PLOT_INP_FILE_NAME = 'plot_inp'
+    _DEFAULT_BROYD_FILE_NAME = 'broyd*'
+    _DEFAULT_POT_FILE_NAME = 'pot*'
+    _DEFAULT_POT1_FILE_NAME = 'pottot'
+    _DEFAULT_POT2_FILE_NAME = 'potcoul'
+    _DEFAULT_STRUCTURE_FILE_NAME = 'struct.xcf'
+    _DEFAULT_STARS_FILE_NAME = 'stars'
+    _DEFAULT_WKF2_FILE_NAME = 'wkf2'
+    _DEFAULT_CDN_HDF5_FILE_NAME = 'cdn.hdf'
+    _DEFAULT_CDN_LAST_HDF5_FILE_NAME = 'cdn_last.hdf'
 
 
-        # special out files
-        self._DOS_FILE_NAME = 'DOS.*'
-        self._DOSINP_FILE_NAME = 'dosinp'
-        self._BAND_GNU_FILE_NAME = 'band.gnu'
-        self._BAND_FILE_NAME = 'bands.*'
-        self._NEW_XMlINP_FILE_NAME = 'inp_new.xml'
+    # special out files
+    _DEFAULT_DOS_FILE_NAME = 'DOS.*'
+    _DEFAULT_DOSINP_FILE_NAME = 'dosinp'
+    _DEFAULT_BAND_GNU_FILE_NAME = 'band.gnu'
+    _DEFAULT_BAND_FILE_NAME = 'bands.*'
+    _DEFAULT_NEW_XMlINP_FILE_NAME = 'inp_new.xml'
 
-        # helper files
-        self._FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
-        self._JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
-        self._QFIX_FILE_NAME = 'qfix'
-
-
-        # forces and relaxation files
-        self._FORCE_FILE_NAME = 'forces.dat'
-
-        # jij files
-        self._JENERG_FILE_NAME = 'jenerg'
-        self._MCINP_FILE_NAME = 'MCinp'
-        self._QPTSINFO_FILE_NAME = 'qptsinfo'
-        self._SHELL_FILE_NAME = 'shells'
-        self._JCONST_FILE_NAME = 'jconst'
-
-        # files for lda+U
-        self._NMMPMAT_FILE_NAME = 'n_mmp_mat'
-
-        # files for hybrid functionals
-        self._COULOMB1_FILE_NAME = 'coulomb1'
-        self._MIXBAS_FILE_NAME = 'mixbas'
-        self._CMT_FIlE_NAME = 'cmt'
-        self._CZ_FILE_NAME = 'cz'
-        self._OLAP_FILE_NAME = 'olap'
-        self._VR0_FILE_NAME = 'vr0'
-
-        # files non-collinear calculation
-        self._RHOMAT_INP_FILE_NAME = 'rhomat_inp'
-        self._RHOMAT_OUT_FILE_NAME = 'rhomat_out'
-        self._CDN_FILE_NAME = 'cdn'
-        self._DIROFMAG_FILE_NAME = 'dirofmag'
-
-        # files for Wannier 90
-        self._W90KPTS_FILE_NAME = 'w90kpts'
-        self._PROJ_FILE_NAME = 'proj'
-        self._WANN_INP_FILE_NAME = 'wann_inp'
-        self._BKPTS_FILE_NAME = 'bkpts'
-        self._WFMMN_FILE_NAME = 'WF*.mmn'
-        self._WFAMN_FILE_NAME = 'WF*.amn'
-        self._WFWIN_FILE_NAME = 'WF*.win'
-        self._WFWOUT_FILE_NAME = 'WF*.wout'
-        self._UNK_FILE_NAME = 'UNK*'
-        self._KPTSMAP_FILE_NAME = 'kptsmap'
-        self._PROJGEN_INP_FILE_NAME = 'projgen_inp'
-        self._IONS_FILE_NAME = 'IONS'
-        self._POLARIZATION_OUT_FILE_NAME = 'polarization_out'
-        self._HOPPING_FILE_NAME = 'hopping.*'
-        self._WF1HSOMTX_FILE_NAME = 'WF1.hsomtx'
-        self._RSSOCMAT_FILE_NAME = 'rssocmat.1'
-        self._RSNABLA_FILE_NAME = 'rsnabla.*'
-        self._WFNABL_FILE_NAME = 'WF*.nabl'
-
-        # copy file lists. I rather dont like this.
-        # Might gives rise to a lot of possible erros, if files or not there,
-        #or Fleur did not created same, or at some point they will not be
-        # deleted remotely.
-
-        ########## Policy
-        # we store everything needed for a further run in the local repository
-        #(inp.xml, cdn1), also all important results files.
-        # these will ALWAYS be copied from the local repository to the maschine
-        # If a parent calculation exists, other files will be copied remotely
-        #######
-
-        #all possible files first chargedensity
-        self._copy_filelist1 = []
-        self._copy_filelist1 = [self._INP_FILE_NAME,
-                                self._ENPARA_FILE_NAME,
-                                self._SYMOUT_FILE_NAME,
-                                self._CDN1_FILE_NAME,
-                                self._KPTS_FILE_NAME,
-                                self._STARS_FILE_NAME,
-                                self._WKF2_FILE_NAME]
-
-        #after inpgen, before first chargedensity
-        self._copy_filelist_inpgen = [self._INPXML_FILE_NAME]
-
-        #for after fleur SCF [name, detination_name]
-        self._copy_filelist_scf1 = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME]]
-        self._copy_filelist_scf2 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME]]
-        #self._INPXML_FILE_NAME, comes from fleurinpdata
-        self._copy_filelist_scf = [[self._CDN1_FILE_NAME, self._CDN1_FILE_NAME],
-                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
-        self._copy_filelist_scf2_1 = [[self._CDN_LAST_HDF5_FILE_NAME, self._CDN_HDF5_FILE_NAME],
-                                   [self._INPXML_FILE_NAME, self._INPXML_FILE_NAME]]
-        self._copy_filelist_scf_remote = [self._BROYD_FILE_NAME]
-        self._copy_filelist3 = []
-        self._copy_filelist3 = [self._INP_FILE_NAME,
-                                self._ENPARA_FILE_NAME,
-                                self._SYMOUT_FILE_NAME,
-                                self._CDN1_FILE_NAME,
-                                self._KPTS_FILE_NAME,
-                                self._STARS_FILE_NAME,
-                                self._WKF2_FILE_NAME,
-                                self._BROYD_FILE_NAME,
-                                self._OUT_FILE_NAME,
-                                self._POT_FILE_NAME]
-
-        #files need for rerun
-        self._copy_filelist3 = []
-        self._copy_filelist_dos = [self._INPXML_FILE_NAME,
-                                   self._CDN1_FILE_NAME]
-        self._copy_filelist_band = [self._INPXML_FILE_NAME,
-                                    self._POT_FILE_NAME,
-                                    self._CDN1_FILE_NAME]
+    # helper files
+    _DEFAULT_FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
+    _DEFAULT_JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
+    _DEFAULT_QFIX_FILE_NAME = 'qfix'
 
 
-        self._copy_filelist_hybrid = []
-        self._copy_filelist_jij = []
+    # forces and relaxation files
+    _DEFAULT_FORCE_FILE_NAME = 'forces.dat'
 
-        #possible settings_dict keys
-        self._settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                               'additional_remotecopy_list', 'remove_from_remotecopy_list',
-                               'cmdline', 'remove_from_localcopy_list']
-        #possible modes?
-        self._fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
-                             'latticeCo', 'scf']
-    #_DEFAULT_INPUT_FILE = 'inp.xml'
-    @classproperty
-    def _use_methods(cls):
-        """
-        Extend the parent _use_methods with further keys.
-        """
-        retdict = JobCalculation._use_methods
-        retdict.update({
-            "fleurinpdata": {
-                'valid_types': FleurinpData,
-                'additional_parameter': None,
-                'linkname': 'fleurinpdata',
-                'docstring': (
-                    "Use a FleruinpData node that specifies the input parameters"
+    # jij files
+    _DEFAULT_JENERG_FILE_NAME = 'jenerg'
+    _DEFAULT_MCINP_FILE_NAME = 'MCinp'
+    _DEFAULT_QPTSINFO_FILE_NAME = 'qptsinfo'
+    _DEFAULT_SHELL_FILE_NAME = 'shells'
+    _DEFAULT_JCONST_FILE_NAME = 'jconst'
+
+    # files for lda+U
+    _DEFAULT_NMMPMAT_FILE_NAME = 'n_mmp_mat'
+
+    # files for hybrid functionals
+    _DEFAULT_COULOMB1_FILE_NAME = 'coulomb1'
+    _DEFAULT_MIXBAS_FILE_NAME = 'mixbas'
+    _DEFAULT_CMT_FIlE_NAME = 'cmt'
+    _DEFAULT_CZ_FILE_NAME = 'cz'
+    _DEFAULT_OLAP_FILE_NAME = 'olap'
+    _DEFAULT_VR0_FILE_NAME = 'vr0'
+
+    # files non-collinear calculation
+    _DEFAULT_RHOMAT_INP_FILE_NAME = 'rhomat_inp'
+    _DEFAULT_RHOMAT_OUT_FILE_NAME = 'rhomat_out'
+    _DEFAULT_CDN_FILE_NAME = 'cdn'
+    _DEFAULT_DIROFMAG_FILE_NAME = 'dirofmag'
+
+    # files for Wannier 90
+    _DEFAULT_W90KPTS_FILE_NAME = 'w90kpts'
+    _DEFAULT_PROJ_FILE_NAME = 'proj'
+    _DEFAULT_WANN_INP_FILE_NAME = 'wann_inp'
+    _DEFAULT_BKPTS_FILE_NAME = 'bkpts'
+    _DEFAULT_WFMMN_FILE_NAME = 'WF*.mmn'
+    _DEFAULT_WFAMN_FILE_NAME = 'WF*.amn'
+    _DEFAULT_WFWIN_FILE_NAME = 'WF*.win'
+    _DEFAULT_WFWOUT_FILE_NAME = 'WF*.wout'
+    _DEFAULT_UNK_FILE_NAME = 'UNK*'
+    _DEFAULT_KPTSMAP_FILE_NAME = 'kptsmap'
+    _DEFAULT_PROJGEN_INP_FILE_NAME = 'projgen_inp'
+    _DEFAULT_IONS_FILE_NAME = 'IONS'
+    _DEFAULT_POLARIZATION_OUT_FILE_NAME = 'polarization_out'
+    _DEFAULT_HOPPING_FILE_NAME = 'hopping.*'
+    _DEFAULT_WF1HSOMTX_FILE_NAME = 'WF1.hsomtx'
+    _DEFAULT_RSSOCMAT_FILE_NAME = 'rssocmat.1'
+    _DEFAULT_RSNABLA_FILE_NAME = 'rsnabla.*'
+    _DEFAULT_WFNABL_FILE_NAME = 'WF*.nabl'
+
+    # copy file lists. I rather dont like this.
+    # Might gives rise to a lot of possible erros, if files or not there,
+    #or Fleur did not created same, or at some point they will not be
+    # deleted remotely.
+
+    ########## Policy
+    # we store everything needed for a further run in the local repository
+    #(inp.xml, cdn1), also all important results files.
+    # these will ALWAYS be copied from the local repository to the maschine
+    # If a parent calculation exists, other files will be copied remotely
+    #######
+
+    #all possible files first chargedensity
+    _DEFAULT_copy_filelist1 = [_DEFAULT_INP_FILE_NAME,
+                            _DEFAULT_ENPARA_FILE_NAME,
+                            _DEFAULT_SYMOUT_FILE_NAME,
+                            _DEFAULT_CDN1_FILE_NAME,
+                            _DEFAULT_KPTS_FILE_NAME,
+                            _DEFAULT_STARS_FILE_NAME,
+                            _DEFAULT_WKF2_FILE_NAME]
+
+    #after inpgen, before first chargedensity
+    _DEFAULT_copy_filelist_inpgen = [_DEFAULT_INPXML_FILE_NAME]
+
+    #for after fleur SCF [name, detination_name]
+    _DEFAULT_copy_filelist_scf1 = [[_DEFAULT_CDN1_FILE_NAME, _DEFAULT_CDN1_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf2 = [[_DEFAULT_CDN_LAST_HDF5_FILE_NAME, _DEFAULT_CDN_HDF5_FILE_NAME]]
+    #_DEFAULT_INPXML_FILE_NAME, comes from fleurinpdata
+    _DEFAULT_copy_filelist_scf = [[_DEFAULT_CDN1_FILE_NAME, _DEFAULT_CDN1_FILE_NAME],
+                               [_DEFAULT_INPXML_FILE_NAME, _DEFAULT_INPXML_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf2_1 = [[_DEFAULT_CDN_LAST_HDF5_FILE_NAME, _DEFAULT_CDN_HDF5_FILE_NAME],
+                               [_DEFAULT_INPXML_FILE_NAME, _DEFAULT_INPXML_FILE_NAME]]
+    _DEFAULT_copy_filelist_scf_remote = [_DEFAULT_BROYD_FILE_NAME]
+    _DEFAULT_copy_filelist3 = [_DEFAULT_INP_FILE_NAME,
+                            _DEFAULT_ENPARA_FILE_NAME,
+                            _DEFAULT_SYMOUT_FILE_NAME,
+                            _DEFAULT_CDN1_FILE_NAME,
+                            _DEFAULT_KPTS_FILE_NAME,
+                            _DEFAULT_STARS_FILE_NAME,
+                            _DEFAULT_WKF2_FILE_NAME,
+                            _DEFAULT_BROYD_FILE_NAME,
+                            _DEFAULT_OUT_FILE_NAME,
+                            _DEFAULT_POT_FILE_NAME]
+
+    #files need for rerun
+    _DEFAULT_copy_filelist_dos = [_DEFAULT_INPXML_FILE_NAME,
+                               _DEFAULT_CDN1_FILE_NAME]
+    _DEFAULT_copy_filelist_band = [_DEFAULT_INPXML_FILE_NAME,
+                                _DEFAULT_POT_FILE_NAME,
+                                _DEFAULT_CDN1_FILE_NAME]
+
+
+    _DEFAULT_copy_filelist_hybrid = []
+    _DEFAULT_copy_filelist_jij = []
+
+    #possible settings_dict keys
+    _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
+                           'additional_remotecopy_list', 'remove_from_remotecopy_list'
+                           'cmdline']
+    #possible modes?
+    _DEFAULT_fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
+                         'latticeCo', 'scf']
+#_DEFAULT_INPUT_FILE = 'inp.xml'
+    
+    @classmethod
+    def define(cls, spec):
+        super(FleurCalculation, cls).define(spec)
+        
+        spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._DEFAULT_use_kpoints)
+        spec.input('metadata.options.inpxml_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPXML_FILE_NAME)
+        
+        #default input and output files
+        spec.input('metadata.options.default_input_file', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE)
+        spec.input('metadata.options.output_file', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE)
+        
+        #these will be shown in AiiDA
+        spec.input('metadata.options.output_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUTPUT_FILE_NAME)
+        spec.input('metadata.options.input_file_name', valid_type=six.string_types, default=cls._DEFAULT_INPUT_FILE_NAME)
+        
+        #needed for calc
+        spec.input('metadata.options.outxml_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUTXML_FILE_NAME)
+        spec.input('metadata.options.inp_file_name', valid_type=six.string_types, default=cls._DEFAULT_INP_FILE_NAME)
+        spec.input('metadata.options.enpara_file_name', valid_type=six.string_types, default=cls._DEFAULT_ENPARA_FILE_NAME)
+        spec.input('metadata.options.symout_file_name', valid_type=six.string_types, default=cls._DEFAULT_SYMOUT_FILE_NAME)
+        spec.input('metadata.options.cdn1_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDN1_FILE_NAME)
+        spec.input('metadata.options.shelloutput_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELLOUTPUT_FILE_NAME)
+        spec.input('metadata.options.error_file_name', valid_type=six.string_types, default=cls._DEFAULT_ERROR_FILE_NAME)
+        #other
+        spec.input('metadata.options.out_file_name', valid_type=six.string_types, default=cls._DEFAULT_OUT_FILE_NAME)
+        spec.input('metadata.options.cdnc_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDNC_FILE_NAME)
+        spec.input('metadata.options.time_info_file_name', valid_type=six.string_types, default=cls._DEFAULT_TIME_INFO_FILE_NAME)
+        spec.input('metadata.options.kpts_file_name', valid_type=six.string_types, default=cls._DEFAULT_KPTS_FILE_NAME)
+        spec.input('metadata.options.qpts_file_name', valid_type=six.string_types, default=cls._DEFAULT_QPTS_FILE_NAME)
+        spec.input('metadata.options.plot_inp_file_name', valid_type=six.string_types, default=cls._DEFAULT_PLOT_INP_FILE_NAME)
+        spec.input('metadata.options.broyd_file_name', valid_type=six.string_types, default=cls._DEFAULT_BROYD_FILE_NAME)
+        spec.input('metadata.options.pot_file_name', valid_type=six.string_types, default=cls._DEFAULT_POT_FILE_NAME)
+        spec.input('metadata.options.pot1_file_name', valid_type=six.string_types, default=cls._DEFAULT_POT1_FILE_NAME)
+        spec.input('metadata.options.pot2_file_name', valid_type=six.string_types, default=cls._DEFAULT_POT2_FILE_NAME)
+        spec.input('metadata.options.structure_file_name', valid_type=six.string_types, default=cls._DEFAULT_STRUCTURE_FILE_NAME)
+        spec.input('metadata.options.stars_file_name', valid_type=six.string_types, default=cls._DEFAULT_STARS_FILE_NAME)
+        spec.input('metadata.options.wkf2_file_name', valid_type=six.string_types, default=cls._DEFAULT_WKF2_FILE_NAME)
+        spec.input('metadata.options.cdn_hdf5_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDN_HDF5_FILE_NAME)
+        spec.input('metadata.options.cdn_last_hdf5_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDN_LAST_HDF5_FILE_NAME)
+        
+        #special out files
+        spec.input('metadata.options.dos_file_name', valid_type=six.string_types, default=cls._DEFAULT_DOS_FILE_NAME)
+        spec.input('metadata.options.dosinp_file_name', valid_type=six.string_types, default=cls._DEFAULT_DOSINP_FILE_NAME)
+        spec.input('metadata.options.band_gnu_file_name', valid_type=six.string_types, default=cls._DEFAULT_BAND_GNU_FILE_NAME)
+        spec.input('metadata.options.band_file_name', valid_type=six.string_types, default=cls._DEFAULT_BAND_FILE_NAME)
+        spec.input('metadata.options.new_xmlinp_file_name', valid_type=six.string_types, default=cls._DEFAULT_NEW_XMlINP_FILE_NAME)
+        
+        #helper files
+        spec.input('metadata.options.fleur_warn_only_info_file_name', valid_type=six.string_types, default=cls._DEFAULT_FLEUR_WARN_ONLY_INFO_FILE_NAME)
+        spec.input('metadata.options.judft_warn_only_info_file_name', valid_type=six.string_types, default=cls._DEFAULT_JUDFT_WARN_ONLY_INFO_FILE_NAME)
+        spec.input('metadata.options.qfix_file_name', valid_type=six.string_types, default=cls._DEFAULT_QFIX_FILE_NAME)
+        
+        #forces and relaxation forces
+        spec.input('metadata.options.force_file_name', valid_type=six.string_types, default=cls._DEFAULT_FORCE_FILE_NAME)
+        
+        #jij files
+        spec.input('metadata.options.default_jenerg_file_name', valid_type=six.string_types, default=cls._DEFAULT_JENERG_FILE_NAME)
+        spec.input('metadata.options.mcinp_file_name', valid_type=six.string_types, default=cls._DEFAULT_MCINP_FILE_NAME)
+        spec.input('metadata.options.qptsinfo_file_name', valid_type=six.string_types, default=cls._DEFAULT_QPTSINFO_FILE_NAME)
+        spec.input('metadata.options.shell_file_name', valid_type=six.string_types, default=cls._DEFAULT_SHELL_FILE_NAME)
+        spec.input('metadata.options.jconst_file_name', valid_type=six.string_types, default=cls._DEFAULT_JCONST_FILE_NAME)
+        
+        #files for LDA+U
+        spec.input('metadata.options.nmmpmat_file_name', valid_type=six.string_types, default=cls._DEFAULT_NMMPMAT_FILE_NAME)
+        
+        #files for hybrid functionals
+        spec.input('metadata.options.coulomb1_file_name', valid_type=six.string_types, default=cls._DEFAULT_COULOMB1_FILE_NAME)
+        spec.input('metadata.options.mixbas_file_name', valid_type=six.string_types, default=cls._DEFAULT_MIXBAS_FILE_NAME)
+        spec.input('metadata.options.cmt_file_name', valid_type=six.string_types, default=cls._DEFAULT_CMT_FIlE_NAME)
+        spec.input('metadata.options.cz_file_name', valid_type=six.string_types, default=cls._DEFAULT_CZ_FILE_NAME)
+        spec.input('metadata.options.olap_file_name', valid_type=six.string_types, default=cls._DEFAULT_OLAP_FILE_NAME)
+        spec.input('metadata.options.vr0_file_name', valid_type=six.string_types, default=cls._DEFAULT_VR0_FILE_NAME)
+        
+        #files non-collinear calculation
+        spec.input('metadata.options.rhomat_inp_file_name', valid_type=six.string_types, default=cls._DEFAULT_RHOMAT_INP_FILE_NAME)
+        spec.input('metadata.options.rhomat_out_file_name', valid_type=six.string_types, default=cls._DEFAULT_RHOMAT_OUT_FILE_NAME)
+        spec.input('metadata.options.cdn_file_name', valid_type=six.string_types, default=cls._DEFAULT_CDN_FILE_NAME)
+        spec.input('metadata.options.dirofmag_file_name', valid_type=six.string_types, default=cls._DEFAULT_DIROFMAG_FILE_NAME)
+        
+        #files for Wannier 90
+        spec.input('metadata.options.w90kpts_file_name', valid_type=six.string_types, default=cls._DEFAULT_W90KPTS_FILE_NAME)
+        spec.input('metadata.options.proj_file_name', valid_type=six.string_types, default=cls._DEFAULT_PROJ_FILE_NAME)
+        spec.input('metadata.options.wann_inp_file_name', valid_type=six.string_types, default=cls._DEFAULT_WANN_INP_FILE_NAME)
+        spec.input('metadata.options.bkpts_file_name', valid_type=six.string_types, default=cls._DEFAULT_BKPTS_FILE_NAME)
+        spec.input('metadata.options.wfmmn_file_name', valid_type=six.string_types, default=cls._DEFAULT_WFMMN_FILE_NAME)
+        spec.input('metadata.options.wfamn_file_name', valid_type=six.string_types, default=cls._DEFAULT_WFAMN_FILE_NAME)
+        spec.input('metadata.options.wfwin_file_name', valid_type=six.string_types, default=cls._DEFAULT_WFWIN_FILE_NAME)
+        spec.input('metadata.options.wfwout_file_name', valid_type=six.string_types, default=cls._DEFAULT_WFWOUT_FILE_NAME)
+        spec.input('metadata.options.unk_file_name', valid_type=six.string_types, default=cls._DEFAULT_UNK_FILE_NAME)
+        spec.input('metadata.options.kptsmap_file_name', valid_type=six.string_types, default=cls._DEFAULT_KPTSMAP_FILE_NAME)
+        spec.input('metadata.options.projgen_inp_file_name', valid_type=six.string_types, default=cls._DEFAULT_PROJGEN_INP_FILE_NAME)
+        spec.input('metadata.options.ions_file_name', valid_type=six.string_types, default=cls._DEFAULT_IONS_FILE_NAME)
+        spec.input('metadata.options.polarization_out_file_name', valid_type=six.string_types, default=cls._DEFAULT_POLARIZATION_OUT_FILE_NAME)
+        spec.input('metadata.options.hopping_file_name', valid_type=six.string_types, default=cls._DEFAULT_HOPPING_FILE_NAME)
+        spec.input('metadata.options.wf1hsomtx_file_name', valid_type=six.string_types, default=cls._DEFAULT_WF1HSOMTX_FILE_NAME)
+        spec.input('metadata.options.rssocmat_file_name', valid_type=six.string_types, default=cls._DEFAULT_RSSOCMAT_FILE_NAME)
+        spec.input('metadata.options.rsnabla_file_name', valid_type=six.string_types, default=cls._DEFAULT_RSNABLA_FILE_NAME)
+        spec.input('metadata.options.wfnabl_file_name', valid_type=six.string_types, default=cls._DEFAULT_WFNABL_FILE_NAME)
+        
+        #filelists
+        spec.input('metadata.options.copy_filelist1', valid_type=list, default=cls._DEFAULT_copy_filelist1)
+        spec.input('metadata.options.copy_filelist_inpgen', valid_type=list, default=cls._DEFAULT_copy_filelist_inpgen)
+        
+        spec.input('metadata.options.copy_filelist_scf1', valid_type=list, default=cls._DEFAULT_copy_filelist_scf1)
+        spec.input('metadata.options.copy_filelist_scf2', valid_type=list, default=cls._DEFAULT_copy_filelist_scf2)
+        spec.input('metadata.options.copy_filelist_scf', valid_type=list, default=cls._DEFAULT_copy_filelist_scf)
+        spec.input('metadata.options.copy_filelist_scf2_1', valid_type=list, default=cls._DEFAULT_copy_filelist_scf2_1)
+        spec.input('metadata.options.copy_filelist_scf_remote', valid_type=list, default=cls._DEFAULT_copy_filelist_scf_remote)
+        spec.input('metadata.options.copy_filelist3', valid_type=list, default=cls._DEFAULT_copy_filelist3)
+        spec.input('metadata.options.copy_filelist_dos', valid_type=list, default=cls._DEFAULT_copy_filelist_dos)
+        spec.input('metadata.options.copy_filelist_band', valid_type=list, default=cls._DEFAULT_copy_filelist_band)
+        spec.input('metadata.options.copy_filelist_hybrid', valid_type=list, default=cls._DEFAULT_copy_filelist_hybrid)
+        spec.input('metadata.options.copy_filelist_jij', valid_type=list, default=cls._DEFAULT_copy_filelist_jij)
+        spec.input('metadata.options.setting_keys', valid_type=list, default=cls._DEFAULT_settings_keys)
+        spec.input('metadata.options.fleur_modes', valid_type=list, default=cls._DEFAULT_fleur_modes)
+        
+        #inputs transfered from _use_methods (pre 1.0.0b1)
+        spec.input('fleurinpdata', valid_type=FleurinpData, required = False,
+            help="Use a FleruinpData node that specifies the input parameters"
                     "usually copy from the parent calculation, basicly makes"
                     "the inp.xml file visible in the db and makes sure it has "
-                    "the files needed."),
-                },
-            "parent_folder": {
-                'valid_types': RemoteData,
-                'additional_parameter': None,
-                'linkname': 'parent_calc_folder',
-                'docstring': (
-                    "Use a remote or local repository folder as parent folder "
+                    "the files needed.")
+        spec.input('parent_folder', valid_type=RemoteData, required = False,
+            help="Use a remote or local repository folder as parent folder "
                     "(also for restarts and similar). It should contain all the "
                     "needed files for a Fleur calc, only edited files should be "
-                    "uploaded from the repository."),
-                },
-            "settings": {
-                'valid_types': ParameterData,
-                'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': (
-                    "This parameter data node is used to specify for some "
+                    "uploaded from the repository.")
+        spec.input('settings', valid_type=Dict, required = False,
+            help="This parameter data node is used to specify for some "
                     "advanced features how the plugin behaves. You can add files"
                     "the retrieve list, or add command line switches, "
-                    "for all available features here check the documentation."),
-
-            }})
-            #
-            #"parent_calc":{
-            #   'valid_types': (FleurinputgenCalculation, FleurCalculation),
-            #   'additional_parameter': None,
-            #   'linkname': 'parent_calc',
-            #   'docstring': ("Use a parent calculation from which to copy"
-            #                 "files, and so on."),
-            #
-            #  },
-            #"kpoints" : {
-            #   'valid_types': KpointsData,
-            #   'additional_parameter': None,
-            #   'linkname': 'kpoints',
-            #   'docstring': "Connect to k-point node from inpgen or other calc.",
-            #   }
-
-
-        return retdict
+                    "for all available features here check the documentation.")
+        
+        #parser
+        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
+    
+        # declare outputs of the calculation
+        spec.output('output_parameters', valid_type=Dict, required=False)
+        spec.output('output_params_complex', valid_type=Dict, required=False)
+        spec.output('fleurinpData', valid_type=FleurinpData, required=False)
+        
+        #exit codes
+        spec.exit_code(
+            104, 'ERROR_WRONG_PARSER_INPUT', message='Parser class accepts FleurCalculation only.')
+        spec.exit_code(
+            105, 'ERROR_OPENING_OUTPUTS', message='One of output files can not be opened.')
+        spec.exit_code(
+            106, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
+        spec.exit_code(
+            107, 'ERROR_FLEUR_CALC_FAILED', message='FLEUR calculation failed.')
+        spec.exit_code(
+            108, 'ERROR_NO_OUTXML', message='XML output file was not found.')
+        spec.exit_code(
+            109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
+        spec.exit_code(
+            110, 'ERROR_XMLOUT_PARSING_FAILED', message='Parsing of XML output file was not successfull.')
+    
 
     @classproperty
     def _OUTPUT_FOLDER(cls):
@@ -311,16 +408,14 @@ class FleurCalculation(JobCalculation):
         self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(
                                                          self._INPXML_FILE_NAME)
     '''
-    def _prepare_for_submission(self, tempfolder, inputdict):
+    def prepare_for_submission(self, folder):
         """
         This is the routine to be called when you make a fleur calculation
         Here should be checked if all the files are there to run fleur.
         And input files (inp.xml) can be modified.
 
-        :param tempfolder: a aiida.common.folders.Folder subclass where
+        :param folder: a aiida.common.folders.Folder subclass where
                            the plugin should put all its files.
-        :param inputdict: a dictionary with the input nodes, as they would
-                be returned by get_inputdata_dict (without the Code!)
         """
 
         # TODO how to check if code compiled with HDF5?
@@ -349,19 +444,17 @@ class FleurCalculation(JobCalculation):
         copy_remotely = True
         with_hdf5 = False
 
-        ##########################################
-        ############# INPUT CHECK ################
-        ##########################################
-
-        try:
-            code = inputdict.pop(self.get_linkname('code'))
-        except KeyError:
-            raise InputValidationError("No code specified for this calculation")
+        #since 1.0.0b inputs are checked automatically
+        code = self.inputs.code
 
         codesdesc = code.description
         # TODO ggf also check settings
         if codesdesc is not None:
-            if ('hdf5' or 'Hdf5' or 'HDF5') in codesdesc:
+            if 'hdf5' in codesdesc:
+                with_hdf5 = True
+            elif 'Hdf5' in codesdesc:
+                with_hdf5 = True
+            elif 'HDF5' in codesdesc:
                 with_hdf5 = True
             else:
                 with_hdf5 = False
@@ -372,18 +465,22 @@ class FleurCalculation(JobCalculation):
         #calculation does not need theoretical a new FleurinpData it could use
         #the one from the parent, but the plug-in desgin is in a way that it has
         # to be there and it just copies files if changes occured..
+        
+        if 'fleurinpdata' in self.inputs:
+            fleurinp = self.inputs.fleurinpdata
+        else:
+            fleurinp = None
 
-        fleurinp = inputdict.pop(self.get_linkname('fleurinpdata'), None)
         if fleurinp is None:
             #xml_inp_dict = {}
             has_fleurinp = False
         else:
-            if not isinstance(fleurinp, FleurinpData):
-                raise InputValidationError(
-                    "The FleurinpData node given is not of type FleurinpData.")
             has_fleurinp = True
-        parent_calc_folder = inputdict.pop(self.get_linkname('parent_folder'),
-                                           None)
+
+        if 'parent_folder' in self.inputs:
+            parent_calc_folder = self.inputs.parent_folder
+        else:
+            parent_calc_folder = None
 
         if parent_calc_folder is None:
             has_parent = False
@@ -392,20 +489,17 @@ class FleurCalculation(JobCalculation):
                     "No parent calculation found and no fleurinp data "
                     "given, need either one or both for a "
                     "'fleurcalculation'.")
-        else: #
-            if not isinstance(parent_calc_folder, RemoteData):
-                raise InputValidationError("parent_calc_folder, if specified,"
-                                           "must be of type RemoteData")
-
+        else:
             # extract parent calculation
-            parent_calcs = parent_calc_folder.get_inputs(node_type=JobCalculation)
+            #assume that RemoteFolder has a single parent
+            parent_calcs = parent_calc_folder.get_incoming(node_class=CalcJob).all()
             n_parents = len(parent_calcs)
             if n_parents != 1:
-                raise UniquenessError(
-                    "Input RemoteData is child of {} "
+                raise UniquenessError("Input RemoteData is child of {} "
                     "calculation{}, while it should have a single parent"
                     "".format(n_parents, "" if n_parents == 0 else "s"))
-            parent_calc = parent_calcs[0]
+            parent_calc = parent_calcs[0].node
+            parent_calc_class = parent_calc.process_class
             has_parent = True
 
             # check that it is a valid parent
@@ -416,19 +510,19 @@ class FleurCalculation(JobCalculation):
             # check if folder from db given, or get folder from rep.
             # Parent calc does not has to be on the same computer.
 
-            if isinstance(parent_calc, FleurCalculation):
-                new_comp = self.get_computer()
-                old_comp = parent_calc.get_computer()
+            if parent_calc_class is FleurCalculation:
+                new_comp = self.node.computer
+                old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
                     #dont copy files, copy files localy
                     copy_remotely = False
                     #raise InputValidationError(
                     #    "FleurCalculation must be launched on the same computer"
                     #    " of the parent: {}".format(old_comp.get_name()))
-            elif isinstance(parent_calc, FleurinputgenCalculation):
+            elif parent_calc_class is FleurinputgenCalculation:
                 fleurinpgen = True
-                new_comp = self.get_computer()
-                old_comp = parent_calc.get_computer()
+                new_comp = self.node.computer
+                old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
                     #dont copy files, copy files localy
                     copy_remotely = False
@@ -438,64 +532,51 @@ class FleurCalculation(JobCalculation):
                     " a 'fleur calculation'.")
 
         # check existence of settings (optional)
-        settings = inputdict.pop(self.get_linkname('settings'), None)
-        #print('settings: {}'.format(settings))
+
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings
+        else:
+            settings = None
+
         if settings is None:
             settings_dict = {}
         else:
-            if not isinstance(settings, ParameterData):
-                raise InputValidationError("settings, if specified, must be of "
-                                           "type ParameterData")
-            else:
-                settings_dict = settings.get_dict()
+            settings_dict = settings.get_dict()
+
         #check for for allowed keys, ignor unknown keys but warn.
         for key in settings_dict.keys():
-            if key not in self._settings_keys:
+            if key not in self.inputs.metadata.options.setting_keys:
                 #TODO warrning
                 self.logger.info("settings dict key {} for Fleur calculation"
                                  "not reconized, only {} are allowed."
-                                 "".format(key, self._settings_keys))
-        # Here, there should be no other inputs
-        if inputdict:
-            raise InputValidationError(
-                "The following input data nodes are "
-                "unrecognized: {}".format(inputdict.keys()))
+                                 "".format(key, self.inputs.metadata.options.setting_keys))
 
         #TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData.
         # from where to copy
 
-        ##############################
-        # END OF INITIAL INPUT CHECK #
-
-
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
-            self._DEFAULT_INPUT_FILE = fleurinp.get_file_abs_path(self._INPXML_FILE_NAME)
-
-            #local_copy_list.append((
-            #    fleurinp.get_file_abs_path(self._INPXML_FILE_NAME),
-            #    self._INPXML_FILE_NAME))
-            #copy ALL files from inp.xml
+            #add files belonging to fleurinp into local_copy_list
             allfiles = fleurinp.files
             for file1 in allfiles:
                 local_copy_list.append((
-                    fleurinp.get_file_abs_path(file1),
+                    fleurinp.uuid, file1,
                     file1))
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
             if modes['band']:
-                mode_retrieved_filelist.append(self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.band_file_name)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.band_gnu_file_name)
             if modes['dos']:
-                mode_retrieved_filelist.append(self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.dos_file_name)
             if modes['forces']:
                 print('FORCES!!!')
-                mode_retrieved_filelist.append(self._NEW_XMlINP_FILE_NAME)
-                mode_retrieved_filelist.append(self._FORCE_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.new_xmlinp_file_name)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.force_file_name)
             if modes['ldau']:
-                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+                mode_retrieved_filelist.append(self.inputs.metadata.options.nmmpmat_file_name)
             #if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
             # if needed
@@ -504,23 +585,26 @@ class FleurCalculation(JobCalculation):
         if has_parent:
             # copy the right files #TODO check first if file, exist and throw
             # warning, now this will throw an error
-            outfolderpath = parent_calc.out.retrieved.folder.abspath
-            self.logger.info("out folder path {}".format(outfolderpath))
+            outfolder_uuid = parent_calc.outputs.retrieved.uuid
+            self.logger.info("out folder path {}".format(outfolder_uuid))
 
             if fleurinpgen and (not has_fleurinp):
-                for file1 in self._copy_filelist_inpgen:
+                for file1 in self.inputs.metadata.options.copy_filelist_inpgen:
                     local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1),
+                        outfolder_uuid,
+                        os.path.join(file1),
                         os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp): # fleurCalc
                 if with_hdf5:
-                    copylist = self._copy_filelist_scf2_1
+                    copylist = self.inputs.metadata.options.copy_filelist_scf2_1
                 else:
-                    copylist = self._copy_filelist_scf
-                for file1 in copylist:
-                    local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1[0]),
-                        os.path.join(file1[1])))
+                    copylist = self.inputs.metadata.options.copy_filelist_scf
+                #for file1 in copylist:
+                    #local_copy_list.append((
+                    #    outfolder_uuid,
+                    #    file1[0],
+                    #   file1[1]))
+                #until 2725 aiida_core not solved, copy remotely:
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
                 #TODO get inp.xml from parent fleurinpdata, since otherwise it will be doubled in repo
             elif fleurinpgen and has_fleurinp:
@@ -529,13 +613,15 @@ class FleurCalculation(JobCalculation):
             elif not fleurinpgen and has_fleurinp:
                 # input file is already taken care of
                 if with_hdf5:
-                    copylist = self._copy_filelist_scf2
+                    copylist = self.inputs.metadata.options.copy_filelist_scf2
                 else:
-                    copylist = self._copy_filelist_scf1
-                for file1 in copylist:
-                    local_copy_list.append((
-                        os.path.join(outfolderpath, 'path', file1[0]),
-                        os.path.join(file1[1])))
+                    copylist = self.inputs.metadata.options.copy_filelist_scf1
+                #for file1 in copylist:
+                #    local_copy_list.append((
+                #        outfolder_uuid,
+                #        file1[0],
+                #        file1[1]))
+                #until 2725 aiida_core not solved, copy remotely:
                 filelist_tocopy_remote = filelist_tocopy_remote# + self._copy_filelist_scf_remote
 
             # TODO not on same computer -> copy needed files from repository,
@@ -549,7 +635,7 @@ class FleurCalculation(JobCalculation):
                 elif modes['band']:
                     pass
                 else:
-                    filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
+                    filelist_tocopy_remote = filelist_tocopy_remote + self.inputs.metadata.options.copy_filelist_scf_remote
                 # from settings, user specified
                 #TODO check if list?
                 for file1 in settings_dict.get('additional_remotecopy_list', []):
@@ -558,26 +644,25 @@ class FleurCalculation(JobCalculation):
                 for file1 in settings_dict.get('remove_from_remotecopy_list', []):
                     if file1 in filelist_tocopy_remote:
                         filelist_tocopy_remote.remove(file1)
-
+            
+                for file1 in copylist:
+                    remote_copy_list.append((
+                        parent_calc_folder.computer.uuid,
+                        os.path.join(parent_calc_folder.get_remote_path(), file1[0]),
+                        file1[1]))
+            
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
-                        parent_calc_folder.get_computer().uuid,
+                        parent_calc_folder.computer.uuid,
                         os.path.join(parent_calc_folder.get_remote_path(), file1),
                         self._OUTPUT_FOLDER))
 
                 #self.logger.info("remote copy file list {}".format(remote_copy_list))
         
-        #  Prepare self._JUDFT_WARN_ONLY_INFO_FILE_NAME and upload
-        # local_copy_list.append
-        warn_only_filename = tempfolder.get_abs_path(self._JUDFT_WARN_ONLY_INFO_FILE_NAME)
-        with open(warn_only_filename, 'w') as infile:
-            infile.write("\n")
 
-        
-        #remove specified files from localcopy list
-        for file1 in settings_dict.get('remove_from_localcopy_list', []):
-            if file1 in local_copy_list:
-                local_copy_list.remove(file1)
+        #create an JUDFT_WARN_ONLY file in the calculation folder
+        with io.StringIO(u'/n') as handle:
+            folder.create_file_from_filelike(handle, filename=self.inputs.metadata.options.judft_warn_only_info_file_name, mode='w')
 
         ########## MAKE CALCINFO ###########
 
@@ -599,18 +684,18 @@ class FleurCalculation(JobCalculation):
 
         # Retrieve by default the output file and the xml file
         retrieve_list = []
-        retrieve_list.append(self._OUTXML_FILE_NAME)
-        retrieve_list.append(self._INPXML_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.outxml_file_name)
+        retrieve_list.append(self.inputs.metadata.options.inpxml_file_name)
         #calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
-        retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
-        retrieve_list.append(self._ERROR_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.shelloutput_file_name)
+        retrieve_list.append(self.inputs.metadata.options.error_file_name)
         #calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)
-        retrieve_list.append(self._OUT_FILE_NAME)
+        retrieve_list.append(self.inputs.metadata.options.out_file_name)
         if with_hdf5:
-            retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
-            retrieve_list.append(self._CDN1_FILE_NAME) # only for now because somthing is buggy
+            retrieve_list.append(self.inputs.metadata.options.cdn_last_hdf5_file_name)
+            retrieve_list.append(self.inputs.metadata.options.cdn1_file_name) # only for now because somthing is buggy
         else:
-            retrieve_list.append(self._CDN1_FILE_NAME)
+            retrieve_list.append(self.inputs.metadata.options.cdn1_file_name)
         #calcinfo.retrieve_list.append(self._INP_FILE_NAME)
         #calcinfo.retrieve_list.append(self._ENPARA_FILE_NAME)
         #calcinfo.retrieve_list.append(self._SYMOUT_FILE_NAME)
@@ -640,11 +725,10 @@ class FleurCalculation(JobCalculation):
 
         codeinfo = CodeInfo()
         # should look like: codepath -xmlInput < inp.xml > shell.out 2>&1
-        walltime_sec = self.get_max_wallclock_seconds()
+        walltime_sec = self.node.get_attribute('max_wallclock_seconds')
         #self.logger.info("!!!!!!!!!!!!!!!!!!! walltime_sec : {}"
         #                         "".format(walltime_sec))
         cmdline_params = []#, "-wtime", "{}".format(walltime_sec)]"-xml"
-        #walltime_sec = self.get_max_wallclock_seconds()
         #print('walltime: {}'.format(walltime_sec))
         if with_hdf5:
             cmdline_params.append("-last_extra")
@@ -664,11 +748,11 @@ class FleurCalculation(JobCalculation):
         # + ["<", self._INPXML_FILE_NAME,
 	    # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
         codeinfo.code_uuid = code.uuid
-        codeinfo.withmpi = self.get_withmpi()
+        codeinfo.withmpi = self.node.get_attribute('max_wallclock_seconds')
         codeinfo.stdin_name = None#self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._SHELLOUTPUT_FILE_NAME
+        codeinfo.stdout_name = self.inputs.metadata.options.shelloutput_file_name
         #codeinfo.join_files = True
-        codeinfo.stderr_name = self._ERROR_FILE_NAME
+        codeinfo.stderr_name = self.inputs.metadata.options.error_file_name
 
         calcinfo.codes_info = [codeinfo]
         '''
@@ -692,6 +776,7 @@ class FleurCalculation(JobCalculation):
         '''
         return calcinfo
 
+'''
     def _check_valid_parent(self, calc):
         """
         Check that calc is a valid parent for a FleurCalculation.
@@ -768,3 +853,4 @@ class FleurCalculation(JobCalculation):
         Used to create a WARN_ONLY file in the calculation dir
         """
         pass
+'''

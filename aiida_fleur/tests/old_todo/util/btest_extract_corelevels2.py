@@ -1,18 +1,21 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
+from six.moves import range
 if not is_dbenv_loaded():
     load_dbenv()
 import sys,os
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError
 from pprint import pprint
-from aiida.orm import Code, DataFactory, CalculationFactory
+from aiida.plugins import Code, DataFactory, CalculationFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
 from pprint import pprint
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 KpointsData = DataFactory('array.kpoints')
 
 FleurInpCalc = CalculationFactory('fleur.inpgen')
@@ -91,7 +94,7 @@ def extrac_corelevels(outxml):
         try:
             tree = etree.parse(outxmlfile, parser)
         except XMLSyntaxError:
-            print 'here'
+            print('here')
             parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False
 
@@ -105,7 +108,7 @@ def extrac_corelevels(outxml):
     species_atts = {}
     species_names = []
     for species in species_nodes:
-        print species
+        print(species)
         species_name = species.get('name')
         species_corestates = species.get('coreStates')
         species_element = species.get('element')
@@ -159,7 +162,7 @@ def extrac_corelevels(outxml):
             corelv = parse_state_card(corestatescard, iteration_to_parse)
             corelevels[int(corelv['atomtype'])-1].append(corelv)
             #corelevels.append(corelv)
-    print parser_info
+    print(parser_info)
     #pprint(corelevels)
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
     #corelevels[atomtypeNumber][spin]['corestates'][corestate number][attribute]
@@ -294,7 +297,7 @@ outxmlfile = test_outxmlfiles[2]
 
 corelevels = extrac_corelevels(outxmlfile)
 for i in range(0,len(corelevels[0][1]['corestates'])):
-    print corelevels[0][1]['corestates'][i]['energy']
+    print(corelevels[0][1]['corestates'][i]['energy'])
 
 
 for calc in calcs_pks:
@@ -304,4 +307,4 @@ for calc in calcs_pks:
     extrac_corelevels(outxml)
 
 
-print("--- %s seconds ---" % (time.time() - start_time))
+print(("--- %s seconds ---" % (time.time() - start_time)))

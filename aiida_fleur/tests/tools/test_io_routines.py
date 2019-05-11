@@ -2,6 +2,7 @@
 
 
 # write_results_to_file
+from __future__ import absolute_import
 def test_write_results_to_file_interface():
     """
     is the basic file writter wraper working as indended

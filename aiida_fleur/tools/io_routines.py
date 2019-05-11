@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -15,6 +15,9 @@ Here we collect io routines and their utility. For writting certain things to fi
 For example collection of data or database evaluations, for other people.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+import six
 def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
     """
     Writes data to a file
@@ -34,7 +37,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     for item in datat:
         itemstring = ''
         for value in item:
-            if isinstance(value, str) or isinstance(value, basestring):
+            if isinstance(value, str) or isinstance(value, six.string_types):
                 itemstring = itemstring + '{}{}'.format(value, seperator)
             else:
                 itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
@@ -73,7 +76,7 @@ def write_xps_spectra_datafile(nodes, factors, natomtypes_dict, bindingenergies,
 
     headstring =  headstring + tempst + tempst2
 
-    print('Writting theoretical XPS data to file: {}'.format(destination))
+    print(('Writting theoretical XPS data to file: {}'.format(destination)))
     write_results_to_file(headstring, data, destination=destination, seperator='  ')
 
 # example/test

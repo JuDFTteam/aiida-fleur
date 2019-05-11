@@ -5,7 +5,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -21,13 +21,14 @@ example if a (successful) SCF with the same inputs exists
 Since cashing is not there for data yet, and below are some basic querries I 
 leave the code here for now.
 """
-from aiida.orm import DataFactory
+from __future__ import absolute_import
+from aiida.plugins import DataFactory
 from aiida.orm import QueryBuilder
-from aiida.orm.calculation.job import JobCalculation
+from aiida.engine.calculation.job import CalcJob
 from aiida.orm import Node
 
 
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 '''
 def check_existence_calc(input_nodes, successful=True):
     """

@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -18,17 +18,21 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 # parameter node finding is not optimal.
 
 # TODO several eos starts wich only 20 structures to limit jobs throughput
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from string import digits
 #from pprint import pprint
 
-from aiida.orm import Code, DataFactory, Group
-from aiida.work.workchain import WorkChain, ToContext#, while_
+from aiida.plugins import DataFactory
+from aiida.orm import Code, Group
+from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work import workfunction as wf
-from aiida.work.launch import submit
+from aiida.engine import calcfunction as cf
+from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.eos import fleur_eos_wc
+import six
 
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
@@ -36,7 +40,7 @@ from aiida_fleur.workflows.eos import fleur_eos_wc
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 SingleData = DataFactory('singlefile')
 
@@ -53,8 +57,8 @@ class fleur_delta_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={'struc_group': 'delta',
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict={'struc_group': 'delta',
                                                'para_group' : 'delta',
                                                'add_extra' : {'type' : 'delta run'},
                                                #'group_label' : 'delta_eos',
@@ -62,8 +66,8 @@ class fleur_delta_wc(WorkChain):
                                                'part' : [1,2,3,4],
                                                'points' : 7,
                                                'step' : 0.02}))
-        spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
+        spec.input("options", valid_type=Dict, required=False,
+                   default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'walltime_sec': 60*60,
                             'queue_name': '',
@@ -103,7 +107,7 @@ class fleur_delta_wc(WorkChain):
 
         # check if right codes
         wf_dict = self.inputs.wf_parameters.get_dict()
-        options_dict = self.inputs.get('options', ParameterData(dict={'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)}))
+        options_dict = self.inputs.get('options', Dict(dict={'resources' : {"num_machines": 1}, 'walltime_sec': int(5.5*3600)}))
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
@@ -113,7 +117,7 @@ class fleur_delta_wc(WorkChain):
                  'guess' : 1.0},
             'options' : options_dict
              }
-        self.ctx.wc_eos_para = ParameterData(dict=self.ctx.inputs_eos.get('wf_parameters'))
+        self.ctx.wc_eos_para = Dict(dict=self.ctx.inputs_eos.get('wf_parameters'))
         self.ctx.ncalc = 1 # init
         self.get_calcs_from_groups()
         self.ctx.successful = True
@@ -121,8 +125,8 @@ class fleur_delta_wc(WorkChain):
         self.ctx.labels = []
         #self.ctx.calcs_to_run = calcs
         self.ctx.ncalcs = len(self.ctx.calcs_to_run)
-        print(self.ctx.ncalcs)
-        print(self.ctx.ncalc)
+        print((self.ctx.ncalcs))
+        print((self.ctx.ncalc))
         estimated_jobs = self.ctx.ncalc*wf_dict.get('points', 5)
         joblimit = wf_dict.get('joblimit', 90)
         self.ctx.eos_run_steps = 1
@@ -450,7 +454,7 @@ class fleur_delta_wc(WorkChain):
         bmd_dic = {}
         vol_dic = {}
 
-        for elem,val in all_res.iteritems():
+        for elem,val in six.iteritems(all_res):
             #print elem
             vol_dic[elem] = val[0]
             bm_dic[elem] = val[1]
@@ -471,7 +475,7 @@ class fleur_delta_wc(WorkChain):
         outputnode_dict['volumes_units'] = 'A^3/per atom'
         outputnode_dict['delta_factor'] = {'Wien2K' : '', 'Fleur_026' : ''}
 
-        #outputnode = ParameterData(dict=outputnode_dict)
+        #outputnode = Dict(dict=outputnode_dict)
 
         if self.ctx.successful:
             self.report('INFO: Done, delta worklfow complete')
@@ -488,7 +492,7 @@ class fleur_delta_wc(WorkChain):
 
         # output must be aiida Data types.
         outnodedict = {}
-        outnode = ParameterData(dict=outputnode_dict)
+        outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
         for label in self.ctx.labels:
             eos_res = self.ctx[label]
@@ -509,7 +513,7 @@ class fleur_delta_wc(WorkChain):
         outdict['output_delta_wc_para'] = outputnode.get('output_delta_wc_para')
         #outdict['delta_file'] = delta_file
         #print outdict
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 '''
 if __name__ == "__main__":
@@ -517,11 +521,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='SCF with FLEUR. workflow to'
                  ' converge the chargedensity and optional the total energy.')
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='The pseudopotential family', required=False)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=False)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)
@@ -542,7 +546,7 @@ if __name__ == "__main__":
                                 inpgen = args.inpgen,
                                 fleur=args.fleur)
 '''
-@wf
+@cf
 def create_delta_result_node(**kwargs):#*args):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.

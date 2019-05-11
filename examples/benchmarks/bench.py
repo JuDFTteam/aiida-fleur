@@ -1,6 +1,8 @@
 #!/usr/bin/env runaiida
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2018, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -16,10 +18,10 @@ import json
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.orm import Code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 from aiida_fleur.workflows.scf import fleur_scf_wc
-from aiida.work.run import submit
-from aiida.orm.calculation.job import JobCalculation
+from aiida.engine.run import submit
+from aiida.engine.calculation.job import CalcJob
 
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
@@ -70,14 +72,14 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
             structure = fleurinp.get_structuredata_nwf()#fleurinp)
             formula = structure.get_formula()
         else:
-            print("No files found in {}".format(path))
+            print(("No files found in {}".format(path)))
             continue
         scf_para = wf_para_base_dict_list[i]
         print(scf_para)
         label = 'fleur_scf_benchmark_run_{}'.format(formula)
         description = 'Fleur benchmark run on system {} with resources {}'.format(formula, scf_para['resources'])
-        print('submitting {}'.format(label))
-        res = submit(fleur_scf_wc, wf_parameters=ParameterData(dict=scf_para), fleurinp=fleurinp, fleur=code_node, _label=label, _description=description)
+        print(('submitting {}'.format(label)))
+        res = submit(fleur_scf_wc, wf_parameters=Dict(dict=scf_para), fleurinp=fleurinp, fleur=code_node, _label=label, _description=description)
         all_res.append(res)
     return all_res
 
@@ -129,7 +131,7 @@ benchmark_system_folders = []
 for system in systems_to_run:
     sys_res = benchmark_system_resources.get(system, {}).get(clabel, {})
     if not sys_res:
-        print('INPUT VALIDATION WARNING: No benchmark to run on computer "{}" for system "{}"'.format(clabel, system))
+        print(('INPUT VALIDATION WARNING: No benchmark to run on computer "{}" for system "{}"'.format(clabel, system)))
         continue
     benchmark_system_folder = os.path.join(basepath, system +'/input_files/')
     

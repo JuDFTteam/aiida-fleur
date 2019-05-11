@@ -4,27 +4,27 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
 In this module is the Fleurinpmodefier class, which is used to manipulate
-fleurinpdata objects in a way which keeps the proverance.
+fleurinpdata objects in a way which keeps the provernance.
 """
 
-# TODO implement undo
 # TODO general clean up
-# TODO discuss design again what is really needed and the default way to du things
+# TODO discuss design again what is really needed and the default way to do things
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from aiida.orm import DataFactory
-#from aiida.workflows2.wf import wf
-from aiida.work.workfunctions import workfunction as wf
+from aiida.plugins import DataFactory
+from aiida.engine.processes.functions import calcfunction as cf
 
 FleurinpData = DataFactory('fleur.fleurinp')
 
@@ -38,10 +38,10 @@ class FleurinpModifier(object):
         self._tasks = []
 
     @staticmethod
-    @wf
+    @cf
     def modify_fleurinpdata(original, modifications):
         """
-        WF, original must be a fleurinp data, modifications a fleurinp data as well
+        CF, original must be a fleurinp data, modifications a fleurinp data as well
         modification a python dict of the form {'task':
 
         modifications parameter data of the form: {'tasks:
@@ -56,31 +56,40 @@ class FleurinpModifier(object):
         # save inp.xml
         # store new fleurinp (copy)
 
-        new_fleurinp = original.copy()
+        new_fleurinp = original.clone()
         # TODO test if file is there!
-        inpxmlfile = new_fleurinp.get_file_abs_path('inp.xml')
+        #inpxmlfile = new_fleurinp.get_file_abs_path('inp.xml')
+        inpxmlfile = new_fleurinp.open(key='inp.xml')
         modification_tasks = modifications.get_dict()['tasks']
 
         xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
 
-        tree = etree.parse(inpxmlfile)
+        tree = etree.parse(inpxmlfile, parser)
+        #replace XInclude parts to validate against schema
+        tree.xinclude()
         # there is a bug when validating at parsetime, therefore we only
         #validate at parse time if file is invalid, to get nice error message
         if not xmlschema.validate(tree):
-            tree = etree.parse(inpxmlfile, parser)
+            raise InputValidationError(
+                      "Input file is not validated against the schema.")
 
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
             modification_tasks=modification_tasks)
+        
+        # To include object store storage this prob has to be done differently
 
-        inpxmlfile = os.path.join(
-                         new_fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
-        new_fleurtree.write(inpxmlfile)
+        inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
+        inpxmlfile.close()
+        #inpxmlfile = os.path.join(
+        #                 new_fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
+
+        new_fleurtree.write(inpxmlfile_new)
 
         new_fleurinp.del_file('inp.xml')
-        new_fleurinp._add_path(str(inpxmlfile), 'inp.xml')
-        os.remove(inpxmlfile)
+        new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
+        os.remove(inpxmlfile_new)
 
         # default label and description
         new_fleurinp.label = 'mod_fleurinp'# {}'.format(original.label)
@@ -267,7 +276,7 @@ class FleurinpModifier(object):
                 if not xmlschema.validate(fleurinp_tree_copy):
                     pass# do something to get nice error message
                     # TODO maybe even delete wrong task
-                    print('change not valid: {}'.format(task[1:]))
+                    print(('change not valid: {}'.format(task[1:])))
                 else:
                     pass
         return workingtree
@@ -362,7 +371,8 @@ class FleurinpModifier(object):
 
     def validate(self):
         #print('in validate')
-        inpxmlfile = self._original.get_file_abs_path('inp.xml')
+        #inpxmlfile = self._original.get_file_abs_path('inp.xml')
+        inpxmlfile = self._original.open(key='inp.xml')
         tree = etree.parse(inpxmlfile)
 
         try:# could be not found or on another computer...
@@ -383,7 +393,8 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            inpxmlfile = self._original.get_file_abs_path('inp.xml')
+            #inpxmlfile = self._original.get_file_abs_path('inp.xml')
+            inpxmlfile = self._original.open(key='inp.xml')
             tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
@@ -399,15 +410,19 @@ class FleurinpModifier(object):
         return self._tasks
 
     def freeze(self):
-        modifications = DataFactory("parameter")(dict={"tasks": self._tasks})
+        """
+        This method applies all the modifications to the input and 
+        returns a new stored fleurinpData object.
+        """
+        modifications = DataFactory("dict")(dict={"tasks": self._tasks})
         modifications.description = u'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = u'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
         out = self.modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
-            label='fleurinp modifier',
-            description='This workfunction modified an Fleurinpdataobject')
+            metadata={'label' : 'fleurinp modifier',
+            'description' : 'This calcfunction modified an Fleurinpdataobject'})
         return out
 
     def undo(self, all=False):

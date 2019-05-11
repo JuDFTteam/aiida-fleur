@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -23,14 +23,19 @@ create_group
 
 """
 # TODO import, export of descriptions, and labels...?
+from __future__ import absolute_import
+from __future__ import print_function
 import json
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.querybuilder import QueryBuilder, Node
-from aiida.orm import Group
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm import Group, Node
+import six
+from six.moves import input
 
 
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
@@ -54,11 +59,11 @@ def export_extras(nodes, filename='node_extras.txt'):
     for node in nodes:
         if isinstance(node, int): #pk
             node = load_node(node)
-        elif isinstance(node, basestring): #uuid
+        elif isinstance(node, six.string_types): #uuid
             node = load_node(node)
 
         if not isinstance(node, Node):
-            print('skiped node {}, is not an AiiDA node, did not know what to do.'.format(node))
+            print(('skiped node {}, is not an AiiDA node, did not know what to do.'.format(node)))
             continue
         uuid = node.uuid
         extras_dict = node.get_extras()
@@ -104,13 +109,13 @@ def import_extras(filename):
     except:
         print('The file has to be loadabel by json. i.e json format (which it is not).')
 
-    for uuid, extras in all_extras.iteritems():
+    for uuid, extras in six.iteritems(all_extras):
 
         try:
             node = load_node(uuid)
         except:
             # Does not exists
-            print('node with uuid {} does not exist in DB'.format(uuid))
+            print(('node with uuid {} does not exist in DB'.format(uuid)))
             node = None
             continue
         if isinstance(node, Node):
@@ -149,10 +154,10 @@ def delete_nodes(pks_to_delete):
         all_pks_to_delete.update(models.DbNode.objects.filter(
             parents__in=pks_to_delete).values_list('pk', flat=True))
 
-    print("I am going to delete {} nodes, including ALL THE CHILDREN"
+    print(("I am going to delete {} nodes, including ALL THE CHILDREN"
           "of the nodes you specified. Do you want to continue? [y/N]"
-          "".format(len(all_pks_to_delete)))
-    answer = raw_input()
+          "".format(len(all_pks_to_delete))))
+    answer = input()
 
     if answer.strip().lower() == 'y':
         # Recover the list of folders to delete before actually deleting
@@ -193,11 +198,11 @@ def delete_trash():
     res = q.all()
     for node in res:
         nodes_to_delete_pks.append(node[0].dbnode.pk)
-        print('pk {}, extras {}'.format(node[0].dbnode.pk, node[0].get_extras()))
+        print(('pk {}, extras {}'.format(node[0].dbnode.pk, node[0].get_extras())))
 
     #Delete the trash nodes
 
-    print('deleting nodes {}'.format(nodes_to_delete_pks))
+    print(('deleting nodes {}'.format(nodes_to_delete_pks)))
     delete_nodes(nodes_to_delete_pks)
 
     return
@@ -220,10 +225,10 @@ def create_group(name, nodes, description=None):
     """
     group, created = Group.get_or_create(name=name)
     if created:
-        print('Group created with PK={} and name {}'.format(group.pk, group.name))
+        print(('Group created with PK={} and name {}'.format(group.pk, group.name)))
     else:
-        print('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.name, group.pk))
-        answer = raw_input()
+        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.name, group.pk)))
+        answer = input()
         if answer.strip().lower() == 'y':
             pass
         else:
@@ -242,7 +247,7 @@ def create_group(name, nodes, description=None):
             pass
 
     group.add_nodes(nodes2)
-    print('added nodes: {} to group {} {}'.format(nodes2_pks, group.name, group.pk))
+    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.name, group.pk)))
 
     if description:
         group.description = description

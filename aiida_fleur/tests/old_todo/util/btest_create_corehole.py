@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -14,7 +16,7 @@ import sys,os
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_fleur_ad.util.create_corehole import create_corehole, create_corehole_fleurinp, write_change
-from aiida.orm import Code, CalculationFactory, DataFactory
+from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
 from pprint import pprint
 from aiida_fleur.tools.StructureData_util import break_symmetry as bs
@@ -37,7 +39,7 @@ ids = []#13924]#, 13925]#, 13926, 13927, 13928, 13929, 13930, 13931, 13932, 1393
 
 kind ='W1'
 econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
-para1 = ParameterData(dict={
+para1 = Dict(dict={
                   'title': 'A test calculation of Tungsten',
                   'input': {
                        'film': False,
@@ -89,10 +91,10 @@ valenceconfig = 'same'
 #pprint(fleurinp.inp_dict)
 
 new_inp = create_corehole_fleurinp(fleurinp, species, stateocc)
-print new_inp
+print(new_inp)
 
 etree = ''
 change = [(1,2)]
 res = write_change(etree, change)
 #res.write('.outtree')
-print res
+print(res)

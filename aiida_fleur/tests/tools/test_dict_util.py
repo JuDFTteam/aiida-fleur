@@ -1,8 +1,9 @@
 
 
 # dict_merger
+from __future__ import absolute_import
 def test_dict_merger_interface_dicts_lists_str_int():
-    from aiida_fleur.tools.ParameterData_util import dict_merger
+    from aiida_fleur.tools.dict_util import dict_merger
 
     dict1 = {'a1' : {'b1' : [1]}}
     dict2 = {'a1' : {'b1': [2,3]}}
@@ -19,7 +20,7 @@ def test_dict_merger_interface_dicts_lists_str_int():
 
 # extract_elementpara
 def test_extract_elementpara_interface_W():
-    from aiida_fleur.tools.ParameterData_util import extract_elementpara
+    from aiida_fleur.tools.dict_util import extract_elementpara
 
     para_dict = {'a' : 1, 'atom' : {'element' : 'H', 'rmt': 1}, 'atom1' : {'element' : 'W', 'rmt' : 4}}
     assert extract_elementpara(para_dict, 'W') == {'a' : 1, 'atom1' : {'element' : 'W', 'rmt' : 4}}

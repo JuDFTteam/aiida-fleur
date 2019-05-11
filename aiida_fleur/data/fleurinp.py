@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -23,17 +23,21 @@ manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 #TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
+# TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
+import six
 from lxml import etree
 #from lxml.etree import XMLSyntaxError
 
-from aiida.orm import Data
+from aiida.orm import Data, Node, load_node
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
 from aiida_fleur.tools.xml_util import  xml_set_all_attribv, xml_set_text, replace_tag
-from aiida.work.workfunctions import workfunction as wf
+from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
 bohr_a = 0.52917721092#A, todo: get from somewhereA
@@ -62,62 +66,92 @@ class FleurinpData(Data):
     start a new calculation from it.
     """
 
-    # serach in current folder and search in aiida source code
+    # search in current folder and search in aiida source code
     # we want to search in the Aiida source directory, get it from python path,
     # maybe better from somewhere else.
     #TODO: dont walk the whole python path, test if dir below is aiida?
-    #needs to be imporved, schema file is often after new installation not found...
-    #installation with pip should always lead to a schmea file in the python path, or even specific place
+    #needs to be improved, schema file is often after new installation not found...
+    #installation with pip should always lead to a schema file in the python path, or even specific place
 
-    _search_paths = []
-    ifolders = get_internal_search_paths()
-    ischemas = get_schema_paths()
-    for path in ischemas:
-        _search_paths.append(path)
-    for path in ifolders:
-        _search_paths.append(path)
-    _search_paths.append('./')
 
-    # Now add also python path maybe will be decaptivated
-    #if pythonpath is non existant catch error
-    try:
-        pythonpath = os.environ['PYTHONPATH'].split(':')
-    except KeyError:
-        pythonpath = []
 
-    for path in pythonpath[:]:
-        _search_paths.append(path)
+    def __init__(self, **kwargs):
+        """
+        Initialize a fleurinp data object set the files given
+        :param files: list of files paths to set
+        :param node: any other AiiDA node in form of node instance, pk, or uuid
+        (todo: maybe limit nodes to fleurinpdata and folder?, 
+        allow for list of nodes, because of file list?)
 
-    #_search_paths = ['./', '/Users/broeder/aiida/codes/fleur/',
-    #                 str(get_repository_folder())]
+        """
+        files = kwargs.pop('files', None)
+        node = kwargs.pop('node', None)
+        super(FleurinpData, self).__init__(**kwargs)
+
+
+        search_paths = []
+        ifolders = get_internal_search_paths()
+        ischemas = get_schema_paths()
+        for path in ischemas:
+             search_paths.append(path)
+        for path in ifolders:
+             search_paths.append(path)
+        search_paths.append('./')
+
+        # Now add also python path maybe will be decaptivated
+        #if pythonpath is non existent catch error
+        try:
+             pythonpath = os.environ['PYTHONPATH'].split(':')
+        except KeyError:
+             pythonpath = []
+
+        for path in pythonpath[:]:
+            search_paths.append(path)
+        
+
+        self.set_attribute('_has_schema', False)
+        self.set_attribute('_schema_file_path', None) 
+        self.set_attribute('_search_paths', search_paths) 
+        if files:
+            if node:
+                self.set_files(files, node=node)
+            else:
+                self.set_files(files)
 
     @property
     def _has_schema(self):
         """
         Boolean property, which stores if a schema file is already known
         """
-        return self.get_attr('_has_schema', False)
+        return self.get_attribute('_has_schema')
 
     @property
     def _schema_file_path(self):
         """
-        A string, which stores the absolute path to the schemafile fount
+        A string, which stores the absolute path to the schemafile found
         """
-        return self.get_attr('_schema_file_path', None)
+        return self.get_attribute('_schema_file_path')
+
+    @property
+    def _search_paths(self):
+        """
+        A string, which stores the paths to search for  schemafiles
+        """
+        return self.get_attribute('_search_paths')
 
     @_has_schema.setter
     def _has_schema(self, boolean):
         """
         Setter for has_schema
         """
-        self._set_attr('_has_schema', boolean)
+        self.set_attribute('_has_schema', boolean)
 
     @_schema_file_path.setter
     def _schema_file_path(self, schemapath):
         """
         Setter for the schema file path
         """
-        self._set_attr('_schema_file_path', schemapath)
+        self.set_attribute('_schema_file_path', schemapath)
 
     # files
     @property
@@ -125,10 +159,10 @@ class FleurinpData(Data):
         """
         Returns the list of the names of the files stored
         """
-        return self.get_attr('files', [])
+        return self.get_attribute('files', [])
 
     @files.setter
-    def files(self, filelist):
+    def files(self, filelist, node=None):
         """
         Add a list of files to FleurinpData.
         Alternative use setter method.
@@ -136,24 +170,45 @@ class FleurinpData(Data):
         :param files: list of filepaths
         """
         for file1 in filelist:
-            self.set_file(file1)
+            self.set_file(file1, node=node)
 
-    def set_files(self, files):
+    def set_files(self, files, node=None):
         """
         Add a list of files to FleurinpData
         Alternative setter
 
-        :param files: list of filepaths
+        :param files: list of filepaths abs, or relative
         """
-        self.files = files
+        for file1 in files:
+            self.set_file(file1, node=node)
 
-    def set_file(self, filename, dst_filename=None):
+    def set_file(self, filename, dst_filename=None, node=None):
         """
         Add a file to the FleurinpData
 
         :param filename: absolute path to the file
         """
-        self._add_path(filename, dst_filename=dst_filename)
+        self._add_path(filename, dst_filename=dst_filename, node=node)
+
+
+    def open(self, key='inp.xml', mode='r'):
+        """
+        Return an open file handle to the content of this data node.
+        
+        :param key: optional key within the repository, by default is the `inp.xml` set in the attributes
+        :param mode: the mode with which to open the file handle, default r
+        :return: a file handle in read mode
+	 """
+	
+        return super(FleurinpData, self).open(key, mode=mode)
+
+    def get_content(self, filename='inp.xml'):
+        """Return the content of the single file stored for this data node.
+        :return: the string content of the file
+        """
+        with self.open(key=filename, mode='r') as handle:
+            return handle.read()
+
 
     def del_file(self, filename):
         """
@@ -162,30 +217,34 @@ class FleurinpData(Data):
         :param filename: name of the file stored in the DB
         """
         # remove from files attr list
-        if filename in self.get_attr('files'):
+        if filename in self.get_attribute('files'):
             try:
-                self.get_attr('files').remove(filename)
-                #self._del_attr('filename')
+                self.get_attribute('files').remove(filename)
+                #self._del_attribute(‘filename')
             except AttributeError:
                 ## There was no file set
                 pass
         # remove from sandbox folder
-        if filename in self.get_folder_list():
-            super(FleurinpData, self).remove_path(filename)
+        if filename in self.list_object_names():#get_folder_list():
+            self.delete_object(filename)
+            #super(FleurinpData, self).remove_path(filename)
+    
 
-    def get_file_abs_path(self, filename):
-        """
-        Return the absolute path to a file in the repository
-
-        :param filename: name of the file
-
-        """
-        if filename in self.files:
-            return os.path.join(self._get_folder_pathsubfolder.abspath, filename)
-        else:
-            raise ValueError(
-                '{} is not in {}'.format(filename,
-                    os.path.join(self._get_folder_pathsubfolder.abspath)))
+    # AiiDA API changed do not use abs_paths, you can get the content, or a file reader, 
+    # see self.open and self.get_content()
+    #def get_file_abs_path(self, filename):
+    #    """
+    #    Return the absolute path to a file in the repository
+    #
+    #    :param filename: name of the file
+    #
+    #    """
+    #    if filename in self.files:
+    #        return os.path.join(self._get_folder_pathsubfolder.abspath, filename)
+    #    else:
+    #        raise ValueError(
+    #            '{} is not in {}'.format(filename,
+    #                os.path.join(self._get_folder_pathsubfolder.abspath)))
 
     def find_schema(self, inp_version_number):
         """
@@ -227,46 +286,88 @@ class FleurinpData(Data):
                             for version_number in schema_version_numbers:
                                 if version_number == inp_version_number:
                                     #we found the right schemafile for the current inp.xml
-                                    self._set_attr('_schema_file_path', schemafile_path)
-                                    self._set_attr('_has_schema', True)
+                                    self.set_attribute('_schema_file_path', schemafile_path)
+                                    self.set_attribute('_has_schema', True)
                                     return schemafile_paths, True
 
         return schemafile_paths, False
 
-    def _add_path(self, src_abs, dst_filename=None):
+    def _add_path(self, file1, dst_filename=None, node=None):
         """
-        Add a single file to folder
+        Add a single file to folder. The destination name can be different. inp.xml is a special case.
+        file names are stored in the db, files in the repo.
 
         """
         #TODO, only certain files should be allowed to be added
         #_list_of_allowed_files = ['inp.xml', 'enpara', 'cdn1', 'sym.out', 'kpts']
 
-        old_file_list = self.get_folder_list()
+        #old_file_list = self.get_folder_list()
+        
 
-        if not os.path.isabs(src_abs):
-            raise ValueError("Pass an absolute path for src_abs: {}".format(src_abs))
 
-        if not os.path.isfile(src_abs):
-            raise ValueError("src_abs must exist and must be a single file: {}".format(src_abs))
+        if node:
+            if not isinstance(node, Node):
+                #try:
+                node = load_node(node)
+                #except
 
-        if dst_filename is None:
-            final_filename = os.path.split(src_abs)[1]
+            if file1 in node.list_object_names():
+                file1 = node.open(file1, mode='r')
+            else:# throw error? you try to add something that is not there
+                pass
+
+        if isinstance(file1, six.string_types):
+            is_filelike = False
+            
+            if not os.path.isabs(file1):
+                file1 = os.path.abspath(file1)
+                #raise ValueError("Pass an absolute path for file1: {}".format(file1))
+
+            if not os.path.isfile(file1):
+                raise ValueError("file1 must exist and must be a single file: {}".format(file1))
+
+            if dst_filename is None:
+                final_filename = os.path.split(file1)[1]
+            else:
+                final_filename = dst_filename
         else:
-            final_filename = dst_filename
+            is_filelike = True
+            final_filename = os.path.basename(file1.name)        
 
-        super(FleurinpData, self).add_path(src_abs, final_filename)
 
-        old_files_list = self.get_attr('files', [])
+        key = final_filename
+        
+        old_file_list = self.list_object_names()
+        old_files_list = self.get_attribute('files', [])
 
         if final_filename not in old_file_list:
             old_files_list.append(final_filename)
-        self._set_attr('files', old_files_list)
+        else:
+            try:
+                old_file_list.remove(final_filename)
+            except ValueError:
+                pass
+        
+        if is_filelike:
+            self.put_object_from_filelike(file1, key)
+            if file1.closed:
+                file1 = self.open(file1.name, file1.mode)
+            else: #reset reading to 0
+                file1.seek(0)
+        else:
+            self.put_object_from_file(file1, key)
+        
+        self.set_attribute('files', old_files_list)
 
         # here this is hardcoded, might want to change? get filename from elsewhere
         if final_filename == 'inp.xml':
             #get input file version number
             inp_version_number = None
-            inpfile = open(src_abs, 'r')
+            if is_filelike: # at this point it was read..
+                # TODO this does not work.. reading it now is []..
+                inpfile = file1       
+            else:
+                inpfile = open(file1, 'r')
             for line in inpfile.readlines():
                 if re.search('fleurInputVersion', line):
                     inp_version_number = re.findall(r'\d+.\d+', line)[0]
@@ -276,12 +377,19 @@ class FleurinpData(Data):
                 raise InputValidationError("No fleurInputVersion number found "
                     "in given input file: {}. "
                     "Please check if this is a valid fleur input file. "
-                    "It can not be validated and I can not use it. ".format(src_abs))
+                    "It can not be validated and I can not use it. ".format(file1))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
 
-            if (self._schema_file_path is None) or (self.inp_userchanges.has_key('fleurInputVersion')): #(not)
+            if (not self._has_schema) and (self._schema_file_path is None):
+                raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
+                    "to the inp.xml file was found. I have looked here: {} "
+                    "and have found only these schema files for Fleur: {}. "
+                    "I need this file to validate your input and to know the structure "
+                    "of the current inp.xml file, sorry.".format(inp_version_number,
+                                                          self._search_paths, schemafile_paths))
+            if (self._schema_file_path is None):# or ('fleurInputVersion' in self.inp_userchanges): #(not)
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not(found):
                     raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
@@ -290,14 +398,6 @@ class FleurinpData(Data):
                         "I need this file to validate your input and to know the structure "
                         "of the current inp.xml file, sorry.".format(inp_version_number,
                                                           self._search_paths, schemafile_paths))
-            if (not self._has_schema) and (self._schema_file_path is None):
-                raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
-                    "to the inp.xml file was found. I have looked here: {} "
-                    "and have found only these schema files for Fleur: {}. "
-                    "I need this file to validate your input and to know the structure "
-                    "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                          self._search_paths, schemafile_paths))
-
             # set inp dict of Fleurinpdata
             self._set_inp_dict()
 
@@ -315,35 +415,29 @@ class FleurinpData(Data):
         inpxmlstructure = get_inpxml_file_structure()
 
         # read xmlinp file into an etree with autocomplition from schema
-        inpxmlfile = self.get_file_abs_path('inp.xml')
-
+        #inpxmlfile = self.get_file_abs_path('inp.xml')
+        inpxmlfile = self.open(key='inp.xml', mode='r')
+        
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
         #dtd_validation=True
 
-        tree = etree.parse(inpxmlfile)#, parser)
-        # there is a bug when validating at parsetime, therefore we only
-        #validate at parse time if file is invalid, to get nice error message
+        tree = etree.parse(inpxmlfile, parser)
+        #replace XInclude parts to validate against schema
+        tree.xinclude()
+        #check if it validates against the schema
         if not xmlschema.validate(tree):
-            tree = etree.parse(inpxmlfile, parser)
-
+            raise InputValidationError(
+                      "Input file is not validated against the schema.")
+        inpxmlfile.close()
         root = tree.getroot()
 
         # convert etree into python dictionary
         inpxml_dict = inpxml_todict(root, inpxmlstructure)
-
         # set inpxml_dict attribute
-        self._set_attr('inp_dict', inpxml_dict)
+        self.set_attribute('inp_dict', inpxml_dict)
 
-
-    # tracing user changes
-    @property
-    def inp_userchanges(self):
-        """
-        Return the changes done by the user on the inp.xml file.
-        """
-        return self.get_attr('inp_userchanges', {})
 
     # dict with inp paramters parsed from inp.xml
     @property
@@ -352,23 +446,8 @@ class FleurinpData(Data):
         Returns the inp_dict (the representation of the inp.xml file) as it will
         or is stored in the database.
         """
-        return self.get_attr('inp_dict', {})
+        return self.get_attribute('inp_dict', {})
 
-    def copy(self):
-        """
-        Method to copy a FleurinpData and keep the proverance.
-        (because currently that is not default)
-        """
-        # TODO: do to clone() behavior of aiida 1.0 might be obsolete
-        # copy only the files not the user changes and so on.
-
-        filepath = []
-        for file in self.files:
-            filepath.append(self.get_file_abs_path(file))
-
-        new = FleurinpData(files=filepath)
-
-        return new
 
     # TODO better validation? other files, if has a schema
     def _validate(self):
@@ -426,16 +505,17 @@ class FleurinpData(Data):
         return fleur_modes
 
     #@staticmethod
-    def get_structuredata_nwf(fleurinp):
+    def get_structuredata_ncf(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file. not a workfunction
+        file. not a calcfunction
 
         :return: StructureData node, or None
         """
-        from aiida.orm.data.structure import StructureData
+        from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
-
+        
+        #StructureData = DataFactory(‘structure’)
         #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
         #therefore maintainance might be needed, if you want to circumvent this, you have
         #to get all the paths from somewhere.
@@ -466,7 +546,8 @@ class FleurinpData(Data):
             return None
 
         # read in inpxml
-        inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
+        #inpxmlfile = fleurinp.get_file_abs_path('inp.xml')#'./inp.xml'
+        inpxmlfile = fleurinp.open(key='inp.xml')
 
         if fleurinp._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
@@ -476,7 +557,7 @@ class FleurinpData(Data):
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
-
+        inpxmlfile.close()
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -611,34 +692,34 @@ class FleurinpData(Data):
                 print('I should never get here, 1D not supported yet, '
                       'I only know relPos, absPos, filmPos')
                 #TODO throw error
-        # TODO DATA-DATA links are not wanted, you might want to use a wf instead
+        # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(fleurinp, label='fleurinp.structure', link_type=LinkType.CREATE)
         #label='fleurinp.structure'
         #return {label : struc}
         return struc
 
     @staticmethod
-    @wf
+    @cf
     def get_structuredata(fleurinp):
         """
         This routine return an AiiDA Structure Data type produced from the inp.xml
-        file. This is a workfunction and therefore keeps the provenance.
+        file. This is a calcfunction and therefore keeps the provenance.
 
         :return: StructureData node
         """
-        return fleurinp.get_structuredata_nwf(fleurinp)
+        return fleurinp.get_structuredata_ncf(fleurinp)
 
 
 
     @staticmethod
-    def get_kpointsdata_nwf(fleurinp):
+    def get_kpointsdata_ncf(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is NOT a workfunction and does not keep the provenance!
+        This is NOT a calcfunction and does not keep the provenance!
         :return: KpointsData node
         """
-        from aiida.orm.data.array.kpoints import KpointsData
+        from aiida.orm import KpointsData
 
 
         #HINT, TODO:? in this routine, the 'cell' you might get in an other way
@@ -674,7 +755,8 @@ class FleurinpData(Data):
             return False
 
         # else read in inpxml
-        inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
+        #inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
+        inpxmlfile = fleurinp.open(key='inp.xml')
 
         if fleurinp._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
@@ -684,7 +766,7 @@ class FleurinpData(Data):
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
-
+        inpxmlfile.close()
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -745,7 +827,8 @@ class FleurinpData(Data):
             totalw = 0
             for weight in kpoints_weight:
                 totalw = totalw + weight
-            kps = KpointsData(cell=cell)
+            kps = KpointsData()
+            kps.set_cell(cell)
             kps.pbc = pbc1
 
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)
@@ -759,24 +842,24 @@ class FleurinpData(Data):
 
 
     @staticmethod
-    @wf
+    @cf
     def get_kpointsdata(fleurinp):
         """
         This routine returns an AiiDA kpoint Data type produced from the inp.xml
         file. This only works if the kpoints are listed in the in inpxml.
-        This is a workfunction and does keep the provenance!
+        This is a calcfunction and does keep the provenance!
         :return: KpointsData node
         """
 
-        return fleurinp.get_kpointsdata_nwf(fleurinp)
+        return fleurinp.get_kpointsdata_ncf(fleurinp)
 
     # TODO: or move these outside...?
     #@staticmethod
-    def get_parameterdata_nwf(self):
+    def get_parameterdata_ncf(self):
         """
         This routine returns an AiiDA ParameterData type produced from the inp.xml
         file. This node can be used for inpgen.
-        This is NOT a workfunction and does NOT keep the provenance!
+        This is NOT a calcfunction and does NOT keep the provenance!
         :return: ParameterData node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
@@ -786,25 +869,25 @@ class FleurinpData(Data):
             return False
 
         # read in inpxml
-        inpxmlfile = self.get_file_abs_path('inp.xml')#'./inp.xml'
-
+        #inpxmlfile = self.get_file_abs_path('inp.xml')#'./inp.xml'
+        inpxmlfile = self.open(key='inp.xml', mode='r')
         new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
-
+        inpxmlfile.close() # I don’t like this
         return new_parameters
 
 
-    # Is there a way to give self to workfunctions?
+    # Is there a way to give self to calcfunctions?
     @staticmethod
-    @wf
+    @cf
     def get_parameterdata(fleurinp):
         """
         This routine returns an AiiDA ParameterData type produced from the inp.xml
         file. This node can be used for inpgen.
-        This is a workfunction and does keep the provenance!
+        This is a calcfunction and does keep the provenance!
         :return: ParameterData node
         """
 
-        return fleurinp.get_parameterdata_nwf()
+        return fleurinp.get_parameterdata_ncf()
 
 
 
@@ -818,8 +901,8 @@ class FleurinpData(Data):
         #fleurinp = fleurinp_orgi.copy()
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
-            inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
-
+            #inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
+            inpxmlfile = fleurinp.open(key='inp.xml')
             if fleurinp._schema_file_path: # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -828,7 +911,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             root = tree.getroot()
         else:
             raise InputValidationError(
@@ -849,10 +932,10 @@ class FleurinpData(Data):
         return fleurinp
     '''
 
-    @wf
+    @cf
     def set_kpointsdata(fleurinp_orgi, KpointsDataNode):
         """
-        This function writes the all the kpoints from a KpointsDataNode in the
+        This calc function writes the all the kpoints from a KpointsDataNode in the
         inp.xml file as a kpointslist. It replaces the Kpoints written in the
         inp.xml file.
 
@@ -860,7 +943,7 @@ class FleurinpData(Data):
         KpointsDataNode with weights. In the future FLEUR might recalculate them.
         :params: KpointsData node
         """
-        from aiida.orm.data.array.kpoints import KpointsData
+        from aiida.orm import KpointsData
         #from aiida.common.exceptions import InputValidationError
 
         #TODO: This is probably broken and should be moved to fleurinpmodifier
@@ -891,8 +974,8 @@ class FleurinpData(Data):
 
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
-            inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
-
+            #inpxmlfile = fleurinp.get_file_abs_path('inp.xml')
+            inpxmlfile = fleurinp.open(key='inp.xml')
             if fleurinp._schema_file_path: # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -901,7 +984,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             #root = tree.getroot()
         else:
             raise InputValidationError(
@@ -935,7 +1018,7 @@ class FleurinpData(Data):
 
         # write new inp.xml, schema evaluation will be done when the file gets added
         new_tree.write(inpxmlfile)
-        print('wrote tree to' + str(inpxmlfile))
+        print(('wrote tree to' + str(inpxmlfile)))
 
         # delete old inp.xml file, not needed anymore
         #TODO maybe do some checks before
@@ -961,8 +1044,8 @@ class FleurinpData(Data):
 
         if 'inp.xml' in self.files:
             # read in inpxml
-            inpxmlfile = self.get_file_abs_path('inp.xml')
-
+            #inpxmlfile = self.get_file_abs_path('inp.xml')
+            inpxmlfile = self.open(key='inp.xml', mode='r')
             if self._schema_file_path: # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)
@@ -971,7 +1054,7 @@ class FleurinpData(Data):
             else: #schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
                 tree = etree.parse(inpxmlfile)
-
+            inpxmlfile.close()
             root = tree.getroot()
         else:
             raise InputValidationError(

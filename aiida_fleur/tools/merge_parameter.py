@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -14,17 +14,19 @@
 This module, contains a method to merge parameterData nodes used by the FLEUR inpgen.
 This might also be of interest for other all-ellectron codes
 """
-# TODO this should be made an inline calculation or workfunction to
+# TODO this should be made an inline calculation or calcfunction to
 # keep the proverance!
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
-from aiida.orm import Code, CalculationFactory, DataFactory
+from __future__ import absolute_import
+from __future__ import print_function
+from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
-from aiida.orm.data.base import Bool
-from aiida.work import workfunction as wf
+from aiida.orm.nodes.base import Bool
+from aiida.engine import calcfunction as cf
 
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     """
@@ -94,28 +96,28 @@ def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     # be carefull with atom namelist
 
 
-    return ParameterData(dict=new_dict)
+    return Dict(dict=new_dict)
 
 
 def merge_parameters(ParameterDataList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
-    paremeter_data_new = ParameterData(dict= {})
+    paremeter_data_new = Dict(dict= {})
 
     for i, parameter in enumerate(ParameterDataList):
         if isinstance(parameter, ParameterData):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter))
+            print(('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter)))
 
     return paremeter_data_new
 
-@wf
-def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
+@cf
+def merge_parameter_cf(ParameterData1, ParameterData2, overwrite=Bool(True)):
     """
-    workfunction of merge_parameters
+    calcfunction of merge_parameters
     """
     paremeter_data_new = merge_parameter(ParameterData1, ParameterData2, overwrite=overwrite)
 
@@ -125,10 +127,10 @@ def merge_parameter_wf(ParameterData1, ParameterData2, overwrite=Bool(True)):
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
 # makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
 # I guess...
-@wf
+@cf
 def merge_parameters_wf(*ParameterDatas, overwrite=Bool(True)):
     """
-    workfunction of merge_parameters
+    calcfunction of merge_parameters
     """
     ParameterDataList = []
     for parameter in ParameterDatas:

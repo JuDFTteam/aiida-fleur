@@ -1,6 +1,8 @@
 #!/usr/bin/env runaiida
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -15,7 +17,7 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
 # invoke the mpirun command in the submission script)
@@ -36,8 +38,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print >> sys.stderr, ("The first parameter can only be either "
-                          "--send or --dont-send")
+    print(("The first parameter can only be either "
+                          "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -58,7 +60,7 @@ inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida_fleur_plugin/tests/i
 symout = '/usr/users/iff_th1/broeder/aiida/github/aiida_fleur_plugin/tests/inp_xml_files/PTO-SOCXML/files/sym.out'
 
 fleurinp = FleurinpData(files = [inpxmlfile, symout])
-print fleurinp.files
+print(fleurinp.files)
 ## For remote codes, it is not necessary to manually set the computer,
 ## since it is set automatically by new_calc
 #computer = code.get_remote_computer()
@@ -92,17 +94,17 @@ if settings is not None:
 
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print "Test_submit for calculation (uuid='{}')".format(
-        calc.uuid)
-    print "Submit file in {}".format(os.path.join(
+    print("Test_submit for calculation (uuid='{}')".format(
+        calc.uuid))
+    print("Submit file in {}".format(os.path.join(
         os.path.relpath(subfolder.abspath),
         script_filename
-    ))
+    )))
 else:
     calc.store_all()
-    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
     calc.submit()
-    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk)
+    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+        calc.uuid, calc.dbnode.pk))
 

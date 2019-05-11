@@ -4,17 +4,20 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
-from aiida.orm import DataFactory
+from __future__ import absolute_import
+from __future__ import print_function
+from aiida.plugins import DataFactory
+import six
 
 
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 #355
 
 def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
@@ -34,7 +37,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     from aiida.common.constants import elements as PeriodicTableElements
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in PeriodicTableElements.iteritems()}
+                           data in six.iteritems(PeriodicTableElements)}
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -50,7 +53,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     #count = 0
     if parameterData:
         new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
-        for key, val in new_parameterd.iteritems():
+        for key, val in six.iteritems(new_parameterd):
             if 'atom' in key:
                 if val.get('element', None) == symbol:
                     # remember id is atomic number.some int
@@ -70,7 +73,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
         else:
             new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig}}
 
-    new_parameter= ParameterData(dict=new_parameterd)
+    new_parameter= Dict(dict=new_parameterd)
     #if parameterData:
     #    new_parameter = merge_parameter(parameterData, new_parameter)
     return new_parameter#structure
@@ -144,7 +147,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
             valenceconfig = eval_xpath2(econfig, 'valenceConfig')
             occupations = eval_xpath2(econfig, 'stateOccupation')
 
-            for key, val in stateocc.iteritems():
+            for key, val in six.iteritems(stateocc):
                 added = False
                 for occ in occupations:
                     name = get_xml_attribute(occ, 'state')

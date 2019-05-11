@@ -13,17 +13,20 @@
 """
 Here we run the fleur_band_wc for W or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine import submit, run
 from aiida_fleur.workflows.band import fleur_band_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -61,14 +64,14 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 4,
+wf_para = Dict(dict={'fleur_runmax' : 4,
                               'kpath' : 'auto',
                               'nkpts' : 800,
                               'sigma' : 0.005,
                               'emin' : -0.30, 
                               'emax' :  0.80})
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
                               'max_wallclock_seconds':  60*60})
 
@@ -122,7 +125,7 @@ print("##################### TEST fleur_band_wc #####################")
 if submit_wc:
     res = submit(fleur_band_wc, **inputs)
     print("##################### Submited fleur_band_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_band_wc #####################")
 else:
     print("##################### Running fleur_dos_wc #####################")

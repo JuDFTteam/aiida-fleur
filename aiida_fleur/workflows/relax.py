@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -22,23 +22,26 @@ This module, contains the crystal structure relaxation workflow for FLEUR.
 #from ase import *
 #from ase.lattice.surface import *
 #from ase.io import *
-from aiida.orm import Code, DataFactory, load_node
-from aiida.work.workchain import WorkChain, while_, if_, ToContext
-from aiida.work.run import run, submit
+from __future__ import absolute_import
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.engine import WorkChain, while_, if_, ToContext
+from aiida.engine import run, submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import fleur_scf_wc
+import six
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 class fleur_relax_wc(WorkChain):
     """
     This workflow relaxes a structure with Fleur calculation.
 
-    :Params: a parameterData node,
+    :Params: a Dict node,
     :returns: Success, last result node, list with convergence behavior
     """
     # wf_parameters: { wf_convergence_para:{  'density_criterion', 'energy_criterion'} #'converge_density' = True, 'converge_energy'= True}, max_force_cycle, force_criterion
@@ -46,12 +49,12 @@ class fleur_relax_wc(WorkChain):
     @classmethod
     def _define(cls, spec):
         super(fleur_relax_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=True)
-                   #, required=False, default = ParameterData(
+        spec.input("wf_parameters", valid_type=Dict, required=True)
+                   #, required=False, default = Dict(
                    #dict={'relax_runmax' : 4, 'fleur_runmax' : 10, 'density_criterion' : 0.00002 , 'converge_density': True, 'converge_energy' : True, 'energy_criterion' : 0.00002})# htr
                    #{default=make_str('quantumespresso.pw')))
         spec.input("structure", valid_type=StructureData)#, required=False
-        spec.input("calc_parameters", valid_type=ParameterData)#, required=False
+        spec.input("calc_parameters", valid_type=Dict)#, required=False
         #spec.input("parent_calculation", valid_type=JobCalculation)#, required=False # either fleur or inpgen.
         spec.input("inpgen", valid_type=Code)#, required=False
         #spec.input("computer", valid_type=Computer)#, required=False, default=get_computer_from_string('iff003')
@@ -239,6 +242,6 @@ class fleur_relax_wc(WorkChain):
             self.report('Done, I reached the number of forces cycles, system is not relaxed enough.')
             self.report('Fleur converged the total forces after {} scf-force cycles to {} ""'.format(self.ctx.loop_count2, largest_force))
         outdict = self.ctx.last_calc2
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)        # return success, and the last calculation outputs
         # ouput must be aiida Data types.

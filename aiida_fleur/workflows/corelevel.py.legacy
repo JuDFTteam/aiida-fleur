@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -19,20 +19,23 @@ energies and corelevel shifts with different methods.
 # TODO alow certain kpoint path, or kpoint node, so far auto
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext
+from aiida.plugins import Code, DataFactory
+from aiida.engine import WorkChain
+from aiida.engine import submit
+from aiida.engine import ToContext
+from aiida.engine import while_, if_
 #from aiida.work.process_registry import ProcessRegistry
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida.work.workchain import while_, if_
 from aiida_fleur.tools.create_corehole import create_corehole
+import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
@@ -44,7 +47,7 @@ class fleur_corelevel_wc(WorkChain):
 
 
     '''
-    # wf_Parameters: ParameterData,
+    # wf_Parameters: Dict,
     '''
     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
     'Bes' : [W4f, Be1s]
@@ -77,8 +80,8 @@ class fleur_corelevel_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(corelevel, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict={
                                             'method' : 'initial',
                                             'atoms' : 'all',
                                             'references' : 'calculate',
@@ -91,7 +94,7 @@ class fleur_corelevel_wc(WorkChain):
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.outline(
             cls.check_input,
             if_(cls.initalstate)(
@@ -112,7 +115,7 @@ class fleur_corelevel_wc(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        print('started bands workflow version {}'.format(self._workflowversion))
+        print(('started bands workflow version {}'.format(self._workflowversion)))
         print("Workchain node identifiers: ")#{}"
               #"".format(ProcessRegistry().current_calc_node))
 
@@ -175,7 +178,7 @@ class fleur_corelevel_wc(WorkChain):
 
         if self.ctx.queue:
             inputs._options.queue_name = self.ctx.queue
-            print(self.ctx.queue)
+            print((self.ctx.queue))
         # if code local use
         #if self.inputs.fleur.is_local():
         #    inputs._options.computer = computer
@@ -208,8 +211,8 @@ class fleur_corelevel_wc(WorkChain):
         '''
         # TODO more here
         print('Band workflow Done')
-        print('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+        print(('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc)))
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -247,9 +250,9 @@ class fleur_corelevel_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         outdict['band_out'] = outputnode
         #print outdict
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             self.out(k, v)

@@ -13,19 +13,22 @@
 """
 Here we run the fleur_intitial_cls_wc  on some material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine import submit, run
 from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
 
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -62,7 +65,7 @@ print(args)
 
 ### Defaults ###
 
-options = ParameterData(dict={'resources' : {"num_machines": 1},
+options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
                               'max_wallclock_seconds':  60*60})
 
@@ -72,7 +75,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -116,7 +119,7 @@ else:
 if args.wf_parameters is not None:
     inputs['wf_parameters'] = load_node(args.wf_parameters)
 else:
-    wf_para = ParameterData(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
+    wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
     inputs['wf_parameters'] = wf_para
 
 
@@ -144,7 +147,7 @@ print("##################### TEST fleur_initial_cls_wc #####################")
 if submit_wc:
     res = submit(fleur_initial_cls_wc, **inputs)
     print("##################### Submited fleur_initial_cls_wc #####################")
-    print("Runtime info: {}".format(res))
+    print(("Runtime info: {}".format(res)))
     print("##################### Finished submiting fleur_initial_cls_wc #####################")
 else:
     print("##################### Running fleur_initial_cls_wc #####################")

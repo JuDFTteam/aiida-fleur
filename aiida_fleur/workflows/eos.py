@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -19,19 +19,24 @@ of an equation of state
 #  half number of iteration if you are close to be converged. (therefore one can start with 18 iterations, and if thats not enough run agian 9 or something)
 #from sys import argv
 #import time
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.data.base import Float
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
-from aiida.work.workfunctions import workfunction as wf
-from aiida.work.launch import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm import Float
+from aiida.engine import WorkChain, ToContext#,Outputs
+from aiida.engine import calcfunction as cf
+from aiida.engine import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
+import six
+from six.moves import range
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
@@ -42,14 +47,14 @@ class fleur_eos_wc(WorkChain):
     A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
-    :param wf_parameters: ParameterData node, optional 'wf_parameters', protocol specifieing parameter dict
+    :param wf_parameters: Dict node, optional 'wf_parameters', protocol specifieing parameter dict
     :param structure: StructureData node, 'structure' crystal structure
-    :param calc_parameters: ParameterData node, optional 'calc_parameters' parameters for inpgen
+    :param calc_parameters: Dict node, optional 'calc_parameters' parameters for inpgen
     :param inpgen: Code node,
     :param fleur: Code node,
 
 
-    :return output_eos_wc_para: ParameterData node, contains relevant output information.
+    :return output_eos_wc_para: Dict node, contains relevant output information.
     about general succces, fit results and so on.
 
 
@@ -84,25 +89,25 @@ class fleur_eos_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,
                        'guess' : 1.00}))
         spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False)
+        spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict={
+        spec.input("options", valid_type=Dict, required=False,
+                   default=Dict(dict={
                             'resources': {"num_machines": 1},
                             'max_wallclock_seconds': 60*60,
                             'queue_name': '',
                             'custom_scheduler_commands' : '',
                             'import_sys_environment' : False,
                             'environment_variables' : {}}))
-        spec.input("settings", valid_type=ParameterData, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -264,7 +269,7 @@ class fleur_eos_wc(WorkChain):
         #    #para['queue_name'] = wf_para_dict.get('queue_name')
         #    para['serial'] = wf_para_dict.get('serial')
         #    #para['custom_scheduler_commands'] = wf_para_dict.get('custom_scheduler_commands')
-        #    inputs['wf_parameters'] = ParameterData(dict=para)
+        #    inputs['wf_parameters'] = Dict(dict=para)
         if 'options' in self.inputs:
             inputs['options'] = self.inputs.options
         try:
@@ -295,14 +300,14 @@ class fleur_eos_wc(WorkChain):
         for label in self.ctx.labels:
             calc = self.ctx[label]
             try:
-                outnodedict[label] = calc.get_outputs_dict()['output_scf_wc_para']
+                outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
                 message = ('One SCF workflow failed, no scf output node: {}. I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
             
-            outpara = calc.get_outputs_dict()['output_scf_wc_para'].get_dict()
+            outpara = calc.outputs.output_scf_wc_para.get_dict()
 
             if not outpara.get('successful', False):
                 #TODO: maybe do something else here
@@ -386,7 +391,7 @@ class fleur_eos_wc(WorkChain):
             self.report('Done, but something went wrong.... Properly some individual calculation failed or a scf-cylcle did not reach the desired distance.')
 
         # output must be aiida Data types.
-        outnode = ParameterData(dict=out)
+        outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...
@@ -404,7 +409,7 @@ class fleur_eos_wc(WorkChain):
         returndict['output_eos_wc_structure'] = outputstructure
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)
 
             
@@ -428,7 +433,7 @@ if __name__ == "__main__":
     # instead you need to use somehting that will load the nodes from pks or uuids
     # checkout what other aiida people do here
     parser = argparse.ArgumentParser(description='Equation of states workchain with Fleur. Does scf-cycles for a structure with different scaleings.')
-    parser.add_argument('--wf_para', type=ParameterData, dest='wf_parameters',
+    parser.add_argument('--wf_para', type=Dict, dest='wf_parameters',
                         help='Parameter data node, specifing workflow parameters', required=False)
     parser.add_argument('--inpgen', type=Code, dest='inpgen',
                         help='The inpgen code node to use', required=True)
@@ -436,7 +441,7 @@ if __name__ == "__main__":
                         help='The FLEUR code node to use', required=True)
     parser.add_argument('--structure', type=StructureData, dest='structure',
                         help='The crystal structure node', required=True)
-    parser.add_argument('--calc_para', type=ParameterData, dest='calc_parameters',
+    parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
     args = parser.parse_args()
     res = fleur_eos_wc.run(wf_parameters=args.wf_parameters,
@@ -445,7 +450,7 @@ if __name__ == "__main__":
                            inpgen=args.inpgen, fleur=args.fleur)
 
 
-@wf
+@cf
 def create_eos_result_node(**kwargs):
     """
     This is a pseudo wf, to create the rigth graph structure of AiiDA.

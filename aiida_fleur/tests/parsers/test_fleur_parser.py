@@ -1,5 +1,6 @@
 # test all routines used by the fleur parser
 
+from __future__ import absolute_import
 import os
 import pytest
 
@@ -53,7 +54,7 @@ def test_parse_xmlout_file():
     expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.1beta',
                                 'parser_warnings': [],
                                 'unparsed': []}
-    simple_out.pop('outputfile_path') # otherwise test will fail on different installations
+    simple_out.pop('outputfile_path', None) # otherwise test will fail on different installations
     # also this should go away any way... 
     
     assert successful == True
@@ -80,7 +81,7 @@ def test_parse_xmlout_file_broken_xmlout_file():
         'parser_warnings': ['The out.xml file is broken I try to repair it.',
                            'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
          'unparsed': []}
-    
+
     assert successful == True
     assert 15 == parser_info_out['last_iteration_parsed']
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
@@ -178,7 +179,7 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     assert exp_partial_simple_out_dict['energy'] == simple_out['energy']
     assert exp_partial_simple_out_dict['energy_hartree'] == simple_out['energy_hartree']
     assert isNaN(exp_partial_simple_out_dict['fermi_energy']) == isNaN(simple_out['fermi_energy'])
-    assert 'bandgap' not in simple_out.keys()
+    assert 'bandgap' not in list(simple_out.keys())
     
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']

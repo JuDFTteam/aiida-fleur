@@ -1,6 +1,8 @@
 #!/usr/bin/env runaiida
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from __future__ import print_function
 __copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
                  "IAS-1/PGI-1, Germany. All rights reserved.")
 __license__ = "MIT license, see LICENSE.txt file"
@@ -15,9 +17,9 @@ import sys
 import os
 
 from aiida.common.example_helpers import test_and_get_code
-from aiida.orm import DataFactory, CalculationFactory, load_node
+from aiida.plugins import DataFactory, CalculationFactory, load_node
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation# as calc
-from aiida.work.run import submit, run
+from aiida.engine.run import submit, run
 
 
 ################################################################
@@ -34,8 +36,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print >> sys.stderr, ("The first parameter can only be either "
-                          "--send or --dont-send")
+    print(("The first parameter can only be either "
+                          "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -56,7 +58,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 s = StructureData(cell=cell)
 s.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -83,9 +85,9 @@ parameters = ParameterData(dict={
 calc = FleurinputgenCalculation()
 #print calc
 #calc.label = 'Test inpgen run'
-print('set label {}'.format(calc.label))
+print(('set label {}'.format(calc.label)))
 JobCalc = calc.process()
-print(JobCalc.calc)
+print((JobCalc.calc))
 print(JobCalc)
 #print(JobCalc.label)
 #JobCalc.calc.label = 'Test inpgen run'
@@ -150,7 +152,7 @@ else:
     #calc.store_all()
     print('submited')
     print(future)
-    print(JobCalc.calc)
+    print((JobCalc.calc))
 
     #print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
     #    JobCalc.uuid, JobCalc.dbnode.pk)

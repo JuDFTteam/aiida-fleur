@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from matplotlib.backends import _macosx
 import matplotlib.pyplot as pp
@@ -11,7 +13,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
 from aiida.orm.querybuilder import QueryBuilder as QB
-from aiida.orm import Node, User, DataFactory, Calculation, Computer, Code
+from aiida.plugins import Node, User, DataFactory, Calculation, Computer, Code
 from aiida.orm import load_node
 
 from aiida.tools.codespecific.fleur.StructureData_util import eos_structures
@@ -28,15 +30,15 @@ W_bcc_id2 = 24422
 W_fcc_id = 24
 
 W_bcc = load_node(W_bcc_id)
-print 'StructureData used:\n{}'.format(W_bcc)
-print 'cell: {}\n'.format(W_bcc.cell)
-print 'sites: {}\n'.format(W_bcc.sites)
+print('StructureData used:\n{}'.format(W_bcc))
+print('cell: {}\n'.format(W_bcc.cell))
+print('sites: {}\n'.format(W_bcc.sites))
 
 # create a Parameternode or load one from the DB
 W_para_id = 24507#without soc soc:24424
 W_para = load_node(W_para_id)
 
-print 'ParamterNode used:'
+print('ParamterNode used:')
 pprint(W_para.get_dict())
 
 ###############################
@@ -55,8 +57,8 @@ wf_dict = {'fleur_runmax' : 2, 'density_criterion' : 0.0000001, 'points' : point
 
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
-computer = Computer.get(computer_name)
-wf_para = ParameterData(dict=wf_dict)
+computer = Computer.objects.get(computer_name)
+wf_para = Dict(dict=wf_dict)
 
 #res = run(lattice_constant, wf_parameters=wf_para, structure=W_bcc,
 #                calc_parameters=W_para, inpgen = code, fleur=code2)

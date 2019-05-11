@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -16,11 +16,15 @@ depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
 
-from aiida.orm import DataFactory, Node, load_node, CalculationFactory
+from __future__ import absolute_import
+from __future__ import print_function
+from aiida.orm import Node, load_node
+from aiida.plugins import DataFactory, CalculationFactory
 
+import six
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = CalculationFactory('fleur.fleur')
@@ -97,13 +101,13 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     #        inputs.options[key] = val
 
     if description:
-        inputs.description = description
+        inputs.metadata.description = description
     else:
-        inputs.description = ''
+        inputs.metadata.description = ''
     if label:
-        inputs.label = label
+        inputs.metadata.label = label
     else:
-        inputs.label = ''
+        inputs.metadata.label = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -118,7 +122,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs.settings = settings
 
     if options:
-        inputs.options = options
+        inputs.metadata.options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.iteritems(): 
@@ -164,14 +168,14 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
 
         
     if description:
-        inputs.description = description
+        inputs.metadata.description = description
     else:
-        inputs.description = ''
+        inputs.metadata.description = ''
 
     if label:
-        inputs.label = label
+        inputs.metadata.label = label
     else:
-        inputs.label = ''
+        inputs.metadata.label = ''
 
     if not options:
         options = {}
@@ -180,7 +184,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     options['resources'] = {"num_machines": 1}
     #print(inputs)
     if options:
-        inputs.options = options
+        inputs.metadata.options = options
     
     # Currently this does not work, find out howto...
     #for key, val in kwargs.items():
@@ -355,7 +359,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
     formenergy_dict ={}
-    for compound, uuid in workchain_dict.iteritems():
+    for compound, uuid in six.iteritems(workchain_dict):
         # TODO ggf get formation energy from ouput node, or extras
         if isinstance(uuid, float):# allow to give values
             formenergy_dict[compound] = uuid
@@ -378,7 +382,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except:
                             ouputnode = None
                             formenergy = None
-                            print('WARNING: ouput node of {} not found. I skip'.format(n))
+                            print(('WARNING: ouput node of {} not found. I skip'.format(n)))
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -448,13 +452,13 @@ def performance_extract_calcs(calcs):
             calc = load_node(calc)
         count = count + 1
         pk = calc.pk
-        print(count, pk)
+        print((count, pk))
         res = calc.res
         res_keys = list(res)
         try:
             efermi = res.fermi_energy
         except AttributeError:
-            print('skipping {}, {}'.format(pk, calc.uuid))
+            print(('skipping {}, {}'.format(pk, calc.uuid)))
             continue # we skip these entries
             efermi = -10000
 
@@ -463,14 +467,14 @@ def performance_extract_calcs(calcs):
         except AttributeError:
             gap = -10000   
             continue
-            print('skipping 2 {}, {}'.format(pk, calc.uuid))
+            print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
 
 
         try:
             energy = res.energy
         except AttributeError:
             energy = 0.0
-            print('skipping 3 {}, {}'.format(pk, calc.uuid))
+            print(('skipping 3 {}, {}'.format(pk, calc.uuid)))
             continue
 
         data_dict['bandgap'].append(gap)        

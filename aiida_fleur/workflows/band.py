@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -16,20 +16,23 @@ electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 # TODO alternative parse a structure and run scf
+from __future__ import absolute_import
+from __future__ import print_function
 import os.path
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain, ToContext
-from aiida.work.run import submit
+from aiida.plugins import DataFactory
+from aiida.orm import Code
+from aiida.engine import WorkChain, ToContext
+from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+import six
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
-FleurProcess = FleurCalculation.process()
 
 
 class fleur_band_wc(WorkChain):
@@ -60,10 +63,10 @@ class fleur_band_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict=cls._default_wf_para))
-        spec.input("options", valid_type=ParameterData, required=False, 
-                   default=ParameterData(dict=cls._default_wf_para))
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._default_wf_para))
+        spec.input("options", valid_type=Dict, required=False, 
+                   default=Dict(dict=cls._default_wf_para))
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
         spec.input("fleur", valid_type=Code, required=True)
@@ -148,7 +151,7 @@ class fleur_band_wc(WorkChain):
         
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = submit(FleurProcess, **inputs)
+        future = submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future) #calcs.append(future),
 
@@ -199,7 +202,7 @@ class fleur_band_wc(WorkChain):
         outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
         outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
         #print outputnode_dict
-        outputnode = ParameterData(dict=outputnode_dict)
+        outputnode = Dict(dict=outputnode_dict)
         outdict = {}
         #TODO parse Bandstructure
         #bandstructurenode = ''
@@ -209,5 +212,5 @@ class fleur_band_wc(WorkChain):
         #outdict['output_band2'] = bandstructurenode1
         outdict['output_band_wc_para'] = outputnode
         #print outdict
-        for key, val in outdict.iteritems():
+        for key, val in six.iteritems(outdict):
             self.out(key, val)

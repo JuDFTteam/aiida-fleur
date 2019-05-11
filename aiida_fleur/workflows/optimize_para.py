@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -16,26 +16,27 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 """
 
 #import numpy as np
-from aiida.orm import Code, DataFactory#, load_node
+from __future__ import absolute_import
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
-#from aiida.work import workfunction as wf
-from aiida.work.run import submit
+from aiida.engine import WorkChain, ToContext#,Outputs
+#from aiida.work import calcfunction as cf
+from aiida.engine import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
 #from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 #from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
 
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-#FleurProcess = FleurCalculation.process()
-FleurinpProcess = FleurinputgenCalculation.process()
 
 
 class fleur_optimize_parameters_wc(WorkChain):
@@ -44,15 +45,15 @@ class fleur_optimize_parameters_wc(WorkChain):
     from a structure. For now, it runs inpgen on the structure and uses
     the Fleur defaults.
 
-    :param wf_parameters: ParameterData node, optional, protocol specification 
+    :param wf_parameters: Dict node, optional, protocol specification 
                           will be parsed like this to fleur_eos_wc
     :param structure: StructureData node, bulk crystal structure
     :param inpgen: Code node,
     :param fleur: Code node,
 
-    :return output_optimized_wc_para: ParameterData node, contains relevant output information
+    :return output_optimized_wc_para: Dict node, contains relevant output information
                                       about general succces.
-    :return optimized_para: ParameterData node usable by inpgen
+    :return optimized_para: Dict node usable by inpgen
     :return optimized_fleurinp: FleurinpData with optimized
 
     """
@@ -65,8 +66,8 @@ class fleur_optimize_parameters_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_optimize_parameters_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict={
                        'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
                        'walltime_sec':  60*60,
                        'queue_name' : '',
@@ -158,7 +159,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         inputs = get_inputs_inpgen(structure, inpgencode, options, label, 
                                    description, params=params)
         self.report('INFO: run inpgen')
-        future = submit(FleurinpProcess, **inputs)
+        future = submit(FleurinputgenCalculation, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
 
@@ -169,7 +170,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         """
 
         try:
-            fleurin = self.ctx['inpgen'].out.fleurinpData
+            fleurin = self.ctx['inpgen'].outputs.fleurinpData
         except AttributeError:
             error = 'No fleurinpData found, inpgen failed'
             self.control_end_wc(error)
@@ -201,7 +202,7 @@ class fleur_optimize_parameters_wc(WorkChain):
                'optimal_para' : optimal_parameters_uuid,
                'successful' : self.ctx.successful}
 
-        outnode = ParameterData(dict=out)
+        outnode = Dict(dict=out)
 
         returndict = {}
 
@@ -216,7 +217,7 @@ class fleur_optimize_parameters_wc(WorkChain):
 
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):

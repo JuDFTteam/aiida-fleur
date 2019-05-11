@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -13,17 +13,21 @@
 """
 A dummy workchain to test nested workchains
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import time
-from aiida.orm import Code, DataFactory
-from aiida.work.workchain import WorkChain
-from aiida.work.run import submit
-from aiida.work.workchain import ToContext
-from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import Outputs
-from aiida.orm.data.base import Str
+from aiida.plugins import Code, DataFactory
+from aiida.engine import WorkChain
+from aiida.engine import submit
+from aiida.engine import ToContext
+from aiida.engine.process_registry import ProcessRegistry
+from aiida.engine.workchain import Outputs
+from aiida.orm.nodes.base import Str
+import six
+from six.moves import range
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 
 
 class dummy_wc(WorkChain):
@@ -93,7 +97,7 @@ class dummy_wc(WorkChain):
         subout = '{} | {} | {}, {}'.format(self.ctx.sub1, self.ctx.sub2, self.ctx.sub31, self.ctx.sub32)
         self.report(subout)
         outdict = {'out_dummy_wc' : Str('wonderful dummy_wc')}
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 
@@ -127,7 +131,7 @@ class sub_dummy_wc(WorkChain):
         message = 'generating output nodes sub_dummy'
         self.report(message)
         outdict = {'out_sub_dummy_wc' : Str('wonderful sub_dummy_wc')}
-        for link_name, node in outdict.iteritems():
+        for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
 

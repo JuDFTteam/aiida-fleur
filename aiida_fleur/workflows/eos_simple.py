@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -15,22 +15,26 @@ In this module you find the workflow 'fleur_eos_wc_simple' for the calculation o
 of an equation of state, with only the structure and optional wc parameters as input
 """
 
+from __future__ import absolute_import
 import numpy as np
-from aiida.orm import Code, DataFactory, load_node
-from aiida.orm.data.base import Float
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm.nodes.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.work.workchain import WorkChain, ToContext#,Outputs
-#from aiida.work import workfunction as wf
-from aiida.work.run import submit
+from aiida.engine import WorkChain, ToContext#,Outputs
+#from aiida.work import calcfunction as cf
+from aiida.engine import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
 from aiida_fleur.workflows.eos import fleur_eos_wc, eos_structures
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+import six
+from six.moves import range
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
@@ -40,13 +44,13 @@ class fleur_eos_wc_simple(WorkChain):
     calls it for the calculation of the equation of states of a structure.
 
 
-    :param wf_parameters: ParameterData node, optional, protocol specification will be parsed like this to fleur_eos_wc
+    :param wf_parameters: Dict node, optional, protocol specification will be parsed like this to fleur_eos_wc
     :param structure: StructureData node, bulk crystal structure
     :param inpgen: Code node,
     :param fleur: Code node,
 
 
-    :return output_eos_wc_para: ParameterData node of fleur_eos_wc, contains relevant output information.
+    :return output_eos_wc_para: Dict node of fleur_eos_wc, contains relevant output information.
     about general succces, fit results and so on.
 
     """
@@ -59,8 +63,8 @@ class fleur_eos_wc_simple(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_eos_wc_simple, cls).define(spec)
-        spec.input("wf_parameters", valid_type=ParameterData, required=False,
-                   default=ParameterData(dict={
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict={
                        'fleur_runmax': 4,
                        'points' : 9,
                        'step' : 0.002,
@@ -223,5 +227,5 @@ class fleur_eos_wc_simple(WorkChain):
 
 
         # create link to workchain node
-        for link_name, node in returndict.iteritems():
+        for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)

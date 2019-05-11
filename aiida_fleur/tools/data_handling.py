@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -17,12 +17,14 @@ nodes, or data-mine go in here
 """
 
 #import time
-from aiida.orm import DataFactory, Node, load_node
+from __future__ import absolute_import
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder as QB
 
 
 StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
+ParameterData = DataFactory('dict')
 
 
 
@@ -34,7 +36,7 @@ def extract_structure_info(keys, structures=None):
     returns that information as a dict, which could be used for further evalation
     #keys = ['uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy', 
     'child_nodes', 'natoms', 'group', extras', 'label', 'description', 'cif_file', 
-    'cif_number', 'cif_uuid', 'cif_ref', 'workfunctions', 'band', 'dos', 'eos', 
+    'cif_number', 'cif_uuid', 'cif_ref', 'calcfunctions', 'band', 'dos', 'eos', 
     'init_cls', 'corehole', primitive]
 
     """
@@ -138,9 +140,9 @@ def extract_structure_info(keys, structures=None):
         if 'corehole' in keys:
             corehole = input_of_workcal('fleur_corehole_wc', struc)
             structure_dict['corehole'] = corehole 
-        if 'workfunctions' in keys:
-            workfunctions_uuid, workfunctions_name = input_of_workfunctions(struc)
-            structure_dict['workfunctions'] = [workfunctions_uuid, workfunctions_name] 
+        if 'calcfunctions' in keys:
+            calcfunctions_uuid, calcfunctions_name = input_of_calcfunctions(struc)
+            structure_dict['calcfunctions'] = [calcfunctions_uuid, calcfunctions_name] 
             
         structure_list.append(structure_dict)
         
@@ -184,10 +186,10 @@ def input_of_workcal(name, node):
                 process_uuids.append(out.uuid)
     return process_uuids
 
-def input_of_workfunctions(node, name=''):
+def input_of_calcfunctions(node, name=''):
     """
-    checks if a given node was input into a certain workfunction
-    and returns a list of workfunction uuids of workfunction with the given name
+    checks if a given node was input into a certain calcfunction
+    and returns a list of calcfunction uuids of calcfunction with the given name
     """
     from aiida.orm.implementation.general.calculation.work import WorkCalculation
     process_uuids = []
@@ -217,7 +219,7 @@ def get_cif_file(node):
     returns [cif_filename, cif_uuid, cif_folder]
     """
     from aiida.orm.implementation.general.calculation.work import WorkCalculation
-    from aiida.orm.data.cif import CifData
+    from aiida.orm.nodes.cif import CifData
     inputs = node.get_inputs()
     name = 'wf_struc_from_cif'# TODO: Bad solution, not general for me currently enough
     cif_uuid, cif_filename, cif_folder = '','',''
