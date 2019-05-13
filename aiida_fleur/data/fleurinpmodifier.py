@@ -69,12 +69,15 @@ class FleurinpModifier(object):
         tree = etree.parse(inpxmlfile, parser)
         #replace XInclude parts to validate against schema
         tree.xinclude()
-        # there is a bug when validating at parsetime, therefore we only
-        #validate at parse time if file is invalid, to get nice error message
         if not xmlschema.validate(tree):
             raise InputValidationError(
                       "Input file is not validated against the schema.")
 
+        #return xinclude part to let FLEUR code to deal with it
+        inpxmlfile.seek(0)
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=False)
+        tree = etree.parse(inpxmlfile, parser)
+        
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
             modification_tasks=modification_tasks)
         
