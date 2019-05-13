@@ -423,17 +423,11 @@ class fleur_scf_wc(WorkChain):
             self.control_end_wc('ERROR: Not optimal computational resourses.')
             return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
         
-        '''
         if 'settings' in self.inputs:
-            settings = self.input.settings
+            settings = self.inputs.settings
         else:
-            settings = Dict(dict={'files_to_retrieve' : [],
-                                           'files_not_to_retrieve': [],
-                                           'files_copy_remotely': [],
-                                           'files_not_copy_remotely': [],
-                                           'commandline_options': ["-wtime", "{}".format(self.ctx.options['max_wallclock_seconds'])],
-                                           'blaha' : ['bla']})
-        '''
+            settings = None
+        
         if self.ctx['last_calc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_calc'].outputs.remote_folder
@@ -455,7 +449,7 @@ class fleur_scf_wc(WorkChain):
         options = self.ctx.options.copy()
 
         
-        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
+        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, settings, serial=self.ctx.serial)
         future = self.submit(inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))

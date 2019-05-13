@@ -214,7 +214,6 @@ class fleur_relax_wc(WorkChain):
             #generate inp.xml in scf workflow
             inputs['inpgen'] = self.inputs.inpgen
             inputs['structure'] = self.inputs.structure
-            inputs['settings'] = Dict(dict={'additional_remotecopy_list': ['relax.xml']})
             self.ctx.make_fleurinp = False
         else:
             #use inp.xml from previous iteration
@@ -348,9 +347,13 @@ class fleur_relax_wc(WorkChain):
             self.control_end_wc('ERROR: Not optimal computational resourses.')
             return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
 
-        #Do not copy broyd* files from the parent
-        settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
-    
+        #Do not copy broyd* files from the parent but copy relax.xml
+        if self.ctx.loop_count == 0:
+            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_retrieve_list': ['relax.xml']})
+        else:
+            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_retrieve_list': ['relax.xml'],
+                'additional_remotecopy_list': ['relax.xml']})
+
         #Retrieve remote folder of the reference calculation
         pk_last = 0
         scf_ref_node = load_node(calc.pk)
@@ -397,7 +400,6 @@ class fleur_relax_wc(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
     
         if abs(self.ctx.forces) < self.ctx.wf_dict['force_criterion']:
-            self.report('Aaaaaaaaaa: STOOOOOP')
             return False
 
         self.ctx.loop_count += 1
@@ -408,7 +410,7 @@ class fleur_relax_wc(WorkChain):
         """
         Exits the workchain and throws an exit_code
         """
-        if (self.ctx.loop_count > self.ctx.wf_dict['relax_iter']):
+        if (self.ctx.loop_count == self.ctx.wf_dict['relax_iter']):
             message = ('Did not reach structure optimization in a given number of scf iterations.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_DID_NOT_CONVERGE
