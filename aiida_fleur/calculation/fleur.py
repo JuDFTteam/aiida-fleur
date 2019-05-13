@@ -210,7 +210,7 @@ class FleurCalculation(CalcJob):
 
     #possible settings_dict keys
     _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                           'additional_remotecopy_list', 'remove_from_remotecopy_list'
+                           'additional_remotecopy_list', 'remove_from_remotecopy_list',
                            'cmdline']
     #possible modes?
     _DEFAULT_fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
