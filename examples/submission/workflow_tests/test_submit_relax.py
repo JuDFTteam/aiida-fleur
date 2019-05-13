@@ -13,17 +13,20 @@
 """
 Here we run the fleur_scf_wc for Si or some other material
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida.orm import DataFactory, load_node
-from aiida.work.launch import submit, run
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.engine import submit, run
 from aiida_fleur.workflows.relax_new import fleur_relax_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('parameter')
+Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -48,7 +51,7 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = ParameterData(dict={'fleur_runmax' : 2,
+wf_para = Dict(dict={'fleur_runmax' : 2,
                               'itmax_per_run' : 120,
                               'density_criterion' : 0.00002,
                               'force_th' : True,
@@ -60,7 +63,7 @@ wf_para = ParameterData(dict={'fleur_runmax' : 2,
                               'inpxml_changes' : []
                         })
 
-options = ParameterData(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                               'queue_name' : 'devel',
                               'max_wallclock_seconds':  60*60})
 '''
@@ -70,7 +73,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -96,7 +99,7 @@ structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
 structure.append_atom(position=(0.,0.,1.99285*bohr_a_0), symbols='Fe')
 structure.pbc = (True, True, False)
 
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'Pt',
                         #'jri' : 833,
@@ -130,7 +133,7 @@ a = 3.4100000000*bohr_a_0
 cell = [[0.0,a,a],[a,0.0,a],[a,a,0.0]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='Fe')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'comp': {
                         'kmax': 3.4,
                         },
@@ -196,8 +199,8 @@ print("##################### TEST fleur_relax_wc #####################")
 if submit_wc:
     res = submit(fleur_relax_wc, **inputs)
     print("##################### Submited fleur_relax_wc #####################")
-    print("Runtime info: {}".format(res))
-    print(res.pk)
+    print(("Runtime info: {}".format(res)))
+    print((res.pk))
     print("##################### Finished submiting fleur_relax_wc #####################")
 
 else:

@@ -314,7 +314,7 @@ class FleurinpData(Data):
             if file1 in node.list_object_names():
                 file1 = node.open(file1, mode='r')
             else:# throw error? you try to add something that is not there
-                pass
+                raise ValueError("file1 has to be in the specified node")
 
         if isinstance(file1, six.string_types):
             is_filelike = False

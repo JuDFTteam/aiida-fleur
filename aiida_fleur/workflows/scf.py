@@ -26,7 +26,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from aiida.plugins import DataFactory
-from aiida.orm import Code
+from aiida.orm import Code, load_node
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import submit
 from aiida.engine import calcfunction as cf
@@ -244,7 +244,6 @@ class fleur_scf_wc(WorkChain):
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         else:
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.control_end_wc(error)
@@ -348,7 +347,7 @@ class fleur_scf_wc(WorkChain):
         elif 'remote_data' in self.inputs and not self.ctx.get('inpgen', None):
             #In this case only an inp.xml file is given
             #fleurinp data has to be generated from the inp.xml file to use change_fleurinp
-            fleurin = FleurInpData(files=[os.path.join(self.inputs.remote_data.created_by.get_retrieved_node().get_abs_path(), 'path/inp.xml')])
+            fleurin = FleurInpData(files=['inp.xml'], node=self.inputs.remote_data.get_incoming().get_node_by_label(u'remote_folder').get_outgoing().get_node_by_label(u'retrieved'))
         else:
             try:
                 fleurin = self.ctx['inpgen'].outputs.fleurinpData
