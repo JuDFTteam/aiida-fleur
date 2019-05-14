@@ -73,7 +73,7 @@
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
             "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc",
 	    "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc",
-	    "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc"
+	    "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc",
 	    "fleur.relax = aiida_fleur.workflows.relax_new:fleur_relax_wc"
         ]
     }
