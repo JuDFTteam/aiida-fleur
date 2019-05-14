@@ -59,7 +59,11 @@ class fleur_relax_wc(WorkChain):
                    'alpha_mix' : 0.015,              #mixing parameter alpha
                    'relax_iter' : 5,
                    'relax_specie' : {},
-                   'force_criterion' : 0.0002,
+                   'force_converged' : 0.0002,
+                   'qfix' : 2,
+                   'forcealpha' : 0.5,
+                   'forcemix' : 2,
+                   'force_criterion' : 0.001,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }
     
@@ -210,6 +214,7 @@ class fleur_relax_wc(WorkChain):
             inputs['remote_data'] = self.ctx.forr.outputs.remote_folder
             #do not forget about relax.xml file
             inputs['settings'] = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_remotecopy_list': ['relax.xml']})
+            #switch l_f off for scf calculation
             inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_f' : False}}))
 
         #Initialize codes
@@ -238,7 +243,10 @@ class fleur_relax_wc(WorkChain):
             fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))
         
         #give 60 more iterations to generate new positions
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60}}))#, u'epsforce' : self.ctx.wf_dict.get('force_criterion')}}))
+        if self.ctx.loop_count == 0:
+            fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60, u'epsforce' : self.ctx.wf_dict.get('force_criterion'), u'force_converged' : self.ctx.wf_dict.get('force_converged'), u'qfix' : self.ctx.wf_dict.get('qfix'), u'forcealpha' : self.ctx.wf_dict.get('forcealpha'), u'forcemix' : self.ctx.wf_dict.get('forcemix')}}))
+        else:
+            fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60}}))
         
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
