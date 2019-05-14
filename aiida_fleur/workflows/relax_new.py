@@ -15,6 +15,7 @@
 """
 from __future__ import absolute_import
 from __future__ import print_function
+import copy
 
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import submit
@@ -193,7 +194,9 @@ class fleur_relax_wc(WorkChain):
         scf_wf_param = {}
         for key in self._scf_keys:
             scf_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = scf_wf_param
+        
+        #deepcopy to protect wf params
+        inputs['wf_parameters'] = copy.deepcopy(scf_wf_param)
         
         inputs['options'] = self.ctx.options
         
@@ -236,8 +239,8 @@ class fleur_relax_wc(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
-        #copy inpchanges from wf parameters
-        fchanges = list(self.ctx.wf_dict['inpxml_changes'])
+        #deepcopy inpchanges to protect wf params
+        fchanges = copy.deepcopy(self.ctx.wf_dict['inpxml_changes'])
         
         for specie,relax_dir in six.iteritems(self.ctx.wf_dict.get('relax_specie')):
             fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))

@@ -151,7 +151,7 @@ class FleurParser(Parser):
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.error('FLEUR calculation did not finish'
                         'successfully.')
-                    self.exit_codes.ERROR_FLEUR_CALC_FAILED
+                    return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
         #what about other files?
         #check input dict
