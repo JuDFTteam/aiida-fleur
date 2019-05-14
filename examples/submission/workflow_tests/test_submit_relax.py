@@ -53,13 +53,13 @@ print(args)
 ### Defaults ###
 wf_para = Dict(dict={'fleur_runmax' : 2,
                               'itmax_per_run' : 120,
-                              'density_criterion' : 0.00002,
+                              'density_criterion' : 0.02,
                               'force_th' : True,
                               'serial' : False,
                               'alpha_mix' : 0.015,              #mixing parameter alpha
-                              'relax_iter' : 12,
-                              'relax_specie' : {'Pt-1' : 'FFF', 'Fe-1' : 'FFT'},
-                              'force_criterion' : 0.002,
+                              'relax_iter' : 2,
+                              'relax_specie' : {'Pt-1' : 'FFF', 'Fe-1' : 'FFT', 'Fe-2' : 'FFT'},
+                              'force_criterion' : 0.02,
                               'inpxml_changes' : []
                         })
 
@@ -94,9 +94,9 @@ bohr_a_0= 0.52917721092 # A
 a = 7.497*bohr_a_0
 cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
+structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe', name='Fe2')
 structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
-structure.append_atom(position=(0.,0.,1.99285*bohr_a_0), symbols='Fe')
+structure.append_atom(position=(0.,0.,1.99285*bohr_a_0), symbols='Fe', name='Fe1')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={
