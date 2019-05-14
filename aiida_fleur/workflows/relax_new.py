@@ -14,11 +14,10 @@
     In this module you find the workflow 'fleur_relax_wc' for geometry optimization.
 """
 from __future__ import absolute_import
-
 from __future__ import print_function
+
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import submit
-
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.common.exceptions import NotExistent
@@ -53,7 +52,7 @@ class fleur_relax_wc(WorkChain):
                         'environment_variables' : {}}
     
     _wf_default = {
-                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
+                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts
                    'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
                    'serial' : False,                # execute fleur with mpi or without
                    'itmax_per_run' : 30,
@@ -94,14 +93,13 @@ class fleur_relax_wc(WorkChain):
         spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES', message="Invalid input, plaese check input configuration.")
         spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message="Some required inputs are missing.")
         spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED', message="Invalid code node specified, please check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
         spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed.")
         spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE', message="Input file is corrupted after user's modifications.")
         spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED', message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE', message="Optimization cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference calculation failed.")
+        spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE', message="Optimization cycle did not lead to convergence of forces.")
+        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference scf calculation failed.")
         spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED', message="Force theorem calculation failed.")
+        spec.exit_code(314, 'ERROR_RELAX_FAILED', message="New positions calculation failed.")
         spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
 
     def start(self):
@@ -119,8 +117,7 @@ class fleur_relax_wc(WorkChain):
         self.ctx.loop_count = 0
         self.ctx.make_fleurinp = True
 
-        #Retrieve WorkFlow parameters,
-        #initialize the dictionary using defaults if no wf paramters are given by user
+        #initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
         
         if 'wf_parameters' in self.inputs:
@@ -136,8 +133,7 @@ class fleur_relax_wc(WorkChain):
         #set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : self.ctx.wf_dict['alpha_mix']}}))
         
-        #Retrieve calculation options,
-        #initialize the dictionary using defaults if no options are given by user
+        #initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
         
         if 'options' in self.inputs:
@@ -176,7 +172,6 @@ class fleur_relax_wc(WorkChain):
         """
         inputs = {}
         inputs = self.get_inputs_scf().copy()
-        print(inputs)
         inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
         inputs['options'] = Dict(dict=inputs['options'])
@@ -190,7 +185,6 @@ class fleur_relax_wc(WorkChain):
         """
         inputs = {}
 
-        # Retrieve scf wf parameters and options form inputs
         #Note that relax wf parameters contain more information than needed for scf
         scf_wf_param = {}
         for key in self._scf_keys:
@@ -206,10 +200,6 @@ class fleur_relax_wc(WorkChain):
             calc_para = {}
         inputs['calc_parameters'] = calc_para
 
-        #TODO
-        #if not a first force calculation cycle, provide fleurinp and remote folder
-        #remove stucture in this case
-
         if self.ctx.make_fleurinp:
             #generate inp.xml in scf workflow
             inputs['inpgen'] = self.inputs.inpgen
@@ -218,6 +208,7 @@ class fleur_relax_wc(WorkChain):
         else:
             #use inp.xml from previous iteration
             inputs['remote_data'] = self.ctx.forr.outputs.remote_folder
+            #do not forget about relax.xml file
             inputs['settings'] = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_remotecopy_list': ['relax.xml']})
             inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_f' : False}}))
 
@@ -236,7 +227,7 @@ class fleur_relax_wc(WorkChain):
         try:
             fleurin = self.ctx.reference.outputs.fleurinp
         except NotExistent:
-            error = 'Fleurinp generated in the reference claculation is not found.'
+            error = 'Fleurinp generated in previous scf calculation is not found.'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
@@ -246,6 +237,7 @@ class fleur_relax_wc(WorkChain):
         for specie,relax_dir in six.iteritems(self.ctx.wf_dict.get('relax_specie')):
             fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))
         
+        #give 60 more iterations to generate new positions
         fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60}}))#, u'epsforce' : self.ctx.wf_dict.get('force_criterion')}}))
         
         if fchanges:# change inp.xml file
@@ -317,7 +309,7 @@ class fleur_relax_wc(WorkChain):
         calc = self.ctx.reference
         
         if not calc.is_finished_ok:
-            message = ('The SCF calculation was not successful.')
+            message = ('The SCF calculation is not finished OK.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         
@@ -336,7 +328,7 @@ class fleur_relax_wc(WorkChain):
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
-        self.report('INFO: run force calculations')
+        self.report('INFO: run new positions calculations')
 
         status = self.change_fleurinp()
         if not (status is None):
@@ -369,8 +361,8 @@ class fleur_relax_wc(WorkChain):
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
         
-        label = 'Forces'
-        description = 'This is a calculation of forces'
+        label = 'New positions calculation'
+        description = 'This calculation computes new atom positions using one of the existing algorithms in FLEUR'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
@@ -383,21 +375,21 @@ class fleur_relax_wc(WorkChain):
         try:
             calculation = self.ctx.forr
             if not calculation.is_finished_ok:
-                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
+                message = ('ERROR: New atom positions calculation failed somehow it has '
                         'exit status {}'.format(calculation.exit_status))
                 self.control_end_wc(message)
-                return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+                return self.exit_codes.ERROR_RELAX_FAILED
         except AttributeError:
-            message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
+            message = 'ERROR: Something went wrong I do not have new atom positions calculation'
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+            return self.exit_codes.ERROR_RELAX_FAILED
 
         try:
             self.ctx.forces = calculation.outputs.output_parameters.dict.force_largest
         except AttributeError:
             message = 'ERROR: Did not manage to read the largest force'
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+            return self.exit_codes.ERROR_RELAX_FAILED
     
         if abs(self.ctx.forces) < self.ctx.wf_dict['force_criterion']:
             return False
@@ -424,10 +416,8 @@ class fleur_relax_wc(WorkChain):
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors,
                'force' : self.ctx.forces,
-               'force_iter_made' : self.ctx.loop_count
+               'force_iter_done' : self.ctx.loop_count
                }
-       
-       #TODO create a fleurinp node
        
         self.out('out', Dict(dict=out))
 
