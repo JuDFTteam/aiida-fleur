@@ -1240,13 +1240,13 @@ def get_inpxml_file_structure():
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
-                           'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count')
+                           'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count', 'qfix', 'forcemix')
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
-                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval')
+                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp',
                               'xcFunctional', 'fleurInputVersion', 'species')
 
