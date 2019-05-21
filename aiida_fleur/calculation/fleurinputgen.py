@@ -577,6 +577,7 @@ def conv_to_fortran(val, quote_strings=True):
         # Note that bool should come before integer, because a boolean matches also
         # isinstance(...,int)
         import numpy
+        import numbers
     
         if isinstance(val, (bool, numpy.bool_)):
             if val:
