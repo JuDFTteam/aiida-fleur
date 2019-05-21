@@ -26,7 +26,7 @@ from aiida.engine import submit, run
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -67,11 +67,11 @@ print(args)
 
 ### Defaults ###
 wf_para = Dict(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,
+                              'density_criterion' : 0.0001,
                               'serial' : False})
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+                              'queue_name' : 'devel',#23_node',
                               'max_wallclock_seconds':  60*60})
 
 # W bcc structure 
@@ -121,8 +121,8 @@ else:
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
 else:
-    pass
-    #inputs['calc_parameters'] = default['calc_parameters']
+    #pass
+    inputs['calc_parameters'] = default['calc_parameters']
 
 if args.fleurinp is not None:
     inputs['fleurinp'] = load_node(args.fleurinp)
