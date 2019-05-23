@@ -647,7 +647,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
         # column, finally to join the strings
         list_of_strings = list(zip(*sorted(list_of_strings)))[1]
         return "".join(list_of_strings)
-    elif hasattr(val, '__iter__'):
+    elif not isinstance(val, six.string_types) and hasattr(val, '__iter__'):
         if value_only:
             list_of_strings = [
                 "  ({1}){0} ".format(conv_to_fortran(itemval), idx+1)
