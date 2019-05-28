@@ -577,6 +577,7 @@ def conv_to_fortran(val, quote_strings=True):
         # Note that bool should come before integer, because a boolean matches also
         # isinstance(...,int)
         import numpy
+        import numbers
     
         if isinstance(val, (bool, numpy.bool_)):
             if val:
@@ -646,7 +647,7 @@ def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fl
         # column, finally to join the strings
         list_of_strings = list(zip(*sorted(list_of_strings)))[1]
         return "".join(list_of_strings)
-    elif hasattr(val, '__iter__'):
+    elif not isinstance(val, six.string_types) and hasattr(val, '__iter__'):
         if value_only:
             list_of_strings = [
                 "  ({1}){0} ".format(conv_to_fortran(itemval), idx+1)

@@ -585,7 +585,7 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     possible_nodes = [x for x in divisors_kpts if x<=nodes]
     suggestions = []
     for n_n in possible_nodes:
-        adviced_cpu_per_node = max([x for x in divisors(kpts/n_n) if x<=cpus_per_node])
+        adviced_cpu_per_node = max([x for x in divisors(kpts//n_n) if x<=cpus_per_node])
         suggestions.append((n_n, adviced_cpu_per_node))
     
     def best_criterion(suggestion):

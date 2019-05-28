@@ -822,7 +822,7 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
     if position:
         if not position == 'all':
-            xpathatmgroup ='/fleurInput/atomGroups/atomGroup/[/*Pos = {}]'.format(position)
+            xpathatmgroup ='/fleurInput/atomGroups/atomGroup/[/*Pos = "{}"]'.format(position)
             xpathforce = '{}/force'.format(xpathatmgroup)
             xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
     if species:
