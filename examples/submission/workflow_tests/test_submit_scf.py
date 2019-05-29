@@ -26,7 +26,7 @@ from aiida.engine import submit, run
 from aiida_fleur.workflows.scf import fleur_scf_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -66,35 +66,58 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,
+wf_para = Dict(dict={'fleur_runmax' : 4,
+                              'density_criterion' : 0.001,
+                              'energy_criterion' : 0.002,
+                              'mode' : 'force',
+                              'force_criterion' : 0.002,
+                              'itmax_per_run' : 30,
+                              'force_dict' : {'qfix' : 2,
+                                            'forcealpha' : 0.5,
+                                            'forcemix' : 2},
                               'serial' : False})
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
+
+                              'queue_name' : 'devel',#23_node',
                               'max_wallclock_seconds':  60*60})
 
 # W bcc structure 
 bohr_a_0= 0.52917721092 # A
-a = 3.013812049196*bohr_a_0
-cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
+a = 7.497*bohr_a_0
+cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0.,0.,0.), symbols='W')
+structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
+structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
+structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
+structure.pbc = (True, True, False)
+
 parameters = Dict(dict={
                   'atom':{
-                        'element' : 'W',
-                        'jri' : 833,
-                        'rmt' : 2.3,
-                        'dx' : 0.015,
+                        'element' : 'Pt',
+                        #'jri' : 833,
+                        #'rmt' : 2.3,
+                        #'dx' : 0.015,
                         'lmax' : 8,
-                        'lo' : '5p',
-                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        #'lo' : '5p',
+                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        },
+                    'atom2':{
+                        'element' : 'Fe',
+                        #'jri' : 833,
+                        #'rmt' : 2.3,
+                        #'dx' : 0.015,
+                        'lmax' : 8,
+                        #'lo' : '5p',
+                        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
                         },
                   'comp': {
-                        'kmax': 3.0,
+                        'kmax': 3.8,
                         },
                   'kpt': {
-                        'nkpt': 100,
+                        'div1': 20,
+                        'div2' : 24,
+                        'div3' : 1
                         }})
 
 default = {'structure' : structure,
@@ -121,8 +144,8 @@ else:
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
 else:
-    pass
-    #inputs['calc_parameters'] = default['calc_parameters']
+    #pass
+    inputs['calc_parameters'] = default['calc_parameters']
 
 if args.fleurinp is not None:
     inputs['fleurinp'] = load_node(args.fleurinp)
