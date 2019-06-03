@@ -19,10 +19,12 @@ import copy
 
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import submit
+from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.common.exceptions import NotExistent
 from lxml.etree import XMLSyntaxError
+from lxml import etree
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -62,14 +64,14 @@ class fleur_relax_wc(WorkChain):
                    'relax_iter' : 5,
                    'relax_specie' : {},
                    'force_converged' : 0.0002,
-                   'qfix' : 2,
-                   'forcealpha' : 0.5,
-                   'forcemix' : 2,
+                   'force_dict' : {'qfix' : 2,
+                                    'forcealpha' : 0.5,
+                                    'forcemix' : 2},
                    'force_criterion' : 0.001,
                    'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
                    }
     
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes'] #a list of wf_params needed for scf workflow
+    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes', 'force_dict'] #a list of wf_params needed for scf workflow
 
     @classmethod
     def define(cls, spec):
@@ -106,6 +108,7 @@ class fleur_relax_wc(WorkChain):
         spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference scf calculation failed.")
         spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message="Found no reference calculation remote repository.")
         spec.exit_code(314, 'ERROR_RELAX_FAILED', message="New positions calculation failed.")
+        spec.exit_code(315, 'ERROR_NO_RELAX_XML', message="Found no relax.xml file in retrieved folder")
         spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
 
     def start(self):
@@ -198,6 +201,7 @@ class fleur_relax_wc(WorkChain):
         
         #deepcopy to protect wf params
         inputs['wf_parameters'] = copy.deepcopy(scf_wf_param)
+        inputs['wf_parameters']['mode'] = 'force'
         
         inputs['options'] = self.ctx.options
         
@@ -217,103 +221,13 @@ class fleur_relax_wc(WorkChain):
             #use inp.xml from previous iteration
             inputs['remote_data'] = self.ctx.forr.outputs.remote_folder
             #do not forget about relax.xml file
-            inputs['settings'] = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_remotecopy_list': ['relax.xml']})
-            #switch l_f off for scf calculation
-            inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'l_f' : False}}))
+            inputs['settings'] = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
 
         #Initialize codes
         inputs['fleur'] = self.inputs.fleur
 
         return inputs
     
-   
-    def change_fleurinp(self):
-        """
-        This routine sets somethings in the fleurinp file before running a fleur
-        calculation.
-        """
-        self.report('INFO: run change_fleurinp')
-        try:
-            fleurin = self.ctx.reference.outputs.fleurinp
-        except NotExistent:
-            error = 'Fleurinp generated in previous scf calculation is not found.'
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
-
-        #deepcopy inpchanges to protect wf params
-        fchanges = copy.deepcopy(self.ctx.wf_dict['inpxml_changes'])
-        
-        for specie,relax_dir in six.iteritems(self.ctx.wf_dict.get('relax_specie')):
-            fchanges.append((u'set_atomgr_att', ({u'force' : [(u'relaxXYZ', relax_dir)]}, False, specie)))
-        
-        #give 60 more iterations to generate new positions
-        if self.ctx.loop_count == 0:
-            fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60, u'epsforce' : self.ctx.wf_dict.get('force_criterion'), u'force_converged' : self.ctx.wf_dict.get('force_converged'), u'qfix' : self.ctx.wf_dict.get('qfix'), u'forcealpha' : self.ctx.wf_dict.get('forcealpha'), u'forcemix' : self.ctx.wf_dict.get('forcemix')}}))
-        else:
-            fchanges.append((u'set_inpchanges', {u'change_dict' : {u'l_f' : True, u'itmax' : 60}}))
-        
-        if fchanges:# change inp.xml file
-            fleurmode = FleurinpModifier(fleurin)
-            avail_ac_dict = fleurmode.get_avail_actions()
-
-            # apply further user dependend changes
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                                "is not known to fleurinpmodifier class, "
-                                "plaese check/test your input. I abort..."
-                                "".format(method))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:# apply change
-                    if function==u'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
-
-            # validate?
-            apply_c = True
-            try:
-                fleurmode.show(display=False, validate=True)
-            except XMLSyntaxError:
-                error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                #fleurmode.show(display=True)#, validate=True)
-                self.report(error)
-                apply_c = False
-                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
-            
-            # apply
-            if apply_c:
-                out = fleurmode.freeze()
-                self.ctx.fleurinp = out
-            return
-        else: # otherwise do not change the inp.xml
-            self.ctx.fleurinp = fleurin
-            return
-            
-    def check_kpts(self, fleurinp):
-        """
-        This routine checks if the total number of requested cpus
-        is a factor of kpts and makes small optimisation.
-        """
-        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
-                      int(self.ctx.options['resources']['num_machines']),
-                      int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
-
-        if 'WARNING' in message:
-            self.ctx.warnings.append(message)
-
-        self.report(message)
-
-        self.ctx.options['resources']['num_machines'] = adv_nodes
-        self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
-        
-        return exit_code
-
     def calculate_forces(self):
         '''
         This routine calculaties forces of a pre-converged structure
@@ -353,9 +267,9 @@ class fleur_relax_wc(WorkChain):
 
         #Do not copy broyd* files from the parent but copy relax.xml
         if self.ctx.loop_count == 0:
-            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_retrieve_list': ['relax.xml']})
+            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
         else:
-            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*'], 'additional_retrieve_list': ['relax.xml'],
+            settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*'],
                 'additional_remotecopy_list': ['relax.xml']})
 
         #Retrieve remote folder of the reference calculation
@@ -441,3 +355,22 @@ class fleur_relax_wc(WorkChain):
         self.report(errormsg) # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
+    @cf
+    def create_input_node(node):
+        """
+        This function checks the content of the retrived
+        relax.xml file and generated a new one if there is
+        a problem with MT radii and suggested displacements.
+        
+        It also creates a 
+        """
+        #from aiida.tool.xml_utils import
+        
+        try:
+            relax_filelike = node.open('relax.xml', 'r')
+        except IOError:
+            return self.exit_codes.ERROR_NO_RELAX_XML
+
+        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
+        tree = etree.parse(inpxmlfile, parser)
