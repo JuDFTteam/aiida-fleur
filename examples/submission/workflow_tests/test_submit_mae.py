@@ -26,7 +26,7 @@ from aiida.engine import submit, run
 from aiida_fleur.workflows.mae import fleur_mae_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -51,9 +51,9 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax' : 2,
-                              'itmax_per_run' : 35,
-                              'density_criterion' : 0.002,
+wf_para = Dict(dict={'fleur_runmax' : 3,
+                              'itmax_per_run' : 100,
+                              'density_criterion' : 0.02,
                               'force_th' : True,
                               'use_soc_ref' : True,
                               'sqas_theta' : '1.57079 0.0 0.1 0.2512',
@@ -63,9 +63,9 @@ wf_para = Dict(dict={'fleur_runmax' : 2,
                               'inpxml_changes' : []
                         })
 
-options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
                               'queue_name' : 'devel',
-                              'max_wallclock_seconds':  60*60+40*60})
+                              'max_wallclock_seconds':  40*60})
 '''
 # W bcc structure
 bohr_a_0= 0.52917721092 # A
@@ -94,9 +94,10 @@ bohr_a_0= 0.52917721092 # A
 a = 7.497*bohr_a_0
 cell = [[0.7071068*a,0.0,0.0],[0.0,1.0*a,0.0],[0.0,0.0,0.7071068*a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
-structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
-structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
+structure.append_atom(position=(0.,0.,0.), symbols='Fe')
+#structure.append_atom(position=(0.,0.,-1.99285*bohr_a_0), symbols='Fe')
+#structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
+#structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={
@@ -122,8 +123,8 @@ parameters = Dict(dict={
                         'kmax': 3.8,
                         },
                   'kpt': {
-                        'div1': 20,
-                        'div2' : 24,
+                        'div1': 1,
+                        'div2' : 1,
                         'div3' : 1
                         }})
 

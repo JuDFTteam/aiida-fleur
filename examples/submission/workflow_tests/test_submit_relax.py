@@ -60,9 +60,9 @@ wf_para = Dict(dict={'fleur_runmax' : 2,
                               'relax_iter' : 3,
                               'relax_specie' : {'Pt-1' : 'FFF', 'Fe-1' : 'FFT', 'Fe-2' : 'FFT'},
                               'force_converged' : 0.0002,
-                              'qfix' : 2,
-                              'forcealpha' : 0.5,
-                              'forcemix' : 2,
+                              'force_dict' : {'qfix' : 2,
+                                              'forcealpha' : 0.5,
+                                              'forcemix' : 2},
                               'force_criterion' : 0.001,
                               'inpxml_changes' : []
                         })
