@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the fleur_scf_wc for Si or some other material
+Here we run the FleurScfWorkChain for Si or some other material
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -23,7 +23,7 @@ from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.engine import submit, run
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from pprint import pprint
 ################################################################
 Dict = DataFactory('dict')
@@ -170,16 +170,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-#builder = fleur_scf_wc.get_builder()
+#builder = FleurScfWorkChain.get_builder()
 
-print("##################### TEST fleur_scf_wc #####################")
+print("##################### TEST FleurScfWorkChain #####################")
 
 if submit_wc:
-    res = submit(fleur_scf_wc, **inputs)
-    print("##################### Submited fleur_scf_wc #####################")
+    res = submit(FleurScfWorkChain, **inputs)
+    print("##################### Submited FleurScfWorkChain #####################")
     print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting fleur_scf_wc #####################")
+    print("##################### Finished submiting FleurScfWorkChain #####################")
 else:
-    print("##################### Running fleur_scf_wc #####################")
-    res = run(fleur_scf_wc, **inputs)
-    print("##################### Finished running fleur_scf_wc #####################")
+    print("##################### Running FleurScfWorkChain #####################")
+    res = run(FleurScfWorkChain, **inputs)
+    print("##################### Finished running FleurScfWorkChain #####################")
