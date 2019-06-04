@@ -36,7 +36,7 @@ from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.StructureData_util import supercell
 from aiida_fleur.tools.create_corehole import create_corehole_para#, create_corehole_fleurinp
 from aiida_fleur.tools.extract_corelevels import extract_corelevels
@@ -715,16 +715,16 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
-                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
+                    res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, options=options,
                                  calc_parameters=node[1], structure=node[0],
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                                  label=scf_label, description=scf_desc)#
@@ -808,17 +808,17 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
                     if isinstance(node[2], Dict):
-                        res = self.submit(fleur_scf_wc, wf_parameters=node[2],
+                        res = self.submit(FleurScfWorkChain, wf_parameters=node[2],
                                      calc_parameters=node[1], structure=node[0], options=options,
                                      inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                                      label=scf_label, description=scf_desc)#

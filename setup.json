@@ -65,16 +65,16 @@
                 "fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser"
         ],
         "aiida.workflows" : [
-            "fleur.scf = aiida_fleur.workflows.scf:fleur_scf_wc",
+            "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.band = aiida_fleur.workflows.band:fleur_band_wc",
             "fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
             "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc",
-	    "fleur.spst = aiida_fleur.workflows.spst:FleurScfWorkChain",
-	    "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc",
-	    "fleur.relax = aiida_fleur.workflows.relax_new:fleur_relax_wc"
+            "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc",
+            "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc",
+            "fleur.relax = aiida_fleur.workflows.relax:FleurRelaxWorkChain"
         ]
     }
 }

@@ -33,7 +33,7 @@ from aiida.orm import Code, load_node, Group
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
 import six
 
@@ -427,7 +427,7 @@ class fleur_initial_cls_wc(WorkChain):
             scf_label = 'cls|scf_wc main'
             scf_description = 'cls|scf of the main structure'
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                              inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                              label=scf_label, description=scf_description)#
             #elif isinstance(node, FleurinpData):
@@ -435,7 +435,7 @@ class fleur_initial_cls_wc(WorkChain):
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):#(StructureData, Dict)):
                 if len(node) == 2:
-                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
+                    res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters,
                                  structure=node[0], calc_parameters=node[1], options=options,
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                                  label=scf_label, description=scf_description)
@@ -548,14 +548,14 @@ class fleur_initial_cls_wc(WorkChain):
                                ''.format(self.ctx.elements[i]))
             #print node
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                              inpgen = self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                              label=scf_label, description=scf_description)#
             #elif isinstance(node, FleurinpData):
             #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):#(StructureData, Dict)):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters,
                              structure=node[0], calc_parameters=node[1], options=options,
                              inpgen = self.inputs.inpgen, fleur=self.inputs.fleur,
                              label=scf_label, description=scf_description)#

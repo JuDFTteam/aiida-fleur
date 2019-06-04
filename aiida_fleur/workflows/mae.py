@@ -26,7 +26,7 @@ from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
@@ -226,7 +226,7 @@ class fleur_mae_wc(WorkChain):
             inputs[key]['wf_parameters'] = Dict(dict=inputs[key]['wf_parameters'])
             inputs[key]['calc_parameters'] = Dict(dict=inputs[key]['calc_parameters'])
             inputs[key]['options'] = Dict(dict=inputs[key]['options'])
-            res = self.submit(fleur_scf_wc, **inputs[key])
+            res = self.submit(FleurScfWorkChain, **inputs[key])
             self.to_context(**{key:res})
     
     def get_inputs_scf(self):

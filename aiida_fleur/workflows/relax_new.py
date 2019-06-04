@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-    In this module you find the workflow 'fleur_relax_wc' for geometry optimization.
+    In this module you find the workflow 'FleurScfWorkChain' for geometry optimization.
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -29,7 +29,7 @@ from lxml import etree
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation
 
 import six
@@ -184,7 +184,7 @@ class fleur_relax_wc(WorkChain):
         inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
         inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
         inputs['options'] = Dict(dict=inputs['options'])
-        res = self.submit(fleur_scf_wc, **inputs)
+        res = self.submit(FleurScfWorkChain, **inputs)
         return ToContext(reference=res)
     
     def get_inputs_scf(self):

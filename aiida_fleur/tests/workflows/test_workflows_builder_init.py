@@ -31,9 +31,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the scf workchain
         """
-        from aiida_fleur.workflows.scf import fleur_scf_wc
+        from aiida_fleur.workflows.scf import FleurScfWorkChain
         
-        builder = fleur_scf_wc.get_builder()
+        builder = FleurScfWorkChain.get_builder()
 
         
     def test_fleur_eos_wc_init(aiida_env):
@@ -58,9 +58,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the band workchain
         """
-        from aiida_fleur.workflows.scf import fleur_scf_wc
+        from aiida_fleur.workflows.scf import FleurScfWorkChain
         
-        builder = fleur_scf_wc.get_builder()
+        builder = FleurScfWorkChain.get_builder()
 
 
     #def test_fleur_band2_wc_init(aiida_env):

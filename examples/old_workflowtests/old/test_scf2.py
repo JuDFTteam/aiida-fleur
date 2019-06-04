@@ -11,7 +11,7 @@ if not is_dbenv_loaded():
 from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
 #from aiida.work.run import async, run
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -37,5 +37,5 @@ fleurinp = load_node(1339)
 remote = load_node(1353)
 wf_para = load_node(1333)
 
-res = fleur_scf_wc.run(wf_parameters=wf_para, fleurinp=fleurinp,
+res = FleurScfWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp,
                             remote_data= remote, fleur=code2)

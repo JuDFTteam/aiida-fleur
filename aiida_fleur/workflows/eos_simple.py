@@ -25,7 +25,7 @@ from aiida.engine import WorkChain, ToContext#,Outputs
 #from aiida.work import calcfunction as cf
 from aiida.engine import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
 from aiida_fleur.workflows.eos import fleur_eos_wc, eos_structures
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode

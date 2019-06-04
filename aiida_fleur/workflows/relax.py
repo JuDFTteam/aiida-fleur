@@ -29,7 +29,7 @@ from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import run, submit
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 import six
 
 
@@ -97,7 +97,7 @@ class fleur_relax_wc(WorkChain):
         inputs = self.get_inputs_scf(self.ctx)
 
         if self.ctx.last_calc2:
-            res = run(fleur_scf_wc,
+            res = run(FleurScfWorkChain,
                       wf_parameters=inputs['wf_parameters'],
                       fleurinp=inputs['fleurinp'],
                       fleur=inputs['fleur'])
@@ -108,7 +108,7 @@ class fleur_relax_wc(WorkChain):
                   #inpgen = code,
                   #fleur=code2)#, computer=computer)
         else:
-            res = run(fleur_scf_wc, wf_parameters=inputs['wf_parameters'],
+            res = run(FleurScfWorkChain, wf_parameters=inputs['wf_parameters'],
                       structure=inputs['structure'], calc_parameters=inputs['calc_parameters'], inpgen = inputs['inpgen'], fleur=inputs['fleur'] )#inputs)#
 
         self.ctx.last_calc2 = res#.get('remote_folder', None)
