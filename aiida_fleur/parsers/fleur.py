@@ -19,6 +19,7 @@ the parser. Makes testing and portability easier.
 # TODO: move methods to utils, xml or other
 # TODO: warnings
 from __future__ import absolute_import
+import os
 from datetime import date
 
 from aiida.parsers import Parser
@@ -69,7 +70,7 @@ class FleurParser(Parser):
         """
 
         ####### init some variables ######
-               
+
         # these files should be at least present after success of a Fleur run
         calc = self.node
 
@@ -112,7 +113,7 @@ class FleurParser(Parser):
 
         # check if all files expected are there for the calculation
         for filel in should_retrieve:
-            if filel == calc.get_attribute('relaxrelax_file_name'):
+            if filel == calc.get_attribute('relax_file_name'):
                 # hardcode: relax.xml can be not generated after FLEUR run
                 continue
             if filel not in list_of_files:
@@ -151,7 +152,7 @@ class FleurParser(Parser):
 
         # if a relax.xml was retrieved
         if calc.get_attribute('relax_file_name') in list_of_files:
-            self.logger.error("relax.xml file found in retrieved folder")
+            self.logger.info("relax.xml file found in retrieved folder")
             has_relax_file = True
 
         ####### Parse the files ########
@@ -325,6 +326,7 @@ def parse_xmlout_file(outxmlfile):
         spin_orbit_calculation = 'calculationSetup/soc'
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
+        l_f_xpath = '/fleurOutput/inputData/calculationSetup/geometryOptimization/@l_f'
 
         # timing
         start_time_xpath = '/fleurOutput/startDateAndTime/@time'
@@ -359,10 +361,15 @@ def parse_xmlout_file(outxmlfile):
 
         # for getting the fleur modes use fleurinp methods
         spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
+
         if spin:
             fleurmode = {'jspin': int(spin)}
         else:
             fleurmode = {'jspin': 1}
+
+        relax = eval_xpath(root, l_f_xpath)
+        fleurmode['relax'] = relax == 'T'
+
         if data_exists:
             simple_data = parse_simple_outnode(iteration_to_parse, fleurmode)
         else:
@@ -670,9 +677,17 @@ def parse_xmlout_file(outxmlfile):
         new_y_name = 'y'
         new_z_name = 'z'
 
+        relPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/relPos'
+        absPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/absPos'
+        filmPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/filmPos'
+        atomstypes_xpath = '/fleurOutput/inputData/atomGroups/atomGroup'
+
+        film_lat_xpath = '/fleurOutput/inputData/cell/filmLattice/bravaisMatrix/'
+
         ###################################################
 
         jspin = fleurmode['jspin']
+        relax = fleurmode['relax']
         simple_data = {}
 
         def write_simple_outnode(value, value_type, value_name, dict_out):
@@ -860,37 +875,39 @@ def parse_xmlout_file(outxmlfile):
                 units, 'str', 'density_convergence_units', simple_data)
 
             if jspin == 1:
-                charge_density = get_xml_attribute(
-                    eval_xpath(iteration_node, chargedensity_xpath), distance_name)
-                write_simple_outnode(
-                    charge_density, 'float', 'charge_density', simple_data)
+                if not relax: # there are no charge densities written if relax
+                    charge_density = get_xml_attribute(
+                        eval_xpath(iteration_node, chargedensity_xpath), distance_name)
+                    write_simple_outnode(
+                        charge_density, 'float', 'charge_density', simple_data)
 
             elif jspin == 2:
-                charge_densitys = eval_xpath(
+                charge_densitys = eval_xpath2(
                     iteration_node, chargedensity_xpath)
 
-                if charge_densitys:  # otherwise we get a keyerror if calculation failed.
-                    charge_density1 = get_xml_attribute(
-                        charge_densitys[0], distance_name)
-                    charge_density2 = get_xml_attribute(
-                        charge_densitys[1], distance_name)
-                else:  # Is non a problem?
-                    charge_density1 = None
-                    charge_density2 = None
-                write_simple_outnode(
-                    charge_density1, 'float', 'charge_density1', simple_data)
-                write_simple_outnode(
-                    charge_density2, 'float', 'charge_density2', simple_data)
+                if not relax: # there are no charge densities written if relax
+                    if charge_densitys:  # otherwise we get a keyerror if calculation failed.
+                        charge_density1 = get_xml_attribute(
+                            charge_densitys[0], distance_name)
+                        charge_density2 = get_xml_attribute(
+                            charge_densitys[1], distance_name)
+                    else:  # Is non a problem?
+                        charge_density1 = None
+                        charge_density2 = None
+                    write_simple_outnode(
+                        charge_density1, 'float', 'charge_density1', simple_data)
+                    write_simple_outnode(
+                        charge_density2, 'float', 'charge_density2', simple_data)
 
-                spin_density = get_xml_attribute(
-                    eval_xpath(iteration_node, spindensity_xpath), distance_name)
-                write_simple_outnode(
-                    spin_density, 'float', 'spin_density', simple_data)
+                    spin_density = get_xml_attribute(
+                        eval_xpath(iteration_node, spindensity_xpath), distance_name)
+                    write_simple_outnode(
+                        spin_density, 'float', 'spin_density', simple_data)
 
-                overall_charge_density = get_xml_attribute(
-                    eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
-                write_simple_outnode(
-                    overall_charge_density, 'float', 'overall_charge_density', simple_data)
+                    overall_charge_density = get_xml_attribute(
+                        eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+                    write_simple_outnode(
+                        overall_charge_density, 'float', 'overall_charge_density', simple_data)
 
                 # magnetic moments            #TODO orbMag Moment
                 m_units = get_xml_attribute(
@@ -944,6 +961,34 @@ def parse_xmlout_file(outxmlfile):
                 #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
 
                 # Total charges, total magentic moment
+
+            if relax:
+
+                v_1 = eval_xpath(root, os.path.join(film_lat_xpath, 'row-1'))
+                v_1 = [float(x) for x in v_1.text.split()]
+
+                v_2 = eval_xpath(root, os.path.join(film_lat_xpath, 'row-2'))
+                v_2 = [float(x) for x in v_2.text.split()]
+
+                v_3 = eval_xpath(root, os.path.join(film_lat_xpath, 'row-3'))
+                v_3 = [float(x) for x in v_3.text.split()]
+
+                relax_brav_vectors = [v_1, v_2, v_3]
+
+                atom_positions = []
+
+                all_atoms = eval_xpath2(root, atomstypes_xpath)
+                for a_type in all_atoms:
+                    element = get_xml_attribute(a_type, 'species')[:2]
+                    type_positions = eval_xpath2(a_type, 'filmPos')
+                    for pos in type_positions:
+                        pos = [convert_frac(x) for x in pos.text.split()]
+                        atom_positions.append([element]+pos)
+
+                write_simple_outnode(
+                    relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
+                write_simple_outnode(
+                    atom_positions, 'list', 'relax_atom_positions', simple_data)
 
             # total iterations
             number_of_iterations_total = get_xml_attribute(
@@ -1082,7 +1127,7 @@ def parse_relax_file(rlx):
     displacements = eval_xpath2(root, xpath_disp)
     float_displ = []
     for i in displacements:
-        temp = [float(x) for x in i.split()]
+        temp = [convert_frac(x) for x in i.text.split()]
         float_displ.append(temp)
 
     energies = eval_xpath2(root, xpath_energy)
@@ -1094,7 +1139,7 @@ def parse_relax_file(rlx):
         posforces = eval_xpath2(posf, 'posforce')
         temp2 = []
         for i in posforces:
-            temp = [float(x) for x in i.split()]
+            temp = [convert_frac(x) for x in i.text.split()]
             temp2.append(temp)
         float_posforces.append(temp2)
 
@@ -1103,4 +1148,12 @@ def parse_relax_file(rlx):
     out_dict['energies'] = energies
     out_dict['posforces'] = float_posforces
 
-    return Dict(out_dict)
+    return Dict(dict=out_dict)
+
+def convert_frac(ratio):
+    """ Converts ratio strings into float, e.g. 1.0/2.0 -> 0.5 """
+    try:
+        return float(ratio)
+    except ValueError:
+        num, denom = ratio.split('/')
+        return float(num) / float(denom)

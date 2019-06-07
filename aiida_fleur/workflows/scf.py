@@ -35,6 +35,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, optimize_calc_options
+from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 
 RemoteData = DataFactory('remote')
@@ -179,7 +180,6 @@ class FleurScfWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
-
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
@@ -230,9 +230,7 @@ class FleurScfWorkChain(WorkChain):
         # validate input and find out which path (1, or 2) to take
         # return True means run inpgen if false run fleur directly
         """
-
-        self.ctx.run_inpgen = True
-        inputs = self.inputs
+        inputs = cleanup_inputs(self.inputs)
 
         if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
@@ -253,15 +251,16 @@ class FleurScfWorkChain(WorkChain):
                            'is given that overrides inp.xml from remote calculation')
                 self.ctx.warnings.append(warning)
                 self.report(warning)
+        elif 'remote_data' in inputs:
+            self.ctx.run_inpgen = False
         elif 'structure' in inputs:
+            self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
-        elif 'remote_data' in inputs:
-            self.ctx.run_inpgen = False
         else:
-            error = 'ERROR: No StructureData nor FleurinpData was provided'
+            error = 'ERROR: No StructureData nor FleurinpData nor RemoteData was provided'
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
         if 'inpgen' in inputs:
@@ -366,24 +365,32 @@ class FleurScfWorkChain(WorkChain):
         calculation.
         """
         self.report('INFO: run change_fleurinp')
+
+        inputs = cleanup_inputs(self.inputs)
+
+        # Has to never crash because corresponding check was done in validate function
         if self.ctx.fleurinp:  # something was already changed
             return
-        elif 'fleurinp' in self.inputs:
+        elif 'fleurinp' in inputs:
             fleurin = self.inputs.fleurinp
-        elif 'structure' in self.inputs:
+        elif 'remote_data' in inputs:
+            # In this case only remote_data for input structure is given
+            # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
+            remote_node = self.inputs.remote_data
+            parent_calc_node = remote_node.get_incoming().get_node_by_label('remote_folder')
+            retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
+            try:
+                fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+            except ValueError:
+                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+        elif 'structure' in inputs:
+            # only structure is given, no remote nor fleurinp
             try:
                 fleurin = self.ctx['inpgen'].outputs.fleurinpData
             except NotExistent:
                 error = 'No fleurinpData found, inpgen failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-        elif 'remote_data' in self.inputs:
-            # In this case only remote_data for input structure is given
-            # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
-            remote_node = self.inputs.remote_data
-            parent_calc_node = remote_node.get_incoming().get_node_by_label('remote_folder')
-            retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-            fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
@@ -581,6 +588,7 @@ class FleurScfWorkChain(WorkChain):
         overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence'
                                       '/overallchargeDensity/@distance')
         #spindensity_xpath = 'densityConvergence/spinDensity'
+        mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_calc = self.ctx.last_calc
 
@@ -623,7 +631,7 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.total_energy.append(float(energy))
 
             overall_distances = eval_xpath2(root, overallchargedensity_xpath)
-            if overall_distances:
+            if not overall_distances:
                 distances = eval_xpath2(root, xpath_distance)
                 for distance in distances:
                     self.ctx.distance.append(float(distance))
@@ -631,29 +639,30 @@ class FleurScfWorkChain(WorkChain):
                 for distance in overall_distances:
                     self.ctx.distance.append(float(distance))
 
-            iter_all = eval_xpath2(root, xpath_iter)
-            for iteration in iter_all:
-                forces = eval_xpath2(iteration, xpath_force)
-                forces_in_iter = []
-                for force in forces:
-                    # forces_unit = get_xml_attribute(
-                    #    eval_xpath(iteration_node, forces_units_xpath), units_name)
-                    force_x = float(get_xml_attribute(force, 'F_x'))
-                    force_y = float(get_xml_attribute(force, 'F_y'))
-                    force_z = float(get_xml_attribute(force, 'F_z'))
+            if mode=='force':
+                iter_all = eval_xpath2(root, xpath_iter)
+                for iteration in iter_all:
+                    forces = eval_xpath2(iteration, xpath_force)
+                    forces_in_iter = []
+                    for force in forces:
+                        # forces_unit = get_xml_attribute(
+                        #    eval_xpath(iteration_node, forces_units_xpath), units_name)
+                        force_x = float(get_xml_attribute(force, 'F_x'))
+                        force_y = float(get_xml_attribute(force, 'F_y'))
+                        force_z = float(get_xml_attribute(force, 'F_z'))
 
-                    forces_in_iter.append(force_x)
-                    forces_in_iter.append(force_y)
-                    forces_in_iter.append(force_z)
+                        forces_in_iter.append(force_x)
+                        forces_in_iter.append(force_y)
+                        forces_in_iter.append(force_z)
 
-                self.ctx.all_forces.append(forces_in_iter)
+                    self.ctx.all_forces.append(forces_in_iter)
             outxmlfile_opened.close()
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
 
-        if self.ctx.distance:
+        if not self.ctx.distance:
             errormsg = 'ERROR: did not manage to extract charge density from the calculation'
             self.control_end_wc(errormsg)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
@@ -671,10 +680,13 @@ class FleurScfWorkChain(WorkChain):
         if len(energy) >= 2:
             self.ctx.energydiff = abs(energy[-1]-energy[-2])
 
-        forces = self.ctx.all_forces
-        if len(forces) >= 2:
-            self.ctx.forcediff = max(
-                [abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+        if mode == 'force':
+            forces = self.ctx.all_forces
+            if len(forces) >= 2:
+                self.ctx.forcediff = max(
+                    [abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+        else:
+            self.ctx.forcediff = 'can not be determined'
 
         if mode == 'density':
             if self.ctx.wf_dict.get('density_criterion') >= self.ctx.last_charge_density:
@@ -684,11 +696,11 @@ class FleurScfWorkChain(WorkChain):
                 return False
         elif mode == 'force':
             try:
-                _ = self.ctx.last_calc.relax_parameters
+                _ = self.ctx.last_calc.outputs.relax_parameters
             except NotExistent:
+                return True
+            else:
                 return False
-            # self.ctx.last_calc
-            # if self.ctx.wf_dict.get('force_criterion') >= self.ctx.forcediff:
 
         return True
 
@@ -731,6 +743,7 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['material'] = self.ctx.formula
+        outputnode_dict['conv_mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get(
             'number_of_iterations_total', None)
@@ -818,19 +831,9 @@ class FleurScfWorkChain(WorkChain):
         else:
             outdict = create_scf_result_node(outpara=outputnode_t)
 
-        if 'fleurinp' in self.inputs:
-            outdict['fleurinp'] = self.inputs.fleurinp
-        elif not self.ctx.run_inpgen:
-            # fleurinp node contain a fleurinp which was changed according to inpxml_changes
-            outdict['fleurinp'] = self.ctx.fleurinp
-        else:
-            try:
-                fleurinp = self.ctx['inpgen'].outputs.fleurinpData
-            except NotExistent:
-                self.report(
-                    'ERROR: No fleurinp, something was wrong with the inpgen calc')
-                fleurinp = None
-            outdict['fleurinp'] = fleurinp
+        # Now it always returns changed fleurinp that was actually used in the calculation
+        outdict['fleurinp'] = self.ctx.fleurinp
+
         if last_calc_out:
             outdict['last_fleur_calc_output'] = last_calc_out
 
