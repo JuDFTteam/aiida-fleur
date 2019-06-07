@@ -723,8 +723,6 @@ class FleurCalculation(CalcJob):
         if with_hdf5:
             retrieve_list.append(
                 self.inputs.metadata.options.cdn_last_hdf5_file_name)
-            # only for now because somthing is buggy
-            retrieve_list.append(self.inputs.metadata.options.cdn1_file_name)
         else:
             retrieve_list.append(self.inputs.metadata.options.cdn1_file_name)
 
