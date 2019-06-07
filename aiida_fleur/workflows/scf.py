@@ -204,7 +204,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.default_itmax = self.ctx.wf_dict.get('itmax_per_run', 30)
 
         # return para/vars
-        self.ctx.successful = False
+        self.ctx.successful = True
         self.ctx.parse_last = True
         self.ctx.distance = []
         self.ctx.all_forces = []
