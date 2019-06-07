@@ -423,21 +423,19 @@ class FleurinpData(Data):
         parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
         #dtd_validation=True
 
-        tree = etree.parse(inpxmlfile, parser)
-        #replace XInclude parts to validate against schema
-        tree.xinclude()
-        #check if it validates against the schema
-        if not xmlschema.validate(tree):
+        tree_x = etree.parse(inpxmlfile, parser)
+        # replace XInclude parts to validate against schema
+        tree_x.xinclude()
+        # check if it validates against the schema
+        if not xmlschema.validate(tree_x):
             raise InputValidationError(
                       "Input file is not validated against the schema.")
-        inpxmlfile.close()
-        root = tree.getroot()
 
         # convert etree into python dictionary
+        root = tree_x.getroot()
         inpxml_dict = inpxml_todict(root, inpxmlstructure)
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
-
 
     # dict with inp paramters parsed from inp.xml
     @property

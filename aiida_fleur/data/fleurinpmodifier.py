@@ -19,7 +19,8 @@ fleurinpdata objects in a way which keeps the provernance.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import re
+import copy
+
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
@@ -67,16 +68,13 @@ class FleurinpModifier(object):
         parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
 
         tree = etree.parse(inpxmlfile, parser)
-        #replace XInclude parts to validate against schema
-        tree.xinclude()
-        if not xmlschema.validate(tree):
-            raise InputValidationError(
-                      "Input file is not validated against the schema.")
+        tree_x = copy.deepcopy(tree)
 
-        #return xinclude part to let FLEUR code to deal with it
-        inpxmlfile.seek(0)
-        parser = etree.XMLParser(attribute_defaults=True, remove_comments=False)
-        tree = etree.parse(inpxmlfile, parser)
+        #replace XInclude parts to validate against schema
+        tree_x.xinclude()
+        if not xmlschema.validate(tree_x):
+            raise ValueError(
+                      "Input file is not validated against the schema.")
         
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
             modification_tasks=modification_tasks)
@@ -262,11 +260,10 @@ class FleurinpModifier(object):
 
         }
 
-        workingtree = fleurinp_tree_copy#.copy()
+        workingtree = fleurinp_tree_copy
         if schema_tree:
             #xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(schema_tree)
-            parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
 
         for task in modification_tasks:
             try:
@@ -275,13 +272,15 @@ class FleurinpModifier(object):
                 raise ValueError("Unknown task {}".format(task[0]))
 
             workingtree = action(workingtree, *task[1:])
-            if schema_tree:
-                if not xmlschema.validate(fleurinp_tree_copy):
-                    pass# do something to get nice error message
-                    # TODO maybe even delete wrong task
-                    print(('change not valid: {}'.format(task[1:])))
-                else:
-                    pass
+
+        workingtree_x = copy.deepcopy(workingtree)
+        workingtree_x.xinclude()
+        if schema_tree:
+            if not xmlschema.validate(workingtree_x):
+                # TODO maybe even delete wrong task
+                print(('change not valid: {}'.format(task[1:])))
+                #raise ValueError('change not valid: {}'.format(task[1:]))
+
         return workingtree
 
     def get_avail_actions(self):
