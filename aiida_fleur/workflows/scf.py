@@ -71,8 +71,8 @@ class FleurScfWorkChain(WorkChain):
 
     maximum input example:
     1. Code1, Code2, Structure, Parameters
-        wf_parameters: {'density_criterion' : Float,
-                        'energy_criterion' : Float,
+        wf_parameters: {'density_converged' : Float,
+                        'energy_converged' : Float,
                         'converge_density' : True,
                         'converge_energy' : True}
     2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
@@ -83,9 +83,9 @@ class FleurScfWorkChain(WorkChain):
 
     _workflowversion = "0.3.2"
     _wf_default = {'fleur_runmax': 4,
-                   'density_criterion': 0.00002,
-                   'energy_criterion': 0.002,
-                   'force_criterion': 0.002,
+                   'density_converged': 0.00002,
+                   'energy_converged': 0.002,
+                   'force_converged': 0.002,
                    'mode': 'density',  # 'density', 'energy' or 'force'
                    'serial': False,
                    'itmax_per_run': 30,
@@ -401,11 +401,11 @@ class FleurScfWorkChain(WorkChain):
 
         # set proper convergence parameters in inp.xml
         if converge_mode == 'density':
-            dist = wf_dict.get('density_criterion')
+            dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges(
                 {'itmax': self.ctx.default_itmax, 'minDistance': dist})
         elif converge_mode == 'force':
-            force_converged = wf_dict.get('force_criterion')
+            force_converged = wf_dict.get('force_converged')
             dist = 0.0
             fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist,
                                       'force_converged': force_converged, 'l_f': True,
@@ -689,10 +689,10 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.forcediff = 'can not be determined'
 
         if mode == 'density':
-            if self.ctx.wf_dict.get('density_criterion') >= self.ctx.last_charge_density:
+            if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
                 return False
         elif mode == 'energy':
-            if self.ctx.wf_dict.get('energy_criterion') >= self.ctx.energydiff:
+            if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 return False
         elif mode == 'force':
             try:
