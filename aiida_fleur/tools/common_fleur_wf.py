@@ -616,3 +616,11 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
             'Changed the number of nodes from {} to {}. Number of k-points is {}.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
     return best_suggestion[0], best_suggestion[1], message, exit_status
 
+def cleanup_inputs(original_inputs):
+    """ Remove input nodes that is None from the input dict"""
+    import copy
+    inputs = copy.deepcopy(original_inputs)
+    for key, value in six.iteritems(original_inputs):
+        if value is None:
+            inputs.pop(key)
+    return inputs

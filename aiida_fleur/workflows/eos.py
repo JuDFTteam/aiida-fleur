@@ -29,7 +29,7 @@ from aiida.engine import WorkChain, ToContext#,Outputs
 from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida_fleur.tools.StructureData_util import rescale, is_structure
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 import six
@@ -243,7 +243,7 @@ class fleur_eos_wc(WorkChain):
             #                  label=label_c,
             #                  description=description)
             #time.sleep(5)
-            res = self.submit(fleur_scf_wc, **inputs)
+            res = self.submit(FleurScfWorkChain, **inputs)
             self.ctx.labels.append(label)
             calcs[label] = res
 

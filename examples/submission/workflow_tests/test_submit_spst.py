@@ -26,7 +26,7 @@ from aiida.engine import submit, run
 from aiida_fleur.workflows.spst import fleur_spst_wc
 from pprint import pprint
 ################################################################
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
     
@@ -57,17 +57,17 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                               'force_th' : True,
                               'serial' : False,
                               'prop_dir' : [0.125, 0.125, 0.0],
-                              'q_vectors': ['0.125 0.125 0.0',
-                                            '0.0 0.0 0.0',
+                              'q_vectors': ['0.0 0.0 0.0',
+                                            '0.125 0.125 0.0',
                                             '0.250 0.250 0.0',
                                             '0.375 0.375 0.0',
                                             '0.500 0.500 0.0'],
                               'inpxml_changes' : []
                         })
 
-options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 16},
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
                               'queue_name' : 'devel',
-                              'max_wallclock_seconds':  40*60})
+                              'max_wallclock_seconds':  4*60})
 '''
 #W bcc structure
 bohr_a_0= 0.52917721092 # A
@@ -75,7 +75,7 @@ a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
                         'jri' : 833,
@@ -101,7 +101,7 @@ structure.append_atom(position=(0.5*0.7071068*a,0.5*a,0.0), symbols='Pt')
 structure.append_atom(position=(0.,0.,2.65059*bohr_a_0), symbols='Pt')
 structure.pbc = (True, True, False)
 
-parameters = ParameterData(dict={
+parameters = Dict(dict={
                   'atom':{
                         'element' : 'Pt',
                         #'jri' : 833,
@@ -144,9 +144,9 @@ parameters = Dict(dict={
                         'bmu' : 2.5,
                         },
                   'kpt': {
-                        'div1': 16,
-                        'div2' : 16,
-                        'div3' : 16
+                        'div1': 1,
+                        'div2' : 1,
+                        'div3' : 1
                         }})
 
 default = {'structure' : structure,
@@ -208,6 +208,7 @@ if submit_wc:
 else:
     print("##################### Running fleur_spst_wc #####################")
     res = run(fleur_spst_wc, **inputs)
+    '''
     print((res['out'].get_dict()))
     a = res['out'].get_dict()
     import matplotlib
@@ -224,3 +225,4 @@ else:
     plt.xlabel('lambda^(-2), A^(-2)')
     plt.show()
     print("##################### Finished running fleur_spst_wc #####################")
+    '''
