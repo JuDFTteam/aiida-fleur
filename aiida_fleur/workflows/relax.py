@@ -326,8 +326,9 @@ class FleurRelaxWorkChain(WorkChain):
             return False
 
         self.ctx.loop_count += 1
-        self.report('INFO: submit optimization iteration number {}. '
-                    'Largest force is {}'.format(self.ctx.loop_count+1, largest_now))
+        self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
+                    'force criterion is {}'.format(self.ctx.loop_count+1, largest_now,
+                                                   self.ctx.wf_dict['force_criterion']))
 
         return True
 
@@ -336,6 +337,7 @@ class FleurRelaxWorkChain(WorkChain):
         Exits the workchain and throws an exit_code
         """
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
+            self.get_results()
             message = ('Did not reach structure optimization in a given number of scf iterations.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_DID_NOT_CONVERGE
@@ -446,12 +448,3 @@ def save_output_node(out):
     """
     out_wc = out.clone()
     return out_wc
-
-@cf
-def create_output_node(node):
-    """
-    This function checks the content of the retrived
-    relax.xml file and generated a new one if there is
-    a problem with MT radii and suggested displacements.
-    """
-    pass

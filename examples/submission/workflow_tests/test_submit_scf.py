@@ -61,7 +61,7 @@ print(args)
 wf_para = Dict(dict={'fleur_runmax' : 4,
                      'density_criterion' : 0.001,
                      'energy_criterion' : 0.002,
-                     'mode' : 'energy', # 'force', 'energy' or 'density'
+                     'mode' : 'force', # 'force', 'energy' or 'density'
                      'force_criterion' : 0.2,
                      'itmax_per_run' : 30,
                      'force_dict' : {'qfix' : 2,
@@ -73,7 +73,7 @@ options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine
                      'queue_name' : 'devel',
                      'max_wallclock_seconds':  60*60})
 
-# W bcc structure
+
 bohr_a_0 = 0.52917721092 # A
 a = 7.497 * bohr_a_0
 cell = [[0.7071068*a, 0.0, 0.0],
@@ -112,7 +112,33 @@ parameters = Dict(dict={
         'div2' : 10,
         'div3' : 1
         }})
+'''
 
+# Fe fcc structure
+bohr_a_0 = 0.52917721092 # A
+a = 3.4100000000*bohr_a_0*2**(0.5)
+cell = [[a, 0, 0],
+        [0, a, 0],
+        [0, 0, a]]
+structure = StructureData(cell=cell)
+structure.append_atom(position=(0., 0., 0.), symbols='Fe')
+structure.append_atom(position=(0.5*a, 0.47*a, 0.0*a), symbols='Fe')
+structure.append_atom(position=(0.5*a, 0.0*a, 0.46*a), symbols='Fe')
+structure.append_atom(position=(0.01*a, 0.5*a, 0.43*a), symbols='Fe')
+parameters = Dict(dict={
+    'comp': {
+        'kmax': 3.4,
+        },
+    'atom' : {
+        'element' : 'Fe',
+        'bmu' : 2.5,
+        },
+    'kpt': {
+        'div1': 1,
+        'div2' : 1,
+        'div3' : 1
+        }})
+'''
 default = {'structure' : structure,
            'wf_parameters': wf_para,
            'options' : options,
