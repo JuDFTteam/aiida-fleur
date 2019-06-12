@@ -4,7 +4,7 @@
 #                All rights reserved.                                         #
 # This file is part of the AiiDA-FLEUR package.                               #
 #                                                                             #
-# The code is hosted on GitHub at https://github.com/broeder-j/aiida-fleur    #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
 # For further information on the license, see the LICENSE.txt file            #
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
@@ -56,7 +56,6 @@ class FleurRelaxWorkChain(WorkChain):
         'itmax_per_run': 30,
         'alpha_mix': 0.015,
         'relax_iter': 5,
-        'relax_specie': {},
         'force_converged': 0.0002,
         'force_dict': {'qfix': 2,
                        'forcealpha': 0.5,
@@ -319,12 +318,16 @@ class FleurRelaxWorkChain(WorkChain):
             self.control_end_wc(message)
             return self.exit_codes.ERROR_RELAX_FAILED
 
-        if abs(self.ctx.forces[-1]) < self.ctx.wf_dict['force_criterion']:
+        largest_now = abs(self.ctx.forces[-1])
+
+        if largest_now < self.ctx.wf_dict['force_criterion']:
+            self.report('Structure is converged to the largest force'
+                        '{}'.format(self.ctx.forces[-1]))
             return False
 
         self.ctx.loop_count += 1
-        self.report('INFO: submit optimization iteration number {}.'
-                    'Largest force is {}'.format(self.ctx.loop_count+1, self.ctx.forces[-1]))
+        self.report('INFO: submit optimization iteration number {}. '
+                    'Largest force is {}'.format(self.ctx.loop_count+1, largest_now))
 
         return True
 

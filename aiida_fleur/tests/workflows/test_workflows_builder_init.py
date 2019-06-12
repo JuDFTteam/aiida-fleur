@@ -103,9 +103,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the relax workchain
         """
-        from aiida_fleur.workflows.relax import fleur_relax_wc
+        from aiida_fleur.workflows.relax import FleurRelaxWorkChain
         
-        builder = fleur_relax_wc.get_builder()
+        builder = FleurRelaxWorkChain.get_builder()
 
 
     def test_fleur_optimize_para_wc_init(aiida_env):
