@@ -161,8 +161,7 @@ class FleurParser(Parser):
             # open output file
             outxmlfile_opened = output_folder.open(
                 calc.get_attribute('outxml_file_name'), 'r')
-            simpledata, complexdata, parser_info, success = parse_xmlout_file(
-                outxmlfile_opened)
+            simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
             outxmlfile_opened.close()
 
             # Call routines for output node creation
@@ -173,12 +172,14 @@ class FleurParser(Parser):
             elif simpledata:
                 outputdata = dict(list(simpledata.items()) +
                                   list(parser_info.items()))
+                outputdata['CalcJob_uuid'] = self.node.uuid
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
             elif complexdata:
                 parameter_data = dict(
                     list(complexdata.items()) + list(parser_info.items()))
+                parameter_data['CalcJob_uuid'] = self.node.uuid
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)

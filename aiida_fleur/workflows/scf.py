@@ -597,8 +597,8 @@ class FleurScfWorkChain(WorkChain):
             '''
             # TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
-
-            fleur_calcjob = load_node(last_calc.outputs.final_calc.value)
+            out_para = last_calc.outputs.output_parameters
+            fleur_calcjob = load_node(out_para.get_dict()['CalcJob_uuid'])
             outxmlfile_opened = last_calc.outputs.retrieved.open(
                 fleur_calcjob.get_attribute('outxml_file_name'), 'r')
             walltime = last_calc.outputs.output_parameters.dict.walltime
@@ -709,7 +709,8 @@ class FleurScfWorkChain(WorkChain):
         therefore it only uses results from context.
         """
         try:
-            last_calc_uuid = self.ctx.last_calc.outputs.final_calc.value
+            out_param = self.ctx.last_calc.outputs.output_parameters
+            last_calc_uuid = out_param.get_dict()['CalcJob_uuid']
         except AttributeError:
             last_calc_uuid = None
         try:  # if something failed, we still might be able to retrieve something

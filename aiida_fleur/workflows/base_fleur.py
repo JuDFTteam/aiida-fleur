@@ -121,24 +121,3 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
-
-    def results(self):
-        """
-        Also output last FLEUR calculation
-        """
-        # all_outgoing = self.node.get_outgoing().all()
-        # last_calc_pk = 0
-        # for link in all_outgoing:
-        #     if link.link_label == 'CALL_CALC' and link.node.pk > last_calc_pk:
-        #         last_calc_pk = link.node.pk
-        # last_calc = orm.load_node(last_calc_pk)
-        last_calc = self.ctx.restart_calc
-        stored_uuid = store_last_uuid(orm.Str(last_calc.uuid))
-        self.out('final_calc', stored_uuid)
-        super(FleurBaseWorkChain, self).results()
-
-@cf
-def store_last_uuid(uuid):
-    """Store uuid"""
-    uuid_cloned = uuid.clone()
-    return uuid_cloned
