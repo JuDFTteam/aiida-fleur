@@ -24,7 +24,7 @@ from aiida.plugins import DataFactory, CalculationFactory
 import six
 KpointsData =  DataFactory('array.kpoints')
 RemoteData = DataFactory('remote')
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 #FleurInpData = DataFactory('fleurinp.fleurinp')
 FleurInpData = DataFactory('fleur.fleurinp')
 FleurProcess = CalculationFactory('fleur.fleur')
@@ -83,31 +83,22 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     '''
     get the input for a FLEUR calc
     '''
-    inputs = FleurProcess.get_builder()#get_inputs_template()
-    #print('Template fleur {} '.format(inputs))
+    inputs = {}
     if remote:
-        inputs.parent_folder = remote
+        inputs['parent_folder'] = remote
     if code:
-        inputs.code = code
+        inputs['code'] = code
     if fleurinp:
-        inputs.fleurinpdata = fleurinp
+        inputs['fleurinpdata'] = fleurinp
 
-    #for key, val in options.iteritems():
-    #    if val==None:
-    #        continue
-    #    elif isinstance(val, str):# ensure unicode 
-    #        inputs.options[key] = unicode(val)
-    #    else:
-    #        inputs.options[key] = val
-
-    if description:
-        inputs.metadata.description = description
-    else:
-        inputs.metadata.description = ''
-    if label:
-        inputs.metadata.label = label
-    else:
-        inputs.metadata.label = ''
+    # if description:
+    #     inputs['description'] = description
+    # else:
+    #     inputs['description'] = ''
+    # if label:
+    #     inputs['label'] = label
+    # else:
+    #     inputs['label'] = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -117,32 +108,16 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machinces,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {"num_machines": 1}
+    else:
+        # set withmpi explicitly
+        options['withmpi'] = True
 
     if settings:
-        inputs.settings = settings
+        inputs['settings'] = Dict(dict=settings)
 
     if options:
-        inputs.metadata.options = options
-    
-    # Currently this does not work, find out howto...
-    #for key, val in kwargs.iteritems(): 
-    #    inputs[key] = val
-    '''
-    options = {
-    "max_wallclock_seconds": int,
-    "resources": dict,
-    "custom_scheduler_commands": unicode,
-    "queue_name": basestring,
-    "computer": Computer,
-    "withmpi": bool,
-    "mpirun_extra_params": Any(list, tuple),
-    "import_sys_environment": bool,
-    "environment_variables": dict,
-    "priority": unicode,
-    "max_memory_kb": int,
-    "prepend_text": unicode,
-    "append_text": unicode}
-    '''
+        inputs['options'] = Dict(dict=options)
+
     return inputs
 
 

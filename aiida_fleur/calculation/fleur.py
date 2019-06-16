@@ -426,7 +426,6 @@ class FleurCalculation(CalcJob):
         spec.output('output_parameters', valid_type=Dict, required=False)
         spec.output('output_params_complex', valid_type=Dict, required=False)
         spec.output('relax_parameters', valid_type=Dict, required=False)
-        spec.output('fleurinpData', valid_type=FleurinpData, required=False)
         spec.default_output_node = 'output_parameters'
 
         # exit codes

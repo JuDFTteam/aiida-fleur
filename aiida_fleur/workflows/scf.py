@@ -27,16 +27,17 @@ import six
 from six.moves import range
 
 from aiida.plugins import DataFactory
-from aiida.orm import Code
+from aiida.orm import Code, load_node, CalcJobNode
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, optimize_calc_options
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
@@ -162,7 +163,7 @@ class FleurScfWorkChain(WorkChain):
         """
         init context and some parameters
         """
-        self.report('INFO: started convergence workflow version {}\n'
+        self.report('INFO: started convergence workflow version {}'
                     ''.format(self._workflowversion))
 
         ####### init    #######
@@ -340,25 +341,6 @@ class FleurScfWorkChain(WorkChain):
 
         return ToContext(inpgen=future, last_calc=future)
 
-    def check_kpts(self, fleurinp):
-        """
-        This routine checks if the total number of requested cpus
-        is a factor of kpts and makes small optimisation.
-        """
-        mach = int(self.ctx.options['resources']['num_machines'])
-        procs = int(self.ctx.options['resources']['num_mpiprocs_per_machine'])
-        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp, mach, procs)
-
-        if 'WARNING' in message:
-            self.ctx.warnings.append(message)
-
-        self.report(message)
-
-        self.ctx.options['resources']['num_machines'] = adv_nodes
-        self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
-
-        return exit_code
-
     def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
@@ -377,7 +359,9 @@ class FleurScfWorkChain(WorkChain):
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
             remote_node = self.inputs.remote_data
-            parent_calc_node = remote_node.get_incoming().get_node_by_label('remote_folder')
+            for link in remote_node.get_incoming().all():
+                if isinstance(link.node, CalcJobNode):
+                    parent_calc_node = link.node
             retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
             try:
                 fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
@@ -467,9 +451,6 @@ class FleurScfWorkChain(WorkChain):
             return status
 
         fleurin = self.ctx.fleurinp
-        if self.check_kpts(fleurin):
-            self.control_end_wc('ERROR: Not optimal computational resourses.')
-            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
 
         if 'settings' in self.inputs:
             settings = self.inputs.settings
@@ -500,7 +481,7 @@ class FleurScfWorkChain(WorkChain):
 
         inputs_builder = get_inputs_fleur(
             code, remote, fleurin, options, label, description, settings, serial=self.ctx.serial)
-        future = self.submit(inputs_builder)
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
@@ -534,7 +515,6 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.parse_last = True
 
         '''
-        #TODO: these retries have to be fixed/implemented using fleur calculation exit_codes
         # Done: successful convergence of last calculation
         if calculation.has_finished_ok():
             self.report('converged successfully after {} iterations'.format(self.ctx.iteration))
@@ -617,8 +597,10 @@ class FleurScfWorkChain(WorkChain):
             '''
             # TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
-            outxmlfile_opened = last_calc.get_retrieved_node().open(
-                last_calc.get_attribute('outxml_file_name'), 'r')
+
+            fleur_calcjob = load_node(last_calc.outputs.final_calc.value)
+            outxmlfile_opened = last_calc.outputs.retrieved.open(
+                fleur_calcjob.get_attribute('outxml_file_name'), 'r')
             walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
@@ -727,7 +709,7 @@ class FleurScfWorkChain(WorkChain):
         therefore it only uses results from context.
         """
         try:
-            last_calc_uuid = self.ctx.last_calc.uuid
+            last_calc_uuid = self.ctx.last_calc.outputs.final_calc.value
         except AttributeError:
             last_calc_uuid = None
         try:  # if something failed, we still might be able to retrieve something
