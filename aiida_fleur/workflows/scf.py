@@ -339,7 +339,7 @@ class FleurScfWorkChain(WorkChain):
         self.report('INFO: run inpgen')
         future = self.submit(inputs_build)
 
-        return ToContext(inpgen=future, last_calc=future)
+        return ToContext(inpgen=future)
 
     def change_fleurinp(self):
         """

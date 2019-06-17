@@ -79,7 +79,8 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False, **kwargs):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
+                     serial=False):
     '''
     get the input for a FLEUR calc
     '''
@@ -91,14 +92,14 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     if fleurinp:
         inputs['fleurinpdata'] = fleurinp
 
-    # if description:
-    #     inputs['description'] = description
-    # else:
-    #     inputs['description'] = ''
-    # if label:
-    #     inputs['label'] = label
-    # else:
-    #     inputs['label'] = ''
+    if description:
+        inputs['description'] = description
+    else:
+        inputs['description'] = ''
+    if label:
+        inputs['label'] = label
+    else:
+        inputs['label'] = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -134,14 +135,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
         inputs.code = inpgencode
     if params:
         inputs.parameters = params
-    #for key, val in options.iteritems():
-    #    if val==None:
-    #        #leave them out, otherwise the dict schema won't validate
-    #        continue
-    #    else:
-    #        inputs.options[key] = val
 
-        
     if description:
         inputs.metadata.description = description
     else:

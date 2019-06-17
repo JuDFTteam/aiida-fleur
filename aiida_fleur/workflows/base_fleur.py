@@ -1,15 +1,30 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+"""
+This module contains the FleurBaseWorkChain.
+FleurBaseWorkChain is a workchain that wraps the submission of
+the FLEUR calculation. Inheritence from the BaseRestartWorkChain
+allows to add scenarious to restart a calculation in an
+automatic way if an expected failure occured.
+"""
 from __future__ import absolute_import
+import six
 
 from aiida import orm
 from aiida.common import AttributeDict
 from aiida.engine import while_
-from aiida.engine import calcfunction as cf
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
-from aiida_fleur.common.mapping import update_mapping, prepare_process_inputs
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
-from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 
 FleurProcess = CalculationFactory('fleur.fleur')
 FleurInpData = DataFactory('fleur.fleurinp')
@@ -34,10 +49,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                    help='Optional parameters to set up computational details.')
         spec.input('fleurinpdata', valid_type=FleurInpData,
                    help='Optional parameter set up a ready-to-use fleurinp.')
-        # spec.input('description', valid_type=six.string_types, required=False,
-        #            help='Calculation description.')
-        # spec.input('label', valid_type=six.string_types, required=False,
-        #            help='Calculation label.')
+        spec.input('description', valid_type=six.string_types, required=False, non_db=True,
+                   help='Calculation description.')
+        spec.input('label', valid_type=six.string_types, required=False, non_db=True,
+                   help='Calculation label.')
 
         spec.outline(
             cls.setup,
