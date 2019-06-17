@@ -17,7 +17,6 @@ cylce management of a FLEUR calculation with AiiDA.
 # TODO: more info in output, log warnings
 # TODO: make smarter, ggf delete broyd or restart with more or less iterations
 # you can use the pattern of the density convergence for this
-# TODO: test in each step if calculation before had a problem
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 # TODO: clean up exit codes and its messages
 from __future__ import absolute_import
@@ -514,100 +513,40 @@ class FleurScfWorkChain(WorkChain):
         else:
             self.ctx.parse_last = True
 
-        '''
-        # Done: successful convergence of last calculation
-        if calculation.has_finished_ok():
-            self.report('converged successfully after {} iterations'.format(self.ctx.iteration))
-            self.ctx.restart_calc = calculation
-            self.ctx.is_finished = True
-
-        # Abort: exceeded maximum number of retries
-        elif self.ctx.iteration >= self.ctx.max_iterations:
-            self.report('reached the max number of iterations {}'.format(self.ctx.max_iterations))
-            self.abort_nowait('last ran PwCalculation<{}>'.format(calculation.pk))
-
-        # Abort: unexpected state of last calculation
-        elif calculation.get_state() not in expected_states:
-            self.abort_nowait('unexpected state ({}) of PwCalculation<{}>'.format(
-                calculation.get_state(), calculation.pk))
-
-        # Retry: submission failed, try to restart or abort
-        elif calculation.get_state() in [calc_states.SUBMISSIONFAILED]:
-            self._handle_submission_failure(calculation)
-
-        # Retry: calculation failed, try to salvage or abort
-        elif calculation.get_state() in [calc_states.FAILED]:
-            self._handle_calculation_failure(calculation)
-
-        # Retry: try to convergence restarting from this calculation
-        else:
-            self.report('calculation did not converge after {} iterations, restarting'.format(self.ctx.iteration))
-            self.ctx.restart_calc = calculation
-
-        # ggf handle bad convergence behavior, delete broyd (do not copy)
-        return
-        '''
-
     def get_res(self):
         """
         Check how the last Fleur calculation went
         Parse some results.
         """
-        # TODO maybe do this different
-        # or if complexer output node exists take from there.
-
         self.report('INFO: get results FLEUR')
 
         xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
         xpath_iter = '/fleurOutput/scfLoop/iteration'
         xpath_force = 'totalForcesOnRepresentativeAtoms/forceTotal'
+
         # be aware of magnetism
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance'
-        #densityconvergence_xpath = 'densityConvergence'
-        #chargedensity_xpath = 'densityConvergence/chargeDensity'
         overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence'
                                       '/overallchargeDensity/@distance')
-        #spindensity_xpath = 'densityConvergence/spinDensity'
+
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_calc = self.ctx.last_calc
 
-            '''
-            spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
-
-                charge_densitys = eval_xpath(iteration_node, chargedensity_xpath)
-                charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
-                write_simple_outnode(
-                    charge_density1, 'float', 'charge_density1', simple_data)
-
-                charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
-                write_simple_outnode(
-                    charge_density2, 'float', 'charge_density2', simple_data)
-
-                spin_density = get_xml_attribute(
-                    eval_xpath(iteration_node, spindensity_xpath), distance_name)
-                write_simple_outnode(
-                    spin_density, 'float', 'spin_density', simple_data)
-
-                overall_charge_density = get_xml_attribute(
-                    eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
-                write_simple_outnode(
-                    overall_charge_density, 'float', 'overall_charge_density', simple_data)
-
-            '''
             # TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
             out_para = last_calc.outputs.output_parameters
             fleur_calcjob = load_node(out_para.get_dict()['CalcJob_uuid'])
             outxmlfile_opened = last_calc.outputs.retrieved.open(
                 fleur_calcjob.get_attribute('outxml_file_name'), 'r')
+
             walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            #outpara = last_calc.get('output_parameters', None)
-            #outxmlfile = outpara.dict.outputfile_path
+
             tree = etree.parse(outxmlfile_opened)
             root = tree.getroot()
+
             energies = eval_xpath2(root, xpath_energy)
             for energy in energies:
                 self.ctx.total_energy.append(float(energy))
@@ -621,14 +560,12 @@ class FleurScfWorkChain(WorkChain):
                 for distance in overall_distances:
                     self.ctx.distance.append(float(distance))
 
-            if mode=='force':
+            if mode == 'force':
                 iter_all = eval_xpath2(root, xpath_iter)
                 for iteration in iter_all:
                     forces = eval_xpath2(iteration, xpath_force)
                     forces_in_iter = []
                     for force in forces:
-                        # forces_unit = get_xml_attribute(
-                        #    eval_xpath(iteration_node, forces_units_xpath), units_name)
                         force_x = float(get_xml_attribute(force, 'F_x'))
                         force_y = float(get_xml_attribute(force, 'F_y'))
                         force_z = float(get_xml_attribute(force, 'F_z'))
@@ -732,12 +669,10 @@ class FleurScfWorkChain(WorkChain):
             'number_of_iterations_total', None)
         outputnode_dict['distance_charge'] = self.ctx.last_charge_density
         outputnode_dict['distance_charge_all'] = self.ctx.distance
-        outputnode_dict['total_energy'] = last_calc_out_dict.get(
-            'energy_hartree', None)
+        outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
         outputnode_dict['total_energy_all'] = self.ctx.total_energy
         outputnode_dict['force_diff_last'] = self.ctx.forcediff
-        outputnode_dict['force_largest'] = last_calc_out_dict.get(
-            'force_largest', None)
+        outputnode_dict['force_largest'] = last_calc_out_dict.get('force_largest', None)
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
@@ -823,87 +758,6 @@ class FleurScfWorkChain(WorkChain):
         #outdict['output_scf_wc_para'] = outputnode
         for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
-
-    def handle_fleur_failure(self):
-        """
-        handle a failure of a Fleur calculation
-        """
-        return
-        # handle out of walltime (not one interation run) abort, tell user to specifi mor resources, or different cutoffs
-
-        # handle fleur error fermi level convergence
-        # restart fleur with more tempertature broad or other smearing type (gauss = T)
-
-        # qfix needed, restart fleur with Qfix
-
-        # differ errors, solving dirac equation
-        # abort, or restart with different parameters
-
-        # muffin tin radii overlap, restart with smaller MT
-
-        # wrong command line switches
-        # hdf, -h , ... restart with the right one, or abort
-
-        # something about kpt grid
-        # abort, or restart with increased number /different number of kpoints
-
-        # wrong parallelisation
-        # abort or restart with right parallelisation
-
-        #
-
-        '''
-        #ALl FLEUR current (07.2017) ERROR hints: TODO
-
-        1.nsh greater than dimensioned | increase nmax in jcoff2'
-        2. Fermi-level determination did not converge| change temperature or set input = F
-        3. Too low eigenvalue detected | If the lowest eigenvalue is more than 1Htr below the lowest energy parameter, you probably have picked up a ghoststate
-        4. e >= vz0 | Vacuum energy-parameter too high
-        5. kidx /= stars | something wrong with kmxxc_fft or nxc3_fft
-        6 Wrong size of matrix | Your basis might be too large or the parallelization fail or ??
-        If no LO's are set skiplo must be 0 in enpara
-        You compiled without support for HDF5. Please use another mode
-        Your HDF5 library does not support parallel IO
-        Use -mpi or -hdf instead
-        Consider setting 'autocomp = false' in apwefl.
-        Film setup not centered" | The z = 0 plane is the center of the film
-        setcore_bystr |
-        expnadconfig |
-        File not readable:"//filename | FLEUR wants to read a file that is not present
-        Both inp & inp.xml given  | Please delete one of the input files or specify -xml to use inp.xml
-        inp.xml not found | You gave the -xml option but provided no inp.xml file
-        No input file found | To use FLEUR, you have to provide either an 'inp' or an 'inp.xml' file in the working directory
-        Use a supercell or a different functional
-        MPI parallelization failed | ou have to either compile FLEUR with a parallel diagonalization library (ELPA,SCALAPACK...) or you have to run such that the No of kpoints can be distributed on the PEs
-
-        AiiDA related:
-        1. Submissionfailed:
-        SSHException: SSH session not active   -> wait and relaunch
-
-        Scheduler/HPC related:
-
-        1. scf scheduler needs other things than torque, try to provide both as default
-        that they both work
-
-        2. ran out of walltime with out a single interation done. (killed by scheduler)
-        -> terminate, because the user should specify more recources or in the
-        calculation something is fishy
-
-        3. bumped by scheduler joblimit. reached
-        -> think about something here and retry
-
-        4. no space/files left on remote machine.
-        -> also terminate, tell user to delete stuff
-
-        5. not eneough memory, (killed by scheduler, or some fleur error)
-        -> can we do something here
-        '''
-
-    def handle_inpgen_failure(self):
-        """
-        Handle a failure of inpgen
-        """
-        return
 
     def control_end_wc(self, errormsg):
         """

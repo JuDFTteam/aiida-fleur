@@ -51,8 +51,7 @@ class BaseRestartWorkChain(WorkChain):
 
     The `_calculation_class` attribute should be set to the `CalcJob` class that should be run in the loop.
     """
-    # TODO: set False
-    _verbose = True
+    _verbose = False
     _calculation_class = None
     _error_handler_entry_point = None
 
