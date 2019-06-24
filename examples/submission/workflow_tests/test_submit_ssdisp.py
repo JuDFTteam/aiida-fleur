@@ -49,6 +49,10 @@ parser.add_argument('--submit', type=bool, dest='submit',
                     help='should the workflow be submited or run', required=False)
 parser.add_argument('--options', type=int, dest='options',
                     help='options of the workflow', required=False)
+parser.add_argument('--remote', type=int, dest='remote',
+                    help='remote', required=False)
+parser.add_argument('--fleurinp', type=int, dest='fleurinp',
+                    help='fleurinp', required=False)
 args = parser.parse_args()
 
 print(args)
@@ -66,6 +70,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                                    '0.375 0.375 0.0',
                                    '0.500 0.500 0.0'],
                      'ref_qss' : '0.0 0.0 0.0',
+                     'input_converged' : True,
                      'inpxml_changes' : []
                     })
 
@@ -165,6 +170,11 @@ if args.calc_parameters is not None:
 else:
     inputs['calc_parameters'] = default['calc_parameters'] # bad if using other structures...
 
+if args.remote is not None:
+    inputs['remote'] = load_node(args.remote)
+
+if args.fleurinp is not None:
+    inputs['fleurinp'] = load_node(args.fleurinp)
 
 if args.options is not None:
     inputs['options'] = load_node(args.options)

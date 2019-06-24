@@ -22,10 +22,10 @@ import six
 from six.moves import range
 from lxml.etree import XMLSyntaxError
 
-from aiida.engine import WorkChain, ToContext
+from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
+from aiida.orm import Code, load_node, CalcJobNode
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -68,6 +68,7 @@ class FleurSSDispWorkChain(WorkChain):
                       '0.250 0.0 0.0',
                       '0.375 0.0 0.0'],
         'ref_qss' : '0.0 0.0 0.0',
+        'input_converged' : False,
         'inpxml_changes' : []
         }
 
@@ -89,8 +90,12 @@ class FleurSSDispWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            cls.converge_scf,
-            cls.force_sp_sp,
+            if_(cls.scf_needed)(
+                cls.converge_scf,
+                cls.force_after_scf,
+            ).else_(
+                cls.force_wo_scf,
+            ),
             cls.get_results,
             cls.return_results
         )
@@ -168,6 +173,13 @@ class FleurSSDispWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
+        if wf_dict['input_converged']:
+            if not 'remote' in self.inputs:
+                error = ("Remote calculation was not specified. However, 'input_converged was set"
+                         " to True.")
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # Check if user gave valid inpgen and fleur execulatbles
         inputs = self.inputs
         if 'inpgen' in inputs:
@@ -187,6 +199,15 @@ class FleurSSDispWorkChain(WorkChain):
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+
+    def scf_needed(self):
+        """
+        This function handles setting of required parameters
+        for force theorem calculation depending on if scf is needed
+        or not.
+        """
+        self.ctx.scf_needed = not self.ctx.wf_dict['input_converged']
+        return self.ctx.scf_needed
 
     def converge_scf(self):
         """
@@ -258,12 +279,29 @@ class FleurSSDispWorkChain(WorkChain):
         calculation.
         """
         self.report('INFO: run change_fleurinp')
-        try:
-            fleurin = self.ctx.reference.outputs.fleurinp
-        except NotExistent:
-            error = 'Fleurinp generated in the reference claculation is not found.'
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
+
+        if self.ctx.scf_needed:
+            try:
+                fleurin = self.ctx.reference.outputs.fleurinp
+            except NotExistent:
+                error = 'Fleurinp generated in the reference claculation is not found.'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
+        else:
+            if 'fleurinp' in self.inputs:
+                fleurin = self.inputs.fleurinp
+            else:
+                # In this case only remote is given
+                # fleurinp data has to be generated from the remote inp.xml file
+                remote_node = self.inputs.remote
+                for link in remote_node.get_incoming().all():
+                    if isinstance(link.node, CalcJobNode):
+                        parent_calc_node = link.node
+                retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
+                try:
+                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                except ValueError:
+                    fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
 
         #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -330,7 +368,7 @@ class FleurSSDispWorkChain(WorkChain):
             self.ctx.fleurinp = fleurin
             return
 
-    def force_sp_sp(self):
+    def force_after_scf(self):
         '''
         This routine uses the force theorem to calculate energies dispersion of
         spin spirals. The force theorem calculations implemented into the FLEUR
@@ -394,7 +432,38 @@ class FleurSSDispWorkChain(WorkChain):
         options = self.ctx.options.copy()
 
         inputs_builder = get_inputs_fleur(code, remote,
-            fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
+                                          fleurin, options, label, description, settings,
+                                          serial=self.ctx.wf_dict['serial'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(f_t=future)
+
+    def force_wo_scf(self):
+        """
+        Submit FLEUR force theorem calculation using input remote
+        """
+        self.report('INFO: run Force theorem calculations')
+
+        status = self.change_fleurinp()
+        if status:
+            return status
+
+        fleurin = self.ctx.fleurinp
+
+        #Do not copy broyd* files from the parent
+        settings = {'remove_from_remotecopy_list': ['broyd*']}
+
+        #Retrieve remote folder from the inputs
+        remote = self.inputs.remote
+
+        label = 'Force_theorem_calculation'
+        description = 'This is a force theorem calculation for all SQA'
+
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+
+        inputs_builder = get_inputs_fleur(code, remote,
+                                          fleurin, options, label, description, settings,
+                                          serial=self.ctx.wf_dict['serial'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
