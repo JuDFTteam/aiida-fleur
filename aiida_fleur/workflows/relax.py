@@ -86,7 +86,6 @@ class FleurRelaxWorkChain(WorkChain):
             cls.validate,
             cls.converge_scf,
             while_(cls.condition)(
-                cls.loop_count,
                 cls.generate_new_fleurinp,
                 cls.converge_scf,
             ),
@@ -139,6 +138,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_cell = None
         self.ctx.final_atom_positions = None
         self.ctx.pbc = None
+        self.ctx.reached_relax = True
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
@@ -324,22 +324,16 @@ class FleurRelaxWorkChain(WorkChain):
                         '{}'.format(self.ctx.forces[-1]))
             return False
 
+        if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
+            self.ctx.reached_relax = False
+            return False
+
         self.ctx.loop_count += 1
         self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
                     'force criterion is {}'.format(self.ctx.loop_count+1, largest_now,
                                                    self.ctx.wf_dict['force_criterion']))
 
         return True
-
-    def loop_count(self):
-        """
-        Exits the workchain and throws an exit_code
-        """
-        if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
-            self.get_results()
-            message = ('Did not reach structure optimization in a given number of scf iterations.')
-            self.control_end_wc(message)
-            return self.exit_codes.ERROR_DID_NOT_CONVERGE
 
     def generate_new_fleurinp(self):
         """
@@ -422,6 +416,8 @@ class FleurRelaxWorkChain(WorkChain):
 
         out = save_output_node(Dict(dict=out))
         self.out('out', out)
+        if not self.ctx.reached_relax:
+            return self.exit_codes.ERROR_DID_NOT_CONVERGE
 
     def control_end_wc(self, errormsg):
         """

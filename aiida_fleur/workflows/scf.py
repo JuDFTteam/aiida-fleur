@@ -127,7 +127,6 @@ class FleurScfWorkChain(WorkChain):
             cls.inspect_fleur,
             cls.get_res,
             while_(cls.condition)(
-                cls.loop_count,  # loop_count is not in while_ to throw exit_code correctly
                 cls.run_fleur,
                 cls.inspect_fleur,
                 cls.get_res),
@@ -173,6 +172,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.relax_generated = False
         self.ctx.calcs = []
         self.ctx.abort = False
+        self.ctx.reached_conv = True
 
         wf_default = self._wf_default
         if 'wf_parameters' in self.inputs:
@@ -617,27 +617,15 @@ class FleurScfWorkChain(WorkChain):
             try:
                 _ = self.ctx.last_calc.outputs.relax_parameters
             except NotExistent:
-                return True
+                pass
             else:
                 return False
 
-        return True
-
-    def loop_count(self):
-        """
-        Exits the workchain if the number of iterations is exceeded.
-
-        This loop count is separated from self.condition function since
-        it has to return ExitCode to interupt the workchain.
-        However, if a function returns an ExitCode inside a while_ statement,
-        the ouptut seem to be automatically converted to True
-        which does not interupt the workchain when needed.
-        """
         if self.ctx.loop_count >= self.ctx.max_number_runs:
-            errormsg = 'ERROR: did not reach convergence in specified number of iterations'
-            self.control_end_wc(errormsg)
-            return self.exit_codes.ERROR_DID_NOT_CONVERGE
-        return
+            self.ctx.reached_conv = False
+            return False
+
+        return True
 
     def return_results(self):
         """
@@ -758,6 +746,9 @@ class FleurScfWorkChain(WorkChain):
         #outdict['output_scf_wc_para'] = outputnode
         for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
+
+        if not self.ctx.reached_conv:
+            return self.exit_codes.ERROR_DID_NOT_CONVERGE
 
     def control_end_wc(self, errormsg):
         """
