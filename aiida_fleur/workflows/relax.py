@@ -301,14 +301,16 @@ class FleurRelaxWorkChain(WorkChain):
         try:
             scf_wc = self.ctx.scf_res
             if not scf_wc.is_finished_ok:
-                message = ('ERROR: scf cycle failed, it has an '
-                           'exit status {}'.format(scf_wc.exit_status))
-                self.control_end_wc(message)
-                return self.exit_codes.ERROR_RELAX_FAILED
+                # message = ('ERROR: scf cycle failed, it has an '
+                #            'exit status {}'.format(scf_wc.exit_status))
+                # self.control_end_wc(message)
+                # return self.exit_codes.ERROR_RELAX_FAILED
+                return False
         except AttributeError:
-            message = 'ERROR: Something went wrong I do not have new atom positions calculation'
-            self.control_end_wc(message)
-            return self.exit_codes.ERROR_RELAX_FAILED
+            # message = 'ERROR: Something went wrong I do not have new atom positions calculation'
+            # self.control_end_wc(message)
+            # return self.exit_codes.ERROR_RELAX_FAILED
+            return False
 
         try:
             self.ctx.forces.append(scf_wc.outputs.output_scf_wc_para.dict.force_largest)
@@ -328,9 +330,9 @@ class FleurRelaxWorkChain(WorkChain):
             self.ctx.reached_relax = False
             return False
 
-        self.ctx.loop_count += 1
+        self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
-                    'force criterion is {}'.format(self.ctx.loop_count+1, largest_now,
+                    'force criterion is {}'.format(self.ctx.loop_count, largest_now,
                                                    self.ctx.wf_dict['force_criterion']))
 
         return True
