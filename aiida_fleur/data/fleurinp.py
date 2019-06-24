@@ -492,12 +492,14 @@ class FleurinpData(Data):
         #    'dos': '/fleurInput/output',
         #    'band': '/fleurInput/output',
         #    'jspins': '/fleurInput/calculationSetup/magnetism',
-        fleur_modes = {'jspins' : '', 'dos' : '', 'band' : '', 'ldau' : '', 'forces' : ''}
+        fleur_modes = {'jspins' : '', 'dos' : '', 'band' : '', 'ldau' : '', 'forces' : '',
+                        'force_theorem': ''}
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins'] #['fleurInput']
             fleur_modes['dos'] = self.inp_dict['output']['dos']#'fleurInput']
             fleur_modes['band'] = self.inp_dict['output']['band']
             fleur_modes['forces'] = self.inp_dict['calculationSetup']['geometryOptimization']['l_f']
+            fleur_modes['force_theorem'] = 'forceTheorem' in self.inp_dict
             ldau = False # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
         return fleur_modes

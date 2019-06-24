@@ -526,8 +526,8 @@ class FleurScfWorkChain(WorkChain):
 
         # be aware of magnetism
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance'
-        overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence'
-                                      '/overallchargeDensity/@distance')
+        overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence/'
+                                      'overallChargeDensity/@distance')
 
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
