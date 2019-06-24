@@ -139,6 +139,6 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the dmi workchain
         """
-        from aiida_fleur.workflows.dmi import fleur_dmi_wc
+        from aiida_fleur.workflows.dmi import FleurDMIWorkChain
         
-        builder = fleur_dmi_wc.get_builder()
+        builder = FleurDMIWorkChain.get_builder()
