@@ -65,6 +65,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                                    '0.250 0.250 0.0',
                                    '0.375 0.375 0.0',
                                    '0.500 0.500 0.0'],
+                     'ref_qss' : '0.0 0.0 0.0',
                      'inpxml_changes' : []
                     })
 

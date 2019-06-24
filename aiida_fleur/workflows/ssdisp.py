@@ -31,7 +31,6 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
@@ -68,7 +67,8 @@ class FleurSSDispWorkChain(WorkChain):
                       '0.125 0.0 0.0',
                       '0.250 0.0 0.0',
                       '0.375 0.0 0.0'],
-        'inpxml_changes' : [],
+        'ref_qss' : '0.0 0.0 0.0',
+        'inpxml_changes' : []
         }
 
     _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
@@ -146,6 +146,12 @@ class FleurSSDispWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+        if wf_dict['ref_qss'] != wf_dict['q_vectors'][0]:
+            error = ("The first q_vector of the forceTheorem step has to be equal to"
+                     "the q vector of the reference calculation.")
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
@@ -204,10 +210,20 @@ class FleurSSDispWorkChain(WorkChain):
 
         input_scf['wf_parameters'] = copy.deepcopy(scf_wf_param)
         input_scf['wf_parameters']['mode'] = 'density'
-        changes_dict = {'qss' : ' 0.0 0.0 0.0 ',
-                        'l_noco': False,
-                        'ctail': True,
-                        'l_ss': False}
+
+        # set up q vector for the reference calculation
+        list_ref_qss = [float(x) for x in self.ctx.wf_dict['ref_qss'].split()]
+        if [x for x in list_ref_qss if x != 0]:
+            changes_dict = {'qss' : self.ctx.wf_dict['ref_qss'],
+                            'l_noco': True,
+                            'ctail': False,
+                            'l_ss': True}
+        else:
+            changes_dict = {'qss' : ' 0.0 0.0 0.0 ',
+                            'l_noco': False,
+                            'ctail': True,
+                            'l_ss': False}
+
         input_scf['wf_parameters']['inpxml_changes'].append(
             (u'set_inpchanges', {u'change_dict': changes_dict}))
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
