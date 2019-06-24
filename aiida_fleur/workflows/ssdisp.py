@@ -60,7 +60,7 @@ class FleurSSDispWorkChain(WorkChain):
         'density_converged' : 0.00005,
         'serial' : False,
         'itmax_per_run' : 30,
-        'beta' : 0.000,
+        'beta' : {'all' : 1.57079},
         'alpha_mix' : 0.015,
         'prop_dir' : [1.0, 0.0, 0.0],
         'q_vectors': ['0.0 0.0 0.0',
@@ -247,6 +247,12 @@ class FleurSSDispWorkChain(WorkChain):
 
         input_scf['wf_parameters']['inpxml_changes'].append(
             (u'set_inpchanges', {u'change_dict': changes_dict}))
+
+        #change beta parameter
+        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+            input_scf['wf_parameters']['inpxml_changes'].append(
+                ('set_atomgr_att', ({'nocoParams': [('beta', val)]}, False, key)))
+
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
         input_scf['options'] = self.ctx.options
@@ -321,9 +327,10 @@ class FleurSSDispWorkChain(WorkChain):
                         'l_ss': True}
         fchanges.append((u'set_inpchanges', {u'change_dict' : changes_dict}))
 
-        #change beta parameter in all AtomGroups
-        fchanges.append(('set_atomgr_att',
-                         ({'nocoParams': [('beta', self.ctx.wf_dict.get('beta'))]}, False, 'all')))
+        #change beta parameter
+        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+            fchanges.append(('set_atomgr_att',
+                             ({'nocoParams': [('beta', val)]}, False, key)))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
