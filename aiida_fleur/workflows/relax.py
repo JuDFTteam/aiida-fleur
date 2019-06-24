@@ -187,7 +187,6 @@ class FleurRelaxWorkChain(WorkChain):
                          "use the plugin fleur.fleur")
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-        return
 
     def validate(self):
         """

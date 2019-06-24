@@ -654,7 +654,7 @@ class FleurScfWorkChain(WorkChain):
             last_calc_out = self.ctx.last_calc.outputs['output_parameters']
             retrieved = self.ctx.last_calc.outputs['retrieved']
             last_calc_out_dict = last_calc_out.get_dict()
-        except NotExistent:
+        except (NotExistent, AttributeError):
             last_calc_out = None
             last_calc_out_dict = {}
             retrieved = None
