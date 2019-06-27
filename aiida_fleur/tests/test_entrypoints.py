@@ -115,10 +115,17 @@ class TestAiida_fleur_entrypoints:
 
     def test_fleur_mae_wc_entry_point(aiida_env):
         from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.mae import fleur_mae_wc
+        from aiida_fleur.workflows.mae import FleurMaeWorkChain
         
         workflow = WorkflowFactory('fleur.mae')
-        assert workflow == fleur_mae_wc
+        assert workflow == FleurMaeWorkChain
+
+    def test_fleur_mae_conv_wc_entry_point(aiida_env):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.mae_conv import FleurMaeConvWorkChain
+        
+        workflow = WorkflowFactory('fleur.mae_conv')
+        assert workflow == FleurMaeConvWorkChain
 
     def test_fleur_ssdisp_wc_entry_point(aiida_env):
         from aiida.plugins import WorkflowFactory

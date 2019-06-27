@@ -61,8 +61,8 @@ print(args)
 wf_para = Dict(dict={'fleur_runmax' : 1,
                      'itmax_per_run' : 120,
                      'density_converged' : 0.2,
-                     'force_th' : True,
                      'serial' : False,
+                     'beta' : {'Fe-2' : 1.57079},
                      'prop_dir' : [0.125, 0.125, 0.0],
                      'q_vectors': ['0.0 0.0 0.0',
                                    '0.125 0.125 0.0',
@@ -125,10 +125,10 @@ cell = [[a, 0, 0],
         [0, a, 0],
         [0, 0, a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0., 0., 0.), symbols='Fe')
-structure.append_atom(position=(0.5*a, 0.5*a, 0.0*a), symbols='Fe')
-structure.append_atom(position=(0.5*a, 0.0*a, 0.5*a), symbols='Fe')
-structure.append_atom(position=(0.0*a, 0.5*a, 0.5*a), symbols='Fe')
+structure.append_atom(position=(0., 0., 0.), symbols='Fe', name='Fe1')
+structure.append_atom(position=(0.5*a, 0.5*a, 0.0*a), symbols='Fe', name='Fe2')
+structure.append_atom(position=(0.5*a, 0.0*a, 0.5*a), symbols='Fe', name='Fe31')
+structure.append_atom(position=(0.0*a, 0.5*a, 0.5*a), symbols='Fe', name='Fe43')
 parameters = Dict(dict={
     'comp': {
         'kmax': 3.4,

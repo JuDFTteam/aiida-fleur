@@ -71,7 +71,8 @@
             "fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
-            "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc",
+            "fleur.mae = aiida_fleur.workflows.mae:FleurMAEWorkChain",
+            "fleur.mae_conv = aiida_fleur.workflows.mae_conv:FleurMaeConvWorkChain",
             "fleur.ssdisp = aiida_fleur.workflows.ssdisp:FleurSSDispWorkChain",
             "fleur.dmi = aiida_fleur.workflows.dmi:FleurDMIWorkChain",
             "fleur.relax = aiida_fleur.workflows.relax:FleurRelaxWorkChain"
