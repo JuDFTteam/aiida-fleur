@@ -113,14 +113,11 @@ class FleurParser(Parser):
 
         # check if all files expected are there for the calculation
         for filel in should_retrieve:
-            if filel == calc.get_attribute('relax_file_name'):
-                # hardcode: relax.xml can be not generated after FLEUR run
-                continue
             if filel not in list_of_files:
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
                     " was probable not created by fleur".format(filel))
-                return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
+                #return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         # check if something was written to the error file
         if calc.get_attribute('error_file_name') in list_of_files:

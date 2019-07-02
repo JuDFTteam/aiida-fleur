@@ -17,25 +17,27 @@ and should be run localy (with the direct scheduler) or inline,
 because it does not take many resources.
 """
 from __future__ import absolute_import
+import six
+from six.moves import zip
+
 from aiida.engine import CalcJob
 from aiida.plugins import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
 from aiida.common.constants import bohr_to_ang
-from aiida.common.utils import classproperty
+
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
-import six
-from six.moves import zip
 
 StructureData = DataFactory('structure')
 Dict = DataFactory('dict')
 
 class FleurinputgenCalculation(CalcJob):
     """
-    JobCalculationClass for the Inputgenerator, which is a preprocessor for a FLEUR calculation. Here is implemented how an input file for 'inpgen' is written from AiiDA data objects.
+    JobCalculationClass for the Inputgenerator, which is a preprocessor for a FLEUR calculation. 
+    Here is implemented how an input file for 'inpgen' is written from AiiDA data objects.
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
     #### (Maintain) if inputgen keys change ####
@@ -51,13 +53,7 @@ class FleurinputgenCalculation(CalcJob):
     _DEFAULT_OUTPUT_FILE_NAME = 'out'
     _DEFAULT_ERROR_FILE_NAME = 'out.error'
     _DEFAULT_STRUCT_FILE_NAME = 'struct.xsf'
-    '''
-    _DEFAULT_INP_FILE_NAME = 'inp'
-    _DEFAULT_ENPARA_FILE_NAME = 'enpara'
-    _DEFAULT_SYMOUT_FILE_NAME = 'sym.out'
-    _DEFAULT_FORT_FILE_NAME = 'fort93'
-    _DEFAULT_CORELEVEL_FILE_NAME = 'corelevels.' # Add coordination number
-    '''
+
     _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
                            'cmdline']
     # TODO switch all these to init_interal_params?
@@ -154,7 +150,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.exit_code(
             109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
 
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, folder):
         """
         This is the routine to be called when you want to create
         the input files for the inpgen with the plug-in.
@@ -292,8 +288,7 @@ class FleurinputgenCalculation(CalcJob):
             #in fleur it is possible to give a lattice namelist
             if 'lattice' in list(input_params.keys()):
                 own_lattice = True
-                structure = inputdict.pop(self.get_linkname('structure'), None)
-                if structure is not None: #two structures given?
+                if structure in self.inputs: #two structures given?
                     #which one should be prepared? TODO: log warning or even error
                     if self._use_aiida_structure:
                         input_params.pop('lattice', {})
@@ -390,6 +385,16 @@ class FleurinputgenCalculation(CalcJob):
                 site_symbol = kind.symbols[0] # TODO: list I assume atoms therefore I just get the first one...
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
+
+                # per default we use relative coordinates in Fleur
+                # we have to scale back to atomic units from angstrom
+                pos = site.position
+                if bulk:
+                    vector_rel = abs_to_rel(pos, cell)
+                elif film:
+                    vector_rel = abs_to_rel_f(pos, cell, structure.pbc)
+                    vector_rel[2] = vector_rel[2]*scaling_pos
+
                 if site_symbol != kind_name: # This is an important fact, if usere renames it becomes a new species!
                     suc = True
                     try:
@@ -399,21 +404,17 @@ class FleurinputgenCalculation(CalcJob):
                         suc = False
                     if suc:
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
-                # per default we use relative coordinates in Fleur
-                # we have to scale back to atomic units from angstrom
-                pos = site.position
-
-                if bulk:
-                    vector_rel = abs_to_rel(pos, cell)
-                elif film:
-                    vector_rel = abs_to_rel_f(pos, cell, structure.pbc)
-                    vector_rel[2] = vector_rel[2]*scaling_pos
-                atomic_positions_card_listtmp.append(
-                    "    {0:3} {1:18.10f} {2:18.10f} {3:18.10f}"
-                    "\n".format(atomic_number_name,
-                                vector_rel[0], vector_rel[1],
-                                vector_rel[2]))
-                #TODO check format
+                    atomic_positions_card_listtmp.append(
+                        "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}"
+                        "\n".format(atomic_number_name,
+                                    vector_rel[0], vector_rel[1], vector_rel[2],
+                                    kind_namet))
+                else:
+                    atomic_positions_card_listtmp.append(
+                        "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f}"
+                        "\n".format(atomic_number_name,
+                                    vector_rel[0], vector_rel[1], vector_rel[2]))
+            #TODO check format
             # we write it later, since we do not know what natoms is before the loop...
             atomic_positions_card_list.append("    {0:3}\n".format(natoms))
             for card in atomic_positions_card_listtmp:
@@ -436,7 +437,7 @@ class FleurinputgenCalculation(CalcJob):
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
 
-        input_filename = tempfolder.get_abs_path(self.inputs.metadata.options.input_file_name)
+        input_filename = folder.get_abs_path(self.inputs.metadata.options.input_file_name)
 
         with open(input_filename, 'w') as infile:
 
@@ -470,10 +471,10 @@ class FleurinputgenCalculation(CalcJob):
                         namels_name = 'atom'
                     infile.write("&{0}\n".format(namels_name))
                     if namels_name in val_only_namelist:
-                        reversed = False
+                        make_reversed = False
                         if namels_name == 'soc':
-                            reversed = True
-                        for k, val in sorted(six.iteritems(namelist), reverse=reversed):
+                            make_reversed = True
+                        for k, val in sorted(six.iteritems(namelist), reverse=make_reversed):
                             infile.write(get_input_data_text(k, val, True, mapping=None))
                     else:
                         for k, val in sorted(six.iteritems(namelist)):
