@@ -110,6 +110,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import create_tag, replace_tag, delete_tag
         from aiida_fleur.tools.xml_util import delete_att, set_species
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
+        from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename,
                                  attribv, occ=None, create=False):
@@ -166,6 +167,11 @@ class FleurinpModifier(object):
                 fleurinp_tree_copy, species_name, attributedict, create=create)
             return fleurinp_tree_copy
 
+        def set_species2(fleurinp_tree_copy, at_label, attributedict, create=False):
+            fleurinp_tree_copy = set_species_label(
+                fleurinp_tree_copy, at_label, attributedict, create=create)
+            return fleurinp_tree_copy
+
         def change_atomgr_att1(fleurinp_tree_copy, attributedict,
                                position=None, species=None, create=False):
             fleurinp_tree_copy = change_atomgr_att(
@@ -173,6 +179,15 @@ class FleurinpModifier(object):
                 attributedict,
                 position=position,
                 species=species,
+                create=create)
+            return fleurinp_tree_copy
+
+        def change_atomgr_att2(fleurinp_tree_copy, attributedict,
+                               atom_label, create=False):
+            fleurinp_tree_copy = change_atomgr_att_label(
+                fleurinp_tree_copy,
+                attributedict,
+                at_label=atom_label,
                 create=create)
             return fleurinp_tree_copy
 
@@ -262,7 +277,9 @@ class FleurinpModifier(object):
             'delete_tag': delete_tag1,
             'delete_att': delete_att1,
             'set_species': set_species1,
+            'set_species_label': set_species2,
             'set_atomgr_att': change_atomgr_att1,
+            'set_atomgr_att_label': change_atomgr_att2,
             'set_inpchanges': set_inpchanges1,
             'set_nkpts': set_nkpts1,
             'add_num_to_att': add_num_to_att1
@@ -308,7 +325,9 @@ class FleurinpModifier(object):
             'delete_tag': self.delete_tag,
             'delete_att': self.delete_att,
             'set_species': self.set_species,
+            'set_species_label': self.set_species_label,
             'set_atomgr_att': self.set_atomgr_att,
+            'set_atomgr_att_label': self.set_atomgr_att_label,
             'set_inpchanges': self.set_inpchanges,
             'set_nkpts': self.set_nkpts,
             'add_num_to_att': self.add_num_to_att
@@ -351,8 +370,14 @@ class FleurinpModifier(object):
     def set_species(self, species_name, attributedict, create=False):
         self._tasks.append(('set_species', species_name, attributedict, create))
 
+    def set_species_label(self, at_label, attributedict, create=False):
+        self._tasks.append(('set_species_label', at_label, attributedict, create))
+
     def set_atomgr_att(self, attributedict, position=None, species=None, create=False):
         self._tasks.append(('set_atomgr_att', attributedict, position, species, create))
+
+    def set_atomgr_att_label(self, attributedict, atom_label, create=False):
+        self._tasks.append(('set_atomgr_att_label', attributedict, atom_label, create))
 
     # for now
     def set_inpchanges(self, change_dict):

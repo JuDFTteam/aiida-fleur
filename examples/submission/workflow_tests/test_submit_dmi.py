@@ -62,7 +62,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                      'itmax_per_run' : 120,
                      'density_converged' : 0.2,
                      'serial' : False,
-                     'beta' : {'all' : 1.57079},
+                     'beta' : {'123' : 1.57079},
                      'sqas_theta' : '0.0 1.57079 1.57079',
                      'sqas_phi' : '0.0 0.0 1.57079',
                      'prop_dir' : [0.125, 0.15, 0.24],
@@ -85,7 +85,7 @@ cell = [[0.7071068*a, 0.0, 0.0],
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.0, 0.0, -1.99285*bohr_a_0), symbols='Fe')
 structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
-structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt', name='Pt123')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={

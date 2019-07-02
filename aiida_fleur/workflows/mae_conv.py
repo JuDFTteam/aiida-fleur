@@ -141,9 +141,9 @@ class FleurMaeConvWorkChain(WorkChain):
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
 
         # switch off SOC on an atom specie
-        for specie in self.ctx.wf_dict['soc_off']:
+        for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species', (specie, {'special': {'socscale': 0.0}}, True)))
+                ('set_species_label', (atom_label, {'special': {'socscale': 0.0}}, True)))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options

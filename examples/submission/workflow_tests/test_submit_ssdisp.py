@@ -62,7 +62,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                      'itmax_per_run' : 120,
                      'density_converged' : 0.2,
                      'serial' : False,
-                     'beta' : {'Fe-2' : 1.57079},
+                     'beta' : {'123' : 1.57079},
                      'prop_dir' : [0.125, 0.125, 0.0],
                      'q_vectors': ['0.0 0.0 0.0',
                                    '0.125 0.125 0.0',
@@ -77,7 +77,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
 options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                      'queue_name' : 'devel',
                      'max_wallclock_seconds':  60*60})
-'''
+
 bohr_a_0 = 0.52917721092 # A
 a = 7.497*bohr_a_0
 cell = [[0.7071068*a, 0.0, 0.0],
@@ -86,7 +86,7 @@ cell = [[0.7071068*a, 0.0, 0.0],
 structure = StructureData(cell=cell)
 structure.append_atom(position=(0.0, 0.0, -1.99285*bohr_a_0), symbols='Fe')
 structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
-structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt', name='Pt123')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={
@@ -143,7 +143,7 @@ parameters = Dict(dict={
         'div2' : 4,
         'div3' : 4
         }})
-
+'''
 default = {'structure' : structure,
            'wf_parameters': wf_para,
            'options' : options,

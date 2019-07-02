@@ -572,33 +572,33 @@ def write_inpgen_inputfile(structure_dict, parameter_dict):
 
 
 def conv_to_fortran(val, quote_strings=True):
-        """
-        :param val: the value to be read and converted to a Fortran-friendly string.
-        """
-        # Note that bool should come before integer, because a boolean matches also
-        # isinstance(...,int)
-        import numpy
-        import numbers
-    
-        if isinstance(val, (bool, numpy.bool_)):
-            if val:
-                val_str = '.true.'
-            else:
-                val_str = '.false.'
-        elif isinstance(val, numbers.Integral):
-            val_str = "{:d}".format(val)
-        elif isinstance(val, numbers.Real):
-            val_str = ("{:18.10e}".format(val)).replace('e', 'd')
-        elif isinstance(val, six.string_types):
-            if quote_strings:
-                val_str = "'{!s}'".format(val)
-            else:
-                val_str = "{!s}".format(val)
+    """
+    :param val: the value to be read and converted to a Fortran-friendly string.
+    """
+    # Note that bool should come before integer, because a boolean matches also
+    # isinstance(...,int)
+    import numpy
+    import numbers
+
+    if isinstance(val, (bool, numpy.bool_)):
+        if val:
+            val_str = '.true.'
         else:
-            raise ValueError("Invalid value '{}' of type '{}' passed, accepts only bools, ints, floats and strings".format(
-                val, type(val)))
-    
-        return val_str
+            val_str = '.false.'
+    elif isinstance(val, numbers.Integral):
+        val_str = "{:d}".format(val)
+    elif isinstance(val, numbers.Real):
+        val_str = ("{:18.10e}".format(val)).replace('e', 'd')
+    elif isinstance(val, six.string_types):
+        if quote_strings:
+            val_str = "'{!s}'".format(val)
+        else:
+            val_str = "{!s}".format(val)
+    else:
+        raise ValueError("Invalid value '{}' of type '{}' passed, accepts only bools, ints, "
+                         "floats and strings".format(val, type(val)))
+
+    return val_str
 
 def get_input_data_text(key, val, value_only, mapping=None):#TODO rewrite for fleur/ delete unnessesariy parts
     """

@@ -169,9 +169,9 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
         #switch off SOC on an atom specie
-        for specie in self.ctx.wf_dict['soc_off']:
+        for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species', (specie, {'special' : {'socscale' : 0.0}}, True)))
+                ('set_species_label', (atom_label, {'special' : {'socscale' : 0.0}}, True)))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -263,7 +263,7 @@ class FleurDMIWorkChain(WorkChain):
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             input_scf['wf_parameters']['inpxml_changes'].append(
-                ('set_atomgr_att', ({'nocoParams': [('beta', val)]}, False, key)))
+                ('set_atomgr_att_label', ({'nocoParams': [('beta', val)]}, key)))
 
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
@@ -348,8 +348,8 @@ class FleurDMIWorkChain(WorkChain):
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            fchanges.append(('set_atomgr_att',
-                             ({'nocoParams': [('beta', val)]}, False, key)))
+            fchanges.append(('set_atomgr_att_label',
+                             ({'nocoParams': [('beta', val)]}, key)))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)

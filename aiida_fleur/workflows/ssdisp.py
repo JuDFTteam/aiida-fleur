@@ -251,7 +251,7 @@ class FleurSSDispWorkChain(WorkChain):
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             input_scf['wf_parameters']['inpxml_changes'].append(
-                ('set_atomgr_att', ({'nocoParams': [('beta', val)]}, False, key)))
+                ('set_atomgr_att_label', ({'nocoParams': [('beta', val)]}, key)))
 
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
@@ -329,8 +329,8 @@ class FleurSSDispWorkChain(WorkChain):
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            fchanges.append(('set_atomgr_att',
-                             ({'nocoParams': [('beta', val)]}, False, key)))
+            fchanges.append(('set_atomgr_att_label',
+                             ({'nocoParams': [('beta', val)]}, key)))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)

@@ -672,6 +672,26 @@ def get_inpgen_para_from_xml(inpxmlfile):
 
 ####### XML SETTERS SPECIAL ########
 
+def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False):
+    """
+    This method calls set_species method for a certain atom specie
+    that corresponds to an atom with a given label
+    """
+
+    specie = ''
+    at_label = "{: >20}".format(at_label)
+    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    for group in all_groups:
+        for atom in eval_xpath2(group, 'filmPos'):
+            atom_label = get_xml_attribute(atom, 'label')
+            if atom_label == at_label:
+                specie = get_xml_attribute(group, 'species')
+
+    fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
+
+    return fleurinp_tree_copy
+
 
 def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     """
@@ -833,6 +853,27 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 def add_lo(fleurinp_tree_copy, species_name, attributedict):
     pass
 
+
+def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=False):
+    """
+    This method calls change_atomgr_att method for a certain atom specie
+    that corresponds to an atom with a given label
+    """
+
+    specie = ''
+    at_label = "{: >20}".format(at_label)
+    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    for group in all_groups:
+        for atom in eval_xpath2(group, 'filmPos'):
+            atom_label = get_xml_attribute(atom, 'label')
+            if atom_label == at_label:
+                specie = get_xml_attribute(group, 'species')
+
+    fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
+                                           species=specie, create=create)
+
+    return fleurinp_tree_copy
 
 def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
 
