@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-    In this module you find the workflow 'FleurMAEWorkChain' for the calculation of
+    In this module you find the workflow 'FleurSSDispConvWorkChain' for the calculation of
     Magnetic Anisotropy Energy converging all the directions.
 """
 
@@ -33,7 +33,7 @@ Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 
-class FleurMaeConvWorkChain(WorkChain):
+class FleurSSDispConvWorkChain(WorkChain):
     """
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
@@ -50,7 +50,10 @@ class FleurMaeConvWorkChain(WorkChain):
 
     _wf_default = {
         'fleur_runmax': 10,
-        'sqas': {'label' : [0.0, 0.0]},
+        'beta': {'all' : 1.57079},
+        'q_vectors': {'label': [0.0, 0.0, 0.0],
+                      'label2': [0.125, 0.0, 0.0]
+                     },
         'alpha_mix': 0.05,
         'density_converged': 0.00005,
         'serial': False,
@@ -63,7 +66,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurMaeConvWorkChain, cls).define(spec)
+        super(FleurSSDispConvWorkChain, cls).define(spec)
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("calc_parameters", valid_type=Dict, required=False)
@@ -104,9 +107,9 @@ class FleurMaeConvWorkChain(WorkChain):
         spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
         spec.exit_code(312, 'ERROR_ALL_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for all SQAs.")
+                       message="Convergence Spin Spiral calculation failed for all SQAs.")
         spec.exit_code(313, 'ERROR_SOME_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for some SQAs.")
+                       message="Convergence Spin Spiral calculation failed for some SQAs.")
 
     def start(self):
         """
@@ -118,11 +121,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        # defaults that will be written into the output node in case of failure
-        # note: convergence branch always generates defaults inside get_results
-        self.ctx.t_energydict = []
-        self.ctx.mae_thetas = []
-        self.ctx.mae_phis = []
+        self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
@@ -139,11 +138,6 @@ class FleurMaeConvWorkChain(WorkChain):
         # set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-
-        # switch off SOC on an atom specie
-        for specie in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species', (specie, {'special': {'socscale': 0.0}}, True)))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -180,14 +174,14 @@ class FleurMaeConvWorkChain(WorkChain):
     def converge_scf(self):
         """
         Converge charge density with or without SOC.
-        Depending on a branch of MAE calculation, submit a single Fleur calculation to obtain
+        Depending on a branch of Spiral calculation, submit a single Fleur calculation to obtain
         a reference for further force theorem calculations or
         submit a set of Fleur calculations to converge charge density for all given SQAs.
         """
         inputs = {}
-        for key, socs in six.iteritems(self.ctx.wf_dict['sqas']):
+        for key, vect in six.iteritems(self.ctx.wf_dict['q_vectors']):
             inputs[key] = self.get_inputs_scf()
-            inputs[key]['calc_parameters']['soc'] = {'theta': socs[0], 'phi': socs[1]}
+            inputs[key]['calc_parameters']['qss'] = {'x': vect[0], 'y': vect[1], 'z': vect[2]}
             inputs[key]['calc_parameters'] = Dict(dict=inputs[key]['calc_parameters'])
             res = self.submit(FleurScfWorkChain, **inputs[key])
             self.to_context(**{key: res})
@@ -232,7 +226,7 @@ class FleurMaeConvWorkChain(WorkChain):
         outnodedict = {}
         htr2eV = 27.21138602
 
-        for label in six.iterkeys(self.ctx.wf_dict['sqas']):
+        for label in six.iterkeys(self.ctx.wf_dict['q_vectors']):
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
@@ -264,7 +258,7 @@ class FleurMaeConvWorkChain(WorkChain):
             t_energydict[label] = t_e
 
         if t_energydict:
-            # Find a minimal value of MAE and count it as 0
+            # Find a minimal value of Spiral and count it as 0
             labelmin = list(t_energydict.keys())[0]
             for labels in six.iterkeys(t_energydict):
                 try:
@@ -286,17 +280,17 @@ class FleurMaeConvWorkChain(WorkChain):
 
         failed_labels = []
 
-        for label in six.iterkeys(self.ctx.wf_dict['sqas']):
+        for label in six.iterkeys(self.ctx.wf_dict['q_vectors']):
             if label not in six.iterkeys(self.ctx.energydict):
                 failed_labels.append(label)
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
-               'maes': self.ctx.energydict,
-               'sqas': self.ctx.wf_dict['sqas'],
+               'energies': self.ctx.energydict,
+               'q_vectors': self.ctx.wf_dict['q_vectors'],
                'failed_labels': failed_labels,
-               'mae_units': 'eV',
+               'energy_units': 'eV',
                'info': self.ctx.info,
                'warnings': self.ctx.warnings,
                'errors': self.ctx.errors}
