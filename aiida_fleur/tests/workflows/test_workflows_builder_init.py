@@ -142,6 +142,13 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         
         builder = FleurSSDispWorkChain.get_builder()
 
+    def test_fleur_spst_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
+        
+        builder = FleurSSDispConvWorkChain.get_builder()
 
     def test_fleur_dmi_wc_init(aiida_env):
         """

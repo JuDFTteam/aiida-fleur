@@ -74,6 +74,7 @@
             "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",
             "fleur.mae_conv = aiida_fleur.workflows.mae_conv:FleurMaeConvWorkChain",
             "fleur.ssdisp = aiida_fleur.workflows.ssdisp:FleurSSDispWorkChain",
+            "fleur.ssdisp_conv = aiida_fleur.workflows.ssdisp_conv:FleurSSDispConvWorkChain",
             "fleur.dmi = aiida_fleur.workflows.dmi:FleurDMIWorkChain",
             "fleur.relax = aiida_fleur.workflows.relax:FleurRelaxWorkChain"
         ]
