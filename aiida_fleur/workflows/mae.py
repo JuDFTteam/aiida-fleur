@@ -33,11 +33,12 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
+# pylint: disable=invalid-name
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
 Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-
+# pylint: enable=invalid-name
 
 class FleurMaeWorkChain(WorkChain):
     """
@@ -158,7 +159,11 @@ class FleurMaeWorkChain(WorkChain):
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label', (atom_label, {'special': {'socscale': 0.0}}, True)))
+                ('set_species_label',
+                 {'at_label': atom_label,
+                  'attributedict': {'special': {'socscale': 0.0}},
+                  'create': True
+                 }))
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
@@ -300,15 +305,26 @@ class FleurMaeWorkChain(WorkChain):
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
 
         # add forceTheorem tag into inp.xml
-        fchanges.extend([('create_tag', ('/fleurInput', 'forceTheorem')),
-                         ('create_tag', ('/fleurInput/forceTheorem', 'MAE')),
+        fchanges.extend([('create_tag',
+                          {'xpath': '/fleurInput',
+                           'newelement': 'forceTheorem'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem',
+                           'newelement': 'MAE'
+                          }),
                          ('xml_set_attribv_occ',
-                          ('/fleurInput/forceTheorem/MAE',
-                           'theta', ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta'))))),
+                          {'xpathn': '/fleurInput/forceTheorem/MAE',
+                           'attributename': 'theta',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+                          }),
                          ('xml_set_attribv_occ',
-                          ('/fleurInput/forceTheorem/MAE',
-                           'phi', ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi'))))),
-                         ('set_inpchanges', {'change_dict': {'itmax': 1}})])
+                          {'xpathn': '/fleurInput/forceTheorem/MAE',
+                           'attributename': 'phi',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+                          }),
+                         ('set_inpchanges', {'change_dict': {'itmax': 1}})
+                        ])
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -328,10 +344,7 @@ class FleurMaeWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:  # apply change
-                    if function == u'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
+                    method(**para)
 
             # validate?
             apply_c = True
@@ -456,7 +469,7 @@ class FleurMaeWorkChain(WorkChain):
         t_energydict = []
         mae_thetas = []
         mae_phis = []
-        htr2eV = 27.21138602
+        htr_to_ev = 27.21138602
 
         try:
             calculation = self.ctx.f_t
@@ -486,7 +499,7 @@ class FleurMaeWorkChain(WorkChain):
             for labels in range(len(t_energydict)):
                 t_energydict[labels] = t_energydict[labels] - minenergy
                 if e_u == 'Htr' or 'htr':
-                    t_energydict[labels] = t_energydict[labels] * htr2eV
+                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
 
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')

@@ -27,11 +27,12 @@ from aiida.orm import Code
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
+# pylint: disable=invalid-name
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
 Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-
+# pylint: enable=invalid-name
 
 class FleurMaeConvWorkChain(WorkChain):
     """
@@ -143,7 +144,11 @@ class FleurMaeConvWorkChain(WorkChain):
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label', (atom_label, {'special': {'socscale': 0.0}}, True)))
+                ('set_species_label',
+                 {'at_label': atom_label,
+                  'attributedict': {'special': {'socscale': 0.0}},
+                  'create': True
+                 }))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -230,7 +235,7 @@ class FleurMaeConvWorkChain(WorkChain):
         """
         t_energydict = {}
         outnodedict = {}
-        htr2eV = 27.21138602
+        htr_to_ev = 27.21138602
 
         for label in six.iterkeys(self.ctx.wf_dict['sqas']):
             calc = self.ctx[label]
@@ -260,7 +265,7 @@ class FleurMaeConvWorkChain(WorkChain):
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr2eV
+                t_e = t_e * htr_to_ev
             t_energydict[label] = t_e
 
         if t_energydict:

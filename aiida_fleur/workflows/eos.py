@@ -283,7 +283,7 @@ class FleurEosWorkChain(WorkChain):
         vol_peratom_success = []
         outnodedict = {}
         natoms = len(self.inputs.structure.sites)
-        htr2eV = 27.21138602
+        htr_to_ev = 27.21138602
 
         for label in self.ctx.labels:
             calc = self.ctx[label]
@@ -309,7 +309,7 @@ class FleurEosWorkChain(WorkChain):
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr2eV
+                t_e = t_e * htr_to_ev
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)

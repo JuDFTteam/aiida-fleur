@@ -20,6 +20,7 @@ import copy
 
 import six
 from six.moves import range
+from six.moves import map
 from lxml.etree import XMLSyntaxError
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -34,10 +35,12 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
+# pylint: disable=invalid-name
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
 Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
 class FleurDMIWorkChain(WorkChain):
     """
@@ -62,8 +65,8 @@ class FleurDMIWorkChain(WorkChain):
         'itmax_per_run' : 30,
         'beta' : {'all' : 1.57079},
         'alpha_mix' : 0.015,
-        'sqas_theta' : '0.0 1.57079 1.57079',
-        'sqas_phi' : '0.0 0.0 1.57079',
+        'sqas_theta' : [0.0, 1.57079, 1.57079],
+        'sqas_phi' : [0.0, 0.0, 1.57079],
         'soc_off' : [],
         'prop_dir' : [1.0, 0.0, 0.0],
         'q_vectors': ['0.0 0.0 0.0',
@@ -168,10 +171,21 @@ class FleurDMIWorkChain(WorkChain):
         # set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-        #switch off SOC on an atom specie
+
+        # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label', (atom_label, {'special' : {'socscale' : 0.0}}, True)))
+                ('set_species_label',
+                 {'at_label': atom_label,
+                  'attributedict': {'special': {'socscale': 0.0}},
+                  'create': True
+                 }))
+
+        # Check if sqas_theta and sqas_phi have the same length
+        if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
+            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -258,12 +272,15 @@ class FleurDMIWorkChain(WorkChain):
                             'l_ss': False}
 
         input_scf['wf_parameters']['inpxml_changes'].append(
-            (u'set_inpchanges', {u'change_dict': changes_dict}))
+            ('set_inpchanges', {'change_dict': changes_dict}))
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             input_scf['wf_parameters']['inpxml_changes'].append(
-                ('set_atomgr_att_label', ({'nocoParams': [('beta', val)]}, key)))
+                ('set_atomgr_att_label',
+                 {'attributedict': {'nocoParams': [('beta', val)]},
+                  'atom_label': key
+                 }))
 
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
@@ -324,32 +341,54 @@ class FleurDMIWorkChain(WorkChain):
         #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
         #create forceTheorem tags
-        fchanges.extend([('create_tag', ('/fleurInput', 'forceTheorem')),
-                         ('create_tag', ('/fleurInput/forceTheorem', 'DMI')),
-                         ('create_tag', ('/fleurInput/forceTheorem/DMI', 'qVectors')),
+        fchanges.extend([('create_tag',
+                          {'xpath': '/fleurInput',
+                           'newelement': 'forceTheorem'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem',
+                           'newelement': 'DMI'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem/DMI',
+                           'newelement': 'qVectors'
+                          }),
                          ('xml_set_attribv_occ',
-                          ('/fleurInput/forceTheorem/DMI', 'theta',
-                           self.ctx.wf_dict.get('sqas_theta'))),
+                          {'xpathn': '/fleurInput/forceTheorem/DMI',
+                           'attributename': 'theta',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+                          }),
                          ('xml_set_attribv_occ',
-                          ('/fleurInput/forceTheorem/DMI', 'phi',
-                           self.ctx.wf_dict.get('sqas_phi')))])
+                          {'xpathn': '/fleurInput/forceTheorem/DMI',
+                           'attributename': 'phi',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+                          })
+                        ])
 
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append(('create_tag', ('/fleurInput/forceTheorem/DMI/qVectors', 'q')))
-            #next change requires a q-vector vectors, create flag False and a position of the <q>
+            fchanges.append(('create_tag',
+                             {'xpath': '/fleurInput/forceTheorem/DMI/qVectors',
+                              'newelement': 'q'
+                             }))
             fchanges.append(('xml_set_text_occ',
-                             ('/fleurInput/forceTheorem/DMI/qVectors/q', vectors, False, i)))
+                             {'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
+                              'text': vectors,
+                              'create': False,
+                              'occ': i
+                             }))
 
         changes_dict = {'itmax' : 1,
                         'l_noco': True,
                         'ctail': False,
                         'l_ss': True}
-        fchanges.append((u'set_inpchanges', {u'change_dict' : changes_dict}))
+        fchanges.append(('set_inpchanges', {'change_dict' : changes_dict}))
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label',
-                             ({'nocoParams': [('beta', val)]}, key)))
+                             {'attributedict': {'nocoParams': [('beta', val)]},
+                              'atom_label': key
+                             }))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -369,10 +408,7 @@ class FleurDMIWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
-                    if function == 'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
+                    method(**para)
 
             # validate?
             apply_c = True
@@ -417,9 +453,7 @@ class FleurDMIWorkChain(WorkChain):
 
         outpara = outpara_node.get_dict()
 
-        try:
-            t_e = outpara['total_energy']
-        except KeyError:
+        if 'total_energy' not in outpara:
             message = ('Did not manage to extract float total energy from the'
                        ' reference SCF calculation.')
             self.control_end_wc(message)
@@ -497,7 +531,7 @@ class FleurDMIWorkChain(WorkChain):
         """
         Generates results of the workchain.
         """
-        htr2eV = 27.21138602
+        htr_to_ev = 27.21138602
         t_energydict = []
         mae_thetas = []
         mae_phis = []
@@ -534,7 +568,7 @@ class FleurDMIWorkChain(WorkChain):
 
             if e_u == 'Htr' or 'htr':
                 for labels in range(len(t_energydict)):
-                    t_energydict[labels] = t_energydict[labels] * htr2eV
+                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)

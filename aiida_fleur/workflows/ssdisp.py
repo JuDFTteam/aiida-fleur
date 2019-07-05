@@ -34,10 +34,12 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
+# pylint: disable=invalid-name
 StructureData = DataFactory('structure')
 RemoteData = DataFactory('remote')
 Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
 class FleurSSDispWorkChain(WorkChain):
     """
@@ -246,12 +248,15 @@ class FleurSSDispWorkChain(WorkChain):
                             'l_ss': False}
 
         input_scf['wf_parameters']['inpxml_changes'].append(
-            (u'set_inpchanges', {u'change_dict': changes_dict}))
+            ('set_inpchanges', {'change_dict': changes_dict}))
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             input_scf['wf_parameters']['inpxml_changes'].append(
-                ('set_atomgr_att_label', ({'nocoParams': [('beta', val)]}, key)))
+                ('set_atomgr_att_label',
+                 {'attributedict': {'nocoParams': [('beta', val)]},
+                  'atom_label': key
+                 }))
 
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
@@ -312,25 +317,39 @@ class FleurSSDispWorkChain(WorkChain):
         #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
         #create forceTheorem tags
-        fchanges.extend([('create_tag', ('/fleurInput', 'forceTheorem')),
-                         ('create_tag', ('/fleurInput/forceTheorem', 'spinSpiralDispersion'))])
+        fchanges.extend([('create_tag',
+                          {'xpath': '/fleurInput',
+                           'newelement': 'forceTheorem'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem',
+                           'newelement': 'spinSpiralDispersion'
+                          })])
 
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append(('create_tag', ('/fleurInput/forceTheorem/spinSpiralDispersion', 'q')))
-            #next change requires a q-vector vectors, create flag False and a position of the <q>
+            fchanges.append(('create_tag',
+                             {'xpath': '/fleurInput/forceTheorem/spinSpiralDispersion',
+                              'newelement': 'q'
+                             }))
             fchanges.append(('xml_set_text_occ',
-                             ('/fleurInput/forceTheorem/spinSpiralDispersion/q', vectors, False, i)))
+                             {'xpathn': '/fleurInput/forceTheorem/spinSpiralDispersion/q',
+                              'text': vectors,
+                              'create': False,
+                              'occ': i
+                             }))
 
         changes_dict = {'itmax' : 1,
                         'l_noco': True,
                         'ctail': False,
                         'l_ss': True}
-        fchanges.append((u'set_inpchanges', {u'change_dict' : changes_dict}))
+        fchanges.append(('set_inpchanges', {'change_dict' : changes_dict}))
 
         #change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label',
-                             ({'nocoParams': [('beta', val)]}, key)))
+                             {'attributedict': {'nocoParams': [('beta', val)]},
+                              'atom_label': key
+                             }))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -350,10 +369,7 @@ class FleurSSDispWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
-                    if function == 'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
+                    method(**para)
 
             # validate?
             apply_c = True
@@ -398,9 +414,7 @@ class FleurSSDispWorkChain(WorkChain):
 
         outpara = outpara_node.get_dict()
 
-        try:
-            t_e = outpara['total_energy']
-        except KeyError:
+        if 'total_energy' not in outpara:
             message = ('Did not manage to extract float total energy from the'
                        ' reference SCF calculation.')
             self.control_end_wc(message)
@@ -479,7 +493,7 @@ class FleurSSDispWorkChain(WorkChain):
         Generates results of the workchain.
         """
         t_energydict = []
-        htr2eV = 27.21138602
+        htr_to_ev = 27.21138602
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
@@ -506,7 +520,7 @@ class FleurSSDispWorkChain(WorkChain):
             for labels in range(len(t_energydict)):
                 t_energydict[labels] = t_energydict[labels] - minenergy
                 if e_u == 'Htr' or 'htr':
-                    t_energydict[labels] = t_energydict[labels] * htr2eV
+                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
             self.ctx.energy_dict = t_energydict
 
         except AttributeError:

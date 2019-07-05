@@ -38,11 +38,12 @@ from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
+# pylint: disable=invalid-name
 RemoteData = DataFactory('remote')
 StructureData = DataFactory('structure')
 Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-
+# pylint: enable=invalid-name
 
 class FleurScfWorkChain(WorkChain):
     """
@@ -417,10 +418,7 @@ class FleurScfWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:  # apply change
-                    if function == u'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
+                    method(**para)
 
         # validate?
         apply_c = True
