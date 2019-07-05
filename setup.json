@@ -68,7 +68,7 @@
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.band = aiida_fleur.workflows.band:fleur_band_wc",
-            "fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc",
+            "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
             "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",

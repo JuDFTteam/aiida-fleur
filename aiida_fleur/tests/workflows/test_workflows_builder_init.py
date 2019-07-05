@@ -40,9 +40,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the eos workchain
         """
-        from aiida_fleur.workflows.eos import fleur_eos_wc
+        from aiida_fleur.workflows.eos import FleurEosWorkChain
         
-        builder = fleur_eos_wc.get_builder()
+        builder = FleurEosWorkChain.get_builder()
 
 
     def test_fleur_dos_wc_init(aiida_env):

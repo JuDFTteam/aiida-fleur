@@ -94,6 +94,7 @@ class FleurRelaxWorkChain(WorkChain):
         )
 
         spec.output('out', valid_type=Dict)
+        spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',

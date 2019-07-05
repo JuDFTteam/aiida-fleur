@@ -31,7 +31,7 @@ from aiida.engine import WorkChain, ToContext#, while_
 from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.eos import FleurEosWorkChain
 import six
 
 #from aiida_fleur.tools.xml_util import eval_xpath2
@@ -296,12 +296,12 @@ class fleur_delta_wc(WorkChain):
             label = '|delta_wc|eos|{}'.format(formula)
             description = '|delta| fleur_eos_wc on {}'.format(formula)
             if para:
-                eos_future = submit(fleur_eos_wc,
+                eos_future = submit(FleurEosWorkChain,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 label=label, description=description)
             else: # TODO: run eos_wc_simple
-                eos_future = submit(fleur_eos_wc,
+                eos_future = submit(FleurEosWorkChain,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 label=label, description=description)

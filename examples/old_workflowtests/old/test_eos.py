@@ -8,7 +8,7 @@ if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
 from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.eos import FleurEosWorkChain
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
 KpointsData = DataFactory('array.kpoints')
@@ -47,6 +47,6 @@ pprint(wf_para.get_dict())
 print("parameterdata = ")#{}".format(parameters.get_dict()))
 pprint(parameters.get_dict())
 
-res = fleur_eos_wc.run(wf_parameters=wf_para, structure=s, 
+res = FleurEosWorkChain.run(wf_parameters=wf_para, structure=s, 
                             calc_parameters=parameters, 
                             inpgen = code, fleur=code2)#, settings=settings)# 
