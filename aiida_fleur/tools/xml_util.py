@@ -683,7 +683,10 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
     for group in all_groups:
-        for atom in eval_xpath2(group, 'filmPos'):
+        positions = eval_xpath2(group, 'filmPos')
+        if not positions:
+            positions = eval_xpath2(group, 'relPos')
+        for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
                 specie = get_xml_attribute(group, 'species')
@@ -865,7 +868,10 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
     for group in all_groups:
-        for atom in eval_xpath2(group, 'filmPos'):
+        positions = eval_xpath2(group, 'filmPos')
+        if not positions:
+            positions = eval_xpath2(group, 'relPos')
+        for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
                 specie = get_xml_attribute(group, 'species')
