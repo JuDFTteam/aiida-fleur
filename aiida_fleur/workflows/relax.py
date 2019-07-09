@@ -279,8 +279,6 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
 
         input_scf['options'] = self.ctx.options
-        # TODO: remove next line when #272 FLEUR issue is fixed
-        input_scf['options']['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
         input_scf['options'] = Dict(dict=input_scf['options'])
 
         input_scf['fleur'] = self.inputs.fleur
