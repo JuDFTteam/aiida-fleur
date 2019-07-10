@@ -199,6 +199,14 @@ class FleurSSDispConvWorkChain(WorkChain):
             scf_wf_param[key] = self.ctx.wf_dict.get(key)
         inputs['wf_parameters'] = scf_wf_param
 
+        #change beta parameter
+        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+            inputs['wf_parameters']['inpxml_changes'].append(
+                ('set_atomgr_att_label',
+                 {'attributedict': {'nocoParams': [('beta', val)]},
+                  'atom_label': key
+                 }))
+
         inputs['options'] = self.ctx.options
 
         # Try to retrieve calculaion parameters from inputs
