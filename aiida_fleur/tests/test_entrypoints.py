@@ -147,3 +147,10 @@ class TestAiida_fleur_entrypoints:
         
         workflow = WorkflowFactory('fleur.dmi')
         assert workflow == FleurDMIWorkChain
+   
+    def test_fleur_base_wc_entry_point(aiida_env):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+        
+        workflow = WorkflowFactory('fleur.base')
+        assert workflow == FleurBaseWorkChain
