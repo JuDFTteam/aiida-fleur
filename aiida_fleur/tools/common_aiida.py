@@ -230,11 +230,11 @@ def create_group(name, nodes, description=None):
         create_group(group_name, nodes_to_group_pks, description='delta structures added by hand. from Gustavs inpgen files')
 
     """
-    group, created = Group.get_or_create(name=name)
+    group, created = Group.objects.get_or_create(label=name)
     if created:
-        print(('Group created with PK={} and name {}'.format(group.pk, group.name)))
+        print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.name, group.pk)))
+        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.label, group.pk)))
         answer = input()
         if answer.strip().lower() == 'y':
             pass
@@ -254,7 +254,7 @@ def create_group(name, nodes, description=None):
             pass
 
     group.add_nodes(nodes2)
-    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.name, group.pk)))
+    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.label, group.pk)))
 
     if description:
         group.description = description
