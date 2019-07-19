@@ -38,7 +38,7 @@ class FleurParser(Parser):
     i.e checks if all files are there that should be and their condition.
     Then it parses the out.xml file and returns a (simple) parameterData node
     with the results of the last iteration.
-    Other files (DOS.x, bands.x, ...) are also parsed if they are retrieved.
+    Other files (DOS.x, bands.x, relax.xml, ...) are also parsed if they are retrieved.
     """
 
     _setting_key = 'parser_options'
@@ -61,7 +61,7 @@ class FleurParser(Parser):
         """
         Receives in input a dictionary of retrieved nodes.
         Does all the logic here. Checks presents of files.
-        Calls routines to parse them and returns parameter nodes and sucess.
+        Calls routines to parse them and returns parameter nodes and success.
 
         :return successful: Bool, if overall parsing was successful or not
         :return new_nodes_list: list of tuples of two (linkname, Dataobject),
@@ -243,7 +243,7 @@ class FleurParser(Parser):
 def parse_xmlout_file(outxmlfile):
     """
     Parses the out.xml file of a FLEUR calculation
-    Receives as input the absolut path to the xml output file
+    Receives as input the absolute path to the xml output file
 
     :param outxmlfile: path to out.xml file
 
@@ -290,7 +290,9 @@ def parse_xmlout_file(outxmlfile):
         Parses the xml.out file of a Fleur calculation
         Receives in input the root of an xmltree of the xml output file
 
-        :param xmltree: root node of etree of out.xml file
+        :param root: root node of etree of out.xml file
+        :param outfile_broken: a boolen that indicates if an out.xml has a broken last iteration
+                               output
 
         :returns xml_data_dict: a simple dictionary (QE output like)
                                 with parsed data
@@ -402,7 +404,7 @@ def parse_xmlout_file(outxmlfile):
 
         # time
         # Maybe change the behavior if things could not be parsed...
-        # Especilly if file was broken, ie endtime it not there.
+        # Especially if file was broken, ie endtime it not there.
         starttime = eval_xpath(root, start_time_xpath)
         if starttime:
             starttimes = starttime.split(':')
@@ -454,10 +456,11 @@ def parse_xmlout_file(outxmlfile):
     # TODO find a way to import these from xml_util, but make the parser logger work...
     def eval_xpath(node, xpath):
         """
-        Tries to evalutate an xpath expression. If it fails it logs it.
+        Tries to evaluate an xpath expression. If it fails it logs it.
 
-        :param root node of an etree and an xpath expression (relative, or absolute)
-        :returns either nodes, or attributes, or text
+        :param node: root node of an etree
+        :param xpath: xpath expression (relative, or absolute)
+        :returns: text, attribute or a node list
         """
         try:
             return_value = node.xpath(xpath)
@@ -474,10 +477,12 @@ def parse_xmlout_file(outxmlfile):
 
     def eval_xpath2(node, xpath):
         """
-        Tries to evalutate an xpath expression. If it fails it logs it.
+        Tries to evaluate an xpath expression. If it fails it logs it.
+        It always return a list even if a single element was evaluated.
 
-        :param root node of an etree and an xpath expression (relative, or absolute)
-        :returns ALWAYS a node list
+        :param node: root node of an etree
+        :param xpath: xpath expression (relative, or absolute)
+        :returns: a node list
         """
         try:
             return_value = node.xpath(xpath)
@@ -498,7 +503,7 @@ def parse_xmlout_file(outxmlfile):
 
         :param node: a node from etree
         :param attributename: a string with the attribute name.
-        :returns either attributevalue, or None
+        :returns: attributevalue or None
         """
         if etree.iselement(node):
             attrib_value = node.get(attributename)
@@ -507,7 +512,7 @@ def parse_xmlout_file(outxmlfile):
             else:
                 parser_info_out['parser_warnings'].append(
                     'Tried to get attribute: "{}" from element {}.\n '
-                    'I recieved "{}", maybe the attribute does not exist'
+                    'I received "{}", maybe the attribute does not exist'
                     ''.format(attributename, node, attrib_value))
                 return None
         else:  # something doesn't work here, some nodes get through here
@@ -525,7 +530,7 @@ def parse_xmlout_file(outxmlfile):
 
         :param value_string: a string
         :returns value: the new float or value_string: the string given
-        :returns True or Falses
+        :returns: True if convertation was successfull, False otherwise
         """
         try:
             value = float(value_string)
@@ -548,7 +553,7 @@ def parse_xmlout_file(outxmlfile):
 
         :param value_string: a string
         :returns value: the new int or value_string: the string given
-        :returns True or False
+        :returns: True or False
         """
         try:
             value = int(value_string)
@@ -691,13 +696,16 @@ def parse_xmlout_file(outxmlfile):
 
         def write_simple_outnode(value, value_type, value_name, dict_out):
             """
-            writes a value (int or float) in the simple data dict.
+            Writes a value (int or float) in the simple data dict.
             if path does not exit it initializes it!
 
-            if the value has not the type given,
+            If the value has not the type given,
             it will be logged in parser info instead of writing.
 
-            :param value: value
+            :param value: value ti write
+            :param value_type: a type of a value: 'float', 'int', 'str', 'list', 'list_floats',
+                               'list_ints', list_list_floats
+            :param value_name: a name of a value to be used in the dictionary
             """
 
             iteration_current_number_name = 'numberForCurrentRun'
@@ -1116,7 +1124,7 @@ def parse_bands_file(bands_lines):
 def parse_relax_file(rlx):
     """
     This function parsers relax.xml output file and
-    returns a Dict
+    returns a Dict containing all the data given there.
     """
     from lxml import etree
     from aiida_fleur.tools.xml_util import eval_xpath2

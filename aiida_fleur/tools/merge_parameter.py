@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-This module, contains a method to merge parameterData nodes used by the FLEUR inpgen.
+This module, contains a method to merge Dict nodes used by the FLEUR inpgen.
 This might also be of interest for other all-ellectron codes
 """
 # TODO this should be made an inline calculation or calcfunction to
@@ -21,20 +21,20 @@ This might also be of interest for other all-ellectron codes
 
 from __future__ import absolute_import
 from __future__ import print_function
-from aiida.plugins import Code, CalculationFactory, DataFactory
-from aiida.orm import load_node
-from aiida.orm.nodes.base import Bool
+from aiida.plugins import CalculationFactory, DataFactory
+from aiida.orm import Code, load_node
+from aiida.orm import Bool
 from aiida.engine import calcfunction as cf
 
-ParameterData = DataFactory('dict')
+Dict = DataFactory('dict')
 
-def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
+def merge_parameter(Dict1, Dict2, overwrite=True):
     """
-    Merges two parameterData nodes.
+    Merges two Dict nodes.
     Additive: uses all namelists of both.
-    If they have a namelist in common. ParameterData2 will overwrite the namelist
-    of parameterData. If this is not wanted. set overwrite = False.
-    Then attributes of both will be added, but attributes from ParameterData1 won't
+    If they have a namelist in common. Dict2 will overwrite the namelist
+    of Dict. If this is not wanted. set overwrite = False.
+    Then attributes of both will be added, but attributes from Dict1 won't
     be oeverwritten.
 
 
@@ -48,19 +48,19 @@ def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     # check input
     # get dictionaries
     # merge dictionaries into new dictionary
-    # create a new parameterData node
+    # create a new Dict node
 
     new_dict = {}
     atoms_dict = {}
     atomlist = []
-    if not isinstance(ParameterData1, ParameterData):
-        raise InputValidationError("ParameterData1, must be of "
-                                           "type ParameterData")
-    if not isinstance(ParameterData2, ParameterData):
-        raise InputValidationError("ParameterData2, must be of "
-                                           "type ParameterData")
-    dict1 = ParameterData1.get_dict()
-    dict2 = ParameterData2.get_dict()
+    if not isinstance(Dict1, Dict):
+        raise InputValidationError("Dict1, must be of "
+                                           "type Dict")
+    if not isinstance(Dict2, Dict):
+        raise InputValidationError("Dict2, must be of "
+                                           "type Dict")
+    dict1 = Dict1.get_dict()
+    dict2 = Dict2.get_dict()
 
     for key in dict1.keys():
         if 'atom' in key:
@@ -99,27 +99,29 @@ def merge_parameter(ParameterData1, ParameterData2, overwrite=True):
     return Dict(dict=new_dict)
 
 
-def merge_parameters(ParameterDataList, overwrite=True):
+def merge_parameters(DictList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
     paremeter_data_new = Dict(dict= {})
 
-    for i, parameter in enumerate(ParameterDataList):
-        if isinstance(parameter, ParameterData):
+    for i, parameter in enumerate(DictList):
+        if isinstance(parameter, Dict):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print(('WARNING: Entry : {} {} is not of type ParameterData, I skip it.'.format(i, parameter)))
+            print(('WARNING: Entry : {} {} is not of type Dict, I skip it.'.format(i, parameter)))
 
     return paremeter_data_new
 
 @cf
-def merge_parameter_cf(ParameterData1, ParameterData2, overwrite=Bool(True)):
+def merge_parameter_cf(Dict1, Dict2, overwrite=None):
     """
     calcfunction of merge_parameters
     """
-    paremeter_data_new = merge_parameter(ParameterData1, ParameterData2, overwrite=overwrite)
+    if overwrite is None:
+        overwrite = Bool(True)
+    paremeter_data_new = merge_parameter(Dict1, Dict2, overwrite=overwrite)
 
     return paremeter_data_new
 
@@ -128,26 +130,26 @@ def merge_parameter_cf(ParameterData1, ParameterData2, overwrite=Bool(True)):
 # makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
 # I guess...
 @cf
-def merge_parameters_wf(*ParameterDatas, overwrite=Bool(True)):
+def merge_parameters_wf(*Dicts, overwrite=Bool(True)):
     """
     calcfunction of merge_parameters
     """
-    ParameterDataList = []
-    for parameter in ParameterDatas:
-        ParameterDataList.append(parameter)
-    paremeter_data_new = merge_parameters(ParameterDataList, overwrite=overwrite)
+    DictList = []
+    for parameter in Dicts:
+        DictList.append(parameter)
+    paremeter_data_new = merge_parameters(DictList, overwrite=overwrite)
 
     return paremeter_data_new
 '''
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Merge a parameterData node.')
-    parser.add_argument('--para1', type=ParameterData, dest='para1',
-                        help='The first ParameterData node', required=True)
-    parser.add_argument('--para2', type=ParameterData, dest='para2',
-                        help='The second ParameterData node', required=True)
+    parser = argparse.ArgumentParser(description='Merge a Dict node.')
+    parser.add_argument('--para1', type=Dict, dest='para1',
+                        help='The first Dict node', required=True)
+    parser.add_argument('--para2', type=Dict, dest='para2',
+                        help='The second Dict node', required=True)
     parser.add_argument('--overwrite', type=bool, dest='overwrite',
-                        help='Shall values given in ParameterData2 overwrite the values from the first ParameterData?', required=False)
+                        help='Shall values given in Dict2 overwrite the values from the first Dict?', required=False)
     args = parser.parse_args()
     merge_parameter(paremeter_data_new=args.para1, parameter=args.para1, overwrite=args.overwrite)

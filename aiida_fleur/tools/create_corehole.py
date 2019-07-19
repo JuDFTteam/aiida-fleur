@@ -84,18 +84,27 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
 def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
-    given econfig as in inp.xml [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2)
-    if position(pos) is given the electronConfig for the specifed position will be set.
-    (or todo? econfig, either [Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2 or
-    [Kr] 2(5s1/2) 4(4d3/2) 6(4d5/2) 6(4f5/2) 8(4f7/2) |2(5p1/2) 4(5p3/2) 2(6s1/2) 2(5d3/2) 2(5d5/2))
-    occ tags already there will be untouched, unless the state is the same as given
+    given econfig as in inp.xml::
 
-    :param fleurinp:, an unstored! changes are done on this fleurinp fleurinpdata object # TODO alternatively stored?
-    :param species:, string with species name
-    :param stateocc: dict state tuples (spinup, spindown), exp: {'(5d3/2)' : (2.5, 0.0), '(4f7/2)' : (3.5 , 4.0)}
-    :param pos: list of tuples of 3, pos=[(0.0, 0.0, 0.0), ...]
-    :param coreconfig: string, e.g: [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2), default='same' (same as current in inp.xml)
-    :param valenceconfig, string, e.g.: (5p1/2) (5p3/2) (6s1/2) (5d3/2) (5d5/2)
+        [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2)
+
+    if position(pos) is given the electronConfig for the specified position will be set.
+    (or todo? econfig, either:: 
+
+            [Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2
+
+    or::
+
+        [Kr] 2(5s1/2) 4(4d3/2) 6(4d5/2) 6(4f5/2) 8(4f7/2) |2(5p1/2) 4(5p3/2) 2(6s1/2) 2(5d3/2) 2(5d5/2))
+
+    occ tags already there will be untouched, unless the state is the same as given.
+
+    :params fleurinp: an unstored! changes are done on this fleurinp fleurinpdata object # TODO alternatively stored?
+    :params species: string with species name
+    :params stateocc: dict state tuples (spinup, spindown), exp: {'(5d3/2)' : (2.5, 0.0), '(4f7/2)' : (3.5 , 4.0)}
+    :params pos: list of tuples of 3, pos=[(0.0, 0.0, 0.0), ...]
+    :params coreconfig: string, e.g: "[Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2)", default='same' (same as current in inp.xml)
+    :params valenceconfig string, e.g.: (5p1/2) (5p3/2) (6s1/2) (5d3/2) (5d5/2)
 
     :return: the changes fleurinpData object
     """

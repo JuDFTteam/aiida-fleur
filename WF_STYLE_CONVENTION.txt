@@ -59,9 +59,9 @@ FLEUR Specific:
 
    which workflow was run, what version?
    what came out?  What was put in, how can I see what was put in?
-   Is this valueable or garbage?
+   Is this valuable or garbage?
 
-3. so far name Fleur workflows/workchains name: fleur_name_wc
+3. so far name Fleur workflows/workchains name: FleurNameWorkChain
 
 4. (advanced) group workflow internal(between) calculations and add extras to calculation. (that way one can extract them from global queries, if need.
 

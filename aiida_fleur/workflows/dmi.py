@@ -110,7 +110,7 @@ class FleurDMIWorkChain(WorkChain):
 
         #exit codes
         spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
+                       message="Invalid input, please check input configuration.")
         spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
                        message="Some required inputs are missing.")
         spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
@@ -132,7 +132,7 @@ class FleurDMIWorkChain(WorkChain):
         spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
         spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
+                       message="Computational resources are not optimal.")
 
     def start(self):
         """

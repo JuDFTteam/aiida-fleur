@@ -45,7 +45,7 @@ def convert_to_float(value_string, parser_info_out=None, suc_return=True):
 
     :param value_string: a string
     :returns value: the new float or value_string: the string given
-    :retruns True or False
+    :returns: True or False
     """
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
@@ -79,7 +79,7 @@ def convert_to_int(value_string, parser_info_out=None, suc_return=True):
 
     :param value_string: a string
     :returns value: the new int or value_string: the string given
-    :retruns True or False, if suc_return=True
+    :returns: True or False, if suc_return=True
     """
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
@@ -1038,9 +1038,9 @@ def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings': [
     """
     Get an attribute value from a node.
 
-    :param node: a node from etree
-    :param attributename: a string with the attribute name.
-    :returns either attributevalue, or None
+    :params node: a node from etree
+    :params attributename: a string with the attribute name.
+    :returns: either attributevalue, or None
     """
     if etree.iselement(node):
         attrib_value = node.get(attributename)
@@ -1079,11 +1079,10 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
     This modifies the xml-inp file. Makes all the changes wanted by
     the user or sets some default values for certain modes
 
-    :param inp_file_lines_o xml-tree of the xml-inp file
-    :param fleur_change_dic dictionary {attrib_name : value} with all the
-           wanted changes.
+    :params inp_file_xmltree: xml-tree of the xml-inp file
+    :params fleur_change_dic: dictionary {attrib_name : value} with all the wanted changes.
 
-    return an etree of the xml-inp file with changes.
+    :returns: an etree of the xml-inp file with changes.
     """
     # TODO rename, name is misleaded just changes the tree.
     xmltree_new = inp_file_xmltree
@@ -1268,12 +1267,15 @@ def get_inpxml_file_structure():
     :return other_attributes_once: list of all attributes, which occur just once (can be tested)
     :return other_attributes_several: list of all attributes, which can occur more then once
     :return all_text: list of all text of tags, which can be set
-    :return all_attrib_xpath: dictonary (attrib, xpath), of all possible attributes
+    :return all_attrib_xpath: 
+                              dictonary (attrib, xpath), of all possible attributes
                               with their xpath expression for the xmp inp
-    :return expertkey: keyname (should not be in any other list), which can be
+
+    :return expertkey: 
+                       keyname (should not be in any other list), which can be
                        used to set anything in the file, by hand,
-     (for experts, and that plug-in does not need to be directly maintained if
-     xmlinp gets a new switch)
+                       (for experts, and that plug-in does not need to be directly maintained if
+                       xmlinp gets a new switch)
     """
 
     # All attributes (allowed to change?)

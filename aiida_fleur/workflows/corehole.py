@@ -81,41 +81,42 @@ class fleur_corehole_wc(WorkChain):
 
     :returns: output_corehole_wc_para: Dict node,  successful=True if no error
 
+    :uses workchains: fleur_scf_wc, fleur_relax_wc
+    :uses calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
 
-    :uses: workchains: fleur_scf_wc, fleur_relax_wc
-    :uses: calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
-
-    minimum input example:
-    1. Code1, Code2, Structure, (Parameters), (wf_parameters)
-    2. Code2, FleurinpData, (wf_parameters)
-
-    maximum input example:
-    1. Code1, Code2, Structure, Parameters,
-       wf_parameters: {
-            'method' : 'valence', # what method to use, default for valence to highest open shell
-            'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
-            'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
-            'corelevel': ['all'],        # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
-            'supercell_size' : [2,1,1], # size of the supercell [nx,ny,nz]
-            'para_group' : None,       # use parameter nodes from a parameter group
-            #'references' : 'calculate',# at some point aiida will have fast forwarding
-            'relax' : False,          # relax the unit cell first?
-            'relax_mode': 'Fleur',    # what releaxation do you want
-            'relax_para' : 'default', # parameter dict for the relaxation
-            'scf_para' : 'default',    # wf parameter dict for the scfs
-            'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
-            'resources' : {"num_machines": 1},# resources per job
-            'max_wallclock_seconds' : 6*60*60,    # walltime per job
-            'queue_name' : '',       # what queue to submit to
-            'serial' : True,           # run fleur in serial, or parallel?
-            #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-            'magnetic' : True          # jspins=2, makes a difference for coreholes
-            }
-    2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
-
-    Hints:
-    1. This workflow does not work with local codes!
     """
+    # This block of commented code was removed from the docstring and should be put
+    # to the other place in the documentation.
+    # minimum input example:
+    # 1. Code1, Code2, Structure, (Parameters), (wf_parameters)
+    # 2. Code2, FleurinpData, (wf_parameters)
+
+    # maximum input example:
+    # 1. Code1, Code2, Structure, Parameters,
+    #    wf_parameters: {
+    #         'method' : 'valence', # what method to use, default for valence to highest open shell
+    #         'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
+    #         'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
+    #         'corelevel': ['all'],        # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
+    #         'supercell_size' : [2,1,1], # size of the supercell [nx,ny,nz]
+    #         'para_group' : None,       # use parameter nodes from a parameter group
+    #         #'references' : 'calculate',# at some point aiida will have fast forwarding
+    #         'relax' : False,          # relax the unit cell first?
+    #         'relax_mode': 'Fleur',    # what releaxation do you want
+    #         'relax_para' : 'default', # parameter dict for the relaxation
+    #         'scf_para' : 'default',    # wf parameter dict for the scfs
+    #         'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
+    #         'resources' : {"num_machines": 1},# resources per job
+    #         'max_wallclock_seconds' : 6*60*60,    # walltime per job
+    #         'queue_name' : '',       # what queue to submit to
+    #         'serial' : True,           # run fleur in serial, or parallel?
+    #         #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
+    #         'magnetic' : True          # jspins=2, makes a difference for coreholes
+    #         }
+    # 2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
+
+    # Hints:
+    # 1. This workflow does not work with local codes!
 
     _workflowversion = "0.3.2"
     _default_options = {

@@ -48,35 +48,34 @@ FleurCalc = CalculationFactory('fleur.fleur')
 class fleur_initial_cls_wc(WorkChain):
     """
     Turn key solution for the calculation of core level shift
-
-
-    'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
-    'Bes' : [W4f, Be1s]
-    'CLS' : [W4f, Be1s]
- toms' : ['all', 'postions' : []]
-    #'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
-    'references' : { 'W': [calc/ouputnode or  fleurinp, or structure data or
-                     structure data + Parameter  ], 'Be' : }
-    'scf_para' : {...}, 'default'
-    'relax' : True
-    'relax_mode': ['Fleur', 'QE Fleur', 'QE']
-    'relax_para' : {...}, 'default'
-    'calculate_doses' : False
-    'dos_para' : {...}, 'default'
-
-    # defaults
-    default wf_Parameters::
-    'method' : 'initial'
-    'atoms' : 'all
-    'references' : 'calculate'
-    'scf_para' : 'default'
-    'relax' : True
-    'relax_mode': 'QE Fleur'
-    'relax_para' : 'default'
-    'calculate_doses' : False
-    'dos_para' : 'default'
     """
+    # This block of commented code was removed from the docstring and should be put
+    # to the other place in the documentation.
+    #     'method' : ['initial', 'full_valence ch', 'half_valence_ch', 'ch', ...]
+    #     'Bes' : [W4f, Be1s]
+    #     'CLS' : [W4f, Be1s]
+    #  toms' : ['all', 'postions' : []]
+    #     #'references' : ['calculate', and use # calculate : 'all' , or 'calculate' : ['W', 'Be']
+    #     'references' : { 'W': [calc/ouputnode or  fleurinp, or structure data or
+    #                      structure data + Parameter  ], 'Be' : }
+    #     'scf_para' : {...}, 'default'
+    #     'relax' : True
+    #     'relax_mode': ['Fleur', 'QE Fleur', 'QE']
+    #     'relax_para' : {...}, 'default'
+    #     'calculate_doses' : False
+    #     'dos_para' : {...}, 'default'
 
+    #     # defaults
+    #     default wf_Parameters::
+    #     'method' : 'initial'
+    #     'atoms' : 'all
+    #     'references' : 'calculate'
+    #     'scf_para' : 'default'
+    #     'relax' : True
+    #     'relax_mode': 'QE Fleur'
+    #     'relax_para' : 'default'
+    #     'calculate_doses' : False
+    #     'dos_para' : 'default'
     _workflowversion = "0.3.4"
     _default_wf_para = {'references' : {},
                        'relax' : True,
@@ -1121,16 +1120,19 @@ def clshifts_to_be(coreleveldict, reference_dict):
     """
     This methods converts corelevel shifts to binding energies,
     if a reference is given.
-    These cann than be used for plotting.
+    These can than be used for plotting.
 
-    i.e:
+    Example:
 
-    reference = {'W' : {'4f7/2' : [124],
-                     '4f5/2' : [102]},
-              'Be' : {'1s': [117]}}
-    corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
-                     '4f5/2' : [0, 0.3, 0.4, 0.1]},
-              'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}}
+    .. code-block:: python
+
+            reference = {'W' : {'4f7/2' : [124],
+                               '4f5/2' : [102]},
+                         'Be' : {'1s': [117]}}
+            corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
+                                 '4f5/2' : [0, 0.3, 0.4, 0.1]},
+                          'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}}
+
     """
 
     return_corelevel_dict = {}

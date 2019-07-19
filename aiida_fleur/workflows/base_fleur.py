@@ -116,18 +116,21 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         resourses_input = self.ctx.inputs.metadata.options['resources']
         try:
             self.ctx.num_machines = int(resourses_input['num_machines'])
-            self.ctx.max_wallclock_seconds = int(resourses_input['num_mpiprocs_per_machine'])
+            self.ctx.num_mpiprocs_per_machine = int(resourses_input['num_mpiprocs_per_machine'])
         except KeyError:
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
     def check_kpts(self):
         """
         This routine checks if the total number of requested cpus
-        is a factor of kpts and makes small optimisation.
+        is a factor of kpts and makes an optimisation.
+
+        If suggested number of num_mpiprocs_per_machine is 60% smaller than
+        requested, it throws an exit code and calculation stop withour submission.
         """
         fleurinp = self.ctx.inputs.fleurinpdata
         mach = self.ctx.num_machines
-        procs = self.ctx.max_wallclock_seconds
+        procs = self.ctx.num_mpiprocs_per_machine
         adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp, mach, procs)
 
         self.report(message)

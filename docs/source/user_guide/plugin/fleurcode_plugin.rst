@@ -6,33 +6,31 @@ FLEUR code plugin
 
 Description
 '''''''''''
-Use the plugin to support inputs of the Fleur code i.e. the 'fleur' and 'fleur_MPI' executable.
+Use the plugin to support inputs of the Fleur code i.e. the ``fleur`` and ``fleur_MPI`` executables.
 
 Supported codes
 '''''''''''''''
-* tested from Fleur v0.27 (MAX release 1.0) onwards. It is NOT back compatible to
+* Tested for Fleur v0.27 (MAX release 2.0). It is NOT back compatible to
   version v0.26 and earlier, because the I/O has changed completely and the plugin
   relies on the xml I/O.
 
-Not (yet) supported code features
+Not supported code features
 '''''''''''''''''''''''''''''''''
 
-* sparning multiple fleur calculation with on execution of fleur in a certain subdir structure
-  (on can parse the commandline switches, but it will fail, because the subdirs have to be prepared on the machine.)
-* 1D, not supported by the plugin, but currently also not testest in Fleur 0.27
+* sparring multiple fleur calculation with on execution of fleur in a certain subdir structure
+  (on can parse the commandline switches, but it will fail, because the subdirs have to be prepared
+  on the machine.)
+* 1D, not supported by the plugin, but currently also not tested in Fleur 0.27
   (in principal possible, some plugin functionalities have to be updated.)
 
 
-Partially supported yet
+Partially supported
 .......................
 
-* LDA+U, not tested yet, in principal possible, but user has to take care of copying the files, nothing parsed to output
-* Noncolinear Magnetism, not tested yet, in principal possible, but user has to take care of copying the extra files, not all information is parsed.
-* Jijs same as nonco.
-* Hybrid functionals same as noco
-* Wannier 90 same as noco
-  
-  
+* J_ij and D_ij calculations will be available soon.
+* LDA+U, hybrid functionals and Wannier 90 not tested, in principal possible, but user ha
+  to take care of copying the extra files, not all information is parsed.
+
 Sketch of nodes
 '''''''''''''''
 .. image:: images/fleur_calc.png
@@ -41,151 +39,213 @@ Sketch of nodes
 
 Inputs
 ''''''
-* **fleurinp**, class :py:class:`fleurinpData <aiida.orm.data.fleurinp>`
-  Data structure which represents the inp.xml file everything a Fleur calculation needs.
-  For more information see fleurinpData. 
-* **parent_folder**, class :py:class:`RemoteData <aiida.orm.data.remote.RemoteData>` (optional)
-  If specified, certain files in the scratch folder coming from a previous Fleur calculation is
-  copied in the scratch of the new calculation.
+* **fleurinp**: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional -
+  Data structure which represents the inp.xml file and everything a Fleur calculation needs.
+  For more information see :ref:`FleurinpData <fleurinp_data>`.
+* **parent_folder**: :py:class:`~aiida.orm.RemoteData`, optional -
+  If specified, certain files in the previous Fleur calculation folder are
+  copied in the new calculation folder.
+
+.. note::
+        **fleurinp** and **parent_folder** are both optional. Depending
+        on the setup of the inputs, one of five scenarios will happen:
+
+          1. **fleurinp**: files belonging to **fleurinp** will be used as input for
+             FLEUR calculation.
+          2. **fleurinp** + **parent_folder** (FLEUR): files, given in **fleurinp**
+             will be used as input for FLEUR calculation. Moreover, initial charge density will be
+             copied from the folder of the parent calculation.
+          3. **parent_folder** (FLEUR): Copies inp.xml file and initial
+             charge density from the folder of the parent FLEUR calculation.
+          4. **parent_folder** (input generator): Copies inp.xml file
+             from the folder of the parent inpgen calculation.
+          5. **parent_folder** (input generator) + **fleurinp**: files belonging to
+             **fleurinp** will be used as input for FLEUR calculation. Remote folder is ignored.
 
 Outputs
 '''''''
+All the outputs can be found in ``calculation.outputs``.
 
-* **fleurinp**, class :py:class:`fleurinpData <aiida.orm.data.fleurinp>` (optional)
-  Data structure that represents the inp.xml file and provides useful methods.
-  For more information see fleurinpData. (accessed by ‘’calculation.out.fleurinp’’)
-  This will only be created if the crystal structure was changed during the fleur run.
-* **output_parameters** class :py:class:`ParameterData <aiida.orm.data.parameter.ParameterData>` 
-  (accessed by ``calculation.res``)
-  Most important output node, contains all kinds of information of the calculation 
-  and some physical quantities of the last iterations. 
-  The node design was chooses along the output node for the pw.x AiiDA plugin from 
-  quantum espresso.
-  
-an example output node:
+* **fleurinp**: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` -
+  See :ref:`FleurinpData <fleurinp_data>`. This output contains inp.xml that was actually
+  used in the calculation. It is not always the same as an input
+  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`.
+* **output_parameters**: :py:class:`~aiida.orm.Dict` -
+  Contains all kinds of information of the calculation
+  and some physical quantities of the last iteration.
+
+An example output node:
+
   .. literalinclude:: output_node_example.py
 
-.. note:: The 'simple' output node will evolve. A draft of a second complexer output node which contains informations of all iterations and atomtypes exists, but a dictionary is not the optimal structure for this. For now this is postponed. In any case if you want to parse something from the out.xml checkout the methods in xml_util.
-  
+.. note::
+          The 'simple' output node will evolve. A draft of a second complex output node which
+          contains informations of all iterations and atomtypes exists, but a dictionary is not
+          the optimal structure for this. For now this is postponed. In any case if you want to
+          parse something from the out.xml checkout the methods in xml_util.
+
 Errors
 ''''''
 
-Errors of the parsing are reported in the log of the calculation (accessible 
-with the ``verdi calculation logshow`` command). 
+Errors of the parsing are reported in the log of the calculation (accessible
+with the ``verdi process report`` command).
 Everything that Fleur writes into stderr is also shown here, i.e all JuDFT error messages.
-Example::
+Example:
 
-    (env_aiida)% verdi calculation logshow 50891
-    *** 50891 [scf: fleur run 1]: FAILED
-    *** Scheduler output:
-    *** 2 LOG MESSAGES:
-    +-> WARNING at 2018-08-15 09:15:39.563297+00:00
-    | The following was written into std error and piped to out.error : 
-    |   
-    |     0**************juDFT-Error*****************
-    |    0Error message:E-field too big or No. of e- not correct
-    |    0Error occurred in subroutine:efield
-    |     0*****************************************
-    | 
-    |  
-    |  Terminating all MPI processes.
-    |  Note: This is a normal procedure.
-    |        Error messages in the following lines can be ignored.
-    |  
-    | application called MPI_Abort(MPI_COMM_WORLD, 0) - process 0
-                                                                      
-Moreover, all warnings and errors written by Fleur in the out.xml file are stored in the ParameterData under the key ``warnings``, and are accessible with ``Calculation.res.warnings``.
+.. code-block:: bash
 
+      (aiidapy)% verdi process report 513
+      *** 513 [scf: fleur run 1]: None
+      *** (empty scheduler output file)
+      *** (empty scheduler errors file)
+      *** 3 LOG MESSAGES:
+      +-> ERROR at 2019-07-17 14:57:01.108964+00:00
+      | parser returned exit code<107>: FLEUR calculation failed.
+      +-> ERROR at 2019-07-17 14:57:01.097337+00:00
+      | FLEUR calculation did not finishsuccessfully.
+      +-> WARNING at 2019-07-17 14:57:01.056220+00:00
+      | The following was written into std error and piped to out.error : 
+      |  I/O warning : failed to load external entity "relax.xml"
+      | rm: cannot remove ‘cdn_last.hdf’: No such file or directory
+      | **************juDFT-Error*****************
+      | Error message:e>vz0
+      | Error occurred in subroutine:vacuz
+      | Hint:Vacuum energy parameter too high
+      | Error from PE:0/24
+
+
+Moreover, all warnings and errors written by Fleur in the out.xml file are stored in the
+ParameterData under the key ``warnings``, and are accessible with ``Calculation.res.warnings``.
+
+More serious FLEUR calculation failures generate a non-zero exit code. If the exit code is zero,
+that means FLEUR calculation finished successfully:
+
+.. code-block:: bash
+
+    (aiidapy)$ verdi process list -a -p 1
+       PK  Created    State             Process label             Process status
+     ----  ---------  ----------------  ------------------------  ----------------------------------
+       60  3m ago     ⏹ Finished [0]    FleurCalculation
+       68  3m ago     ⏹ Finished [105]  FleurCalculation
+
+means that the first calculation was successful and the second one failed because it could not open
+one of the output files for some reason. Each exit code has it's own reason:
+
++-----------+-----------------------------------------+
+| Exit code | Reason                                  |
++-----------+-----------------------------------------+
+| 105       | One of output files can not be opened   |
++-----------+-----------------------------------------+
+| 106       | No retrieved folder found               |
++-----------+-----------------------------------------+
+| 107       | FLEUR calculation failed                |
++-----------+-----------------------------------------+
+| 108       | XML output file was not found           |
++-----------+-----------------------------------------+
+| 109       | Some required files were not retrieved  |
++-----------+-----------------------------------------+
+| 110       | Parsing of XML output file failed       |
++-----------+-----------------------------------------+
+| 111       | Parsing of relax XML output file failed |
++-----------+-----------------------------------------+
 
 Additional advanced features
 ''''''''''''''''''''''''''''
 
-In general see the Fleur documenation: www.flapw.de
+.. _documentation: www.flapw.de
 
-While the input link with name 'fleurinpdata' is used for the content of the 
-inp.xml, additional parameters for changing the plugin behavior, can be specified in the 'settings' input,
-also of type ParameterData.
+In general see the FLEUR `documentation`_.
+
+While the input link with name **fleurinpdata** is used for the content of the
+inp.xml, additional parameters for changing the plugin behavior, can be specified in the
+**settings** input, also of type :py:class:`~aiida.orm.Dict`.
 
 Below we summarise some of the options that you can specify, and their effect.
 In each case, after having defined the content of ``settings_dict``, you can use
 it as input of a calculation ``calc`` by doing::
 
-  calc.use_settings(ParameterData(dict=settings_dict))
-  
+  calc.use_settings(Dict(dict=settings_dict))
+
 
 Adding command-line options
 ...........................
 
-If you want to add command-line options to the executable (particularly 
-relevant e.g. '-hdf' use hdf, or '-magma' use different libaries, magma in this case) (see fleur -h or www.flapw.de), you can pass each option 
+If you want to add command-line options to the executable (particularly
+relevant e.g. '-hdf' use hdf, or '-magma' use different libraries, magma in this case),
+you can pass each option
 as a string in a list, as follows::
 
-  settings_dict = {  
+  settings_dict = {
       'cmdline': ['-hdf', '-magma'],
   }
 
-The default command-line of a fleur execution of the plugin looks like this for the torque scheduler:: 
+The default command-line of a fleur execution of the plugin looks like this for the torque
+scheduler::
 
 'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
 
-If the code node description contains 'hdf5' in some form, the plugin will use per default hdf5, it will only copy the last hdf5 density back, not the full cdn.hdf file.
+If the code node description contains 'hdf5' in some form, the plugin will use per default hdf5,
+it will only copy the last hdf5 density back, not the full cdn.hdf file.
 The Fleur execution line becomes in this case::
 
 'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-last_extra' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
 
-  
+
 Retrieving more files
 .....................
 
-The plugin retrieves per default the files : out.xml, out, cdn1 and inp.xml.
-This way continuing a Fleur calculation from the repository is per default possible.
-When certain inputs are given the plugin retrieves also the files:
-* if band=T : bands.1, bands.2
-* if dos=T: DOS.1, DOS.2
-* if pot8=T : pot*
-...
+AiiDA-FLEUR does not copy all output files generated by a FLEUR calculation. By default, the plugin
+copies only ``out.xml``, ``out``, ``cdn1`` and ``inp.xml``.
+Depending on certain switches in used inp.xml, a plugin
+is capable of automatically adding additional files to the copy list:
+
+  * if ``band=T`` : ``bands.1``, ``bands.2``
+  * if ``dos=T`` : ``DOS.1``, ``DOS.2``
+  * if ``pot8=T`` : ``pot*``
+  * if ``l_f=T`` : ``relax.xml``
 
 If you know that your calculation is producing additional files that you want to
 retrieve (and preserve in the AiiDA repository in the long term), you can add
 those files as a list as follows (here in the case of a file named
 ``testfile.txt``)::
 
-  settings_dict = {  
+  settings_dict = {
     'additional_retrieve_list': ['testfile.txt'],
   }
 
 Retrieving less files
 .....................
 
-If you know that you do not want to retrieve certain files(and preserve in the AiiDA repository in the long term). i.e. the cdn1 file is to large and it is stored somewhere else anyway, you can add
-those files as a list as follows (here in the case of a file named
+If you know that you do not want to retrieve certain files(and preserve in the AiiDA repository
+in the long term). i.e. the ``cdn1`` file is to large and it is stored somewhere else anyway,
+you can add those files as a list as follows (here in the case of a file named
 ``testfile.txt``)::
 
-  settings_dict = {  
+  settings_dict = {
     'remove_from_retrieve_list': ['testfile.txt'],
   }
 
 Copy more files remotely
 ........................
 
-The plugin copies per default the broyden files (broyd*) if a parent_folder is given in the input.
+The plugin copies by default the ``broyd*`` files if a parent_folder is given
+in the input.
 
 If you know that for your calculation you need some other files on the remote machine, you can add
 those files as a list as follows (here in the case of a file named
 ``testfile.txt``)::
 
-  settings_dict = {  
+  settings_dict = {
     'additional_remotecopy_list': ['testfile.txt'],
   }
 
 Copy less files remotely
 ........................
 
-If you know that for your calculation do not need some files which are copied per default by the plugin you can add those files as a list as follows (here in the case of a file named
+If you know that for your calculation do not need some files which are copied per default by
+the plugin you can add those files as a list as follows (here in the case of a file named
 ``testfile.txt``)::
 
-  settings_dict = {  
+  settings_dict = {
     'remove_from_remotecopy_list': ['testfile.txt'],
   }
-  
-  

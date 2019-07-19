@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Input plug-in for a FLEUR ciculation. fleur.x
+This file contains a CalcJob that represents FLEUR calculation.
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -32,8 +32,8 @@ from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
 class FleurCalculation(CalcJob):
     """
-    Main DFT code of the FLEUR code
-    For more information about the FLEUR-code family, go to http://www.flapw.de/
+    A CalcJob class that represents FLEUR DFT calculation.
+    For more information about the FLEUR-code family go to http://www.flapw.de/
     """
 
     ######### Only this should be to be maintained! #########
@@ -133,8 +133,8 @@ class FleurCalculation(CalcJob):
     _DEFAULT_RSNABLA_FILE_NAME = 'rsnabla.*'
     _DEFAULT_WFNABL_FILE_NAME = 'WF*.nabl'
 
-    # copy file lists. I rather dont like this.
-    # Might gives rise to a lot of possible erros, if files or not there,
+    # copy file lists. I rather don not like this.
+    # Might gives rise to a lot of possible errors, if files or not there,
     # or Fleur did not created same, or at some point they will not be
     # deleted remotely.
 
@@ -157,7 +157,7 @@ class FleurCalculation(CalcJob):
     # after inpgen, before first chargedensity
     _DEFAULT_copy_filelist_inpgen = [_DEFAULT_INPXML_FILE_NAME]
 
-    # for after fleur SCF [name, detination_name]
+    # for after fleur SCF [name, destination_name]
     _DEFAULT_copy_scf_noinp = [
         [_DEFAULT_CDN1_FILE_NAME, _DEFAULT_CDN1_FILE_NAME]]
 
@@ -429,22 +429,20 @@ class FleurCalculation(CalcJob):
         spec.default_output_node = 'output_parameters'
 
         # exit codes
-        spec.exit_code(
-            104, 'ERROR_WRONG_PARSER_INPUT', message='Parser class accepts FleurCalculation only.')
-        spec.exit_code(
-            105, 'ERROR_OPENING_OUTPUTS', message='One of output files can not be opened.')
-        spec.exit_code(
-            106, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
-        spec.exit_code(
-            107, 'ERROR_FLEUR_CALC_FAILED', message='FLEUR calculation failed.')
-        spec.exit_code(
-            108, 'ERROR_NO_OUTXML', message='XML output file was not found.')
-        spec.exit_code(
-            109, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
-        spec.exit_code(
-            110, 'ERROR_XMLOUT_PARSING_FAILED', message='Parsing of XML output file failed.')
-        spec.exit_code(
-            111, 'ERROR_RELAX_PARSING_FAILED', message='Parsing of relax XML output file failed.')
+        spec.exit_code(105, 'ERROR_OPENING_OUTPUTS',
+                       message='One of output files can not be opened.')
+        spec.exit_code(106, 'ERROR_NO_RETRIEVED_FOLDER',
+                       message='No retrieved folder found.')
+        spec.exit_code(107, 'ERROR_FLEUR_CALC_FAILED',
+                       message='FLEUR calculation failed.')
+        spec.exit_code(108, 'ERROR_NO_OUTXML',
+                       message='XML output file was not found.')
+        spec.exit_code(109, 'ERROR_MISSING_RETRIEVED_FILES',
+                       message='Some required files were not retrieved.')
+        spec.exit_code(110, 'ERROR_XMLOUT_PARSING_FAILED',
+                       message='Parsing of XML output file failed.')
+        spec.exit_code(111, 'ERROR_RELAX_PARSING_FAILED',
+                       message='Parsing of relax XML output file failed.')
 
     @classproperty
     def _get_outut_folder(self):
@@ -452,9 +450,9 @@ class FleurCalculation(CalcJob):
 
     def prepare_for_submission(self, folder):
         """
-        This is the routine to be called when you make a fleur calculation
-        Here should be checked if all the files are there to run fleur.
-        And input files (inp.xml) can be modified.
+        This is the routine to be called when you make a FLEUR calculation.
+        This routine checks the inputs and modifies copy lists accordingly.
+        The standard files to be copied are given here.
 
         :param folder: a aiida.common.folders.Folder subclass where
                            the plugin should put all its files.

@@ -75,35 +75,42 @@ def extract_lo_energies(outxmlfile, options=None):
 
 def extract_corelevels(outxmlfile, options=None):
     """
-    Extras corelevels out of out.xml files
+    Extracts corelevels out of out.xml files
 
-    param: outxmlfile path to out.xml file
+    :params outxmlfile: path to out.xml file
 
-    param: options, dict: 'iteration' : X/'all'
-    return: corelevels, list of the form
-             [atomtypes][spin][dict={atomtype : '', corestates : list_of_corestates}]
-             [atomtypeNumber][spin]['corestates'][corestate number][attribute]
-    get corelevel energy of first atomtype, spin1, corelevels[0][0]['corestates'][i]['energy']
-    example::
+    :param options: A dict: 'iteration' : X/'all'
+    :returns corelevels: A list of the form:
 
-    [[{'atomtype': '     1',
-   'corestates': [{'energy': -3.6489930627,
-                   'j': ' 0.5',
-                   'l': ' 0',
-                   'n': ' 1',
-                   'weight': 2.0}],
-   'eigenvalue_sum': '     -7.2979861254',
-   'kin_energy': '     13.4757066163',
-   'spin': '1'}],
- [{'atomtype': '     2',
-   'corestates': [{'energy': -3.6489930627,
-                   'j': ' 0.5',
-                   'l': ' 0',
-                   'n': ' 1',
-                   'weight': 2.0}],
-   'eigenvalue_sum': '     -7.2979861254',
-   'kin_energy': '     13.4757066163',
-   'spin': '1'}]]
+    .. code-block:: python
+
+            [atomtypes][spin][dict={atomtype : '', corestates : list_of_corestates}]
+            [atomtypeNumber][spin]['corestates'][corestate number][attribute]
+            get corelevel energy of first atomtype, spin1, corelevels[0][0]['corestates'][i]['energy']
+
+    :example of output:
+
+    .. code-block:: python
+
+                        [[{'atomtype': '     1',
+                        'corestates': [{'energy': -3.6489930627,
+                                        'j': ' 0.5',
+                                        'l': ' 0',
+                                        'n': ' 1',
+                                        'weight': 2.0}],
+                        'eigenvalue_sum': '     -7.2979861254',
+                        'kin_energy': '     13.4757066163',
+                        'spin': '1'}],
+                        [{'atomtype': '     2',
+                        'corestates': [{'energy': -3.6489930627,
+                                        'j': ' 0.5',
+                                        'l': ' 0',
+                                        'n': ' 1',
+                                        'weight': 2.0}],
+                        'eigenvalue_sum': '     -7.2979861254',
+                        'kin_energy': '     13.4757066163',
+                        'spin': '1'}]]
+
     """
     ##########################################
     #1. read out.xml in etree
@@ -259,11 +266,20 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     """
     Parses the ONE core state card
 
-    :param corestateNode: an etree element (node), of a fleur output corestate card
-    :param iteration_node: an etree element, iteration node
-    :param jspin : integer 1 or 2
+    :params corestateNode: an etree element (node), of a fleur output corestate card
+    :params iteration_node: an etree element, iteration node
+    :params jspin: integer 1 or 2
 
-    :return a pythondict, {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
+    :returns: a pythondict of type:
+
+    .. code-block:: python
+
+            {'eigenvalue_sum' : eigenvalueSum,
+             'corestates': states,
+             'spin' : spin,
+             'kin_energy' : kinEnergy,
+             'atomtype' : atomtype}
+
     """
     ##### all xpath of density convergence card (maintain) ########
     coreStates_xpath = 'coreStates'
@@ -328,7 +344,7 @@ def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
 
     :param value_string: a string
     :returns value: the new float or value_string: the string given
-    :retruns True or False
+    :retruns: True or False
     """
     try:
         value = float(value_string)
@@ -367,19 +383,29 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
     This methods converts corelevel shifts to binding energies, if a reference is given.
     These can than be used for plotting.
 
-    i.e
+    :params reference_dict: An example:
 
-    reference = {'W' : {'4f7/2' : [124],
-                     '4f5/2' : [102]},
-              'Be' : {'1s': [117]}}
-    corelevels = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
-                     '4f5/2' : [0, 0.3, 0.4, 0.1]},
-              'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}
+    .. code-block:: python
 
-    {'Be': {'1s': [117, 117.2, 117.4, 117.1, 117.3]},
-     'W': {'4f5/2': [102, 102.3, 102.4, 102.1],
-           '4f7/2': [124.4, 124.3, 124.4, 124.1]}}
+           reference_dict = {'W' : {'4f7/2' : [124],
+                                    '4f5/2' : [102]},
+                             'Be' : {'1s': [117]}}
+
+    :params coreleveldict: An example:
+
+    .. code-block:: python
+
+           coreleveldict = {'W' : {'4f7/2' : [0.4, 0.3, 0.4 ,0.1],
+                                   '4f5/2' : [0, 0.3, 0.4, 0.1]},
+                            'Be' : {'1s': [0, 0.2, 0.4, 0.1, 0.3]}
+
     """
+    # this block of comments was extracted from the docstring
+    # I did not understand where it belongs
+    # {'Be': {'1s': [117, 117.2, 117.4, 117.1, 117.3]},
+    #  'W': {'4f5/2': [102, 102.3, 102.4, 102.1],
+    #        '4f7/2': [124.4, 124.3, 124.4, 124.1]}}
+
     return_corelevel_dict = {}
 
     for elem, corelevel_dict in six.iteritems(coreleveldict):

@@ -544,9 +544,8 @@ def cost_ratio(total_costs, walltime_sec, ncores):
 def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     """
     This routine checks if the total number of requested cpus
-    is a factor of kpts and makes small optimisation.
+    is a factor of kpts and suggests the optimisation.
     """
-    #TODO: transfer this routine into common_fleur_wf.py?
     from sympy.ntheory.factor_ import factorint, divisors
     kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
     kpts = int(kpts[0])

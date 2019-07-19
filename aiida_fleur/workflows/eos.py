@@ -50,18 +50,15 @@ class FleurEosWorkChain(WorkChain):
     A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
-    :param wf_parameters: Dict node, optional 'wf_parameters', protocol specifieing parameter dict
-    :param structure: StructureData node, 'structure' crystal structure
-    :param calc_parameters: Dict node, optional 'calc_parameters' parameters for inpgen
-    :param inpgen: Code node,
-    :param fleur: Code node,
+    :params wf_parameters: Dict node, optional 'wf_parameters', protocol specifieing parameter dict
+    :params structure: StructureData node, 'structure' crystal structure
+    :params calc_parameters: Dict node, optional 'calc_parameters' parameters for inpgen
+    :params inpgen: Code node,
+    :params fleur: Code node,
 
 
     :return output_eos_wc_para: Dict node, contains relevant output information.
-    about general succces, fit results and so on.
-
-
-    example input.
+                                about general succeed, fit results and so on.
     """
 
     _workflowversion = "0.3.4"

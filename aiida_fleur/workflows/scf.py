@@ -55,31 +55,16 @@ class FleurScfWorkChain(WorkChain):
     (1) Start from a structure and run the inpgen first optional with calc_parameters
     (2) Start from a Fleur calculation, with optional remoteData
 
-    :param wf_parameters: (Dict), Workchain Spezifications
-    :param structure: (StructureData), Crystal structure
-    :param calc_parameters: (Dict), Inpgen Parameters
-    :param fleurinp: (FleurinpData), to start with a Fleur calculation
-    :param remote_data: (RemoteData), from a Fleur calculation
-    :param inpgen: (Code)
-    :param fleur: (Code)
+    :params wf_parameters: (Dict), Workchain Specifications
+    :params structure: (StructureData), Crystal structure
+    :params calc_parameters: (Dict), Inpgen Parameters
+    :params fleurinp: (FleurinpData), to start with a Fleur calculation
+    :params remote_data: (RemoteData), from a Fleur calculation
+    :params inpgen: (Code)
+    :params fleur: (Code)
 
-    :return output_scf_wc_para: (Dict), Information of workflow results
+    :returns output_scf_wc_para: (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
-
-    minimum input example:
-    1. Code1, Code2, Structure, (Parameters), (wf_parameters)
-    2. Code2, FleurinpData, (wf_parameters)
-
-    maximum input example:
-    1. Code1, Code2, Structure, Parameters
-        wf_parameters: {'density_converged' : Float,
-                        'energy_converged' : Float,
-                        'converge_density' : True,
-                        'converge_energy' : True}
-    2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
-
-    Hints:
-    1. This workflow does not work with local codes!
     """
 
     _workflowversion = "0.3.2"
@@ -248,9 +233,8 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.warnings.append(warning)
                 self.report(warning)
             if 'remote_data' in inputs:
-                warning = ('WARNING: Ignoring remote_data inp.xml because Fleurinp'
-                           'is given that overrides inp.xml from remote calculation')
-                self.ctx.warnings.append(warning)
+                warning = ('WARNING: Only initial charge disity will be copied from the'
+                           'given remote folder because fleurinp is given.')
                 self.report(warning)
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False

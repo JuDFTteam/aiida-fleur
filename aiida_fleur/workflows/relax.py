@@ -38,7 +38,7 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class FleurRelaxWorkChain(WorkChain):
     """
-    This workflow performs strucute optimization.
+    This workflow performs structure optimization.
     """
 
     _workflowversion = "0.1.0"
@@ -99,7 +99,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         # exit codes
         spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
+                       message="Invalid input, please check input configuration.")
         spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
                        message="Some required inputs are missing.")
         spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
@@ -120,8 +120,6 @@ class FleurRelaxWorkChain(WorkChain):
                        message="New positions calculation failed.")
         spec.exit_code(315, 'ERROR_NO_RELAX_OUTPUT',
                        message="Found no relax.xml file in retrieved folder")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
 
     def start(self):
         """
@@ -194,10 +192,12 @@ class FleurRelaxWorkChain(WorkChain):
         """
         This function analyses inputs nodes and decides what
         is the input mode:
-            1. Fleurinp is given -> converge, cycle
-            2. Fleurinp and remote are given -> take cdn1 from remote, converge, cycle
-            3. Remote is given -> take inp.xml and cdn1 from remite, converge, cycle
-            4. Structure is given -> run inpgen, converge, cycle
+
+        1. Fleurinp is given -> converge, cycle
+        2. Fleurinp and remote are given -> take cdn1 from remote, converge, cycle
+        3. Remote is given -> take inp.xml and cdn1 from remote, converge, cycle
+        4. Structure is given -> run inpgen, converge, cycle
+        
         """
         inputs = cleanup_inputs(self.inputs)
 
@@ -433,7 +433,7 @@ class FleurRelaxWorkChain(WorkChain):
 @cf
 def save_structure(structure):
     """
-    Saves a structure data node
+    Save a structure data node
     """
     structure_return = structure.clone()
     return structure_return
