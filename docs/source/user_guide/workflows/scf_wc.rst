@@ -4,7 +4,7 @@ Fleur self-consistency field workflow
 -------------------------------------
 
 * **Class**: :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.scf``
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.scf``
 * **Workflow type**: Basic
 * **Aim**: Manage FLEUR SCF convergence
 * **Computational demand**: Corresponding to several ``FleurCalculation``
@@ -49,19 +49,19 @@ Input nodes
   * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen``: :py:class:`~aiida.orm.Code`, optional - Inpgen code using the ``fleur.inpgen``
     plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - Settings
+  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
     of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.data.structure.StructureData`, optional: Crystal structure
+  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
     data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional -
+  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
     FLAPW parameters, used by inpgen
   * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
     object representing the FLEUR input files
-  * ``remote_data``: :py:class:`~aiida.orm.data.remote.RemoteData`, optional - The remote folder of
+  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
     the previous calculation
-  * ``options``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - AiiDA options
+  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)
-  * ``settings``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - special settings
+  * ``settings``: :py:class:`~aiida.orm.Dict`, optional - special settings
     for Fleur calculations.
 
 
@@ -72,10 +72,10 @@ sets can be found below in the Layout section.
 Returns nodes
 ^^^^^^^^^^^^^
 
-  * ``output_scf_wc_para``: :py:class:`~aiida.orm.data.parameter.ParameterData` -  Main results of the workflow
+  * ``output_scf_wc_para``: :py:class:`~aiida.orm.Dict` -  Main results of the workflow
   * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` - An inp.xml that was
     actually used.
-  * ``last_fleur_calc_output``: :py:class:`~aiida.orm.data.parameter.ParameterData` - Output node
+  * ``last_fleur_calc_output``: :py:class:`~aiida.orm.Dict` - Output node
     of the last Fleur calculation.
 
 Default inputs
@@ -105,7 +105,7 @@ All possible workflow parameters and their defaults.
 Layout
 ^^^^^^
 
-Similarly to :py:class:`~aiida_fleur.calc.fleur.FleurCalculation`, SCF workchain has several
+Similarly to :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`, SCF workchain has several
 input combinations that implicitly define the workchain layout. Depending
 on the setup of the inputs, one of four supported scenarios will happen:
 

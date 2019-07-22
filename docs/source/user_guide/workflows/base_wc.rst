@@ -4,7 +4,7 @@ Fleur base restart workchain
 ----------------------------
 
 * **Class**: :py:class:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.base``
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.base``
 * **Workflow type**: Basic
 * **Aim**: Implements Base restart workchain for the FleurCalculation
 * **Computational demand**: Corresponding a single ``FleurCalculation``

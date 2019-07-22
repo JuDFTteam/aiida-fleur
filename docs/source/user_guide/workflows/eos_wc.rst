@@ -4,7 +4,7 @@ Fleur equation of states (eos) workflows
 ----------------------------------------
 
 * **Class**: :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.eos``
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.eos``
 * **Workflow type**:  Basic (lvl 1)
 * **Aim**: Vary the cell volume, to fit an equation of states, (Bulk modulus, ...)
 * **Computational demand**: 5-10 ``Fleur SCF workchains`` in parallel
@@ -34,26 +34,26 @@ Description/Purpose
   * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen``: :py:class:`~aiida.orm.Code`, optional - Inpgen code using the ``fleur.inpgen``
     plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - Settings
+  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
     of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.data.structure.StructureData`, optional: Crystal structure
+  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
     data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional -
+  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
     FLAPW parameters, used by inpgen
   * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
     object representing the FLEUR input files
-  * ``remote_data``: :py:class:`~aiida.orm.data.remote.RemoteData`, optional - The remote folder of
+  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
     the previous calculation
-  * ``options``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - AiiDA options
+  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)
-  * ``settings``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - special settings
+  * ``settings``: :py:class:`~aiida.orm.Dict`, optional - special settings
     for Fleur calculations.
 
 Returns nodes
 ^^^^^^^^^^^^^
-  * ``output_eos_wc_para``: :py:class:`~aiida.orm.data.parameter.ParameterData` - Information of
+  * ``output_eos_wc_para``: :py:class:`~aiida.orm.Dict` - Information of
     workflow results like success, list with convergence behavior
-  * ``output_eos_wc_structure``: :py:class:`~aiida.orm.data.structure.StructureData` - Crystal
+  * ``output_eos_wc_structure``: :py:class:`~aiida.orm.StructureData` - Crystal
     structure with the volume of the lowest total energy.
 
 Layout

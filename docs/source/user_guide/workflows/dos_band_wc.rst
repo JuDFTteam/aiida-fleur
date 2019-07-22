@@ -9,8 +9,8 @@ Fleur dos/band workflows
 
 These are two seperate workflows which are pretty similar so we treat them here together
 
-* **Class**: :py:class:`~aiida_fleur.workflows.dos.Fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.dos.Fleur_band_wc`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.dos``, ``fleur.band``
+* **Class**: :py:class:`~aiida_fleur.workflows.dos.fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.band.fleur_band_wc`
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.dos``, ``fleur.band``
 * **Workflow type**:  Workflow (lv 1)
 * **Aim**: Calculate a density of states. Calculate a Band structure.
 * **Compuational demand**: 1 ``Fleur Job calculation``
@@ -52,18 +52,18 @@ Description/Purpose
 Input nodes:
 ^^^^^^^^^^^^
   * ``fleur`` (:py:class:`~aiida.orm.Code`): Fleur code using the ``fleur.fleur`` plugin
-  * ``wf_parameters`` (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): Some settings of the workflow behavior (e.g. number of kpoints, path, energy sampling and smearing, ...)
+  * ``wf_parameters`` (:py:class:`~aiida.orm.Dict`, optional): Some settings of the workflow behavior (e.g. number of kpoints, path, energy sampling and smearing, ...)
   * ``fleurinp`` (:py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, path 2): Fleur input data object representing the fleur input files.
-  * ``remote_data`` (:py:class:`~aiida.orm.data.remote.RemoteData`, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS, or band structure run.
+  * ``remote_data`` (:py:class:`~aiida.orm.RemoteData`, optional): The remote folder of the (converged) calculation whose output density is used as input for the DOS, or band structure run.
   
-  * ``options``  (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
-  * ``settings`` (:py:class:`~aiida.orm.data.parameter.ParameterData`, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
+  * ``options``  (:py:class:`~aiida.orm.Dict`, optional): All options available in AiiDA, i.e resource specification, queue name, extras scheduler commands, ... 
+  * ``settings`` (:py:class:`~aiida.orm.Dict`, optional): special settings for Fleur calculations, will be given like it is through to calculationss.
     
 Returns nodes
 ^^^^^^^^^^^^^
-  * ``output_dos_wc_para`` (:py:class:`~aiida.orm.data.parameter.ParameterData`): Information of the dos workflow results like success, last result node, list with convergence behavior
-  * ``output_band_wc_para`` (:py:class:`~aiida.orm.data.parameter.ParameterData`): Information node from the band workflow
-  * ``last_fleur_calc_output`` (:py:class:`~aiida.orm.data.parameter.ParameterData`) Output node of last Fleur calculation is returned.
+  * ``output_dos_wc_para`` (:py:class:`~aiida.orm.Dict`): Information of the dos workflow results like success, last result node, list with convergence behavior
+  * ``output_band_wc_para`` (:py:class:`~aiida.orm.Dict`): Information node from the band workflow
+  * ``last_fleur_calc_output`` (:py:class:`~aiida.orm.Dict`) Output node of last Fleur calculation is returned.
     
 Layout
 ^^^^^^

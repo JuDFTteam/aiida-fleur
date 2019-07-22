@@ -3,8 +3,8 @@
 Fleur self-consistent Magnetic Anisotropy Energy workchain
 ----------------------------------------------------------
 
-* **Class**: :py:class:`~aiida_fleur.workflows.mae.FleurMaeConvWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.mae_conv``
+* **Class**: :py:class:`~aiida_fleur.workflows.mae_conv.FleurMaeConvWorkChain`
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup
 * **Aim**: Calculate Magnetic Anisotropy Energies along given spin quantization axes
 * **Computational demand**: A ``Fleur SCF WorkChain`` for each SQA
@@ -35,13 +35,13 @@ Input nodes
   * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
     plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - Settings
+  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
     of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.data.structure.StructureData`, optional: Crystal structure
+  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
     data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional -
+  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
     FLAPW parameters, used by inpgen
-  * ``options``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - AiiDA options
+  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)
 
 Returns nodes

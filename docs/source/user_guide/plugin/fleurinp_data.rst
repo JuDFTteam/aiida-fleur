@@ -4,7 +4,7 @@ FleurinpData
 ============
 
 * **Class**: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
-* **String to pass to the** :py:func:`~aiida.orm.utils.DataFactory`: ``fleur.fleurinp``
+* **String to pass to the** :py:func:`~aiida.plugins.DataFactory`: ``fleur.fleurinp``
 * **Aim**: store input files for the FLEUR code and provide user-friendly editing.
 * **What is stored in the database**: the filenames, a parsed inp.xml files as nested dictionary
 * **What is stored in the file repository**: inp.xml file and other optional files.

@@ -4,7 +4,7 @@ Fleur structure optimization workchain
 --------------------------------------
 
 * **Class**: :py:class:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.relax``
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.relax``
 * **Workflow type**: Basic workflow
 * **Aim**: Structure optimization of a given structure
 * **Computational demand**: Several :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain`
@@ -45,7 +45,7 @@ Input nodes
     FLAPW parameters, used by inpgen
   * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
     object representing the fleur input files
-  * ``remote_data``: :py:class:`~aiida.orm.data.remote.RemoteData`, optional - The remote folder of
+  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
     the previous calculation
   * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)

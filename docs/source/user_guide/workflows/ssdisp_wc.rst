@@ -4,7 +4,7 @@ Fleur Spin-Spiral Dispersion workchain
 --------------------------------------
 
 * **Class**: :py:class:`~aiida_fleur.workflows.ssdisp.FleurSSDispWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.ssdisp``
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.ssdisp``
 * **Workflow type**: Scientific workchain, force-theorem subgroup
 * **Aim**: Calculate spin-spiral energy dispersion over given q-points.
 * **Computational demand**: 1 :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain` and
@@ -40,23 +40,23 @@ Input nodes
   * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
     plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - Settings
+  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
     of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.data.structure.StructureData`, optional: Crystal structure
+  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
     data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional -
+  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
     FLAPW parameters, used by inpgen
   * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
     object representing the fleur input files
-  * ``remote_data``: :py:class:`~aiida.orm.data.remote.RemoteData`, optional - The remote folder of
+  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
     the previous calculation
-  * ``options``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - AiiDA options
+  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)
 
 Returns nodes
 ^^^^^^^^^^^^^
 
-  * ``out``: :py:class:`~aiida.orm.data.parameter.ParameterData` -  Information of
+  * ``out``: :py:class:`~aiida.orm.Dict` -  Information of
     workflow results like success, last result node, list with convergence behavior
 
 Default inputs

@@ -3,8 +3,8 @@
 Fleur Spin-Spiral Dispersion workchain
 --------------------------------------
 
-* **Class**: :py:class:`~aiida_fleur.workflows.ssdisp.FleurSSDispConvWorkChain`
-* **String to pass to the** :py:func:`~aiida.orm.utils.WorkflowFactory`: ``fleur.ssdisp_conv``
+* **Class**: :py:class:`~aiida_fleur.workflows.ssdisp_conv.FleurSSDispConvWorkChain`
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.ssdisp_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup
 * **Aim**: Calculate spin-spiral energy dispersion over given q-points.
 * **Computational demand**: A ``Fleur SCF WorkChain`` for each q-point to calculate.
@@ -36,13 +36,13 @@ Input nodes
   * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
   * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
     plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - Settings
+  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
     of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.data.structure.StructureData`, optional: Crystal structure
+  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
     data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional -
+  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
     FLAPW parameters, used by inpgen
-  * ``options``: :py:class:`~aiida.orm.data.parameter.ParameterData`, optional - AiiDA options
+  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
     (queues, cpus)
 
 Returns nodes
