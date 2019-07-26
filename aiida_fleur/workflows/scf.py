@@ -11,8 +11,8 @@
 ###############################################################################
 
 """
-In this module you find the worklfow 'fleur_scf_wc' for the self-consistency
-cylce management of a FLEUR calculation with AiiDA.
+In this module you find the workchain 'FleurScfWorkChain' for the self-consistency
+cycle management of a FLEUR calculation with AiiDA.
 """
 # TODO: more info in output, log warnings
 # TODO: make smarter, ggf delete broyd or restart with more or less iterations
@@ -119,13 +119,13 @@ class FleurScfWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('fleurinp', valid_type=FleurInpData)
+        spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
         # exit codes
         spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
+                       message="Invalid input, please check input configuration.")
         spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
                        message="Some required inputs are missing.")
         spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
@@ -136,12 +136,10 @@ class FleurScfWorkChain(WorkChain):
                        message="Input file modification failed.")
         spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
+        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FAILED',
                        message="Fleur calculation failed.")
         spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE',
                        message="SCF cycle did not lead to convergence.")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
 
     def start(self):
         """
@@ -233,7 +231,7 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.warnings.append(warning)
                 self.report(warning)
             if 'remote_data' in inputs:
-                warning = ('WARNING: Only initial charge disity will be copied from the'
+                warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
                 self.report(warning)
         elif 'remote_data' in inputs:
@@ -269,7 +267,7 @@ class FleurScfWorkChain(WorkChain):
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy']:
-            error = ("ERROR: Wrong mode of converfence"
+            error = ("ERROR: Wrong mode of convergence"
                      ": one of 'force', 'density' or 'energy' was expected.")
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
@@ -396,7 +394,7 @@ class FleurScfWorkChain(WorkChain):
                 if not method:
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
-                             "plaese check/test your input. I abort..."
+                             "please check/test your input. I abort..."
                              "".format(method))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
@@ -484,14 +482,14 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.parse_last = False
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
 
         exit_status = calculation.exit_status
         if not calculation.is_finished_ok:
             error = ('ERROR: Last Fleur calculation failed '
                      'with exit status {}'.format(exit_status))
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
         else:
             self.ctx.parse_last = True
 
@@ -561,12 +559,12 @@ class FleurScfWorkChain(WorkChain):
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
-            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
 
         if not self.ctx.distance:
             errormsg = 'ERROR: did not manage to extract charge density from the calculation'
             self.control_end_wc(errormsg)
-            return self.exit_codes.ERROR_FLEUR_CALCULATION_FALIED
+            return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
         else:
             self.ctx.last_charge_density = self.ctx.distance[-1]
 
@@ -612,17 +610,18 @@ class FleurScfWorkChain(WorkChain):
     def return_results(self):
         """
         return the results of the calculations
-        This shoudl run through and produce output nodes even if everything failed,
+        This should run through and produce output nodes even if everything failed,
         therefore it only uses results from context.
         """
         try:
             out_param = self.ctx.last_calc.outputs.output_parameters
             last_calc_uuid = out_param.get_dict()['CalcJob_uuid']
-        except AttributeError:
+        except NotExistent:
             last_calc_uuid = None
+
         try:  # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.outputs['output_parameters']
-            retrieved = self.ctx.last_calc.outputs['retrieved']
+            last_calc_out = self.ctx.last_calc.outputs.output_parameters
+            retrieved = self.ctx.last_calc.outputs.retrieved
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None
@@ -678,9 +677,9 @@ class FleurScfWorkChain(WorkChain):
                                       self.ctx.energydiff,
                                       self.ctx.forcediff))
         else:  # Termination ok, but not converged yet...
-            if self.ctx.abort:  # some error occured, donot use the output.
+            if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and '
-                            'erros/warning/hints in output_scf_wc_para')
+                            'errors/warning/hints in output_scf_wc_para')
             else:
                 if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
                     self.report('STATUS/WARNING: Done, the maximum number of runs '
@@ -734,7 +733,7 @@ class FleurScfWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.ctx.successful = False
@@ -746,14 +745,14 @@ class FleurScfWorkChain(WorkChain):
 @cf
 def create_scf_result_node(**kwargs):
     """
-    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This is a pseudo wf, to create the right graph structure of AiiDA.
     This wokfunction will create the output node in the database.
     It also connects the output_node to all nodes the information commes from.
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
     for key, val in six.iteritems(kwargs):
-        if key == 'outpara':  # should be alwasys there
+        if key == 'outpara':  # should be always there
             outpara = val
     outdict = {}
     outputnode = outpara.clone()

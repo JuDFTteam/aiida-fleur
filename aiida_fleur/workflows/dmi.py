@@ -121,7 +121,7 @@ class FleurDMIWorkChain(WorkChain):
                        message="Input file modification failed.")
         spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
+        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FAILED',
                        message="Fleur calculation failed.")
         spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
                        message="SCF cycle did not lead to convergence.")
@@ -131,8 +131,6 @@ class FleurDMIWorkChain(WorkChain):
                        message="Found no reference calculation remote repository.")
         spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resources are not optimal.")
 
     def start(self):
         """
@@ -149,6 +147,7 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
         self.ctx.t_energydict = []
+        self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
@@ -171,15 +170,6 @@ class FleurDMIWorkChain(WorkChain):
         # set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-
-        # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label',
-                 {'at_label': atom_label,
-                  'attributedict': {'special': {'socscale': 0.0}},
-                  'create': True
-                 }))
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
@@ -388,6 +378,14 @@ class FleurDMIWorkChain(WorkChain):
             fchanges.append(('set_atomgr_att_label',
                              {'attributedict': {'nocoParams': [('beta', val)]},
                               'atom_label': key
+                             }))
+
+        # switch off SOC on an atom specie
+        for atom_label in self.ctx.wf_dict['soc_off']:
+            fchanges.append(('set_species_label',
+                             {'at_label': atom_label,
+                              'attributedict': {'special': {'socscale': 0.0}},
+                              'create': True
                              }))
 
         if fchanges:# change inp.xml file
@@ -603,7 +601,7 @@ class FleurDMIWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg) # because return_results still fails somewhen
