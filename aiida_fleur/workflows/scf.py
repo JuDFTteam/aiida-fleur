@@ -119,7 +119,7 @@ class FleurScfWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('fleurinp', valid_type=FleurinpData)
+        spec.output('fleurinp', valid_type=FleurInpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
         spec.output('last_fleur_calc_output', valid_type=Dict)
 

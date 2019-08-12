@@ -12,9 +12,9 @@
 """
 This module contains the FleurBaseWorkChain.
 FleurBaseWorkChain is a workchain that wraps the submission of
-the FLEUR calculation. Inheritence from the BaseRestartWorkChain
-allows to add scenarious to restart a calculation in an
-automatic way if an expected failure occured.
+the FLEUR calculation. Inheritance from the BaseRestartWorkChain
+allows to add scenarios to restart a calculation in an
+automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
 import six
@@ -59,7 +59,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.outline(
             cls.setup,
             cls.validate_inputs,
-            cls.check_kpts,
             while_(cls.should_run_calculation)(
                 cls.run_calculation,
                 cls.inspect_calculation,
@@ -77,10 +76,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
                        message='Something went wrong. More verbose output will be implemented.')
         spec.exit_code(303, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message='Neither the `options` nor `automatic_parallelization` input was '
+                       message='Neither the `options` nor `automatic_parallelisation` input was '
                        'specified.')
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
+        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURCES',
+                       message="Computational resources are not optimal.")
 
     def validate_inputs(self):
         """
@@ -113,13 +112,20 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         else:
             self.ctx.inputs.settings = {}
 
-        resourses_input = self.ctx.inputs.metadata.options['resources']
+        resources_input = self.ctx.inputs.metadata.options['resources']
         try:
-            self.ctx.num_machines = int(resourses_input['num_machines'])
-            self.ctx.num_mpiprocs_per_machine = int(resourses_input['num_mpiprocs_per_machine'])
+            self.ctx.num_machines = int(resources_input['num_machines'])
+            self.ctx.num_mpiprocs_per_machine = int(resources_input['num_mpiprocs_per_machine'])
         except KeyError:
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
-
+            self.report('WARNING: Computation resources were not optimised.')
+        else:
+            try:
+                self.check_kpts()
+            except Warning:
+                self.report('ERROR: Not optimal computational resources.')
+                return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+            
+                
     def check_kpts(self):
         """
         This routine checks if the total number of requested cpus
@@ -136,8 +142,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.report(message)
 
         if exit_code:
-            self.report('ERROR: Not optimal computational resourses.')
-            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
+            raise Warning('Not optimal computational resources, load less than 60%')
 
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
