@@ -507,20 +507,18 @@ class FleurSSDispWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         try:
-            t_energydict = calculation.outputs.output_parameters.dict.spst_force_evSum
-            e_u = calculation.outputs.output_parameters.dict.energy_units
+            out_dict = calculation.outputs.output_parameters.dict
+            t_energydict = out_dict.spst_force_evSum
+            e_u = out_dict.energy_units
 
             #Find a minimal value of SpSp and count it as 0
-            labelmin = 0
-            for labels in range(1, len(t_energydict)):
-                if t_energydict[labels] < t_energydict[labelmin]:
-                    labelmin = labels
-            minenergy = t_energydict[labelmin]
+            minenergy = min(t_energydict)
 
-            for labels in range(len(t_energydict)):
-                t_energydict[labels] = t_energydict[labels] - minenergy
-                if e_u == 'Htr' or 'htr':
-                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
+            if e_u == 'Htr' or 'htr':
+                t_energydict = [htr_to_ev * (x-minenergy) for x in t_energydict]
+            else:
+                t_energydict = [(x-minenergy) for x in t_energydict]
+
             self.ctx.energy_dict = t_energydict
 
         except AttributeError:

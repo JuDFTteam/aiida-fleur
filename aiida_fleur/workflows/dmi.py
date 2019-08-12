@@ -550,14 +550,15 @@ class FleurDMIWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         try:
-            t_energydict = calculation.outputs.output_parameters.dict.dmi_force_evSum
-            mae_thetas = calculation.outputs.output_parameters.dict.dmi_force_theta
-            mae_phis = calculation.outputs.output_parameters.dict.dmi_force_phi
-            num_ang = calculation.outputs.output_parameters.dict.dmi_force_angles
-            num_q_vectors = calculation.outputs.output_parameters.dict.dmi_force_qs
-            q_vectors = [self.ctx.wf_dict['q_vectors'][x-1] for x in
-                         calculation.outputs.output_parameters.dict.dmi_force_q]
-            e_u = calculation.outputs.output_parameters.dict.energy_units
+            out_dict = calculation.outputs.output_parameters.dict
+            t_energydict = out_dict.dmi_force_evSum
+            mae_thetas = out_dict.dmi_force_theta
+            mae_phis = out_dict.dmi_force_phi
+            num_ang = out_dict.dmi_force_angles
+            num_q_vectors = out_dict.dmi_force_qs
+            q_vectors = [self.ctx.wf_dict['q_vectors'][x-1] for x in out_dict.dmi_force_q]
+            e_u = out_dict.energy_units
+
             for i in range((num_q_vectors-1)*(num_ang), -1, -num_ang):
                 ref_enrg = t_energydict.pop(i)
                 q_vectors.pop(i)

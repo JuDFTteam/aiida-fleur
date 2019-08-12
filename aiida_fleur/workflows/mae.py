@@ -484,22 +484,18 @@ class FleurMaeWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         try:
-            t_energydict = calculation.outputs.output_parameters.dict.mae_force_evSum
-            mae_thetas = calculation.outputs.output_parameters.dict.mae_force_theta
-            mae_phis = calculation.outputs.output_parameters.dict.mae_force_phi
-            e_u = calculation.outputs.output_parameters.dict.energy_units
+            out_dict = calculation.outputs.output_parameters.dict
+            t_energydict = out_dict.mae_force_evSum
+            mae_thetas = out_dict.mae_force_theta
+            mae_phis = out_dict.mae_force_phi
+            e_u = out_dict.energy_units
 
-            # Find a minimal value of MAE and count it as 0
-            labelmin = 0
-            for labels in range(1, len(t_energydict)):
-                if t_energydict[labels] < t_energydict[labelmin]:
-                    labelmin = labels
-            minenergy = t_energydict[labelmin]
+            minenergy = min(t_energydict)
 
-            for labels in range(len(t_energydict)):
-                t_energydict[labels] = t_energydict[labels] - minenergy
-                if e_u == 'Htr' or 'htr':
-                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
+            if e_u == 'Htr' or 'htr':
+                t_energydict = [htr_to_ev * (x-minenergy) for x in t_energydict]
+            else:
+                t_energydict = [(x-minenergy) for x in t_energydict]
 
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')

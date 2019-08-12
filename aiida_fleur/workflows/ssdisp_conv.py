@@ -268,14 +268,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         if t_energydict:
             # Find a minimal value of Spiral and count it as 0
-            labelmin = list(t_energydict.keys())[0]
-            for labels in six.iterkeys(t_energydict):
-                try:
-                    if t_energydict[labels] < t_energydict[labelmin]:
-                        labelmin = labels
-                except KeyError:
-                    pass
-            minenergy = t_energydict[labelmin]
+            minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
                 t_energydict[key] = t_energydict[key] - minenergy
