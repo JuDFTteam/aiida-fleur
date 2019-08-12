@@ -25,6 +25,7 @@ from aiida.engine import while_
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
+from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
 
 # pylint: disable=invalid-name
 FleurProcess = CalculationFactory('fleur.fleur')
@@ -146,3 +147,15 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+
+
+@register_error_handler(FleurBaseWorkChain, 100)
+def _handle_insufficient_bands(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    self.ctx.restart_calc = calculation
+    self.ctx.is_finished = True
+    self.report('Calculation failed for unknown reason, stop the Base workchain')
+    self.results()
+    return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
