@@ -52,8 +52,8 @@ where source codes will be located. To do this, run:
 .. code-block:: bash
 
     (aiidapy)$ mkdir <your_directory_AiiDA>
-    (aiidapy)$ cd <your_directory_AiiDA>
     (aiidapy)$ git clone https://github.com/aiidateam/aiida-core.git
+    (aiidapy)$ cd aiida_core
     (aiidapy)$ pip install -e .
 
 Which will install aiida_core. Note ``-e`` option in the last line: it allows one to fetch updates
@@ -62,8 +62,8 @@ from GitHub without package reinstallation. AiiDA-FLEUR can be installed the sam
 .. code-block:: bash
 
     (aiidapy)$ mkdir <your_directory_FLEUR>
-    (aiidapy)$ cd <your_directory_FLEUR>
     (aiidapy)$ git clone https://github.com/JuDFTteam/aiida-fleur.git
+    (aiidapy)$ cd aiida-fleur
     (aiidapy)$ git checkout develop
     (aiidapy)$ pip install -e .
 
