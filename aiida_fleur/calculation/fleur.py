@@ -445,13 +445,11 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_hdf
                 else:
                     copylist = self._copy_scf
-                # for file1 in copylist:
-                    # local_copy_list.append((
-                    #    outfolder_uuid,
-                    #    file1[0],
-                    #   file1[1]))
-                # until 2725 aiida_core not solved, copy remotely:
-                filelist_tocopy_remote = filelist_tocopy_remote  # + self._copy_scf_remote
+                for file1 in copylist:
+                    local_copy_list.append((
+                       outfolder_uuid,
+                       file1[0],
+                      file1[1]))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
             elif fleurinpgen and has_fleurinp:
                 # everything is taken care of
@@ -462,13 +460,11 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_noinp_hdf
                 else:
                     copylist = self._copy_scf_noinp
-                # for file1 in copylist:
-                #    local_copy_list.append((
-                #        outfolder_uuid,
-                #        file1[0],
-                #        file1[1]))
-                # until 2725 aiida_core not solved, copy remotely:
-                filelist_tocopy_remote = filelist_tocopy_remote  # + self._copy_scf_remote
+                for file1 in copylist:
+                   local_copy_list.append((
+                       outfolder_uuid,
+                       file1[0],
+                       file1[1]))
 
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
@@ -489,13 +485,6 @@ class FleurCalculation(CalcJob):
                 for file1 in settings_dict.get('remove_from_remotecopy_list', []):
                     if file1 in filelist_tocopy_remote:
                         filelist_tocopy_remote.remove(file1)
-
-                for file1 in copylist:
-                    remote_copy_list.append((
-                        parent_calc_folder.computer.uuid,
-                        os.path.join(
-                            parent_calc_folder.get_remote_path(), file1[0]),
-                        file1[1]))
 
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append((
