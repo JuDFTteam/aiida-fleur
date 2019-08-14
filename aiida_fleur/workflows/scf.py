@@ -651,7 +651,7 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
 
-        if self.ctx.successful:
+        if self.ctx.successful and self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
                 self.report('STATUS: Done, the convergence criteria are reached.\n'
                             'INFO: The charge density of the FLEUR calculation '
@@ -676,39 +676,39 @@ class FleurScfWorkChain(WorkChain):
                                       outputnode_dict['distance_charge'],
                                       self.ctx.energydiff,
                                       self.ctx.forcediff))
+        elif self.ctx.successful and not self.ctx.reached_conv:
+            if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
+                self.report('STATUS/WARNING: Done, the maximum number of runs '
+                            'was reached.\n INFO: The '
+                            'charge density of the FLEUR calculation, '
+                            'after {} FLEUR runs, {} iterations and {} sec '
+                            'walltime is {} "me/bohr^3"\n'
+                            'INFO: can not extract energy and largest force difference between'
+                            ' two last iterations, probably converged in a single iteration'
+                            ''.format(self.ctx.loop_count,
+                                        last_calc_out_dict.get(
+                                            'number_of_iterations_total', None),
+                                        self.ctx.total_wall_time,
+                                        outputnode_dict['distance_charge']))
+            else:
+                self.report('STATUS/WARNING: Done, the maximum number of runs '
+                            'was reached.\n INFO: The '
+                            'charge density of the FLEUR calculation, '
+                            'after {} FLEUR runs, {} iterations and {} sec '
+                            'walltime is {} "me/bohr^3"\n'
+                            'INFO: The total energy difference of the last two iterations '
+                            'is {} Htr and largest force difference is {} Htr/bohr\n'
+                            ''.format(self.ctx.loop_count,
+                                        last_calc_out_dict.get(
+                                            'number_of_iterations_total', None),
+                                        self.ctx.total_wall_time,
+                                        outputnode_dict['distance_charge'],
+                                        self.ctx.energydiff,
+                                        self.ctx.forcediff))
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and '
                             'errors/warning/hints in output_scf_wc_para')
-            else:
-                if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
-                    self.report('STATUS/WARNING: Done, the maximum number of runs '
-                                'was reached or something failed.\n INFO: The '
-                                'charge density of the FLEUR calculation, '
-                                'after {} FLEUR runs, {} iterations and {} sec '
-                                'walltime is {} "me/bohr^3"\n'
-                                'INFO: can not extract energy and largest force difference between'
-                                ' two last iterations, probably converged in a single iteration'
-                                ''.format(self.ctx.loop_count,
-                                          last_calc_out_dict.get(
-                                              'number_of_iterations_total', None),
-                                          self.ctx.total_wall_time,
-                                          outputnode_dict['distance_charge']))
-                else:
-                    self.report('STATUS/WARNING: Done, the maximum number of runs '
-                                'was reached or something failed.\n INFO: The '
-                                'charge density of the FLEUR calculation, '
-                                'after {} FLEUR runs, {} iterations and {} sec '
-                                'walltime is {} "me/bohr^3"\n'
-                                'INFO: The total energy difference of the last two iterations '
-                                'is {} Htr and largest force difference is {} Htr/bohr\n'
-                                ''.format(self.ctx.loop_count,
-                                          last_calc_out_dict.get(
-                                              'number_of_iterations_total', None),
-                                          self.ctx.total_wall_time,
-                                          outputnode_dict['distance_charge'],
-                                          self.ctx.energydiff,
-                                          self.ctx.forcediff))
 
         outputnode_t = Dict(dict=outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...

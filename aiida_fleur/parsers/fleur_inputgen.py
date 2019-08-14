@@ -72,7 +72,7 @@ class Fleur_inputgenParser(Parser):
         for file1 in self._default_files:
             if file1 not in list_of_files:
                 self.logger.error(
-                    "'{}' file not found in retrived folder, it was probable "
+                    "'{}' file not found in retrived folder, it was probably "
                     "not created by inpgen".format(file1))
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 

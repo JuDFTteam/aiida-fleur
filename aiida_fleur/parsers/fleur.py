@@ -109,11 +109,11 @@ class FleurParser(Parser):
             has_xml_outfile = True
 
         # check if all files expected are there for the calculation
-        for filel in should_retrieve:
-            if filel not in list_of_files:
+        for file in should_retrieve:
+            if file not in list_of_files:
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
-                    " was probable not created by fleur".format(filel))
+                    " was probably not created by fleur".format(file))
                 #return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         # check if something was written to the error file
