@@ -724,8 +724,8 @@ class FleurCalculation(CalcJob):
         retrieve_list.append(
             self.inputs.metadata.options.shelloutput_file_name)
         retrieve_list.append(self.inputs.metadata.options.error_file_name)
-        # calcinfo.retrieve_list.append(self._TIME_INFO_FILE_NAME)
-        retrieve_list.append(self.inputs.metadata.options.out_file_name)
+        # retrieve_list.append(self._TIME_INFO_FILE_NAME)
+        # retrieve_list.append(self.inputs.metadata.options.out_file_name)
         if with_hdf5:
             retrieve_list.append(
                 self.inputs.metadata.options.cdn_last_hdf5_file_name)
