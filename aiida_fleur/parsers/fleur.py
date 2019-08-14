@@ -73,10 +73,7 @@ class FleurParser(Parser):
 
         # these files should be at least present after success of a Fleur run
         calc = self.node
-
-        #default_files = {calc.get_attribute(
-        #    'outxml_file_name'), calc.get_attribute('inpxml_file_name')}
-        #other_files = {}
+        FleurCalculation = calc.process_class
 
         # this files should be retrieved
         should_retrieve = calc.get_attribute('retrieve_list')
@@ -104,9 +101,9 @@ class FleurParser(Parser):
         self.logger.info("file list {}".format(list_of_files))
 
         # has output xml file, otherwise error
-        if calc.get_attribute('outxml_file_name') not in list_of_files:
+        if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
             self.logger.error(
-                "XML out not found '{}'".format(calc.get_attribute('outxml_file_name')))
+                "XML out not found '{}'".format(FleurCalculation._OUTXML_FILE_NAME))
             return self.exit_codes.ERROR_NO_OUTXML
         else:
             has_xml_outfile = True
@@ -120,8 +117,8 @@ class FleurParser(Parser):
                 #return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         # check if something was written to the error file
-        if calc.get_attribute('error_file_name') in list_of_files:
-            errorfile = calc.get_attribute('error_file_name')
+        if FleurCalculation._ERROR_FILE_NAME in list_of_files:
+            errorfile = FleurCalculation._ERROR_FILE_NAME
             # read
             try:
                 with output_folder.open(errorfile, 'r') as efile:
@@ -142,13 +139,13 @@ class FleurParser(Parser):
                                       'successfully.')
                     return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
-        if calc.get_attribute('dos_file_name') in list_of_files:
+        if FleurCalculation._DOS_FILE_NAME in list_of_files:
             has_dos = True
-        if calc.get_attribute('band_file_name') in list_of_files:
+        if FleurCalculation._BAND_FILE_NAME in list_of_files:
             has_bands = True
 
         # if a relax.xml was retrieved
-        if calc.get_attribute('relax_file_name') in list_of_files:
+        if FleurCalculation._RELAX_FILE_NAME in list_of_files:
             self.logger.info("relax.xml file found in retrieved folder")
             has_relax_file = True
 
@@ -157,7 +154,7 @@ class FleurParser(Parser):
         if has_xml_outfile:
             # open output file
             outxmlfile_opened = output_folder.open(
-                calc.get_attribute('outxml_file_name'), 'r')
+                FleurCalculation._OUTXML_FILE_NAME, 'r')
             simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
             outxmlfile_opened.close()
 
@@ -191,7 +188,7 @@ class FleurParser(Parser):
         # optional parse other files
         # DOS
         if has_dos_file:
-            dos_file = calc.get_attribute('dos_file_name')
+            dos_file = FleurCalculation._DOS_FILE_NAME
             # if dos_file is not None:
             try:
                 with output_folder.open(dos_file, 'r') as dosf:
@@ -205,7 +202,7 @@ class FleurParser(Parser):
         # Bands
         if has_bands_file:
             # TODO: be carefull there might be two files.
-            band_file = calc.get_attribute('band_file_name')
+            band_file = FleurCalculation._BAND_FILE_NAME
 
             # if band_file is not None:
             try:
@@ -218,7 +215,7 @@ class FleurParser(Parser):
             bands_data = parse_bands_file(bands_lines)
 
         if has_relax_file:
-            relax_name = calc.get_attribute('relax_file_name')
+            relax_name = FleurCalculation._RELAX_FILE_NAME
             try:
                 fleurinp = calc.inputs.fleurinpdata
             except NotExistent:

@@ -518,7 +518,7 @@ class FleurScfWorkChain(WorkChain):
             out_para = last_calc.outputs.output_parameters
             fleur_calcjob = load_node(out_para.get_dict()['CalcJob_uuid'])
             outxmlfile_opened = last_calc.outputs.retrieved.open(
-                fleur_calcjob.get_attribute('outxml_file_name'), 'r')
+                fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r')
 
             walltime = last_calc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
