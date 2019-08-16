@@ -244,9 +244,9 @@ class BaseRestartWorkChain(WorkChain):
         handler_report = None
 
         # Sort the handlers based on their priority in reverse order
-        handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
-
-        if not handlers:
+        try:
+            handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
+        except AttributeError:
             raise UnexpectedCalculationFailure('no calculation error handlers were registered')
 
         for handler in handlers:

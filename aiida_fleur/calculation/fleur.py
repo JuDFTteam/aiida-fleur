@@ -244,6 +244,8 @@ class FleurCalculation(CalcJob):
                        message='No retrieved folder found.')
         spec.exit_code(302, 'ERROR_FLEUR_CALC_FAILED',
                        message='FLEUR calculation failed.')
+        spec.exit_code(310, 'ERROR_NOT_ENOUGH_MEMORY',
+                       message='FLEUR calculation failed.')
         spec.exit_code(303, 'ERROR_NO_OUTXML',
                        message='XML output file was not found.')
         spec.exit_code(304, 'ERROR_XMLOUT_PARSING_FAILED',

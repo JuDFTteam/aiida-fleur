@@ -149,13 +149,31 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
 
 
-@register_error_handler(FleurBaseWorkChain, 100)
+@register_error_handler(FleurBaseWorkChain, 999)
 def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    self.ctx.restart_calc = calculation
-    self.ctx.is_finished = True
-    self.report('Calculation failed for unknown reason, stop the Base workchain')
-    self.results()
-    return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED']):
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('Calculation failed for unknown reason, stop the Base workchain')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+
+@register_error_handler(FleurBaseWorkChain, 50)
+def _handle_not_enough_memory(self, calculation):
+    """
+    Calculation failed due to lack of memory.
+    Probably works for JURECA only, has to be tested for other systems.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_NOT_ENOUGH_MEMORY']):
+        self.ctx.restart_calc = None
+        self.ctx.is_finished = False
+        self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
+                    'amount of computational resources')
+        self.ctx.num_machines = self.ctx.num_machines * 2
+        self.check_kpts()
+
+        return ErrorHandlerReport(True, True)

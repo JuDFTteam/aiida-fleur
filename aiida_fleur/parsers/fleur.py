@@ -136,7 +136,10 @@ class FleurParser(Parser):
                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish'
                                       'successfully.')
-                    return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+                    if 'Signal           15  detected on PE:' in error_file_lines:
+                        return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
+                    else:
+                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
         if FleurCalculation._DOS_FILE_NAME in list_of_files:
             has_dos = True
