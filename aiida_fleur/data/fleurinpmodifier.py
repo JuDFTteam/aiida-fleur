@@ -419,8 +419,8 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        inpxmlfile = self._original.open(key='inp.xml')
-        tree = etree.parse(inpxmlfile)
+        with self._original.open(key='inp.xml') as inpxmlfile:
+           tree = etree.parse(inpxmlfile)
 
         try:  # could be not found or on another computer...
             xmlschema_tree = etree.parse(self._original._schema_file_path)
@@ -448,8 +448,8 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            inpxmlfile = self._original.open(key='inp.xml')
-            tree = etree.parse(inpxmlfile)
+            with self._original.open(key='inp.xml') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
         if display:

@@ -410,6 +410,7 @@ class FleurinpData(Data):
         #dtd_validation=True
 
         tree_x = etree.parse(inpxmlfile, parser)
+        inpxmlfile.close()
         # replace XInclude parts to validate against schema
         tree_x.xinclude()
         # check if it validates against the schema
@@ -481,7 +482,7 @@ class FleurinpData(Data):
         return fleur_modes
 
     #@staticmethod
-    def get_structuredata_ncf(fleurinp):
+    def get_structuredata_ncf(self, fleurinp):
         """
         This routine returns an AiiDA Structure Data type produced from the ``inp.xml``
         file. not a calcfunction
@@ -917,7 +918,7 @@ class FleurinpData(Data):
     '''
 
     @cf
-    def set_kpointsdata(fleurinp_orgi, KpointsDataNode):
+    def set_kpointsdata(self, fleurinp_orgi, KpointsDataNode):
         """
         This calc function writes the all the kpoints from a :class:`~aiida.orm.KpointsData` node
         in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the

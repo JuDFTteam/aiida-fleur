@@ -87,7 +87,7 @@ class FleurCalculation(CalcJob):
     _JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
     _QFIX_FILE_NAME = 'qfix'
 
-    # relax (gormetry optimization) files
+    # relax (geometry optimization) files
     _RELAX_FILE_NAME = 'relax.xml'
 
     # jij files
@@ -201,7 +201,7 @@ class FleurCalculation(CalcJob):
                       'cmdline']
     # possible modes?
     _fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
-                            'latticeCo', 'scf']
+                    'latticeCo', 'scf']
 
     @classmethod
     def define(cls, spec):
@@ -213,7 +213,7 @@ class FleurCalculation(CalcJob):
         # inputs
         spec.input('fleurinpdata', valid_type=FleurinpData, required=False,
                    help="Use a FleruinpData node that specifies the input parameters"
-                   "usually copy from the parent calculation, basicly makes"
+                   "usually copy from the parent calculation, basically makes"
                    "the inp.xml file visible in the db and makes sure it has "
                    "the files needed.")
         spec.input('parent_folder', valid_type=RemoteData, required=False,
@@ -300,7 +300,7 @@ class FleurCalculation(CalcJob):
         # in a remote source). if the User has not changed something, the
         # calculation does not need theoretical a new FleurinpData it could use
         # the one from the parent, but the plug-in desgin is in a way that it has
-        # to be there and it just copies files if changes occured..
+        # to be there and it just copies files if changes occurred..
 
         if 'fleurinpdata' in self.inputs:
             fleurinp = self.inputs.fleurinpdata
@@ -348,14 +348,14 @@ class FleurCalculation(CalcJob):
                 new_comp = self.node.computer
                 old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
-                    # dont copy files, copy files localy
+                    # don't copy files, copy files locally
                     copy_remotely = False
             elif parent_calc_class is FleurinputgenCalculation:
                 fleurinpgen = True
                 new_comp = self.node.computer
                 old_comp = parent_calc.computer
                 if new_comp.uuid != old_comp.uuid:
-                    # dont copy files, copy files localy
+                    # don't copy files, copy files locally
                     copy_remotely = False
             else:
                 raise InputValidationError(
@@ -445,9 +445,9 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf
                 for file1 in copylist:
                     local_copy_list.append((
-                       outfolder_uuid,
-                       file1[0],
-                      file1[1]))
+                        outfolder_uuid,
+                        file1[0],
+                        file1[1]))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
             elif fleurinpgen and has_fleurinp:
                 # everything is taken care of
@@ -459,10 +459,10 @@ class FleurCalculation(CalcJob):
                 else:
                     copylist = self._copy_scf_noinp
                 for file1 in copylist:
-                   local_copy_list.append((
-                       outfolder_uuid,
-                       file1[0],
-                       file1[1]))
+                    local_copy_list.append((
+                        outfolder_uuid,
+                        file1[0],
+                        file1[1]))
 
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
