@@ -82,31 +82,11 @@ class FleurMaeConvWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
-                       message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
-                       message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-                       message="SCF cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED',
-                       message="Reference calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
-                       message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
-                       message="Force theorem calculation failed.")
-        spec.exit_code(312, 'ERROR_ALL_SQAS_FAILED',
+        spec.exit_code(343, 'ERROR_ALL_SQAS_FAILED',
                        message="Convergence MAE calculation failed for all SQAs.")
-        spec.exit_code(313, 'ERROR_SOME_SQAS_FAILED',
+        spec.exit_code(344, 'ERROR_SOME_SQAS_FAILED',
                        message="Convergence MAE calculation failed for some SQAs.")
 
     def start(self):
@@ -162,7 +142,7 @@ class FleurMaeConvWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -211,7 +191,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         inputs['options'] = self.ctx.options
 
-        # Try to retrieve calculaion parameters from inputs
+        # Try to retrieve calculation parameters from inputs
         try:
             calc_para = self.inputs.calc_parameters.get_dict()
         except AttributeError:
@@ -221,7 +201,7 @@ class FleurMaeConvWorkChain(WorkChain):
         # Initialize codes
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
-        # Initialize the strucutre
+        # Initialize the structure
         inputs['structure'] = self.inputs.structure
 
         inputs['options'] = Dict(dict=inputs['options'])
@@ -260,7 +240,7 @@ class FleurMaeConvWorkChain(WorkChain):
             if not isinstance(t_e, float):
                 message = (
                     'Did not manage to extract float total energy from one '
-                    'SCF worflow: {}'.format(label))
+                    'SCF workflow: {}'.format(label))
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
@@ -310,7 +290,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg)

@@ -124,21 +124,19 @@ class FleurScfWorkChain(WorkChain):
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FAILED',
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED',
+                       message="Inpgen calculation failed.")
+        spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED',
                        message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE',
+        spec.exit_code(362, 'ERROR_DID_NOT_CONVERGE',
                        message="SCF cycle did not lead to convergence.")
 
     def start(self):
@@ -411,7 +409,7 @@ class FleurScfWorkChain(WorkChain):
             # fleurmode.show(display=True)#, validate=True)
             self.report(error)
             apply_c = False
-            return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
+            return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
         # apply
         if apply_c:

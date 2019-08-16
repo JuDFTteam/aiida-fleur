@@ -84,6 +84,7 @@ class Fleur_inputgenParser(Parser):
             except IOError:
                 self.logger.error(
                     "Failed to open error file: {}.".format(errorfile))
+                return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
                 self.logger.error(

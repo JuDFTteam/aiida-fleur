@@ -238,19 +238,17 @@ class FleurCalculation(CalcJob):
         spec.default_output_node = 'output_parameters'
 
         # exit codes
-        spec.exit_code(105, 'ERROR_OPENING_OUTPUTS',
-                       message='One of output files can not be opened.')
-        spec.exit_code(106, 'ERROR_NO_RETRIEVED_FOLDER',
+        spec.exit_code(300, 'ERROR_OPENING_OUTPUTS',
+                       message='One of the output files can not be opened.')
+        spec.exit_code(301, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
-        spec.exit_code(107, 'ERROR_FLEUR_CALC_FAILED',
+        spec.exit_code(302, 'ERROR_FLEUR_CALC_FAILED',
                        message='FLEUR calculation failed.')
-        spec.exit_code(108, 'ERROR_NO_OUTXML',
+        spec.exit_code(303, 'ERROR_NO_OUTXML',
                        message='XML output file was not found.')
-        spec.exit_code(109, 'ERROR_MISSING_RETRIEVED_FILES',
-                       message='Some required files were not retrieved.')
-        spec.exit_code(110, 'ERROR_XMLOUT_PARSING_FAILED',
+        spec.exit_code(304, 'ERROR_XMLOUT_PARSING_FAILED',
                        message='Parsing of XML output file failed.')
-        spec.exit_code(111, 'ERROR_RELAX_PARSING_FAILED',
+        spec.exit_code(305, 'ERROR_RELAX_PARSING_FAILED',
                        message='Parsing of relax XML output file failed.')
 
     @classproperty

@@ -19,7 +19,6 @@ from __future__ import absolute_import
 import copy
 
 import six
-from six.moves import range
 from lxml.etree import XMLSyntaxError
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -105,30 +104,20 @@ class FleurSSDispWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         #exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message="Invalid input, please check input configuration.")
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-                       message="SCF cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED',
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
                        message="Reference calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
+        spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
                        message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
+        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
 
     def start(self):
         """
@@ -182,7 +171,7 @@ class FleurSSDispWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -295,7 +284,7 @@ class FleurSSDispWorkChain(WorkChain):
             try:
                 fleurin = self.ctx.reference.outputs.fleurinp
             except NotExistent:
-                error = 'Fleurinp generated in the reference claculation is not found.'
+                error = 'Fleurinp generated in the reference calculation is not found.'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         else:
@@ -363,7 +352,7 @@ class FleurSSDispWorkChain(WorkChain):
                 if not method:
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
-                             "plaese check/test your input. I abort..."
+                             "please check/test your input. I abort..."
                              "".format(method))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
@@ -380,7 +369,7 @@ class FleurSSDispWorkChain(WorkChain):
                 #fleurmode.show(display=True)#, validate=True)
                 self.control_end_wc(error)
                 apply_c = False
-                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
             # apply
             if apply_c:
@@ -442,7 +431,7 @@ class FleurSSDispWorkChain(WorkChain):
         try:
             remote = load_node(pk_last).outputs.remote_folder
         except AttributeError:
-            message = ('Found no remote folder of the referece scf calculation.')
+            message = ('Found no remote folder of the reference scf calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
 
@@ -547,7 +536,7 @@ class FleurSSDispWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. It will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg) # because return_results still fails somewhen

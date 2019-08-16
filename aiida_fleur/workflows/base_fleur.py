@@ -76,10 +76,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
                        message='Something went wrong. More verbose output will be implemented.')
-        spec.exit_code(303, 'ERROR_INVALID_INPUT_RESOURCES',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message='Neither the `options` nor `automatic_parallelisation` input was '
                        'specified.')
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURCES',
+        spec.exit_code(360, 'ERROR_NOT_OPTIMAL_RESOURCES',
                        message="Computational resources are not optimal.")
 
     def validate_inputs(self):
@@ -125,8 +125,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             except Warning:
                 self.report('ERROR: Not optimal computational resources.')
                 return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
-            
-                
+
+
     def check_kpts(self):
         """
         This routine checks if the total number of requested cpus
@@ -150,7 +150,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
 
 @register_error_handler(FleurBaseWorkChain, 100)
-def _handle_insufficient_bands(self, calculation):
+def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """

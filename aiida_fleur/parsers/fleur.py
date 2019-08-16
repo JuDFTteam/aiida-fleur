@@ -114,7 +114,6 @@ class FleurParser(Parser):
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
                     " was probably not created by fleur".format(file))
-                #return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         # check if something was written to the error file
         if FleurCalculation._ERROR_FILE_NAME in list_of_files:
@@ -133,7 +132,7 @@ class FleurParser(Parser):
 
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning(
-                        u'The following was written into std error and piped to {}'
+                        'The following was written into std error and piped to {}'
                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish'
                                       'successfully.')

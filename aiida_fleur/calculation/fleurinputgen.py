@@ -124,19 +124,19 @@ class FleurinputgenCalculation(CalcJob):
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
         # exit codes
-        spec.exit_code(151, 'ERROR_WRONG_INPUT_PARAMS',
+        spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',
                        message='Input parameters for inpgen contain unknown keys.')
-        spec.exit_code(153, 'ERROR_ATOM_POSITION_NEEDED',
+        spec.exit_code(253, 'ERROR_ATOM_POSITION_NEEDED',
                        message='Fleur lattice needs atom positions as input.')
-        spec.exit_code(154, 'ERROR_INPUT_PARAMS_LEFTOVER',
+        spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
                        message='Excessive input parameters were specified.')
-        spec.exit_code(106, 'ERROR_NO_RETRIEVED_FOLDER',
+        spec.exit_code(301, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
-        spec.exit_code(105, 'ERROR_OPENING_OUTPUTS',
-                       message='One of output files can not be opened.')
-        spec.exit_code(155, 'ERROR_NO_INPXML',
+        spec.exit_code(300, 'ERROR_OPENING_OUTPUTS',
+                       message='One of the output files can not be opened.')
+        spec.exit_code(306, 'ERROR_NO_INPXML',
                        message='XML input file was not found.')
-        spec.exit_code(109, 'ERROR_MISSING_RETRIEVED_FILES',
+        spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES',
                        message='Some required files were not retrieved.')
 
     def prepare_for_submission(self, folder):

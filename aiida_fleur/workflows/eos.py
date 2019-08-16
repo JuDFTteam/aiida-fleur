@@ -17,7 +17,7 @@ of an equation of state
 # TODO: print more user info
 # allow different inputs, make things optional(don't know yet how)
 # half number of iteration if you are close to be converged. (therefore
-# one can start with 18 iterations, and if thats not enough run agian 9 or something)
+# one can start with 18 iterations, and if thats not enough run again 9 or something)
 from __future__ import absolute_import
 from __future__ import print_function
 import numpy as np
@@ -50,7 +50,7 @@ class FleurEosWorkChain(WorkChain):
     A Birch_Murnaghan  equation of states fit determines the Bulk modulus and the
     groundstate volume of the cell.
 
-    :params wf_parameters: Dict node, optional 'wf_parameters', protocol specifieing parameter dict
+    :params wf_parameters: Dict node, optional 'wf_parameters', protocol specifying parameter dict
     :params structure: StructureData node, 'structure' crystal structure
     :params calc_parameters: Dict node, optional 'calc_parameters' parameters for inpgen
     :params inpgen: Code node,
@@ -107,22 +107,8 @@ class FleurEosWorkChain(WorkChain):
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
         #exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
-                       message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
-                       message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-                       message="SCF cycle did not lead to convergence.")
 
     def start(self):
         """
@@ -179,7 +165,7 @@ class FleurEosWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -334,7 +320,7 @@ class FleurEosWorkChain(WorkChain):
             gs_scale = volume * natoms / self.ctx.org_volume
             if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
                 warn = ('Groundstate volume was not in the scaling range.')
-                hint = ('Consider rerunnning around point {}'.format(gs_scale))
+                hint = ('Consider rerunning around point {}'.format(gs_scale))
                 self.ctx.info.append(hint)
                 self.ctx.warnings.append(warn)
                 # TODO maybe make it a feature to rerun with centered around the gs.
@@ -381,7 +367,7 @@ class FleurEosWorkChain(WorkChain):
         else:
             self.report(
                 'Done, but something went wrong.... Probably some individual calculation failed or'
-                ' a scf-cylcle did not reach the desired distance.')
+                ' a scf-cycle did not reach the desired distance.')
 
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -398,7 +384,7 @@ class FleurEosWorkChain(WorkChain):
 
         outputstructure = outputnode_dict.get('gs_structure', None)
         if outputstructure:
-            outputstructure.label = 'ouput_eos_wc_structure'
+            outputstructure.label = 'output_eos_wc_structure'
             outputstructure.description = ('Structure with the scaling/volume of the lowest total '
                                            'energy extracted from FleurEosWorkChain')
             outputstructure = save_structure(outputstructure)
@@ -410,7 +396,7 @@ class FleurEosWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. It will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.ctx.successful = False
@@ -423,7 +409,7 @@ class FleurEosWorkChain(WorkChain):
 @cf
 def create_eos_result_node(**kwargs):
     """
-    This is a pseudo wf, to create the rigth graph structure of AiiDA.
+    This is a pseudo wf, to create the right graph structure of AiiDA.
     This wokfunction will create the output node in the database.
     It also connects the output_node to all nodes the information commes from.
     So far it is just also parsed in as argument, because so far we are to lazy
@@ -454,8 +440,8 @@ def save_structure(structure):
 
 def eos_structures(inp_structure, scalelist):
     """
-    Creates many rescalled StrucutureData nodes out of a crystal structure.
-    Keeps the provanance in the database.
+    Creates many rescalled StructureData nodes out of a crystal structure.
+    Keeps the provenance in the database.
 
     :param StructureData, a StructureData node (pk, sor uuid)
     :param scalelist, list of floats, scaling factors for the cell

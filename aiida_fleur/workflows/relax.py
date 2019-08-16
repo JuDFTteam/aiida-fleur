@@ -98,27 +98,15 @@ class FleurRelaxWorkChain(WorkChain):
         spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
-                       message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
-                       message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_DID_NOT_CONVERGE',
+        spec.exit_code(350, 'ERROR_DID_NOT_CONVERGE',
                        message="Optimization cycle did not lead to convergence of forces.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED',
-                       message="Reference scf calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
-                       message="Found no reference calculation remote repository.")
-        spec.exit_code(314, 'ERROR_RELAX_FAILED',
+        spec.exit_code(351, 'ERROR_RELAX_FAILED',
                        message="New positions calculation failed.")
-        spec.exit_code(315, 'ERROR_NO_RELAX_OUTPUT',
+        spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT',
                        message="Found no relax.xml file in retrieved folder")
 
     def start(self):
@@ -168,7 +156,7 @@ class FleurRelaxWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -197,7 +185,7 @@ class FleurRelaxWorkChain(WorkChain):
         2. Fleurinp and remote are given -> take cdn1 from remote, converge, cycle
         3. Remote is given -> take inp.xml and cdn1 from remote, converge, cycle
         4. Structure is given -> run inpgen, converge, cycle
-        
+
         """
         inputs = cleanup_inputs(self.inputs)
 
@@ -339,7 +327,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def generate_new_fleurinp(self):
         """
-        This fuction generates a new fleurinp if needed
+        This function generates a new fleurinp if needed
         """
         scf_wc = self.ctx.scf_res
         last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
@@ -355,7 +343,7 @@ class FleurRelaxWorkChain(WorkChain):
     @staticmethod
     def analyse_relax(relax_dict):
         """
-        This fuction generates a new fleurinp if needed
+        This function generates a new fleurinp if needed
         """
         # TODO: implement this function, now always use relax.xml gemerated in FLEUR
         if False:
@@ -423,7 +411,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. It will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg)

@@ -98,33 +98,21 @@ class FleurMaeWorkChain(WorkChain):
 
         spec.output('out', valid_type=Dict)
 
-        # exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, plaese check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        #exit codes
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message="Invalid input, please check input configuration.")
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-                       message="SCF cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED',
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
                        message="Reference calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
+        spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
                        message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
+        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
-        spec.exit_code(312, 'ERROR_ALL_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for all SQAs.")
-        spec.exit_code(313, 'ERROR_SOME_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for some SQAs.")
 
     def start(self):
         """
@@ -338,7 +326,7 @@ class FleurMaeWorkChain(WorkChain):
                 if not method:
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
-                             "plaese check/test your input. I abort..."
+                             "please check/test your input. I abort..."
                              "".format(method))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
@@ -355,7 +343,7 @@ class FleurMaeWorkChain(WorkChain):
                 # fleurmode.show(display=True)#, validate=True)
                 self.report(error)
                 apply_c = False
-                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
             # apply
             if apply_c:
