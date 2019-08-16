@@ -1192,14 +1192,19 @@ def inpxml_todict(parent, xmlstr):
 
             elif key in int_attributes_once1 or (key in int_attributes_several1):
                 # TODO int several
-                return_dict[key] = int(return_dict[key])
+                try:
+                    return_dict[key] = int(return_dict[key])
+                except ValueError:
+                    pass
+            elif key in float_attributes_once1 or (key in float_attributes_several1):
+                # TODO pressision?
+                try:
+                    return_dict[key] = float(return_dict[key])
+                except ValueError:
+                    pass
             elif key in string_attributes_once1 or (key in string_attributes_several1):
                 # TODO What attribute shall be set? all, one or several specific onces?
                 return_dict[key] = str(return_dict[key])
-            elif key in float_attributes_once1 or (key in float_attributes_several1):
-                # TODO pressision?
-                #return_dict[key] = float(return_dict[key])
-                pass
             elif key in pos_text1:
                 # TODO, prob not nessesary, since taken care of below check,
                 pass
@@ -1293,12 +1298,15 @@ def get_inpxml_file_structure():
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
                            'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count', 'qfix', 'forcemix')
+
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
-                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
+                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval',
+                             'forcealpha', 'force_converged')
+                             
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp',
                               'xcFunctional', 'fleurInputVersion', 'species')
 
