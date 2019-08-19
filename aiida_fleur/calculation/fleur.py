@@ -557,6 +557,8 @@ class FleurCalculation(CalcJob):
         walltime_sec = self.node.get_attribute('max_wallclock_seconds')
         cmdline_params = []  # , "-wtime", "{}".format(walltime_sec)]"-xml"
 
+        cmdline_params.append("-minimalOutput")
+
         if with_hdf5:
             cmdline_params.append("-last_extra")
             cmdline_params.append("-no_send")
