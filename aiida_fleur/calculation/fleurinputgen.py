@@ -105,6 +105,10 @@ class FleurinputgenCalculation(CalcJob):
     def define(cls, spec):
         super(FleurinputgenCalculation, cls).define(spec)
 
+        spec.input('metadata.options.input_filename', valid_type=six.string_types,
+                   default=cls._INPUT_FILE)
+        spec.input('metadata.options.output_filename', valid_type=six.string_types,
+                   default=cls._INPXML_FILE_NAME)
         spec.input('structure', valid_type=StructureData,
                    help="Choose the input structure to use")
         spec.input('parameters', valid_type=Dict,
