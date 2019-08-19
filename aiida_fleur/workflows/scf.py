@@ -349,12 +349,11 @@ class FleurScfWorkChain(WorkChain):
                 fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
         elif 'structure' in inputs:
             # only structure is given, no remote nor fleurinp
-            try:
-                fleurin = self.ctx['inpgen'].outputs.fleurinpData
-            except NotExistent:
-                error = 'No fleurinpData found, inpgen failed'
+            if not self.ctx['inpgen'].is_finished_ok:
+                error = 'Inpgen calculation failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+            fleurin = self.ctx['inpgen'].outputs.fleurinpData
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
@@ -644,7 +643,7 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
-        outputnode_dict['total_wall_time_units'] = 'hours'
+        outputnode_dict['total_wall_time_units'] = 's'
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors

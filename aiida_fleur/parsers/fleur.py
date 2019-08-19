@@ -490,10 +490,7 @@ def parse_xmlout_file(outxmlfile):
                 'not exist, or something is wrong with the expression.'
                 ''.format(xpath))
             return []
-        if len(return_value) == 1:
-            return return_value
-        else:
-            return return_value
+        return return_value
 
     def get_xml_attribute(node, attributename):
         """
