@@ -481,13 +481,12 @@ class FleurinpData(Data):
             fleur_modes['ldau'] = False
         return fleur_modes
 
-    #@staticmethod
-    def get_structuredata_ncf(self, fleurinp):
+    def get_structuredata_ncf(self):
         """
         This routine returns an AiiDA Structure Data type produced from the ``inp.xml``
         file. not a calcfunction
 
-        :param fleurinp: a FleurinpData instance to be parsed into a StructureData
+        :param self: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node, or None
         """
         from aiida.orm import StructureData
@@ -518,16 +517,16 @@ class FleurinpData(Data):
         atom_group_tag_filmpos = 'filmPos'
         ########
 
-        if not ('inp.xml' in fleurinp.files):
+        if not ('inp.xml' in self.files):
             print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return None
 
         # read in inpxml
-        inpxmlfile = fleurinp.open(key='inp.xml')
+        inpxmlfile = self.open(key='inp.xml')
 
-        if fleurinp._schema_file_path: # Schema there, parse with schema
-            xmlschema_doc = etree.parse(fleurinp._schema_file_path)
+        if self._schema_file_path: # Schema there, parse with schema
+            xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
             tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?
@@ -670,8 +669,8 @@ class FleurinpData(Data):
                       'I only know relPos, absPos, filmPos')
                 #TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a cf instead
-        #struc.add_link_from(fleurinp, label='fleurinp.structure', link_type=LinkType.CREATE)
-        #label='fleurinp.structure'
+        #struc.add_link_from(self, label='self.structure', link_type=LinkType.CREATE)
+        #label='self.structure'
         #return {label : struc}
         return struc
 
