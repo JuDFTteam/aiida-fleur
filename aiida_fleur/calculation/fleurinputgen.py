@@ -54,7 +54,7 @@ class FleurinputgenCalculation(CalcJob):
     _STRUCT_FILE_NAME = 'struct.xsf'
 
     _settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                              'cmdline']
+                      'cmdline']
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -62,7 +62,7 @@ class FleurinputgenCalculation(CalcJob):
     # Additional files that should always be retrieved for the specific plugin
     _internal_retrieve_list = []
     _automatic_namelists = {}
-    
+
     # Specify here what namelist and parameters the inpgen takes
     _possible_namelists = ['title', 'input', 'lattice', 'gen', 'shift', 'factor', 'qss',
                            'soc', 'atom', 'comp', 'exco', 'film', 'kpt', 'end']
@@ -236,9 +236,9 @@ class FleurinputgenCalculation(CalcJob):
                 namelist = 'atom'
             if namelist not in possible_namelists:
                 raise InputValidationError(
-                    "The namelist '{}' is not supported by the fleur"
-                    " inputgenerator. Check on the fleur website or add '{}'"
-                    "to _possible_namelists.".format(namelist, namelist))
+                    "The namelist '{0}' is not supported by the fleur"
+                    " inputgenerator. Check on the fleur website or add '{0}'"
+                    "to _possible_namelists.".format(namelist))
             for para in paramdic.keys():
                 if para not in possible_params[namelist]:
                     raise InputValidationError(

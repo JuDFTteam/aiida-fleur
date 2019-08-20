@@ -683,10 +683,10 @@ class FleurScfWorkChain(WorkChain):
                             'INFO: can not extract energy and largest force difference between'
                             ' two last iterations, probably converged in a single iteration'
                             ''.format(self.ctx.loop_count,
-                                        last_calc_out_dict.get(
-                                            'number_of_iterations_total', None),
-                                        self.ctx.total_wall_time,
-                                        outputnode_dict['distance_charge']))
+                                      last_calc_out_dict.get(
+                                          'number_of_iterations_total', None),
+                                      self.ctx.total_wall_time,
+                                      outputnode_dict['distance_charge']))
             else:
                 self.report('STATUS/WARNING: Done, the maximum number of runs '
                             'was reached.\n INFO: The '
@@ -696,12 +696,12 @@ class FleurScfWorkChain(WorkChain):
                             'INFO: The total energy difference of the last two iterations '
                             'is {} Htr and largest force difference is {} Htr/bohr\n'
                             ''.format(self.ctx.loop_count,
-                                        last_calc_out_dict.get(
-                                            'number_of_iterations_total', None),
-                                        self.ctx.total_wall_time,
-                                        outputnode_dict['distance_charge'],
-                                        self.ctx.energydiff,
-                                        self.ctx.forcediff))
+                                      last_calc_out_dict.get(
+                                          'number_of_iterations_total', None),
+                                      self.ctx.total_wall_time,
+                                      outputnode_dict['distance_charge'],
+                                      self.ctx.energydiff,
+                                      self.ctx.forcediff))
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and '
@@ -717,7 +717,7 @@ class FleurScfWorkChain(WorkChain):
 
         # Now it always returns changed fleurinp that was actually used in the calculation
         if self.ctx.fleurinp is not None:
-           outdict['fleurinp'] = self.ctx.fleurinp
+            outdict['fleurinp'] = self.ctx.fleurinp
 
         if last_calc_out:
             outdict['last_fleur_calc_output'] = last_calc_out
