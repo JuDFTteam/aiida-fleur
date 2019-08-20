@@ -111,7 +111,7 @@ class FleurinputgenCalculation(CalcJob):
                    default=cls._INPXML_FILE_NAME)
         spec.input('structure', valid_type=StructureData,
                    help="Choose the input structure to use")
-        spec.input('parameters', valid_type=Dict,
+        spec.input('parameters', valid_type=Dict, required=False,
                    help="Use a node that specifies the input parameters "
                         "for the namelists")
         spec.input('settings', valid_type=Dict, required=False,

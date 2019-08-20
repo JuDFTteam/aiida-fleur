@@ -60,7 +60,7 @@ class FleurRelaxWorkChain(WorkChain):
         'force_converged': 0.0002,
         'force_dict': {'qfix': 2,
                        'forcealpha': 0.5,
-                       'forcemix': 2},
+                       'forcemix': 'BFGS'},
         'force_criterion': 0.001,
         'inpxml_changes': [],
     }

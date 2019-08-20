@@ -66,7 +66,7 @@ wf_para = Dict(dict={'fleur_runmax' : 4,
                      'itmax_per_run' : 30,
                      'force_dict' : {'qfix' : 2,
                                      'forcealpha' : 0.5,
-                                     'forcemix' : 2},
+                                     'forcemix' : 'BFGS'},
                      'serial' : False})
 
 options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
