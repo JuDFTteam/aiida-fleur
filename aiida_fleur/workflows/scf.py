@@ -716,7 +716,8 @@ class FleurScfWorkChain(WorkChain):
             outdict = create_scf_result_node(outpara=outputnode_t)
 
         # Now it always returns changed fleurinp that was actually used in the calculation
-        outdict['fleurinp'] = self.ctx.fleurinp
+        if self.ctx.fleurinp is not None:
+           outdict['fleurinp'] = self.ctx.fleurinp
 
         if last_calc_out:
             outdict['last_fleur_calc_output'] = last_calc_out
