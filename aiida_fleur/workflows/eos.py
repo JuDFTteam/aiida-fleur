@@ -214,8 +214,8 @@ class FleurEosWorkChain(WorkChain):
             label = str(self.ctx.scalelist[i])
             label_c = '|eos| fleur_scf_wc'
             description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
-            inputs['label'] = label_c
-            inputs['description'] = description
+            # inputs['label'] = label_c
+            # inputs['description'] = description
 
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms

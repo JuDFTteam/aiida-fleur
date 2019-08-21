@@ -135,7 +135,7 @@ class FleurParser(Parser):
                         'The following was written into std error and piped to {}'
                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish'
-                                      'successfully.')
+                                      ' successfully.')
                     if 'Signal           15  detected on PE:' in error_file_lines:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
                     else:

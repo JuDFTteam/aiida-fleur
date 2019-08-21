@@ -56,7 +56,7 @@ class FleurSSDispConvWorkChain(WorkChain):
                       'label2': [0.125, 0.0, 0.0]
                      },
         'alpha_mix': 0.05,
-        'density_converged': 0.00005,
+        'density_converged': 0.005,
         'serial': False,
         'itmax_per_run': 30,
         'soc_off': [],
