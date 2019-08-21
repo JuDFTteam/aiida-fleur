@@ -189,30 +189,39 @@ General methods:
 
 Change methods:
 
-    * ``xml_set_attribv_occ(xpathn, attributename, attribv, occ=[0], create=False)``: Set an
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_attribv_occ()`: Set an
       attribute of a specific occurrence of xml elements
-    * ``xml_set_first_attribv(xpathn, attributename, attribv, create=False)``: Set an attribute
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_first_attribv()`: Set
+      an attribute of first occurrence of xml element
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_attribv()`: Set 
+      attributes of all occurrences of the xml element
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text()`: Set the text
       of first occurrence of xml element
-    * ``xml_set_all_attribv(xpathn, attributename, attribv, create=False)``: Set an attribute of
-      several xml elements
-    * ``xml_set_text(xpathn, text, create=False)``: Set the text of first occurrence of xml element
-    * ``xml_set_all_text(xpathn, text, create=False)``: Set the text of xml elements
-    * ``create_tag(xpath, newelement, create=False)``: Insert an xml element in the xml tree.
-    * ``delete_att(xpath, attrib)``: Delete an attribute for xml elements from
-      the xpath evaluation.
-    * ``delete_tag(xpath)`` : Delete an xml element.
-    * ``replace_tag(xpath, newelement)``: Replace an xml element.
-    * ``set_species(species_name, attributedict, create=False)``: Specific user-friendly method to
-      change species parameters.
-    * ``set_atomgr_att(attributedict, position=None, species=None,create=False)``:  Specific method
-      to change atom group parameters.
-    * ``set_species_label(at_label, attributedict, create=False)``: Specific user-friendly method
-      to change a specie of an atom with a certain label.
-    * ``set_atomgr_att_label(attributedict, atom_label, create=False)``:  Specific
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text_occ()`: Set
+      an attribute of a specific occurrence of xml elements
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_text()`: Set
+      the text of all occurrences of the xml element
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`: Insert
+      an xml element in the xml tree.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_att()`: Delete
+      an attribute for xml elements from the xpath evaluation.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_tag()`: Delete
+      an xml element.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()`: Replace
+      an xml element.
+
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_species()`: Specific
+      user-friendly method to change species parameters.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att()`:  Specific
+      method to change atom group parameters.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_species_label()`: Specific
+      user-friendly method to change a specie of an atom with a certain label.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att_label()`:  Specific
       method to change atom group parameters of an atom with a certain label.
-    * ``set_inpchanges(self, change_dict)``: Specific user-friendly method for easy changes of
-      attribute key value type.
-    * ``set_nkpts(self, count, gamma='F')``: Specific method to set the number of kpoints.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_inpchanges()`: Specific
+      user-friendly method for easy changes of attribute key value type.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nkpts()`: Specific
+      method to set the number of kpoints.
 
 
 .. Node graphs

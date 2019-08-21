@@ -29,7 +29,7 @@ First of all, make sure that you have all required libraries that are `needed`_ 
 In order to safely install AiiDA, you need to set up a virtual environment which protects you local
 settings and packages.
 
-Currently, AiiDA-FLEUR supports both python 2 and python 3 environments. However, I recommended
+Currently, AiiDA-FLEUR supports both python 2 and python 3 environments. However, I recommend
 using python 3 because python 2 will not be supported since 2020.
 To set up a python 3 environment, run a command:
 
@@ -75,82 +75,7 @@ from GitHub without package reinstallation. AiiDA-FLEUR can be installed the sam
 
             (aiidapy)$ pip install <missing_package>
 
-        For instance, after successful installation I did not manage to run a calculation because of
-        missing `pymatgen` package. The problem was solved by simply running:
 
-        .. code-block:: bash
-
-            (aiidapy)$ pip install pymatgen
-
-
-Installation test
-^^^^^^^^^^^^^^^^^
-
-To test if the aiida-fleur installation was successful use:
-
-.. code-block:: bash
-
-    (aiidapy)$ verdi plugin list aiida.calculations
-
-Example output containing FLEUR calculations:
-
-.. code-block:: shell
-
-    * arithmetic.add
-    * fleur.fleur
-    * fleur.inpgen
-    * templatereplacer
-
-You can pass as a further parameter one (or more) plugin names to get more details on a given
-plugin.
-
-After you have installed AiiDA-FLEUR it is always a good idea to run
-the automated standard test set once to check on the installation.
-(for this make sure that postgres 'pg_ctl' command is in your path)
-
-.. code-block:: shell
-
-  cd aiida_fleur/tests/
-  ./run_all_cov.sh
-
-
-the output should look something like this
-
-.. code-block:: shell
-
-    (env_aiida)% ./run_all.sh
-    ======================================= test session starts ================================
-    platform darwin -- Python 2.7.15, pytest-3.5.1, py-1.5.3, pluggy-0.6.0
-    rootdir: /home/github/aiida-fleur, inifile: pytest.ini
-    plugins: cov-2.5.1
-    collected 166 items                                                                                                                                                                                          
-    
-    test_entrypoints.py ............                                                      [  7%]
-    data/test_fleurinp.py ................................................................[ 63%]
-    parsers/test_fleur_parser.py ........                                                 [ 68%]
-    tools/test_common_aiida.py .                                                          [ 68%]
-    tools/test_common_fleur_wf.py ..                                                      [ 69%]
-    tools/test_common_fleur_wf_util.py ..........                                         [ 75%]
-    tools/test_element_econfig_list.py .......                                            [ 80%]
-    tools/test_extract_corelevels.py ...                                                  [ 81%]
-    tools/test_io_routines.py ..                                                          [ 83%]
-    tools/test_parameterdata_util.py ..                                                   [ 84%]
-    tools/test_read_cif_folder.py .                                                       [ 84%]
-    tools/test_xml_util.py ................                                               [ 94%]
-    workflows/test_workflows_builder_init.py .........                                    [100%]
-
-    + coverage report
-
-    ==================================== 166 passed in 22.53 seconds ===========================
-
-
-If anything (especially a lot of tests) fails it is very likely that your
-installation is messed up. Maybe some packages are missing (reinstall them by hand and report please).
-The other problem could be that the AiiDA-FLEUR version you have installed is not compatible
-with the aiida-core version you are running, since not all aiida-core versions are back-compatible.
-We try to not break back compatibility within aiida-fleur itself.
-Therefore, newer versions of it should still work with older versions of the FLEUR code,
-but newer FLEUR releases force you to migrate to a newer aiida-fleur version.
 
 AiiDA setup
 ----------------
@@ -325,3 +250,71 @@ that has to be mentioned.
             Computer: remote_cluster
             Remote absolute path: /scratch/user/codes/fleur_MPI
 
+Installation test
+^^^^^^^^^^^^^^^^^
+
+To test if the aiida-fleur installation was successful use:
+
+.. code-block:: bash
+
+    (aiidapy)$ verdi plugin list aiida.calculations
+
+Example output containing FLEUR calculations:
+
+.. code-block:: shell
+
+    * arithmetic.add
+    * fleur.fleur
+    * fleur.inpgen
+    * templatereplacer
+
+You can pass as a further parameter one (or more) plugin names to get more details on a given
+plugin.
+
+After you have installed AiiDA-FLEUR it is always a good idea to run
+the automated standard test set once to check on the installation
+(make sure that postgres can be called via 'pg_ctl' command)
+
+.. code-block:: shell
+
+  cd aiida_fleur/tests/
+  ./run_all_cov.sh
+
+
+the output should look something like this
+
+.. code-block:: shell
+
+    (env_aiida)% ./run_all.sh
+    ======================================= test session starts ================================
+    platform darwin -- Python 2.7.15, pytest-3.5.1, py-1.5.3, pluggy-0.6.0
+    rootdir: /home/github/aiida-fleur, inifile: pytest.ini
+    plugins: cov-2.5.1
+    collected 166 items                                                                                                                                                                                          
+    
+    test_entrypoints.py ............                                                      [  7%]
+    data/test_fleurinp.py ................................................................[ 63%]
+    parsers/test_fleur_parser.py ........                                                 [ 68%]
+    tools/test_common_aiida.py .                                                          [ 68%]
+    tools/test_common_fleur_wf.py ..                                                      [ 69%]
+    tools/test_common_fleur_wf_util.py ..........                                         [ 75%]
+    tools/test_element_econfig_list.py .......                                            [ 80%]
+    tools/test_extract_corelevels.py ...                                                  [ 81%]
+    tools/test_io_routines.py ..                                                          [ 83%]
+    tools/test_parameterdata_util.py ..                                                   [ 84%]
+    tools/test_read_cif_folder.py .                                                       [ 84%]
+    tools/test_xml_util.py ................                                               [ 94%]
+    workflows/test_workflows_builder_init.py .........                                    [100%]
+
+    + coverage report
+
+    ==================================== 166 passed in 22.53 seconds ===========================
+
+
+If anything (especially a lot of tests) fails it is very likely that your
+installation is messed up. Maybe some packages are missing (reinstall them by hand and report please).
+The other problem could be that the AiiDA-FLEUR version you have installed is not compatible
+with the aiida-core version you are running, since not all aiida-core versions are back-compatible.
+We try to not break back compatibility within aiida-fleur itself.
+Therefore, newer versions of it should still work with older versions of the FLEUR code,
+but newer FLEUR releases force you to migrate to a newer aiida-fleur version.
