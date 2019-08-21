@@ -20,6 +20,7 @@ the parser. Makes testing and portability easier.
 # TODO: warnings
 from __future__ import absolute_import
 import os
+import re
 from datetime import date
 
 from aiida.parsers import Parser
@@ -127,7 +128,6 @@ class FleurParser(Parser):
                     "Failed to open error file: {}.".format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
-            # if not empty, has_error equals True, parse error.
             if error_file_lines:
 
                 if 'Run finished successfully' not in error_file_lines:
@@ -136,7 +136,18 @@ class FleurParser(Parser):
                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish'
                                       ' successfully.')
-                    if 'Signal           15  detected on PE:' in error_file_lines:
+
+                    mpiprocs = self.node.get_attribute('resources').get(
+                        'num_mpiprocs_per_machine', 1)
+
+                    with output_folder.open('memory_avail.txt', 'r') as mem_file:
+                        mem = mem_file.readline()
+                        mem_kb_avail = float(mem.split()[1])
+
+                    line_used = re.findall(r'used.+', error_file_lines)[0]
+                    kb_used = int(re.findall(r'\d+', line_used)[2])
+
+                    if kb_used * mpiprocs / mem_kb_avail > 0.93:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED

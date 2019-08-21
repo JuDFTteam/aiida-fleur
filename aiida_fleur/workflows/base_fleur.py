@@ -172,7 +172,7 @@ def _handle_not_enough_memory(self, calculation):
         self.ctx.restart_calc = None
         self.ctx.is_finished = False
         self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
-                    'amount of computational resources')
+                    ' amount of computational nodes')
         self.ctx.num_machines = self.ctx.num_machines * 2
         self.check_kpts()
 
