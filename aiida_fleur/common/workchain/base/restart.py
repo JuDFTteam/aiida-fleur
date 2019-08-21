@@ -231,11 +231,9 @@ class BaseRestartWorkChain(WorkChain):
 
     def _handle_calculation_failure(self, calculation):
         """Call the attached error handlers if any to attempt to correct the cause of the calculation failure.
-
         The registered error handlers will be called in order based on their priority until a handler returns a report
         that instructs to break. If the last executed error handler defines an exit code, that will be returned to
         instruct the work chain to abort. Otherwise the work chain will continue the cycle.
-
         :param calculation: the calculation that finished with a non-zero exit status
         :return: `ExitCode` if the work chain is to be aborted
         :raises `UnexpectedCalculationFailure`: if no error handlers were registered or no errors were handled.
@@ -243,13 +241,15 @@ class BaseRestartWorkChain(WorkChain):
         is_handled = False
         handler_report = None
 
-        # Sort the handlers based on their priority in reverse order
-        try:
-            handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
-        except AttributeError:
+        if not hasattr(self, '_error_handlers') or not self._error_handlers:
             raise UnexpectedCalculationFailure('no calculation error handlers were registered')
 
+        # Sort the handlers with a priority defined, based on their priority in reverse order
+        handlers = [handler for handler in self._error_handlers if handler.priority]
+        handlers = sorted(handlers, key=lambda x: x.priority, reverse=True)
+
         for handler in handlers:
+
             handler_report = handler.method(self, calculation)
 
             # If at least one error is handled, we consider the calculation failure handled.
