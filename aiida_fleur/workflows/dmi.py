@@ -128,7 +128,7 @@ class FleurDMIWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation workflow version {}\n'
+        self.report('INFO: started DMI calculation workflow version {}\n'
                     ''.format(self._workflowversion))
         self.ctx.info = []
         self.ctx.warnings = []

@@ -96,8 +96,8 @@ class FleurSSDispConvWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
-                    ''.format(self._workflowversion))
+        self.report('INFO: started Spin Stiffness calculation'
+                    ' convergence calculation workflow version {}\n'.format(self._workflowversion))
 
         self.ctx.info = []
         self.ctx.warnings = []

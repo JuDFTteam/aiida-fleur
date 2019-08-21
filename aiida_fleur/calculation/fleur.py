@@ -417,15 +417,14 @@ class FleurCalculation(CalcJob):
                 mode_retrieved_filelist.append(
                     self._NMMPMAT_FILE_NAME)
             if modes['force_theorem']:
-                options = self.inputs.metadata.options
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
                 if with_hdf5:
                     settings_dict['remove_from_retrieve_list'].append(
-                        options.cdn_last_hdf5_file_name)
+                        self._CDN_LAST_HDF5_FILE_NAME)
                 else:
                     settings_dict['remove_from_retrieve_list'].append(
-                        options.cdn1_file_name)
+                        self._CDN1_FILE_NAME)
 
             # if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
