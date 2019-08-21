@@ -36,7 +36,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
 
     _calculation_class = FleurProcess
-    _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
+    # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
 
     @classmethod
     def define(cls, spec):
