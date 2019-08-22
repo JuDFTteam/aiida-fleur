@@ -406,13 +406,20 @@ class FleurinpData(Data):
 
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
+        parser = etree.XMLParser(attribute_defaults=True)
         #dtd_validation=True
 
         tree_x = etree.parse(inpxmlfile, parser)
         inpxmlfile.close()
         # replace XInclude parts to validate against schema
         tree_x.xinclude()
+
+        # remove comments from inp.xml
+        comments = tree_x.xpath('//comment()')
+        for c in comments:
+            p = c.getparent()
+            p.remove(c)
+
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
             raise InputValidationError(

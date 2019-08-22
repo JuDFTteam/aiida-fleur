@@ -328,7 +328,7 @@ class FleurEosWorkChain(WorkChain):
             volumes = None
             gs_scale = None
             residuals = None
-            volume = None
+            volume = 0
             bulk_modulus = None
             bulk_deriv = None
 

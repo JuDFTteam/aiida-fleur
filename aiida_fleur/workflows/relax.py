@@ -65,7 +65,7 @@ class FleurRelaxWorkChain(WorkChain):
         'inpxml_changes': [],
     }
 
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run',
+    _scf_keys = ['fleur_runmax', 'serial', 'itmax_per_run',
                  'inpxml_changes', 'force_dict', 'force_converged']  #  scf workflow
 
     @classmethod
@@ -320,7 +320,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
-                    'force criterion is {}'.format(self.ctx.loop_count, largest_now,
+                    'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
                                                    self.ctx.wf_dict['force_criterion']))
 
         return True

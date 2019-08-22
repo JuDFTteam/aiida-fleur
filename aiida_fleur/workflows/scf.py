@@ -345,8 +345,11 @@ class FleurScfWorkChain(WorkChain):
             retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
             try:
                 fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
             except ValueError:
                 fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                self.report('INFO: generated FleurinpData from inp.xml')
+            fleurin.store()
         elif 'structure' in inputs:
             # only structure is given, no remote nor fleurinp
             if not self.ctx['inpgen'].is_finished_ok:

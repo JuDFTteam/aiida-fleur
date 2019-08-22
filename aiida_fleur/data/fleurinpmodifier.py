@@ -69,13 +69,20 @@ class FleurinpModifier(object):
 
         xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True, remove_comments=True)
+        parser = etree.XMLParser(attribute_defaults=True)
 
         tree = etree.parse(inpxmlfile, parser)
         tree_x = copy.deepcopy(tree)
 
         # replace XInclude parts to validate against schema
         tree_x.xinclude()
+
+        # remove comments from inp.xml
+        comments = tree_x.xpath('//comment()')
+        for c in comments:
+            p = c.getparent()
+            p.remove(c)
+
         if not xmlschema.validate(tree_x):
             raise ValueError("Input file is not validated against the schema.")
 
@@ -258,6 +265,13 @@ class FleurinpModifier(object):
 
         workingtree_x = copy.deepcopy(workingtree)
         workingtree_x.xinclude()
+
+        # remove comments from inp.xml
+        comments = workingtree_x.xpath('//comment()')
+        for c in comments:
+            p = c.getparent()
+            p.remove(c)
+
         if schema_tree:
             if not xmlschema.validate(workingtree_x):
                 # TODO maybe even delete wrong task
