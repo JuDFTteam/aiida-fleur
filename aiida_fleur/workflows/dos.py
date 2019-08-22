@@ -29,6 +29,11 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 import six
 
+StructureData = DataFactory('structure')
+Dict = DataFactory('dict')
+RemoteData = DataFactory('remote')
+FleurInpData = DataFactory('fleur.fleurinp')
+
 
 class fleur_dos_wc(WorkChain):
     """
@@ -40,11 +45,6 @@ class fleur_dos_wc(WorkChain):
     wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     defaults : tria = True, nkpts = 800, sigma=0.005, emin= -0.3, emax = 0.8
     """
-
-    StructureData = DataFactory('structure')
-    Dict = DataFactory('dict')
-    RemoteData = DataFactory('remote')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.3.3"
 

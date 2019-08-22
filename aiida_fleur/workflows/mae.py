@@ -33,16 +33,17 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
+# pylint: disable=invalid-name
+StructureData = DataFactory('structure')
+RemoteData = DataFactory('remote')
+Dict = DataFactory('dict')
+FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
 class FleurMaeWorkChain(WorkChain):
     """
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
-
-    StructureData = DataFactory('structure')
-    RemoteData = DataFactory('remote')
-    Dict = DataFactory('dict')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.1.0"
 

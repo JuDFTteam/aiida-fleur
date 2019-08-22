@@ -33,6 +33,12 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 import six
 
 
+RemoteData = DataFactory('remote')
+StructureData = DataFactory('structure')
+Dict = DataFactory('dict')
+FleurInpData = DataFactory('fleur.fleurinp')
+
+
 class fleur_optimize_parameters_wc(WorkChain):
     """
     This workflow finds out working/(in the future optimal) flapw parameters
@@ -51,11 +57,6 @@ class fleur_optimize_parameters_wc(WorkChain):
     :return optimized_fleurinp: FleurinpData with optimized
 
     """
-    
-    RemoteData = DataFactory('remote')
-    StructureData = DataFactory('structure')
-    Dict = DataFactory('dict')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.1.0"
 

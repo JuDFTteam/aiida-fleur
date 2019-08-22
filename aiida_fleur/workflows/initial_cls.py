@@ -38,6 +38,13 @@ from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
 import six
 
 
+StructureData = DataFactory('structure')
+Dict = DataFactory('dict')
+RemoteData = DataFactory('remote')
+FleurinpData = DataFactory('fleur.fleurinp')
+FleurCalc = CalculationFactory('fleur.fleur')
+
+
 class fleur_initial_cls_wc(WorkChain):
     """
     Turn key solution for the calculation of core level shift
@@ -69,13 +76,6 @@ class fleur_initial_cls_wc(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-
-    StructureData = DataFactory('structure')
-    Dict = DataFactory('dict')
-    RemoteData = DataFactory('remote')
-    FleurinpData = DataFactory('fleur.fleurinp')
-    FleurCalc = CalculationFactory('fleur.fleur')
-
     _workflowversion = "0.3.4"
     _default_wf_para = {'references' : {},
                        'relax' : True,

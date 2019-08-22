@@ -38,6 +38,13 @@ from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
+# pylint: disable=invalid-name
+RemoteData = DataFactory('remote')
+StructureData = DataFactory('structure')
+Dict = DataFactory('dict')
+FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
+
 class FleurScfWorkChain(WorkChain):
     """
     Workchain for converging a FLEUR calculation (SCF).
@@ -59,11 +66,6 @@ class FleurScfWorkChain(WorkChain):
     :returns output_scf_wc_para: (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
     """
-
-    RemoteData = DataFactory('remote')
-    StructureData = DataFactory('structure')
-    Dict = DataFactory('dict')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.3.2"
     _wf_default = {'fleur_runmax': 4,

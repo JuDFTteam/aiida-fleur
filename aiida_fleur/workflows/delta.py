@@ -37,17 +37,18 @@ import six
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
+
+RemoteData = DataFactory('remote')
+StructureData = DataFactory('structure')
+Dict = DataFactory('dict')
+FleurInpData = DataFactory('fleur.fleurinp')
+SingleData = DataFactory('singlefile')
+
 class fleur_delta_wc(WorkChain):
     """
     This workflow calculates a equation of states and from a given
     group of structures in the database using a group of given parameter nodes in the database
     """
-
-    RemoteData = DataFactory('remote')
-    StructureData = DataFactory('structure')
-    Dict = DataFactory('dict')
-    FleurInpData = DataFactory('fleur.fleurinp')
-    SingleData = DataFactory('singlefile')
 
     _workflowversion = "0.3.2"
     _wf_default = {}

@@ -35,16 +35,17 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
+# pylint: disable=invalid-name
+StructureData = DataFactory('structure')
+RemoteData = DataFactory('remote')
+Dict = DataFactory('dict')
+FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
 class FleurDMIWorkChain(WorkChain):
     """
     This workflow calculates spin spiral dispersion of a structure.
     """
-
-    StructureData = DataFactory('structure')
-    RemoteData = DataFactory('remote')
-    Dict = DataFactory('dict')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.1.0"
 

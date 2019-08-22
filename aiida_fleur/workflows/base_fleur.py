@@ -26,12 +26,13 @@ from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 
+# pylint: disable=invalid-name
+FleurProcess = CalculationFactory('fleur.fleur')
+FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-
-    FleurProcess = CalculationFactory('fleur.fleur')
-    FleurInpData = DataFactory('fleur.fleurinp')
 
     _calculation_class = FleurProcess
     _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
