@@ -3,6 +3,7 @@
 Fleur base restart workchain
 ----------------------------
 
+* **Current version**: 0.1.0
 * **Class**: :py:class:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.base``
 * **Workflow type**: Basic

@@ -1,3 +1,13 @@
+## v1.0.0a
+### release compatible with AiiDA-core 1.0.0b5
+- added magnetic workchains
+- added geometry optimisation (relax) workchain
+- implemented the use of exit codes
+- added FLEUR restart workchain
+- integrated new Fleur input schema files
+- other improvements of the workchains and calculations
+- code clean-ups, documentation updates
+
 ## v0.6.0
 ### release for MaX virtual machine, not so well testet, but used in production mode. some things are currently half done
 - added CI

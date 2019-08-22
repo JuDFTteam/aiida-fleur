@@ -3,6 +3,7 @@
 Fleur self-consistent Magnetic Anisotropy Energy workchain
 ----------------------------------------------------------
 
+* **Current version**: 0.1.0
 * **Class**: :py:class:`~aiida_fleur.workflows.mae_conv.FleurMaeConvWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup

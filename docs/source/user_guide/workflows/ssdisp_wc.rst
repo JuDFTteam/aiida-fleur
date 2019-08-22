@@ -3,6 +3,7 @@
 Fleur Spin-Spiral Dispersion workchain
 --------------------------------------
 
+* **Current version**: 0.1.0
 * **Class**: :py:class:`~aiida_fleur.workflows.ssdisp.FleurSSDispWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.ssdisp``
 * **Workflow type**: Scientific workchain, force-theorem subgroup

@@ -3,6 +3,7 @@
 Fleur Magnetic Anisotropy Energy workflow
 -----------------------------------------
 
+* **Current version**: 0.1.0
 * **Class**: :py:class:`~aiida_fleur.workflows.mae.FleurMaeWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae``
 * **Workflow type**: Scientific workchain, force-theorem subgroup

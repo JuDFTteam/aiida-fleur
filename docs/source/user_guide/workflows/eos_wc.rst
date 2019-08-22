@@ -3,6 +3,7 @@
 Fleur equation of states (eos) workflows
 ----------------------------------------
 
+* **Current version**: 0.3.4
 * **Class**: :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.eos``
 * **Workflow type**:  Basic (lvl 1)

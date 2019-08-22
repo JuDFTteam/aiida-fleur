@@ -34,7 +34,8 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-
+    _workflowversion = "0.1.0"
+    
     _calculation_class = FleurProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
 

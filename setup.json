@@ -1,5 +1,5 @@
 {
-    "version" : "1.0.0",
+    "version" : "1.0.0a",
     "name" : "aiida-fleur",
     "url" : "https://github.com/JuDFTteam/aiida-fleur",
     "license" : "MIT License, see LICENSE.txt file.",

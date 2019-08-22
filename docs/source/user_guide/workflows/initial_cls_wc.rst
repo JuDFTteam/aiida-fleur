@@ -1,5 +1,7 @@
 .. _init_cl_wc:
 
+* **Current version**: 0.3.4
+
 Fleur initial core-level shifts workflow
 ----------------------------------------
 

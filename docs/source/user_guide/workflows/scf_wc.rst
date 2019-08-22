@@ -3,6 +3,7 @@
 Fleur self-consistency field workflow
 -------------------------------------
 
+* **Current version**: 0.4.0
 * **Class**: :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.scf``
 * **Workflow type**: Basic
