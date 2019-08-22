@@ -36,12 +36,6 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
-# pylint: disable=invalid-name
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
-
 
 class FleurEosWorkChain(WorkChain):
     """
@@ -60,6 +54,10 @@ class FleurEosWorkChain(WorkChain):
     :return output_eos_wc_para: Dict node, contains relevant output information.
                                 about general succeed, fit results and so on.
     """
+
+    StructureData = DataFactory('structure')
+    Dict = DataFactory('dict')
+    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.3.4"
 

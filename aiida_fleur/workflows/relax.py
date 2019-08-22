@@ -29,17 +29,16 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-# pylint: disable=invalid-name
-StructureData = DataFactory('structure')
-RemoteData = DataFactory('remote')
-Dict = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
 
 class FleurRelaxWorkChain(WorkChain):
     """
     This workflow performs structure optimization.
     """
+
+    StructureData = DataFactory('structure')
+    RemoteData = DataFactory('remote')
+    Dict = DataFactory('dict')
+    FleurInpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.1.0"
 

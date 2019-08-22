@@ -29,11 +29,6 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
 
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleur.fleurinp')
-
 
 class fleur_band_wc(WorkChain):
     '''
@@ -44,6 +39,11 @@ class fleur_band_wc(WorkChain):
     '''
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
+
+    StructureData = DataFactory('structure')
+    Dict = DataFactory('dict')
+    RemoteData = DataFactory('remote')
+    FleurinpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.3.3"
     

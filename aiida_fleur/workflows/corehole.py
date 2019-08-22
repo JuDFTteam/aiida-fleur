@@ -47,10 +47,6 @@ from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 import six
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleur.fleurinp')
 
 
 class fleur_corehole_wc(WorkChain):
@@ -117,6 +113,11 @@ class fleur_corehole_wc(WorkChain):
 
     # Hints:
     # 1. This workflow does not work with local codes!
+
+    StructureData = DataFactory('structure')
+    Dict = DataFactory('dict')
+    RemoteData = DataFactory('remote')
+    FleurinpData = DataFactory('fleur.fleurinp')
 
     _workflowversion = "0.3.2"
     _default_options = {
