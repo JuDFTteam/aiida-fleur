@@ -113,6 +113,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         # set withmpi explicitly
         options['withmpi'] = True
 
+    custom_commands = options.get('custom_scheduler_commands', '')
+    custom_commands = custom_commands + '\ncat /proc/meminfo > memory_avail.txt'
+    options['custom_scheduler_commands'] = custom_commands
+
     if settings:
         inputs['settings'] = Dict(dict=settings)
 

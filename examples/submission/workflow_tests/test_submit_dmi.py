@@ -63,8 +63,8 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
                      'density_converged' : 0.2,
                      'serial' : False,
                      'beta' : {'123' : 1.57079},
-                     'sqas_theta' : '0.0 1.57079 1.57079',
-                     'sqas_phi' : '0.0 0.0 1.57079',
+                     'sqas_theta' : [0.0, 1.57079, 1.57079],
+                     'sqas_phi' : [0.0, 0.0, 1.57079],
                      'prop_dir' : [0.125, 0.15, 0.24],
                      'q_vectors': ['0.0 0.0 0.0',
                                    '0.1 0.1 0.0'],
@@ -75,6 +75,7 @@ wf_para = Dict(dict={'fleur_runmax' : 1,
 
 options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                      'queue_name' : 'devel',
+		             'custom_scheduler_commands' : '',
                      'max_wallclock_seconds':  60*60})
 
 bohr_a_0 = 0.52917721092 # A

@@ -42,19 +42,19 @@ class FleurinputgenCalculation(CalcJob):
     """
 
     # Default input and output files
-    _DEFAULT_INPUT_FILE = 'aiida.in'  # will be shown with inputcat
-    _DEFAULT_OUTPUT_FILE = 'out'  # 'shell.out' #will be shown with outputcat
+    _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
+    _OUTPUT_FILE = 'out'  # 'shell.out' #will be shown with outputcat
 
     # created file names, some needed for Fleur calc
-    _DEFAULT_INPXML_FILE_NAME = 'inp.xml'
-    _DEFAULT_INPUT_FILE_NAME = 'aiida.in'
-    _DEFAULT_SHELLOUT_FILE_NAME = 'shell.out'
-    _DEFAULT_OUTPUT_FILE_NAME = 'out'
-    _DEFAULT_ERROR_FILE_NAME = 'out.error'
-    _DEFAULT_STRUCT_FILE_NAME = 'struct.xsf'
+    _INPXML_FILE_NAME = 'inp.xml'
+    _INPUT_FILE_NAME = 'aiida.in'
+    _SHELLOUT_FILE_NAME = 'shell.out'
+    _OUTPUT_FILE_NAME = 'out'
+    _ERROR_FILE_NAME = 'out.error'
+    _STRUCT_FILE_NAME = 'struct.xsf'
 
-    _DEFAULT_settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                              'cmdline']
+    _settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
+                      'cmdline']
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -62,7 +62,7 @@ class FleurinputgenCalculation(CalcJob):
     # Additional files that should always be retrieved for the specific plugin
     _internal_retrieve_list = []
     _automatic_namelists = {}
-    
+
     # Specify here what namelist and parameters the inpgen takes
     _possible_namelists = ['title', 'input', 'lattice', 'gen', 'shift', 'factor', 'qss',
                            'soc', 'atom', 'comp', 'exco', 'film', 'kpt', 'end']
@@ -105,29 +105,10 @@ class FleurinputgenCalculation(CalcJob):
     def define(cls, spec):
         super(FleurinputgenCalculation, cls).define(spec)
 
-        #Default input and output files
-        spec.input('metadata.options.input_file', valid_type=six.string_types,
-                   default=cls._DEFAULT_INPUT_FILE)
-        spec.input('metadata.options.output_file', valid_type=six.string_types,
-                   default=cls._DEFAULT_OUTPUT_FILE)
-
-        #created file names, some needed for Fleur calc
-        spec.input('metadata.options.inpxml_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_INPXML_FILE_NAME)
-        spec.input('metadata.options.input_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_INPUT_FILE_NAME)
-        spec.input('metadata.options.shellout_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_SHELLOUT_FILE_NAME)
-        spec.input('metadata.options.output_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_OUTPUT_FILE_NAME)
-        spec.input('metadata.options.error_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_ERROR_FILE_NAME)
-        spec.input('metadata.options.struct_file_name', valid_type=six.string_types,
-                   default=cls._DEFAULT_STRUCT_FILE_NAME)
-        spec.input('metadata.options.settings_keys', valid_type=list,
-                   default=cls._DEFAULT_settings_keys)
-        
-        # since 1.0.0b _use_methods is deprecated
+        spec.input('metadata.options.input_filename', valid_type=six.string_types,
+                   default=cls._INPUT_FILE)
+        spec.input('metadata.options.output_filename', valid_type=six.string_types,
+                   default=cls._INPXML_FILE_NAME)
         spec.input('structure', valid_type=StructureData,
                    help="Choose the input structure to use")
         spec.input('parameters', valid_type=Dict, required=False,
@@ -147,19 +128,19 @@ class FleurinputgenCalculation(CalcJob):
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
         # exit codes
-        spec.exit_code(151, 'ERROR_WRONG_INPUT_PARAMS',
+        spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',
                        message='Input parameters for inpgen contain unknown keys.')
-        spec.exit_code(153, 'ERROR_ATOM_POSITION_NEEDED',
+        spec.exit_code(253, 'ERROR_ATOM_POSITION_NEEDED',
                        message='Fleur lattice needs atom positions as input.')
-        spec.exit_code(154, 'ERROR_INPUT_PARAMS_LEFTOVER',
+        spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
                        message='Excessive input parameters were specified.')
-        spec.exit_code(106, 'ERROR_NO_RETRIEVED_FOLDER',
+        spec.exit_code(301, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
-        spec.exit_code(105, 'ERROR_OPENING_OUTPUTS',
-                       message='One of output files can not be opened.')
-        spec.exit_code(155, 'ERROR_NO_INPXML',
+        spec.exit_code(300, 'ERROR_OPENING_OUTPUTS',
+                       message='One of the output files can not be opened.')
+        spec.exit_code(306, 'ERROR_NO_INPXML',
                        message='XML input file was not found.')
-        spec.exit_code(109, 'ERROR_MISSING_RETRIEVED_FILES',
+        spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES',
                        message='Some required files were not retrieved.')
 
     def prepare_for_submission(self, folder):
@@ -255,9 +236,9 @@ class FleurinputgenCalculation(CalcJob):
                 namelist = 'atom'
             if namelist not in possible_namelists:
                 raise InputValidationError(
-                    "The namelist '{}' is not supported by the fleur"
-                    " inputgenerator. Check on the fleur website or add '{}'"
-                    "to _possible_namelists.".format(namelist, namelist))
+                    "The namelist '{0}' is not supported by the fleur"
+                    " inputgenerator. Check on the fleur website or add '{0}'"
+                    "to _possible_namelists.".format(namelist))
             for para in paramdic.keys():
                 if para not in possible_params[namelist]:
                     raise InputValidationError(
@@ -425,7 +406,7 @@ class FleurinputgenCalculation(CalcJob):
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
 
-        input_filename = folder.get_abs_path(self.inputs.metadata.options.input_file_name)
+        input_filename = folder.get_abs_path(self._INPUT_FILE_NAME)
 
         with open(input_filename, 'w') as infile:
 
@@ -487,12 +468,12 @@ class FleurinputgenCalculation(CalcJob):
 
         # Retrieve per default only out file and inp.xml file?
         retrieve_list = []
-        retrieve_list.append(self.inputs.metadata.options.inpxml_file_name)
-        retrieve_list.append(self.inputs.metadata.options.output_file_name)
-        retrieve_list.append(self.inputs.metadata.options.shellout_file_name)
-        retrieve_list.append(self.inputs.metadata.options.error_file_name)
-        retrieve_list.append(self.inputs.metadata.options.struct_file_name)
-        retrieve_list.append(self.inputs.metadata.options.input_file_name)
+        retrieve_list.append(self._INPXML_FILE_NAME)
+        retrieve_list.append(self._OUTPUT_FILE_NAME)
+        retrieve_list.append(self._SHELLOUT_FILE_NAME)
+        retrieve_list.append(self._ERROR_FILE_NAME)
+        retrieve_list.append(self._STRUCT_FILE_NAME)
+        retrieve_list.append(self._INPUT_FILE_NAME)
 
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
@@ -518,9 +499,9 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self.inputs.metadata.options.input_file_name
-        codeinfo.stdout_name = self.inputs.metadata.options.shellout_file_name  # shell output will be piped in file
-        codeinfo.stderr_name = self.inputs.metadata.options.error_file_name  # std error too
+        codeinfo.stdin_name = self._INPUT_FILE_NAME
+        codeinfo.stdout_name = self._SHELLOUT_FILE_NAME  # shell output will be piped in file
+        codeinfo.stderr_name = self._ERROR_FILE_NAME  # std error too
 
         calcinfo.codes_info = [codeinfo]
 

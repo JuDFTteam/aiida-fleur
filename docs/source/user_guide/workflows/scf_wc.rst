@@ -93,7 +93,7 @@ All possible workflow parameters and their defaults.
                    'itmax_per_run': 30,               # Maximum iterations run for one Fleur job
                    'force_dict': {'qfix': 2,          # parameters required for the 'force' mode
                                   'forcealpha': 0.5,
-                                  'forcemix': 2},
+                                  'forcemix': 'BFGS'},
                    'inpxml_changes': [],              # (expert) List of further changes applied to the inp.xml after the inpgen run
                   }                                   # tuples (function_name, [parameters]), have to be the function names supported by fleurinpmodifier
 

@@ -61,16 +61,17 @@ print(args)
 wf_para = Dict(dict={'fleur_runmax' : 4,
                      'density_converge' : 0.001,
                      'energy_converge' : 0.002,
-                     'mode' : 'force', # 'force', 'energy' or 'density'
+                     'mode' : 'density', # 'force', 'energy' or 'density'
                      'force_converge' : 0.2,
                      'itmax_per_run' : 30,
                      'force_dict' : {'qfix' : 2,
                                      'forcealpha' : 0.5,
-                                     'forcemix' : 2},
+                                     'forcemix' : 'BFGS'},
                      'serial' : False})
 
 options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                      'queue_name' : 'devel',
+                     'custom_scheduler_commands' : '',
                      'max_wallclock_seconds':  60*60})
 
 

@@ -336,7 +336,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     return core_states
 
 
-# TODO should be used from somewhere else, probable double
+# TODO should be used from somewhere else, probably double
 def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
     """
     Tries to make a float out of a string. If it can't it logs a warning

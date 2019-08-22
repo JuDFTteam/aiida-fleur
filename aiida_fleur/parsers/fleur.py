@@ -20,6 +20,7 @@ the parser. Makes testing and portability easier.
 # TODO: warnings
 from __future__ import absolute_import
 import os
+import re
 from datetime import date
 
 from aiida.parsers import Parser
@@ -73,10 +74,7 @@ class FleurParser(Parser):
 
         # these files should be at least present after success of a Fleur run
         calc = self.node
-
-        #default_files = {calc.get_attribute(
-        #    'outxml_file_name'), calc.get_attribute('inpxml_file_name')}
-        #other_files = {}
+        FleurCalculation = calc.process_class
 
         # this files should be retrieved
         should_retrieve = calc.get_attribute('retrieve_list')
@@ -104,24 +102,23 @@ class FleurParser(Parser):
         self.logger.info("file list {}".format(list_of_files))
 
         # has output xml file, otherwise error
-        if calc.get_attribute('outxml_file_name') not in list_of_files:
+        if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
             self.logger.error(
-                "XML out not found '{}'".format(calc.get_attribute('outxml_file_name')))
+                "XML out not found '{}'".format(FleurCalculation._OUTXML_FILE_NAME))
             return self.exit_codes.ERROR_NO_OUTXML
         else:
             has_xml_outfile = True
 
         # check if all files expected are there for the calculation
-        for filel in should_retrieve:
-            if filel not in list_of_files:
+        for file in should_retrieve:
+            if file not in list_of_files:
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
-                    " was probable not created by fleur".format(filel))
-                #return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
+                    " was probably not created by fleur".format(file))
 
         # check if something was written to the error file
-        if calc.get_attribute('error_file_name') in list_of_files:
-            errorfile = calc.get_attribute('error_file_name')
+        if FleurCalculation._ERROR_FILE_NAME in list_of_files:
+            errorfile = FleurCalculation._ERROR_FILE_NAME
             # read
             try:
                 with output_folder.open(errorfile, 'r') as efile:
@@ -131,24 +128,37 @@ class FleurParser(Parser):
                     "Failed to open error file: {}.".format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
-            # if not empty, has_error equals True, parse error.
             if error_file_lines:
 
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning(
-                        u'The following was written into std error and piped to {}'
+                        'The following was written into std error and piped to {}'
                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish'
-                                      'successfully.')
-                    return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+                                      ' successfully.')
 
-        if calc.get_attribute('dos_file_name') in list_of_files:
+                    mpiprocs = self.node.get_attribute('resources').get(
+                        'num_mpiprocs_per_machine', 1)
+
+                    with output_folder.open('memory_avail.txt', 'r') as mem_file:
+                        mem = mem_file.readline()
+                        mem_kb_avail = float(mem.split()[1])
+
+                    line_used = re.findall(r'used.+', error_file_lines)[0]
+                    kb_used = int(re.findall(r'\d+', line_used)[2])
+
+                    if kb_used * mpiprocs / mem_kb_avail > 0.93:
+                        return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
+                    else:
+                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+
+        if FleurCalculation._DOS_FILE_NAME in list_of_files:
             has_dos = True
-        if calc.get_attribute('band_file_name') in list_of_files:
+        if FleurCalculation._BAND_FILE_NAME in list_of_files:
             has_bands = True
 
         # if a relax.xml was retrieved
-        if calc.get_attribute('relax_file_name') in list_of_files:
+        if FleurCalculation._RELAX_FILE_NAME in list_of_files:
             self.logger.info("relax.xml file found in retrieved folder")
             has_relax_file = True
 
@@ -156,8 +166,7 @@ class FleurParser(Parser):
 
         if has_xml_outfile:
             # open output file
-            outxmlfile_opened = output_folder.open(
-                calc.get_attribute('outxml_file_name'), 'r')
+            outxmlfile_opened = output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r')
             simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
             outxmlfile_opened.close()
 
@@ -191,7 +200,7 @@ class FleurParser(Parser):
         # optional parse other files
         # DOS
         if has_dos_file:
-            dos_file = calc.get_attribute('dos_file_name')
+            dos_file = FleurCalculation._DOS_FILE_NAME
             # if dos_file is not None:
             try:
                 with output_folder.open(dos_file, 'r') as dosf:
@@ -205,7 +214,7 @@ class FleurParser(Parser):
         # Bands
         if has_bands_file:
             # TODO: be carefull there might be two files.
-            band_file = calc.get_attribute('band_file_name')
+            band_file = FleurCalculation._BAND_FILE_NAME
 
             # if band_file is not None:
             try:
@@ -218,7 +227,7 @@ class FleurParser(Parser):
             bands_data = parse_bands_file(bands_lines)
 
         if has_relax_file:
-            relax_name = calc.get_attribute('relax_file_name')
+            relax_name = FleurCalculation._RELAX_FILE_NAME
             try:
                 fleurinp = calc.inputs.fleurinpdata
             except NotExistent:
@@ -492,10 +501,7 @@ def parse_xmlout_file(outxmlfile):
                 'not exist, or something is wrong with the expression.'
                 ''.format(xpath))
             return []
-        if len(return_value) == 1:
-            return return_value
-        else:
-            return return_value
+        return return_value
 
     def get_xml_attribute(node, attributename):
         """

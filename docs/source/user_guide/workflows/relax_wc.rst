@@ -71,7 +71,7 @@ Workflow parameters.
                    'serial' : False,               # needed for SCF
                    'force_dict': {'qfix': 2,       # needed for SCF
                                   'forcealpha': 0.5,
-                                  'forcemix': 2},
+                                  'forcemix': 'BFGS'},
                    'itmax_per_run' : 30,           # needed for SCF
                    'inpxml_changes' : [],          # needed for SCF
                    }

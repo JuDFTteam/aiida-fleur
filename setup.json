@@ -37,7 +37,8 @@
             "sympy",
             "masci-tools",
             "future",
-            "ase"
+            "ase",
+            "pymatgen"
     ],
     "extras_require" : {
         "graphs ": [

@@ -119,6 +119,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import delete_att, set_species
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
+        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename,
                                  attribv, occ=None, create=False):
@@ -214,77 +215,12 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
-            """
-            Makes given changes directly in the inp.xml file. Afterwards
-            updates the inp.xml file representation and the current inp_userchanges
-            dictionary with the keys provided in the 'change_dict' dictionary.
-
-            :param fleurinp_tree_copy: a lxml tree that represents inp.xml
-            :param change_dict: a python dictionary with the keys to substitute.
-                                It works like dict.update(), adding new keys and
-                                overwriting existing keys.
-            
-            :returns new_tree: a lxml tree with applied changes
-            """
-            from aiida_fleur.tools.xml_util import write_new_fleur_xmlinp_file
-            from aiida_fleur.tools.xml_util import get_inpxml_file_structure
-
-            # TODO if we still want tracking that way, have to get fleurinp in argument
-            '''
-            if self.inp_userchanges is None:
-                self._set_attr('inp_userchanges', {})
-
-            # store change dict, to trace changes
-            currentchangedict = self.inp_userchanges
-            currentchangedict.update(change_dict)
-            self._set_attr('inp_userchanges', currentchangedict)
-
-            # load file, if it does not exist error will be thrown in routine
-            inpxmlfile = self.get_file_abs_path('inp.xml')
-
-            if self._has_schema:
-               #schema file for validation will be loaded later
-               pass
-            elif self._schema_file_path != None:
-                print('Warning: The User set the XMLSchema file path manually, your'
-                      'inp.xml will be evaluated! If it fails it is your own fault!')
-            else:
-                print('Warning: No XMLSchema file was provided, your inp.xml file '
-                      'will not be evaluated and parsed! (I should never get here)')
-
-            #read in tree
-            tree = etree.parse(inpxmlfile)
-            '''
-            tree = fleurinp_tree_copy
-            # apply changes to etree
-            xmlinpstructure = get_inpxml_file_structure()
-            new_tree = write_new_fleur_xmlinp_file(tree, change_dict, xmlinpstructure)
-
-            return new_tree
+            fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
+            return fleurinp_tree_copy
 
         def set_nkpts1(fleurinp_tree_copy, count, gamma):
-            """
-            Sets a k-point mesh directly into inp.xml
-
-            :param fleurinp_tree_copy: a lxml tree that represents inp.xml
-            :param count: number of k-points
-            :param gamma: a fortran-type boolen that controls if the gamma-point should be included
-                          in the k-point mesh
-
-            :returns new_tree: a lxml tree with applied changes
-            """
-
-            kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-            #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
-
-            tree = fleurinp_tree_copy
-            new_kpo = etree.Element(
-                'kPointCount',
-                count="{}".format(count),
-                gamma="{}".format(gamma))
-            new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
-
-            return new_tree
+            fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
+            return fleurinp_tree_copy
 
         actions = {
             'xml_set_attribv_occ': xml_set_attribv_occ1,
@@ -357,53 +293,187 @@ class FleurinpModifier(object):
         return outside_actions
 
     def xml_set_attribv_occ(self, xpathn, attributename, attribv, occ=None, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_attribv_occ()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param attributename: an attribute name
+        :param attribv: an attribute value which will be set
+        :param occ: a list of integers specifying number of occurrence to be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         if occ is None:
             occ = [0]
         self._tasks.append(('xml_set_attribv_occ', xpathn, attributename, attribv, occ, create))
 
     def xml_set_first_attribv(self, xpathn, attributename, attribv, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_first_attribv()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param attributename: an attribute name
+        :param attribv: an attribute value which will be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         self._tasks.append(('xml_set_first_attribv', xpathn, attributename, attribv, create))
 
     def xml_set_all_attribv(self, xpathn, attributename, attribv, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_all_attribv()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param attributename: an attribute name
+        :param attribv: an attribute value which will be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         self._tasks.append(('xml_set_all_attribv', xpathn, attributename, attribv, create))
 
     def xml_set_text(self, xpathn, text, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_text()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param text: text to be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         self._tasks.append(('xml_set_text', xpathn, text, create))
 
     def xml_set_text_occ(self, xpathn, text, create=False, occ=0):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_text_occ()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param text: text to be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        :param occ: an integer specifying number of occurrence to be set
+        """
         self._tasks.append(('xml_set_text_occ', xpathn, text, create, occ))
 
     def xml_set_all_text(self, xpathn, text, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_all_text()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute
+        :param text: text to be set
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         self._tasks.append(('xml_set_all_text', xpathn, text, create))
 
     def create_tag(self, xpath, newelement, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.create_tag()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path where to place a new tag
+        :param newelement: a tag name to be created
+        :param create: if True and there is no given xpath in the FleurinpData, creates it
+        """
         self._tasks.append(('create_tag', xpath, newelement, create))
 
     def delete_att(self, xpath, attrib):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.delete_att()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the attribute to be deleted
+        :param attrib: the name of an attribute
+        """
         self._tasks.append(('delete_att', xpath, attrib))
 
     def delete_tag(self, xpath):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.delete_tag()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the tag to be deleted
+        """
         self._tasks.append(('delete_tag', xpath))
 
     def replace_tag(self, xpath, newelement):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.replace_tag()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: a path to the tag to be replaced
+        :param newelement: a new tag
+        """
         self._tasks.append(('replace_tag', xpath, newelement))
 
     def set_species(self, species_name, attributedict, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.set_species()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param species_name: a path to the tag to be replaced
+        :param attributedict: attribute dictionary to be set into the specie
+        :param create: if True and there is no given specie in the FleurinpData, creates it
+        """
         self._tasks.append(('set_species', species_name, attributedict, create))
 
     def set_species_label(self, at_label, attributedict, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.set_species_label()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param at_label: Atom label which specie will be set
+        :param attributedict: attribute dictionary to be set into the specie
+        :param create: if True and there is no given specie in the FleurinpData, creates it
+        """
         self._tasks.append(('set_species_label', at_label, attributedict, create))
 
     def set_atomgr_att(self, attributedict, position=None, species=None, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param species_name: a path to the tag to be replaced
+        :param attributedict: attribute dictionary to be set into the atom group
+        :param create: if True and there is no given atom group in the FleurinpData, creates it
+        """
         self._tasks.append(('set_atomgr_att', attributedict, position, species, create))
 
     def set_atomgr_att_label(self, attributedict, atom_label, create=False):
+        """
+        Appends a :func:`~aiida_fleur.tools.xml_util.change_atomgr_att_label()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param attributedict: a new tag
+        :param atom_label: Atom label which atom group will be set
+        :param create: if True and there is no given atom group in the FleurinpData, creates it
+        """
         self._tasks.append(('set_atomgr_att_label', attributedict, atom_label, create))
 
     def set_inpchanges(self, change_dict):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_inpchanges()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param change_dict: a dictionary with changes
+
+        An example of change_dict::
+
+            change_dict = {'itmax' : 1,
+                           'l_noco': True,
+                           'ctail': False,
+                           'l_ss': True}
+        """
         self._tasks.append(('set_inpchanges', change_dict))
 
     def set_nkpts(self, count, gamma='F'):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_nkpts()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param attributedict: a new tag
+        :param atom_label: Atom label which atom group will be set
+        :param create: if True and there is no given atom group in the FleurinpData, creates it
+        """
         self._tasks.append(('set_nkpts', count, gamma))
 
     def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None, create=False):
@@ -419,8 +489,8 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        inpxmlfile = self._original.open(key='inp.xml')
-        tree = etree.parse(inpxmlfile)
+        with self._original.open(key='inp.xml') as inpxmlfile:
+           tree = etree.parse(inpxmlfile)
 
         try:  # could be not found or on another computer...
             xmlschema_tree = etree.parse(self._original._schema_file_path)
@@ -448,8 +518,8 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            inpxmlfile = self._original.open(key='inp.xml')
-            tree = etree.parse(inpxmlfile)
+            with self._original.open(key='inp.xml') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
         if display:

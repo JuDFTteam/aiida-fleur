@@ -109,36 +109,26 @@ class FleurDMIWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         #exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-                       message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
-                       message="SCF cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED',
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
                        message="Reference calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
+        spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
                        message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED',
+        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED',
                        message="Force theorem calculation failed.")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resources are not optimal.")
 
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation workflow version {}\n'
+        self.report('INFO: started DMI calculation workflow version {}\n'
                     ''.format(self._workflowversion))
         self.ctx.info = []
         self.ctx.warnings = []
@@ -149,6 +139,7 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
         self.ctx.t_energydict = []
+        self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
@@ -172,18 +163,9 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
 
-        # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label',
-                 {'at_label': atom_label,
-                  'attributedict': {'special': {'socscale': 0.0}},
-                  'create': True
-                 }))
-
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
-            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            error = ("Number of sqas_theta has to be equal to the number of sqas_phi")
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
@@ -206,7 +188,7 @@ class FleurDMIWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -319,7 +301,7 @@ class FleurDMIWorkChain(WorkChain):
             try:
                 fleurin = self.ctx.reference.outputs.fleurinp
             except NotExistent:
-                error = 'Fleurinp generated in the reference claculation is not found.'
+                error = 'Fleurinp generated in the reference calculation is not found.'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         else:
@@ -390,6 +372,14 @@ class FleurDMIWorkChain(WorkChain):
                               'atom_label': key
                              }))
 
+        # switch off SOC on an atom specie
+        for atom_label in self.ctx.wf_dict['soc_off']:
+            fchanges.append(('set_species_label',
+                             {'at_label': atom_label,
+                              'attributedict': {'special': {'socscale': 0.0}},
+                              'create': True
+                             }))
+
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
@@ -402,7 +392,7 @@ class FleurDMIWorkChain(WorkChain):
                 if not method:
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
-                             "plaese check/test your input. I abort..."
+                             "please check/test your input. I abort..."
                              "".format(method))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
@@ -419,7 +409,7 @@ class FleurDMIWorkChain(WorkChain):
                 #fleurmode.show(display=True)#, validate=True)
                 self.control_end_wc(error)
                 apply_c = False
-                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
+                return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
             # apply
             if apply_c:
@@ -481,7 +471,7 @@ class FleurDMIWorkChain(WorkChain):
         try:
             remote = load_node(pk_last).outputs.remote_folder
         except AttributeError:
-            message = ('Found no remote folder of the referece scf calculation.')
+            message = ('Found no remote folder of the reference scf calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
 
@@ -552,14 +542,15 @@ class FleurDMIWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         try:
-            t_energydict = calculation.outputs.output_parameters.dict.dmi_force_evSum
-            mae_thetas = calculation.outputs.output_parameters.dict.dmi_force_theta
-            mae_phis = calculation.outputs.output_parameters.dict.dmi_force_phi
-            num_ang = calculation.outputs.output_parameters.dict.dmi_force_angles
-            num_q_vectors = calculation.outputs.output_parameters.dict.dmi_force_qs
-            q_vectors = [self.ctx.wf_dict['q_vectors'][x-1] for x in
-                         calculation.outputs.output_parameters.dict.dmi_force_q]
-            e_u = calculation.outputs.output_parameters.dict.energy_units
+            out_dict = calculation.outputs.output_parameters.dict
+            t_energydict = out_dict.dmi_force_evSum
+            mae_thetas = out_dict.dmi_force_theta
+            mae_phis = out_dict.dmi_force_phi
+            num_ang = out_dict.dmi_force_angles
+            num_q_vectors = out_dict.dmi_force_qs
+            q_vectors = [self.ctx.wf_dict['q_vectors'][x-1] for x in out_dict.dmi_force_q]
+            e_u = out_dict.energy_units
+
             for i in range((num_q_vectors-1)*(num_ang), -1, -num_ang):
                 ref_enrg = t_energydict.pop(i)
                 q_vectors.pop(i)
@@ -603,7 +594,7 @@ class FleurDMIWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg) # because return_results still fails somewhen

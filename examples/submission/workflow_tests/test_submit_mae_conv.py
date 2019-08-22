@@ -70,6 +70,7 @@ wf_para = Dict(dict={'fleur_runmax': 10,
 
 options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
                      'queue_name' : 'devel',
+		             'custom_scheduler_commands' : '',
                      'max_wallclock_seconds':  60*60})
 
 bohr_a_0 = 0.52917721092 # A

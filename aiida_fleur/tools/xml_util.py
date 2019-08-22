@@ -245,9 +245,12 @@ def xml_set_attribv_occ(xmltree, xpathn, attributename, attribv, occ=None, creat
     Routine sets the value of an attribute in the xml file on only the places
     specified in occ
 
-    :param: an etree a xpath from root to the attribute and the attribute value
-    :param: occ, list of integers
-    :return: None, or an etree
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param attributename: an attribute name
+    :param attribv: an attribute value which will be set
+    :param occ: a list of integers specifying number of occurrence to be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
 
     Comment: Element.set will add the attribute if it does not exist,
              xpath expression has to exist
@@ -271,9 +274,13 @@ def xml_set_attribv_occ(xmltree, xpathn, attributename, attribv, occ=None, creat
 
 def xml_set_first_attribv(xmltree, xpathn, attributename, attribv, create=False):
     """
-    Routine sets the value of an attribute in the xml file
+    Routine sets the value of the first found attribute in the xml file
 
-    :param: an etree a xpath from root to the attribute and the attribute value
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param attributename: an attribute name
+    :param attribv: an attribute value which will be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
 
     :return: None, or an etree
 
@@ -296,7 +303,11 @@ def xml_set_all_attribv(xmltree, xpathn, attributename, attribv, create=False):
     """
     Routine sets the value of an attribute in the xml file on all places it occurs
 
-    :param: an etree a xpath from root to the attribute and the attribute value
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param attributename: an attribute name
+    :param attribv: an attribute value which will be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
 
     :return: None, or an etree
 
@@ -323,12 +334,21 @@ def xml_set_all_attribv(xmltree, xpathn, attributename, attribv, create=False):
 def xml_set_text(xmltree, xpathn, text, create=False, place_index=None, tag_order=None):
     """
     Routine sets the text of a tag in the xml file
-    Input: an etree a xpath from root to the tag and the text
-    Output: none, an etree
+
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param text: text to be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
+    :param place_index: if create=True, defines the place where to put a created tag
+    :param tag_order: if create=True, defines a tag order
+
     example:
-    xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
-    but also cordinates and Bravais Matrix!:
-    xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos', '1.20000 PI/3 5.1-MYCrazyCostant')
+
+        xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
+
+    but also coordinates and Bravais Matrix!:
+
+        xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos','1.20000 PI/3 5.1-MYCrazyCostant')
     """
 
     root = xmltree.getroot()
@@ -341,12 +361,14 @@ def xml_set_text(xmltree, xpathn, text, create=False, place_index=None, tag_orde
 def xml_set_text_occ(xmltree, xpathn, text, create=False, occ=0, place_index=None, tag_order=None):
     """
     Routine sets the text of a tag in the xml file
-    Input: an etree a xpath from root to the tag and the text
-    Output: none, an etree
-    example:
-    xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
-    but also cordinates and Bravais Matrix!:
-    xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos', '1.20000 PI/3 5.1-MYCrazyCostant')
+
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param text: text to be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
+    :param occ: an integer that sets occurrence number to be set
+    :param place_index: if create=True, defines the place where to put a created tag
+    :param tag_order: if create=True, defines a tag order
     """
 
     root = xmltree.getroot()
@@ -358,12 +380,13 @@ def xml_set_text_occ(xmltree, xpathn, text, create=False, occ=0, place_index=Non
 def xml_set_all_text(xmltree, xpathn, text, create=False):
     """
     Routine sets the text of a tag in the xml file
-    Input: an etree a xpath from root to the tag and the text
-    Output: none, an etree
-    example:
-    xml_set_text(tree, '/fleurInput/comment', 'Test Fleur calculation for AiiDA plug-in')
-    but also cordinates and Bravais Matrix!:
-    xml_set_text(tree, '/fleurInput/atomGroups/atomGroup/relPos', '1.20000 PI/3 5.1-MYCrazyCostant')
+    
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute
+    :param text: text to be set
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
+    :param place_index: if create=True, defines the place where to put a created tag
+    :param tag_order: if create=True, defines a tag order
     """
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpathn, create=create)
@@ -378,10 +401,16 @@ def xml_set_all_text(xmltree, xpathn, text, create=False):
 def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_order=None):
     """
     This method evaluates an xpath expresion and creates tag in an xmltree under the
-    returned nodes. If the path does exist things will be overriden, or created.
+    returned nodes. If the path does exist things will be overwritten, or created.
     Per default the new element is appended to the elements, but it can also be
     inserted in a certain position or after certain other tags.
 
+    :param xmlnode: an xmltree that represents inp.xml
+    :param xpathn: a path where to place a new tag
+    :param newelement: a tag name to be created
+    :param create: if True and there is no given xpath in the FleurinpData, creates it
+    :param place_index: if create=True, defines the place where to put a created tag
+    :param tag_order: if create=True, defines a tag order
     """
     #root = xmltree.getroot()
     if not etree.iselement(newelement):
@@ -442,10 +471,11 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
 
 def delete_att(xmltree, xpath, attrib):
     """
-    deletes an xml tag in an xmletree in place
+    Deletes an xml tag in an xmletree.
 
-    param: xmltree: xmltree (etree)
-    param: xpath: xpathexpression
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the attribute to be deleted
+    :param attrib: the name of an attribute
     """
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
@@ -460,10 +490,10 @@ def delete_att(xmltree, xpath, attrib):
 
 def delete_tag(xmltree, xpath):
     """
-    deletes an xml tag in an xmletree in place
+    Deletes an xml tag in an xmletree.
 
-    param: xmltree: xmltree (etree)
-    param: xpath: xpathexpression
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the tag to be deleted
     """
     root = xmltree.getroot()
     nodes = eval_xpath3(root, xpath)
@@ -478,9 +508,9 @@ def replace_tag(xmltree, xpath, newelement):
     """
     replaces a xml tag by another tag on an xmletree in place
 
-    param: xmltree: xmltree (etree)
-    param: xpath: xpathexpression
-    param: newelement: xmlElement
+    :param xmltree: an xmltree that represents inp.xml
+    :param xpathn: a path to the tag to be replaced
+    :param newelement: a new tag
     """
     root = xmltree.getroot()
 
@@ -674,8 +704,13 @@ def get_inpgen_para_from_xml(inpxmlfile):
 
 def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False):
     """
-    This method calls set_species method for a certain atom specie
-    that corresponds to an atom with a given label
+    This method calls :func:`~aiida_fleur.tools.xml_util.set_species()`
+    method for a certain atom specie that corresponds to an atom with a given label
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param at_label: string, a label of the atom which specie will be changed
+    :param attributedict: a python dict specifying what you want to change. 
+    :param create: bool, if species does not exist create it and all subtags?
     """
 
     specie = ''
@@ -700,17 +735,30 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     """
     Method to set parameters of a species tag of the fleur inp.xml file.
 
-    param: fleurinp_tree_copy, xml etree of the inp.xml
-    param: species_name : string, name of the species you want to change
-    param: attributedict: python dict: what you want to change
-    param: create: bool, if species does not exist create it and all subtags?
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param species_name: string, name of the specie you want to change
+    :param attributedict: a python dict specifying what you want to change. 
+    :param create: bool, if species does not exist create it and all subtags?
 
-    raises: ValueError, if species name is non existent in inp.xml and should not be created.
-    also if other given tags are garbage. (errors from eval_xpath() methods)
+    :raises ValueError: if species name is non existent in inp.xml and should not be created.
+                        also if other given tags are garbage. (errors from eval_xpath() methods)
 
-    return: fleurinp_tree_copy: xml etree of the new inp.xml
+    :return fleurinp_tree_copy: xml etree of the new inp.xml
 
+    **attributedict** is a python dictionary containing dictionaries that specify attributes
+    to be set inside the certain specie. For example, if one wants to set a MT radius it
+    can be done via::
 
+        attributedict = {'mtSphere' : {'radius' : 2.2}}
+    
+    Another example::
+
+        'attributedict': {'special': {'socscale': 0.0}}
+
+    that switches SOC terms on a sertain specie. ``mtSphere``, ``atomicCutoffs``, 
+    ``energyParameters``, ``lo``, ``electronConfig``, ``nocoParams``, ``ldaU`` and
+    ``special`` keys are supported. To find possible
+    keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also
@@ -836,10 +884,10 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                 xml_set_attribv_occ(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=create)
         elif key == 'special':
             eval_xpath3(fleurinp_tree_copy,
-                xpath_soc_scale,
-                create=True,
-                place_index=species_seq.index('special'),
-                tag_order=species_seq)
+                        xpath_soc_scale,
+                        create=True,
+                        place_index=species_seq.index('special'),
+                        tag_order=species_seq)
             for attrib, value in six.iteritems(val):
                 xml_set_attribv_occ(
                     fleurinp_tree_copy,
@@ -859,8 +907,8 @@ def add_lo(fleurinp_tree_copy, species_name, attributedict):
 
 def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=False):
     """
-    This method calls change_atomgr_att method for a certain atom specie
-    that corresponds to an atom with a given label
+    This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`
+    method for a certain atom specie that corresponds to an atom with a given label.
     """
 
     specie = ''
@@ -882,7 +930,26 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=
     return fleurinp_tree_copy
 
 def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
+    """
+    Method to set parameters of an atom group of the fleur inp.xml file.
 
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param attributedict: a python dict specifying what you want to change.
+    :param position: position of an atom group to be changed. If equals to 'all', all species will be changed
+    :param species: atom groups, corresponding to the given specie will be changed
+    :param create: bool, if species does not exist create it and all subtags?
+
+    :return fleurinp_tree_copy: xml etree of the new inp.xml
+
+    **attributedict** is a python dictionary containing dictionaries that specify attributes
+    to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
+    can be done via::
+
+        'attributedict': {'nocoParams': [('beta', val)]}
+
+    ``force`` and ``nocoParams`` keys are supported.
+    To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
+    """
     xpathatmgroup = '/fleurInput/atomGroups/atomGroup'
     xpathforce = '{}/force'.format(xpathatmgroup)
     xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
@@ -913,6 +980,184 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
     return fleurinp_tree_copy
 
+def set_inpchanges(fleurinp_tree_copy, change_dict):
+    """
+    Makes given changes directly in the inp.xml file. Afterwards
+    updates the inp.xml file representation and the current inp_userchanges
+    dictionary with the keys provided in the 'change_dict' dictionary.
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param change_dict: a python dictionary with the keys to substitute.
+                        It works like dict.update(), adding new keys and
+                        overwriting existing keys.
+    
+    :returns new_tree: a lxml tree with applied changes
+
+    An example of change_dict::
+
+            change_dict = {'itmax' : 1,
+                           'l_noco': True,
+                           'ctail': False,
+                           'l_ss': True}
+
+    A full list of supported keys in the change_dict can be found in
+    :py:func:`~aiida_fleur.tools.xml_util.get_inpxml_file_structure()`::
+
+            'comment': '/fleurInput/comment',
+            'relPos': '/fleurInput/atomGroups/atomGroup/relPos',
+            'filmPos': '/fleurInput/atomGroups/atomGroup/filmPos',
+            'absPos': '/fleurInput/atomGroups/atomGroup/absPos',
+            'qss': '/fleurInput/calculationSetup/nocoParams/qss',
+            'l_ss': '/fleurInput/calculationSetup/nocoParams',
+            'row-1': '/fleurInput/cell/bulkLattice/bravaisMatrix',
+            'row-2': '/fleurInput/cell/bulkLattice/bravaisMatrix',
+            'row-3': '/fleurInput/cell/bulkLattice/bravaisMatrix',
+            'a1': '/fleurInput/cell/filmLattice/a1',  # switches once
+            'dos': '/fleurInput/output',
+            'band': '/fleurInput/output',
+            'secvar': '/fleurInput/calculationSetup/expertModes',
+            'ctail': '/fleurInput/calculationSetup/coreElectrons',
+            'frcor': '/fleurInput/calculationSetup/coreElectrons',
+            'l_noco': '/fleurInput/calculationSetup/magnetism',
+            'l_J': '/fleurInput/calculationSetup/magnetism',
+            'swsp': '/fleurInput/calculationSetup/magnetism',
+            'lflip': '/fleurInput/calculationSetup/magnetism',
+            'off': '/fleurInput/calculationSetup/soc',
+            'spav': '/fleurInput/calculationSetup/soc',
+            'l_soc': '/fleurInput/calculationSetup/soc',
+            'soc66': '/fleurInput/calculationSetup/soc',
+            'pot8': '/fleurInput/calculationSetup/expertModes',
+            'eig66': '/fleurInput/calculationSetup/expertModes',
+            'l_f': '/fleurInput/calculationSetup/geometryOptimization',
+            'gamma': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+            'gauss': '',
+            'tria': '',
+            'invs': '',
+            'zrfs': '',
+            'vchk': '/fleurInput/output/checks',
+            'cdinf': '/fleurInput/output/checks',
+            'disp': '/fleurInput/output/checks',
+            'vacdos': '/fleurInput/output',
+            'integ': '/fleurInput/output/vacuumDOS',
+            'star': '/fleurInput/output/vacuumDOS',
+            'iplot': '/fleurInput/output/plotting',
+            'score': '/fleurInput/output/plotting',
+            'plplot': '/fleurInput/output/plotting',
+            'slice': '/fleurInput/output',
+            'pallst': '/fleurInput/output/chargeDensitySlicing',
+            'form66': '/fleurInput/output/specialOutput',
+            'eonly': '/fleurInput/output/specialOutput',
+            'bmt': '/fleurInput/output/specialOutput',
+            'relativisticCorrections': '/fleurInput/xcFunctional',
+            'calculate': '/fleurInput/atomGroups/atomGroup/force',
+            'flipSpin': '/fleurInput/atomSpecies/species',
+            'Kmax': '/fleurInput/calculationSetup/cutoffs',
+            'Gmax': '/fleurInput/calculationSetup/cutoffs',
+            'GmaxXC': '/fleurInput/calculationSetup/cutoffs',
+            'numbands': '/fleurInput/calculationSetup/cutoffs',
+            'itmax': '/fleurInput/calculationSetup/scfLoop',
+            'minDistance': '/fleurInput/calculationSetup/scfLoop',
+            'maxIterBroyd': '/fleurInput/calculationSetup/scfLoop',
+            'imix': '/fleurInput/calculationSetup/scfLoop',
+            'alpha': '/fleurInput/calculationSetup/scfLoop',
+            'spinf': '/fleurInput/calculationSetup/scfLoop',
+            'kcrel': '/fleurInput/calculationSetup/coreElectrons',
+            'jspins': '/fleurInput/calculationSetup/magnetism',
+            'theta': '/fleurInput/calculationSetup/soc',
+            'phi': '/fleurInput/calculationSetup/soc',
+            'gw': '/fleurInput/calculationSetup/expertModes',
+            'lpr': '/fleurInput/calculationSetup/expertModes',
+            'isec1': '/fleurInput/calculationSetup/expertModes',
+            'forcemix': '/fleurInput/calculationSetup/geometryOptimization',
+            'forcealpha': '/fleurInput/calculationSetup/geometryOptimization',
+            'force_converged': '/fleurInput/calculationSetup/geometryOptimization',
+            'qfix': '/fleurInput/calculationSetup/geometryOptimization',
+            'epsdisp': '/fleurInput/calculationSetup/geometryOptimization',
+            'epsforce': '/fleurInput/calculationSetup/geometryOptimization',
+            'valenceElectrons': '/fleurInput/calculationSetup/bzIntegration',
+            'mode': '/fleurInput/calculationSetup/bzIntegration',
+            'fermiSmearingEnergy': '/fleurInput/calculationSetup/bzIntegration',
+            'nx': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+            'ny': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+            'nz': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+            'count': '/fleurInput/calculationSetup/kPointCount',
+            'ellow': '/fleurInput/calculationSetup/energyParameterLimits',
+            'elup': '/fleurInput/calculationSetup',
+            'filename': '/fleurInput/cell/symmetryFile',
+            'scale': '/fleurInput/cell/bulkLattice',
+            'ndir': '/fleurInput/output/densityOfStates',
+            'minEnergy': '/fleurInput/output/densityOfStates',
+            'maxEnergy': '/fleurInput/output/densityOfStates',
+            'sigma': ' /fleurInput/output/densityOfStates',
+            'layers': '/fleurInput/output/vacuumDOS',
+            'nstars': '/fleurInput/output/vacuumDOS',
+            'locx1': '/fleurInput/output/vacuumDOS',
+            'locy1': '/fleurInput/output/vacuumDOS',
+            'locx2': '/fleurInput/output/vacuumDOS',
+            'locy2': '/fleurInput/output/vacuumDOS',
+            'nstm': '/fleurInput/output/vacuumDOS',
+            'tworkf': '/fleurInput/output/vacuumDOS',
+            'numkpts': '/fleurInput/output/chargeDensitySlicing',
+            'minEigenval': '/fleurInput/output/chargeDensitySlicing',
+            'maxEigenval': '/fleurInput/output/chargeDensitySlicing',
+            'nnne': '/fleurInput/output/chargeDensitySlicing',
+            'dVac': '/fleurInput/cell/filmLattice',
+            'dTilda': '/fleurInput/cell/filmLattice',
+            'xcFunctional': '/fleurInput/xcFunctional/@name',  # other_attributes_more
+            'name': {'/fleurInput/constantDefinitions', '/fleurInput/xcFunctional',
+                    '/fleurInput/atomSpecies/species'},
+            'value': '/fleurInput/constantDefinitions',
+            'element': '/fleurInput/atomSpecies/species',
+            'atomicNumber': '/fleurInput/atomSpecies/species',
+            'coreStates': '/fleurInput/atomSpecies/species',
+            'magMom': '/fleurInput/atomSpecies/species',
+            'radius': '/fleurInput/atomSpecies/species/mtSphere',
+            'gridPoints': '/fleurInput/atomSpecies/species/mtSphere',
+            'logIncrement': '/fleurInput/atomSpecies/species/mtSphere',
+            'lmax': '/fleurInput/atomSpecies/species/atomicCutoffs',
+            'lnonsphr': '/fleurInput/atomSpecies/species/atomicCutoffs',
+            's': '/fleurInput/atomSpecies/species/energyParameters',
+            'p': '/fleurInput/atomSpecies/species/energyParameters',
+            'd': '/fleurInput/atomSpecies/species/energyParameters',
+            'f': '/fleurInput/atomSpecies/species/energyParameters',
+            'type': '/fleurInput/atomSpecies/species/lo',
+            'l': '/fleurInput/atomSpecies/species/lo',
+            'n': '/fleurInput/atomSpecies/species/lo',
+            'eDeriv': '/fleurInput/atomSpecies/species/lo',
+            'species': '/fleurInput/atomGroups/atomGroup',
+            'relaxXYZ': '/fleurInput/atomGroups/atomGroup/force'
+
+    """
+    tree = fleurinp_tree_copy
+    # apply changes to etree
+    xmlinpstructure = get_inpxml_file_structure()
+    new_tree = write_new_fleur_xmlinp_file(tree, change_dict, xmlinpstructure)
+
+    return new_tree
+
+def set_nkpts(fleurinp_tree_copy, count, gamma):
+    """
+    Sets a k-point mesh directly into inp.xml
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param count: number of k-points
+    :param gamma: a fortran-type boolean that controls if the gamma-point should be included
+                    in the k-point mesh
+
+    :returns new_tree: a lxml tree with applied changes
+    """
+
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
+    #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
+
+    tree = fleurinp_tree_copy
+    new_kpo = etree.Element(
+        'kPointCount',
+        count="{}".format(count),
+        gamma="{}".format(gamma))
+    new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
+
+    return new_tree
 
 def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
     """
@@ -1192,14 +1437,19 @@ def inpxml_todict(parent, xmlstr):
 
             elif key in int_attributes_once1 or (key in int_attributes_several1):
                 # TODO int several
-                return_dict[key] = int(return_dict[key])
+                try:
+                    return_dict[key] = int(return_dict[key])
+                except ValueError:
+                    pass
+            elif key in float_attributes_once1 or (key in float_attributes_several1):
+                # TODO pressision?
+                try:
+                    return_dict[key] = float(return_dict[key])
+                except ValueError:
+                    pass
             elif key in string_attributes_once1 or (key in string_attributes_several1):
                 # TODO What attribute shall be set? all, one or several specific onces?
                 return_dict[key] = str(return_dict[key])
-            elif key in float_attributes_once1 or (key in float_attributes_several1):
-                # TODO pressision?
-                #return_dict[key] = float(return_dict[key])
-                pass
             elif key in pos_text1:
                 # TODO, prob not nessesary, since taken care of below check,
                 pass
@@ -1292,15 +1542,18 @@ def get_inpxml_file_structure():
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
-                           'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count', 'qfix', 'forcemix')
+                           'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
+
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
-                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
+                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval',
+                             'forcealpha', 'force_converged')
+                             
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp',
-                              'xcFunctional', 'fleurInputVersion', 'species')
+                              'xcFunctional', 'fleurInputVersion', 'species', 'forcemix')
 
     other_attributes_once = tuple(
         list(int_attributes_once) +
@@ -1462,7 +1715,7 @@ def get_inpxml_file_structure():
         'n': '/fleurInput/atomSpecies/species/lo',
         'eDeriv': '/fleurInput/atomSpecies/species/lo',
         'species': '/fleurInput/atomGroups/atomGroup',
-        'relaxXYX': '/fleurInput/atomGroups/atomGroup/force'
+        'relaxXYZ': '/fleurInput/atomGroups/atomGroup/force'
     }
     # 'constant': (name, value)
     # 'xcFunctional' : name

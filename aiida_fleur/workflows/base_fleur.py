@@ -12,9 +12,9 @@
 """
 This module contains the FleurBaseWorkChain.
 FleurBaseWorkChain is a workchain that wraps the submission of
-the FLEUR calculation. Inheritence from the BaseRestartWorkChain
-allows to add scenarious to restart a calculation in an
-automatic way if an expected failure occured.
+the FLEUR calculation. Inheritance from the BaseRestartWorkChain
+allows to add scenarios to restart a calculation in an
+automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
 import six
@@ -25,6 +25,7 @@ from aiida.engine import while_
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
+from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
 
 # pylint: disable=invalid-name
 FleurProcess = CalculationFactory('fleur.fleur')
@@ -35,7 +36,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
 
     _calculation_class = FleurProcess
-    _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
+    # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
 
     @classmethod
     def define(cls, spec):
@@ -59,7 +60,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.outline(
             cls.setup,
             cls.validate_inputs,
-            cls.check_kpts,
             while_(cls.should_run_calculation)(
                 cls.run_calculation,
                 cls.inspect_calculation,
@@ -76,11 +76,11 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
                        message='Something went wrong. More verbose output will be implemented.')
-        spec.exit_code(303, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message='Neither the `options` nor `automatic_parallelization` input was '
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message='Neither the `options` nor `automatic_parallelisation` input was '
                        'specified.')
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES',
-                       message="Computational resourses are not optimal.")
+        spec.exit_code(360, 'ERROR_NOT_OPTIMAL_RESOURCES',
+                       message="Computational resources are not optimal.")
 
     def validate_inputs(self):
         """
@@ -113,12 +113,19 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         else:
             self.ctx.inputs.settings = {}
 
-        resourses_input = self.ctx.inputs.metadata.options['resources']
+        resources_input = self.ctx.inputs.metadata.options['resources']
         try:
-            self.ctx.num_machines = int(resourses_input['num_machines'])
-            self.ctx.num_mpiprocs_per_machine = int(resourses_input['num_mpiprocs_per_machine'])
+            self.ctx.num_machines = int(resources_input['num_machines'])
+            self.ctx.num_mpiprocs_per_machine = int(resources_input['num_mpiprocs_per_machine'])
         except KeyError:
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            self.report('WARNING: Computation resources were not optimised.')
+        else:
+            try:
+                self.check_kpts()
+            except Warning:
+                self.report('ERROR: Not optimal computational resources.')
+                return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+
 
     def check_kpts(self):
         """
@@ -136,8 +143,37 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.report(message)
 
         if exit_code:
-            self.report('ERROR: Not optimal computational resourses.')
-            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
+            raise Warning('Not optimal computational resources, load less than 60%')
 
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+
+
+@register_error_handler(FleurBaseWorkChain, 999)
+def _handle_general_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED']):
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('Calculation failed for unknown reason, stop the Base workchain')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+
+@register_error_handler(FleurBaseWorkChain, 50)
+def _handle_not_enough_memory(self, calculation):
+    """
+    Calculation failed due to lack of memory.
+    Probably works for JURECA only, has to be tested for other systems.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_NOT_ENOUGH_MEMORY']):
+        self.ctx.restart_calc = None
+        self.ctx.is_finished = False
+        self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
+                    ' amount of computational nodes')
+        self.ctx.num_machines = self.ctx.num_machines * 2
+        self.check_kpts()
+
+        return ErrorHandlerReport(True, True)
