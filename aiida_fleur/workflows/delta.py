@@ -26,6 +26,7 @@ from string import digits
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, Group
+from aiida.orm import RemoteData, StructureData, Dict, SingleData
 from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import calcfunction as cf
@@ -37,12 +38,8 @@ import six
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
-
-RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-SingleData = DataFactory('singlefile')
+
 
 class fleur_delta_wc(WorkChain):
     """

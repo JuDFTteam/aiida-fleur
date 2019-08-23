@@ -19,7 +19,7 @@ from __future__ import print_function
 import os.path
 
 from aiida.plugins import DataFactory
-from aiida.orm import Code
+from aiida.orm import Code, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
@@ -29,9 +29,6 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 import six
 
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
 FleurInpData = DataFactory('fleur.fleurinp')
 
 

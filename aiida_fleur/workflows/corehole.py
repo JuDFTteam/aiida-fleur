@@ -30,7 +30,7 @@ import numpy as np
 from pprint import pprint
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.orm import Int
+from aiida.orm import Int, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, if_, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
@@ -47,9 +47,7 @@ from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 import six
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
+
 FleurinpData = DataFactory('fleur.fleurinp')
 
 

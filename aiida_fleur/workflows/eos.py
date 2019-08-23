@@ -27,7 +27,7 @@ from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.orm import Float
+from aiida.orm import Float, StructureData, Dict
 from aiida.engine import WorkChain, ToContext  # ,Outputs
 from aiida.engine import calcfunction as cf
 
@@ -37,8 +37,6 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
 # pylint: disable=invalid-name
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
 

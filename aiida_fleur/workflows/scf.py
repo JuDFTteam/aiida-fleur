@@ -27,6 +27,7 @@ from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
+from aiida.rom import StructureData, RemoteData, Dict
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -39,9 +40,6 @@ from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 # pylint: disable=invalid-name
-RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
 

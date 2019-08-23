@@ -23,14 +23,12 @@ from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code
+from aiida.rom import StructureData, RemoteData, Dict
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # pylint: disable=invalid-name
-StructureData = DataFactory('structure')
-RemoteData = DataFactory('remote')
-Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
 
