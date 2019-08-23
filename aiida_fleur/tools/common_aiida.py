@@ -34,12 +34,6 @@ import six
 from six.moves import input
 
 
-RemoteData = DataFactory('remote')
-ParameterData = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-
-
-
 def export_extras(nodes, filename='node_extras.txt'):
     """
     writes uuids and extras of given nodes to a file (json).

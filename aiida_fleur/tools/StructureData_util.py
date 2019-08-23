@@ -30,10 +30,6 @@ import six
 from six.moves import range
 
 
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-
-
 def is_structure(structure):
     """
     Test if the given input is a StructureData node, by obejct, id, or pk
@@ -339,6 +335,7 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
     :params parameterData: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
+    Dict = DataFactory('dict')
     if parameterData is None:
         parameterData = Dict(dict={})
     wf_dict = wf_para.get_dict()
@@ -506,6 +503,7 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
     """
     import spglib
+    Dict = DataFactory('dict')
 
     equi_info = []
     equi_info_symbol = []
@@ -603,6 +601,8 @@ def find_primitive_cell(structure):
     # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
+    StructureData = DataFactory('structure')
+
     symprec = 1e-7
     #print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
@@ -660,6 +660,7 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
     wraps the pymatgen function generate_all_slabs with some useful extras
     returns a dictionary of structures
     """
+    StructureData = DataFactory('structure')
     aiida_strucs = {}
     pymat_struc = initial_structure.get_pymatgen_structure()
     # currently the pymatgen method is buggy... no coordinates in x,y....
@@ -682,6 +683,7 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     """
     returns a dictionary of structures
     """
+    StructureData = DataFactory('structure')
     aiida_strucs = {}
     #pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
@@ -762,6 +764,7 @@ def sort_atoms_z_value(structure):
 
        returns: AiiDA structure
     """
+    StructureData = DataFactory('structure')
     new_structure = StructureData(cell=structure.cell)
     for kind in structure.kinds:
         new_structure.append_kind(kind)

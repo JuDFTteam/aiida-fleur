@@ -31,13 +31,6 @@ from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath
 import six
 #convert_to_float
 
-StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
-KpointsData = DataFactory('array.kpoints')
-
-FleurInpCalc = CalculationFactory('fleur.inpgen')
-FleurCalc = CalculationFactory('fleur.fleur')
-
 
 #import time
 #start_time = time.time()

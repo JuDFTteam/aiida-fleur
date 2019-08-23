@@ -17,7 +17,6 @@ import six
 
 
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
-ParameterData = DataFactory('dict')
 #355
 
 def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):

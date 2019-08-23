@@ -23,12 +23,6 @@ from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder as QB
 
 
-StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
-
-
-
-
 def extract_structure_info(keys, structures=None):
     """
     A method that collects a bunch of information (specified in keys) from 
@@ -40,6 +34,7 @@ def extract_structure_info(keys, structures=None):
     'init_cls', 'corehole', primitive]
 
     """
+    StructureData = DataFactory('structure')
     structure_list = []
     
     from aiida_fleur.tools.StructureData_util import get_spacegroup, is_structure

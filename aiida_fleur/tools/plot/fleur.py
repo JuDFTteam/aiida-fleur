@@ -35,12 +35,6 @@ from pprint import pprint
 import six
 from six.moves import range
 
-RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-
-
 
 ###########################
 ## general plot routine  ##
@@ -101,6 +95,7 @@ def plot_fleur_sn(node, show_dict=False, save=False):
     if it finds one
     """
     #show_dic = show_dic
+    ParameterData = DataFactory('dict')
     if isinstance(node, int):#pk
         node = load_node(node)
     
@@ -154,7 +149,8 @@ def plot_fleur_mn(nodelist, save=False):
     # Things to plot together
     all_nodes = {}
     ###    
-    
+    ParameterData = DataFactory('dict')
+
     if not isinstance(nodelist, list):
         print(('The nodelist provided: {}, type {} is not a list. I abort'.format(nodelist, type(nodelist))))
         return None

@@ -22,14 +22,6 @@ from aiida.orm import Node, load_node
 from aiida.plugins import DataFactory, CalculationFactory
 
 import six
-KpointsData =  DataFactory('array.kpoints')
-RemoteData = DataFactory('remote')
-Dict = DataFactory('dict')
-#FleurInpData = DataFactory('fleurinp.fleurinp')
-FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = CalculationFactory('fleur.fleur')
-FleurinpProcess = CalculationFactory('fleur.inpgen')
-
 
 def is_code(code):
     """
@@ -84,6 +76,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     '''
     get the input for a FLEUR calc
     '''
+    Dict = DataFactory('dict')
     inputs = {}
     if remote:
         inputs['parent_folder'] = remote
@@ -130,6 +123,8 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     """
     get the input for a inpgen calc
     """
+
+    FleurinpProcess = CalculationFactory('fleur.inpgen')
     inputs = FleurinpProcess.get_builder()#.get_inputs_template()
     #print('Template inpgen {} '.format(inputs))
 
@@ -291,6 +286,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
+    KpointsData =  DataFactory('array.kpoints')
     kp = KpointsData()
     kp.set_cell_from_structure(structure)
     density  = kpoint_density #1/A
