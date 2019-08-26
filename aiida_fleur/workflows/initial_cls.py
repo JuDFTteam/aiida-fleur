@@ -30,7 +30,7 @@ from aiida.engine import ToContext, WorkChain, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import Code, load_node, Group
-from aiida.rom import StructureData, Dict, RemoteData, 
+from aiida.orm import StructureData, Dict, RemoteData
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation

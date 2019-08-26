@@ -20,18 +20,15 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os.path
 from aiida.plugins import DataFactory
-from aiida.orm import Code
+from aiida.orm import Code, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import submit
-#from aiida.work.process_registry import ProcessRegistry
+
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
 
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
 FleurinpData = DataFactory('fleur.fleurinp')
 
 

@@ -153,7 +153,7 @@ def group_member(node):
     
     Comment: currently very greedy!
     """
-    from aiida.orm.group import Group
+    from aiida.orm import Group
     member_in = []
     #get all groups in db
     # for each group check if node is member of group
@@ -169,13 +169,13 @@ def group_member(node):
 
 def input_of_workcal(name, node):
     """
-    checks if a given node was input into a certain workcalculation
+    checks if a given node was input into a certain WorkChain
     and returns a list of workcalculation uuids of workcalculations with the given name
     """
-    from aiida.orm.implementation.general.calculation.work import WorkCalculation
+    from aiida.orm import WorkChainNode
     process_uuids = []
     for out in node.get_outputs():
-        if isinstance(out, WorkCalculation):
+        if isinstance(out, WorkChainNode):
             label = out.get_attr('_process_label')
             if label == name:
                 process_uuids.append(out.uuid)
@@ -186,12 +186,12 @@ def input_of_calcfunctions(node, name=''):
     checks if a given node was input into a certain calcfunction
     and returns a list of calcfunction uuids of calcfunction with the given name
     """
-    from aiida.orm.implementation.general.calculation.work import WorkCalculation
+    from aiida.orm import WorkChainNode
     process_uuids = []
     process_names = []
     outputs = node.get_outputs()
     for out in outputs:
-        if isinstance(out, WorkCalculation):
+        if isinstance(out, WorkChainNode):
             try:# TODO: is there a better way
                 label = out.get_attr('function_name')
             except AttributeError:
@@ -213,13 +213,13 @@ def get_cif_file(node):
     params: node: structureData node
     returns [cif_filename, cif_uuid, cif_folder]
     """
-    from aiida.orm.implementation.general.calculation.work import WorkCalculation
-    from aiida.orm.nodes.cif import CifData
+    from aiida.orm import WorkChainNode
+    from aiida.orm import CifData
     inputs = node.get_inputs()
     name = 'wf_struc_from_cif'# TODO: Bad solution, not general for me currently enough
     cif_uuid, cif_filename, cif_folder = '','',''
     for inp in inputs:
-        if isinstance(inp, WorkCalculation):
+        if isinstance(inp, WorkChainNode):
             try:# TODO: is there a better way
                 label = inp.get_attr('function_name') #process_label
             except AttributeError:

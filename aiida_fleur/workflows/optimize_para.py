@@ -19,7 +19,7 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 from __future__ import absolute_import
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.rom import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, RemoteData, Dict
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import WorkChain, ToContext#,Outputs

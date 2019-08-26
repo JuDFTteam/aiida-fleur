@@ -25,11 +25,10 @@ from datetime import date
 
 from aiida.parsers import Parser
 from aiida.plugins import DataFactory
+from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
 
-Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
-BandsData = DataFactory('array.bands')
 
 
 class FleurParser(Parser):

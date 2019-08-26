@@ -369,6 +369,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     """
     # TODO proper input checks?
     from aiida.common.constants import elements as PeriodicTableElements
+    from aiida.orm import Dict
 
     _atomic_numbers = {data['symbol']: num for num,
                            data in six.iteritems(PeriodicTableElements)}

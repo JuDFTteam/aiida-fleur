@@ -72,6 +72,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
         else:
             new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig}}
 
+    from aiida.orm import Dict
     new_parameter= Dict(dict=new_parameterd)
     #if parameterData:
     #    new_parameter = merge_parameter(parameterData, new_parameter)

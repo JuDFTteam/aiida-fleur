@@ -42,7 +42,8 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
 
     returns: AiiDA ParamterData Node
     """
-    
+
+    from aiida.common.exceptions import InputValidationError
     Dict = DataFactory('dict')
 
     # layout:
@@ -155,4 +156,4 @@ if __name__ == "__main__":
     parser.add_argument('--overwrite', type=bool, dest='overwrite',
                         help='Shall values given in Dict2 overwrite the values from the first Dict?', required=False)
     args = parser.parse_args()
-    merge_parameter(paremeter_data_new=args.para1, parameter=args.para1, overwrite=args.overwrite)
+    merge_parameter(Dict1=args.para1, Dict2=args.para1, overwrite=args.overwrite)

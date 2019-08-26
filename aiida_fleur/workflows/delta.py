@@ -26,7 +26,7 @@ from string import digits
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, Group
-from aiida.orm import RemoteData, StructureData, Dict, SingleData
+from aiida.orm import RemoteData, StructureData, Dict, SinglefileData
 from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import calcfunction as cf
@@ -159,7 +159,7 @@ class fleur_delta_wc(WorkChain):
 
         if group_pk is not None:
             try:
-                str_group = Group(dbgroup=group_pk)
+                str_group = Group(label=group_pk)
             except NotExistent:
                 str_group = None
                 message = ('You have to provide a valid pk for a Group of'
@@ -199,7 +199,7 @@ class fleur_delta_wc(WorkChain):
 
         if group_pk is not None:
             try:
-                para_group = Group(dbgroup=group_pk)
+                para_group = Group(label=group_pk)
             except NotExistent:
                 para_group = None
                 message = ('ERROR: You have to provide a valid pk for a Group of'
@@ -483,7 +483,7 @@ class fleur_delta_wc(WorkChain):
             #print('Done, but something went wrong.... Properly some '
             #            'individual eos workchain failed. Check the log.')
 
-        delta_file = SingleData.filename = self.ctx.outfilepath
+        delta_file = SinglefileData.filename = self.ctx.outfilepath
 
         print(delta_file)
 

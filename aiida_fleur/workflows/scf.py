@@ -27,7 +27,7 @@ from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
-from aiida.rom import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, RemoteData, Dict
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent

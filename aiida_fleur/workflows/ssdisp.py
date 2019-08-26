@@ -25,7 +25,7 @@ from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
-from aiida.rom import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, RemoteData, Dict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
