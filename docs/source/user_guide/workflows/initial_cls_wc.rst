@@ -1,5 +1,13 @@
+.. _init_cl_wc:
+
+* **Current version**: 0.3.4
+
 Fleur initial core-level shifts workflow
 ----------------------------------------
+
+.. warning::
+
+    This workchain does not work with AiiDA 1.0.0b version yet. They need to be updated.
 
 Class name, import from:
   ::

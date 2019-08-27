@@ -1,5 +1,5 @@
 {
-    "version" : "1.0.0",
+    "version" : "1.0.0a",
     "name" : "aiida-fleur",
     "url" : "https://github.com/JuDFTteam/aiida-fleur",
     "license" : "MIT License, see LICENSE.txt file.",
@@ -37,7 +37,8 @@
             "sympy",
             "masci-tools",
             "future",
-            "ase"
+            "ase",
+            "pymatgen"
     ],
     "extras_require" : {
         "graphs ": [
@@ -65,15 +66,19 @@
                 "fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser"
         ],
         "aiida.workflows" : [
-            "fleur.scf = aiida_fleur.workflows.scf:fleur_scf_wc",
+            "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.band = aiida_fleur.workflows.band:fleur_band_wc",
-            "fleur.eos = aiida_fleur.workflows.eos:fleur_eos_wc",
+            "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",
-            "fleur.mae = aiida_fleur.workflows.mae:fleur_mae_wc",
-	    "fleur.spst = aiida_fleur.workflows.spst:fleur_spst_wc",
-	    "fleur.dmi = aiida_fleur.workflows.dmi:fleur_dmi_wc"
+            "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",
+            "fleur.mae_conv = aiida_fleur.workflows.mae_conv:FleurMaeConvWorkChain",
+            "fleur.ssdisp = aiida_fleur.workflows.ssdisp:FleurSSDispWorkChain",
+            "fleur.ssdisp_conv = aiida_fleur.workflows.ssdisp_conv:FleurSSDispConvWorkChain",
+            "fleur.dmi = aiida_fleur.workflows.dmi:FleurDMIWorkChain",
+            "fleur.relax = aiida_fleur.workflows.relax:FleurRelaxWorkChain",
+            "fleur.base = aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
         ]
     }
 }

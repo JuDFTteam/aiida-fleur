@@ -9,7 +9,7 @@ if not is_dbenv_loaded():
     load_dbenv(profile='aiida_test')
 from aiida.plugins import Code, DataFactory
 from aiida.orm import load_node
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 StructureData = DataFactory('structure')
 ParameterData = DataFactory('parameter')
@@ -43,7 +43,7 @@ wf_para = Dict(dict={'fleur_runmax' : 4,
                               'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
                               'walltime_sec':  10*60})
 
-res = fleur_scf_wc.run(wf_parameters=wf_para, structure=s, 
+res = FleurScfWorkChain.run(wf_parameters=wf_para, structure=s, 
                             #calc_parameters=parameters, 
                             inpgen = code, fleur=code2)#, settings=settings)# 
 

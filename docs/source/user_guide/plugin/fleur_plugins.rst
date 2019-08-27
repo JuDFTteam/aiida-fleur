@@ -1,16 +1,22 @@
 =================================
-AiiDA FLEUR Code and Data Plugins
+AiiDA-FLEUR Code and Data Plugins
 =================================
 
-Layout:
+AiiDA-FLEUR plugin consists of three main parts:
 
-#. Fleur input generator (:ref:`inpgen_plugin`)
+#. FLEUR input generator (:ref:`inpgen_plugin`)
 #. FleurinpData structure (:ref:`fleurinp_data`)
-#. Fleur code (:ref:`fleurcode_plugin`)
+#. Fleurinpmodifier structure (:ref:`fleurinp_mod`)
+#. FLEUR code (:ref:`fleurcode_plugin`)
 
-The overall plugin for Fleur consists out of three AiiDA plugins. One for the Fleur input generator (inpgen), one datastructure (:py:class:`~aiida_fleur.data.fleurinp.FleurinpData`) representing the inp.xml file and a plugin for the Fleur code (fleur, fleur_MPI). See www.flapw.de.
-Other codes from the Fleur family (GFleur) or which build ontop (Spex) are
-not supported.
+Fleur input generator represents inpgen code, FLEUR code represents fleur and fleur_MPI codes.
+FleurinpData is a DataStructure type that represents input files needed for the FLEUR code and
+methods to work with them. They include inp.xml and some other situational files.
+Finally, Fleurinpmodifier consists of methods to change existing FleurinpData in a way to
+preserve data provinance.
+
+Other codes from the Fleur family (GFleur) or which are built on top of FLEUR (Spex) are
+not supported yet.
 
 .. toctree::
     :maxdepth: 4

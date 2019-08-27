@@ -26,23 +26,20 @@ from string import digits
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, Group
+from aiida.orm import RemoteData, StructureData, Dict, SinglefileData
 from aiida.engine import WorkChain, ToContext#, while_
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.eos import FleurEosWorkChain
 import six
 
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
-
-RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
 FleurInpData = DataFactory('fleur.fleurinp')
-SingleData = DataFactory('singlefile')
+
 
 class fleur_delta_wc(WorkChain):
     """
@@ -162,7 +159,7 @@ class fleur_delta_wc(WorkChain):
 
         if group_pk is not None:
             try:
-                str_group = Group(dbgroup=group_pk)
+                str_group = Group(label=group_pk)
             except NotExistent:
                 str_group = None
                 message = ('You have to provide a valid pk for a Group of'
@@ -202,7 +199,7 @@ class fleur_delta_wc(WorkChain):
 
         if group_pk is not None:
             try:
-                para_group = Group(dbgroup=group_pk)
+                para_group = Group(label=group_pk)
             except NotExistent:
                 para_group = None
                 message = ('ERROR: You have to provide a valid pk for a Group of'
@@ -296,12 +293,12 @@ class fleur_delta_wc(WorkChain):
             label = '|delta_wc|eos|{}'.format(formula)
             description = '|delta| fleur_eos_wc on {}'.format(formula)
             if para:
-                eos_future = submit(fleur_eos_wc,
+                eos_future = submit(FleurEosWorkChain,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 calc_parameters=para, inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 label=label, description=description)
             else: # TODO: run eos_wc_simple
-                eos_future = submit(fleur_eos_wc,
+                eos_future = submit(FleurEosWorkChain,
                                 wf_parameters=inputs['wc_eos_para'], structure=struc, options=inputs['options'],
                                 inpgen=inputs['inpgen'], fleur=inputs['fleur'],
                                 label=label, description=description)
@@ -486,7 +483,7 @@ class fleur_delta_wc(WorkChain):
             #print('Done, but something went wrong.... Properly some '
             #            'individual eos workchain failed. Check the log.')
 
-        delta_file = SingleData.filename = self.ctx.outfilepath
+        delta_file = SinglefileData.filename = self.ctx.outfilepath
 
         print(delta_file)
 

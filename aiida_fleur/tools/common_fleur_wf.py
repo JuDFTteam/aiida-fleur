@@ -22,14 +22,6 @@ from aiida.orm import Node, load_node
 from aiida.plugins import DataFactory, CalculationFactory
 
 import six
-KpointsData =  DataFactory('array.kpoints')
-RemoteData = DataFactory('remote')
-ParameterData = DataFactory('dict')
-#FleurInpData = DataFactory('fleurinp.fleurinp')
-FleurInpData = DataFactory('fleur.fleurinp')
-FleurProcess = CalculationFactory('fleur.fleur')
-FleurinpProcess = CalculationFactory('fleur.inpgen')
-
 
 def is_code(code):
     """
@@ -79,35 +71,28 @@ def is_code(code):
     '''
     return None
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False, **kwargs):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
+                     serial=False):
     '''
     get the input for a FLEUR calc
     '''
-    inputs = FleurProcess.get_builder()#get_inputs_template()
-    #print('Template fleur {} '.format(inputs))
+    Dict = DataFactory('dict')
+    inputs = {}
     if remote:
-        inputs.parent_folder = remote
+        inputs['parent_folder'] = remote
     if code:
-        inputs.code = code
+        inputs['code'] = code
     if fleurinp:
-        inputs.fleurinpdata = fleurinp
-
-    #for key, val in options.iteritems():
-    #    if val==None:
-    #        continue
-    #    elif isinstance(val, str):# ensure unicode 
-    #        inputs.options[key] = unicode(val)
-    #    else:
-    #        inputs.options[key] = val
+        inputs['fleurinpdata'] = fleurinp
 
     if description:
-        inputs.metadata.description = description
+        inputs['description'] = description
     else:
-        inputs.metadata.description = ''
+        inputs['description'] = ''
     if label:
-        inputs.metadata.label = label
+        inputs['label'] = label
     else:
-        inputs.metadata.label = ''
+        inputs['label'] = ''
     #TODO check  if code is parallel version?
     if serial:
         if not options:
@@ -117,32 +102,20 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machinces,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {"num_machines": 1}
+    else:
+        # set withmpi explicitly
+        options['withmpi'] = True
+
+    custom_commands = options.get('custom_scheduler_commands', '')
+    custom_commands = custom_commands + '\ncat /proc/meminfo > memory_avail.txt'
+    options['custom_scheduler_commands'] = custom_commands
 
     if settings:
-        inputs.settings = settings
+        inputs['settings'] = Dict(dict=settings)
 
     if options:
-        inputs.metadata.options = options
-    
-    # Currently this does not work, find out howto...
-    #for key, val in kwargs.iteritems(): 
-    #    inputs[key] = val
-    '''
-    options = {
-    "max_wallclock_seconds": int,
-    "resources": dict,
-    "custom_scheduler_commands": unicode,
-    "queue_name": basestring,
-    "computer": Computer,
-    "withmpi": bool,
-    "mpirun_extra_params": Any(list, tuple),
-    "import_sys_environment": bool,
-    "environment_variables": dict,
-    "priority": unicode,
-    "max_memory_kb": int,
-    "prepend_text": unicode,
-    "append_text": unicode}
-    '''
+        inputs['options'] = Dict(dict=options)
+
     return inputs
 
 
@@ -150,6 +123,8 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     """
     get the input for a inpgen calc
     """
+
+    FleurinpProcess = CalculationFactory('fleur.inpgen')
     inputs = FleurinpProcess.get_builder()#.get_inputs_template()
     #print('Template inpgen {} '.format(inputs))
 
@@ -159,14 +134,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
         inputs.code = inpgencode
     if params:
         inputs.parameters = params
-    #for key, val in options.iteritems():
-    #    if val==None:
-    #        #leave them out, otherwise the dict schema won't validate
-    #        continue
-    #    else:
-    #        inputs.options[key] = val
 
-        
     if description:
         inputs.metadata.description = description
     else:
@@ -318,6 +286,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
+    KpointsData =  DataFactory('array.kpoints')
     kp = KpointsData()
     kp.set_cell_from_structure(structure)
     density  = kpoint_density #1/A
@@ -575,9 +544,8 @@ def cost_ratio(total_costs, walltime_sec, ncores):
 def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     """
     This routine checks if the total number of requested cpus
-    is a factor of kpts and makes small optimisation.
+    is a factor of kpts and suggests the optimisation.
     """
-    #TODO: transfer this routine into common_fleur_wf.py?
     from sympy.ntheory.factor_ import factorint, divisors
     kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
     kpts = int(kpts[0])
@@ -585,7 +553,7 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     possible_nodes = [x for x in divisors_kpts if x<=nodes]
     suggestions = []
     for n_n in possible_nodes:
-        adviced_cpu_per_node = max([x for x in divisors(kpts/n_n) if x<=cpus_per_node])
+        adviced_cpu_per_node = max([x for x in divisors(kpts//n_n) if x<=cpus_per_node])
         suggestions.append((n_n, adviced_cpu_per_node))
     
     def best_criterion(suggestion):
@@ -616,3 +584,11 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
             'Changed the number of nodes from {} to {}. Number of k-points is {}.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
     return best_suggestion[0], best_suggestion[1], message, exit_status
 
+def cleanup_inputs(original_inputs):
+    """ Remove input nodes that is None from the input dict"""
+    import copy
+    inputs = copy.deepcopy(original_inputs)
+    for key, value in six.iteritems(original_inputs):
+        if value is None:
+            inputs.pop(key)
+    return inputs

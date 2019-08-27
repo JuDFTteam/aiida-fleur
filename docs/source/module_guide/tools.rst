@@ -24,7 +24,7 @@ Parameter utility
 General Parameter
 _________________
 
-.. automodule:: aiida_fleur.tools.ParameterData_util
+.. automodule:: aiida_fleur.tools.dict_util
    :members:
 
 Merge Parameter

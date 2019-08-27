@@ -47,20 +47,26 @@ Fleurinp modifier
 Workflows/Workchains
 ++++++++++++++++++++
 
-SCF: Fleur-scf wf
+Base: Fleur-Base WorkChain
+----------------------------
+
+.. automodule:: aiida_fleur.workflows.base_fleur
+   :members:
+
+SCF: Fleur-Scf WorkChain
 -------------------------
 
 .. automodule:: aiida_fleur.workflows.scf
    :members:
 
-Band: Bandstructure wf
-----------------------
+Band: Bandstructure WorkChain
+------------------------------
 
 .. automodule:: aiida_fleur.workflows.band
    :members:
 
-DOS: Density of states wf
--------------------------
+DOS: Density of states WorkChain
+---------------------------------
 
 .. automodule:: aiida_fleur.workflows.dos
    :members:
@@ -71,8 +77,8 @@ EOS: Calculate a lattice constant
 .. automodule:: aiida_fleur.workflows.eos
    :members:
 
-Relax: Relaxation of a Cystalstructure wf
------------------------------------------
+Relax: Relaxation of a Cystalstructure WorkChain
+-------------------------------------------------
 
 .. automodule:: aiida_fleur.workflows.relax
    :members:
@@ -95,4 +101,32 @@ delta: Calculates a Delta Factor
 .. automodule:: aiida_fleur.workflows.delta
    :members:
 
+MAE: Force-theorem calculation of magnetic anisotropy energies
+----------------------------------------------------------------
 
+.. automodule:: aiida_fleur.workflows.mae
+   :members:
+
+MAE Conv: Self-consistent calculation of magnetic anisotropy energies
+----------------------------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.mae_conv
+   :members:
+
+SSDisp: Force-theorem calculation of spin spiral dispersion
+----------------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.ssdisp
+   :members:
+
+SSDisp Conv: Self-consistent calculation of spin spiral dispersion
+-----------------------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.ssdisp_conv
+   :members:
+
+DMI: Force-theorem calculation of Dzjaloshinskii-Moriya interaction energy dispersion
+----------------------------------------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.dmi
+   :members:

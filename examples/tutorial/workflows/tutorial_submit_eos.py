@@ -31,7 +31,7 @@ if not is_dbenv_loaded():
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.engine.launch import submit, run
-from aiida_fleur.workflows.eos import fleur_eos_wc
+from aiida_fleur.workflows.eos import FleurEosWorkChain
 
 ParameterData = DataFactory('parameter')
 FleurinpData = DataFactory('fleur.fleurinp')
@@ -99,7 +99,7 @@ inputs['options'] = options
 # Noice that the nodes we created before are not yet stored in the database, 
 # but AiiDA will do so automaticly when we launch the workchain. 
 # To reuse nodes it might be a good idea, to save them before by hand and then load them 
-res = submit(fleur_eos_wc, **inputs)
+res = submit(FleurEosWorkChain, **inputs)
 
 # You can also run the workflow in the python interpreter as blocking
 #res = run(fleur_eos_wc, **inputs)

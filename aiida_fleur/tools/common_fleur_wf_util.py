@@ -202,9 +202,9 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     This method determines the formation energy.
     E_form =  E(A_xB_y) - x*E(A) - y*E(B)
 
-    :inputs: struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
-    :inputs: ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom, or per unit cell} for the elements
-    (if the formula of the elements contains a number the total energy is devided by that number)
+    :params struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
+    :params ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom, or per unit cell} for the elements
+                               (if the formula of the elements contains a number the total energy is devided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
     #eform_list = []

@@ -27,19 +27,13 @@ from __future__ import print_function
 import numpy as np
 #import matplotlib.pyplot as pp
 #from masci_tools.vis.plot_methods import *
-from aiida.plugins import Code, DataFactory
-from aiida.orm import load_node
-from aiida.orm.calculation.work import WorkCalculation
+from aiida.plugins import DataFactory
+from aiida.orm import load_node, Code
+from aiida.orm import WorkChainNode
 from aiida.orm import Node
 from pprint import pprint
 import six
 from six.moves import range
-
-RemoteData = DataFactory('remote')
-StructureData = DataFactory('structure')
-ParameterData = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-
 
 
 ###########################
@@ -101,6 +95,7 @@ def plot_fleur_sn(node, show_dict=False, save=False):
     if it finds one
     """
     #show_dic = show_dic
+    ParameterData = DataFactory('dict')
     if isinstance(node, int):#pk
         node = load_node(node)
     
@@ -108,15 +103,14 @@ def plot_fleur_sn(node, show_dict=False, save=False):
         node = load_node(node) #try
     
     if isinstance(node, Node):
-        if isinstance(node, WorkCalculation):
-            output_dict = node.get_outputs_dict()
-            keys = list(output_dict.keys())
-            for key in keys:
-                if 'output_' in key:
-                    if 'wc' in key or 'wf' in key:
-                        if 'para' in key: # currently only parameter nodes 
-                            # TODO more general...: get all output node, plotmethod has to deal with them...
-                            node = output_dict.get(key)# we only visualize last output node
+        if isinstance(node, WorkChainNode):
+            output_list = node.get_outgoing().all()
+            for out_link in output_list:
+                if 'output_' in out_link.link_label:
+                    if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
+                        if 'para' in out_link.link_label:# We are just looking for parameter 
+                            #nodes, structures, bands, dos and so on we tread different
+                            node = out_link.node# we only visualize last output node
         if isinstance(node, ParameterData):
             p_dict = node.get_dict()
             workflow_name = p_dict.get('workflow_name', None)
@@ -155,7 +149,8 @@ def plot_fleur_mn(nodelist, save=False):
     # Things to plot together
     all_nodes = {}
     ###    
-    
+    ParameterData = DataFactory('dict')
+
     if not isinstance(nodelist, list):
         print(('The nodelist provided: {}, type {} is not a list. I abort'.format(nodelist, type(nodelist))))
         return None
@@ -170,15 +165,14 @@ def plot_fleur_mn(nodelist, save=False):
             
         if isinstance(node, Node):
             node_labels.append(node.label)
-            if isinstance(node, WorkCalculation):
-                output_dict = node.get_outputs_dict()
-                keys = list(output_dict.keys())
-                for key in keys:
-                    if 'output_' in key:
-                        if 'wc' in key or 'wf' in key:
-                            if 'para' in key:# We are just looking for parameter 
+            if isinstance(node, WorkChainNode):
+                output_list = node.get_outgoing().all()
+                for out_link in output_list:
+                    if 'output_' in out_link.link_label:
+                        if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
+                            if 'para' in out_link.link_label:# We are just looking for parameter 
                                 #nodes, structures, bands, dos and so on we tread different
-                                node = output_dict.get(key)# we only visualize last output node
+                                node = out_link.node# we only visualize last output node
             if isinstance(node, ParameterData):
                 p_dict = node.get_dict()
                 workflow_name = p_dict.get('workflow_name', None)
@@ -225,23 +219,27 @@ def plot_fleur_scf_wc(nodes, labels=[]):
     iterations = []
     distance_all_n = []
     total_energy_n =[]
+    modes = []
     
     for node in nodes:
         iteration = []
         output_d = node.get_dict()
         total_energy = output_d.get('total_energy_all')
         distance_all = output_d.get('distance_charge_all')
-        iteration_total = output_d.get('iterations_total')        
+        iteration_total = output_d.get('iterations_total')
+        mode = output_d.get('conv_mode')
         for i in range(1, len(total_energy)+1):
             iteration.append(iteration_total - len(total_energy) + i)
         iterations.append(iteration)
         distance_all_n.append(distance_all)
         total_energy_n.append(total_energy)
+        modes.append(mode)
     #plot_convergence_results(distance_all, total_energy, iteration)
     if labels:
-        plot_convergence_results_m(distance_all_n, total_energy_n, iterations, plot_labels=labels)        
+        plot_convergence_results_m(distance_all_n, total_energy_n, iterations,
+                                   plot_labels=labels, modes=modes)        
     else:
-        plot_convergence_results_m(distance_all_n, total_energy_n, iterations)
+        plot_convergence_results_m(distance_all_n, total_energy_n, iterations, modes=modes)
 
 def plot_fleur_dos_wc(node, labels=[]):
     """
@@ -359,8 +357,8 @@ def plot_fleur_initial_cls_wc(nodes, labels=[]):
 
 
 functions_dict = {
-        'fleur_scf_wc' : plot_fleur_scf_wc,
-        'fleur_eos_wc' : plot_fleur_eos_wc,
+        'FleurScfWorkChain' : plot_fleur_scf_wc,
+        'FleurEosWorkChain' : plot_fleur_eos_wc,
         'fleur_dos_wc' : plot_fleur_dos_wc,
         'fleur_band_wc' : plot_fleur_band_wc,
         #'fleur_corehole_wc' : plot_fleur_corehole_wc,

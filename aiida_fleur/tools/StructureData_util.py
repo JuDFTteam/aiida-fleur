@@ -30,10 +30,6 @@ import six
 from six.moves import range
 
 
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-
-
 def is_structure(structure):
     """
     Test if the given input is a StructureData node, by obejct, id, or pk
@@ -312,30 +308,36 @@ def rel_to_abs_f(vector, cell):
         return False
 
 @cf
-def break_symmetry_wf(structure, wf_para, parameterData = Dict(dict={})):#, _label='break_symmetry_wf', _description='WF, Introduces certain kind objects in a crystal structure, and adapts the parameter node for inpgen accordingly. All kinds of the structure will become there own species.'):
+def break_symmetry_wf(structure, wf_para, parameterData=None):
     """
     This is the calcfunction of the routine break_symmetry, which
     introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
     If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
 
-    params: StructureData
-    params: wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
+    :params: StructureData
+    :params wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
 
-    {
-    params: atoms: python list of symbols, exp: ['W', 'Be']. This would make for
-                   all Be and W atoms their own kinds.
-    params: site: python list of integers, exp: [1, 4, 8]. This would create for
-                  atom 1, 4 and 8 their own kinds.
-    params: pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
-                 This will create a new kind for the atom at that position.
-                 Be carefull the number given has to match EXACTLY the position
-                 in the structure.
-    }
+                     'atoms': 
+                            python list of symbols, exp: ['W', 'Be']. This would make for
+                            all Be and W atoms their own kinds.
 
-    params: parameterData: AiiDa ParameterData
-    return: StructureData, a AiiDA crystal structure with new kind specification.
+                     'site': 
+                           python list of integers, exp: [1, 4, 8]. This would create for
+                           atom 1, 4 and 8 their own kinds.
+
+                     'pos': 
+                          python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
+                          This will create a new kind for the atom at that position.
+                          Be carefull the number given has to match EXACTLY the position
+                          in the structure.
+
+    :params parameterData: AiiDa ParameterData
+    :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
+    Dict = DataFactory('dict')
+    if parameterData is None:
+        parameterData = Dict(dict={})
     wf_dict = wf_para.get_dict()
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
@@ -353,12 +355,12 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     and names them that inpgen will make different species/atomgroups out of them.
     If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
 
-    params: StructureData
-    params: atoms: python list of symbols, exp: ['W', 'Be']. This would make for
+    :params: StructureData
+    :params atoms: python list of symbols, exp: ['W', 'Be']. This would make for
                    all Be and W atoms their own kinds.
-    params: site: python list of integers, exp: [1, 4, 8]. This would create for
+    :params site: python list of integers, exp: [1, 4, 8]. This would create for
                   atom 1, 4 and 8 their own kinds.
-    params: pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
+    :params pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
                  This will create a new kind for the atom at that position.
                  Be carefull the number given has to match EXACTLY the position
                  in the structure.
@@ -367,6 +369,7 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
     """
     # TODO proper input checks?
     from aiida.common.constants import elements as PeriodicTableElements
+    from aiida.orm import Dict
 
     _atomic_numbers = {data['symbol']: num for num,
                            data in six.iteritems(PeriodicTableElements)}
@@ -501,6 +504,7 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
     """
     import spglib
+    Dict = DataFactory('dict')
 
     equi_info = []
     equi_info_symbol = []
@@ -598,6 +602,8 @@ def find_primitive_cell(structure):
     # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
+    StructureData = DataFactory('structure')
+
     symprec = 1e-7
     #print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
@@ -655,6 +661,7 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
     wraps the pymatgen function generate_all_slabs with some useful extras
     returns a dictionary of structures
     """
+    StructureData = DataFactory('structure')
     aiida_strucs = {}
     pymat_struc = initial_structure.get_pymatgen_structure()
     # currently the pymatgen method is buggy... no coordinates in x,y....
@@ -677,6 +684,7 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     """
     returns a dictionary of structures
     """
+    StructureData = DataFactory('structure')
     aiida_strucs = {}
     #pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
@@ -757,6 +765,7 @@ def sort_atoms_z_value(structure):
 
        returns: AiiDA structure
     """
+    StructureData = DataFactory('structure')
     new_structure = StructureData(cell=structure.cell)
     for kind in structure.kinds:
         new_structure.append_kind(kind)

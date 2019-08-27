@@ -156,10 +156,9 @@ def get_econfig(element, full=False):
     """
     returns the econfiguration as a string of an element.
 
-    :param: element string
-    :param: full, bool (econfig without [He]...)
-    :return: string
-    Be careful with base strings...
+    :params element: element string
+    :params full: a bool (econfig without [He]...)
+    :returns: a econfig string
     """
     if isinstance(element, int):
         econ = econfiguration.get(element, {}).get('econfig', None)

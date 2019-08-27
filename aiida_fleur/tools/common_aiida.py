@@ -34,12 +34,6 @@ import six
 from six.moves import input
 
 
-RemoteData = DataFactory('remote')
-ParameterData = DataFactory('dict')
-FleurInpData = DataFactory('fleur.fleurinp')
-
-
-
 def export_extras(nodes, filename='node_extras.txt'):
     """
     writes uuids and extras of given nodes to a file (json).
@@ -130,17 +124,19 @@ def import_extras(filename):
 def delete_nodes(pks_to_delete):
     """
     Delete a set of nodes. (From AiiDA cockbook)
-    Note: TODO this has to be improved for workfchain removal. (checkpoints and co)
+    Note: TODO this has to be improved for workchain removal. (checkpoints and co)
     Also you will be backchecked.
 
     BE VERY CAREFUL!
-    TODO: CHECK IF THIS IS UP TO DATE!
     
-    :note: The script will also delete
-    all children calculations generated from the specified nodes.
+    .. note:: 
+    
+        The script will also delete
+        all children calculations generated from the specified nodes.
 
-    :param pks_to_delete: a list of the PKs of the nodes to delete
+    :params pks_to_delete: a list of the PKs of the nodes to delete
     """
+    # TODO: CHECK IF THIS IS UP TO DATE!
     from django.db import transaction
     from django.db.models import Q
     from aiida.backends.djsite.db import models
@@ -212,22 +208,27 @@ def create_group(name, nodes, description=None):
     Creates a group for a given node list.
 
     So far this is only an AiiDA verdi command.
-    :param name: string name for the group
-    :param nodes: list of AiiDA nodes, pks, or uuids
-    :param description, optional string that will be stored as description for the group
 
-    :return: the group, AiiDa group
-    usage example:
+    :params name: string name for the group
+    :params nodes: list of AiiDA nodes, pks, or uuids
+    :params description: optional string that will be stored as description for the group
 
-    group_name = 'delta_structures_gustav'
-    nodes_to_goup_pks =[2142, 2084]
-    create_group(group_name, nodes_to_group_pks, description='delta structures added by hand. from Gustavs inpgen files')
+    :returns: the group, AiiDa group
+
+    Usage example:
+
+    .. code-block:: python
+
+        group_name = 'delta_structures_gustav'
+        nodes_to_goup_pks =[2142, 2084]
+        create_group(group_name, nodes_to_group_pks, description='delta structures added by hand. from Gustavs inpgen files')
+
     """
-    group, created = Group.get_or_create(name=name)
+    group, created = Group.objects.get_or_create(label=name)
     if created:
-        print(('Group created with PK={} and name {}'.format(group.pk, group.name)))
+        print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.name, group.pk)))
+        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.label, group.pk)))
         answer = input()
         if answer.strip().lower() == 'y':
             pass
@@ -247,7 +248,7 @@ def create_group(name, nodes, description=None):
             pass
 
     group.add_nodes(nodes2)
-    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.name, group.pk)))
+    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.label, group.pk)))
 
     if description:
         group.description = description

@@ -11,155 +11,182 @@
 ###############################################################################
 
 """
-    In this module you find the workflow 'fleur_dmi_wc' for the calculation of
-    Dzyaloshinskii-Moriya interaction energy in reciprocal space.
+    In this module you find the workflow 'FleurDMIWorkChain' for the calculation of
+    DMI energy dispersion.
 """
-# TODO: calculation states
-from __future__ import absolute_import
-from aiida.engine import WorkChain, ToContext
-from aiida.engine import submit
-from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
-from aiida.common import CalcJobState
-from aiida.common.exceptions import NotExistent
 
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, optimize_calc_options
-from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from __future__ import absolute_import
+import copy
 
 import six
 from six.moves import range
+from six.moves import map
+from lxml.etree import XMLSyntaxError
 
-StructureData = DataFactory('structure')
-RemoteData = DataFactory('remote')
-Dict = DataFactory('dict')
+from aiida.engine import WorkChain, ToContext, if_
+from aiida.engine import calcfunction as cf
+from aiida.plugins import DataFactory
+from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import StructureData, RemoteData, Dict
+from aiida.common.exceptions import NotExistent
+
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+
+# pylint: disable=invalid-name
 FleurInpData = DataFactory('fleur.fleurinp')
+# pylint: enable=invalid-name
 
-class fleur_dmi_wc(WorkChain):
+class FleurDMIWorkChain(WorkChain):
     """
-        This workflow calculates DMI energy of a structure.
+    This workflow calculates spin spiral dispersion of a structure.
     """
-    
-    _workflowversion = "0.1.0a"
+
+    _workflowversion = "0.1.0"
 
     _default_options = {
-                        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
-                        'max_wallclock_seconds' : 2*60*60,
-                        'queue_name' : '',
-                        'custom_scheduler_commands' : '',
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
-    
+        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+        'max_wallclock_seconds' : 2*60*60,
+        'queue_name' : '',
+        'custom_scheduler_commands' : '',
+        'import_sys_environment' : False,
+        'environment_variables' : {}
+        }
+
     _wf_default = {
-                   'fleur_runmax': 10,              # Maximum number of fleur jobs/starts (defauld 30 iterations per start)
-                   'density_criterion' : 0.00005,  # Stop if charge denisty is converged below this value
-                   'serial' : False,                # execute fleur with mpi or without
-                   'itmax_per_run' : 30,
-                   'beta' : 0.000,
-                   'alpha_mix' : 0.015,              #mixing parameter alpha
-                   'sqas_theta' : '0.0 1.57079 1.57079',
-                   'sqas_phi' : '0.0 0.0 1.57079',
-                   'soc_off' : [],
-                   'prop_dir' : [1.0, 0.0, 0.0],     #propagation direction of a spin spiral
-                   'q_vectors': ['0.0 0.0 0.0',
-                                 '0.125 0.0 0.0',
-                                 '0.250 0.0 0.0',
-                                 '0.375 0.0 0.0'],
-                   'inpxml_changes' : [],      # (expert) List of further changes applied after the inpgen run
-                   }
-    
-    _scf_keys = ['fleur_runmax', 'density_criterion', 'serial', 'itmax_per_run', 'inpxml_changes']#a list of wf_params needed for scf workflow
+        'fleur_runmax': 10,
+        'density_converged' : 0.00005,
+        'serial' : False,
+        'itmax_per_run' : 30,
+        'beta' : {'all' : 1.57079},
+        'alpha_mix' : 0.015,
+        'sqas_theta' : [0.0, 1.57079, 1.57079],
+        'sqas_phi' : [0.0, 0.0, 1.57079],
+        'soc_off' : [],
+        'prop_dir' : [1.0, 0.0, 0.0],
+        'q_vectors': ['0.0 0.0 0.0',
+                      '0.125 0.0 0.0',
+                      '0.250 0.0 0.0',
+                      '0.375 0.0 0.0'],
+        'ref_qss' : '0.0 0.0 0.0',
+        'input_converged' : False,
+        'inpxml_changes' : []
+        }
+
+    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
-        super(fleur_dmi_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False, default=Dict(dict=cls._wf_default))
-        spec.input("structure", valid_type=StructureData, required=True)
+        super(FleurDMIWorkChain, cls).define(spec)
+        spec.input("wf_parameters", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._wf_default))
+        spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=Dict, required=False, default=Dict(dict=cls._default_options))
-        #spec.input("settings", valid_type=Dict, required=False)
-        
+        spec.input("remote", valid_type=RemoteData, required=False)
+        spec.input("fleurinp", valid_type=FleurInpData, required=False)
+        spec.input("options", valid_type=Dict, required=False,
+                   default=Dict(dict=cls._default_options))
+
         spec.outline(
             cls.start,
-            cls.converge_scf,
-            cls.force_sp_sp,
+            if_(cls.scf_needed)(
+                cls.converge_scf,
+                cls.force_after_scf,
+            ).else_(
+                cls.force_wo_scf,
+            ),
             cls.get_results,
             cls.return_results
         )
 
         spec.output('out', valid_type=Dict)
-    
+
         #exit codes
-        spec.exit_code(301, 'ERROR_INVALID_INPUT_RESOURCES', message="Invalid input, plaese check input configuration.")
-        spec.exit_code(302, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message="Some required inputs are missing.")
-        spec.exit_code(303, 'ERROR_INVALID_CODE_PROVIDED', message="Invalid code node specified, please check inpgen and fleur code nodes.")
-        spec.exit_code(304, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
-        spec.exit_code(305, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed.")
-        spec.exit_code(306, 'ERROR_CALCULATION_INVALID_INPUT_FILE', message="Input file is corrupted after user's modifications.")
-        spec.exit_code(307, 'ERROR_FLEUR_CALCULATION_FALIED', message="Fleur calculation failed.")
-        spec.exit_code(308, 'ERROR_CONVERGENCE_NOT_ARCHIVED', message="SCF cycle did not lead to convergence.")
-        spec.exit_code(309, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference calculation failed.")
-        spec.exit_code(310, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message="Found no reference calculation remote repository.")
-        spec.exit_code(311, 'ERROR_FORCE_THEOREM_FAILED', message="Force theorem calculation failed.")
-        spec.exit_code(333, 'ERROR_NOT_OPTIMAL_RESOURSES', message="Computational resourses are not optimal.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message="Invalid input, please check input configuration.")
+        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
+                       message="Invalid code node specified, check inpgen and fleur code nodes.")
+        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+                       message="Input file modification failed.")
+        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
+                       message="Input file is corrupted after user's modifications.")
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
+                       message="Reference calculation failed.")
+        spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
+                       message="Found no reference calculation remote repository.")
+        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED',
+                       message="Force theorem calculation failed.")
 
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation workflow version {}\n'
+        self.report('INFO: started DMI calculation workflow version {}\n'
                     ''.format(self._workflowversion))
-                    
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        #default of some outputs that will be written into the output node
-        #in case of workchain failure
-        self.ctx.t_energydict = []
+        self.ctx.energy_dict = []
         self.ctx.qs = []
         self.ctx.mae_thetas = []
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
+        self.ctx.t_energydict = []
+        self.ctx.q_vectors = []
 
-        #Retrieve WorkFlow parameters,
-        #initialize the dictionary using defaults if no wf paramters are given by user
+        # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default
-        
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
-        
-        #extend wf parameters given by user using defaults
+
+        # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
-        
-        #set up mixing parameter alpha
-        self.ctx.wf_dict['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'alpha' : self.ctx.wf_dict['alpha_mix']}}))
-        #switch off SOC on an atom specie
-        for specie in self.ctx.wf_dict['soc_off']:
-                self.ctx.wf_dict['inpxml_changes'].append((u'set_species', (specie, {u'special' : {u'socscale' : 0.0}}, True)))
-        
-        #Retrieve calculation options,
-        #initialize the dictionary using defaults if no options are given by user
+
+        if wf_dict['ref_qss'] != wf_dict['q_vectors'][0]:
+            error = ("The first q_vector of the forceTheorem step has to be equal to"
+                     "the q vector of the reference calculation.")
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
+        # set up mixing parameter alpha
+        self.ctx.wf_dict['inpxml_changes'].append(
+            ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
+
+        # Check if sqas_theta and sqas_phi have the same length
+        if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
+            error = ("Number of sqas_theta has to be equal to the number of sqas_phi")
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
+        # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
-        
         if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
-        
-        #extend options given by user using defaults
+
+        # extend options given by user using defaults
         for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        #Check if user gave valid inpgen and fleur execulatbles
+        if wf_dict['input_converged']:
+            if not 'remote' in self.inputs:
+                error = ("Remote calculation was not specified. However, 'input_converged was set"
+                         " to True.")
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -179,84 +206,177 @@ class fleur_dmi_wc(WorkChain):
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
+    def scf_needed(self):
+        """
+        This function handles setting of required parameters
+        for force theorem calculation depending on if scf is needed
+        or not.
+        """
+        self.ctx.scf_needed = not self.ctx.wf_dict['input_converged']
+        return self.ctx.scf_needed
+
     def converge_scf(self):
         """
         Converge charge density for collinear case which is a reference for futher
         spin spiral calculations.
         """
-        inputs = {}
         inputs = self.get_inputs_scf()
-        #set proper propagation direction to reduce symmetry
-        inputs['calc_parameters']['qss'] = {'x' : self.ctx.wf_dict['prop_dir'][0], 'y' : self.ctx.wf_dict['prop_dir'][1], 'z': self.ctx.wf_dict['prop_dir'][2]}
-        #change inp.xml to make a collinear calculation
-        inputs['wf_parameters']['inpxml_changes'].append((u'set_inpchanges', {u'change_dict' : {u'qss' : ' 0.0 0.0 0.0 ', u'l_noco' : False, u'ctail' : True, u'l_ss' : False}}))
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
-        inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
-        inputs['options'] = Dict(dict=inputs['options'])
-        res = self.submit(fleur_scf_wc, **inputs)
+        res = self.submit(FleurScfWorkChain, **inputs)
         return ToContext(reference=res)
-    
+
     def get_inputs_scf(self):
         """
-        Initialize inputs for scf workflow:
-        wf_param, options, calculation parameters, codes, structure
+        Initialize inputs for the scf cycle
         """
-        inputs = {}
+        inputs = self.inputs
+        input_scf = {}
 
-        # Retrieve scf wf parameters and options form inputs
-        #Note that dmi wf parameters contain more information than needed for scf
-        #Note: by the time this function is executed, wf_dict is initialized by inputs or defaults
         scf_wf_param = {}
         for key in self._scf_keys:
             scf_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = scf_wf_param
-        
-        inputs['options'] = self.ctx.options
-        
-        #Try to retrieve calculaion parameters from inputs
-        try:
-            calc_para = self.inputs.calc_parameters.get_dict()
-        except AttributeError:
-            calc_para = {}
-        inputs['calc_parameters'] = calc_para
 
-        #Initialize codes
-        inputs['inpgen'] = self.inputs.inpgen
-        inputs['fleur'] = self.inputs.fleur
-        #Initialize the strucutre
-        inputs['structure'] = self.inputs.structure
+        input_scf['wf_parameters'] = copy.deepcopy(scf_wf_param)
+        input_scf['wf_parameters']['mode'] = 'density'
 
-        return inputs
-    
-   
+        # set up q vector for the reference calculation
+        list_ref_qss = [float(x) for x in self.ctx.wf_dict['ref_qss'].split()]
+        if [x for x in list_ref_qss if x != 0]:
+            changes_dict = {'qss' : self.ctx.wf_dict['ref_qss'],
+                            'l_noco': True,
+                            'ctail': False,
+                            'l_ss': True}
+        else:
+            changes_dict = {'qss' : ' 0.0 0.0 0.0 ',
+                            'l_noco': False,
+                            'ctail': True,
+                            'l_ss': False}
+
+        input_scf['wf_parameters']['inpxml_changes'].append(
+            ('set_inpchanges', {'change_dict': changes_dict}))
+
+        #change beta parameter
+        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+            input_scf['wf_parameters']['inpxml_changes'].append(
+                ('set_atomgr_att_label',
+                 {'attributedict': {'nocoParams': [('beta', val)]},
+                  'atom_label': key
+                 }))
+
+        input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
+
+        input_scf['options'] = self.ctx.options
+        input_scf['options'] = Dict(dict=input_scf['options'])
+
+        input_scf['fleur'] = self.inputs.fleur
+
+        if 'fluerinp' in inputs:
+            input_scf['fleurinp'] = inputs.fleurinp
+            if 'remote' in inputs:
+                input_scf['remote_data'] = inputs.remote
+        elif 'remote' in inputs:
+            input_scf['remote_data'] = inputs.remote
+        elif 'structure' in inputs:
+            input_scf['structure'] = inputs.structure
+            input_scf['inpgen'] = inputs.inpgen
+            if 'calc_parameters' in inputs:
+                input_scf['calc_parameters'] = inputs.calc_parameters.get_dict()
+            else:
+                input_scf['calc_parameters'] = {}
+            input_scf['calc_parameters']['qss'] = {'x': self.ctx.wf_dict['prop_dir'][0],
+                                                   'y': self.ctx.wf_dict['prop_dir'][1],
+                                                   'z': self.ctx.wf_dict['prop_dir'][2]}
+            input_scf['calc_parameters'] = Dict(dict=input_scf['calc_parameters'])
+        return input_scf
+
     def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
         calculation.
         """
         self.report('INFO: run change_fleurinp')
-        try:
-            fleurin = self.ctx.reference.outputs.fleurinp
-        except NotExistent:
-            error = 'Fleurinp generated in the reference claculation is not found.'
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
+        if self.ctx.scf_needed:
+            try:
+                fleurin = self.ctx.reference.outputs.fleurinp
+            except NotExistent:
+                error = 'Fleurinp generated in the reference calculation is not found.'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
+        else:
+            if 'fleurinp' in self.inputs:
+                fleurin = self.inputs.fleurinp
+            else:
+                # In this case only remote is given
+                # fleurinp data has to be generated from the remote inp.xml file
+                remote_node = self.inputs.remote
+                for link in remote_node.get_incoming().all():
+                    if isinstance(link.node, CalcJobNode):
+                        parent_calc_node = link.node
+                retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
+                try:
+                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                except ValueError:
+                    fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+
+        #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
-        fchanges.extend([(u'create_tag', (u'/fleurInput', u'forceTheorem')),
-                    (u'create_tag', (u'/fleurInput/forceTheorem', u'DMI')),
-                    (u'create_tag', (u'/fleurInput/forceTheorem/DMI', u'qVectors')),
-                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'theta', self.ctx.wf_dict.get('sqas_theta'))),
-                    (u'xml_set_attribv_occ', (u'/fleurInput/forceTheorem/DMI', u'phi', self.ctx.wf_dict.get('sqas_phi')))])
-        
-        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append((u'create_tag', (u'/fleurInput/forceTheorem/DMI/qVectors', u'q')))
-            #next change requires a q-vector, create flag and a position of the <q> tag
-            fchanges.append((u'xml_set_text_occ', (u'/fleurInput/forceTheorem/DMI/qVectors/q', vectors, False, i)))
+        #create forceTheorem tags
+        fchanges.extend([('create_tag',
+                          {'xpath': '/fleurInput',
+                           'newelement': 'forceTheorem'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem',
+                           'newelement': 'DMI'
+                          }),
+                         ('create_tag',
+                          {'xpath': '/fleurInput/forceTheorem/DMI',
+                           'newelement': 'qVectors'
+                          }),
+                         ('xml_set_attribv_occ',
+                          {'xpathn': '/fleurInput/forceTheorem/DMI',
+                           'attributename': 'theta',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+                          }),
+                         ('xml_set_attribv_occ',
+                          {'xpathn': '/fleurInput/forceTheorem/DMI',
+                           'attributename': 'phi',
+                           'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+                          })
+                        ])
 
-        fchanges.append((u'set_inpchanges', {u'change_dict' : {u'itmax' : 1, u'l_noco' : True, u'ctail' : False, u'l_ss' : True}}))
-        #change beta parameter in all AtomGroups
-        fchanges.append((u'set_atomgr_att', ({u'nocoParams' : [(u'beta', self.ctx.wf_dict.get('beta'))]}, False, u'all')))
+        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
+            fchanges.append(('create_tag',
+                             {'xpath': '/fleurInput/forceTheorem/DMI/qVectors',
+                              'newelement': 'q'
+                             }))
+            fchanges.append(('xml_set_text_occ',
+                             {'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
+                              'text': vectors,
+                              'create': False,
+                              'occ': i
+                             }))
+
+        changes_dict = {'itmax' : 1,
+                        'l_noco': True,
+                        'ctail': False,
+                        'l_ss': True}
+        fchanges.append(('set_inpchanges', {'change_dict' : changes_dict}))
+
+        #change beta parameter
+        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+            fchanges.append(('set_atomgr_att_label',
+                             {'attributedict': {'nocoParams': [('beta', val)]},
+                              'atom_label': key
+                             }))
+
+        # switch off SOC on an atom specie
+        for atom_label in self.ctx.wf_dict['soc_off']:
+            fchanges.append(('set_species_label',
+                             {'at_label': atom_label,
+                              'attributedict': {'special': {'socscale': 0.0}},
+                              'create': True
+                             }))
 
         if fchanges:# change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -269,17 +389,14 @@ class fleur_dmi_wc(WorkChain):
                 method = avail_ac_dict.get(function, None)
                 if not method:
                     error = ("ERROR: Input 'inpxml_changes', function {} "
-                                "is not known to fleurinpmodifier class, "
-                                "plaese check/test your input. I abort..."
-                                "".format(method))
+                             "is not known to fleurinpmodifier class, "
+                             "please check/test your input. I abort..."
+                             "".format(method))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:# apply change
-                    if function==u'set_inpchanges':
-                        method(**para)
-                    else:
-                        method(*para)
+                    method(**para)
 
             # validate?
             apply_c = True
@@ -288,10 +405,10 @@ class fleur_dmi_wc(WorkChain):
             except XMLSyntaxError:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 #fleurmode.show(display=True)#, validate=True)
-                self.report(error)
+                self.control_end_wc(error)
                 apply_c = False
-                return self.exit_codes.ERROR_CALCULATION_INVALID_INPUT_FILE
-            
+                return self.exit_codes.ERROR_INVALID_INPUT_FILE
+
             # apply
             if apply_c:
                 out = fleurmode.freeze()
@@ -301,148 +418,166 @@ class fleur_dmi_wc(WorkChain):
             self.ctx.fleurinp = fleurin
             return
 
-    def check_kpts(self, fleurinp):
-        """
-        This routine checks if the total number of requested cpus
-        is a factor of kpts and makes small optimisation.
-        """
-        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp,
-                      int(self.ctx.options['resources']['num_machines']),
-                      int(self.ctx.options['resources']['num_mpiprocs_per_machine']))
-        
-        if 'WARNING' in message:
-            self.ctx.warnings.append(message)
-        
-        self.report(message)
-
-        self.ctx.options['resources']['num_machines'] = adv_nodes
-        self.ctx.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
-        
-        return exit_code
-
-    def force_sp_sp(self):
+    def force_after_scf(self):
         '''
-        This routine uses the force theorem to calculate energy dispersion of
-        spin spirals which is followed by DMI energy calculation.
+        This routine uses the force theorem to calculate energies dispersion of
+        spin spirals. The force theorem calculations implemented into the FLEUR
+        code. Hence a single iteration FLEUR input file having <forceTheorem> tag
+        has to be created and submitted.
         '''
         calc = self.ctx.reference
-        
+
         if not calc.is_finished_ok:
             message = ('The reference SCF calculation was not successful.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
-        
+
         try:
             outpara_node = calc.outputs.output_scf_wc_para
         except NotExistent:
             message = ('The reference SCF calculation failed, no scf output node.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
-        
+
         outpara = outpara_node.get_dict()
-        
-        t_e = outpara.get('total_energy', 'failed')
-        if not (type(t_e) is float):
-            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
+
+        if 'total_energy' not in outpara:
+            message = ('Did not manage to extract float total energy from the'
+                       ' reference SCF calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         self.report('INFO: run Force theorem calculations')
 
         status = self.change_fleurinp()
-        if not (status is None):
+        if status:
             return status
-            
+
         fleurin = self.ctx.fleurinp
-        if self.check_kpts(fleurin):
-            self.control_end_wc('ERROR: Not optimal computational resourses.')
-            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURSES
-        
+
         #Do not copy broyd* files from the parent
-        settings = Dict(dict={'remove_from_remotecopy_list': ['broyd*']})
-    
+        settings = {'remove_from_remotecopy_list': ['broyd*']}
+
         #Retrieve remote folder of the reference calculation
         pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
-            if i.node_type == u'process.calculation.calcjob.CalcJobNode.':
-                if i.process_class is FleurCalculation:
+            if i.node_type == u'process.workflow.workchain.WorkChainNode.':
+                if i.process_class is FleurBaseWorkChain:
                     if pk_last < i.pk:
                         pk_last = i.pk
         try:
-            remote_old = load_node(pk_last).outputs.remote_folder
+            remote = load_node(pk_last).outputs.remote_folder
         except AttributeError:
-            message = ('Found no remote folder of the referece scf calculation.')
+            message = ('Found no remote folder of the reference scf calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
-        
+
         label = 'Force_theorem_calculation'
         description = 'This is a force theorem calculation for all SQA'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
 
-        inputs_builder = get_inputs_fleur(code, remote_old, fleurin, options, label, description, settings, serial=self.ctx.wf_dict['serial'])
-        future = self.submit(inputs_builder)
-        return ToContext(forr=future)
+        inputs_builder = get_inputs_fleur(code, remote,
+                                          fleurin, options, label, description, settings,
+                                          serial=self.ctx.wf_dict['serial'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(f_t=future)
+
+    def force_wo_scf(self):
+        """
+        Submit FLEUR force theorem calculation using input remote
+        """
+        self.report('INFO: run Force theorem calculations')
+
+        status = self.change_fleurinp()
+        if status:
+            return status
+
+        fleurin = self.ctx.fleurinp
+
+        #Do not copy broyd* files from the parent
+        settings = {'remove_from_remotecopy_list': ['broyd*']}
+
+        #Retrieve remote folder from the inputs
+        remote = self.inputs.remote
+
+        label = 'Force_theorem_calculation'
+        description = 'This is a force theorem calculation for all SQA'
+
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+
+        inputs_builder = get_inputs_fleur(code, remote,
+                                          fleurin, options, label, description, settings,
+                                          serial=self.ctx.wf_dict['serial'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(f_t=future)
 
     def get_results(self):
-        htr2eV = 27.21138602
+        """
+        Generates results of the workchain.
+        """
+        htr_to_ev = 27.21138602
         t_energydict = []
         mae_thetas = []
         mae_phis = []
         num_ang = 0
-        num_qs = 0
-        qs = []
-        
+        num_q_vectors = 0
+        q_vectors = []
+
         try:
-            calculation = self.ctx.forr
+            calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
                 message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                        'exit status {}'.format(calculation.exit_status))
+                           'exit status {}'.format(calculation.exit_status))
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:
             message = 'ERROR: Something went wrong I do not have a force theorem Fleur calculation'
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
-    
+
         try:
-            t_energydict = calculation.outputs.output_parameters.dict.dmi_force_evSum
-            mae_thetas = calculation.outputs.output_parameters.dict.dmi_force_theta
-            mae_phis = calculation.outputs.output_parameters.dict.dmi_force_phi
-            num_ang = calculation.outputs.output_parameters.dict.dmi_force_angles
-            num_qs = calculation.outputs.output_parameters.dict.dmi_force_qs
-            qs = [self.ctx.wf_dict['q_vectors'][x-1] for x in
-                                                calculation.outputs.output_parameters.dict.dmi_force_q]
-            e_u = calculation.outputs.output_parameters.dict.energy_units
-            for i in range((num_qs-1)*(num_ang), -1, -num_ang):
+            out_dict = calculation.outputs.output_parameters.dict
+            t_energydict = out_dict.dmi_force_evSum
+            mae_thetas = out_dict.dmi_force_theta
+            mae_phis = out_dict.dmi_force_phi
+            num_ang = out_dict.dmi_force_angles
+            num_q_vectors = out_dict.dmi_force_qs
+            q_vectors = [self.ctx.wf_dict['q_vectors'][x-1] for x in out_dict.dmi_force_q]
+            e_u = out_dict.energy_units
+
+            for i in range((num_q_vectors-1)*(num_ang), -1, -num_ang):
                 ref_enrg = t_energydict.pop(i)
-                qs.pop(i)
+                q_vectors.pop(i)
                 for k in range(i, i+num_ang-1, 1):
-                   t_energydict[k] -= ref_enrg
-        
+                    t_energydict[k] -= ref_enrg
+
             if e_u == 'Htr' or 'htr':
                 for labels in range(len(t_energydict)):
-                    t_energydict[labels] = t_energydict[labels] * htr2eV
+                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         self.ctx.t_energydict = t_energydict
-        self.ctx.qs = qs
+        self.ctx.q_vectors = q_vectors
         self.ctx.mae_thetas = mae_thetas
         self.ctx.mae_phis = mae_phis
         self.ctx.num_ang = num_ang
-        
+
     def return_results(self):
-    
+        """
+        This function outputs results of the wc
+        """
         out = {'workflow_name' : self.__class__.__name__,
                'workflow_version' : self._workflowversion,
                'initial_structure': self.inputs.structure.uuid,
                'energies' : self.ctx.t_energydict,
-               'q_vectors' : self.ctx.qs,
+               'q_vectors' : self.ctx.q_vectors,
                'theta' : self.ctx.mae_thetas,
                'phi' : self.ctx.mae_phis,
                'angles' : self.ctx.num_ang-1,
@@ -450,15 +585,24 @@ class fleur_dmi_wc(WorkChain):
                'info' : self.ctx.info,
                'warnings' : self.ctx.warnings,
                'errors' : self.ctx.errors,
-                }
-       
-        self.out('out', Dict(dict=out))
+              }
+
+        out = save_output_node(Dict(dict=out))
+        self.out('out', out)
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg) # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
+@cf
+def save_output_node(out):
+    """
+    This calcfunction saves the out dict in the db
+    """
+    out_wc = out.clone()
+    return out_wc

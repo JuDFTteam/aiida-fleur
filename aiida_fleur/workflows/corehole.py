@@ -30,13 +30,13 @@ import numpy as np
 from pprint import pprint
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
-from aiida.orm import Int
+from aiida.orm import Int, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, if_, ToContext
 from aiida.engine import submit
 #from aiida.work.process_registry import ProcessRegistry
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.calculation.fleur import FleurCalculation
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.StructureData_util import supercell
 from aiida_fleur.tools.create_corehole import create_corehole_para#, create_corehole_fleurinp
 from aiida_fleur.tools.extract_corelevels import extract_corelevels
@@ -47,9 +47,7 @@ from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 import six
-StructureData = DataFactory('structure')
-Dict = DataFactory('dict')
-RemoteData = DataFactory('remote')
+
 FleurinpData = DataFactory('fleur.fleurinp')
 
 
@@ -81,41 +79,42 @@ class fleur_corehole_wc(WorkChain):
 
     :returns: output_corehole_wc_para: Dict node,  successful=True if no error
 
+    :uses workchains: fleur_scf_wc, fleur_relax_wc
+    :uses calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
 
-    :uses: workchains: fleur_scf_wc, fleur_relax_wc
-    :uses: calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
-
-    minimum input example:
-    1. Code1, Code2, Structure, (Parameters), (wf_parameters)
-    2. Code2, FleurinpData, (wf_parameters)
-
-    maximum input example:
-    1. Code1, Code2, Structure, Parameters,
-       wf_parameters: {
-            'method' : 'valence', # what method to use, default for valence to highest open shell
-            'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
-            'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
-            'corelevel': ['all'],        # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
-            'supercell_size' : [2,1,1], # size of the supercell [nx,ny,nz]
-            'para_group' : None,       # use parameter nodes from a parameter group
-            #'references' : 'calculate',# at some point aiida will have fast forwarding
-            'relax' : False,          # relax the unit cell first?
-            'relax_mode': 'Fleur',    # what releaxation do you want
-            'relax_para' : 'default', # parameter dict for the relaxation
-            'scf_para' : 'default',    # wf parameter dict for the scfs
-            'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
-            'resources' : {"num_machines": 1},# resources per job
-            'max_wallclock_seconds' : 6*60*60,    # walltime per job
-            'queue_name' : '',       # what queue to submit to
-            'serial' : True,           # run fleur in serial, or parallel?
-            #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-            'magnetic' : True          # jspins=2, makes a difference for coreholes
-            }
-    2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
-
-    Hints:
-    1. This workflow does not work with local codes!
     """
+    # This block of commented code was removed from the docstring and should be put
+    # to the other place in the documentation.
+    # minimum input example:
+    # 1. Code1, Code2, Structure, (Parameters), (wf_parameters)
+    # 2. Code2, FleurinpData, (wf_parameters)
+
+    # maximum input example:
+    # 1. Code1, Code2, Structure, Parameters,
+    #    wf_parameters: {
+    #         'method' : 'valence', # what method to use, default for valence to highest open shell
+    #         'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
+    #         'atoms' : ['all'],           # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
+    #         'corelevel': ['all'],        # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
+    #         'supercell_size' : [2,1,1], # size of the supercell [nx,ny,nz]
+    #         'para_group' : None,       # use parameter nodes from a parameter group
+    #         #'references' : 'calculate',# at some point aiida will have fast forwarding
+    #         'relax' : False,          # relax the unit cell first?
+    #         'relax_mode': 'Fleur',    # what releaxation do you want
+    #         'relax_para' : 'default', # parameter dict for the relaxation
+    #         'scf_para' : 'default',    # wf parameter dict for the scfs
+    #         'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
+    #         'resources' : {"num_machines": 1},# resources per job
+    #         'max_wallclock_seconds' : 6*60*60,    # walltime per job
+    #         'queue_name' : '',       # what queue to submit to
+    #         'serial' : True,           # run fleur in serial, or parallel?
+    #         #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
+    #         'magnetic' : True          # jspins=2, makes a difference for coreholes
+    #         }
+    # 2. Code2, FleurinpData, (remote-data), wf_parameters as in 1.
+
+    # Hints:
+    # 1. This workflow does not work with local codes!
 
     _workflowversion = "0.3.2"
     _default_options = {
@@ -715,16 +714,16 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, _description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
-                    res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, options=options,
+                    res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, options=options,
                                  calc_parameters=node[1], structure=node[0],
                                  inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                                  label=scf_label, description=scf_desc)#
@@ -808,17 +807,17 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i+1
             if isinstance(node, StructureData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, FleurinpData):
-                res = self.submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
+                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
                           inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
                           label=scf_label, description=scf_desc)#
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
                     if isinstance(node[2], Dict):
-                        res = self.submit(fleur_scf_wc, wf_parameters=node[2],
+                        res = self.submit(FleurScfWorkChain, wf_parameters=node[2],
                                      calc_parameters=node[1], structure=node[0], options=options,
                                      inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
                                      label=scf_label, description=scf_desc)#

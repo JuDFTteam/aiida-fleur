@@ -31,18 +31,18 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the scf workchain
         """
-        from aiida_fleur.workflows.scf import fleur_scf_wc
+        from aiida_fleur.workflows.scf import FleurScfWorkChain
         
-        builder = fleur_scf_wc.get_builder()
+        builder = FleurScfWorkChain.get_builder()
 
         
     def test_fleur_eos_wc_init(aiida_env):
         """
         Test the interface of the eos workchain
         """
-        from aiida_fleur.workflows.eos import fleur_eos_wc
+        from aiida_fleur.workflows.eos import FleurEosWorkChain
         
-        builder = fleur_eos_wc.get_builder()
+        builder = FleurEosWorkChain.get_builder()
 
 
     def test_fleur_dos_wc_init(aiida_env):
@@ -58,9 +58,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the band workchain
         """
-        from aiida_fleur.workflows.scf import fleur_scf_wc
+        from aiida_fleur.workflows.scf import FleurScfWorkChain
         
-        builder = fleur_scf_wc.get_builder()
+        builder = FleurScfWorkChain.get_builder()
 
 
     #def test_fleur_band2_wc_init(aiida_env):
@@ -103,9 +103,9 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the relax workchain
         """
-        from aiida_fleur.workflows.relax import fleur_relax_wc
+        from aiida_fleur.workflows.relax import FleurRelaxWorkChain
         
-        builder = fleur_relax_wc.get_builder()
+        builder = FleurRelaxWorkChain.get_builder()
 
 
     def test_fleur_optimize_para_wc_init(aiida_env):
@@ -121,24 +121,47 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         """
         Test the interface of the dmi workchain
         """
-        from aiida_fleur.workflows.mae import fleur_mae_wc
+        from aiida_fleur.workflows.mae import FleurMaeWorkChain
         
-        builder = fleur_mae_wc.get_builder()
+        builder = FleurMaeWorkChain.get_builder()
+
+    def test_fleur_mae_conv_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.mae_conv import FleurMaeConvWorkChain
+        
+        builder = FleurMaeConvWorkChain.get_builder()
 
 
     def test_fleur_spst_wc_init(aiida_env):
         """
         Test the interface of the dmi workchain
         """
-        from aiida_fleur.workflows.spst import fleur_spst_wc
+        from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
         
-        builder = fleur_spst_wc.get_builder()
+        builder = FleurSSDispWorkChain.get_builder()
 
+    def test_fleur_spst_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
+        
+        builder = FleurSSDispConvWorkChain.get_builder()
 
     def test_fleur_dmi_wc_init(aiida_env):
         """
         Test the interface of the dmi workchain
         """
-        from aiida_fleur.workflows.dmi import fleur_dmi_wc
+        from aiida_fleur.workflows.dmi import FleurDMIWorkChain
         
-        builder = fleur_dmi_wc.get_builder()
+        builder = FleurDMIWorkChain.get_builder()
+
+    def test_fleur_base_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+        
+        builder = FleurBaseWorkChain.get_builder()

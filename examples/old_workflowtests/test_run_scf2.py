@@ -18,7 +18,7 @@ import os
 
 from aiida.common.example_helpers import test_and_get_code
 from aiida.plugins import DataFactory
-from aiida_fleur.workflows.scf import fleur_scf_wc
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # If set to True, will ask AiiDA to run in serial mode (i.e., AiiDA will not
 # invoke the mpirun command in the submission script)
@@ -72,5 +72,5 @@ if submit_test:
     print('workchain do not have so far a submit_test function')
 else:
     print("Running fleur_scf_wc")
-    res = fleur_scf_wc.run(wf_parameters=wf_para, fleurinp=fleurinp, fleur=code)
+    res = FleurScfWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp, fleur=code)
                  #remote_data= remote, fleur=code)

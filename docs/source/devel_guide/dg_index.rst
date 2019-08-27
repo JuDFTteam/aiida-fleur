@@ -15,6 +15,7 @@ Folder name   Content
 ============  ============================================================
 calculation   Calculation plugin classes. Each within his own file.
 cmdline       Verdi command line plugins.
+common        BaseRestartWorkChain routines copied from AiiDA-core.
 data          Data structure plugins, each with his own file.
 fleur_schema  Place of the XML schema files to validate Fleur input files
 parsers       Parsers of the package, each has its own source file.
@@ -24,9 +25,10 @@ workflows     All workchain/workflow classes, each has its own file.
 ============  ============================================================
 
 
-The example folder contains currently some small manual examples, tutorials, calculation and workchain submission tests.
+The example folder contains currently some small manual examples, tutorials, calculation ]
+and workchain submission tests.
 Documentation is fully contained within the docs folder. The rest of the files are needed
-for python packaging or contineous integration things.
+for python packaging or continuous integration things.
 
 Automated tests
 +++++++++++++++
@@ -36,7 +38,7 @@ The more complete all code features and code lines are tested the better. Read t
 Through idealy there should be only one test(set) for one 'unit', to ensure that 
 if something breaks, it stays local in the test result. Tests should be clearly understanble and documented.
  
-You can run the continueoues integration tests of aiida-fleur via
+You can run the continuous integration tests of aiida-fleur via
 (for this make sure that postgres 'pg_ctl' command is in your path)::
 
   cd aiida_fleur/tests/

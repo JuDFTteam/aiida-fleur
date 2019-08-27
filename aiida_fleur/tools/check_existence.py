@@ -28,7 +28,6 @@ from aiida.engine.calculation.job import CalcJob
 from aiida.orm import Node
 
 
-ParameterData = DataFactory('dict')
 '''
 def check_existence_calc(input_nodes, successful=True):
     """

@@ -11,6 +11,7 @@ This is the AiiDA-FLEUR user's guide.
    ./plugin/fleur_plugins
    ./workflows/wc_index
    ./cmd/cmd_index
-   ./tools/tools_index.rst
+   ./tools/tools_index
+   ./tutorials/tutorials
    ./plugin/hints_faq
 

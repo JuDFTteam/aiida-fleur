@@ -29,8 +29,6 @@ from aiida.engine import calcfunction as cf
 from six.moves import range
 #from ase.io import cif
 
-cifdata = DataFactory('cif')
-structuredata = DataFactory('structure')
 
 def read_cif_folder(path=os.getcwd(), rekursive=True,
                     store=False, log=False,
@@ -50,6 +48,7 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     :params: extras: dir/string/arb: extras added to the structures stored in the db
 
     """
+    cifdata = DataFactory('cif')
     ############ parameters for the user to set ########
 
     parent_cif_folder = path    # folder path
