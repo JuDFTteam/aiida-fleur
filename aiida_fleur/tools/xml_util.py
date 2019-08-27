@@ -165,7 +165,7 @@ def convert_from_fortran_bool(stringbool):
 
 def convert_to_fortran_bool(boolean):
     """
-    Converts a Boolean as string to the format definded in the input
+    Converts a Boolean as string to the format defined in the input
 
     :param boolean: either a boolean or a string ('True', 'False', 'F', 'T')
 

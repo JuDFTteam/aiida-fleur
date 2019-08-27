@@ -39,7 +39,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.1.1"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -179,10 +179,10 @@ class FleurRelaxWorkChain(WorkChain):
         This function analyses inputs nodes and decides what
         is the input mode:
 
-        1. Fleurinp is given -> converge, cycle
-        2. Fleurinp and remote are given -> take cdn1 from remote, converge, cycle
-        3. Remote is given -> take inp.xml and cdn1 from remote, converge, cycle
-        4. Structure is given -> run inpgen, converge, cycle
+        1. Fleurinp is given -> relax iterations
+        2. Fleurinp and remote are given -> take cdn1 from remote, relax iterations
+        3. Remote is given -> take inp.xml and cdn1 from remote, relax iterations
+        4. Structure is given -> run inpgen, relax iterations
 
         """
         inputs = cleanup_inputs(self.inputs)
@@ -206,7 +206,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def converge_scf(self):
         """
-        Converge charge density for collinear case.
+        Submits :class:`aiida_fleur.workflows.scf.FleurScfWorkChain`.
         """
         inputs = {}
         if self.ctx.loop_count:
@@ -218,7 +218,9 @@ class FleurRelaxWorkChain(WorkChain):
 
     def get_inputs_first_scf(self):
         """
-        Initialize inputs for the first scf cycle
+        Initialize inputs for the first iteration. Here one can find initialization of different
+        input regimes described in
+        :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.validate()`.
         """
         inputs = cleanup_inputs(self.inputs)
 
@@ -252,7 +254,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def get_inputs_scf(self):
         """
-        Initialize inputs for the first scf cycle
+        Initializes inputs for further iterations.
         """
         input_scf = {}
 
@@ -281,8 +283,9 @@ class FleurRelaxWorkChain(WorkChain):
 
     def condition(self):
         """
-        Returns True if structure is optimised
-        and False otherwise
+        Checks if relaxation criteria is achieved.
+
+        :return: True if structure is optimised and False otherwise
         """
         try:
             scf_wc = self.ctx.scf_res
@@ -301,9 +304,10 @@ class FleurRelaxWorkChain(WorkChain):
         try:
             self.ctx.forces.append(scf_wc.outputs.output_scf_wc_para.dict.force_largest)
         except AttributeError:
-            message = 'ERROR: Did not manage to read the largest force'
-            self.control_end_wc(message)
-            return self.exit_codes.ERROR_RELAX_FAILED
+            # message = 'ERROR: Did not manage to read the largest force'
+            # self.control_end_wc(message)
+            # return self.exit_codes.ERROR_RELAX_FAILED
+            return False
 
         largest_now = abs(self.ctx.forces[-1])
 
@@ -325,7 +329,9 @@ class FleurRelaxWorkChain(WorkChain):
 
     def generate_new_fleurinp(self):
         """
-        This function generates a new fleurinp if needed
+        This function fetches relax.xml from the previous iteration and calls
+        :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.analyse_relax()`.
+        New FleurinpData is stored in the context.
         """
         scf_wc = self.ctx.scf_res
         last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
@@ -341,7 +347,13 @@ class FleurRelaxWorkChain(WorkChain):
     @staticmethod
     def analyse_relax(relax_dict):
         """
-        This function generates a new fleurinp if needed
+        This function generates a new fleurinp analysing parsed relax.xml from the previous
+        calculation.
+
+        **NOT IMPLEMENTED YET**
+
+        :param relax_dict: parsed relax.xml from the previous calculation
+        :return new_fleurinp: new FleurinpData object that will be used for next relax iteration
         """
         # TODO: implement this function, now always use relax.xml gemerated in FLEUR
         if False:
@@ -353,7 +365,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Generates results of the workchain.
         Creates a new structure data node which is an
-        optimized structure
+        optimized structure.
         """
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
@@ -379,7 +391,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def return_results(self):
         """
-        This function outputs results of the wc
+        This function stores results of the workchain into the output nodes.
         """
 
         out = {'workflow_name': self.__class__.__name__,
@@ -410,7 +422,7 @@ class FleurRelaxWorkChain(WorkChain):
     def control_end_wc(self, errormsg):
         """
         Controlled way to shutdown the workchain. It will initialize the output nodes
-        The shutdown of the workchain will has to be done afterwards
+        The shutdown of the workchain will has to be done afterwards.
         """
         self.report(errormsg)
         self.ctx.errors.append(errormsg)
@@ -419,7 +431,7 @@ class FleurRelaxWorkChain(WorkChain):
 @cf
 def save_structure(structure):
     """
-    Save a structure data node
+    Save a structure data node to provide correct provenence.
     """
     structure_return = structure.clone()
     return structure_return
@@ -427,7 +439,7 @@ def save_structure(structure):
 @cf
 def save_output_node(out):
     """
-    This calcfunction saves the out dict in the db
+    Save the out dict in the db to provide correct provenance.
     """
     out_wc = out.clone()
     return out_wc

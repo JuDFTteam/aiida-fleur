@@ -3,7 +3,7 @@
 Fleur structure optimization workchain
 --------------------------------------
 
-* **Current version**: 0.1.0
+* **Current version**: 0.1.1
 * **Class**: :py:class:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.relax``
 * **Workflow type**: Basic workflow
@@ -31,6 +31,8 @@ checks if the largest force is smaller than the
 threshold. If the largest force is bigger, submits a new
 :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain` for next step structure
 proposed by FLEUR.
+
+All structure optimization routines implemented in the FLEUR code, the workchain only wraps it.
 
 Input nodes
 ^^^^^^^^^^^
@@ -77,8 +79,8 @@ Workflow parameters.
                    'inpxml_changes' : [],          # needed for SCF
                    }
 
-Layout
-^^^^^^
+Supported input configurations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Geometry optimization workchain has several
 input combinations that implicitly define the workchain layout. Depending
 on the setup of the inputs, one of four supported scenarios will happen:
@@ -105,10 +107,44 @@ on the setup of the inputs, one of four supported scenarios will happen:
 
 Example usage
 ^^^^^^^^^^^^^
+Has to be documented.
 
 Output node example
 ^^^^^^^^^^^^^^^^^^^
+For now output node contains the minimal amount of information. The content can be easily extended
+on demand, please contact to developers for request.
+
+.. code-block:: python
+
+    {
+        "errors": [],
+        "force": [
+            0.03636428
+        ],
+        "force_iter_done": 1,
+        "info": [],
+        "initial_structure": "181c1e8d-3c56-4009-b0bb-e8b76cb417e2",
+        "warnings": [],
+        "workflow_name": "FleurRelaxWorkChain",
+        "workflow_version": "0.1.0"
+    }
 
 Error handling
 ^^^^^^^^^^^^^^
-  Still has to be documented
+A list of implemented exit codes:
+
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| Code | Name                          | Meaning                                                                                                |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| 230  | ERROR_INVALID_INPUT_RESOURCES | Input nodes do not correspond to any valid input configuration.                                        |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| 231  | ERROR_INVALID_CODE_PROVIDED   | Input codes do not correspond to fleur or inpgen codes respectively.                                   |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| 350  | ERROR_DID_NOT_CONVERGE        | The workchain execution did not lead to relaxation criterion. Thrown in the vary end of the workchain. |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| 351  | ERROR_RELAX_FAILED            | A relaxation iteration (a SCF workchain) failed.                                                       |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+| 352  | ERROR_NO_RELAX_OUTPUT         | No parsed relax.xml output of SCF workchain found.                                                     |
++------+-------------------------------+--------------------------------------------------------------------------------------------------------+
+
+If your workchain crashes and stops in *Excepted* state, please open a new issue on the Github page.
