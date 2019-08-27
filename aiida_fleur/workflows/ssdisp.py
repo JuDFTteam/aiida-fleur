@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import copy
 
 import six
+from six.moves import map
 from lxml.etree import XMLSyntaxError
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -62,11 +63,11 @@ class FleurSSDispWorkChain(WorkChain):
         'beta' : {'all' : 1.57079},
         'alpha_mix' : 0.015,
         'prop_dir' : [1.0, 0.0, 0.0],
-        'q_vectors': ['0.0 0.0 0.0',
-                      '0.125 0.0 0.0',
-                      '0.250 0.0 0.0',
-                      '0.375 0.0 0.0'],
-        'ref_qss' : '0.0 0.0 0.0',
+        'q_vectors': [[0.0, 0.0, 0.0],
+                      [0.125, 0.0, 0.0],
+                      [0.250, 0.0, 0.0],
+                      [0.375, 0.0, 0.0]],
+        'ref_qss' : [0.0, 0.0, 0.0],
         'input_converged' : False,
         'inpxml_changes' : []
         }
@@ -314,13 +315,14 @@ class FleurSSDispWorkChain(WorkChain):
                           })])
 
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
+
             fchanges.append(('create_tag',
                              {'xpath': '/fleurInput/forceTheorem/spinSpiralDispersion',
                               'newelement': 'q'
                              }))
             fchanges.append(('xml_set_text_occ',
                              {'xpathn': '/fleurInput/forceTheorem/spinSpiralDispersion/q',
-                              'text': vectors,
+                              'text': ' '.join(map(str, vectors)),
                               'create': False,
                               'occ': i
                              }))

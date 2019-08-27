@@ -67,11 +67,11 @@ class FleurDMIWorkChain(WorkChain):
         'sqas_phi' : [0.0, 0.0, 1.57079],
         'soc_off' : [],
         'prop_dir' : [1.0, 0.0, 0.0],
-        'q_vectors': ['0.0 0.0 0.0',
-                      '0.125 0.0 0.0',
-                      '0.250 0.0 0.0',
-                      '0.375 0.0 0.0'],
-        'ref_qss' : '0.0 0.0 0.0',
+        'q_vectors': [[0.0, 0.0, 0.0],
+                      [0.125, 0.0, 0.0],
+                      [0.250, 0.0, 0.0],
+                      [0.375, 0.0, 0.0]],
+        'ref_qss' : [0.0, 0.0, 0.0],
         'input_converged' : False,
         'inpxml_changes' : []
         }
@@ -352,7 +352,7 @@ class FleurDMIWorkChain(WorkChain):
                              }))
             fchanges.append(('xml_set_text_occ',
                              {'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
-                              'text': vectors,
+                              'text': ' '.join(map(str, vectors)),
                               'create': False,
                               'occ': i
                              }))
