@@ -431,7 +431,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     behind_tags = tag_order[:place_index]
                     #children = node_1.getchildren()
                     # get all names of tag exisiting tags
-                    set = False
+                    was_set = False
                     for tag in reversed(behind_tags):
                         for child in node_1.iterchildren(tag=tag, reversed=False):
                             # if tagname of elements==tag:
@@ -442,11 +442,11 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                                 raise ValueError('{}. If this is a species, are'
                                                  'you sure this species exists in your inp.xml?'
                                                  ''.format(v))
-                            set = True
+                            was_set = True
                             break
-                        if set:
+                        if was_set:
                             break
-                    if not set:  # just append
+                    if not was_set:  # just append
                         try:
                             node_1.append(newelement)
                         except ValueError as v:
@@ -709,9 +709,13 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
 
     :param fleurinp_tree_copy: xml etree of the inp.xml
     :param at_label: string, a label of the atom which specie will be changed
-    :param attributedict: a python dict specifying what you want to change. 
+    :param attributedict: a python dict specifying what you want to change.
     :param create: bool, if species does not exist create it and all subtags?
     """
+
+    if at_label == 'all':
+        fleurinp_tree_copy = set_species(fleurinp_tree_copy, 'all', attributedict, create)
+        return fleurinp_tree_copy
 
     specie = ''
     at_label = "{: >20}".format(at_label)
@@ -737,7 +741,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
     :param fleurinp_tree_copy: xml etree of the inp.xml
     :param species_name: string, name of the specie you want to change
-    :param attributedict: a python dict specifying what you want to change. 
+    :param attributedict: a python dict specifying what you want to change.
     :param create: bool, if species does not exist create it and all subtags?
 
     :raises ValueError: if species name is non existent in inp.xml and should not be created.
@@ -750,12 +754,12 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     can be done via::
 
         attributedict = {'mtSphere' : {'radius' : 2.2}}
-    
+
     Another example::
 
         'attributedict': {'special': {'socscale': 0.0}}
 
-    that switches SOC terms on a sertain specie. ``mtSphere``, ``atomicCutoffs``, 
+    that switches SOC terms on a sertain specie. ``mtSphere``, ``atomicCutoffs``,
     ``energyParameters``, ``lo``, ``electronConfig``, ``nocoParams``, ``ldaU`` and
     ``special`` keys are supported. To find possible
     keys of the inner dictionary please refer to the FLEUR documentation flapw.de
@@ -763,7 +767,11 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also
     # number, other parameters
-    xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
+    if species_name == 'all':
+        xpath_species = '/fleurInput/atomSpecies/species'
+    else:
+        xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
+
     xpath_mt = '{}/mtSphere'.format(xpath_species)
     xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
     xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
@@ -911,6 +919,11 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=
     method for a certain atom specie that corresponds to an atom with a given label.
     """
 
+    if at_label == 'all':
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
+                                               species='all', create=create)
+        return fleurinp_tree_copy
+
     specie = ''
     at_label = "{: >20}".format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
@@ -990,7 +1003,7 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
     :param change_dict: a python dictionary with the keys to substitute.
                         It works like dict.update(), adding new keys and
                         overwriting existing keys.
-    
+
     :returns new_tree: a lxml tree with applied changes
 
     An example of change_dict::
@@ -1159,7 +1172,7 @@ def set_nkpts(fleurinp_tree_copy, count, gamma):
 
     return new_tree
 
-def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0], create=False):
+def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None, create=False):
     """
     Routine adds something to the value of an attribute in the xml file (should be a number here)
 
@@ -1173,6 +1186,9 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=[0],
     example: add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1')
              add_num_to_add(tree, '/fleurInput/bzIntegration', 'valenceElectrons', '1.1', mode='rel')
     """
+
+    if occ is None:
+        occ = [0]
 
     # get attribute, add or multiply
     # set attribute
@@ -1492,8 +1508,8 @@ def inpxml_todict(parent, xmlstr):
 # list of possible xpaths from a schema file, or to validate a certain xpath expression and
 # to allow to get SINGLE xpaths for certain attrbiutes.
 #  akk: tell me where 'DOS' is
-# This might not be back compatible... i.e a certain plugin version will by this design only work with
-#  certain schema version
+# This might not be back compatible... i.e a certain plugin version will by this design only work 
+#  with certain schema version
 def get_inpxml_file_structure():
     """
     This routine returns the structure/layout of the 'inp.xml' file.
@@ -1517,11 +1533,11 @@ def get_inpxml_file_structure():
     :return other_attributes_once: list of all attributes, which occur just once (can be tested)
     :return other_attributes_several: list of all attributes, which can occur more then once
     :return all_text: list of all text of tags, which can be set
-    :return all_attrib_xpath: 
+    :return all_attrib_xpath:
                               dictonary (attrib, xpath), of all possible attributes
                               with their xpath expression for the xmp inp
 
-    :return expertkey: 
+    :return expertkey:
                        keyname (should not be in any other list), which can be
                        used to set anything in the file, by hand,
                        (for experts, and that plug-in does not need to be directly maintained if
@@ -1551,7 +1567,7 @@ def get_inpxml_file_structure():
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
                              'locy2', 'tworkf', 'minEigenval', 'maxEigenval',
                              'forcealpha', 'force_converged')
-                             
+
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp',
                               'xcFunctional', 'fleurInputVersion', 'species', 'forcemix')
 
@@ -1774,4 +1790,3 @@ def get_inpxml_file_structure():
                   all_attrib_xpath,
                   expertkey)
     return returnlist
-
