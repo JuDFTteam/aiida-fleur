@@ -275,8 +275,8 @@ class FleurinpModifier(object):
         if schema_tree:
             if not xmlschema.validate(workingtree_x):
                 # TODO maybe even delete wrong task
-                print('changes were not valid: {}')
-                #raise ValueError('change not valid: {}'.format(task[1:]))
+                #print('changes were not valid: {}({})'.format(task[0], task[1:]))
+                raise ValueError('changes were not valid: {}({})'.format(task[0], task[1:]))
 
         return workingtree
 
