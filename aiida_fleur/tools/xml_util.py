@@ -518,8 +518,9 @@ def replace_tag(xmltree, xpath, newelement):
     if nodes:
         for node in nodes:
             parent = node.getparent()
+            index = parent.index(node)
             parent.remove(node)
-            parent.append(newelement)
+            parent.insert(index, newelement)
 
     return xmltree
 
