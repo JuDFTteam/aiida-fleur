@@ -143,8 +143,12 @@ class FleurParser(Parser):
                         mem = mem_file.readline()
                         mem_kb_avail = float(mem.split()[1])
 
-                    line_used = re.findall(r'used.+', error_file_lines)[0]
-                    kb_used = int(re.findall(r'\d+', line_used)[2])
+                    try:
+                        line_used = re.findall(r'used.+', error_file_lines)[0]
+                        kb_used = int(re.findall(r'\d+', line_used)[2])
+                    except IndexError:
+                        kb_used = 0.0
+                        self.logger.info('Did not manage to find memory usage info.')  
 
                     if kb_used * mpiprocs / mem_kb_avail > 0.93:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
