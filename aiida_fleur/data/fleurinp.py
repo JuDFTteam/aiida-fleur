@@ -535,11 +535,25 @@ class FleurinpData(Data):
         if self._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-            tree = etree.parse(inpxmlfile)#, parser) # parser somewhat broken TODO, lxml version?
+            parser = etree.XMLParser(attribute_defaults=True)
+            tree = etree.parse(inpxmlfile, parser) 
+            tree.xinclude()
+            # remove comments from inp.xml
+            comments = tree.xpath('//comment()')
+            for c in comments:
+                p = c.getparent()
+                p.remove(c)
+            if not xmlschema.validate(tree_x):
+                raise ValueError("Input file is not validated against the schema.")
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
+            tree.xinclude()
+            # remove comments from inp.xml
+            comments = tree.xpath('//comment()')
+            for c in comments:
+                p = c.getparent()
+                p.remove(c)
         inpxmlfile.close()
         root = tree.getroot()
 
@@ -748,11 +762,25 @@ class FleurinpData(Data):
         if fleurinp._schema_file_path: # Schema there, parse with schema
             xmlschema_doc = etree.parse(fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
+            parser = etree.XMLParser(attribute_defaults=True)
             tree = etree.parse(inpxmlfile, parser)
+            tree.xinclude()
+            # remove comments from inp.xml
+            comments = tree.xpath('//comment()')
+            for c in comments:
+                p = c.getparent()
+                p.remove(c)
+            if not xmlschema.validate(tree_x):
+                raise ValueError("Input file is not validated against the schema.")
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
+            tree.xinclude()
+            # remove comments from inp.xml
+            comments = tree.xpath('//comment()')
+            for c in comments:
+                p = c.getparent()
+                p.remove(c)
         inpxmlfile.close()
         root = tree.getroot()
 
