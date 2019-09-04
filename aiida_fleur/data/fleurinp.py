@@ -543,7 +543,7 @@ class FleurinpData(Data):
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-            if not xmlschema.validate(tree_x):
+            if not xmlschema.validate(tree):
                 raise ValueError("Input file is not validated against the schema.")
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
@@ -695,9 +695,8 @@ class FleurinpData(Data):
         #return {label : struc}
         return struc
 
-    @staticmethod
     @cf
-    def get_structuredata(fleurinp):
+    def get_structuredata(self):
         """
         This routine return an AiiDA Structure Data type produced from the ``inp.xml``
         file. If this was done before, it returns the existing structure data node.
@@ -706,19 +705,16 @@ class FleurinpData(Data):
         :param fleurinp: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node
         """
-        return fleurinp.get_structuredata_ncf(fleurinp)
+        return self.get_structuredata_ncf()
 
 
 
-    @staticmethod
-    def get_kpointsdata_ncf(fleurinp):
+    def get_kpointsdata_ncf(self):
         """
-        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the ``inp.xml``
-        file. This only works if the kpoints are listed in the in inpxml.
+        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the 
+        ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
         This is NOT a calcfunction and does not keep the provenance!
 
-        :param fleurinp: a FleurinpData instance to be parsed into a :class:`~aiida.orm.KpointsData`
-                         node
         :returns: :class:`~aiida.orm.KpointsData` node
         """
         from aiida.orm import KpointsData
@@ -751,16 +747,16 @@ class FleurinpData(Data):
         row3_tag_name = 'row-3'
         ########
 
-        if not ('inp.xml' in fleurinp.files):
+        if 'inp.xml' not in self.files:
             print('cannot get a KpointsData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
 
         # else read in inpxml
-        inpxmlfile = fleurinp.open(key='inp.xml')
+        inpxmlfile = self.open(key='inp.xml')
 
-        if fleurinp._schema_file_path: # Schema there, parse with schema
-            xmlschema_doc = etree.parse(fleurinp._schema_file_path)
+        if self._schema_file_path: # Schema there, parse with schema
+            xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(attribute_defaults=True)
             tree = etree.parse(inpxmlfile, parser)
@@ -770,7 +766,7 @@ class FleurinpData(Data):
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-            if not xmlschema.validate(tree_x):
+            if not xmlschema.validate(tree):
                 raise ValueError("Input file is not validated against the schema.")
         else: #schema not there, parse without
             print('parsing inp.xml without XMLSchema')
@@ -847,7 +843,7 @@ class FleurinpData(Data):
             kps.pbc = pbc1
 
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)
-            #kps.add_link_from(fleurinp, label='fleurinp.kpts', link_type=LinkType.CREATE)
+            #kps.add_link_from(self, label='fleurinp.kpts', link_type=LinkType.CREATE)
             kps.label = 'fleurinp.kpts'
             #return {label: kps}
             return kps
@@ -856,20 +852,17 @@ class FleurinpData(Data):
             return None
 
 
-    @staticmethod
     @cf
-    def get_kpointsdata(fleurinp):
+    def get_kpointsdata(self):
         """
-        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the ``inp.xml``
-        file. This only works if the kpoints are listed in the in inpxml.
+        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
+        ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
         This is a calcfunction and keeps the provenance!
 
-        :param fleurinp: a FleurinpData instance to be parsed into a :class:`~aiida.orm.KpointsData`
-                         node
         :returns: :class:`~aiida.orm.KpointsData` node
         """
 
-        return fleurinp.get_kpointsdata_ncf(fleurinp)
+        return self.get_kpointsdata_ncf()
 
     # TODO: or move these outside...?
     #@staticmethod
