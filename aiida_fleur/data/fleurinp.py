@@ -579,18 +579,20 @@ class FleurinpData(Data):
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, True]
 
-        elif root.xpath(bravaismatrix_film_xpath + row1_tag_name): #film calculation
+        elif root.xpath(bravaismatrix_film_xpath + row1_tag_name):
+            #film calculation
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
+            row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*bohr_a
+                row1[i] = float(cor)
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*bohr_a
-            row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+                row2[i] = float(cor)
+            for i, cor in enumerate(row3):
+                row3[i] = float(cor)
+            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
-            # create new structure Node
-            struc = StructureData(cell=cell)
-            struc.pbc = [True, True, False]
+            pbc1 = [True, True, False]
 
         if cell is None:
             print('Could not extract Bravais matrix out of inp.xml. Is the '
@@ -734,7 +736,7 @@ class FleurinpData(Data):
         #######
         # all hardcoded xpaths used and attributes names:
         bravaismatrix_bulk_xpath = '/fleurInput/cell/bulkLattice/bravaisMatrix/'
-        bravaismatrix_film_xpath = 'fleurInput/cell/filmLattice/bravaisMatrix/'
+        bravaismatrix_film_xpath = '/fleurInput/cell/filmLattice/bravaisMatrix/'
         kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList/'
 
         kpoint_tag = 'kPoint'
@@ -804,11 +806,14 @@ class FleurinpData(Data):
             #film calculation
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
+            row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
                 row1[i] = float(cor)
             for i, cor in enumerate(row2):
                 row2[i] = float(cor)
-            row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+            for i, cor in enumerate(row3):
+                row3[i] = float(cor)
+            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
 
