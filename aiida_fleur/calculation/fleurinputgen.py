@@ -25,7 +25,6 @@ from aiida.plugins import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements
-from aiida.common.constants import bohr_to_ang
 from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
@@ -174,8 +173,8 @@ class FleurinputgenCalculation(CalcJob):
         # Scaling comes from the Structure
         # but we have to convert from Angstrom to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0]
-        scaling_lat = 1.  # /bohr_to_ang
-        scaling_pos = 1. / bohr_to_ang  # Angstrom to atomic
+        scaling_lat = 1.  # /bohr_to_ang = 0.52917720859
+        scaling_pos = 1. / 0.52917720859  # Angstrom to atomic
         own_lattice = False  # not self._use_aiida_structure
 
         ##########################################
