@@ -63,19 +63,6 @@ class Fleur_inputgenParser(Parser):
         list_of_files = output_folder.list_object_names()
         self.logger.info("file list {}".format(list_of_files))
 
-        inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
-        if inpxml_file not in list_of_files:
-            self.logger.error(
-                "XML inp not found '{}'".format(inpxml_file))
-            return self.exit_codes.ERROR_NO_INPXML
-
-        for file1 in self._default_files:
-            if file1 not in list_of_files:
-                self.logger.error(
-                    "'{}' file not found in retrived folder, it was probably "
-                    "not created by inpgen".format(file1))
-                return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
-
         errorfile = FleurinputgenCalculation._ERROR_FILE_NAME
         if errorfile in list_of_files:
             try:
@@ -90,6 +77,19 @@ class Fleur_inputgenParser(Parser):
                 self.logger.error(
                     "The following was written to the error file {} : \n '{}'"
                     "".format(errorfile, error_file_lines))
+
+        inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
+        if inpxml_file not in list_of_files:
+            self.logger.error(
+                "XML inp not found '{}'".format(inpxml_file))
+            return self.exit_codes.ERROR_NO_INPXML
+
+        for file1 in self._default_files:
+            if file1 not in list_of_files:
+                self.logger.error(
+                    "'{}' file not found in retrived folder, it was probably "
+                    "not created by inpgen".format(file1))
+                return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         self.logger.info('FleurinpData initialized')
         self.out('fleurinpData', FleurinpData(files=[inpxml_file], node=output_folder))
