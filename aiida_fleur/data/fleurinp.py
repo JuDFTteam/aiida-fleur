@@ -683,7 +683,8 @@ class FleurinpData(Data):
                         else:
                             postion_f[i] = float(pos)
                     # now transform to absolute Positions
-                    new_abs_pos = rel_to_abs_f(postion_r, cell)
+                    postion_f[2] = postion_f[2]*bohr_a
+                    new_abs_pos = rel_to_abs_f(postion_f, cell)
                     # append atom to StructureData
                     struc.append_atom(
                         position=new_abs_pos,
