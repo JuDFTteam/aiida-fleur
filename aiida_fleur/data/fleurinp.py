@@ -507,7 +507,7 @@ class FleurinpData(Data):
         #######
         # all hardcoded xpaths used and attributes names:
         bravaismatrix_bulk_xpath = '/fleurInput/cell/bulkLattice/bravaisMatrix/'
-        bravaismatrix_film_xpath = 'fleurInput/cell/filmLattice/bravaisMatrix/'
+        bravaismatrix_film_xpath = '/fleurInput/cell/filmLattice/bravaisMatrix/'
         species_xpath = '/fleurInput/atomSpecies/species'
         all_atom_groups_xpath = '/fleurInput/atomGroups/atomGroup'
 
@@ -585,18 +585,19 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)
+                row1[i] = float(cor)*bohr_a
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)
+                row2[i] = float(cor)*bohr_a
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)
+                row3[i] = float(cor)*bohr_a
             #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
-            pbc1 = [True, True, False]
+            struc = StructureData(cell=cell)
+            struc.pbc = [True, True, False]
 
         if cell is None:
-            print('Could not extract Bravais matrix out of inp.xml. Is the '
-                  'Bravais matrix explicitly given? i.e Latnam definition '
+            print('Could not extract Bravias matrix out of inp.xml. Is the '
+                  'Bravias matrix explicitly given? i.e Latnam definition '
                   'not supported.')
             return None
 
@@ -792,11 +793,11 @@ class FleurinpData(Data):
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)
+                row1[i] = float(cor)*bohr_a
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)
+                row2[i] = float(cor)*bohr_a
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)
+                row3[i] = float(cor)*bohr_a
 
             cell = [row1, row2, row3]
             #set boundary conditions
@@ -808,11 +809,11 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)
+                row1[i] = float(cor)*bohr_a
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)
+                row2[i] = float(cor)*bohr_a
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)
+                row3[i] = float(cor)*bohr_a
             #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
