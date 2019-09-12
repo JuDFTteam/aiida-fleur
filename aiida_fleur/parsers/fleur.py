@@ -978,44 +978,6 @@ def parse_xmlout_file(outxmlfile):
 
                 # Total charges, total magentic moment
 
-            if relax:
-                # check if it is a film or a bulk structure
-                film = eval_xpath2(root, os.path.join(film_lat_xpath, 'row-1'))
-                if film:
-                    lat_path = film_lat_xpath
-                    pos_attr = 'filmPos'
-                else:
-                    lat_path = bulk_lat_xpath
-                    pos_attr = 'relPos'
-
-                v_1 = eval_xpath(root, os.path.join(lat_path, 'row-1'))
-                v_1 = [float(x) for x in v_1.text.split()]
-
-                v_2 = eval_xpath(root, os.path.join(lat_path, 'row-2'))
-                v_2 = [float(x) for x in v_2.text.split()]
-
-                v_3 = eval_xpath(root, os.path.join(lat_path, 'row-3'))
-                v_3 = [float(x) for x in v_3.text.split()]
-
-                relax_brav_vectors = [v_1, v_2, v_3]
-
-                atom_positions = []
-
-                all_atoms = eval_xpath2(root, atomstypes_xpath)
-                for a_type in all_atoms:
-                    element = get_xml_attribute(a_type, 'species')[:2]
-                    type_positions = eval_xpath2(a_type, pos_attr)
-                    for pos in type_positions:
-                        pos = [convert_frac(x) for x in pos.text.split()]
-                        atom_positions.append([element]+pos)
-
-                write_simple_outnode(
-                    relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
-                write_simple_outnode(
-                    atom_positions, 'list', 'relax_atom_positions', simple_data)
-                write_simple_outnode(
-                    str(bool(film)), 'str', 'film', simple_data)
-
             # total iterations
             number_of_iterations_total = get_xml_attribute(
                 eval_xpath(iteration_node, iteration_xpath), overall_number_name)
