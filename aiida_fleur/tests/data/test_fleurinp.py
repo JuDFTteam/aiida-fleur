@@ -94,7 +94,7 @@ def test_fleurinp_kpointsdata_extraction(inpxmlfilepath):
 
     
     fleurinp_tmp = fleurinp(files=[inpxmlfilepath])
-    kptsd = fleurinp_tmp.get_kpointsdata_ncf(fleurinp_tmp)
+    kptsd = fleurinp_tmp.get_kpointsdata_ncf()
     
     if kptsd is not None:
         assert isinstance(kptsd, KpointsData)
