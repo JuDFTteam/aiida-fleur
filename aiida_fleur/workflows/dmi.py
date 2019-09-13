@@ -237,7 +237,7 @@ class FleurDMIWorkChain(WorkChain):
         input_scf['wf_parameters']['mode'] = 'density'
 
         # set up q vector for the reference calculation
-        list_ref_qss = [float(x) for x in self.ctx.wf_dict['ref_qss'].split()]
+        list_ref_qss = self.ctx.wf_dict['ref_qss']
         if [x for x in list_ref_qss if x != 0]:
             changes_dict = {'qss' : self.ctx.wf_dict['ref_qss'],
                             'l_noco': True,
