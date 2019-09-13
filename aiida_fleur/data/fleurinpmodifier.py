@@ -69,7 +69,7 @@ class FleurinpModifier(object):
 
         xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
 
         tree = etree.parse(inpxmlfile, parser)
 
@@ -84,7 +84,7 @@ class FleurinpModifier(object):
         inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
         inpxmlfile.close()
 
-        new_fleurtree.write(inpxmlfile_new)
+        new_fleurtree.write(inpxmlfile_new, pretty_print=True)
 
         new_fleurinp.del_file('inp.xml')
         new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
