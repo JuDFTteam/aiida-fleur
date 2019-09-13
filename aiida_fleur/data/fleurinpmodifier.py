@@ -18,7 +18,6 @@ FleurinpData objects in a way which keeps the provernance.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import copy
 
 from lxml import etree
 
@@ -61,6 +60,7 @@ class FleurinpModifier(object):
         # validate
         # save inp.xml
         # store new fleurinp (copy)
+        from aiida_fleur.tools.xml_util import clear_xml
 
         new_fleurinp = original.clone()
         # TODO test if file is there!
@@ -72,18 +72,8 @@ class FleurinpModifier(object):
         parser = etree.XMLParser(attribute_defaults=True)
 
         tree = etree.parse(inpxmlfile, parser)
-        tree_x = copy.deepcopy(tree)
 
-        # replace XInclude parts to validate against schema
-        tree_x.xinclude()
-
-        # remove comments from inp.xml
-        comments = tree_x.xpath('//comment()')
-        for c in comments:
-            p = c.getparent()
-            p.remove(c)
-
-        if not xmlschema.validate(tree_x):
+        if not xmlschema.validate(clear_xml(tree)):
             raise ValueError("Input file is not validated against the schema.")
 
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
@@ -127,6 +117,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts
+        from aiida_fleur.tools.xml_util import clear_xml
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename,
                                  attribv, occ=None, create=False):
@@ -263,17 +254,8 @@ class FleurinpModifier(object):
 
             workingtree = action(workingtree, *task[1:])
 
-        workingtree_x = copy.deepcopy(workingtree)
-        workingtree_x.xinclude()
-
-        # remove comments from inp.xml
-        comments = workingtree_x.xpath('//comment()')
-        for c in comments:
-            p = c.getparent()
-            p.remove(c)
-
         if schema_tree:
-            if not xmlschema.validate(workingtree_x):
+            if not xmlschema.validate(clear_xml(workingtree)):
                 # TODO maybe even delete wrong task
                 #print('changes were not valid: {}({})'.format(task[0], task[1:]))
                 raise ValueError('changes were not valid: {}({})'.format(task[0], task[1:]))

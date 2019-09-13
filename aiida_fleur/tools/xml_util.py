@@ -1791,3 +1791,26 @@ def get_inpxml_file_structure():
                   all_attrib_xpath,
                   expertkey)
     return returnlist
+
+def clear_xml(tree):
+    """
+    Removes comments and executes xinclude tags of an
+    xml tree.
+
+    :param tree: an xml-tree which will be processes
+    :return cleared_tree: an xml-tree without comments and with replaced xinclude tags
+    """
+    import copy
+
+    cleared_tree = copy.deepcopy(tree)
+
+    # replace XInclude parts to validate against schema
+    cleared_tree.xinclude()
+
+    # remove comments from inp.xml
+    comments = cleared_tree.xpath('//comment()')
+    for comment in comments:
+        com_parent = comment.getparent()
+        com_parent.remove(comment)
+
+    return cleared_tree

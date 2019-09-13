@@ -397,7 +397,7 @@ class FleurinpData(Data):
         3. call inpxml_to_dict
         4. set inputxml_dict
         """
-        from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict
+        from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict, clear_xml
         # get inpxml structure
         inpxmlstructure = get_inpxml_file_structure()
 
@@ -412,13 +412,7 @@ class FleurinpData(Data):
         tree_x = etree.parse(inpxmlfile, parser)
         inpxmlfile.close()
         # replace XInclude parts to validate against schema
-        tree_x.xinclude()
-
-        # remove comments from inp.xml
-        comments = tree_x.xpath('//comment()')
-        for c in comments:
-            p = c.getparent()
-            p.remove(c)
+        tree_x = clear_xml(tree_x)
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
