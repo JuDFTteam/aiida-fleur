@@ -58,30 +58,33 @@ class FleurEosWorkChain(WorkChain):
     :return output_eos_wc_para: Dict node, contains relevant output information.
                                 about general succeed, fit results and so on.
     """
+    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
 
-    _workflowversion = "0.3.4"
+        super().__init__(inputs, logger, runner, enable_persistence)
+        self._workflowversion = "0.3.4"
 
-    _default_options = {
-        'resources': {"num_machines": 1},
-        'max_wallclock_seconds': 6 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}
-        }
+        self._default_options = {
+            'resources': {"num_machines": 1},
+            'max_wallclock_seconds': 6 * 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': '',
+            'import_sys_environment': False,
+            'environment_variables': {}
+            }
 
-    _wf_default = {
-        'fleur_runmax': 4,
-        'density_converged': 0.02,
-        'serial': False,
-        'itmax_per_run': 30,
-        'inpxml_changes': [],
-        'points': 9,
-        'step': 0.002,
-        'guess': 1.00
-        }
+        self._wf_default = {
+            'fleur_runmax': 4,
+            'density_converged': 0.02,
+            'serial': False,
+            'itmax_per_run': 30,
+            'inpxml_changes': [],
+            'points': 9,
+            'step': 0.002,
+            'guess': 1.00
+            }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+        self._scf_keys = ['fleur_runmax', 'density_converged', 'serial',
+                          'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
@@ -131,7 +134,7 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        # TODO get all succesfull from convergence, if all True this
+        # TODO get all successfull from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default

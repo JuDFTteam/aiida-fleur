@@ -42,33 +42,36 @@ class FleurMaeWorkChain(WorkChain):
     """
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
+    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
 
-    _workflowversion = "0.1.0"
+        super().__init__(inputs, logger, runner, enable_persistence)
+        self._workflowversion = "0.1.0"
 
-    _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 2 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}}
+        self._default_options = {
+            'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+            'max_wallclock_seconds': 2 * 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': '',
+            'import_sys_environment': False,
+            'environment_variables': {}}
 
-    _wf_default = {
-        'sqa_ref': [0.7, 0.7],
-        'use_soc_ref': False,
-        'input_converged' : False,
-        'fleur_runmax': 10,
-        'sqas_theta': [0.0, 1.57079, 1.57079],
-        'sqas_phi': [0.0, 0.0, 1.57079],
-        'alpha_mix': 0.05,
-        'density_converged': 0.00005,
-        'serial': False,
-        'itmax_per_run': 30,
-        'soc_off': [],
-        'inpxml_changes': [],
-    }
+        self._wf_default = {
+            'sqa_ref': [0.7, 0.7],
+            'use_soc_ref': False,
+            'input_converged' : False,
+            'fleur_runmax': 10,
+            'sqas_theta': [0.0, 1.57079, 1.57079],
+            'sqas_phi': [0.0, 0.0, 1.57079],
+            'alpha_mix': 0.05,
+            'density_converged': 0.00005,
+            'serial': False,
+            'itmax_per_run': 30,
+            'soc_off': [],
+            'inpxml_changes': [],
+        }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+        self._scf_keys = ['fleur_runmax', 'density_converged', 'serial',
+                          'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
@@ -153,7 +156,7 @@ class FleurMaeWorkChain(WorkChain):
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
-            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            error = ("Number of sqas_theta has to be equal to the number of sqas_phi")
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
@@ -176,7 +179,7 @@ class FleurMaeWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
@@ -268,7 +271,7 @@ class FleurMaeWorkChain(WorkChain):
             try:
                 fleurin = self.ctx.reference.outputs.fleurinp
             except NotExistent:
-                error = 'Fleurinp generated in the reference claculation is not found.'
+                error = 'Fleurinp generated in the reference calculation is not found.'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         else:
@@ -514,7 +517,7 @@ class FleurMaeWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg)  # because return_results still fails somewhen

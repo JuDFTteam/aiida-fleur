@@ -44,35 +44,39 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = "0.1.0"
+    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
 
-    _default_options = {
-        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
-        'max_wallclock_seconds' : 2*60*60,
-        'queue_name' : '',
-        'custom_scheduler_commands' : '',
-        'import_sys_environment' : False,
-        'environment_variables' : {}
-        }
+        super().__init__(inputs, logger, runner, enable_persistence)
+        self._workflowversion = "0.1.0"
 
-    _wf_default = {
-        'fleur_runmax': 10,
-        'density_converged' : 0.00005,
-        'serial' : False,
-        'itmax_per_run' : 30,
-        'beta' : {'all' : 1.57079},
-        'alpha_mix' : 0.015,
-        'prop_dir' : [1.0, 0.0, 0.0],
-        'q_vectors': [[0.0, 0.0, 0.0],
-                      [0.125, 0.0, 0.0],
-                      [0.250, 0.0, 0.0],
-                      [0.375, 0.0, 0.0]],
-        'ref_qss' : [0.0, 0.0, 0.0],
-        'input_converged' : False,
-        'inpxml_changes' : []
-        }
+        self._default_options = {
+            'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
+            'max_wallclock_seconds' : 2*60*60,
+            'queue_name' : '',
+            'custom_scheduler_commands' : '',
+            'import_sys_environment' : False,
+            'environment_variables' : {}
+            }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+        self._wf_default = {
+            'fleur_runmax': 10,
+            'density_converged' : 0.00005,
+            'serial' : False,
+            'itmax_per_run' : 30,
+            'beta' : {'all' : 1.57079},
+            'alpha_mix' : 0.015,
+            'prop_dir' : [1.0, 0.0, 0.0],
+            'q_vectors': [[0.000, 0.0, 0.0],
+                          [0.125, 0.0, 0.0],
+                          [0.250, 0.0, 0.0],
+                          [0.375, 0.0, 0.0]],
+            'ref_qss' : [0.0, 0.0, 0.0],
+            'input_converged' : False,
+            'inpxml_changes' : []
+            }
+
+        self._scf_keys = ['fleur_runmax', 'density_converged', 'serial',
+                          'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):

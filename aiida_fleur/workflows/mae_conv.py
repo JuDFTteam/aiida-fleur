@@ -23,7 +23,7 @@ from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, Dict
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
@@ -36,29 +36,32 @@ class FleurMaeConvWorkChain(WorkChain):
     """
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
+    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
 
-    _workflowversion = "0.1.0"
+        super().__init__(inputs, logger, runner, enable_persistence)
+        self._workflowversion = "0.1.0"
 
-    _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 2 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}}
+        self._default_options = {
+            'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+            'max_wallclock_seconds': 2 * 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': '',
+            'import_sys_environment': False,
+            'environment_variables': {}}
 
-    _wf_default = {
-        'fleur_runmax': 10,
-        'sqas': {'label' : [0.0, 0.0]},
-        'alpha_mix': 0.05,
-        'density_converged': 0.00005,
-        'serial': False,
-        'itmax_per_run': 30,
-        'soc_off': [],
-        'inpxml_changes': [],
-    }
+        self._wf_default = {
+            'fleur_runmax': 10,
+            'sqas': {'label' : [0.0, 0.0]},
+            'alpha_mix': 0.05,
+            'density_converged': 0.00005,
+            'serial': False,
+            'itmax_per_run': 30,
+            'soc_off': [],
+            'inpxml_changes': [],
+        }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+        self._scf_keys = ['fleur_runmax', 'density_converged', 'serial',
+                          'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
