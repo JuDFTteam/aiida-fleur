@@ -81,16 +81,14 @@ class FleurSSDispWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurSSDispWorkChain, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._wf_default))
+        spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
-        spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_options))
+        spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
