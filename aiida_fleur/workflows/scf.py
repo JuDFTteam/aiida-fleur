@@ -65,30 +65,27 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
+    _workflowversion = "0.4.0"
+    _wf_default = {'fleur_runmax': 4,
+                   'density_converged': 0.00002,
+                   'energy_converged': 0.002,
+                   'force_converged': 0.002,
+                   'mode': 'density',  # 'density', 'energy' or 'force'
+                   'serial': False,
+                   'itmax_per_run': 30,
+                   'force_dict': {'qfix': 2,
+                                  'forcealpha': 0.5,
+                                  'forcemix': 'BFGS'},
+                   'inpxml_changes': [],
+                  }
 
-        super().__init__(inputs, logger, runner, enable_persistence)
-        self._workflowversion = "0.4.0"
-        self._wf_default = {'fleur_runmax': 4,
-                            'density_converged': 0.00002,
-                            'energy_converged': 0.002,
-                            'force_converged': 0.002,
-                            'mode': 'density',  # 'density', 'energy' or 'force'
-                            'serial': False,
-                            'itmax_per_run': 30,
-                            'force_dict': {'qfix': 2,
-                                           'forcealpha': 0.5,
-                                           'forcemix': 'BFGS'},
-                            'inpxml_changes': [],
-                            }
-
-        self._default_options = {
-            'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-            'max_wallclock_seconds': 6*60*60,
-            'queue_name': '',
-            'custom_scheduler_commands': '',
-            'import_sys_environment': False,
-            'environment_variables': {}}
+    _default_options = {
+        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+        'max_wallclock_seconds': 6*60*60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}}
 
     @classmethod
     def define(cls, spec):

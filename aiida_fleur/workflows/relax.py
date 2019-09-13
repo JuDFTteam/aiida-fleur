@@ -38,36 +38,33 @@ class FleurRelaxWorkChain(WorkChain):
     """
     This workflow performs structure optimization.
     """
-    def __init__(self, inputs=None, logger=None, runner=None, enable_persistence=True):
 
-        super().__init__(inputs, logger, runner, enable_persistence)
-        
-        self._workflowversion = "0.1.1"
+    _workflowversion = "0.1.1"
 
-        self._default_options = {
-            'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-            'max_wallclock_seconds': 2*60*60,
-            'queue_name': '',
-            'custom_scheduler_commands': '',
-            'import_sys_environment': False,
-            'environment_variables': {}}
+    _default_options = {
+        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+        'max_wallclock_seconds': 2*60*60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}}
 
-        self._wf_default = {
-            'fleur_runmax': 10,
-            'serial': False,
-            'itmax_per_run': 30,
-            'alpha_mix': 0.015,
-            'relax_iter': 5,
-            'force_converged': 0.0002,
-            'force_dict': {'qfix': 2,
-                           'forcealpha': 0.5,
-                           'forcemix': 'BFGS'},
-            'force_criterion': 0.001,
-            'inpxml_changes': [],
-        }
+    _wf_default = {
+        'fleur_runmax': 10,
+        'serial': False,
+        'itmax_per_run': 30,
+        'alpha_mix': 0.015,
+        'relax_iter': 5,
+        'force_converged': 0.0002,
+        'force_dict': {'qfix': 2,
+                       'forcealpha': 0.5,
+                       'forcemix': 'BFGS'},
+        'force_criterion': 0.001,
+        'inpxml_changes': [],
+    }
 
-        self._scf_keys = ['fleur_runmax', 'serial', 'itmax_per_run',
-                          'inpxml_changes', 'force_dict', 'force_converged']  #  scf workflow
+    _scf_keys = ['fleur_runmax', 'serial', 'itmax_per_run',
+                 'inpxml_changes', 'force_dict', 'force_converged']  #  scf workflow
 
     @classmethod
     def define(cls, spec):
