@@ -128,7 +128,7 @@ class FleurSSDispWorkChain(WorkChain):
         self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = self._wf_default
+        wf_default = copy.deepcopy(self._wf_default)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -217,7 +217,7 @@ class FleurSSDispWorkChain(WorkChain):
         for key in self._scf_keys:
             scf_wf_param[key] = self.ctx.wf_dict.get(key)
 
-        input_scf['wf_parameters'] = copy.deepcopy(scf_wf_param)
+        input_scf['wf_parameters'] = scf_wf_param
         input_scf['wf_parameters']['mode'] = 'density'
 
         # set up q vector for the reference calculation
