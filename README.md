@@ -64,6 +64,8 @@ eos | Calculate and Equation of States (Lattice constant) with FLEUR
 dos | Calculate a Density of States (DOS) with FLEUR
 bands | Calculate a Band structure with FLEUR
 relax | Relaxation of a crystal structure with FLEUR
+initial_cls | initial corelevel shifts and formation energies with FLEUR
+corehole | Workflow for corehole calculations, calculation of Binding energies with FLEUR
 
 See the AiiDA documentation for general info about the AiiDA workflow system or how to write workflows.
 
@@ -78,6 +80,9 @@ xml_util.py | All xml functions that are used, by parsers and other tools are in
 read_cif.py | This can be used as stand-alone to create StructureData nodes from .cif files from an directory tree.
 ...
 
+Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository, 
+which is a dependency of aiida-fleur.
+
 ## Installation Instructions <a name="Installation"></a>
 
 From the aiida-fleur folder (after downloading the code, recommended) use:
@@ -90,7 +95,7 @@ To uninstall use:
 
     $ pip uninstall aiida-fleur
 
-Or install lates release version from pypi:
+Or install latest release version from pypi:
 
     $ pip install aiida-fleur
 
@@ -104,15 +109,6 @@ $ verdi calculation plugins
 
    ## Pass as a further parameter one (or more) plugin names
    ## to get more details on a given plugin.
-   * codtools.cifcellcontents
-   * codtools.cifcodcheck
-   * codtools.cifcodnumbers
-   * codtools.ciffilter
-   * codtools.cifsplitprimitive
-   * quantumespresso.cp
-   * quantumespresso.pw
-   * quantumespresso.pwimmigrant
-   * simpleplugins.templatereplace
    ...
    * fleur.fleur
    * fleur.inpgen
@@ -177,15 +173,18 @@ Requirements are listed in 'setup_requirements.txt' and setup.json.
 
 most important are:
 
-* aiida_core >= 0.9
+* aiida_core >= 1.0.0
 * lxml
 * ase
 ...
 
 Mainly AiiDA:
 
-1. Download from [www.aiida.net/?page_id=264](www.aiida.net -> Download)
-2. install and setup -> [http://aiida-core.readthedocs.org/en/stable/](aiida's documentation)
+1. Download from [www.aiida.net -> Download](www.aiida.net)
+2. install and setup -> [aiida's documentation](http://aiida-core.readthedocs.org/en/stable)
+
+Easy plotting and other useful routines that do not depend on aiida_core are part of 
+the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository. 
 
 For easy ploting we recommend installing 'plot_methods' (not yet integrated into this package):
 https://bitbucket.org/broeder-j/plot_methods
@@ -197,8 +196,16 @@ also some documentation of the plug-in, further things can be found at www.flapw
 Usage examples are shown in 'examples'.
 
 
+## Acknowledgements
+
+Besides the Forschungszentrum Juelich, this work is supported by the [MaX 
+European Centre of Excellence](<http://www.max-centre.eu/>) funded by the Horizon 2020 EINFRA-5 program,
+Grant No. 676598.
+
+For this work essential is AiiDA, which itself is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>) funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>).
 
 
+![MaX](miscellaneous/logos/MaX.png)
 
 
 
