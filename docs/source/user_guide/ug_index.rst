@@ -8,10 +8,11 @@ This is the AiiDA-FLEUR user's guide.
    :maxdepth: 4
 
    ./getting_started/getting_started
-   ./plugin/fleur_plugins
+   ./data/fleur_data_plugins
+   ./calculations/fleur_calculation_plugins
    ./workflows/wc_index
    ./cmd/cmd_index
    ./tools/tools_index
    ./tutorials/tutorials
-   ./plugin/hints_faq
+   ./hints/hints_faq
 

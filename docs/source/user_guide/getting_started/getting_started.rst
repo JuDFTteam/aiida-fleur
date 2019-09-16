@@ -67,14 +67,6 @@ from GitHub without package reinstallation. AiiDA-FLEUR can be installed the sam
     (aiidapy)$ git checkout develop
     (aiidapy)$ pip install -e .
 
-.. note::
-        You may need to install additional packages that are not strongly required for aiida-core
-        and aiida-fleur and will not be installed automatically with them:
-
-        .. code-block:: bash
-
-            (aiidapy)$ pip install <missing_package>
-
 
 
 AiiDA setup
