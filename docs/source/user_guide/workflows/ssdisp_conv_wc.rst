@@ -8,10 +8,6 @@ Fleur Spin-Spiral Dispersion workchain
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.ssdisp_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup
 * **Aim**: Calculate spin-spiral energy dispersion over given q-points.
-* **Computational demand**: A ``Fleur SCF WorkChain`` for each q-point to calculate.
-* **Database footprint**: Outputnode with information, full provenance, ``~ 10+10*FLEUR Jobs`` nodes
-* **File repository footprint**: no addition to the ``JobCalculations`` run
-* **Additional Info**: Use alone or as sub-workflow
 
 .. contents::
 

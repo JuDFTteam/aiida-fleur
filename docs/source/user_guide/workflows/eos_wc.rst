@@ -6,7 +6,7 @@ Fleur equation of states (eos) workflows
 * **Current version**: 0.3.4
 * **Class**: :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.eos``
-* **Workflow type**:  Basic (lvl 1)
+* **Workflow type**:  Technical
 * **Aim**: Vary the cell volume, to fit an equation of states, (Bulk modulus, ...)
 * **Computational demand**: 5-10 ``Fleur SCF workchains`` in parallel
 * **Database footprint**: Outputnode with information, full provenance, ``~ (10+10*FLEUR Jobs)*points`` nodes

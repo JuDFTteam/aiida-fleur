@@ -7,10 +7,6 @@ Fleur self-consistent Magnetic Anisotropy Energy workchain
 * **Class**: :py:class:`~aiida_fleur.workflows.mae_conv.FleurMaeConvWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup
-* **Aim**: Calculate Magnetic Anisotropy Energies along given spin quantization axes
-* **Computational demand**: A ``Fleur SCF WorkChain`` for each SQA
-* **Database footprint**: Outputnode with information, full provenance, ``~ 10+10*FLEUR Jobs`` nodes
-* **File repository footprint**: no addition to the ``JobCalculations`` run
 
 .. contents::
 

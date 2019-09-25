@@ -135,7 +135,7 @@ All output nodes can be accessed via ``calculation.outputs``.
 
 Errors
 '''''''
-When a certain error appears, the calculation exit with a non-zero exit status.
+When a certain error appears, the calculation finishes with a non-zero exit status.
 
 +-----------+--------------------------------------------------+
 | Exit code | Reason                                           |

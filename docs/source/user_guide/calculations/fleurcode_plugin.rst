@@ -172,6 +172,13 @@ one of the output files for some reason. Each exit code has it's own reason:
 | 310       | FLEUR calculation failed due to memory issue|
 +-----------+---------------------------------------------+
 
+.. warning::
+
+    Due to Fleur implementation, the exit status 310 can be thrown only in case of using Intel
+    complier for the Fleur code.
+
+.. _Fleur_settings:
+
 Additional advanced features
 ''''''''''''''''''''''''''''
 

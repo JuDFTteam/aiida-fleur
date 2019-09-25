@@ -18,7 +18,6 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: make smarter, ggf delete broyd or restart with more or less iterations
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
-# TODO: clean up exit codes and its messages
 from __future__ import absolute_import
 from lxml import etree
 from lxml.etree import XMLSyntaxError
@@ -47,7 +46,7 @@ class FleurScfWorkChain(WorkChain):
     """
     Workchain for converging a FLEUR calculation (SCF).
 
-    It converges the charge density.
+    It converges the charge density, total energy or the largest force.
     Two paths are possible:
 
     (1) Start from a structure and run the inpgen first optional with calc_parameters

@@ -7,14 +7,9 @@ Fleur Dzyaloshinskii–Moriya Interaction energy workchain
 * **Class**: :py:class:`~aiida_fleur.workflows.dmi.FleurDMIWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.dmi``
 * **Workflow type**: Scientific workchain, force theorem sub-group
-* **Aim**: Calculate Dzyaloshinskii–Moriya Interaction energy dispersion over given q-points
-* **Computational demand**: 1 ``Fleur SCF WorkChain`` and 1
-  :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`
-* **Database footprint**: Outputnode with information, full provenance, ``~ 10+10*FLEUR Jobs`` nodes
-* **File repository footprint**: no addition to the ``JobCalculations`` run
 
 .. contents::
-
+    :depth: 2
 
 Import Example:
 
@@ -36,53 +31,45 @@ to specify inputs to use external pre-converged charge density and use is as a r
 Input nodes
 ^^^^^^^^^^^
 
-  * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
-  * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
-    plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
-    of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
-    data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
-    FLAPW parameters, used by inpgen
-  * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
-    object representing the fleur input files
-  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
-    the previous calculation
-  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
-    (queues, cpus)
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| name            | type                                               | description                             | required |
++=================+====================================================+=========================================+==========+
+| fleur           | :py:class:`~aiida.orm.Code`                        | Fleur code                              | yes      |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| inpgen          | :py:class:`~aiida.orm.Code`                        | Inpgen code                             | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| wf_parameters   | :py:class:`~aiida.orm.Dict`                        | Settings of the workchain               | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| structure       | :py:class:`~aiida.orm.StructureData`               | Structure data node                     | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| calc_parameters | :py:class:`~aiida.orm.Dict`                        | inpgen :ref:`parameters<scf_wc_layout>` | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| fleurinp        | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`| :ref:`FLEUR input<fleurinp_data>`       | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| remote_data     | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| options         | :py:class:`~aiida.orm.Dict`                        | AiiDA options (computational resources) | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| settings        | :py:class:`~aiida.orm.Dict`                        | Special :ref:`settings<fleurinp_data>`  |          |
+|                 |                                                    | for Fleur calculation                   | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
 
-Returns nodes
-^^^^^^^^^^^^^
+Only ``fleur`` input is required. However, it does not mean that it is enough to specify ``fleur``
+only. One *must* keep one of the supported input configurations described in the
+:ref:`layout_dmi` section.
 
-  * ``out``: :py:class:`~aiida.orm.Dict` -  Information of workflow results
+Workchain parameters and its defaults
+.....................................
 
-Inputs: description
-^^^^^^^^^^^^^^^^^^^
-Workflow parameters
-...................
+.. _FLEUR relaxation: https://www.flapw.de/site/xml-inp/#structure-relaxations-with-fleur
 
-.. code-block:: python
+``wf_parameters``
+,,,,,,,,,,,,,,,,,
 
-    wf_parameters_dict = {'fleur_runmax': 10,       # needed for SCF
-        'density_converged' : 0.00005,              # needed for SCF
-        'serial' : False,                           # needed for SCF
-        'itmax_per_run' : 30,                       # needed for SCF
-        'beta' : {'all' : 1.57079},                 # see description below
-        'alpha_mix' : 0.015,                        # sets mixing parameter alpha
-        'sqas_theta' : [0.0, 1.57079, 1.57079],     # sets SOC theta values
-        'sqas_phi' : [0.0, 0.0, 1.57079],           # sets SOC phi values
-        'soc_off' : [],                             # switches off SOC on a given atom
-        'prop_dir' : [1.0, 0.0, 0.0],               # sets a propagation direction of a q-vector
-        'q_vectors': [[0.0, 0.0, 0.0],                # set a set of q-vectors to calculate DMI energies
-                      [0.125, 0.0, 0.0],
-                      [0.250, 0.0, 0.0],
-                      [0.375, 0.0, 0.0]],
-        'ref_qss' : [0.0, 0.0, 0.0],                  # sets a q-vector for the reference calculation
-        'input_converged' : False,                  # True, if charge density from remote folder has to be converged
-        'inpxml_changes' : []                       # needed for SCF
-        }
+``wf_parameters``: :py:class:`~aiida.orm.Dict` - Settings of the workflow behavior. All possible
+keys and their defaults are listed below:
 
+.. literalinclude:: code/ssdisp_parameters.py
 
 Workchain parameters contain a set of parameters needed by the SCF workchain.
 There are also DMI-specific parameters such as ``beta``, ``alpha-mix``, ``prop_dir``,
@@ -101,9 +88,9 @@ changes
 .. code-block:: html
 
       <atomGroup species="Fe-1">
-         <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
-         <force calculate="T" relaxXYZ="TTT"/>
-         <nocoParams l_relax="F" alpha=".00000000" beta="0.00000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+        <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta="0.00000" b_cons_x=".00000000" b_cons_y=".00000000"/>
       </atomGroup>
 
 to:
@@ -111,9 +98,9 @@ to:
 .. code-block:: html
 
       <atomGroup species="Fe-1">
-         <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
-         <force calculate="T" relaxXYZ="TTT"/>
-         <nocoParams l_relax="F" alpha=".00000000" beta="1.57079" b_cons_x=".00000000" b_cons_y=".00000000"/>
+        <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta="1.57079" b_cons_x=".00000000" b_cons_y=".00000000"/>
       </atomGroup>
 
 .. note::
@@ -128,8 +115,7 @@ to the atom with a given label.
 .. note::
 
     It can be that the spice correspond to several atoms and ``soc_off`` switches off SOC for atoms
-    that was not intended to change. You must be careful with this. For more information, see the
-    LINK.
+    that was not intended to change. You must be careful with this.
 
 An example of ``soc_off`` work:
 
@@ -142,17 +128,17 @@ changes
 .. code-block:: html
 
       <species name="Ir-2" element="Ir" atomicNumber="77" coreStates="17" magMom=".00000000" flipSpin="T">
-         <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
-         <atomicCutoffs lmax="8" lnonsphr="6"/>
-         <energyParameters s="6" p="6" d="5" f="5"/>
-         <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
-         <lo type="SCLO" l="1" n="5" eDeriv="0"/>
+        <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
+        <atomicCutoffs lmax="8" lnonsphr="6"/>
+        <energyParameters s="6" p="6" d="5" f="5"/>
+        <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
+        <lo type="SCLO" l="1" n="5" eDeriv="0"/>
       </species>
       -----
       <atomGroup species="Ir-2">
-         <filmPos label="                 458">1.000/4.000 1.000/2.000 11.4074000502</filmPos>
-         <force calculate="T" relaxXYZ="TTT"/>
-         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+        <filmPos label="                 458">1.000/4.000 1.000/2.000 11.4074000502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
       </atomGroup>
 
 to:
@@ -160,12 +146,12 @@ to:
 .. code-block:: html
 
       <species name="Ir-2" element="Ir" atomicNumber="77" coreStates="17" magMom=".00000000" flipSpin="T">
-         <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
-         <atomicCutoffs lmax="8" lnonsphr="6"/>
-         <energyParameters s="6" p="6" d="5" f="5"/>
-         <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
-         <special socscale="0.0"/>
-         <lo type="SCLO" l="1" n="5" eDeriv="0"/>
+        <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
+        <atomicCutoffs lmax="8" lnonsphr="6"/>
+        <energyParameters s="6" p="6" d="5" f="5"/>
+        <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
+        <special socscale="0.0"/>
+        <lo type="SCLO" l="1" n="5" eDeriv="0"/>
       </species>
 
 As you can see, I was careful about "Ir-2" specie  and it contained a single atom with a
@@ -186,11 +172,64 @@ True if there is no need to converge a given charge density and it can be used d
 force-theorem step. If it is set to False, input charge density will be submitted into scf
 workchain before the force-theorem step to achieve the convergence.
 
+``options``
+,,,,,,,,,,,
 
-Layout
-^^^^^^
+``options``: :py:class:`~aiida.orm.Dict` - AiiDA options (computational resources).
+Example:
 
-SSDisp workchain has several
+.. code-block:: python
+
+      'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+      'max_wallclock_seconds': 6*60*60,
+      'queue_name': '',
+      'custom_scheduler_commands': '',
+      'import_sys_environment': False,
+      'environment_variables': {}
+
+
+Output nodes
+^^^^^^^^^^^^^
+
+  * ``out``: :py:class:`~aiida.orm.Dict` -  Information of
+    workflow results like success, last result node, list with convergence behavior
+
+    .. code-block:: python
+
+        "angles": 3,
+        "energies": [
+            0.0
+        ],
+        "energy_units": "eV",
+        "errors": [],
+        "info": [],
+        "initial_structure": "35e5058d-161c-4cf9-801e-4eca99e7d7be",
+        "phi": [
+            3.1415927,
+        ],
+        "q_vectors": [
+            [
+                0.0,
+                0.0,
+                0.0
+            ],
+        ],
+        "theta": [
+            0.0,
+        ],
+        "warnings": [],
+        "workflow_name": "FleurDMIWorkChain",
+        "workflow_version": "0.1.0"
+
+    Resulting DMI energies are sorted according to theirs q-vector, theta and phi values
+    i.e. ``energies[N]`` corresponds to ``q_vectors[N]``, ``phi[N]`` and ``theta[N]``.
+
+.. _layout_dmi:
+
+Supported input configurations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ВЬШ workchain has several
 input combinations that implicitly define the workchain layout. Depending
 on the setup of the inputs, one of four supported scenarios will happen:
 
@@ -212,7 +251,7 @@ on the setup of the inputs, one of four supported scenarios will happen:
         #. q_vectors
         #. inpxml_changes
 
-      The other are ignored.
+      The others are ignored.
 
 2. **fleurinp** + **parent_folder** (FLEUR):
 
@@ -239,14 +278,28 @@ on the setup of the inputs, one of four supported scenarios will happen:
 
 
 
-Example usage
-^^^^^^^^^^^^^
-Still has to be documented
-
-Output node example
-^^^^^^^^^^^^^^^^^^^
-Still has to be documented
-
 Error handling
 ^^^^^^^^^^^^^^
+A list of implemented exit codes:
+
++------+------------------------------------------------------------------------------------------+
+| Code | Meaning                                                                                  |
++======+==========================================================================================+
+| 230  | Input nodes do not correspond to any valid input configuration.                          |
++------+------------------------------------------------------------------------------------------+
+| 231  | Input codes do not correspond to fleur or inpgen codes respectively.                     |
++------+------------------------------------------------------------------------------------------+
+| 232  | Input file modification failed.                                                          |
++------+------------------------------------------------------------------------------------------+
+| 233  | Input file is corrupted after user's modifications.                                      |
++------+------------------------------------------------------------------------------------------+
+| 334  | Reference calculation failed.                                                            |
++------+------------------------------------------------------------------------------------------+
+| 335  | Found no reference calculation remote repository.                                        |
++------+------------------------------------------------------------------------------------------+
+| 336  | Force theorem calculation failed.                                                        |
++------+------------------------------------------------------------------------------------------+
+
+Example usage
+^^^^^^^^^^^^^
 Still has to be documented

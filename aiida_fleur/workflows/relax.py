@@ -105,7 +105,7 @@ class FleurRelaxWorkChain(WorkChain):
         spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT',
                        message="Found no relax.xml file in retrieved folder")
         spec.exit_code(354, 'ERROR_NO_FLEURINP_OUTPUT',
-                       message="Found no relax.xml file in retrieved folder")
+                       message="Found no fleurinpData in the last SCF workchain")
 
     def start(self):
         """

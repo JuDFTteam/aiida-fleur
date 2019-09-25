@@ -65,10 +65,10 @@ Workchain classification
     :width: 100%
     :align: center
 
-All of the workchains are split into the groups. First, we separate *technical* and
+All of the workchains are divided into the groups. First, we separate *technical* and
 *scientific* workflows. This separation is purely subjective: *technical* workchains tend to be
 less complex and represent basic routine tasks that people usually encounter. *Scientific*
-workflows make a particular physical task which is more specific to the particular project.
+workflows are less general and aimed at certain tasks.
 
 There are the sub-group of the force theorem calculations
 and their self-consistent analogs in the scientific workchains group.
@@ -81,14 +81,14 @@ and their self-consistent analogs in the scientific workchains group.
 Basic (Technical) Workchains
 ''''''''''''''''''''''''''''
 
-Here describe the basic workflows and how to use them. (Beyond the source code documentation)
-
 .. toctree::
    :maxdepth: 2
 
    ./base_wc
    ./scf_wc
+   ./eos_wc
    ./relax_wc
+   ./dos_band_wc
 
 More advanced (Scientific) Workchains
 '''''''''''''''''''''''''''''''''''''
@@ -98,8 +98,6 @@ More advanced (Scientific) Workchains
 
    ./initial_cls_wc
    ./corehole_wc
-   ./dos_band_wc
-   ./eos_wc
 
 Magnetic workchains
 ...................

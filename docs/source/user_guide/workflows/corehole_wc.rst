@@ -80,8 +80,6 @@ Example usage
      
 Output node example
 ^^^^^^^^^^^^^^^^^^^
-  .. include:: /images/scf_wc_outputnode.py
-     :literal:
 
 Error handling
 ^^^^^^^^^^^^^^

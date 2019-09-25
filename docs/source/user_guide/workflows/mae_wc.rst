@@ -8,12 +8,9 @@ Fleur Magnetic Anisotropy Energy workflow
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae``
 * **Workflow type**: Scientific workchain, force-theorem subgroup
 * **Aim**: Calculate Magnetic Anisotropy Energies along given spin quantization axes
-* **Computational demand**: 1 ``Fleur SCF WorkChain`` and 1
-  :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation` d
-* **Database footprint**: Outputnode with information, full provenance, ``~ 10+10*FLEUR Jobs`` nodes
-* **File repository footprint**: no addition to the ``JobCalculations`` run
 
 .. contents::
+    :depth: 2
 
 
 Import Example:
@@ -33,55 +30,52 @@ then it submits a single FleurCalculation with a `<forceTheorem>` tag.
 Input nodes
 ^^^^^^^^^^^
 
-  * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
-  * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
-    plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
-    of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
-    data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
-    FLAPW parameters, used by inpgen
-  * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
-    object representing the fleur input files
-  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
-    the previous calculation
-  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
-    (queues, cpus)
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| name            | type                                               | description                             | required |
++=================+====================================================+=========================================+==========+
+| fleur           | :py:class:`~aiida.orm.Code`                        | Fleur code                              | yes      |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| inpgen          | :py:class:`~aiida.orm.Code`                        | Inpgen code                             | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| wf_parameters   | :py:class:`~aiida.orm.Dict`                        | Settings of the workchain               | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| structure       | :py:class:`~aiida.orm.StructureData`               | Structure data node                     | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| calc_parameters | :py:class:`~aiida.orm.Dict`                        | inpgen :ref:`parameters<scf_wc_layout>` | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| fleurinp        | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`| :ref:`FLEUR input<fleurinp_data>`       | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| remote_data     | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| options         | :py:class:`~aiida.orm.Dict`                        | AiiDA options (computational resources) | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
+| settings        | :py:class:`~aiida.orm.Dict`                        | Special :ref:`settings<fleurinp_data>`  |          |
+|                 |                                                    | for Fleur calculation                   | no       |
++-----------------+----------------------------------------------------+-----------------------------------------+----------+
 
-Returns nodes
-^^^^^^^^^^^^^
+Only ``fleur`` input is required. However, it does not mean that it is enough to specify ``fleur``
+only. One *must* keep one of the supported input configurations described in the
+:ref:`layout_mae` section.
 
-  * ``out`` (*ParameterData*): Information of workflow results like success,
-    last result node, list with convergence behavior
+Workchain parameters and its defaults
+.....................................
 
-Default inputs
-^^^^^^^^^^^^^^
-Workflow parameters.
+.. _FLEUR relaxation: https://www.flapw.de/site/xml-inp/#structure-relaxations-with-fleur
 
-.. code-block:: python
+``wf_parameters``
+,,,,,,,,,,,,,,,,,
 
-    wf_parameters_dict = {
-        'sqa_ref': [0.7, 0.7],                      # set SQA for the reference calculation
-        'use_soc_ref': False,                       # True, if include SOC terms into the reference calculation
-        'input_converged' : False,                  # True, if input charge density is converged
-        'fleur_runmax': 10,                         # needed for SCF
-        'sqas_theta': [0.0, 1.57079, 1.57079],      # sets SOC theta values
-        'sqas_phi': [0.0, 0.0, 1.57079],            # sets SOC phi values
-        'alpha_mix': 0.05,                          # sets mixing parameter alpha
-        'density_converged': 0.00005,               # needed for SCF
-        'serial': False,                            # needed for SCF
-        'itmax_per_run': 30,                        # needed for SCF
-        'soc_off': [],                              # switches off SOC on a given atom
-        'inpxml_changes': [],                       # needed for SCF
-    }
+``wf_parameters``: :py:class:`~aiida.orm.Dict` - Settings of the workflow behavior. All possible
+keys and their defaults are listed below:
+
+.. literalinclude:: code/mae_parameters.py
 
 Workchain parameters contain a set of parameters needed by the SCF workchain.
 There are also DMI-specific parameters such as ``alpha-mix``, ``sqas_theta``, ``sqas_phi``,
 ``soc_off``, ``input_converged``, ``sqa_ref``, ``use_soc_ref``.
 
-``soc_off`` is a python list containing atoms labels. SOC is switched off for species, corresponding
-to the atom with a given label.
+``soc_off`` is a python list containing atoms labels. SOC is switched off for species,
+corresponding to the atom with a given label.
 
 .. note::
 
@@ -100,17 +94,17 @@ changes
 .. code-block:: html
 
       <species name="Ir-2" element="Ir" atomicNumber="77" coreStates="17" magMom=".00000000" flipSpin="T">
-         <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
-         <atomicCutoffs lmax="8" lnonsphr="6"/>
-         <energyParameters s="6" p="6" d="5" f="5"/>
-         <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
-         <lo type="SCLO" l="1" n="5" eDeriv="0"/>
+        <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
+        <atomicCutoffs lmax="8" lnonsphr="6"/>
+        <energyParameters s="6" p="6" d="5" f="5"/>
+        <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
+        <lo type="SCLO" l="1" n="5" eDeriv="0"/>
       </species>
       -----
       <atomGroup species="Ir-2">
-         <filmPos label="                 458">1.000/4.000 1.000/2.000 11.4074000502</filmPos>
-         <force calculate="T" relaxXYZ="TTT"/>
-         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+        <filmPos label="                 458">1.000/4.000 1.000/2.000 11.4074000502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
       </atomGroup>
 
 to:
@@ -118,12 +112,12 @@ to:
 .. code-block:: html
 
       <species name="Ir-2" element="Ir" atomicNumber="77" coreStates="17" magMom=".00000000" flipSpin="T">
-         <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
-         <atomicCutoffs lmax="8" lnonsphr="6"/>
-         <energyParameters s="6" p="6" d="5" f="5"/>
-         <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
-         <special socscale="0.0"/>
-         <lo type="SCLO" l="1" n="5" eDeriv="0"/>
+        <mtSphere radius="2.52000000" gridPoints="747" logIncrement=".01800000"/>
+        <atomicCutoffs lmax="8" lnonsphr="6"/>
+        <energyParameters s="6" p="6" d="5" f="5"/>
+        <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
+        <special socscale="0.0"/>
+        <lo type="SCLO" l="1" n="5" eDeriv="0"/>
       </species>
 
 As you can see, I was careful about "Ir-2" specie  and it contained a single atom with a
@@ -142,11 +136,63 @@ True if there is no need to converge a given charge density and it can be used d
 force-theorem step. If it is set to False, input charge density will be submitted into scf
 workchain before the force-theorem step to achieve the convergence.
 
+``options``
+,,,,,,,,,,,
 
-Layout
-^^^^^^
+``options``: :py:class:`~aiida.orm.Dict` - AiiDA options (computational resources).
+Example:
 
-SSDisp workchain has several
+.. code-block:: python
+
+      'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+      'max_wallclock_seconds': 6*60*60,
+      'queue_name': '',
+      'custom_scheduler_commands': '',
+      'import_sys_environment': False,
+      'environment_variables': {}
+
+
+Output nodes
+^^^^^^^^^^^^^
+
+  * ``out``: :py:class:`~aiida.orm.Dict` -  Information of
+    workflow results like success, last result node, list with convergence behavior
+
+    .. code-block:: python
+
+        "errors": [],
+        "info": [],
+        "initial_structure": "ac274613-27f5-4c0b-9d42-bae340007ab1",
+        "is_it_force_theorem": true,
+        "mae_units": "eV",
+        "maes": [
+            0.0006585155416697,
+            0.0048545112659747,
+            0.0
+        ],
+        "phi": [
+            0.0,
+            0.0,
+            1.57079
+        ],
+        "theta": [
+            0.0,
+            1.57079,
+            1.57079
+        ],
+        "warnings": [],
+        "workflow_name": "FleurMaeWorkChain",
+        "workflow_version": "0.1.0"
+
+    Resulting Magnetic Anisotropy Directions are sorted according to theirs theta and phi values
+    i.e. ``maes[N]`` corresponds to ``theta[N]`` and ``phi[N]``.
+
+.. _layout_mae:
+
+Supported input configurations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MAE workchain has several
 input combinations that implicitly define the workchain layout. Depending
 on the setup of the inputs, one of four supported scenarios will happen:
 
@@ -192,14 +238,30 @@ on the setup of the inputs, one of four supported scenarios will happen:
       force-theorem FLEUR calculation after.
 
 
-Example usage
-^^^^^^^^^^^^^
-Still has to be documented
-
-Output node example
-^^^^^^^^^^^^^^^^^^^
-Still has to be documented
-
 Error handling
 ^^^^^^^^^^^^^^
-Still has to be documented
+A list of implemented exit codes:
+
++------+------------------------------------------------------------------------------------------+
+| Code | Meaning                                                                                  |
++======+==========================================================================================+
+| 230  | Input nodes do not correspond to any valid input configuration.                          |
++------+------------------------------------------------------------------------------------------+
+| 231  | Input codes do not correspond to fleur or inpgen codes respectively.                     |
++------+------------------------------------------------------------------------------------------+
+| 232  | Input file modification failed.                                                          |
++------+------------------------------------------------------------------------------------------+
+| 233  | Input file is corrupted after user's modifications.                                      |
++------+------------------------------------------------------------------------------------------+
+| 334  | Reference calculation failed.                                                            |
++------+------------------------------------------------------------------------------------------+
+| 335  | Found no reference calculation remote repository.                                        |
++------+------------------------------------------------------------------------------------------+
+| 336  | Force theorem calculation failed.                                                        |
++------+------------------------------------------------------------------------------------------+
+
+
+Example usage
+^^^^^^^^^^^^^
+
+  .. literalinclude:: code/mae_wc_submission.py
