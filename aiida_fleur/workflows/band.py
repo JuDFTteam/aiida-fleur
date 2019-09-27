@@ -22,7 +22,6 @@ import os.path
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, ToContext
-from aiida.engine import submit
 
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -148,7 +147,7 @@ class fleur_band_wc(WorkChain):
         
         
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = submit(FleurCalculation, **inputs)
+        future = self.submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future) #calcs.append(future),
 
