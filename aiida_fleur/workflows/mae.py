@@ -74,9 +74,9 @@ class FleurMaeWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurMaeWorkChain, cls).define(spec)
         spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=True)
+        spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
@@ -241,7 +241,7 @@ class FleurMaeWorkChain(WorkChain):
 
         input_scf['fleur'] = self.inputs.fleur
 
-        if 'fluerinp' in inputs:
+        if 'fleurinp' in inputs:
             input_scf['fleurinp'] = inputs.fleurinp
             if 'remote' in inputs:
                 input_scf['remote_data'] = inputs.remote

@@ -251,7 +251,7 @@ class FleurSSDispWorkChain(WorkChain):
 
         input_scf['fleur'] = self.inputs.fleur
 
-        if 'fluerinp' in inputs:
+        if 'fleurinp' in inputs:
             input_scf['fleurinp'] = inputs.fleurinp
             if 'remote' in inputs:
                 input_scf['remote_data'] = inputs.remote

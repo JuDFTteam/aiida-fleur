@@ -187,7 +187,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         inputs = cleanup_inputs(self.inputs)
 
-        if 'fluerinp' in inputs:
+        if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
             if 'structure' in inputs:
                 self.report('Structure data node will be ignored because fleurinp is given')
@@ -239,7 +239,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         input_scf['fleur'] = self.inputs.fleur
 
-        if 'fluerinp' in inputs:
+        if 'fleurinp' in inputs:
             input_scf['fleurinp'] = inputs.fleurinp
             if 'remote' in inputs:
                 input_scf['remote_data'] = inputs.remote
