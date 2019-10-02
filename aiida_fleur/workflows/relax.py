@@ -39,7 +39,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = "0.1.1"
+    _workflowversion = "0.1.2"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -59,6 +59,7 @@ class FleurRelaxWorkChain(WorkChain):
         'force_dict': {'qfix': 2,
                        'forcealpha': 0.5,
                        'forcemix': 'BFGS'},
+        'film_distance_relaxation' : False,
         'force_criterion': 0.001,
         'inpxml_changes': [],
     }
@@ -141,6 +142,11 @@ class FleurRelaxWorkChain(WorkChain):
         # set up mixing parameter alpha
         self.ctx.wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
+
+        if self.ctx.wf_dict['film_distance_relaxation']:
+            self.ctx.wf_dict['inpxml_changes'].append(
+            ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
+                                'species':'all'}))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options

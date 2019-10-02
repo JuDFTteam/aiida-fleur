@@ -7,5 +7,6 @@
 'force_dict': {'qfix': 2,            # needed for SCF
                'forcealpha': 0.5,
                'forcemix': 'BFGS'},
+'film_distance_relaxation' : False,  # Sets relaxXYZ="FFT" for all atoms
 'itmax_per_run' : 30,                # needed for SCF
 'inpxml_changes' : [],               # needed for SCF

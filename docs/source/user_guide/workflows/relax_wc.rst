@@ -3,7 +3,7 @@
 Fleur structure optimization workchain
 --------------------------------------
 
-* **Current version**: 0.1.1
+* **Current version**: 0.1.2
 * **Class**: :py:class:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.relax``
 * **Workflow type**: Technical
