@@ -1,9 +1,6 @@
-
-
-
 # for support of the xml files and parsers
 lxml >= 3.6.4
-aiida_core>=0.12.0
+aiida_core>=1.0.0b6
 
 # for utilities
 ase
