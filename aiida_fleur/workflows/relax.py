@@ -27,7 +27,6 @@ from aiida.orm import StructureData, RemoteData, Dict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # pylint: disable=invalid-name
@@ -191,20 +190,17 @@ class FleurRelaxWorkChain(WorkChain):
         4. Structure is given -> run inpgen, relax iterations
 
         """
-        inputs = cleanup_inputs(self.inputs)
+        inputs = self.inputs
 
         if 'fleurinp' in inputs:
-            self.ctx.run_inpgen = False
             if 'structure' in inputs:
                 self.report('Structure data node will be ignored because fleurinp is given')
             if 'remote' in inputs:
                 self.report('Initial charge density will be taken from given remote folder')
         elif 'remote' in inputs:
-            self.ctx.run_inpgen = False
             if 'structure' in inputs:
                 self.report('Structure data node will be ignored because fleurinp is given')
         elif 'structure' in inputs:
-            self.ctx.run_inpgen = True
             if 'inpgen' not in inputs:
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         else:
@@ -228,7 +224,7 @@ class FleurRelaxWorkChain(WorkChain):
         input regimes described in
         :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.validate()`.
         """
-        inputs = cleanup_inputs(self.inputs)
+        inputs = self.inputs
 
         input_scf = {}
 

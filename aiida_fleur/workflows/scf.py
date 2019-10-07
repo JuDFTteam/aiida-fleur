@@ -34,7 +34,6 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import cleanup_inputs
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
@@ -207,7 +206,7 @@ class FleurScfWorkChain(WorkChain):
         # validate input and find out which path (1, or 2) to take
         # return True means run inpgen if false run fleur directly
         """
-        inputs = cleanup_inputs(self.inputs)
+        inputs = self.inputs
 
         if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
@@ -323,7 +322,7 @@ class FleurScfWorkChain(WorkChain):
         """
         self.report('INFO: run change_fleurinp')
 
-        inputs = cleanup_inputs(self.inputs)
+        inputs = self.inputs
 
         # Has to never crash because corresponding check was done in validate function
         if self.ctx.fleurinp:  # something was already changed
@@ -611,7 +610,7 @@ class FleurScfWorkChain(WorkChain):
         try:
             out_param = self.ctx.last_calc.outputs.output_parameters
             last_calc_uuid = out_param.get_dict()['CalcJob_uuid']
-        except NotExistent:
+        except (NotExistent, AttributeError):
             last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
