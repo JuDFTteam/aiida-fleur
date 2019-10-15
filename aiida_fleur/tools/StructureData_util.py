@@ -28,6 +28,7 @@ import numpy as np
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
 import six
 from six.moves import range
+from six.moves import zip
 
 
 def is_structure(structure):
@@ -697,7 +698,8 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     return aiida_strucs
 
 
-def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=0, lll_reduce=False, center_slab=False, primitive=False, max_normal_search=1, reorient_lattice=True):
+def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=0, lll_reduce=False,
+                center_slab=False, primitive=False, max_normal_search=1, reorient_lattice=True):
     """
     wraps the pymatgen slab generator
     """
@@ -751,7 +753,7 @@ def center_film(structure):
     #else: #even
     #    middle = (sites[natoms/2].position[2] + sites[natoms/2 + 1].position[2])/2.0
     #    shift = [0,0, -middle]
-    shift = [0,0, (sites[0].position[2]-sites[-1].position[2])/2.0]
+    shift = [0,0, -(sites[0].position[2]+sites[-1].position[2])/2.0]
 
     return move_atoms_incell(sorted_struc, shift)
 
@@ -779,6 +781,173 @@ def sort_atoms_z_value(structure):
         new_structure.append_site(site[0])
 
     return new_structure
+
+def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], host_symbol='Fe',
+                           latticeconstant=4.0, size=(1,1,5), replacements=None, decimals=10):
+    """
+    Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
+
+    :param lattice: 'fcc' and 'bcc' are supported. Set the host lattice of a slab.
+    :param miller: a list of directions of lattice vectors
+    :param symbol: a string specifying the atom type
+    :param latticeconstant: the lattice constant of a structure
+    :param size: a 3-element tuple that sets supercell size. For instance, use (1,1,5) to set
+                 5 layers of a slab.
+    :param decimals: sets the rounding of atom positions. See numpy.around.
+    :return structure: an ase-lattice representing a slab with replaced atoms
+
+    """
+    
+    if replacements is not None:
+        keys = six.viewkeys(replacements)
+        if min(keys) < 0:
+            raise ValueError('"replacements" has to contain only natural numbers')
+        if max(keys) > size[2]:
+            raise ValueError('"replacements" has to contain numbers less than number of layers')
+    else:    
+        replacements = {}
+
+    if lattice == 'fcc':
+        from ase.lattice.cubic import FaceCenteredCubic
+        structure_factory = FaceCenteredCubic
+    elif lattice == 'bcc':
+        from ase.lattice.cubic import BodyCenteredCubic
+        structure_factory = BodyCenteredCubic
+    else:
+        raise ValueError('The given lattice {} is not supported'.format(lattice))
+
+    structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1,1,0),
+                                  latticeconstant=latticeconstant, size=size)
+    
+    current_symbols = structure.get_chemical_symbols()
+    for i, at_type in six.iteritems(replacements):
+        current_symbols[i] = at_type
+    structure.set_chemical_symbols(current_symbols)
+
+    structure.positions = np.around(structure.positions, decimals=decimals)
+
+    return structure
+
+
+def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
+                               num_relaxed_layers, tolerance_decimals=10):
+    """
+    Transforms a structure that was used for interlayer distance relaxation to
+    a structure that can be further used for magnetic calculations.
+
+    Usually one uses a slab having z-reflection symmetry e.g. A-B1-B2-B3-B2-B1-A where A is
+    a magnetic element (Fe, Ni, Co, Cr) and B is a substrate. However, further magnetic
+    calculations are done using assymetric slab A-B1-B2-B3-B4-B5-B6-B7-B8. The function uses
+    A-B1, B1-B2 etc. iterlayer distances for constraction of assymetric relaxed film.
+
+    The function works as follows: it constructs a new StructureData object taking x and y positions
+    from the orig_structure and z positions from relax_structure for first num_relaxed_interlayers.
+    Then it appends orig_structure slab to the bottom it a way the total number of layers is
+    total_number_layers.
+
+    :param relaxed_structure: Structure which is the output of Relax WorkChain. In thin function
+                              it is assumed to have inversion or at least z-reflection symmetry.
+    :param orig_structure: The host structure slab having the lattice perioud corresponding to
+                           the bulk structure of the substrate.
+    :param total_number_layers: the total number of layers to produce
+    :param num_relaxed_layers: the number of top layers to adjust according to **relaxed_struct**
+    :param tolerance_decimals: sets the rounding of atom positions. See numpy.around.
+    :return magn_structure: Resulting assymetric structure with adjusted interlayer distances for
+                            several top layers.
+
+    """
+    from aiida.orm.nodes.data.structure import Site
+    from aiida.orm import StructureData
+    import numpy as np
+
+    if relaxed_structure.pbc != (True, True, False):
+        raise ValueError('Input structure has to be a film')
+
+    sorted_struc = sort_atoms_z_value(relaxed_structure)
+    sites = sorted_struc.sites
+
+    layers = {np.around(atom.position[2], decimals=tolerance_decimals) for atom in sites}
+    num_layers = len(layers)
+    max_layers_to_extract = num_layers // 2 + num_layers % 2
+
+    num_layers_org = len({np.around(x[2], decimals=tolerance_decimals)
+                          for x in orig_structure.positions})
+
+    if num_layers_org > num_layers:
+        raise ValueError('Your original structure contains more layers than given in relaxed '
+                         'structure.\nCould you reduce the number of layers in the'
+                         'original structure?\nIf not, I will not be able to guess '
+                         'x-y displacements of some atoms')
+
+    if num_relaxed_layers > max_layers_to_extract:
+        print('You want to extract more layers than available, I am setting num_relaxed_layers to'
+              ' {}'.format(max_layers_to_extract))
+        num_relaxed_layers = max_layers_to_extract
+
+    # take relaxed interlayers
+    magn_structure = StructureData(cell=sorted_struc.cell)
+    for kind in relaxed_structure.kinds:
+        magn_structure.append_kind(kind)
+
+    done_layers = 0
+    while True:
+        if done_layers < num_relaxed_layers:
+            layer, _ = get_layer_by_number(sorted_struc, done_layers)
+            for atom in layer:
+                a = Site(kind_name=atom[1], position=atom[0])
+                magn_structure.append_site(a)
+            done_layers = done_layers + 1
+        elif done_layers <= total_number_layers:
+            k = done_layers % num_layers_org
+            layer, pos_z = get_layer_by_number(orig_structure, k)
+            for atom in layer:
+                add_distance = abs(pos_z[k]-pos_z[k-1])
+                atom[0][2] = magn_structure.sites[-1].position[2] + add_distance
+                a = Site(kind_name=atom[1], position=atom[0])
+                magn_structure.append_site(a)
+            done_layers = done_layers + 1
+        else:
+            break
+    
+    magn_structure = center_film(magn_structure)
+    return magn_structure
+
+def get_layer_by_number(structure, number, decimals=10):
+    """
+    Extracts atom positions and their types belonging to the same layer
+
+    :param structure: ase lattice or StructureData which represents a slab
+    :param number: the layer number. Note, that layers will be sorted according to z-position
+    :param decimals: sets the tolerance of atom positions determination. See more in numpy.around.
+    :return layer, layer_z_positions: layer is a list of tuples, the first element of which is
+                                      atom positions and the second one is atom type.
+                                      layer_z_position is a sorted list of all layer positions
+
+    """
+    from aiida.orm import StructureData
+    from ase.lattice.bravais import Lattice
+    from itertools import groupby
+    import numpy as np
+    import copy
+
+    structure = copy.deepcopy(structure)
+
+    if isinstance(structure, StructureData):
+        reformat = [(x.position, x.kind_name)
+                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
+    elif isinstance(structure, Lattice):
+        reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
+    else:
+        raise ValueError('Structure has to be ase lattice or StructureData')
+
+    i = 0
+    layer_z_positions = []
+    layers = []
+    for val,e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
+        layer_z_positions.append(val)
+        layers.append(list(e))
+
+    return layers[number], layer_z_positions
 
 
 def estimate_mt_radii(structure, stepsize=0.05):
