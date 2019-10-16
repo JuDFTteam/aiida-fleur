@@ -38,7 +38,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = "0.1.2"
+    _workflowversion = "0.1.3"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -60,11 +60,12 @@ class FleurRelaxWorkChain(WorkChain):
                        'forcemix': 'BFGS'},
         'film_distance_relaxation' : False,
         'force_criterion': 0.001,
+        'use_relax_xml': True,
         'inpxml_changes': [],
     }
 
     _scf_keys = ['fleur_runmax', 'serial', 'itmax_per_run',
-                 'inpxml_changes', 'force_dict', 'force_converged']  #  scf workflow
+                 'inpxml_changes', 'force_dict', 'force_converged', 'use_relax_xml']  # scf workflow
 
     @classmethod
     def define(cls, spec):
@@ -111,7 +112,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started relaxation of a structure workflow version {}\n'
+        self.report('INFO: started structure relaxation workflow version {}\n'
                     ''.format(self._workflowversion))
 
         self.ctx.info = []
@@ -125,6 +126,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_atom_positions = None
         self.ctx.pbc = None
         self.ctx.reached_relax = True
+        self.ctx.scf_res = None
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._wf_default)
@@ -144,8 +146,8 @@ class FleurRelaxWorkChain(WorkChain):
 
         if self.ctx.wf_dict['film_distance_relaxation']:
             self.ctx.wf_dict['inpxml_changes'].append(
-            ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
-                                'species':'all'}))
+                ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
+                                    'species':'all'}))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -199,7 +201,7 @@ class FleurRelaxWorkChain(WorkChain):
                 self.report('Initial charge density will be taken from given remote folder')
         elif 'remote' in inputs:
             if 'structure' in inputs:
-                self.report('Structure data node will be ignored because fleurinp is given')
+                self.report('Structure data node will be ignored because remote is given')
         elif 'structure' in inputs:
             if 'inpgen' not in inputs:
                 return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
@@ -318,11 +320,14 @@ class FleurRelaxWorkChain(WorkChain):
                         '{}'.format(self.ctx.forces[-1]))
             return False
 
+        self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
             self.ctx.reached_relax = False
+            self.report('INFO: Reached optimization iteration number {}. Largest force is {}, '
+            'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
+                                            self.ctx.wf_dict['force_criterion']))
             return False
 
-        self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
                     'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
                                                    self.ctx.wf_dict['force_criterion']))
@@ -388,7 +393,8 @@ class FleurRelaxWorkChain(WorkChain):
                'warnings': self.ctx.warnings,
                'errors': self.ctx.errors,
                'force': self.ctx.forces,
-               'force_iter_done': self.ctx.loop_count
+               'force_iter_done': self.ctx.loop_count,
+               'last_scf_wc_uuid': self.ctx.scf_res.uuid
               }
 
         if self.ctx.final_structure:
@@ -412,7 +418,7 @@ class FleurRelaxWorkChain(WorkChain):
 @cf
 def save_structure(structure):
     """
-    Save a structure data node to provide correct provenence.
+    Save a structure data node to provide correct provenance.
     """
     structure_return = structure.clone()
     return structure_return

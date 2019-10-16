@@ -74,6 +74,7 @@ class FleurScfWorkChain(WorkChain):
                    'force_dict': {'qfix': 2,
                                   'forcealpha': 0.5,
                                   'forcemix': 'BFGS'},
+                   'use_relax_xml' : True,
                    'inpxml_changes': [],
                   }
 
@@ -338,8 +339,11 @@ class FleurScfWorkChain(WorkChain):
                     parent_calc_node = link.node
             retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
             try:
-                fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
-                self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
+                if self.ctx.wf_dict['use_relax_xml']:
+                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                    self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
+                else:
+                    raise ValueError
             except ValueError:
                 fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
                 self.report('INFO: generated FleurinpData from inp.xml')
