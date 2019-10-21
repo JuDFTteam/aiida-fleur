@@ -165,3 +165,11 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
         
         builder = FleurBaseWorkChain.get_builder()
+
+    def test_fleur_base_relax_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
+        
+        builder = FleurBaseRelaxWorkChain.get_builder()
