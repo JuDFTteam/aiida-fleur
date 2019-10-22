@@ -769,6 +769,7 @@ def sort_atoms_z_value(structure):
     """
     StructureData = DataFactory('structure')
     new_structure = StructureData(cell=structure.cell)
+    new_structure.pbc = structure.pbc
     for kind in structure.kinds:
         new_structure.append_kind(kind)
 
@@ -783,7 +784,8 @@ def sort_atoms_z_value(structure):
     return new_structure
 
 def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], host_symbol='Fe',
-                           latticeconstant=4.0, size=(1,1,5), replacements=None, decimals=10):
+                           latticeconstant=4.0, size=(1,1,5), replacements=None, decimals=10,
+                           pop_last_layers=0):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
@@ -794,17 +796,20 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
     :param size: a 3-element tuple that sets supercell size. For instance, use (1,1,5) to set
                  5 layers of a slab.
     :param decimals: sets the rounding of atom positions. See numpy.around.
+    :param pop_last_layers: specifies how many bottom layers to remove. Sometimes one does not want
+                            to use the integer number of unit cells along z, extra layers can be
+                            removed.
     :return structure: an ase-lattice representing a slab with replaced atoms
 
     """
     
     if replacements is not None:
         keys = six.viewkeys(replacements)
-        if min(keys) < 0:
-            raise ValueError('"replacements" has to contain only natural numbers')
-        if max(keys) > size[2]:
+        # if min(keys) < 0:
+        #     raise ValueError('"replacements" has to contain only natural numbers')
+        if max((abs(x) for x in keys)) > size[2]:
             raise ValueError('"replacements" has to contain numbers less than number of layers')
-    else:    
+    else:
         replacements = {}
 
     if lattice == 'fcc':
@@ -816,9 +821,15 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
     else:
         raise ValueError('The given lattice {} is not supported'.format(lattice))
 
-    structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1,1,0),
+    structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant, size=size)
-    
+
+    *_, layer_occupancies = get_layer_by_number(structure, 0)
+    layer_occupancies.append(0)
+    atoms_to_pop = np.cumsum(np.array(layer_occupancies[-1::-1]))
+    for i in range(atoms_to_pop[pop_last_layers]):
+        structure.pop()
+
     current_symbols = structure.get_chemical_symbols()
     for i, at_type in six.iteritems(replacements):
         current_symbols[i] = at_type
@@ -892,14 +903,14 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     done_layers = 0
     while True:
         if done_layers < num_relaxed_layers:
-            layer, _ = get_layer_by_number(sorted_struc, done_layers)
+            layer, *_ = get_layer_by_number(sorted_struc, done_layers)
             for atom in layer:
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers <= total_number_layers:
             k = done_layers % num_layers_org
-            layer, pos_z = get_layer_by_number(orig_structure, k)
+            layer, pos_z, _ = get_layer_by_number(orig_structure, k)
             for atom in layer:
                 add_distance = abs(pos_z[k]-pos_z[k-1])
                 atom[0][2] = magn_structure.sites[-1].position[2] + add_distance
@@ -942,12 +953,15 @@ def get_layer_by_number(structure, number, decimals=10):
 
     i = 0
     layer_z_positions = []
+    layer_occupancies = []
     layers = []
     for val,e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
         layer_z_positions.append(val)
-        layers.append(list(e))
+        layer_content = list(e)
+        layers.append(layer_content)
+        layer_occupancies.append(len(layer_content))
 
-    return layers[number], layer_z_positions
+    return layers[number], layer_z_positions, layer_occupancies
 
 
 def estimate_mt_radii(structure, stepsize=0.05):
