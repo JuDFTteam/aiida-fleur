@@ -256,6 +256,11 @@ class FleurCalculation(CalcJob):
                        message='Parsing of relax XML output file failed.')
         spec.exit_code(310, 'ERROR_NOT_ENOUGH_MEMORY',
                        message='FLEUR calculation failed due to lack of memory.')
+        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                               'vacuum during relaxation')
+        spec.exit_code(312, 'ERROR_MT_RADII',
+                       message='FLEUR calculation failed due to MT overlap.')
 
     @classproperty
     def _get_outut_folder(self):

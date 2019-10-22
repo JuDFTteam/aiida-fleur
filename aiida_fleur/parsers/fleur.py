@@ -152,6 +152,10 @@ class FleurParser(Parser):
 
                     if kb_used * mpiprocs / mem_kb_avail > 0.93:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
+                    elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
+                        return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
+                    elif 'Error checking M.T. radii' in error_file_lines:
+                        return self.exit_codes.ERROR_MT_RADII
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 

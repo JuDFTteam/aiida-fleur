@@ -82,6 +82,11 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        'specified.')
         spec.exit_code(360, 'ERROR_NOT_OPTIMAL_RESOURCES',
                        message="Computational resources are not optimal.")
+        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                               'vacuum during relaxation')
+        spec.exit_code(312, 'ERROR_MT_RADII',
+                       message='FLEUR calculation failed due to MT overlap.')
 
     def validate_inputs(self):
         """
@@ -161,6 +166,31 @@ def _handle_general_error(self, calculation):
         self.report('Calculation failed for unknown reason, stop the Base workchain')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+
+@register_error_handler(FleurBaseWorkChain, 52)
+def _handle_general_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('FLEUR calculation failed because an atom spilled to the vacuum during'
+                    'relaxation. Please, change the MT radii.')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_VACUUM_SPILL_RELAX)
+
+@register_error_handler(FleurBaseWorkChain, 51)
+def _handle_general_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII']):
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('FLEUR calculation failed due to MT overlap.')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII)
 
 @register_error_handler(FleurBaseWorkChain, 50)
 def _handle_not_enough_memory(self, calculation):

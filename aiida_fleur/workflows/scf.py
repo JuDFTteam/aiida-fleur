@@ -611,11 +611,8 @@ class FleurScfWorkChain(WorkChain):
         This should run through and produce output nodes even if everything failed,
         therefore it only uses results from context.
         """
-        try:
-            out_param = self.ctx.last_calc.outputs.output_parameters
-            last_calc_uuid = out_param.get_dict()['CalcJob_uuid']
-        except (NotExistent, AttributeError):
-            last_calc_uuid = None
+        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+        last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.last_calc.outputs.output_parameters

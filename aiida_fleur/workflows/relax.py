@@ -83,9 +83,11 @@ class FleurRelaxWorkChain(WorkChain):
             cls.start,
             cls.validate,
             cls.converge_scf,
+            cls.check_failure,
             while_(cls.condition)(
                 cls.generate_new_fleurinp,
                 cls.converge_scf,
+                cls.check_failure,
             ),
             cls.get_results,
             cls.return_results,
@@ -107,6 +109,11 @@ class FleurRelaxWorkChain(WorkChain):
                        message="Found no relax.xml file in retrieved folder")
         spec.exit_code(354, 'ERROR_NO_FLEURINP_OUTPUT',
                        message="Found no fleurinpData in the last SCF workchain")
+        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                               'vacuum during relaxation')
+        spec.exit_code(312, 'ERROR_MT_RADII',
+                       message='FLEUR calculation failed due to MT overlap.')
 
     def start(self):
         """
@@ -278,12 +285,32 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wc = self.ctx.scf_res
         last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
 
-        # take cdn_last; take inp.xml and relax.xml if fleurinp in None
         input_scf['remote_data'] = last_calc.outputs.remote_folder
         if self.ctx.new_fleurinp:
             input_scf['fleurinp'] = self.ctx.new_fleurinp
-
+        
         return input_scf
+
+    def check_failure(self):
+        """
+        Throws an exit code if scf failed
+        """
+        try:
+            scf_wc = self.ctx.scf_res
+            if not scf_wc.is_finished_ok:
+                fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
+                if fleur_calc.exit_code == 311:
+                    self.control_end_wc('Failed due to atom and vacuum overlap')
+                    return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
+                elif fleur_calc.exit_code == 312:
+                    self.control_end_wc('Failed due to MT overlap')
+                    return self.exit_codes.ERROR_MT_RADII
+                else:
+                    return self.exit_codes.ERROR_RELAX_FAILED
+        except AttributeError:
+            message = 'ERROR: Something went wrong I do not have new atom positions calculation'
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_RELAX_FAILED
 
     def condition(self):
         """
@@ -291,19 +318,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         :return: True if structure is optimised and False otherwise
         """
-        try:
-            scf_wc = self.ctx.scf_res
-            if not scf_wc.is_finished_ok:
-                # message = ('ERROR: scf cycle failed, it has an '
-                #            'exit status {}'.format(scf_wc.exit_status))
-                # self.control_end_wc(message)
-                # return self.exit_codes.ERROR_RELAX_FAILED
-                return False
-        except AttributeError:
-            # message = 'ERROR: Something went wrong I do not have new atom positions calculation'
-            # self.control_end_wc(message)
-            # return self.exit_codes.ERROR_RELAX_FAILED
-            return False
+        scf_wc = self.ctx.scf_res
 
         try:
             self.ctx.forces.append(scf_wc.outputs.output_scf_wc_para.dict.force_largest)
@@ -388,7 +403,6 @@ class FleurRelaxWorkChain(WorkChain):
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
-               'initial_structure': self.inputs.structure.uuid,
                'info': self.ctx.info,
                'warnings': self.ctx.warnings,
                'errors': self.ctx.errors,

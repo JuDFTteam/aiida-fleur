@@ -583,3 +583,13 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
         message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
             'Changed the number of nodes from {} to {}. Number of k-points is {}.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
     return best_suggestion[0], best_suggestion[1], message, exit_status
+
+def find_last_in_restart(restart_wc):
+    """
+    Finds the last CalcJob submitted in a restart_wc
+    and returns it's uuid
+    """
+    links = restart_wc.get_outgoing().all()
+    calls = list([x for x in links if x.link_label == 'CALL'])
+    calls = sorted(calls, key=lambda x: x.node.pk)
+    return calls[-1].node.uuid
