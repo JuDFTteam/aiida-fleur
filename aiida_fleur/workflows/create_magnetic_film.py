@@ -22,7 +22,7 @@ import six
 from aiida.engine import WorkChain, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
-from aiida.orm import Code, WorkChainNode
+from aiida.orm import Code
 from aiida.orm import StructureData, RemoteData, Dict
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -64,7 +64,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'force_dict': {'qfix': 2,
                        'forcealpha': 0.5,
                        'forcemix': 'BFGS'},
-        'film_distance_relaxation' : False,
+        'film_distance_relaxation' : True,
         'force_criterion': 0.001,
         'use_relax_xml': True,
 
@@ -74,7 +74,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                    [1, 1, 0]],
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,
-        'size': (1,1,5),
+        'size': (1, 1, 5),
         'replacements': {0: 'Fe', -1: 'Fe'},
         'decimals': 10,
         'pop_last_layers': 1,
@@ -113,13 +113,13 @@ class FleurCreateMagneticWorkChain(WorkChain):
             cls.make_magnetic
         )
 
-        spec.output('out', valid_type=Dict)
+        spec.output('magnetic_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
         spec.exit_code(401, 'ERROR_NOT_SUPPORTED_LATTICE',
-                       message="Specified substrate has to be bcc or fcc.")        
+                       message="Specified substrate has to be bcc or fcc.")
 
     def eos_needed(self):
         """
@@ -326,6 +326,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
                                            replacements=replacements, decimals=decimals,
                                            pop_last_layers=pop_last_layers)
 
+        self.ctx.substrate = create_manual_slab_ase(miller=miller, host_symbol=host_symbol,
+                                                    latticeconstant=latticeconstant, size=(1, 1, 1),
+                                                    replacements=None, decimals=decimals)
+
         centered_structure = center_film(StructureData(ase=structure))
 
         return centered_structure
@@ -335,4 +339,13 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Analuses outputs of previous steps and generated the final
         structure suitable for magnetic film calculations.
         """
-        pass
+        from aiida_fleur.tools.StructureData_util import magnetic_slab_from_relaxed_cf
+
+        if self.ctx.wf_dict['relax_needed']:
+            optimized_structure = self.ctx.relax_wc.outputs.optimized_structure
+        else:
+            optimized_structure = self.inputs.optimized_structure
+
+        magnetic = magnetic_slab_from_relaxed_cf(optimized_structure, self.ctx.substrate, 11, 4)
+
+        self.out('magnetic_structure', magnetic)

@@ -839,6 +839,14 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
 
     return structure
 
+@cf
+def magnetic_slab_from_relaxed_cf(relaxed_structure, orig_structure, total_number_layers,
+                                  num_relaxed_layers, tolerance_decimals=10):
+    """
+    A CalcFunction that wraps magnetic_slab_from_relaxed
+    """
+    return magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
+                                      num_relaxed_layers, tolerance_decimal)
 
 def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
                                num_relaxed_layers, tolerance_decimals=10):
@@ -919,7 +927,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
             done_layers = done_layers + 1
         else:
             break
-    
+
     magn_structure = center_film(magn_structure)
     return magn_structure
 
