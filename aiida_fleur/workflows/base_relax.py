@@ -21,7 +21,7 @@ import six
 
 from aiida.common import AttributeDict
 from aiida.engine import while_
-from aiida.orm import load_node
+from aiida.orm import load_node, Dict
 from aiida.plugins import WorkflowFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
@@ -102,11 +102,49 @@ def _handle_not_conv_error(self, calculation):
 @register_error_handler(FleurBaseRelaxWorkChain, 999)
 def _handle_general_error(self, calculation):
     """
-    Calculation failed for unknown reason.
+    Calculation failed for a reason that can not be fixed automatically.
     """
-    if calculation.exit_status not in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_CONVERGE']):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_RELAX_FAILED',
+                                                                  'ERROR_INVALID_INPUT_RESOURCES',
+                                                                  'ERROR_INVALID_CODE_PROVIDED',
+                                                                  'ERROR_NO_RELAX_OUTPUT',
+                                                                  'ERROR_NO_FLEURINP_OUTPUT']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Calculation failed for unknown reason, stop the Base workchain')
+        self.report('Calculation failed for ua reason that can not be fixed automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+
+@register_error_handler(FleurBaseRelaxWorkChain, 100)
+def _handle_general_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status not in RelaxProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+        self.ctx.is_finished = False
+        self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum '
+                    'parameter')
+
+        wf_para_dict = self.ctx.inputs.wf_parameters.get_dict()
+        inpxml_changes = wf_para_dict.get('inpxml_changes', [])
+        inpxml_changes.append(('shift_value',
+                               {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}}))
+        wf_para_dict['inpxml_changes'] = inpxml_changes
+        self.ctx.inputs.wf_parameters = Dict(dict=wf_para_dict)
+        return ErrorHandlerReport(True, True)
+
+@register_error_handler(FleurBaseRelaxWorkChain, 101)
+def _handle_general_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status not in RelaxProcess.get_exit_statuses(['ERROR_MT_RADII']):
+        self.ctx.is_finished = False
+        self.report('Relax WC did not lead to convergence, submit next RelaxWC')
+        last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
+        last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+        last_fleur_calc = load_node(last_fleur_calc)
+        remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+
+        self.ctx.inputs.remote = remote
+        return ErrorHandlerReport(True, True)

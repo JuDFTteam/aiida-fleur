@@ -59,7 +59,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'guess': 1.00,
 
         'alpha_mix': 0.015,
-        'relax_iter': 5,
+        'relax_iter': 15,
         'force_converged': 0.0002,
         'force_dict': {'qfix': 2,
                        'forcealpha': 0.5,

@@ -21,7 +21,7 @@ import six
 
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
+from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict
 from aiida.common.exceptions import NotExistent
@@ -31,6 +31,7 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # pylint: disable=invalid-name
 FleurInpData = DataFactory('fleur.fleurinp')
+FleurCalc = CalculationFactory('fleur.fleur')
 # pylint: enable=invalid-name
 
 class FleurRelaxWorkChain(WorkChain):
@@ -297,20 +298,21 @@ class FleurRelaxWorkChain(WorkChain):
         """
         try:
             scf_wc = self.ctx.scf_res
-            if not scf_wc.is_finished_ok:
-                fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_code == 311:
-                    self.control_end_wc('Failed due to atom and vacuum overlap')
-                    return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_code == 312:
-                    self.control_end_wc('Failed due to MT overlap')
-                    return self.exit_codes.ERROR_MT_RADII
-                else:
-                    return self.exit_codes.ERROR_RELAX_FAILED
         except AttributeError:
             message = 'ERROR: Something went wrong I do not have new atom positions calculation'
             self.control_end_wc(message)
             return self.exit_codes.ERROR_RELAX_FAILED
+        
+        if not scf_wc.is_finished_ok:
+            fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
+            if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+                self.control_end_wc('Failed due to atom and vacuum overlap')
+                return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
+            elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII']):
+                self.control_end_wc('Failed due to MT overlap')
+                return self.exit_codes.ERROR_MT_RADII
+            else:
+                return self.exit_codes.ERROR_RELAX_FAILED
 
     def condition(self):
         """
