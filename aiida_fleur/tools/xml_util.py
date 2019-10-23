@@ -1151,6 +1151,52 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
 
     return new_tree
 
+def shift_value(fleurinp_tree_copy, change_dict):
+    """
+    Shifts numertical values of some tags directly in the inp.xml file.
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param change_dict: a python dictionary with the keys to shift.
+
+    :returns new_tree: a lxml tree with shifted values
+
+    An example of change_dict::
+
+            change_dict = {'itmax' : 1, 'dVac': -0.123}
+    """
+    xmlinpstructure = get_inpxml_file_structure()
+    all_attrib_xpath = xmlinpstructure[12]
+    float_attributes_once = xmlinpstructure[4]
+    int_attributes_once = xmlinpstructure[3]
+
+    change_to_write = {}
+
+    for key, value in six.iteritems(change_dict):
+        try:
+            key_path = all_attrib_xpath[key]
+        except KeyError:
+            raise KeyError('Found no xml path for {} attribute'.format(key))
+
+        old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([key_path, key]))
+
+        if not old_val:
+            print('Can not find {} attribute in the inp.xml, skip it'.format(key))
+            continue
+        else:
+            old_val = old_val[0]
+
+        if key in float_attributes_once:
+            change_to_write[key] = float(old_val) + value
+        elif key in int_attributes_once:
+            if abs(int(value)-value) > 1e-8:
+                raise ValueError('You are trying to write a float to an integer attribute')
+            change_to_write[key] = int(old_val) + int(value)
+        else:
+            raise ValueError('Shifting is supported for single integer of float attriutes')
+
+    new_tree = set_inpchanges(fleurinp_tree_copy, change_to_write)
+    return new_tree
+
 def set_nkpts(fleurinp_tree_copy, count, gamma):
     """
     Sets a k-point mesh directly into inp.xml
