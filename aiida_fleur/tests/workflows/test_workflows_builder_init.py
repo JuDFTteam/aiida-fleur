@@ -173,3 +173,11 @@ class TestFleur_workflow_interfaces:#TestAiida_fleur_entrypoints
         from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
         
         builder = FleurBaseRelaxWorkChain.get_builder()
+
+    def test_fleur_create_magnetic_wc_init(aiida_env):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.create_magnetic_film import FleurCreateMagneticWorkChain
+        
+        builder = FleurCreateMagneticWorkChain.get_builder()
