@@ -310,10 +310,14 @@ class FleurEosWorkChain(WorkChain):
         en_array = np.array(t_energylist_peratom)
         vol_array = np.array(vol_peratom_success)
 
+        write_defaults_fit = False
         # TODO: different fits
         if len(en_array): # for some reason just en_array does not work
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
 
+            for i in volume, bulk_modulus, bulk_deriv, residuals:
+                if issubclass(type(i), np.complex):
+                    write_defaults_fit = True
             volumes = self.ctx.volume
             gs_scale = volume * natoms / self.ctx.org_volume
             if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
@@ -323,6 +327,9 @@ class FleurEosWorkChain(WorkChain):
                 self.ctx.warnings.append(warn)
                 # TODO maybe make it a feature to rerun with centered around the gs.
         else:
+            write_defaults_fit = True
+
+        if write_defaults_fit:
             volumes = None
             gs_scale = None
             residuals = None

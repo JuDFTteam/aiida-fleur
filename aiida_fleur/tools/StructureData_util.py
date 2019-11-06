@@ -807,7 +807,7 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
         keys = six.viewkeys(replacements)
         # if min(keys) < 0:
         #     raise ValueError('"replacements" has to contain only natural numbers')
-        if max((abs(x) for x in keys)) > size[2]:
+        if max((abs(int(x)) for x in keys)) > size[2]:
             raise ValueError('"replacements" has to contain numbers less than number of layers')
     else:
         replacements = {}
@@ -832,7 +832,7 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
 
     current_symbols = structure.get_chemical_symbols()
     for i, at_type in six.iteritems(replacements):
-        current_symbols[i] = at_type
+        current_symbols[int(i)] = at_type
     structure.set_chemical_symbols(current_symbols)
 
     structure.positions = np.around(structure.positions, decimals=decimals)
