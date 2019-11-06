@@ -87,6 +87,7 @@ Basic (Technical) Workchains
    ./base_wc
    ./scf_wc
    ./eos_wc
+   ./base_relax_wc
    ./relax_wc
    ./dos_band_wc
 
@@ -98,6 +99,7 @@ More advanced (Scientific) Workchains
 
    ./initial_cls_wc
    ./corehole_wc
+   ./create_magnetic_wc
 
 Magnetic workchains
 ...................

@@ -90,8 +90,6 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.output('magnetic_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
         spec.exit_code(401, 'ERROR_NOT_SUPPORTED_LATTICE',
                        message="Specified substrate has to be bcc or fcc.")
         spec.exit_code(402, 'ERROR_NO_EOS_OUTPUT',

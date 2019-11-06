@@ -219,7 +219,7 @@ on the setup of the inputs, one of four supported scenarios will happen:
 .. warning::
 
   One *must* keep one of the supported input configurations. In other case the workchain will
-  stop throwing non-zero exit status or more seriously, will make unexpected actions.
+  stop throwing non-zero exit status or more dangerously, will make unexpected actions.
 
 
 Error handling

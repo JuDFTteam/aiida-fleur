@@ -1,7 +1,7 @@
 .. _eos_wc:
 
-Fleur equation of states (eos) workflows
-----------------------------------------
+Fleur equation of states (eos) workflow
+---------------------------------------
 
 * **Current version**: 0.3.4
 * **Class**: :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain`

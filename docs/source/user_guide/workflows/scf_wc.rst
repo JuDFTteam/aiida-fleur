@@ -172,7 +172,7 @@ use it as an input together with the RemoteFolder.
 .. warning::
 
   One *must* keep one of the supported input configurations. In other case the workchain will
-  stop throwing non-zero exit status or more seriously, will make unexpected actions.
+  stop throwing non-zero exit status or more dangerously, will make unexpected actions.
 
 The general layout does not depend on the scenario, SCF workchain sequentially submits several
 FLEUR calculation to achieve a convergence criterion.
