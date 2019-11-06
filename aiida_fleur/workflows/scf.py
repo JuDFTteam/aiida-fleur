@@ -370,7 +370,7 @@ class FleurScfWorkChain(WorkChain):
                 {'itmax': self.ctx.default_itmax, 'minDistance': dist})
         elif converge_mode == 'force':
             force_converged = wf_dict.get('force_converged')
-            dist = 0.0
+            dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist,
                                       'force_converged': force_converged, 'l_f': True,
                                       'qfix': force_dict.get('qfix'),
