@@ -24,6 +24,7 @@ from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code
 from aiida.orm import StructureData, RemoteData, Dict
+from aiida.common import AttributeDict
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.eos import FleurEosWorkChain
@@ -49,25 +50,6 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'environment_variables': {}}
 
     _wf_default = {
-        'fleur_runmax': 4,
-        'density_converged': 0.02,
-        'serial': False,
-        'itmax_per_run': 50,
-        'inpxml_changes': [],
-        'points': 9,
-        'step': 0.02,
-        'guess': 1.00,
-
-        'alpha_mix': 0.015,
-        'relax_iter': 15,
-        'force_converged': 0.0002,
-        'force_dict': {'qfix': 2,
-                       'forcealpha': 0.5,
-                       'forcemix': 'BFGS'},
-        'film_distance_relaxation' : True,
-        'force_criterion': 0.001,
-        'use_relax_xml': True,
-
         'lattice': 'fcc',
         'miller': [[-1, 1, 0],
                    [0, 0, 1],
@@ -86,21 +68,13 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'relax_needed': True
     }
 
-    _eos_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes',
-                 'points', 'step', 'guess']
-    _relax_keys = ['fleur_runmax', 'serial', 'itmax_per_run', 'alpha_mix', 'relax_iter',
-                   'force_converged', 'force_dict', 'film_distance_relaxation', 'force_criterion',
-                   'use_relax_xml', 'inpxml_changes']
-
     @classmethod
     def define(cls, spec):
         super(FleurCreateMagneticWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurEosWorkChain, namespace='eos', exclude=('structure', ))
+        spec.expose_inputs(FleurBaseRelaxWorkChain, namespace='relax', exclude=('structure', ))
         spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
         spec.input("eos_output", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -120,6 +94,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
         spec.exit_code(401, 'ERROR_NOT_SUPPORTED_LATTICE',
                        message="Specified substrate has to be bcc or fcc.")
+        spec.exit_code(402, 'ERROR_NO_EOS_OUTPUT',
+                       message="eos_output was not specified, however, 'eos_needed' was set to "
+                               "True.")
 
     def eos_needed(self):
         """
@@ -132,32 +109,11 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Initialize inputs for eos workflow:
         wf_param, options, calculation parameters, codes, structure
         """
-        inputs = {}
+        inputs = AttributeDict(self.exposed_inputs(FleurEosWorkChain, namespace='eos' ))
+        inputs.structure = self.create_substrate_bulk()
 
-        eos_wf_param = {}
-        for key in self._eos_keys:
-            eos_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = eos_wf_param
-
-        inputs['options'] = self.ctx.options
-
-        # Try to retrieve calculation parameters from inputs
-        try:
-            calc_para = self.inputs.calc_parameters.get_dict()
-        except AttributeError:
-            calc_para = {}
-        inputs['calc_parameters'] = Dict(dict=calc_para)
-
-        # Initialize codes
-        inputs['inpgen'] = self.inputs.inpgen
-        inputs['fleur'] = self.inputs.fleur
-        # Initialize the structure
-        inputs['structure'] = self.create_substrate_bulk()
-        if not isinstance(inputs['structure'], StructureData):
+        if not isinstance(inputs.structure, StructureData):
             return inputs['structure'] # throws an exit code thrown in create_substrate_bulk
-
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
 
         return inputs
 
@@ -214,14 +170,13 @@ class FleurCreateMagneticWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        if not wf_dict['eos_needed'] and 'eos_output' not in self.inputs:
+            return self.exit_codes.ERROR_NO_EOS_OUTPUT
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
-
-        # set up mixing parameter alpha
-        self.ctx.wf_dict['inpxml_changes'].append(
-            ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -274,32 +229,11 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Initialise inputs for Relax workchain
         """
-        inputs = {}
+        inputs = AttributeDict(self.exposed_inputs(FleurBaseRelaxWorkChain, namespace='relax'))
+        inputs.structure = self.create_film_to_relax()
 
-        relax_wf_param = {}
-        for key in self._relax_keys:
-            relax_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = relax_wf_param
-
-        inputs['options'] = self.ctx.options
-
-        # Try to retrieve calculation parameters from inputs
-        try:
-            calc_para = self.inputs.calc_parameters.get_dict()
-        except AttributeError:
-            calc_para = {}
-        inputs['calc_parameters'] = Dict(dict=calc_para)
-
-        # Initialize codes
-        inputs['inpgen'] = self.inputs.inpgen
-        inputs['fleur'] = self.inputs.fleur
-        # Initialize the structure
-        inputs['structure'] = self.create_film_to_relax()
-        if not isinstance(inputs['structure'], StructureData):
-            return inputs['structure'] # throws an exit code thrown in create_substrate_bulk
-
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
+        if not isinstance(inputs.structure, StructureData):
+            return inputs.structure # throws an exit code thrown in create_film_to_relax
 
         return inputs
 
@@ -314,7 +248,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         if not self.ctx.wf_dict['eos_needed']:
             eos_output = self.inputs.eos_output
         else:
-            eos_output = self.ctx.eos.outputs.output_eos_wc_para
+            eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
         scaling_parameter = eos_output.get_dict()['scaling_gs']
         latticeconstant = self.ctx.wf_dict['latticeconstant'] * scaling_parameter
         size = self.ctx.wf_dict['size']
