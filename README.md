@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/broeder-j/aiida-fleur.svg)](https://github.com/broeder-j/aiida-fleur/releases)
 [![PyPI version](https://badge.fury.io/py/aiida-fleur.svg)](https://badge.fury.io/py/aiida-fleur)
 [![Build develop](https://travis-ci.org/JuDFTteam/aiida-fleur.svg?branch=master)](https://travis-ci.org/JuDFTteam/aiida-fleur)
-[![Coveralls github branch](https://github.com/broeder-j/aiida-fleur/blob/develop/aiida_fleur/tests/coverage.svg)](https://github.com/broeder-j/aiida-fleur/tree/develop)
+[![Coveralls github branch](https://github.com/JuDFTteam/aiida-fleur/blob/develop/aiida_fleur/tests/coverage.svg)](https://github.com/JuDFTteam/aiida-fleur/tree/develop)
 [![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](https://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
 
 
