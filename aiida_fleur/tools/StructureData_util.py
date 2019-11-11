@@ -20,12 +20,16 @@ from __future__ import print_function
 from ase import *
 from ase.lattice.surface import *
 from ase.io import *
+import numpy as np
+
 from aiida.plugins import DataFactory
-from aiida.orm import load_node
+from aiida.orm import load_node, Int
 from aiida.orm.nodes.data.structure import Site, Kind
 from aiida.engine.processes.functions import calcfunction as cf
-import numpy as np
-from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices, SlabGenerator
+
+from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
+from pymatgen.core.surface import SlabGenerator
+
 import six
 from six.moves import range
 from six.moves import zip
@@ -33,7 +37,7 @@ from six.moves import zip
 
 def is_structure(structure):
     """
-    Test if the given input is a StructureData node, by obejct, id, or pk
+    Test if the given input is a StructureData node, by object, id, or pk
     if yes returns a StructureData node in all cases
     if no returns None
     """
@@ -45,7 +49,7 @@ def is_structure(structure):
     #Test if pk, if yes, is the corresponding node StructureData
     pk = None
     try:
-        pk=int(structure)
+        pk = int(structure)
     except:
         pass
     if pk:
@@ -71,45 +75,48 @@ def is_structure(structure):
 
     return None
 
+
 def is_primitive(structure):
     """
     Checks if a structure is primitive or not,
     returns True if the structure can not be anymore refined.
-    prints False if the structure can be futher refinded.
+    prints False if the structure can be futher refined.
     """
-    refinded_cell = find_primitive_cell(structure)
+    refined_cell = find_primitive_cell(structure)
 
     prim = False
-    if refinded_cell.cell == structure.cell:
+    if refined_cell.cell == structure.cell:
         prim = True
     return prim
+
 
 @cf
 def rescale(inp_structure, scale):
     """
-    Rescales a crystal structures Volume, atoms stay at their same realtive postions,
-    therefore the absolut postions change.
-    Keeps the provanance in the database.
+    Rescales a crystal structures Volume, atoms stay at their same relative postions,
+    therefore the absolute postions change.
+    Keeps the provenance in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
     :param scale, float scaling factor for the cell
 
-    :returns: New StrcutureData node with rescalled structure, which is linked to input Structure
+    :returns: New StructureData node with rescalled structure, which is linked to input Structure
               and None if inp_structure was not a StructureData
     """
 
     return rescale_nowf(inp_structure, scale)
 
-def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF, Rescales a crystal structure (Volume), by a given float.'):
+
+def rescale_nowf(inp_structure, scale):
     """
-    Rescales a crystal structures Volume, atoms stay at their same realtive postions,
-    therefore the absolut postions change.
-    DOES NOT keep the provanence in the database.
+    Rescales a crystal structures Volume, atoms stay at their same relative postions,
+    therefore the absolute postions change.
+    DOES NOT keep the provenance in the database.
 
     :param inp_structure, a StructureData node (pk, or uuid)
     :param scale, float scaling factor for the cell
 
-    :returns: New StrcutureData node with rescalled structure, which is linked to input Structure
+    :returns: New StructureData node with rescalled structure, which is linked to input Structure
               and None if inp_structure was not a StructureData
     """
 
@@ -121,13 +128,16 @@ def rescale_nowf(inp_structure, scale):#, _label='rescale_wf', _description='WF,
 
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
-    new_ase.set_cell(the_ase.get_cell()*np.power(float(scale), 1.0/3), scale_atoms=True)
+    new_ase.set_cell(the_ase.get_cell() *
+                     np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = u'{}  rescaled {}'.format(scale, structure.uuid)
+    rescaled_structure.label = '{}  rescaled {}'.format(scale, structure.uuid)
 
     return rescaled_structure
 
 #@cf
+
+
 def rescale_xyz(inp_structure, scalevec):
     """
     rescales a structure a certain way...
@@ -139,10 +149,11 @@ def rescale_xyz(inp_structure, scalevec):
 def supercell(inp_structure, n_a1, n_a2, n_a3):
     """
     Creates a super cell from a StructureData node.
-    Keeps the provanance in the database.
+    Keeps the provenance in the database.
 
     :param StructureData, a StructureData node (pk, or uuid)
-    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
+    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3,
+                  or if cart =True in x,y,z
 
     :returns StructureData, Node with supercell
     """
@@ -152,10 +163,10 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):
     return superc
 
 
-def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _description=u'WF, Creates a supercell of a crystal structure x(n1,n2,n3).'):# be carefull you have to use AiiDA datatypes...
+def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     """
     Creates a super cell from a StructureData node.
-    Does NOT keeps the provanance in the database.
+    Does NOT keeps the provenance in the database.
 
     :param StructureData, a StructureData node (pk, or uuid)
     :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
@@ -198,7 +209,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         kn = site.kind_name
         pos_o = site.position
         for j in range(na1):
-            pos = [pos_o[i] + j * old_a1[i] for i in range(0,len(old_a1))]
+            pos = [pos_o[i] + j * old_a1[i] for i in range(0, len(old_a1))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
     #scale n_a2
@@ -207,8 +218,8 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         # get atom position
         kn = site.kind_name
         pos_o = site.position
-        for j in range(1,na2): # j=0 these sites/atoms are already added
-            pos = [pos_o[i] + j * old_a2[i] for i in range(0,len(old_a2))]
+        for j in range(1, na2):  # j=0 these sites/atoms are already added
+            pos = [pos_o[i] + j * old_a2[i] for i in range(0, len(old_a2))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
     #scale n_a3
@@ -217,55 +228,55 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):#, _label=u'supercell_wf', _d
         # get atom position
         kn = site.kind_name
         pos_o = site.position
-        for j in range(1,na3): # these sites/atoms are already added
-            pos = [pos_o[i] + j * old_a3[i] for i in range(0,len(old_a3))]
+        for j in range(1, na3):  # these sites/atoms are already added
+            pos = [pos_o[i] + j * old_a3[i] for i in range(0, len(old_a3))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
     formula = inp_structure.get_formula()
     new_structure.label = 'supercell of {}'.format(formula)
-    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
+    new_structure.description = '{}x{}x{} supercell of {}'.format(
+        n_a1, n_a2, n_a3, formula)
     return new_structure
-
-
-#wf
-#prob don't make this a workfuntion, because rescale is already one and scalelist would has to be a ParameterData Node, since AiiDA has no list-datatype
 
 
 #### Structure util
 # after ths is in plugin code import these in fleurinp.
 def abs_to_rel(vector, cell):
     """
-    Converts a position vector in absolut coordinates to relative coordinates.
+    Converts a position vector in absolute coordinates to relative coordinates.
     """
 
     if len(vector) == 3:
         cell_np = np.array(cell)
         inv_cell_np = np.linalg.inv(cell_np)
-        postionR =  np.array(vector)
-        new_rel_post = np.matmul(postionR, inv_cell_np)#np.matmul(inv_cell_np, postionR)#
+        postionR = np.array(vector)
+        # np.matmul(inv_cell_np, postionR)#
+        new_rel_post = np.matmul(postionR, inv_cell_np)
         new_rel_pos = [i for i in new_rel_post]
         return new_rel_pos
     else:
         return False
 
+
 def abs_to_rel_f(vector, cell, pbc):
     """
-    Converts a position vector in absolut coordinates to relative coordinates
+    Converts a position vector in absolute coordinates to relative coordinates
     for a film system.
     """
     # TODO this currently only works if the z-coordinate is the one with no pbc
     # Therefore if a structure with x non pbc is given this should also work.
     # maybe write a 'tranform film to fleur_film routine'?
     if len(vector) == 3:
-        if pbc[2] == False:
-            # leave z coordinate absolut
+        if not pbc[2]:
+            # leave z coordinate absolute
             # convert only x and y.
-            postionR =  np.array(vector)
-            postionR_f =  np.array(postionR[:2])
+            postionR = np.array(vector)
+            postionR_f = np.array(postionR[:2])
             cell_np = np.array(cell)
             cell_np = np.array(cell_np[0:2, 0:2])
             inv_cell_np = np.linalg.inv(cell_np)
-            new_xy = [i for i in np.matmul(postionR_f, inv_cell_np)]#np.matmul(inv_cell_np, postionR_f)]
+            # np.matmul(inv_cell_np, postionR_f)]
+            new_xy = [i for i in np.matmul(postionR_f, inv_cell_np)]
             new_rel_pos_f = [new_xy[0], new_xy[1], postionR[2]]
             return new_rel_pos_f
         else:
@@ -273,15 +284,16 @@ def abs_to_rel_f(vector, cell, pbc):
     else:
         return False
 
+
 def rel_to_abs(vector, cell):
     """
-    Converts a position vector in interal coordinates to absolut coordinates
-    in Angstroem.
+    Converts a position vector in internal coordinates to absolute coordinates
+    in Angstrom.
     """
     if len(vector) == 3:
         cell_np = np.array(cell)
-        postionR =  np.array(vector)
-        new_abs_post = np.matmul(postionR, cell_np)#
+        postionR = np.array(vector)
+        new_abs_post = np.matmul(postionR, cell_np)
         new_abs_pos = [i for i in new_abs_post]
 
         return new_abs_pos
@@ -289,17 +301,18 @@ def rel_to_abs(vector, cell):
     else:
         return False
 
+
 def rel_to_abs_f(vector, cell):
     """
-    Converts a position vector in interal coordinates to absolut coordinates
-    in Angstroem for a film structure (2D).
+    Converts a position vector in internal coordinates to absolute coordinates
+    in Angstrom for a film structure (2D).
     """
     # TODO this currently only works if the z-coordinate is the one with no pbc
     # Therefore if a structure with x non pbc is given this should also work.
     # maybe write a 'tranform film to fleur_film routine'?
     if len(vector) == 3:
-        postionR =  np.array(vector)
-        postionR_f =  np.array(postionR[:2])
+        postionR = np.array(vector)
+        postionR_f = np.array(postionR[:2])
         cell_np = np.array(cell)
         cell_np = np.array(cell_np[0:2, 0:2])
         new_xy = [i for i in np.matmul(postionR_f, cell_np)]
@@ -307,6 +320,7 @@ def rel_to_abs_f(vector, cell):
         return new_abs_pos_f
     else:
         return False
+
 
 @cf
 def break_symmetry_wf(structure, wf_para, parameterData=None):
@@ -319,15 +333,15 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
     :params: StructureData
     :params wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
 
-                     'atoms': 
+                     'atoms':
                             python list of symbols, exp: ['W', 'Be']. This would make for
                             all Be and W atoms their own kinds.
 
-                     'site': 
+                     'site':
                            python list of integers, exp: [1, 4, 8]. This would create for
                            atom 1, 4 and 8 their own kinds.
 
-                     'pos': 
+                     'pos':
                           python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
                           This will create a new kind for the atom at that position.
                           Be carefull the number given has to match EXACTLY the position
@@ -344,13 +358,16 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
     sites = wf_dict.get('site', [])
     pos = wf_dict.get('pos', [])
     new_kinds_names = wf_dict.get('new_kinds_names', {})
-    new_structure, para_new = break_symmetry(structure, atoms=atoms, site=sites, pos=pos, new_kinds_names=new_kinds_names, parameterData = parameterData)
+    new_structure, para_new = break_symmetry(
+        structure, atoms=atoms, site=sites, pos=pos,
+        new_kinds_names=new_kinds_names, parameterData=parameterData)
 
     return new_structure, para_new
 
 
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
-def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}, parameterData = None):
+def break_symmetry(structure, atoms=None, site=None, pos=None,
+                   new_kinds_names={}, parameterData=None):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -368,22 +385,30 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
 
     return: StructureData, a AiiDA crystal structure with new kind specification.
     """
-    # TODO proper input checks?
+    if atoms is None:
+        atoms = ['all']
+    
+    if site is None:
+        site = []
+
+    if pos is None:
+        pos = []
+
     from aiida.common.constants import elements as PeriodicTableElements
     from aiida.orm import Dict
 
     _atomic_numbers = {data['symbol']: num for num,
-                           data in six.iteritems(PeriodicTableElements)}
+                       data in six.iteritems(PeriodicTableElements)}
 
     #get all atoms, get the symbol of the atom
     #if wanted make individual kind for that atom
     #kind names will be atomsymbol+number
     #create new structure with new kinds and atoms
     #Param = DataFactory('dict')
-    symbol_count = {} # Counts the atom symbol occurence to set id's and kind names right
+    symbol_count = {}  # Counts the atom symbol occurrence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
-    replace_siteN = [] # all site integers to be replaced
-    replace_pos = [] #all the atom positions to be replaced
+    replace_siteN = []  # all site integers to be replaced
+    replace_pos = []  # all the atom positions to be replaced
     new_parameterd = None
     struc = is_structure(structure)
     if not struc:
@@ -425,17 +450,17 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
 
         if replace_kind:
             if symbol in symbol_count:
-                symbol_count[symbol] =  symbol_count[symbol] + 1
+                symbol_count[symbol] = symbol_count[symbol] + 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
                 print(symbol_new_kinds_names)
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
                     newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
                 else:
                     newkindname = '{}{}'.format(symbol, symbol_count[symbol])
             else:
                 symbol_count[symbol] = 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
                     newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
                 else:
                     newkindname = '{}{}'.format(symbol, symbol_count[symbol])
@@ -444,32 +469,36 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
 
             # now we have to add an atom list to parameterData with the corresponding id.
             if parameterData:
-                id_a =  symbol_count[symbol]#'{}.{}'.format(charge, symbol_count[symbol])
+                # '{}.{}'.format(charge, symbol_count[symbol])
+                id_a = symbol_count[symbol]
                 for key, val in six.iteritems(para):
                     if 'atom' in key:
                         if val.get('element', None) == symbol:
                             if id_a and id_a == val.get('id', None):
-                                break # we assume the user is smart and provides a para node,
-                                # which incooperates the symmetry breaking already
-                            elif id_a:# != 1: # copy parameter of symbol and add id
+                                break  # we assume the user is smart and provides a para node,
+                                # which incorporates the symmetry breaking already
+                            elif id_a:  # != 1: # copy parameter of symbol and add id
                                 val_new = dict(val)
                                 # getting the charge over element might be risky
-                                charge = _atomic_numbers.get((val.get('element')))
-                                idp = '{}.{}'.format(charge, symbol_count[symbol])
+                                charge = _atomic_numbers.get(
+                                    (val.get('element')))
+                                idp = '{}.{}'.format(
+                                    charge, symbol_count[symbol])
                                 idp = float("{0:.2f}".format(float(idp)))
                                 # dot cannot be stored in AiiDA dict...
-                                val_new.update({u'id' : idp})
+                                val_new.update({u'id': idp})
                                 atomlistname = 'atom{}'.format(id_a)
                                 i = 0
                                 while new_parameterd.get(atomlistname, {}):
                                     i = i+1
                                     atomlistname = 'atom{}'.format(id_a+i)
 
-                                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+                                symbol_new_kinds_names = new_kinds_names.get(
+                                    symbol, [])
                                 #print(symbol_new_kinds_names)
-                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))== symbol_count[symbol]):
-                                     species_name = symbol_new_kinds_names[symbol_count[symbol]-1]
-                                val_new.update({u'name' : species_name})
+                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
+                                    species_name = symbol_new_kinds_names[symbol_count[symbol]-1]
+                                val_new.update({u'name': species_name})
 
                                 new_parameterd[atomlistname] = val_new
             else:
@@ -487,15 +516,14 @@ def break_symmetry(structure, atoms=['all'], site=[], pos=[], new_kinds_names={}
         para_new = None
 
     new_structure.label = structure.label
-    new_structure.description =  structure.description + 'more kinds, less sym'
+    new_structure.description = structure.description + 'more kinds, less sym'
 
     return new_structure, para_new
 
 
-
-def find_equi_atoms(structure):#, sitenumber=0, position=None):
+def find_equi_atoms(structure):  # , sitenumber=0, position=None):
     """
-    This routine uses spqlib and ASE to provide informations of all equivivalent
+    This routine uses spglib and ASE to provide informations of all equivivalent
     atoms in the cell.
 
     params: AiiDA StructureData
@@ -505,7 +533,6 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
     """
     import spglib
-    Dict = DataFactory('dict')
 
     equi_info = []
     equi_info_symbol = []
@@ -518,7 +545,7 @@ def find_equi_atoms(structure):#, sitenumber=0, position=None):
     unique = np.unique(equi)
 
     for uni in unique:
-        equi_info.append(np.where(equi==uni)[0])
+        equi_info.append(np.where(equi == uni)[0])
 
     sites = structure.sites
     kinds = structure.kinds
@@ -544,8 +571,10 @@ def get_spacegroup(structure):
     spacegroup = spglib.get_spacegroup(s_ase, symprec=1e-5)
     return spacegroup
 
+
 @cf
-def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_wf', _description='WF, that moves all atoms in a unit cell by a given vector'):#Float1, Float2, Float3, test=None):
+# , _label='move_atoms_in_unitcell_wf', _description='WF, that moves all atoms in a unit cell by a given vector'):#Float1, Float2, Float3, test=None):
+def move_atoms_incell_wf(structure, wf_para):
     """
     moves all atoms in a unit cell by a given vector
 
@@ -557,11 +586,12 @@ def move_atoms_incell_wf(structure, wf_para):#, _label='move_atoms_in_unitcell_w
     returns: AiiDA stucture
     """
     wf_para_dict = wf_para.get_dict()
-    vector = wf_para_dict.get('vector' , [0.0, 0.0, 0.0])
-    new_structure = move_atoms_incell(structure, vector)#[Float1, Float2, Float3])
+    vector = wf_para_dict.get('vector', [0.0, 0.0, 0.0])
+    # [Float1, Float2, Float3])
+    new_structure = move_atoms_incell(structure, vector)
 
+    return {'moved_struc': new_structure}
 
-    return {'moved_struc' : new_structure}
 
 def move_atoms_incell(structure, vector):
     """
@@ -570,7 +600,7 @@ def move_atoms_incell(structure, vector):
     para: AiiDA structure
     para: vector: tuple of 3, or array
 
-    returns: AiiDA stucture
+    returns: AiiDA structure
     """
 
     StructureData = DataFactory('structure')
@@ -588,7 +618,7 @@ def move_atoms_incell(structure, vector):
         new_structure.label = structure.label
 
     new_structure.label = structure.label
-    new_structure.description =  structure.description + 'moved'
+    new_structure.description = structure.description + 'moved'
     return new_structure
 
 
@@ -608,15 +638,17 @@ def find_primitive_cell(structure):
     symprec = 1e-7
     #print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
-    lattice, scaled_positions, numbers = find_primitive(ase_structure, symprec=symprec)
-    new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
+    lattice, scaled_positions, numbers = find_primitive(
+        ase_structure, symprec=symprec)
+    new_structure_ase = Atoms(
+        numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
     #print('new {}'.format(len(new_structure.sites)))
 
-
     new_structure.label = structure.label + ' primitive'
-    new_structure.description =  structure.description + ' primitive cell'
+    new_structure.description = structure.description + ' primitive cell'
     return new_structure
+
 
 @cf
 def find_primitive_cell_wf(structure):
@@ -627,7 +659,7 @@ def find_primitive_cell_wf(structure):
     returns: list of new AiiDa structure data
     """
 
-    return {'primitive_cell' : find_primitive_cell(structure)}
+    return {'primitive_cell': find_primitive_cell(structure)}
 
 
 def find_primitive_cells(uuid_list):
@@ -645,8 +677,6 @@ def find_primitive_cells(uuid_list):
         new_structures.append(new_structure)
     return new_structures
 
-#test
-#strucs = find_primitive_cells(all_be_ti_structures_uuid)
 
 def get_all_miller_indices(structure, highestindex):
     """
@@ -654,10 +684,11 @@ def get_all_miller_indices(structure, highestindex):
     """
     return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
 
+
 def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0,
-                       bonds=None, tol=1e-3, max_broken_bonds=0,
-                       lll_reduce=False, center_slab=False, primitive=False,
-                       max_normal_search=None, symmetrize=False):#, reorient_lattice=True):
+                           bonds=None, tol=1e-3, max_broken_bonds=0,
+                           lll_reduce=False, center_slab=False, primitive=False,
+                           max_normal_search=None, symmetrize=False):  # , reorient_lattice=True):
     """
     wraps the pymatgen function generate_all_slabs with some useful extras
     returns a dictionary of structures
@@ -667,21 +698,22 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
     pymat_struc = initial_structure.get_pymatgen_structure()
     # currently the pymatgen method is buggy... no coordinates in x,y....
     all_slabs = generate_all_slabs(pymat_struc, miller_index, min_slab_size_ang, min_vacuum_size,
-                       bonds=bonds, tol=tol, max_broken_bonds=max_broken_bonds,
-                       lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
-                       max_normal_search=max_normal_search, symmetrize=symmetrize)#, reorient_lattice=reorient_lattice)
+                                   bonds=bonds, tol=tol, max_broken_bonds=max_broken_bonds,
+                                   lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
+                                   max_normal_search=max_normal_search, symmetrize=symmetrize)  # , reorient_lattice=reorient_lattice)
     for slab in all_slabs:
         #print(slab)
         #slab2 = #slab.get_orthogonal_c_slab()
-        film_struc = StructureData(pymatgen_structure=slab2)
+        film_struc = StructureData(pymatgen_structure=slab)
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
     return aiida_strucs
 
+
 def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0,
-                       bonds=None, tol=1e-3, max_broken_bonds=0,
-                       lll_reduce=False, center_slab=False, primitive=False,
-                       max_normal_search=1, symmetrize=False):#, reorient_lattice=True):
+                     bonds=None, tol=1e-3, max_broken_bonds=0,
+                     lll_reduce=False, center_slab=False, primitive=False,
+                     max_normal_search=1, symmetrize=False):  # , reorient_lattice=True):
     """
     returns a dictionary of structures
     """
@@ -690,7 +722,8 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     #pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
-        slab = create_slap(initial_structure, index, min_slab_size, min_vacuum_size, min_slab_size_ang)
+        slab = create_slap(initial_structure, index,
+                           min_slab_size_ang, min_vacuum_size, min_slab_size_ang)
         film_struc = StructureData(pymatgen_structure=slab)
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
@@ -703,7 +736,8 @@ def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=
     """
     wraps the pymatgen slab generator
     """
-    # minimum slab size is in Angstroem!!!
+    # minimum slab size is in Angstrom!!!
+    StructureData = DataFactory('structure')
     pymat_struc = initial_structure.get_pymatgen_structure()
     slabg = SlabGenerator(pymat_struc, miller_index, min_slab_size, min_vacuum_size,
                           lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
@@ -719,6 +753,7 @@ def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=
 
     return film_struc
 
+
 @cf
 def center_film_wf(structure):
     """
@@ -731,6 +766,7 @@ def center_film_wf(structure):
     """
     return center_film(structure)
 
+
 def center_film(structure):
     """
     Centers a film at z=0
@@ -740,20 +776,9 @@ def center_film(structure):
 
        returns: AiiDA structure
     """
-    # get highest and lowest z value, therefore the whole coordinate range,
-    # then check if number of atoms is odd or even
-    # if even move all atoms that 0 lies in the middle of the atoms in the middle
-    # if odd, set the middle atom to 0.0
-
     sorted_struc = sort_atoms_z_value(structure)
     sites = sorted_struc.sites
-    #natoms = len(sites)
-    #if natoms%2: # odd
-    #    shift = [0,0,-sites[natoms/2].position[2]]
-    #else: #even
-    #    middle = (sites[natoms/2].position[2] + sites[natoms/2 + 1].position[2])/2.0
-    #    shift = [0,0, -middle]
-    shift = [0,0, -(sites[0].position[2]+sites[-1].position[2])/2.0]
+    shift = [0, 0, -(sites[0].position[2]+sites[-1].position[2])/2.0]
 
     return move_atoms_incell(sorted_struc, shift)
 
@@ -783,8 +808,9 @@ def sort_atoms_z_value(structure):
 
     return new_structure
 
-def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], host_symbol='Fe',
-                           latticeconstant=4.0, size=(1,1,5), replacements=None, decimals=10,
+
+def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
+                           latticeconstant=4.0, size=(1, 1, 5), replacements=None, decimals=10,
                            pop_last_layers=0):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
@@ -802,13 +828,16 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
     :return structure: an ase-lattice representing a slab with replaced atoms
 
     """
-    
+    if miller is None:
+        miller = [[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]]
+
     if replacements is not None:
         keys = six.viewkeys(replacements)
-        # if min(keys) < 0:
-        #     raise ValueError('"replacements" has to contain only natural numbers')
         if max((abs(int(x)) for x in keys)) > size[2]:
-            raise ValueError('"replacements" has to contain numbers less than number of layers')
+            raise ValueError(
+                '"replacements" has to contain numbers less than number of layers')
     else:
         replacements = {}
 
@@ -819,7 +848,8 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
         from ase.lattice.cubic import BodyCenteredCubic
         structure_factory = BodyCenteredCubic
     else:
-        raise ValueError('The given lattice {} is not supported'.format(lattice))
+        raise ValueError(
+            'The given lattice {} is not supported'.format(lattice))
 
     structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant, size=size)
@@ -839,14 +869,6 @@ def create_manual_slab_ase(lattice='fcc', miller=[[1,0,0], [0,1,0], [0,0,1]], ho
 
     return structure
 
-@cf
-def magnetic_slab_from_relaxed_cf(relaxed_structure, orig_structure, total_number_layers,
-                                  num_relaxed_layers, tolerance_decimals=10):
-    """
-    A CalcFunction that wraps magnetic_slab_from_relaxed
-    """
-    return magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
-                                      num_relaxed_layers, tolerance_decimal)
 
 def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
                                num_relaxed_layers, tolerance_decimals=10):
@@ -875,9 +897,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
                             several top layers.
 
     """
-    from aiida.orm.nodes.data.structure import Site
     from aiida.orm import StructureData
-    import numpy as np
 
     if relaxed_structure.pbc != (True, True, False):
         raise ValueError('Input structure has to be a film')
@@ -931,6 +951,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     magn_structure = center_film(magn_structure)
     return magn_structure
 
+
 def get_layer_by_number(structure, number, decimals=10):
     """
     Extracts atom positions and their types belonging to the same layer
@@ -946,7 +967,6 @@ def get_layer_by_number(structure, number, decimals=10):
     from aiida.orm import StructureData
     from ase.lattice.bravais import Lattice
     from itertools import groupby
-    import numpy as np
     import copy
 
     structure = copy.deepcopy(structure)
@@ -955,15 +975,15 @@ def get_layer_by_number(structure, number, decimals=10):
         reformat = [(x.position, x.kind_name)
                     for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
-        reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
+        reformat = list(
+            zip(structure.positions, structure.get_chemical_symbols()))
     else:
         raise ValueError('Structure has to be ase lattice or StructureData')
 
-    i = 0
     layer_z_positions = []
     layer_occupancies = []
     layers = []
-    for val,e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
+    for val, e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
         layer_z_positions.append(val)
         layer_content = list(e)
         layers.append(layer_content)
@@ -977,20 +997,20 @@ def estimate_mt_radii(structure, stepsize=0.05):
     #TODO implement
     This method returns for every atom type (group/kind) in the structure a range of
     possible muffin tin radii (min, max).
-    Or maybe just the maximal muffin tin radi (or sets of maximal muffin tin radii)
+    Or maybe just the maximal muffin tin radii (or sets of maximal muffin tin radii)
 
     example return for some Be-W compound
     [[{Be: 1.6, W:2.4}, {Be:1.8, W:2.2}]
 
     """
 
-
     # get symmetry equivalent atoms,
-    # for each atom extimate muffin tin
+    # for each atom estimate muffin tin
     # check what algo fleur uses here
     # Max radius easy increase all spheres until they touch.
     # How to get the minimal muffin tin radii?
     pass
+
 
 def common_mt(max_muffin_tins):
     """
