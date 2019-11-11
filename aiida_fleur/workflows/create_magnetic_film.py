@@ -22,8 +22,7 @@ import six
 from aiida.engine import WorkChain, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
-from aiida.orm import Code
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -107,7 +106,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Initialize inputs for eos workflow:
         wf_param, options, calculation parameters, codes, structure
         """
-        inputs = AttributeDict(self.exposed_inputs(FleurEosWorkChain, namespace='eos' ))
+        inputs = AttributeDict(self.exposed_inputs(FleurEosWorkChain, namespace='eos'))
         inputs.structure = self.create_substrate_bulk()
 
         if not isinstance(inputs.structure, StructureData):
@@ -271,13 +270,26 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Analuses outputs of previous steps and generated the final
         structure suitable for magnetic film calculations.
         """
-        from aiida_fleur.tools.StructureData_util import magnetic_slab_from_relaxed_cf
+        from aiida_fleur.tools.StructureData_util import magnetic_slab_from_relaxed
 
         if self.ctx.wf_dict['relax_needed']:
             optimized_structure = self.ctx.relax_wc.outputs.optimized_structure
         else:
             optimized_structure = self.inputs.optimized_structure
 
-        magnetic = magnetic_slab_from_relaxed_cf(optimized_structure, self.ctx.substrate, 11, 4)
+        magnetic = magnetic_slab_from_relaxed(optimized_structure, self.ctx.substrate,
+                                              self.ctx.wf_dict['total_number_layers'],
+                                              self.ctx.wf_dict['num_relaxed_layers'])
+
+        magnetic = save_structure(magnetic)
 
         self.out('magnetic_structure', magnetic)
+
+
+@cf
+def save_structure(structure):
+    """
+    Save a structure data node to provide correct provenance.
+    """
+    structure_return = structure.clone()
+    return structure_return
