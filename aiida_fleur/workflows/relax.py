@@ -130,7 +130,7 @@ class FleurRelaxWorkChain(WorkChain):
         # Pre-initialization of some variables
         self.ctx.loop_count = 0
         self.ctx.forces = []
-        self.ctx.final_structure = None
+        self.ctx.final_cell = None
         self.ctx.final_atom_positions = None
         self.ctx.pbc = None
         self.ctx.reached_relax = True
@@ -392,11 +392,26 @@ class FleurRelaxWorkChain(WorkChain):
         optimized structure.
         """
         try:
-            fleurinp_out = self.ctx.scf_res.outputs.fleurinp
+            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
         except NotExistent:
-            return self.exit_codes.ERROR_NO_FLEURINP_OUTPUT
+            return self.exit_codes.ERROR_NO_RELAX_OUTPUT
 
-        self.ctx.final_structure = fleurinp_out.get_structuredata_ncf()
+        relax_out = relax_out.get_dict()
+
+        try:
+            cell = relax_out['relax_brav_vectors']
+            atom_positions = relax_out['relax_atom_positions']
+            film = relax_out['film']
+        except KeyError:
+            return self.exit_codes.ERROR_NO_RELAX_OUTPUT
+
+        self.ctx.final_cell = cell
+        self.ctx.final_atom_positions = atom_positions
+
+        if film == 'True':
+            self.ctx.pbc = (True, True, False)
+        else:
+            self.ctx.pbc = (True, True, True)
 
     def return_results(self):
         """
@@ -413,8 +428,14 @@ class FleurRelaxWorkChain(WorkChain):
                'last_scf_wc_uuid': self.ctx.scf_res.uuid
               }
 
-        if self.ctx.final_structure:
-            structure = save_structure(self.ctx.final_structure)
+        if self.ctx.final_cell:
+            structure = StructureData(cell=self.ctx.final_cell)
+
+            for atom in self.ctx.final_atom_positions:
+                structure.append_atom(position=(atom[1], atom[2], atom[3]), symbols=atom[0])
+
+            structure.pbc = self.ctx.pbc
+            structure = save_structure(structure)
             self.out('optimized_structure', structure)
 
         out = save_output_node(Dict(dict=out))
