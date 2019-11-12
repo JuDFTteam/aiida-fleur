@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import copy
+import numpy as np
 
 import six
 
@@ -430,9 +431,18 @@ class FleurRelaxWorkChain(WorkChain):
 
         if self.ctx.final_cell:
             structure = StructureData(cell=self.ctx.final_cell)
+            bohr_a = 0.52917721092
 
             for atom in self.ctx.final_atom_positions:
-                structure.append_atom(position=(atom[1], atom[2], atom[3]), symbols=atom[0])
+                np_cell = np.array(self.ctx.final_cell)
+                np_pos = np.array(atom[1:]) * bohr_a
+                pos_abs = list(np.dot(np_cell, np_pos))
+                if self.ctx.pbc == (True, True, True):
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
+                                          symbols=atom[0])
+                else: # assume z-direction is orthogonal to xy
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a),
+                                          symbols=atom[0])
 
             structure.pbc = self.ctx.pbc
             structure = save_structure(structure)

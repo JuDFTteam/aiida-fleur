@@ -936,7 +936,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
-        elif done_layers <= total_number_layers:
+        elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
             layer, pos_z, _ = get_layer_by_number(orig_structure, k)
             for atom in layer:
