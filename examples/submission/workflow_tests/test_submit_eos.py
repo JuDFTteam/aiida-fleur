@@ -63,52 +63,6 @@ wf_para = Dict(dict={'fleur_runmax': 2,
                      'guess': 1.00
                     })
 
-options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
-                     'queue_name' : 'devel',
-		             'custom_scheduler_commands' : '',
-                     'max_wallclock_seconds':  60*60})
-
-'''
-bohr_a_0 = 0.52917721092 # A
-a = 7.497*bohr_a_0
-cell = [[0.7071068*a, 0.0, 0.0],
-        [0.0, 1.0*a, 0.0],
-        [0.0, 0.0, 0.7071068*a]]
-structure = StructureData(cell=cell)
-structure.append_atom(position=(0.0, 0.0, -1.99285*bohr_a_0), symbols='Fe')
-structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
-structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
-structure.pbc = (True, True, False)
-
-parameters = Dict(dict={
-    'atom':{
-        'element' : 'Pt',
-        #'jri' : 833,
-        #'rmt' : 2.3,
-        #'dx' : 0.015,
-        'lmax' : 8,
-        #'lo' : '5p',
-        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-        },
-    'atom2':{
-        'element' : 'Fe',
-        #'jri' : 833,
-        #'rmt' : 2.3,
-        #'dx' : 0.015,
-        'lmax' : 8,
-        #'lo' : '5p',
-        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-        },
-    'comp': {
-        'kmax': 3.8,
-        },
-    'kpt': {
-        'div1': 20,
-        'div2' : 24,
-        'div3' : 1
-        }})
-
-'''
 # Fe fcc structure
 bohr_a_0 = 0.52917721092 # A
 a = 3.4100000000*2**(0.5)
@@ -135,43 +89,46 @@ parameters = Dict(dict={
         'div3' : 4
         }})
 
-default = {'structure' : structure,
-           'wf_parameters': wf_para,
-           'options' : options,
-           'calc_parameters' : parameters
-          }
+wf_para_scf = {'fleur_runmax' : 2,
+               'itmax_per_run' : 120,
+               'density_converged' : 0.2,
+               'serial' : False,
+               'mode' : 'density'
+}
+
+wf_para_scf = Dict(dict=wf_para_scf)
+
+options_scf = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 8},
+                         'queue_name' : 'devel',
+                         'custom_scheduler_commands' : '',
+                         'max_wallclock_seconds':  60*60})
 
 ####
 
-inputs = {}
-
-if args.wf_parameters is not None:
-    inputs['wf_parameters'] = load_node(args.wf_parameters)
-else:
-    inputs['wf_parameters'] = default['wf_parameters']
-
-if args.structure is not None:
-    inputs['structure'] = load_node(args.structure)
-else:
-    # use default W
-    inputs['structure'] = default['structure']
-
-if args.calc_parameters is not None:
-    inputs['calc_parameters'] = load_node(args.calc_parameters)
-else:
-    inputs['calc_parameters'] = default['calc_parameters'] # bad if using other structures...
-
-if args.options is not None:
-    inputs['options'] = load_node(args.options)
-else:
-    inputs['options'] = default['options']
 
 fleur_code = is_code(args.fleur)
-inputs['fleur'] = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
+fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
 
-if args.inpgen is not None:
-    inpgen_code = is_code(args.inpgen)
-    inputs['inpgen'] = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
+inpgen_code = is_code(args.inpgen)
+inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
+
+inputs = {'scf': {
+                  'wf_parameters' : wf_para_scf,
+                  'calc_parameters' : parameters,
+                  'options' : options_scf,
+                  'inpgen' : inpgen_inp,
+                  'fleur' : fleur_inp
+                 },
+          'wf_parameters' : wf_para,
+          'structure' : structure
+}
+
+
+
+submit_wc = False
+if args.submit is not None:
+    submit_wc = submit
+pprint(inputs)
 
 submit_wc = False
 if args.submit is not None:

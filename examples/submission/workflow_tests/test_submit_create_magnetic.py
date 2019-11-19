@@ -21,7 +21,7 @@ import argparse
 from pprint import pprint
 
 from aiida.plugins import DataFactory
-from aiida.orm import load_node
+from aiida.orm import load_node, Int
 from aiida.engine import submit, run
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
@@ -74,8 +74,8 @@ wf_para = {
         'decimals': 10,
         'pop_last_layers': 1,
 
-        'total_number_layers': 4,
-        'num_relaxed_layers': 2,
+        'total_number_layers': 8,
+        'num_relaxed_layers': 3,
 
         'eos_needed': True,
         'relax_needed': True
@@ -84,15 +84,20 @@ wf_para = {
 wf_para = Dict(dict=wf_para)
 
 wf_eos = {
-        'fleur_runmax': 4,
-        'density_converged': 0.0002,
-        'serial': False,
-        'itmax_per_run': 50,
-        'inpxml_changes': [],
         'points': 15,
         'step': 0.015,
         'guess': 1.00
         }
+
+wf_eos_scf = {
+        'fleur_runmax': 4,
+        'density_converged': 0.0002,
+        'serial': False,
+        'itmax_per_run': 50,
+        'inpxml_changes': []
+        }
+
+wf_eos_scf = Dict(dict=wf_eos_scf)
 
 wf_eos = Dict(dict=wf_eos)
 
@@ -118,22 +123,26 @@ options_eos = {'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 4,
 options_eos = Dict(dict=options_eos)
 
 wf_relax = {
+        'film_distance_relaxation' : False,
+        'force_criterion': 0.049,
+        'use_relax_xml': True
+    }
+
+wf_relax_scf = {
         'fleur_runmax': 5,
         'serial': False,
         'itmax_per_run': 50,
         'alpha_mix': 0.015,
-        'relax_iter': 15,
-        'force_converged': 0.0001,
+        'relax_iter': 25,
+        'force_converged': 0.001,
         'force_dict': {'qfix': 2,
-                       'forcealpha': 0.5,
-                       'forcemix': 'CG'},
-        'film_distance_relaxation' : False,
-        'force_criterion': 0.001,
-        'use_relax_xml': True,
-        'inpxml_changes': [],
-    }
+                       'forcealpha': 0.75,
+                       'forcemix': 'straight'},
+        'inpxml_changes': []
+        }
 
 wf_relax = Dict(dict=wf_relax)
+wf_relax_scf = Dict(dict=wf_relax_scf)
 
 calc_relax = {
     'comp': {
@@ -153,7 +162,7 @@ calc_relax = {
         },
     'atom2':{
         'element' : 'Fe',
-        'rmt' : 2.2,
+        'rmt' : 2.1,
         'lmax' : 10,
         'lnonsph' : 6,
         'econfig': '[Ne] 3s2 3p6| 3d6 4s2',
@@ -172,29 +181,39 @@ options_relax = Dict(dict=options_relax)
 
 settings = Dict(dict={})
 
+fleur_code = is_code(args.fleur)
+fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
+
+inpgen_code = is_code(args.inpgen)
+inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
+
 inputs = {
     'eos': {
-        'wf_parameters' : wf_eos,
-        'calc_parameters' : calc_eos,
-        'inpgen' : inpgen_code,
-        'fleur' : fleur_code,
-        'options' : options_eos,
-        'settings' : settings
+        'scf': {
+                  'wf_parameters' : wf_eos_scf,
+                  'calc_parameters' : calc_eos,
+                  'options' : options_eos,
+                  'inpgen' : inpgen_inp,
+                  'fleur' : fleur_inp
+        },
+        'wf_parameters' : wf_eos
     },
     'relax': {
+        'scf' : {
+                  'wf_parameters' : wf_relax_scf,
+                  'calc_parameters' : calc_relax,
+                  'options' : options_relax,
+                  'inpgen' : inpgen_inp,
+                  'fleur' : fleur_inp
+        },
         'wf_parameters' : wf_relax,
-        'calc_parameters' : calc_relax,
-        'inpgen' : inpgen_code,
-        'fleur' : fleur_code,
-        'options' : options_relax,
         'label': 'relaxation',
-        'description' : 'describtion'
+        'description' : 'describtion',
+        'max_iterations' : Int(5)
     },
     'wf_parameters': wf_para
+    #'eos_output': load_node(14405)
 }
-
-
-#inputs.eos_output = load_node(9226)
 
 
 submit_wc = False
@@ -205,7 +224,7 @@ print("##################### TEST fleur_relax_wc #####################")
 
 if submit_wc:
     res = submit(FleurCreateMagneticWorkChain, **inputs)
-    print("##################### Submited fleur_relax_wc #####################")
+    print("##################### Submitted fleur_relax_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
     print("##################### Finished submiting fleur_relax_wc #####################")

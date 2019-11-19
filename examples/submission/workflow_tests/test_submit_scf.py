@@ -58,12 +58,12 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax' : 4,
+wf_para = Dict(dict={'fleur_runmax' : 2,
                      'density_converge' : 0.001,
                      'energy_converge' : 0.002,
-                     'mode' : 'density', # 'force', 'energy' or 'density'
-                     'force_converge' : 0.2,
-                     'itmax_per_run' : 30,
+                     'mode' : 'force', # 'force', 'energy' or 'density'
+                     'force_converge' : 0.02,
+                     'itmax_per_run' : 10,
                      'force_dict' : {'qfix' : 2,
                                      'forcealpha' : 0.5,
                                      'forcemix' : 'BFGS'},

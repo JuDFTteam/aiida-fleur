@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the FleurSSDispWorkChain
+Here we run the fleur_scf_wc for Si or some other material
 """
 # pylint: disable=invalid-name
 from __future__ import absolute_import
@@ -25,9 +25,8 @@ from aiida.orm import load_node
 from aiida.engine import submit, run
 
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
-from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
+from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
 
-################################################################
 Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
@@ -49,20 +48,15 @@ parser.add_argument('--submit', type=bool, dest='submit',
                     help='should the workflow be submited or run', required=False)
 parser.add_argument('--options', type=int, dest='options',
                     help='options of the workflow', required=False)
-parser.add_argument('--remote', type=int, dest='remote',
-                    help='remote', required=False)
-parser.add_argument('--fleurinp', type=int, dest='fleurinp',
-                    help='fleurinp', required=False)
 args = parser.parse_args()
 
 print(args)
 
 ### Defaults ###
 wf_para = Dict(dict={
-                     'beta': {'all' : 1.57079},
-                     'q_vectors': {'label': [0.0, 0.0, 0.0],
-                                   'label2': [0.125, 0.0, 0.0]
-                                  }
+                     'relax_iter' : 2,
+                     'film_distance_relaxation' : False,
+                     'force_criterion' : 0.005
                     })
 
 bohr_a_0 = 0.52917721092 # A
@@ -96,9 +90,13 @@ parameters = Dict(dict={
 
 wf_para_scf = {'fleur_runmax' : 2,
                'itmax_per_run' : 120,
-               'density_converged' : 0.2,
+               'force_converged': 0.02,
+               'force_dict': {'qfix': 2,
+                              'forcealpha': 0.75,
+                              'forcemix': 'straight'},
+               'use_relax_xml': True,
                'serial' : False,
-               'mode' : 'density'
+               'mode' : 'force',
 }
 
 wf_para_scf = Dict(dict=wf_para_scf)
@@ -140,16 +138,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST FleurSSDispConvWorkChain #####################")
+print("##################### TEST fleur_relax_wc #####################")
 
 if submit_wc:
-    res = submit(FleurSSDispConvWorkChain, **inputs)
-    print("##################### Submited FleurSSDispConvWorkChain #####################")
+    res = submit(FleurBaseRelaxWorkChain, **inputs)
+    print("##################### Submited fleur_relax_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
-    print("##################### Finished submiting FleurSSDispConvWorkChain #####################")
+    print("##################### Finished submiting fleur_relax_wc #####################")
 
 else:
-    print("##################### Running FleurSSDispConvWorkChain #####################")
-    res = run(FleurSSDispConvWorkChain, **inputs)
-    print("##################### Finished running FleurSSDispConvWorkChain #####################")
+    print("##################### Running fleur_relax_wc #####################")
+    res = run(FleurBaseRelaxWorkChain, **inputs)
+    print("##################### Finished running fleur_relax_wc #####################")
