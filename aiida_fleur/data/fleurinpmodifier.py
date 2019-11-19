@@ -287,7 +287,7 @@ class FleurinpModifier(object):
             'set_atomgr_att': self.set_atomgr_att,
             'set_atomgr_att_label': self.set_atomgr_att_label,
             'set_inpchanges': self.set_inpchanges,
-            'shift_value1': self.shift_value,
+            'shift_value': self.shift_value,
             'set_nkpts': self.set_nkpts,
             'add_num_to_att': self.add_num_to_att
 
