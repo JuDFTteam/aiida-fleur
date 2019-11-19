@@ -1344,7 +1344,7 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
         return return_value
 
 
-def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings': []}):
+def get_xml_attribute(node, attributename, parser_info_out=None):
     """
     Get an attribute value from a node.
 
@@ -1352,6 +1352,9 @@ def get_xml_attribute(node, attributename, parser_info_out={'parser_warnings': [
     :params attributename: a string with the attribute name.
     :returns: either attributevalue, or None
     """
+    if parser_info_out is None:
+        parser_info_out = {'parser_warnings': []}
+
     if etree.iselement(node):
         attrib_value = node.get(attributename)
         if attrib_value:
@@ -1557,7 +1560,7 @@ def inpxml_todict(parent, xmlstr):
 # list of possible xpaths from a schema file, or to validate a certain xpath expression and
 # to allow to get SINGLE xpaths for certain attrbiutes.
 #  akk: tell me where 'DOS' is
-# This might not be back compatible... i.e a certain plugin version will by this design only work 
+# This might not be back compatible... i.e a certain plugin version will by this design only work
 #  with certain schema version
 def get_inpxml_file_structure():
     """

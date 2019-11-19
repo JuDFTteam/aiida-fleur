@@ -26,12 +26,12 @@ create_group
 from __future__ import absolute_import
 from __future__ import print_function
 import json
-from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
-from aiida.orm.querybuilder import QueryBuilder
-from aiida.orm import Group, Node
 import six
 from six.moves import input
+
+from aiida.orm import load_node
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm import Group, Node
 
 
 def export_extras(nodes, filename='node_extras.txt'):
@@ -68,13 +68,13 @@ def export_extras(nodes, filename='node_extras.txt'):
     #outfile = open(filename, 'w')
     #outfile.write(outstring)
     #outfile.close()
-    json.dump(outdict, open(filename,'w'))
+    json.dump(outdict, open(filename, 'w'))
     return
 
 
 def import_extras(filename):
     """
-    reads in nodes uuids and extras from a file and aplies them to nodes in the DB.
+    reads in nodes uuids and extras from a file and applies them to nodes in the DB.
 
     This is useful for import/export because currently extras are lost.
     Therefore this can be used to save and restore the extras on the nodes.
@@ -128,9 +128,9 @@ def delete_nodes(pks_to_delete):
     Also you will be backchecked.
 
     BE VERY CAREFUL!
-    
-    .. note:: 
-    
+
+    .. note::
+
         The script will also delete
         all children calculations generated from the specified nodes.
 
@@ -140,7 +140,6 @@ def delete_nodes(pks_to_delete):
     from django.db import transaction
     from django.db.models import Q
     from aiida.backends.djsite.db import models
-    from aiida.orm import load_node
 
     # Delete also all children of the given calculations
     # Here I get a set of all pks to actually delete, including
@@ -151,8 +150,8 @@ def delete_nodes(pks_to_delete):
             parents__in=pks_to_delete).values_list('pk', flat=True))
 
     print(("I am going to delete {} nodes, including ALL THE CHILDREN"
-          "of the nodes you specified. Do you want to continue? [y/N]"
-          "".format(len(all_pks_to_delete))))
+           "of the nodes you specified. Do you want to continue? [y/N]"
+           "".format(len(all_pks_to_delete))))
     answer = input()
 
     if answer.strip().lower() == 'y':
@@ -187,10 +186,8 @@ def delete_trash():
     q = QueryBuilder()
     nodes_to_delete_pks = []
 
-    q.append(Node,
-            filters = {'extras.trash': {'==' : True}
-                       }
-            )
+    q.append(Node, filters = {'extras.trash': {'==' : True}})
+
     res = q.all()
     for node in res:
         nodes_to_delete_pks.append(node[0].dbnode.pk)
@@ -228,7 +225,8 @@ def create_group(name, nodes, description=None):
     if created:
         print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists. Do you want to add nodes?[y/n]'.format(group.label, group.pk)))
+        print(('Group with name {} and pk {} already exists. '
+               'Do you want to add nodes?[y/n]'.format(group.label, group.pk)))
         answer = input()
         if answer.strip().lower() == 'y':
             pass
@@ -260,7 +258,6 @@ def get_nodes_from_group(group, return_format='uuid'):
     """
     returns a list of node uuids for a given group as, name, pk, uuid or group object
     """
-    from aiida.orm import Group
     from aiida.common.exceptions import NotExistent
 
     nodes = []
@@ -280,8 +277,8 @@ def get_nodes_from_group(group, return_format='uuid'):
             str_group = None
             message = ('You have to provide a valid pk for a Group '
                        'or a Group name. Reference key: "group".'
-                      'given pk= {} is not a valid group'
-                      '(or is your group name integer?)'.format(group_pk))
+                       'given pk= {} is not a valid group'
+                       '(or is your group name integer?)'.format(group_pk))
             print(message)
     elif group_name is not None:
         try:
@@ -289,8 +286,8 @@ def get_nodes_from_group(group, return_format='uuid'):
         except NotExistent:
             str_group = None
             message = ('You have to provide a valid pk for a Group or a Group name.'
-                      'given group name= {} is not a valid group'
-                      '(or is your group name integer?)'.format(group_name))
+                       'given group name= {} is not a valid group'
+                       '(or is your group name integer?)'.format(group_name))
             print(message)
     elif isinstance(group, Group):
         str_group = group
@@ -308,6 +305,3 @@ def get_nodes_from_group(group, return_format='uuid'):
             nodes.append(node.pk)
 
     return nodes
-
-
-

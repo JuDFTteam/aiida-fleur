@@ -24,11 +24,10 @@ from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import load_node
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # pylint: disable=invalid-name
@@ -181,7 +180,7 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf.remote_data = last_calc.outputs.remote_folder
         if self.ctx.new_fleurinp:
             input_scf.fleurinp = self.ctx.new_fleurinp
-        
+
         return input_scf
 
     def check_failure(self):
@@ -194,7 +193,7 @@ class FleurRelaxWorkChain(WorkChain):
             message = 'ERROR: Something went wrong I do not have new atom positions calculation'
             self.control_end_wc(message)
             return self.exit_codes.ERROR_RELAX_FAILED
-        
+
         if not scf_wc.is_finished_ok:
             fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
             if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
@@ -233,8 +232,8 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
             self.ctx.reached_relax = False
             self.report('INFO: Reached optimization iteration number {}. Largest force is {}, '
-            'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
-                                            self.ctx.wf_dict['force_criterion']))
+                        'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
+                                                       self.ctx.wf_dict['force_criterion']))
             return False
 
         self.report('INFO: submit optimization iteration number {}. Largest force is {}, '

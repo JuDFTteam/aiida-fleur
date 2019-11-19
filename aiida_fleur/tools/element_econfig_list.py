@@ -18,13 +18,13 @@ from __future__ import print_function
 from aiida.common.constants import elements as PeriodicTableElements
 import six
 
-atomic_numbers = {data['symbol'] : num for num,data in six.iteritems(PeriodicTableElements)}
+atomic_numbers = {data['symbol'] : num for num, data in six.iteritems(PeriodicTableElements)}
 
 # TODO
 # FLEUR econfig=[core states|valence states]
 # TODO add default los
 econfiguration = {
-    1: {'mass': 1.00794, 'name': 'Hydrogen', 'symbol': 'H', 'econfig': '1s1' },
+    1: {'mass': 1.00794, 'name': 'Hydrogen', 'symbol': 'H', 'econfig': '1s1'},
     2: {'mass': 4.002602, 'name': 'Helium', 'symbol': 'He', 'econfig': '1s2'},
     3: {'mass': 6.941, 'name': 'Lithium', 'symbol': 'Li', 'econfig': '1s2 | 2s1'},
     4: {'mass': 9.012182, 'name': 'Beryllium', 'symbol': 'Be', 'econfig': '1s2 | 2s2'},
@@ -109,7 +109,7 @@ econfiguration = {
     83: {'mass': 208.9804, 'name': 'Bismuth', 'symbol': 'Bi', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p3'},
     84: {'mass': 209.0, 'name': 'Polonium', 'symbol': 'Po', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p4'},
     85: {'mass': 210.0, 'name': 'Astatine', 'symbol': 'At', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p5'},
-    86: {'mass': 222.0, 'name': 'Radon', 'symbol': 'Rn', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6'}, # TODO: after wards not rigth
+    86: {'mass': 222.0, 'name': 'Radon', 'symbol': 'Rn', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6'}, # TODO: after wards not right
     87: {'mass': 223.0, 'name': 'Francium', 'symbol': 'Fr', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6 7s1'},
     88: {'mass': 226.0, 'name': 'Radium', 'symbol': 'Ra', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6 7s2'},
     89: {'mass': 227.0, 'name': 'Actinium', 'symbol': 'Ac', 'econfig': '[Xe] 4f14 | 5d10 6s2 6p6 7s2 5f1'},
@@ -169,7 +169,7 @@ def get_econfig(element, full=False):
             return econ
     elif isinstance(element, six.string_types):# str):
         atomic_names = {data['symbol']: num for num,
-                         data in six.iteritems(econfiguration)}
+                        data in six.iteritems(econfiguration)}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
@@ -199,7 +199,7 @@ def get_coreconfig(element, full=False):
             return econ.split('|')[0].rstrip()
     elif isinstance(element, str):
         atomic_names = {data['symbol']: num for num,
-                         data in six.iteritems(econfiguration)}
+                        data in six.iteritems(econfiguration)}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
@@ -213,7 +213,7 @@ def get_coreconfig(element, full=False):
 
 def rek_econ(econfigstr):
     """
-    rekursive routine to return a full econfig
+    recursive routine to return a full econfig
     '[Xe] 4f14 | 5d10 6s2 6p4' -> '1s 2s ... 4f14 | 5d10 6s2 6p4'
     """
     split_econ = econfigstr.strip('[')
@@ -236,7 +236,7 @@ def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
     # for now only use for coreconfig, it will fill all orbitals, since it has no information on the filling.
     """
 
-    econfstring = fleurconf_str.replace('(','').replace(')','')
+    econfstring = fleurconf_str.replace('(', '').replace(')', '')
 
     if keep_spin:
         econfstring.split()
@@ -339,7 +339,7 @@ def econfigstr_hole(econfigstr, corelevel, highesunoccp, htype='valence'):
     corestates = econfigstr.split()
 
     hoc = int(highesunoccp[2:])
-    if htype=='valence':
+    if htype == 'valence':
         new_highocc = str(hoc + 1)
     else:# charged corehole, removed from system, keep occ
         if hoc == 0: # do not add orbital to econfig
@@ -365,7 +365,7 @@ def econfigstr_hole(econfigstr, corelevel, highesunoccp, htype='valence'):
 
 
 
-def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
+def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
     """
     finds out all not full occupied states and returns a dictionary of them
     return a dict
@@ -393,7 +393,7 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
             spinupocc = 0
             spindownocc = 0
             occ_spin = occ
-            if statename==valence:
+            if statename == valence:
                 is_valence = True
             else:
                 is_valence = False
@@ -402,7 +402,7 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
                 occ_spin = occ_spin - spin_mac_occ
                 #print occ_spin
                 name = statename + spins
-                if name==corehole_blank:
+                if name == corehole_blank:
                     # use this state
                     # assume it is without the corehole fully filled.
                     nelec = spin_mac_occ
@@ -421,10 +421,10 @@ def get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
                     else:
                         nelec = occ_spin + spin_mac_occ
                     max_spin_up_occ = spin_mac_occ/2.
-                    if 0<= nelec <= max_spin_up_occ:
+                    if 0 <= nelec <= max_spin_up_occ:
                         spinupocc = nelec
                         spindownocc = 0.00000
-                    elif 0<= nelec:
+                    elif 0 <= nelec:
                         spinupocc = max_spin_up_occ
                         spindownocc = nelec - max_spin_up_occ
                     else:# do not append

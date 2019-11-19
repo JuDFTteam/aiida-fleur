@@ -14,7 +14,7 @@
 In this file/module, YOU, the user can specify some default resource values for
 queues of different computers
 This might be really useful for high-throughput calculation.
-You can modefy, adjudst this file to your needs
+You can modify, adjust this file to your needs
 """
 
 # TODO: move computers dict somewhere else?
@@ -36,9 +36,10 @@ def queue_defaults(queue_name, computer=None):
     print(queue_name)
     computers = {
         'iff003':
-            {'th1' : { 'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12}, 'walltime_sec' : 30 * 60 },
-            'th1_small' : { 'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12}, 'walltime_sec' : 20 * 60 }}
-            }
+            {'th1' : {'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
+                      'walltime_sec' : 30 * 60},
+             'th1_small' : {'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
+                            'walltime_sec' : 20 * 60}}}
 
     if computer:
         #print 'computer'
@@ -58,9 +59,7 @@ def queue_defaults(queue_name, computer=None):
                 res = queue.get('resources', None)
                 wt = queue.get('walltime_sec', None)
 
-    queue_resources = {'resources' : res, 'walltime_sec' : wt }
+    queue_resources = {'resources' : res, 'walltime_sec' : wt}
     #print queue_resources
 
     return queue_resources
-
-

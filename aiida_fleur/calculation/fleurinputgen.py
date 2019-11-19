@@ -21,7 +21,6 @@ import six
 from six.moves import zip
 
 from aiida.engine import CalcJob
-from aiida.plugins import DataFactory
 from aiida.common.exceptions import InputValidationError
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.constants import elements as PeriodicTableElements

@@ -17,22 +17,22 @@ Collection of utility routines dealing with StructureData objects
 
 from __future__ import absolute_import
 from __future__ import print_function
-from ase import *
-from ase.lattice.surface import *
-from ase.io import *
-import numpy as np
-
-from aiida.plugins import DataFactory
-from aiida.orm import load_node, Int
-from aiida.orm.nodes.data.structure import Site, Kind
-from aiida.engine.processes.functions import calcfunction as cf
+# from ase import *
+# from ase.lattice.surface import *
+# from ase.io import *
+import six
+from six.moves import range
+from six.moves import zip
 
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator
 
-import six
-from six.moves import range
-from six.moves import zip
+import numpy as np
+
+from aiida.plugins import DataFactory
+from aiida.orm import load_node
+from aiida.orm.nodes.data.structure import Site, Kind
+from aiida.engine.processes.functions import calcfunction as cf
 
 
 def is_structure(structure):
@@ -41,6 +41,8 @@ def is_structure(structure):
     if yes returns a StructureData node in all cases
     if no returns None
     """
+    from aiida.common import NotExistent
+
     StructureData = DataFactory('structure')
 
     #Test if StructureData
@@ -50,7 +52,7 @@ def is_structure(structure):
     pk = None
     try:
         pk = int(structure)
-    except:
+    except ValueError:
         pass
     if pk:
         structure = load_node(pk)
@@ -58,20 +60,17 @@ def is_structure(structure):
             return structure
         else:
             return None
-    #Test if uuid, if yes, is the corresponding node StructureData
-    # TODO: test for uuids not for string (guess is ok for now)
-    uuid = None
+
+    uuid = str(structure)
+
     try:
-        uuid = str(structure)
-    except:
-        pass
-    if uuid:
         structure = load_node(uuid)
         if isinstance(structure, StructureData):
             return structure
         else:
             return None
-    #Else throw error? or rather return None
+    except NotExistent:
+        return None
 
     return None
 
@@ -169,7 +168,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     Does NOT keeps the provenance in the database.
 
     :param StructureData, a StructureData node (pk, or uuid)
-    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart =True in x,y,z
+    :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart=True in x,y,z
 
     :returns StructureData, Node with supercell
     """
@@ -367,7 +366,7 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
 
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
 def break_symmetry(structure, atoms=None, site=None, pos=None,
-                   new_kinds_names={}, parameterData=None):
+                   new_kinds_names=None, parameterData=None):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -387,12 +386,15 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     """
     if atoms is None:
         atoms = ['all']
-    
+
     if site is None:
         site = []
 
     if pos is None:
         pos = []
+
+    if new_kinds_names is None:
+        new_kinds_names = {}
 
     from aiida.common.constants import elements as PeriodicTableElements
     from aiida.orm import Dict

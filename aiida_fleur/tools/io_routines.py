@@ -18,7 +18,9 @@ For example collection of data or database evaluations, for other people.
 from __future__ import absolute_import
 from __future__ import print_function
 import six
-def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
+
+def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ',
+                          transpose=True):
     """
     Writes data to a file
 
@@ -47,7 +49,10 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
 
 
 
-def write_xps_spectra_datafile(nodes, factors, natomtypes_dict, bindingenergies, bindingenergies_ref, xdata_spec, ydata_spec, ydata_single_all, xdata_all, ydata_all, compound_info, xdatalabel, destination='./outputfile'):
+def write_xps_spectra_datafile(nodes, factors, natomtypes_dict, bindingenergies,
+                               bindingenergies_ref, xdata_spec, ydata_spec, ydata_single_all,
+                               xdata_all, ydata_all, compound_info, xdatalabel,
+                               destination='./outputfile'):
     '''
     special file write routine. Writes theoretical spectra data from plot spectra to file
 
@@ -74,7 +79,7 @@ def write_xps_spectra_datafile(nodes, factors, natomtypes_dict, bindingenergies,
         tempst1 = tempst1 + ' | ' + label
     tempst2 = ('#####################  Data  ######################\n# Energy [eV] | Total intensity {}\n'.format(tempst1))
 
-    headstring =  headstring + tempst + tempst2
+    headstring = headstring + tempst + tempst2
 
     print(('Writting theoretical XPS data to file: {}'.format(destination)))
     write_results_to_file(headstring, data, destination=destination, seperator='  ')
@@ -86,5 +91,3 @@ def write_xps_spectra_datafile(nodes, factors, natomtypes_dict, bindingenergies,
 #factors = [1,1]
 #returnvalues = plot_spectra(all_wc_BeTi_uuid, factors=factors, energy_range=[109,112], energy_grid=0.2)
 #write_xps_spectra_datafile(all_wc_BeTi_uuid, factors, *returnvalues, destination='./out.txt')
-
-

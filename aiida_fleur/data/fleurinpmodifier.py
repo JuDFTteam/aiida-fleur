@@ -46,7 +46,7 @@ class FleurinpModifier(object):
         """
         A CalcFunction that performs the modification of the given FleurinpData and stores
         the result in a database.
-        
+
         :param original: a FleurinpData to be modified
         :param modifications: a python dictionary of modifications in the form of {'task': ...}
 
@@ -106,7 +106,7 @@ class FleurinpModifier(object):
 
         :param fleurinp_tree_copy: a fleurinp lxml tree to be modified
         :param modification_tasks: a list of modification tuples
-        
+
         :returns: a modified fleurinp lxml tree
         """
         from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
@@ -181,8 +181,7 @@ class FleurinpModifier(object):
 
         def change_atomgr_att1(fleurinp_tree_copy, attributedict,
                                position=None, species=None, create=False):
-            fleurinp_tree_copy = change_atomgr_att(
-                                                   fleurinp_tree_copy,
+            fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
                                                    attributedict,
                                                    position=position,
                                                    species=species,
@@ -191,19 +190,17 @@ class FleurinpModifier(object):
 
         def change_atomgr_att2(fleurinp_tree_copy, attributedict,
                                atom_label, create=False):
-            fleurinp_tree_copy = change_atomgr_att_label(
-                                                        fleurinp_tree_copy,
-                                                        attributedict,
-                                                        at_label=atom_label,
-                                                        create=create)
+            fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy,
+                                                         attributedict,
+                                                         at_label=atom_label,
+                                                         create=create)
             return fleurinp_tree_copy
 
         def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename,
                             set_val, mode='abs', occ=None, create=False):
             if occ is None:
                 occ = [0]
-            fleurinp_tree_copy = add_num_to_att(
-                                                fleurinp_tree_copy,
+            fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy,
                                                 xpathn,
                                                 attributename,
                                                 set_val,
@@ -259,17 +256,17 @@ class FleurinpModifier(object):
 
             workingtree = action(workingtree, *task[1:])
 
-        if schema_tree:
-            if not xmlschema.validate(clear_xml(workingtree)):
-                # TODO maybe even delete wrong task
-                #print('changes were not valid: {}({})'.format(task[0], task[1:]))
-                raise ValueError('changes were not valid: {}({})'.format(task[0], task[1:]))
+            if schema_tree:
+                if not xmlschema.validate(clear_xml(workingtree)):
+                    # TODO maybe even delete wrong task
+                    #print('changes were not valid: {}({})'.format(task[0], task[1:]))
+                    raise ValueError('changes were not valid: {}({})'.format(task[0], task[1:]))
 
         return workingtree
 
     def get_avail_actions(self):
         """
-        Returns the allowed functions from fleurinpmod
+        Returns the allowed functions from FleurinpModifier
         """
         outside_actions = {
             'xml_set_attribv_occ': self.xml_set_attribv_occ,
@@ -505,7 +502,7 @@ class FleurinpModifier(object):
         :return: a lxml tree representing inp.xml with applied changes
         """
         with self._original.open(key='inp.xml') as inpxmlfile:
-           tree = etree.parse(inpxmlfile)
+            tree = etree.parse(inpxmlfile)
 
         try:  # could be not found or on another computer...
             xmlschema_tree = etree.parse(self._original._schema_file_path)

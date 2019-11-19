@@ -12,7 +12,7 @@
 
 """
 This module, contains a method to merge Dict nodes used by the FLEUR inpgen.
-This might also be of interest for other all-ellectron codes
+This might also be of interest for other all-electron codes
 """
 # TODO this should be made an inline calculation or calcfunction to
 # keep the proverance!
@@ -21,8 +21,8 @@ This might also be of interest for other all-ellectron codes
 
 from __future__ import absolute_import
 from __future__ import print_function
-from aiida.plugins import CalculationFactory, DataFactory
-from aiida.orm import Code, load_node
+
+from aiida.plugins import DataFactory
 from aiida.orm import Bool
 from aiida.engine import calcfunction as cf
 
@@ -34,13 +34,13 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     If they have a namelist in common. Dict2 will overwrite the namelist
     of Dict. If this is not wanted. set overwrite = False.
     Then attributes of both will be added, but attributes from Dict1 won't
-    be oeverwritten.
+    be overwritten.
 
 
-    param: AiiDA ParamterData Node
-    param: AiiDA ParamterData Node
+    param: AiiDA Dict Node
+    param: AiiDA Dict Node
 
-    returns: AiiDA ParamterData Node
+    returns: AiiDA Dict Node
     """
 
     from aiida.common.exceptions import InputValidationError
@@ -57,10 +57,10 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     atomlist = []
     if not isinstance(Dict1, Dict):
         raise InputValidationError("Dict1, must be of "
-                                           "type Dict")
+                                   "type Dict")
     if not isinstance(Dict2, Dict):
         raise InputValidationError("Dict2, must be of "
-                                           "type Dict")
+                                   "type Dict")
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 
@@ -76,7 +76,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
 
 
     # TODO do something on atom list,
-    # we dont want doubles, check element and Id? Keep first ones?
+    # we do not want doubles, check element and Id? Keep first ones?
 
     for i, atom in enumerate(atomlist):
         # TODO check for duplicates? what about
@@ -130,7 +130,7 @@ def merge_parameter_cf(Dict1, Dict2, overwrite=None):
 
 '''
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
-# makeing a methds m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
+# makeing a methods m(self, *args, **kwargs) and setting some fallbacks, does not work, because self, cannot be parsed
 # I guess...
 @cf
 def merge_parameters_wf(*Dicts, overwrite=Bool(True)):

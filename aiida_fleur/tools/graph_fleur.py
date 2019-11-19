@@ -14,39 +14,44 @@ This code extents the original draw_graph method from  https://github.com/aiidat
 It uses common colors to visualize the aiida-fleur nodes
 """
 from __future__ import absolute_import
-import os, tempfile
+import os
+import tempfile
 import six
 
 from aiida.orm import load_node
 
 def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='dot',
-        include_calculation_inputs=False, include_calculation_outputs=False):
+               include_calculation_inputs=False, include_calculation_outputs=False):
     """
-    The algorithm starts from the original node and goes both input-ward and output-ward via a breadth-first algorithm.
+    The algorithm starts from the original node and goes both input-ward and output-ward via
+    a breadth-first algorithm.
 
     :param origin_node: An Aiida node, the starting point for drawing the graph
-    :param int ancestor_depth: The maximum depth of the ancestors drawn. If left to None, we recurse until the graph is fully explored
-    :param int descendant_depth: The maximum depth of the descendants drawn. If left to None, we recurse until the graph is fully explored
+    :param int ancestor_depth: The maximum depth of the ancestors drawn. If left to None, we
+                               recurse until the graph is fully explored
+    :param int descendant_depth: The maximum depth of the descendants drawn. If left to None,
+                                 we recurse until the graph is fully explored
     :param str format: The format, by default dot
 
     :returns: The exit_status of the os.system call that produced the valid file
     :returns: The file name of the final output
 
     ..note::
-        If an invalid format is provided graphviz prints a helpful message, so this doesn't need to be implemented here.
+        If an invalid format is provided graphviz prints a helpful message, so this doesn't need
+        to be implemented here.
+
     """
     #
     # until the connected part of the graph that contains the root_pk is fully explored.
     # TODO this command deserves to be improved, with options and further subcommands
 
     from aiida.orm import CalculationNode as Calculation
-    from aiida.engine import CalcJob
     from aiida.orm import Code
     from aiida.orm import Node
     from aiida.common.links import LinkType
     from aiida.orm.querybuilder import QueryBuilder
     from aiida.plugins import DataFactory
-    
+
     Dict = DataFactory('dict')
     StructureData = DataFactory('structure')
 
@@ -92,18 +97,19 @@ def draw_graph(origin_node, ancestor_depth=None, descendant_depth=None, format='
 
     def draw_link_settings(inp_id, out_id, link_label, link_type):
         if link_type in (LinkType.CREATE.value, LinkType.INPUT_CALC.value, LinkType.INPUT_WORK.value):
-            style='solid'  # Solid lines and black colors
+            style = 'solid'  # Solid lines and black colors
             color = "0.0 0.0 0.0" # for CREATE and INPUT (The provenance graph)
         elif link_type == LinkType.RETURN.value:
-            style='dotted'  # Dotted  lines of
+            style = 'dotted'  # Dotted  lines of
             color = "0.0 0.0 0.0" # black color for Returns
         elif link_type in (LinkType.CALL_CALC.value, LinkType.CALL_WORK.value):
-            style='bold' # Bold lines and
+            style = 'bold' # Bold lines and
             color = "0.0 1.0 1.0" # Bright red for calls
         else:
-            style='solid'   # Solid and
-            color="0.0 0.0 0.5" #grey lines for unspecified links!
-        return '    {} -> {} [label=<<B>{}</B>>, color="{}", style="{}", penwidth=3];'.format("N{}".format(inp_id),  "N{}".format(out_id), link_label, color, style)
+            style = 'solid'   # Solid and
+            color = "0.0 0.0 0.5" #grey lines for unspecified links!
+        return ('    {} -> {} [label=<<B>{}</B>>, color="{}", style="{}", penwidth=3];'
+                ''.format("N{}".format(inp_id),  "N{}".format(out_id), link_label, color, style))
 
     # Breadth-first search of all ancestors and descendant nodes of a given node
     links = {}  # Accumulate links here , penwidth=5

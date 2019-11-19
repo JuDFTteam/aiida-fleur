@@ -40,7 +40,7 @@ class Fleur_inputgenParser(Parser):
         Initialize the instance of Fleur_inputgenParser
         """
         super(Fleur_inputgenParser, self).__init__(node)
-        
+
         # these files should be at least present after success of inpgen
         self._default_files = {FleurinputgenCalculation._OUTPUT_FILE_NAME,
                                FleurinputgenCalculation._INPXML_FILE_NAME}
@@ -52,7 +52,7 @@ class Fleur_inputgenParser(Parser):
 
         :return: a dictionary of AiiDA nodes to be stored in the database.
         """
-        
+
         try:
             output_folder = self.retrieved
         except NotExistent:

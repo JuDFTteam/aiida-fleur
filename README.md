@@ -5,6 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/aiida-fleur.svg)](https://badge.fury.io/py/aiida-fleur)
 [![Build develop](https://travis-ci.org/JuDFTteam/aiida-fleur.svg?branch=master)](https://travis-ci.org/JuDFTteam/aiida-fleur)
 [![Coveralls github branch](https://github.com/JuDFTteam/aiida-fleur/blob/develop/aiida_fleur/tests/coverage.svg)](https://github.com/JuDFTteam/aiida-fleur/tree/develop)
+[![Code quality pylint](https://github.com/JuDFTteam/aiida-fleur/blob/develop/aiida_fleur/tests/pylint.svg)](https://github.com/JuDFTteam/aiida-fleur/tree/develop)
 [![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](https://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
 
 

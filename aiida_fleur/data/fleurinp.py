@@ -38,7 +38,7 @@ from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.tools.xml_util import replace_tag
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 
-bohr_a = 0.52917721092
+BOHR_A = 0.52917721092
 
 class FleurinpData(Data):
     """
@@ -370,21 +370,25 @@ class FleurinpData(Data):
 
 
             if (not self._has_schema) and (self._schema_file_path is None):
-                raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
-                    "to the inp.xml file was found. I have looked here: {} "
-                    "and have found only these schema files for Fleur: {}. "
-                    "I need this file to validate your input and to know the structure "
-                    "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                          self._search_paths, schemafile_paths))
+                err_msg = ("No XML schema file (.xsd) with matching version number {} "
+                           "to the inp.xml file was found. I have looked here: {} "
+                           "and have found only these schema files for Fleur: {}. "
+                           "I need this file to validate your input and to know the structure "
+                           "of the current inp.xml file, sorry.".format(inp_version_number,
+                                                                        self._search_paths,
+                                                                        schemafile_paths))
+                raise InputValidationError(err_msg)
             if self._schema_file_path is None:# or ('fleurInputVersion' in self.inp_userchanges): #(not)
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
-                    raise InputValidationError("No XML schema file (.xsd) with matching version number {} "
-                        "to the inp.xml file was found. I have looked here: {} "
-                        "and have found only these schema files for Fleur: {}. "
-                        "I need this file to validate your input and to know the structure "
-                        "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                          self._search_paths, schemafile_paths))
+                    err_msg = ("No XML schema file (.xsd) with matching version number {} "
+                               "to the inp.xml file was found. I have looked here: {} "
+                               "and have found only these schema files for Fleur: {}. "
+                               "I need this file to validate your input and to know the structure "
+                               "of the current inp.xml file, sorry.".format(inp_version_number,
+                                                                            self._search_paths,
+                                                                            schemafile_paths))
+                raise InputValidationError(err_msg)
             # set inp dict of Fleurinpdata
             self._set_inp_dict()
 
@@ -530,7 +534,7 @@ class FleurinpData(Data):
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
             parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser) 
+            tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -562,11 +566,11 @@ class FleurinpData(Data):
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*bohr_a
+                row1[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*bohr_a
+                row2[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*bohr_a
+                row3[i] = float(cor)*BOHR_A
 
             cell = [row1, row2, row3]
             # create new structure Node
@@ -579,11 +583,11 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*bohr_a
+                row1[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*bohr_a
+                row2[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*bohr_a
+                row3[i] = float(cor)*BOHR_A
             #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             struc = StructureData(cell=cell)
@@ -632,11 +636,11 @@ class FleurinpData(Data):
                             postion_a[i] = float(temppos[0])*float(temppos[1])
                         else:
                             postion_a[i] = float(pos)
-                        postion_a[i] = postion_a[i]*bohr_a
+                        postion_a[i] = postion_a[i]*BOHR_A
                     # append atom to StructureData
                     struc.append_atom(
-                            position=postion_a,
-                            symbols=species_dict[current_species][species_attrib_element])
+                        position=postion_a,
+                        symbols=species_dict[current_species][species_attrib_element])
 
             elif group_atom_positions_rel: #we have relative positions
                 # TODO: check if film or 1D calc, because this is not allowed! I guess
@@ -677,7 +681,7 @@ class FleurinpData(Data):
                         else:
                             postion_f[i] = float(pos)
                     # now transform to absolute Positions
-                    postion_f[2] = postion_f[2]*bohr_a
+                    postion_f[2] = postion_f[2]*BOHR_A
                     new_abs_pos = rel_to_abs_f(postion_f, cell)
                     # append atom to StructureData
                     struc.append_atom(
@@ -709,7 +713,7 @@ class FleurinpData(Data):
 
     def get_kpointsdata_ncf(self):
         """
-        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the 
+        This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
         This is NOT a calcfunction and does not keep the provenance!
 
@@ -788,11 +792,11 @@ class FleurinpData(Data):
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*bohr_a
+                row1[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*bohr_a
+                row2[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*bohr_a
+                row3[i] = float(cor)*BOHR_A
 
             cell = [row1, row2, row3]
             #set boundary conditions
@@ -804,11 +808,11 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*bohr_a
+                row1[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*bohr_a
+                row2[i] = float(cor)*BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*bohr_a
+                row3[i] = float(cor)*BOHR_A
             #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
@@ -876,7 +880,7 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
-        if not ('inp.xml' in self.files):
+        if 'inp.xml' not in self.files:
             print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
@@ -974,7 +978,7 @@ class FleurinpData(Data):
             totalw = totalw + weight
         #weightscale = totalw
 
-        new_kpo = etree.Element('kPointList',  posScale="1.000", weightScale="1.0", count="{}".format(nkpts))
+        new_kpo = etree.Element('kPointList', posScale="1.000", weightScale="1.0", count="{}".format(nkpts))
         for i, kpos in enumerate(kpoint_list[0]):
             new_k = etree.Element('kPoint', weight="{}".format(kpoint_list[1][i]))
             new_k.text = "{} {} {}".format(kpos[0], kpos[1], kpos[2])

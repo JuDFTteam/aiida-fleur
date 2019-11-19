@@ -23,14 +23,13 @@ from a folder and store the structures in the database.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.engine import calcfunction as cf
-from six.moves import range
-#from ase.io import cif
 
 
-def read_cif_folder(path=os.getcwd(), rekursive=True,
+def read_cif_folder(path=os.getcwd(), recursive=True,
                     store=False, log=False,
                     comments='', extras=''):
     """
@@ -38,10 +37,10 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     It can convert them into AiiDA structures and store them.
 
     defaults input parameter values are:
-    path=".", rekursive=True, store=False, log=False, comments='', extras=''
+    path=".", recursive=True, store=False, log=False, comments='', extras=''
 
     :params: path: Path to the dictionary with the files (default, where this method is called)
-    :params: rekursive: bool, If True: looks aso in subfolders, if False: just given dir
+    :params: recursive: bool, If True: looks aso in subfolders, if False: just given dir
     :params: store: bool, if True: stores structures in database
     :params: log: bool, if True, writes a logfile with information (pks, and co)
     :params: comments: string: comment to add to the structures
@@ -55,8 +54,8 @@ def read_cif_folder(path=os.getcwd(), rekursive=True,
     store_db = store            # True # store stuff in database?
     write_log = log             # write a logfiles on what was saved
     comment = comments          # comments and extras to add to the structure nodes.
-    extra = extras              # helpfull for findng them again in the db
-    rek = rekursive             # search also in subfolders or only given folder
+    extra = extras              # helpfull for finding them again in the db
+    rek = recursive             # search also in subfolders or only given folder
 
     #####################
     filenames = []
@@ -202,8 +201,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.p:
-        read_cif_folder(path=args.p, rekursive=args.r, store=args.s, log=args.l,
+        read_cif_folder(path=args.p, recursive=args.r, store=args.s, log=args.l,
                         comments=args.c, extras=args.e)
     else:
-        read_cif_folder(rekursive=args.r, store=args.s, log=args.l,
+        read_cif_folder(recursive=args.r, store=args.s, log=args.l,
                         comments=args.c, extras=args.e)

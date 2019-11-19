@@ -20,15 +20,11 @@ out.xml file of FLEUR.
 
 from __future__ import absolute_import
 from __future__ import print_function
-import sys#,os
-from lxml import etree#, objectify
-from lxml.etree import XMLSyntaxError, XPathEvalError
-from pprint import pprint
-from aiida.plugins import DataFactory, CalculationFactory
-#from aiida.orm import Computer
-from aiida.orm import load_node
-from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
 import six
+from lxml import etree#, objectify
+from lxml.etree import XMLSyntaxError
+
+from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
 #convert_to_float
 
 
@@ -187,10 +183,10 @@ def extract_corelevels(outxmlfile, options=None):
         #parse state occ
         state_results = []
         for tag in state_occ:#always a list?
-             state = tag.get('state')
-             spinUp = tag.get('spinUp')
-             spinDown = tag.get('spinDown')
-             state_results.append({state : [spinUp, spinDown]})
+            state = tag.get('state')
+            spinUp = tag.get('spinUp')
+            spinDown = tag.get('spinDown')
+            state_results.append({state : [spinUp, spinDown]})
 
 
         species_atts[species_name] = {'name' : species_name,

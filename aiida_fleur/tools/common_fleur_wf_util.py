@@ -22,13 +22,14 @@ import six
 from six.moves import range
 from six.moves import zip
 
+from sympy import Symbol
+
 def convert_formula_to_formula_unit(formula):
     """
-    Converts a formula to the smalles chemical formula unit
+    Converts a formula to the smallest chemical formula unit
     'Be4W2' -> 'Be2W'
     """
-    from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
-    from fractions import gcd
+    from math import gcd
 
     # get formula dict
     # find greatest common divider of values
@@ -37,7 +38,7 @@ def convert_formula_to_formula_unit(formula):
     nelements = list(element_count_dict.values())
     g = nelements[0]
     for a2 in nelements:
-        g = gcd(g,a2)
+        g = gcd(g, a2)
 
     formula_unit_string = ''
     for key, val in six.iteritems(element_count_dict):
@@ -62,7 +63,7 @@ def get_natoms_element(formula):
     #re.split('(\D+)', formula)
 
     for i, elm in enumerate(elements):
-        elem_count = re.findall('\d+|\D+', elm)
+        elem_count = re.findall(r'\d+|\D+', elm)
         #print(elem_count)
         if len(elem_count) == 1:
             elem_count_dict[elem_count[0]] = 1
@@ -76,7 +77,7 @@ def get_natoms_element(formula):
 #get_natoms_element('BeW')
 #get_natoms_element('Be2W')
 
-def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
+def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
     """
     Converts unit cell ratios into atom ratios.
 
@@ -85,10 +86,12 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
     """
     import numpy as np
 
+    if error_ratio is None:
+        error_ratio = []
 
     atompro = []
     atompro_err = []
-    if not (len(ratio) == len(formulas)):
+    if len(ratio) != len(formulas):
         return
 
     n_atoms_formula = []
@@ -114,7 +117,7 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=[]):
 #(array([ 0.79470199,  0.11258278,  0.09271523]), array([ 0.01357192,  0.01136565,  0.0018444 ]))
 
 
-def calc_stoi(unitcellratios, formulas, error_ratio=[]):
+def calc_stoi(unitcellratios, formulas, error_ratio=None):
     """
     Calculate the Stoichiometry with errors from a given unit cell ratio, formulas.
 
@@ -124,11 +127,13 @@ def calc_stoi(unitcellratios, formulas, error_ratio=[]):
     calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'])
     ({'Be': 12.583333333333334, 'Ti': 1.0}, {})
     """
-
     import numpy as np
 
+    if error_ratio is None:
+        error_ratio = []
+
     stoi = {}
-    if not (len(unitcellratios) == len(formulas)):
+    if len(unitcellratios) != len(formulas):
         return
 
     errors_stoi = {}
@@ -161,7 +166,7 @@ def calc_stoi(unitcellratios, formulas, error_ratio=[]):
 
 def get_atomprocent(formula):
     """
-    This converts a formula to a dictionary with elemnt : atomprocent
+    This converts a formula to a dictionary with element : atomprocent
     example converts 'Be24W2' to {'Be': 24/26, 'W' : 2/26}, also BeW to {'Be' : 0.5, 'W' : 0.5}
     :params: formula: string
     :returns: a dict, element : atomprocent
@@ -179,11 +184,9 @@ def get_atomprocent(formula):
 # test
 
 
-
-
 def get_weight_procent(formula):
     """
-    This converts a formula to a dictionary with elemnt : weightprocent
+    This converts a formula to a dictionary with element : weightprocent
     example converts 'Be24W2' to {'Be': , 'W' : }, also BeW to {'Be' : , 'W' : }
     :params: formula: string
     :returns: a dict, element : weightprocent
@@ -204,7 +207,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
 
     :params struc_te_dict: python dictionary in the form of {'formula' : total_energy} for the compound(s)
     :params ref_struc_te_dict: python dictionary in the form of {'formula' : total_energy per atom, or per unit cell} for the elements
-                               (if the formula of the elements contains a number the total energy is devided by that number)
+                               (if the formula of the elements contains a number the total energy is divided by that number)
     :returns: list of floats, dict {formula : eform, ..} units energy/per atom, energies have some unit as energies given
     """
     #eform_list = []
@@ -229,7 +232,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
             else:
                 print(('Reference energy missing for element {}. '
-                      'You need to provide reference energies for all elements in you compound.'
+                       'You need to provide reference energies for all elements in you compound.'
                        ''.format(elem)))
         eform_dict[formula] = eform/ntotal
         #eform_list.append(eform/ntotal)
@@ -313,7 +316,8 @@ def determine_reactions(formula, available_data):
     Stoichiometry
     'Be12W', [Be12W, Be2W, Be, W, Be22W] -> [[Be22W+Be2W], [Be12W], [Be12+W],...]
     params formula: string, given educts (left side of equation),
-    params available_data: list of strings of compounds (products), from which all possibilities will be constructed
+    params available_data: list of strings of compounds (products),
+                           from which all possibilities will be constructed
 
     """
 
@@ -323,9 +327,9 @@ def determine_reactions(formula, available_data):
     reactions = []
     constructed_products = []
     pset_available_data = powerset(available_data) # if len available_data to large cut off?
-    for i,dataset in enumerate(pset_available_data):
+    for i, dataset in enumerate(pset_available_data):
         productstring = ''
-        if len(dataset) <1:
+        if len(dataset) < 1:
             continue
         for entry in dataset:
             productstring = productstring + '{}+'.format(entry)
@@ -334,7 +338,7 @@ def determine_reactions(formula, available_data):
         constructed_products.append(productstring)
         pos_reaction = '{}->{}'.format(formula, productstring)
         bal_reaction = balance_equation(pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True)
-        # We do not allow zero coefficents of products, because the resulting equation should already be in our list.
+        # We do not allow zero coefficients of products, because the resulting equation should already be in our list.
         if bal_reaction:
             # TODO post process (i.e are remove 0 compounds)
             reactions.append(bal_reaction)
@@ -383,7 +387,7 @@ def convert_eq_to_dict(equationstring):
 
 def get_enhalpy_of_equation(reaction, formenergydict):
     """
-    calculate the enhalpy per atom of a given reaction from the given data.
+    calculate the enthalpy per atom of a given reaction from the given data.
 
     param reaction: string
     param fromenergydict: dictionary that contains the {compound: formationenergy per atom}
@@ -400,7 +404,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
             compound_e = formenergydict.get(compound)
         except KeyError:
             print(('Formation energy of compound {} not given in {}.'
-                  'I abort...'.format(compound, formenergydict)))
+                   'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             return None
         educt_energy = educt_energy + factor*compound_e
@@ -410,7 +414,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
             compound_e = formenergydict.get(compound)
         except KeyError:
             print(('Formation energy of compound {} not given in {}.'
-                  'I abort...'.format(compound, formenergydict)))
+                   'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             return None
         product_energy = product_energy + factor*compound_e
@@ -418,14 +422,12 @@ def get_enhalpy_of_equation(reaction, formenergydict):
 
     return educt_energy - product_energy
 
-from sympy import Symbol #somehow, otherwise it in not found in balance equation...
-
 def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eval_linear=True):
     """
     Method that balances a chemical equation.
 
     param equation_string: string (with '->')
-    param allow_negativ: bool, default False, allows for negative coefficents for the products.
+    param allow_negativ: bool, default False, allows for negative coefficients for the products.
 
     return string: balanced equation
 
@@ -444,48 +446,48 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     https://codegolf.stackexchange.com/questions/8728/balance-chemical-equations
     """
 
-    import sys,re
+    import sys, re
     from sympy.solvers import solve
     from fractions import gcd
     from collections import defaultdict
     letters = 'abcdefghijklmnopqrstuvwxyz'
-    Ls=list(letters)
-    eq=equation_string
-    Ss,Os,Es,a,i = defaultdict(list),Ls[:],[],1,1
+    Ls = list(letters)
+    eq = equation_string
+    Ss, Os, Es, a, i = defaultdict(list), Ls[:], [], 1, 1
     for p in eq.split('->'):
         for k in p.split('+'):
             c = [Ls.pop(0), 1]
-            for e,m in re.findall('([A-Z][a-z]?)([0-9]*)',k):
-                m=1 if m=='' else int(m)
-                a*=m
-                d=[c[0],c[1]*m*i]
-                Ss[e][:0],Es[:0]=[d],[[e,d]]
-        i=-1
-    Ys=dict((s,eval('Symbol("'+s+'")')) for s in Os if s not in Ls)
-    Qs=[eval('+'.join('%d*%s'%(c[1],c[0]) for c in Ss[s]),{},Ys) for s in Ss]+[Ys['a']-a]
-    k=solve(Qs,*Ys)
+            for e, m in re.findall('([A-Z][a-z]?)([0-9]*)', k):
+                m = 1 if m == '' else int(m)
+                a *= m
+                d = [c[0], c[1]*m*i]
+                Ss[e][:0], Es[:0] = [d], [[e, d]]
+        i = -1
+    Ys = dict((s, eval('Symbol("'+s+'")')) for s in Os if s not in Ls)
+    Qs = [eval('+'.join('%d*%s'%(c[1], c[0]) for c in Ss[s]), {}, Ys) for s in Ss]+[Ys['a']-a]
+    k = solve(Qs, *Ys)
     if k:# if a solution is found multiply by gcd
         # TODO? check if solution has linear dependence: and evaluate
         #for c in k.values():
         #    for char in list(letters):
         #        if char in str(c):
         #             pass
-        N=[]#[k[Ys[s]]for s in sorted(Ys)]
+        N = []#[k[Ys[s]]for s in sorted(Ys)]
         for s in sorted(Ys):
             n = k[Ys[s]]
             # idea: check if char in n, then linear depended, then
             try: # since solver gives also a linear depended solution if correct, but code fails then
-                if n<0 and not allow_negativ: # We allow for 0 but might be an other case to think about
+                if n < 0 and not allow_negativ: # We allow for 0 but might be an other case to think about
                     return None
             except TypeError:
                 return None # TODO Maybe other return value... maybe list of some values for
                 # linear dependencies, d,e,....? also choose them that the value is positive...?
-            if n==0 and not allow_zero:
+            if n == 0 and not allow_zero:
                 return None
             N.append(n)
         g = N[0]
-        for a1, a2 in zip(N[0::2],N[0::2]):
-            g=gcd(g,a2)
+        for a1, a2 in zip(N[0::2], N[0::2]):
+            g=gcd(g, a2)
         N = [i/g for i in N]
         pM = lambda c: str(c)+'*'# if c!=1 else ''
         return '->'.join('+'.join(pM(N.pop(0))+str(t) for t in p.split('+')) for p in eq.split('->'))
@@ -512,7 +514,7 @@ def check_eos_energies(energylist):
     i.e. if one point has a larger energy then its two neighbors
 
     :param energylist: list of floats
-    :returs nnormalies: integer
+    :returns nnormalies: integer
     """
     # TODO: possible improvements look at all differences, and introduce a threshold
     # Also look at several points...
@@ -524,7 +526,7 @@ def check_eos_energies(energylist):
         if x < y > z:
             abnormality = True
             abnormalityindexlist.append(i)
-            print((x,y,z))
+            print((x, y, z))
             print('annormly detected')
 
     return abnormality, abnormalityindexlist
@@ -537,4 +539,3 @@ def check_eos_energies(energylist):
 #(False, [])
 #total_energy = [ -1, -2, -3 ,-4,-5,-3,-2,-1]
 #(False, [])
-

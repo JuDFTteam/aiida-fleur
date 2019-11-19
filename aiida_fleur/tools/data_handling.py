@@ -19,52 +19,51 @@ nodes, or data-mine go in here
 #import time
 from __future__ import absolute_import
 from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
 from aiida.orm.querybuilder import QueryBuilder as QB
 
 
 def extract_structure_info(keys, structures=None):
     """
-    A method that collects a bunch of information (specified in keys) from 
-    structures (default whole db, or provided node list) in the database and 
+    A method that collects a bunch of information (specified in keys) from
+    structures (default whole db, or provided node list) in the database and
     returns that information as a dict, which could be used for further evalation
-    #keys = ['uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy', 
-    'child_nodes', 'natoms', 'group', extras', 'label', 'description', 'cif_file', 
-    'cif_number', 'cif_uuid', 'cif_ref', 'calcfunctions', 'band', 'dos', 'eos', 
+    #keys = ['uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy',
+    'child_nodes', 'natoms', 'group', extras', 'label', 'description', 'cif_file',
+    'cif_number', 'cif_uuid', 'cif_ref', 'calcfunctions', 'band', 'dos', 'eos',
     'init_cls', 'corehole', primitive]
 
     """
     StructureData = DataFactory('structure')
     structure_list = []
-    
+
     from aiida_fleur.tools.StructureData_util import get_spacegroup, is_structure
     from aiida_fleur.tools.StructureData_util import is_primitive
 
-    if not structures: 
+    if not structures:
         StructureData = DataFactory('structure')
         #t = time.time()
         qb = QB()
         qb.append(StructureData)
-        structures = qb.all()  
+        structures = qb.all()
         #elapsed = time.time() - t
         #print "Total number of structures: {} (retrieved in {} s.)".format(len(structures), elapsed)
         #t = time.time()
-    
+
     #for structure in structures:
     #    structure_dict = {}
     #    struc = structure[0]
     #    for key in keys:
     #        structure_dict[key] = get_methods(key)(struc)
-    
+
     #get information
     for structure in structures:
         structure_dict = {}
-        
+
         if isinstance(structure, list):
             struc = structure[0]
         else:
             struc = is_structure(structure)
-        
+
         if 'formula' in keys:
             structure_dict['formula'] = struc.get_formula()
         if 'pk' in keys:
@@ -96,7 +95,7 @@ def extract_structure_info(keys, structures=None):
         if 'primitive' in keys:
             prim = is_primitive(struc)
             structure_dict['primitive'] = prim
-        
+
         if 'cif_file' in keys:
             cif_file = get_cif_file(struc)
             structure_dict['cif_file'] = cif_file
@@ -116,13 +115,13 @@ def extract_structure_info(keys, structures=None):
         '''
         if 'group' in keys:
             group = group_member(struc)
-            structure_dict['group'] = group         
+            structure_dict['group'] = group
         if 'scf' in keys:
             scf = input_of_workcal('fleur_scf_wc', struc)
-            structure_dict['scf'] = scf        
+            structure_dict['scf'] = scf
         if 'band' in keys:
             band = input_of_workcal('fleur_band_wc', struc)
-            structure_dict['band'] = band    
+            structure_dict['band'] = band
         if 'dos' in keys:
             dos = input_of_workcal('fleur_dos_wc', struc)
             structure_dict['dos'] = dos
@@ -134,18 +133,17 @@ def extract_structure_info(keys, structures=None):
             structure_dict['init_cls'] = init_cls
         if 'corehole' in keys:
             corehole = input_of_workcal('fleur_corehole_wc', struc)
-            structure_dict['corehole'] = corehole 
+            structure_dict['corehole'] = corehole
         if 'calcfunctions' in keys:
             calcfunctions_uuid, calcfunctions_name = input_of_calcfunctions(struc)
-            structure_dict['calcfunctions'] = [calcfunctions_uuid, calcfunctions_name] 
-            
+            structure_dict['calcfunctions'] = [calcfunctions_uuid, calcfunctions_name]
+
         structure_list.append(structure_dict)
-        
+
     #elapsed = time.time() - t
     #print "(needed {} s.!!!)".format(elapsed)
-    
+
     return structure_list
-    
 
 def group_member(node):
     """
@@ -209,7 +207,7 @@ def get_cif_file(node):
     """
     Finds out if (a structure) given as input was created from a cif file
     currently with the method wf_struc_from_cif
-    
+
     params: node: structureData node
     returns [cif_filename, cif_uuid, cif_folder]
     """
@@ -217,7 +215,7 @@ def get_cif_file(node):
     from aiida.orm import CifData
     inputs = node.get_inputs()
     name = 'wf_struc_from_cif'# TODO: Bad solution, not general for me currently enough
-    cif_uuid, cif_filename, cif_folder = '','',''
+    cif_uuid, cif_filename, cif_folder = '', '', ''
     for inp in inputs:
         if isinstance(inp, WorkChainNode):
             try:# TODO: is there a better way
@@ -233,7 +231,7 @@ def get_cif_file(node):
                         cif_filename = iwc.filename
                         cif_folder = iwc.folder.abspath
                         break
-    
+
     return [cif_filename, cif_uuid, cif_folder]
 #wf_struc_from_cif process_label
 #cif.filename

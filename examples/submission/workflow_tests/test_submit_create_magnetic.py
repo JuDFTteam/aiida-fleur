@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
-from pprint import pprint
 
 from aiida.plugins import DataFactory
 from aiida.orm import load_node, Int
@@ -45,7 +44,7 @@ parser.add_argument('--inpgen', type=int, dest='inpgen',
 parser.add_argument('--fleur', type=int, dest='fleur',
                     help='The FLEUR code node to use', required=True)
 parser.add_argument('--submit', type=bool, dest='submit',
-                    help='should the workflow be submited or run', required=False)
+                    help='should the workflow be submitted or run', required=False)
 parser.add_argument('--options', type=int, dest='options',
                     help='options of the workflow', required=False)
 args = parser.parse_args()

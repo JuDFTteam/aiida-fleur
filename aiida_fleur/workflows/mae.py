@@ -141,7 +141,7 @@ class FleurMaeWorkChain(WorkChain):
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
-            error = ("Number of sqas_theta has to be equal to the nmber of sqas_phi")
+            error = ("Number of sqas_theta has to be equal to the number of sqas_phi")
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
@@ -233,7 +233,7 @@ class FleurMaeWorkChain(WorkChain):
             try:
                 fleurin = self.ctx.reference.outputs.fleurinp
             except NotExistent:
-                error = 'Fleurinp generated in the reference claculation is not found.'
+                error = 'Fleurinp generated in the reference calculation is not found.'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         else:
@@ -476,7 +476,7 @@ class FleurMaeWorkChain(WorkChain):
 
     def control_end_wc(self, errormsg):
         """
-        Controled way to shutdown the workchain. will initalize the output nodes
+        Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
         self.report(errormsg)  # because return_results still fails somewhen

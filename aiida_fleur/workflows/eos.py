@@ -34,7 +34,6 @@ from aiida.common import AttributeDict
 
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
 # pylint: disable=invalid-name
@@ -112,7 +111,7 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        # TODO get all succesfull from convergence, if all True this
+        # TODO get all successful from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = self._wf_default

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from six.moves import range
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
@@ -12,6 +10,8 @@ from six.moves import range
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
+from __future__ import absolute_import
+from six.moves import range
 
 def gcd(x, y):
     """
@@ -31,6 +31,6 @@ def decide_ncore(nkpoints, ncore):
     for noc in ncore_list:
         remain = nkpoints % noc
         #print remain
-        if not(remain):
+        if not remain:
             ncore_new = noc
     return ncore_new

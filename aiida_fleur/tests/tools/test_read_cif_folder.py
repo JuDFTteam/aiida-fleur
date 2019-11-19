@@ -19,7 +19,7 @@ def test_read_cif_folder_interface(aiida_env):
     cif_folderpath = os.path.abspath('../files/cif/')
     print(cif_folderpath)
     #read_in
-    structure_data, filenames = read_cif_folder(path=os.getcwd(), rekursive=True,
+    structure_data, filenames = read_cif_folder(path=os.getcwd(), recursive=True,
                                                 store=False, log=False,
                                                comments='', extras='')
     #test number of structurs written

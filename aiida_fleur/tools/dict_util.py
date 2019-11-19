@@ -38,7 +38,7 @@ def extract_elementpara(parameter_dict, element):
 
 def dict_merger(dict1, dict2):
     """
-    Merge rekursively two nested python dictionaries.
+    Merge recursively two nested python dictionaries.
 
     If key is in both digionaries tries to add the entries in both dicts.
     (merges two subdicts, adds strings and numbers together)

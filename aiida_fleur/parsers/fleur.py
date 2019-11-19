@@ -148,7 +148,7 @@ class FleurParser(Parser):
                         kb_used = int(re.findall(r'\d+', line_used)[2])
                     except IndexError:
                         kb_used = 0.0
-                        self.logger.info('Did not manage to find memory usage info.')  
+                        self.logger.info('Did not manage to find memory usage info.')
 
                     if kb_used * mpiprocs / mem_kb_avail > 0.93:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY

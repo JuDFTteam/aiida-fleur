@@ -18,10 +18,10 @@ Util that does not depend on AiiDA classes should go somewhere else.
 
 from __future__ import absolute_import
 from __future__ import print_function
+import six
+
 from aiida.orm import Node, load_node
 from aiida.plugins import DataFactory, CalculationFactory
-
-import six
 
 def is_code(code):
     """
@@ -29,15 +29,16 @@ def is_code(code):
     if yes returns a Code node in all cases
     if no returns None
     """
-    from aiida.orm import Code, load_node
-    #Test if Code
+    from aiida.orm import Code
+    from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
+
     if isinstance(code, Code):
         return code
-    #Test if pk, if yes, is the corresponding node Code
+
     pk = None
     try:
-        pk=int(code)
-    except:
+        pk = int(code)
+    except ValueError:
         pass
     if pk:
         code = load_node(pk)
@@ -45,31 +46,24 @@ def is_code(code):
             return code
         else:
             return None
+
     #given as string
-    codestring = None
+    codestring = str(code)
     try:
-        codestring = str(code)
-    except:
-        pass
-    if codestring:
         code = Code.get_from_string(codestring)
         return code
-    #Test if uuid, if yes, is the corresponding node Code
-    # TODO: test for uuids not for string (guess is ok for now)
-    '''
-    uuid = None
-    try:
-        uuid = str(code)
-    except:
-        pass
-    if uuid:
-        code = load_node(uuid)
+    except InputValidationError:
+        # try to exctract as uuid
+        try:
+            code = load_node(codestring)
+        except NotExistent:
+            return None
         if isinstance(code, Code):
             return code
         else:
             return None
-    '''
-    return None
+    except (NotExistent, MultipleObjectsError):
+        return None
 
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
                      serial=False):
@@ -99,7 +93,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
             options = {}
         options['withmpi'] = False # for now
         #TODO not every machine/scheduler type takes number of machines
-        #  lsf takes number of total_mpi_procs,slurm and psb take num_machinces,\
+        #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {"num_machines": 1}
     else:
@@ -119,7 +113,8 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None, **kwargs):
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
+                      params=None, **kwargs):
     """
     get the input for a inpgen calc
     """
@@ -153,33 +148,37 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     #print(inputs)
     if options:
         inputs.metadata.options = options
-    
+
     # Currently this does not work, find out howto...
     #for key, val in kwargs.items():
     #    inputs[key] = val
-    
+
     return inputs
 
 
 
 
-def get_scheduler_extras(code, resources, extras={}, project='jara0172'):
+def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
     """
-    This is a utilty function with the goal to make prepare the right resource and scheduler extras for a given computer.
+    This is a utility function with the goal to make prepare the right resource
+    and scheduler extras for a given computer.
     Since this is user dependend you might want to create your own.
 
     return: dict, custom scheduler commands
     """
+    if extras is None:
+        extras = {}
     nnodes = resources.get('num_machines', 1)
-    
-    # TODO memmory has to be done better...
+
+    # TODO memory has to be done better...
     mem_per_node = 120000# max recommend 126000 MB on claix jara-clx nodes
     mem_per_process = mem_per_node/24
     if not extras:
         # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {'lsf' : '#BSUB -P {} \n#BSUB -M {}  \n#BSUB -a intelmpi'.format(project, mem_per_process),#{'-P' : 'jara0043', '-M' : memp_per_node*nnodes, '-a' : 'intelmpi'},
-                 'torque' : '',#{},
-                 'direct' : ''}#{}}
+        extras = {'lsf' : ('#BSUB -P {} \n#BSUB -M {}  \n'
+                           '#BSUB -a intelmpi'.format(project, mem_per_process)),
+                  'torque' : '',
+                  'direct' : ''}
 
     # get the scheduler type from the computer the code is run on.
     com = code.get_computer()
@@ -255,8 +254,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
 
         if valid_code_labels:
             msg = ("Pass as further parameter a valid code label.\n"
-                   "Valid labels with a {} executable are:\n".format(
-                expected_code_type))
+                   "Valid labels with a {} executable are:\n".format(expected_code_type))
             msg += "\n".join("* {}".format(l) for l in valid_code_labels)
 
             if use_exceptions:
@@ -267,8 +265,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         else:
             msg = ("Code not valid, and no valid codes for {}.\n"
                    "Configure at least one first using\n"
-                   "    verdi code setup".format(
-                expected_code_type))
+                   "    verdi code setup".format(expected_code_type))
             if use_exceptions:
                 raise ValueError(msg)
             else:
@@ -286,10 +283,10 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
-    KpointsData =  DataFactory('array.kpoints')
+    KpointsData = DataFactory('array.kpoints')
     kp = KpointsData()
     kp.set_cell_from_structure(structure)
-    density  = kpoint_density #1/A
+    density = kpoint_density #1/A
     kp.set_kpoints_mesh_from_density(density)
     mesh = kp.get_kpoints_mesh()
     return mesh, kp
@@ -305,7 +302,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
 # where I have redundant calculations or calculations with different parameters...
 # are total energies comparable?
 # -> as long as the same scheme ist used (all GGA or all GGA+U)
-# total energies are compareable and the gibs enthalpy is approximatily the
+# total energies are compareable and the gibs enthalpy is approximately the
 # total energy difference
 # there are tricks to also compare mixed energies, with experimental fits
 # for binary reactions, where both is needed
@@ -320,16 +317,15 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 
     return dictionary that ranks the reactions after their enthalpy
     """
-    from aiida.orm import load_node
     from aiida.orm.calculation.work import WorkCalculation
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
     # for each reaction get the total energy sum
     # make sure to use the right multipliers...
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
-    formenergy_dict ={}
+    formenergy_dict = {}
     for compound, uuid in six.iteritems(workchain_dict):
-        # TODO ggf get formation energy from ouput node, or extras
+        # TODO ggf get formation energy from output node, or extras
         if isinstance(uuid, float):# allow to give values
             formenergy_dict[compound] = uuid
             continue
@@ -356,7 +352,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
                 else: # check if corehole wc?
-                     pass
+                    pass
 
         formenergy_dict[compound] = formenergy
 
@@ -394,24 +390,24 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 def performance_extract_calcs(calcs):
     """
     Extracts some runtime and system data from given fleur calculations
-    
+
     :params calcs: list of calculation nodes/pks/or uuids. Fleur calc specific
-    
-    :returns data_dict: dictionary, dictionary of arrays with the same lengt, 
+
+    :returns data_dict: dictionary, dictionary of arrays with the same length,
                         from with a panda frame can be created.
-    
+
     Note: Is not the fastest for many calculations > 1000.
     """
     data_dict = {u'n_symmetries':[], u'n_spin_components' : [],
-                 u'n_kpoints': [], u'n_iterations': [], 
-                 u'walltime_sec' : [], u'walltime_sec_per_it' : [], 
-                 u'n_iterations_total' : [], 
+                 u'n_kpoints': [], u'n_iterations': [],
+                 u'walltime_sec' : [], u'walltime_sec_per_it' : [],
+                 u'n_iterations_total' : [],
                  u'density_distance': [], u'computer':[],
                  u'n_atoms' : [], u'kmax':[],
-                 u'cost' : [], u'costkonstant' : [], 
+                 u'cost' : [], u'costkonstant' : [],
                  u'walltime_sec_cor' : [], u'total_cost' : [],
-                 u'fermi_energy' : [], u'bandgap' : [], 
-                 u'energy' : [], u'force_largest' : [], 
+                 u'fermi_energy' : [], u'bandgap' : [],
+                 u'energy' : [], u'force_largest' : [],
                  u'ncores' : [], u'pk' : [],
                  u'uuid' : [], u'serial' : [],
                  u'resources' : []}
@@ -434,7 +430,7 @@ def performance_extract_calcs(calcs):
         try:
             gap = res.bandgap
         except AttributeError:
-            gap = -10000   
+            gap = -10000
             continue
             print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
 
@@ -498,22 +494,22 @@ def performance_extract_calcs(calcs):
         serial = not calc.get_withmpi()
         #codename = calc.get_code().label
         #code_col.append(codename)
-        
+
         #if 'mpi' in codename:
         #    serial = False
         #else:
         #    serial = True
         data_dict['serial'].append(serial)
-        
+
         resources = calc.get_resources()
-        mpi_proc = get_mpi_proc(resources)    
+        mpi_proc = get_mpi_proc(resources)
 
         c_ratio = cost_ratio(cost, walltime_new, mpi_proc)
         data_dict['resources'].append(resources)
         data_dict['cost'].append(cost)
         data_dict['costkonstant'].append(c_ratio)
         data_dict['total_cost'].append(total_cost)
-        data_dict['ncores'].append(mpi_proc)  
+        data_dict['ncores'].append(mpi_proc)
 
     return data_dict
 
@@ -526,7 +522,7 @@ def get_mpi_proc(resources):
             total_proc = nmachines*resources.get('default_mpiprocs_per_machine', 12)
         else:
             total_proc = resources.get('tot_num_mpiprocs', 24)
-        
+
     return total_proc
 
 def calc_time_cost_function(natom, nkpt, kmax, nspins=1):
@@ -540,13 +536,13 @@ def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
 def cost_ratio(total_costs, walltime_sec, ncores):
     ratio = total_costs/(walltime_sec*ncores)
     return ratio
-    
+
 def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     """
     This routine checks if the total number of requested cpus
     is a factor of kpts and suggests the optimisation.
     """
-    from sympy.ntheory.factor_ import factorint, divisors
+    from sympy.ntheory.factor_ import divisors
     kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
     kpts = int(kpts[0])
     divisors_kpts = divisors(kpts)
@@ -555,7 +551,7 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
     for n_n in possible_nodes:
         adviced_cpu_per_node = max([x for x in divisors(kpts//n_n) if x<=cpus_per_node])
         suggestions.append((n_n, adviced_cpu_per_node))
-    
+
     def best_criterion(suggestion):
         """
         The best setup uses as many as possible total number of
@@ -563,25 +559,29 @@ def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
         to use less computations nodes.
         """
         return (suggestion[0]*suggestion[1], 1.0/suggestion[0])
-    
+
     best_suggestion = max(suggestions, key=best_criterion)
     message = ''
     exit_status = 0
-    
-    if (float(best_suggestion[1])/cpus_per_node < 0.6):
+
+    if float(best_suggestion[1])/cpus_per_node < 0.6:
         exit_status = 1
         message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
-                        'Changed the number of nodes from {} to {}. '
-                        'Computational setup, needed for a given number k-points ({})'
-                        ' provides less then 60% of node load.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
-    elif (best_suggestion[1] == cpus_per_node):
-        if (best_suggestion[0] != nodes):
-            message = 'WARNING: Changed the number of nodes from {} to {}'.format(nodes, best_suggestion[0])
+                   'Changed the number of nodes from {} to {}. '
+                   'Computational setup, needed for a given number k-points ({})'
+                   ' provides less then 60% of node load.'
+                   ''.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
+    elif best_suggestion[1] == cpus_per_node:
+        if best_suggestion[0] != nodes:
+            message = ('WARNING: Changed the number of nodes from {} to {}'
+                       ''.format(nodes, best_suggestion[0]))
         else:
-            message = 'Computaional setup is perfect! Nodes: {}, CPUs per node {}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1], kpts )
+            message = ('Computational setup is perfect! Nodes: {}, CPUs per node {}. Number of '
+                       'k-points is {}'.format(best_suggestion[0], best_suggestion[1], kpts))
     else:
         message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
-            'Changed the number of nodes from {} to {}. Number of k-points is {}.'.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
+                   'Changed the number of nodes from {} to {}. Number of k-points is {}.'
+                   ''.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
     return best_suggestion[0], best_suggestion[1], message, exit_status
 
 def find_last_in_restart(restart_wc):
