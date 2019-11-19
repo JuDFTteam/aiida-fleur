@@ -96,7 +96,7 @@ def _handle_not_conv_error(self, calculation):
         last_fleur_calc = load_node(last_fleur_calc)
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
 
-        self.ctx.inputs.remote = remote
+        self.ctx.inputs.scf.remote_data = remote
         return ErrorHandlerReport(True, True)
 
 @register_error_handler(FleurBaseRelaxWorkChain, 999)
@@ -120,31 +120,14 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status not in RelaxProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum '
                     'parameter')
-
-        wf_para_dict = self.ctx.inputs.wf_parameters.get_dict()
+        wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
         inpxml_changes = wf_para_dict.get('inpxml_changes', [])
         inpxml_changes.append(('shift_value',
                                {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}}))
         wf_para_dict['inpxml_changes'] = inpxml_changes
-        self.ctx.inputs.wf_parameters = Dict(dict=wf_para_dict)
-        return ErrorHandlerReport(True, True)
-
-@register_error_handler(FleurBaseRelaxWorkChain, 101)
-def _handle_general_error(self, calculation):
-    """
-    Calculation failed for unknown reason.
-    """
-    if calculation.exit_status not in RelaxProcess.get_exit_statuses(['ERROR_MT_RADII']):
-        self.ctx.is_finished = False
-        self.report('Relax WC did not lead to convergence, submit next RelaxWC')
-        last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
-        last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
-        last_fleur_calc = load_node(last_fleur_calc)
-        remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
-
-        self.ctx.inputs.remote = remote
+        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
         return ErrorHandlerReport(True, True)

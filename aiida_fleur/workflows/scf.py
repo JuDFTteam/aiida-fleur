@@ -301,7 +301,7 @@ class FleurScfWorkChain(WorkChain):
         if 'calc_parameters' in self.inputs:
             params = self.inputs.calc_parameters
         else:
-            params = None
+            params = {}
 
         options = {"max_wallclock_seconds": int(self.ctx.options.get('max_wallclock_seconds')),
                    "resources": self.ctx.options.get('resources'),
@@ -393,7 +393,7 @@ class FleurScfWorkChain(WorkChain):
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
                              "please check/test your input. I abort..."
-                             "".format(method))
+                             "".format(function))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -612,7 +612,10 @@ class FleurScfWorkChain(WorkChain):
         therefore it only uses results from context.
         """
         from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
-        last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+        if self.ctx.last_calc:
+            last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+        else:
+            last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.last_calc.outputs.output_parameters

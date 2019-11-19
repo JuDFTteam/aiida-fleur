@@ -23,8 +23,9 @@ import six
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
-from aiida.orm import Code, load_node
+from aiida.orm import load_node
 from aiida.orm import StructureData, RemoteData, Dict
+from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
@@ -42,48 +43,20 @@ class FleurRelaxWorkChain(WorkChain):
 
     _workflowversion = "0.1.3"
 
-    _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 2*60*60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}}
-
     _wf_default = {
-        'fleur_runmax': 10,
-        'serial': False,
-        'itmax_per_run': 30,
-        'alpha_mix': 0.015,
         'relax_iter': 5,
-        'force_converged': 0.0002,
-        'force_dict': {'qfix': 2,
-                       'forcealpha': 0.5,
-                       'forcemix': 'BFGS'},
         'film_distance_relaxation' : False,
-        'force_criterion': 0.001,
-        'use_relax_xml': True,
-        'inpxml_changes': [],
+        'force_criterion': 0.001
     }
-
-    _scf_keys = ['fleur_runmax', 'serial', 'itmax_per_run',
-                 'inpxml_changes', 'force_dict', 'force_converged', 'use_relax_xml']  # scf workflow
 
     @classmethod
     def define(cls, spec):
         super(FleurRelaxWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("remote", valid_type=RemoteData, required=False)
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
-        spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
-            cls.validate,
             cls.converge_scf,
             cls.check_failure,
             while_(cls.condition)(
@@ -149,74 +122,6 @@ class FleurRelaxWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        # set up mixing parameter alpha
-        self.ctx.wf_dict['inpxml_changes'].append(
-            ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-
-        if self.ctx.wf_dict['film_distance_relaxation']:
-            self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
-                                    'species':'all'}))
-
-        # initialize the dictionary using defaults if no options are given
-        defaultoptions = self._default_options
-        if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
-        else:
-            options = defaultoptions
-
-        # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
-            options[key] = options.get(key, val)
-        self.ctx.options = options
-
-        # Check if user gave valid inpgen and fleur executables
-        inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        if 'fleur' in inputs:
-            try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-    def validate(self):
-        """
-        This function analyses inputs nodes and decides what
-        is the input mode:
-
-        1. Fleurinp is given -> relax iterations
-        2. Fleurinp and remote are given -> take cdn1 from remote, relax iterations
-        3. Remote is given -> take inp.xml and cdn1 from remote, relax iterations
-        4. Structure is given -> run inpgen, relax iterations
-
-        """
-        inputs = self.inputs
-
-        if 'fleurinp' in inputs:
-            if 'structure' in inputs:
-                self.report('Structure data node will be ignored because fleurinp is given')
-            if 'remote' in inputs:
-                self.report('Initial charge density will be taken from given remote folder')
-        elif 'remote' in inputs:
-            if 'structure' in inputs:
-                self.report('Structure data node will be ignored because remote is given')
-        elif 'structure' in inputs:
-            if 'inpgen' not in inputs:
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
-        else:
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
-
     def converge_scf(self):
         """
         Submits :class:`aiida_fleur.workflows.scf.FleurScfWorkChain`.
@@ -235,61 +140,47 @@ class FleurRelaxWorkChain(WorkChain):
         input regimes described in
         :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.validate()`.
         """
-        inputs = self.inputs
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        input_scf = {}
+        if 'wf_parameters' not in input_scf:
+            scf_wf_dict = {}
+        else:
+            scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        scf_wf_param = {}
-        for key in self._scf_keys:
-            scf_wf_param[key] = self.ctx.wf_dict.get(key)
+        if 'inpxml_changes' not in scf_wf_dict:
+            scf_wf_dict['inpxml_changes'] = []
 
-        input_scf['wf_parameters'] = copy.deepcopy(scf_wf_param)
-        input_scf['wf_parameters']['mode'] = 'force'
-        input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
+        scf_wf_dict['mode'] = 'force'
 
-        input_scf['options'] = self.ctx.options
-        input_scf['options'] = Dict(dict=input_scf['options'])
+        if self.ctx.wf_dict['film_distance_relaxation']:
+            scf_wf_dict['inpxml_changes'].append(
+                ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
+                                    'species':'all'}))
 
-        input_scf['fleur'] = self.inputs.fleur
+        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
-        if 'fleurinp' in inputs:
-            input_scf['fleurinp'] = inputs.fleurinp
-            if 'remote' in inputs:
-                input_scf['remote_data'] = inputs.remote
-        elif 'remote' in inputs:
-            input_scf['remote_data'] = inputs.remote
-        elif 'structure' in inputs:
-            input_scf['structure'] = inputs.structure
-            input_scf['inpgen'] = inputs.inpgen
-            if 'calc_parameters' in inputs:
-                input_scf['calc_parameters'] = inputs.calc_parameters
         return input_scf
 
     def get_inputs_scf(self):
         """
         Initializes inputs for further iterations.
         """
-        input_scf = {}
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        scf_wf_param = {}
-        for key in self._scf_keys:
-            scf_wf_param[key] = self.ctx.wf_dict.get(key)
+        if 'wf_parameters' not in input_scf:
+            scf_wf_dict = {}
+        else:
+            scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        input_scf['wf_parameters'] = copy.deepcopy(scf_wf_param)
-        input_scf['wf_parameters']['mode'] = 'force'
-        input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
-
-        input_scf['options'] = self.ctx.options
-        input_scf['options'] = Dict(dict=input_scf['options'])
-
-        input_scf['fleur'] = self.inputs.fleur
+        scf_wf_dict['mode'] = 'force'
+        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
         last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
 
-        input_scf['remote_data'] = last_calc.outputs.remote_folder
+        input_scf.remote_data = last_calc.outputs.remote_folder
         if self.ctx.new_fleurinp:
-            input_scf['fleurinp'] = self.ctx.new_fleurinp
+            input_scf.fleurinp = self.ctx.new_fleurinp
         
         return input_scf
 

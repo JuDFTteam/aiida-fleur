@@ -22,10 +22,9 @@ import six
 from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
-from aiida.orm import Code
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import Dict
+from aiida.common import AttributeDict
 
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 # pylint: disable=invalid-name
@@ -34,41 +33,21 @@ FleurInpData = DataFactory('fleur.fleurinp')
 
 class FleurMaeConvWorkChain(WorkChain):
     """
-        This workflow calculates the Magnetic Anisotropy Energy of a structure.
+    This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
     _workflowversion = "0.1.0"
 
-    _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 2 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}}
-
     _wf_default = {
-        'fleur_runmax': 10,
         'sqas': {'label' : [0.0, 0.0]},
-        'alpha_mix': 0.05,
-        'density_converged': 0.00005,
-        'serial': False,
-        'itmax_per_run': 30,
-        'soc_off': [],
-        'inpxml_changes': [],
+        'soc_off': []
     }
-
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
         super(FleurMaeConvWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -115,51 +94,6 @@ class FleurMaeConvWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        # set up mixing parameter alpha
-        self.ctx.wf_dict['inpxml_changes'].append(
-            ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-
-        # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append(
-                ('set_species_label',
-                 {'at_label': atom_label,
-                  'attributedict': {'special': {'socscale': 0.0}},
-                  'create': True
-                 }))
-
-        # initialize the dictionary using defaults if no options are given
-        defaultoptions = self._default_options
-        if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
-        else:
-            options = defaultoptions
-
-        # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
-            options[key] = options.get(key, val)
-        self.ctx.options = options
-
-        # Check if user gave valid inpgen and fleur executables
-        inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        if 'fleur' in inputs:
-            try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
     def converge_scf(self):
         """
         Converge charge density with or without SOC.
@@ -168,44 +102,45 @@ class FleurMaeConvWorkChain(WorkChain):
         submit a set of Fleur calculations to converge charge density for all given SQAs.
         """
         inputs = {}
-        for key, socs in six.iteritems(self.ctx.wf_dict['sqas']):
+        for key, soc in six.iteritems(self.ctx.wf_dict['sqas']):
             inputs[key] = self.get_inputs_scf()
-            inputs[key]['calc_parameters']['soc'] = {'theta': socs[0], 'phi': socs[1]}
-            inputs[key]['calc_parameters'] = Dict(dict=inputs[key]['calc_parameters'])
+            inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
+            inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
             res = self.submit(FleurScfWorkChain, **inputs[key])
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
         """
-        Initialize inputs for scf workflow:
-        wf_param, options, calculation parameters, codes, structure
+        Initialize inputs for scf workflow
         """
-        inputs = {}
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        scf_wf_param = {}
-        for key in self._scf_keys:
-            scf_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = scf_wf_param
+        if 'wf_parameters' not in input_scf:
+            scf_wf_dict = {}
+        else:
+            scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        inputs['options'] = self.ctx.options
+        if 'inpxml_changes' not in scf_wf_dict:
+            scf_wf_dict['inpxml_changes'] = []
 
-        # Try to retrieve calculation parameters from inputs
-        try:
-            calc_para = self.inputs.calc_parameters.get_dict()
-        except AttributeError:
-            calc_para = {}
-        inputs['calc_parameters'] = calc_para
+        # switch off SOC on an atom specie
+        for atom_label in self.ctx.wf_dict['soc_off']:
+            scf_wf_dict['inpxml_changes'].append(
+                ('set_species_label',
+                 {'at_label': atom_label,
+                  'attributedict': {'special': {'socscale': 0.0}},
+                  'create': True
+                 }))
 
-        # Initialize codes
-        inputs['inpgen'] = self.inputs.inpgen
-        inputs['fleur'] = self.inputs.fleur
-        # Initialize the structure
-        inputs['structure'] = self.inputs.structure
+        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
+        if 'calc_parameters' in input_scf:
+            calc_parameters = input_scf.calc_parameters.get_dict()
+        else:
+            calc_parameters = {}
+        input_scf.calc_parameters = calc_parameters
 
-        return inputs
+        return input_scf
 
     def get_results(self):
         """
@@ -268,9 +203,9 @@ class FleurMaeConvWorkChain(WorkChain):
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
-               'initial_structure': self.inputs.structure.uuid,
-               'maes': self.ctx.energydict,
-               'sqas': self.ctx.wf_dict['sqas'],
+               #'initial_structure': self.inputs.structure.uuid,
+               'mae': self.ctx.energydict,
+               'sqa': self.ctx.wf_dict['sqas'],
                'failed_labels': failed_labels,
                'mae_units': 'eV',
                'info': self.ctx.info,

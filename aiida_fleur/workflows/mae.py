@@ -19,14 +19,15 @@ from __future__ import absolute_import
 import copy
 
 import six
-from six.moves import range, map
+from six.moves import map
 from lxml.etree import XMLSyntaxError
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import RemoteData, Dict
+from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_fleur
@@ -56,27 +57,18 @@ class FleurMaeWorkChain(WorkChain):
     _wf_default = {
         'sqa_ref': [0.7, 0.7],
         'use_soc_ref': False,
-        'input_converged' : False,
-        'fleur_runmax': 10,
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
-        'alpha_mix': 0.05,
-        'density_converged': 0.00005,
         'serial': False,
-        'itmax_per_run': 30,
         'soc_off': [],
         'inpxml_changes': [],
     }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
-
     @classmethod
     def define(cls, spec):
         super(FleurMaeWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
@@ -138,10 +130,6 @@ class FleurMaeWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        # set up mixing parameter alpha
-        self.ctx.wf_dict['inpxml_changes'].append(
-            ('set_inpchanges', {'change_dict': {'alpha': self.ctx.wf_dict['alpha_mix']}}))
-
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             self.ctx.wf_dict['inpxml_changes'].append(
@@ -157,13 +145,6 @@ class FleurMaeWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
-        if wf_dict['input_converged']:
-            if not 'remote' in self.inputs:
-                error = ("Remote calculation was not specified. However, 'input_converged was set"
-                         " to True.")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
-
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
         if 'options' in self.inputs:
@@ -176,17 +157,8 @@ class FleurMaeWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur execulatbles
+        # Check if user gave valid fleur executable
         inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
@@ -202,7 +174,9 @@ class FleurMaeWorkChain(WorkChain):
         for force theorem calculation depending on if scf is needed
         or not.
         """
-        self.ctx.scf_needed = not self.ctx.wf_dict['input_converged']
+        self.ctx.scf_needed = True
+        if 'fleurinp' in self.inputs or 'remote' in self.inputs:
+            self.ctx.scf_needed = False
         return self.ctx.scf_needed
 
     def converge_scf(self):
@@ -213,50 +187,41 @@ class FleurMaeWorkChain(WorkChain):
         """
         inputs = self.get_inputs_scf()
         res = self.submit(FleurScfWorkChain, **inputs)
-        self.to_context(reference=res)
+        return ToContext(reference=res)
 
     def get_inputs_scf(self):
         """
         Initialize inputs for scf workflow:
         wf_param, options, calculation parameters, codes, structure
         """
-        inputs = self.inputs
-        input_scf = {}
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        scf_wf_param = {}
-        for key in self._scf_keys:
-            scf_wf_param[key] = self.ctx.wf_dict.get(key)
+        if 'wf_parameters' not in input_scf:
+            scf_wf_dict = {}
+        else:
+            scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        input_scf['wf_parameters'] = scf_wf_param
-        input_scf['wf_parameters']['mode'] = 'density'
+        if 'inpxml_changes' not in scf_wf_dict:
+            scf_wf_dict['inpxml_changes'] = []
 
+        soc = self.ctx.wf_dict.get('sqa_ref')
         if not self.ctx.wf_dict.get('use_soc_ref'):
-            input_scf['wf_parameters']['inpxml_changes'].append(
+            scf_wf_dict['inpxml_changes'].append(
                 ('set_inpchanges', {'change_dict': {'l_soc': False}}))
+        else: # set soc parameters explicitly
+            changes_dict = {'theta' : soc[0], 'phi': soc[1], 'l_soc': True}
+            scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
-        input_scf['wf_parameters'] = Dict(dict=input_scf['wf_parameters'])
+        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
-        input_scf['options'] = self.ctx.options
-        input_scf['options'] = Dict(dict=input_scf['options'])
-
-        input_scf['fleur'] = self.inputs.fleur
-
-        if 'fleurinp' in inputs:
-            input_scf['fleurinp'] = inputs.fleurinp
-            if 'remote' in inputs:
-                input_scf['remote_data'] = inputs.remote
-        elif 'remote' in inputs:
-            input_scf['remote_data'] = inputs.remote
-        elif 'structure' in inputs:
-            input_scf['structure'] = inputs.structure
-            input_scf['inpgen'] = inputs.inpgen
-            if 'calc_parameters' in inputs:
-                input_scf['calc_parameters'] = inputs.calc_parameters.get_dict()
+        if 'structure' in input_scf:
+            if 'calc_parameters' in input_scf:
+                calc_parameters = input_scf.calc_parameters.get_dict()
             else:
-                input_scf['calc_parameters'] = {}
-            socs = self.ctx.wf_dict.get('sqa_ref')
-            input_scf['calc_parameters']['soc'] = {'theta': socs[0], 'phi': socs[1]}
-            input_scf['calc_parameters'] = Dict(dict=input_scf['calc_parameters'])
+                calc_parameters = {}
+            calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
+            input_scf.calc_parameters = Dict(dict=calc_parameters)
+
         return input_scf
 
     def change_fleurinp(self):
@@ -282,10 +247,7 @@ class FleurMaeWorkChain(WorkChain):
                     if isinstance(link.node, CalcJobNode):
                         parent_calc_node = link.node
                 retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                try:
-                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
-                except ValueError:
-                    fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
 
         # copy default changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -325,7 +287,7 @@ class FleurMaeWorkChain(WorkChain):
                     error = ("ERROR: Input 'inpxml_changes', function {} "
                              "is not known to fleurinpmodifier class, "
                              "please check/test your input. I abort..."
-                             "".format(method))
+                             "".format(function))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -499,7 +461,7 @@ class FleurMaeWorkChain(WorkChain):
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
-               'initial_structure': self.inputs.structure.uuid,
+               # 'initial_structure': self.inputs.structure.uuid,
                'is_it_force_theorem': True,
                'maes': self.ctx.t_energydict,
                'theta': self.ctx.mae_thetas,

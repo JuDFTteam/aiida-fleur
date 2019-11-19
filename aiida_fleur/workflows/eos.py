@@ -26,10 +26,11 @@ import six
 from six.moves import range
 
 from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
+from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict
-from aiida.engine import WorkChain, ToContext  # ,Outputs
+from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
+from aiida.common import AttributeDict
 
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
@@ -61,38 +62,18 @@ class FleurEosWorkChain(WorkChain):
 
     _workflowversion = "0.3.4"
 
-    _default_options = {
-        'resources': {"num_machines": 1},
-        'max_wallclock_seconds': 6 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}
-        }
-
     _wf_default = {
-        'fleur_runmax': 4,
-        'density_converged': 0.02,
-        'serial': False,
-        'itmax_per_run': 30,
-        'inpxml_changes': [],
         'points': 9,
         'step': 0.002,
         'guess': 1.00
         }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
-
     @classmethod
     def define(cls, spec):
         super(FleurEosWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf', exclude=('structure', ))
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -151,38 +132,6 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)  # True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
-        # initialize the dictionary using defaults if no options are given
-        defaultoptions = self._default_options
-        if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
-        else:
-            options = defaultoptions
-
-        # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
-            options[key] = options.get(key, val)
-        self.ctx.options = options
-
-        # Check if user gave valid inpgen and fleur executables
-        inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        if 'fleur' in inputs:
-            try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
     def structures(self):
         """
         Creates structure data nodes with different Volume (lattice constants)
@@ -207,13 +156,13 @@ class FleurEosWorkChain(WorkChain):
 
         for i, struc in enumerate(self.ctx.structurs):
             inputs = self.get_inputs_scf()
-            inputs['structure'] = struc
+            inputs.structure = struc
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i])
             label_c = '|eos| fleur_scf_wc'
             description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
-            # inputs['label'] = label_c
-            # inputs['description'] = description
+            #inputs.label = label_c
+            #inputs.description = description
 
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
@@ -229,29 +178,9 @@ class FleurEosWorkChain(WorkChain):
         """
         get and 'produce' the inputs for a scf-cycle
         """
-        inputs = {}
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        scf_wf_param = {}
-        for key in self._scf_keys:
-            scf_wf_param[key] = self.ctx.wf_dict.get(key)
-        inputs['wf_parameters'] = scf_wf_param
-
-        inputs['options'] = self.ctx.options
-
-        try:
-            calc_para = self.inputs.calc_parameters.get_dict()
-        except AttributeError:
-            calc_para = {}
-        inputs['calc_parameters'] = calc_para
-
-        inputs['inpgen'] = self.inputs.inpgen
-        inputs['fleur'] = self.inputs.fleur
-
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
-        inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
-
-        return inputs
+        return input_scf
 
     def return_results(self):
         """

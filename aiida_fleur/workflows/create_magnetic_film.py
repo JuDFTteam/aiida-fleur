@@ -227,10 +227,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Initialise inputs for Relax workchain
         """
         inputs = AttributeDict(self.exposed_inputs(FleurBaseRelaxWorkChain, namespace='relax'))
-        inputs.structure = self.create_film_to_relax()
+        inputs.scf.structure = self.create_film_to_relax()
 
-        if not isinstance(inputs.structure, StructureData):
-            return inputs.structure # throws an exit code thrown in create_film_to_relax
+        if not isinstance(inputs.scf.structure, StructureData):
+            return inputs.scf.structure # throws an exit code thrown in create_film_to_relax
 
         return inputs
 
