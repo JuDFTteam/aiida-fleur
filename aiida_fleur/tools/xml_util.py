@@ -542,12 +542,12 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
 def get_inpgen_para_from_xml(inpxmlfile):
     """
     This routine returns an python dictionary produced from the inp.xml
-    file, which can be used as a parameterdata node by inpgen.
+    file, which can be used as a calc_parameters node by inpgen.
+    Be aware that inpgen does not take all information that is contained in an inp.xml file
 
-    :return: dict
+    :return new_parameters: A Dict, which will lead to the same inp.xml (in case if other defaults,
+                            which can not be controlled by input for inpgen, were changed)
 
-    Warning: This routine is prelimitary, it is far from complete.
-    Also be aware that inpgen does not take all information that is contained in an inp.xml file
     """
 
     # TODO: convert econfig

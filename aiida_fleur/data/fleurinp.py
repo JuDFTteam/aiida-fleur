@@ -420,8 +420,7 @@ class FleurinpData(Data):
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
-            raise InputValidationError(
-                "Input file is not validated against the schema.")
+            raise InputValidationError("Input file is not validated against the schema.")
 
         # convert etree into python dictionary
         root = tree_x.getroot()
