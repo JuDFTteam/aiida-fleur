@@ -48,28 +48,17 @@ def export_extras(nodes, filename='node_extras.txt'):
     export_extras(node_list)
     """
 
-    #outstring = ''#' node uuid | extras \n'
     outdict = {}
     for node in nodes:
-        if isinstance(node, int): #pk
-            node = load_node(node)
-        elif isinstance(node, six.string_types): #uuid
+        if not isinstance(node, Node): # pk or uuid
             node = load_node(node)
 
-        if not isinstance(node, Node):
-            print(('skiped node {}, is not an AiiDA node, did not know what to do.'.format(node)))
-            continue
         uuid = node.uuid
-        extras_dict = node.get_extras()
+        extras_dict = node.extras
         outdict[uuid] = extras_dict
-        #line = '{} | {}\n'.format(uuid, extras_dict)
-        #outstring = outstring + line
 
-    #outfile = open(filename, 'w')
-    #outfile.write(outstring)
-    #outfile.close()
-    json.dump(outdict, open(filename, 'w'))
-    return
+    json.dump(outdict, open(filename, 'w'), sort_keys=True,
+              indent=4, separators=(',', ': '))
 
 
 def import_extras(filename):
@@ -200,7 +189,7 @@ def delete_trash():
 
     return
 
-def create_group(name, nodes, description=None):
+def create_group(name, nodes, description=None, add_if_exist=False):
     """
     Creates a group for a given node list.
 
@@ -217,36 +206,38 @@ def create_group(name, nodes, description=None):
     .. code-block:: python
 
         group_name = 'delta_structures_gustav'
-        nodes_to_goup_pks =[2142, 2084]
-        create_group(group_name, nodes_to_group_pks, description='delta structures added by hand. from Gustavs inpgen files')
+        nodes_to_group_pks =[2142, 2084]
+        create_group(group_name, nodes_to_group_pks,
+                     description='delta structures added by hand. from Gustavs inpgen files')
 
     """
+    from aiida.common import NotExistent
+
     group, created = Group.objects.get_or_create(label=name)
     if created:
         print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists. '
-               'Do you want to add nodes?[y/n]'.format(group.label, group.pk)))
-        answer = input()
-        if answer.strip().lower() == 'y':
-            pass
+        print(('Group with name {} and pk {} already exists.'
+               ''.format(group.label, group.pk)))
+
+        if add_if_exist:
+            print('Adding nodes to the existing group {}'.format(group.label))
         else:
+            print('Nodes were not added to the existing group {}'.format(group.label))
             return
+
     nodes2 = []
-    nodes2_pks = []
     for node in nodes:
-        try:
-            node = int(node)
-        except ValueError:
-            pass
-        nodes2_pks.append(node)
-        try:
-            nodes2.append(load_node(node))
-        except:# NotExistentError:
-            pass
+        if not isinstance(node, Node):
+            try:
+                node = load_node(node)
+            except NotExistent:
+                print('Skipping {}, it does not exist in the DB'.format(node))
+                continue
+        nodes2.append(node)
 
     group.add_nodes(nodes2)
-    print(('added nodes: {} to group {} {}'.format(nodes2_pks, group.label, group.pk)))
+    print(('added nodes: {} to group {} {}'.format([x.pk for x in nodes2], group.label, group.pk)))
 
     if description:
         group.description = description

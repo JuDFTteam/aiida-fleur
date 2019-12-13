@@ -35,34 +35,28 @@ def is_code(code):
     if isinstance(code, Code):
         return code
 
-    pk = None
     try:
         pk = int(code)
     except ValueError:
-        pass
-    if pk:
-        code = load_node(pk)
-        if isinstance(code, Code):
-            return code
-        else:
-            return None
-
-    #given as string
-    codestring = str(code)
-    try:
-        code = Code.get_from_string(codestring)
-        return code
-    except InputValidationError:
-        # try to exctract as uuid
+        codestring = str(code)
         try:
-            code = load_node(codestring)
+            code = Code.get_from_string(codestring)
         except NotExistent:
-            return None
-        if isinstance(code, Code):
-            return code
-        else:
-            return None
-    except (NotExistent, MultipleObjectsError):
+            try:
+                code = load_node(codestring)
+            except NotExistent:
+                code = None
+        except (InputValidationError, MultipleObjectsError):
+            code = None
+    else:
+        try:
+            code = load_node(pk)
+        except NotExistent:
+            code = None
+
+    if isinstance(code, Code):
+        return code
+    else:
         return None
 
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
@@ -181,7 +175,7 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
                   'direct' : ''}
 
     # get the scheduler type from the computer the code is run on.
-    com = code.get_computer()
+    com = code.computer
     #com_name = com.get_name()
     scheduler_type = com.get_scheduler_type()
 
@@ -249,7 +243,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                                {'==': expected_code_type}},
                   project='*')
 
-        valid_code_labels = ["{}@{}".format(c.label, c.get_computer().name)
+        valid_code_labels = ["{}@{}".format(c.label, c.computer.name)
                              for [c] in qb.all()]
 
         if valid_code_labels:
@@ -478,7 +472,7 @@ def performance_extract_calcs(calcs):
         data_dict['walltime_sec'].append(walltime)
         data_dict['walltime_sec_cor'].append(walltime_new)
         data_dict['walltime_sec_per_it'].append(walltime_periteration)
-        cname = calc.get_computer().name
+        cname = calc.computer.name
         data_dict['computer'].append(cname)
         natom = res.number_of_atoms
         data_dict['n_atoms'].append(natom)

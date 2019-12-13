@@ -4,22 +4,32 @@ import pytest
 
 # is_code
 def test_is_code_interface():
+    from aiida import load_profile
     from aiida.orm import Code, load_node
+    import os
     from aiida_fleur.tools.common_fleur_wf import is_code
-    from aiida.common.exceptions import NotExistent
-    
-    with pytest.raises(NotExistent):
-        is_code(Code)
-    
-    #inpgen has to be stored in db
-    # maybe do a verdi code setup
-    #code_uuid = load_node(1).uuid
-    #code_pk = 1
-    #code_name = 'inpgen'
-    
-    #assert is_code(code_uuid)
-    #assert is_code(code_pk)
-    #assert is_code(code_name)
+
+    load_profile()
+
+    assert is_code('random_string') is None
+    assert is_code('fleur.inpGUT') is None
+
+    f = open("1.txt", "w")
+    f.close()
+
+    code = Code(input_plugin_name='fleur.inpgen', local_executable='1.txt', files=['1.txt'])
+    code.store()
+
+    code_uuid = code.uuid
+    code_pk = code.pk
+    code_name = ''
+
+    assert is_code(code_uuid)
+    assert is_code(code_pk)
+    assert is_code(code_name)
+
+    os.remove("1.txt")
+
 
 
 '''uncommented these 2 tests because the process builder input None is not currently not == None...
