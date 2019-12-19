@@ -4,6 +4,8 @@
 This part of code is copied from aiida-quantumespresso"""
 from __future__ import absolute_import
 
+import shutil
+import tempfile
 import io
 import os
 import collections
@@ -11,7 +13,6 @@ import pytest
 import six
 
 pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
-
 
 @pytest.fixture(scope='function')
 def fixture_sandbox():

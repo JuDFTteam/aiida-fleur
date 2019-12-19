@@ -52,6 +52,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+aiida_fleur/tests/coverage
 
 # Translations
 *.mo
