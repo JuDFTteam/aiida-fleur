@@ -62,7 +62,8 @@ def is_code(code):
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
                      serial=False):
     '''
-    get the input for a FLEUR calc
+    Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
+    correct input types, it is the work of FleurCalculation to check it.
     '''
     Dict = DataFactory('dict')
     inputs = {}
@@ -91,7 +92,6 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {"num_machines": 1}
     else:
-        # set withmpi explicitly
         options['withmpi'] = True
 
     custom_commands = options.get('custom_scheduler_commands', '')
@@ -109,13 +109,12 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
 
 def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
                       params=None, **kwargs):
-    """
-    get the input for a inpgen calc
-    """
+    '''
+    Assembles the input dictionary for Fleur Calculation.
+    '''
 
     FleurinpProcess = CalculationFactory('fleur.inpgen')
-    inputs = FleurinpProcess.get_builder()#.get_inputs_template()
-    #print('Template inpgen {} '.format(inputs))
+    inputs = FleurinpProcess.get_builder()
 
     if structure:
         inputs.structure = structure
@@ -137,9 +136,9 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
     if not options:
         options = {}
     #inpgen run always serial
-    options['withmpi'] = False # for now
+    options['withmpi'] = False
     options['resources'] = {"num_machines": 1}
-    #print(inputs)
+
     if options:
         inputs.metadata.options = options
 
@@ -230,12 +229,12 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
 
 
     try:
-        if codenode is None:
+        if codenode is None or not isinstance(codenode, Code):
             raise ValueError
         code = codenode
         if code.get_input_plugin_name() != expected_code_type:
             raise ValueError
-    except (NotExistent, ValueError):
+    except ValueError:
         from aiida.orm.querybuilder import QueryBuilder
         qb = QueryBuilder()
         qb.append(Code,
@@ -247,8 +246,8 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                              for [c] in qb.all()]
 
         if valid_code_labels:
-            msg = ("Pass as further parameter a valid code label.\n"
-                   "Valid labels with a {} executable are:\n".format(expected_code_type))
+            msg = ("Given Code node is not of expected code type.\n"
+                   "Valid labels for a {} executable are:\n".format(expected_code_type))
             msg += "\n".join("* {}".format(l) for l in valid_code_labels)
 
             if use_exceptions:

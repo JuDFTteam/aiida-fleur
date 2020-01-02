@@ -36,7 +36,7 @@ def fixture_code(fixture_localhost):
 
     def _fixture_code(entry_point_name):
         from aiida.orm import Code
-        return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, 'ls'])
+        return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls'])
 
     return _fixture_code
 
