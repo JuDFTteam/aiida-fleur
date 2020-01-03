@@ -1,25 +1,57 @@
 from __future__ import absolute_import
 import pytest
+import numpy as np
 
-# get_natoms_element
+
+def test_convert_formula_to_formula_unit():
+    from aiida_fleur.tools.common_fleur_wf_util import convert_formula_to_formula_unit
+
+    assert convert_formula_to_formula_unit('Be4W2') == 'Be2W'
+
+
 def test_get_natoms_element_Be2W():
     from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
-    
+
     assert get_natoms_element('Be2W') == {'Be' : 2, 'W' : 1}
 
-# get_atomprocent
+def test_ucell_to_atompr():
+    from aiida_fleur.tools.common_fleur_wf_util import ucell_to_atompr
+
+    correct_result = np.array([0.7947019867549668,  0.11258278145695365,  0.09271523178807947])
+    correct_error = np.array([0.013571924638784224, 0.01136565320488641, 0.0018444037839109243])
+
+    atompro, atompro_err = ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be')
+    assert (atompro == correct_result).all()
+
+    atompro, atompro_err = ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be',
+                                           error_ratio=[0.1,0.1,0.1])
+    assert (atompro == correct_result).all()
+    assert (atompro_err == correct_error).all()
+
+
+def test_calc_stoi():
+    from aiida_fleur.tools.common_fleur_wf_util import calc_stoi
+
+    norm_stoi, errors_stoi = calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], [0.1, 0.01, 0.1])
+    assert norm_stoi == {'Be': 12.583333333333334, 'Ti': 1.0}
+    assert errors_stoi == {'Be': 0.12621369924887876, 'Ti': 0.0012256517540566825}
+
+    norm_stoi, errors_stoi = calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'])
+    assert norm_stoi == {'Be': 12.583333333333334, 'Ti': 1.0}
+    assert errors_stoi == {}    
+
+
 def test_get_atomprocent_Be24W2():
     from aiida_fleur.tools.common_fleur_wf_util import get_atomprocent
     assert get_atomprocent('Be24W2') == {'Be': 24./26., 'W' : 2./26.}
 
 
-#TODO
-# get_weight_procent
+@pytest.mark.skip(reason="The function is not implemented")
 def test_get_weight_procent():
     from aiida_fleur.tools.common_fleur_wf_util import get_weight_procent
     pass
 
-# determine_formation_energy
+
 def test_determine_formation_energy():
     from aiida_fleur.tools.common_fleur_wf_util import determine_formation_energy
     
@@ -31,14 +63,24 @@ def test_determine_formation_energy():
     assert form_en_dict == form_en_dict_exp
 
 
-# inpgen_dict_set_mesh
-def test_inpgen_dict_set_mesh():
+@pytest.mark.skip(reason="Test is not implemented")
+def test_determine_convex_hull():
+    from aiida_fleur.tools.common_fleur_wf_util import determine_convex_hull
+
+
+def test_inpgen_dict_set_mesh(generate_kpoints_mesh):
     from aiida_fleur.tools.common_fleur_wf_util import inpgen_dict_set_mesh
-    pass
+    
+    inpgendict = {'test': 'test_data'}
+    inpgendict_new = inpgen_dict_set_mesh(inpgendict, (1, 2, 3))
+    expected_result = {'test': 'test_data', 'kpt': {'div1': 1, 'div2': 2, 'div3': 3}}
+    assert inpgendict_new == expected_result
 
-#inpgen_dict_set_mesh(Be_para.get_dict(), mesh)
+    inpgendict_new = inpgen_dict_set_mesh(inpgendict, generate_kpoints_mesh(3).get_kpoints_mesh())
+    expected_result = {'test': 'test_data', 'kpt': {'div1': 3, 'div2': 3, 'div3': 3}}
+    assert inpgendict_new == expected_result
 
-# powerset
+
 def test_powerset():
     from aiida_fleur.tools.common_fleur_wf_util import powerset
     
@@ -48,7 +90,7 @@ def test_powerset():
     assert powerset(['Be', 'W', 'Be2W']) == res
     assert length == 8
 
-# determine_reactions
+
 def test_determine_reactions():
     from aiida_fleur.tools.common_fleur_wf_util import determine_reactions
 
@@ -60,7 +102,7 @@ def test_determine_reactions():
     assert determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W']) == res
     assert n_equations == 5
 
-# convert_eq_to_dict
+
 def test_convert_eq_to_dict():
     from aiida_fleur.tools.common_fleur_wf_util import convert_eq_to_dict
     
@@ -68,27 +110,19 @@ def test_convert_eq_to_dict():
     assert convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') == res_dict
 
 
-# get_enhalpy_of_equation
+@pytest.mark.skip(reason="Test is not implemented")
 def test_get_enhalpy_of_equation():
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
-    pass    
 
-# balance_equation
-def test_balance_equation():
+
+@pytest.mark.parametrize("test_input,expected",
+                         [("C7H16+O2 -> CO2+H2O", '1*C7H16+11*O2 ->7* CO2+8*H2O'),
+                          ("Be12W->Be2W+W+Be", None), ("Be12WO->Be2WO+W+Be+O2", None),
+                          ("Be12W->Be22W+Be12W", None), ("Be12W->Be12W", '1*Be12W->1*Be12W')])
+def test_balance_equation(test_input, expected):
     from aiida_fleur.tools.common_fleur_wf_util import balance_equation
-    pass
+    assert balance_equation(test_input) == expected
 
-# test
-#print(balance_equation("C7H16+O2 -> CO2+H2O"))
-#print balance_equation("Be12W->Be2W+W+Be")#+Be12W+Be+Be22W")
-#print balance_equation("Be12WO->Be2WO+W+Be+O2")#+Be12W+Be+Be22W")
-#print balance_equation("Be12W->Be22W+Be12W")
-#print balance_equation("Be12W->Be12W")
-
-#1*C7H16+11*O2 ->7* CO2+8*H2O
-#None
-#None
-#None
-#1*Be12W->1*Be12W
-
-
+@pytest.mark.skip(reason="Test is not implemented")
+def test_check_eos_energies():
+    from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies

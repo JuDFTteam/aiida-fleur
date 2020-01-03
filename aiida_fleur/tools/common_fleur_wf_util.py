@@ -18,6 +18,7 @@ Util that does depend on AiiDA classes should go somewhere else.
 
 from __future__ import absolute_import
 from __future__ import print_function
+from math import gcd
 import six
 from six.moves import range
 from six.moves import zip
@@ -29,15 +30,15 @@ def convert_formula_to_formula_unit(formula):
     Converts a formula to the smallest chemical formula unit
     'Be4W2' -> 'Be2W'
     """
-    from math import gcd
 
     # get formula dict
     # find greatest common divider of values
     # form formula unit string
     element_count_dict = get_natoms_element(formula)
     nelements = list(element_count_dict.values())
-    g = nelements[0]
+    g = int(nelements[0])
     for a2 in nelements:
+        a2 = int(a2)
         g = gcd(g, a2)
 
     formula_unit_string = ''
@@ -48,8 +49,6 @@ def convert_formula_to_formula_unit(formula):
         formula_unit_string = formula_unit_string + '{}{}'.format(key, new_val)
 
     return formula_unit_string
-# test convert_formula_to_formula_unit('Be4W2')
-# Be2W
 
 
 def get_natoms_element(formula):
@@ -110,12 +109,6 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
 
     return atompro, atompro_err
 
-# test
-#print(ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be'))
-#print(ucell_to_atompr([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], element='Be', error_ratio=[0.1,0.1,0.1]))
-#(array([ 0.79470199,  0.11258278,  0.09271523]), [])
-#(array([ 0.79470199,  0.11258278,  0.09271523]), array([ 0.01357192,  0.01136565,  0.0018444 ]))
-
 
 def calc_stoi(unitcellratios, formulas, error_ratio=None):
     """
@@ -156,12 +149,6 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
         if len(error_ratio):
             errors_stoi[key] = 1/stoi[keymin]*np.sqrt((errors_stoi[key]**2 + (stoi[key]/stoi[keymin]*errors_stoi[keymin])**2))
     return norm_stoi, errors_stoi
-
-# test
-#print(calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2'], [0.1, 0.01, 0.1]))
-#print(calc_stoi([10, 1, 7], ['Be12Ti', 'Be17Ti2', 'Be2']))
-#({'Be': 12.583333333333334, 'Ti': 1.0}, {'Be': 0.12621369924887876, 'Ti': 0.0012256517540566825})
-#({'Be': 12.583333333333334, 'Ti': 1.0}, {})
 
 
 def get_atomprocent(formula):
@@ -448,7 +435,6 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
 
     import sys, re
     from sympy.solvers import solve
-    from fractions import gcd
     from collections import defaultdict
     letters = 'abcdefghijklmnopqrstuvwxyz'
     Ls = list(letters)
@@ -495,18 +481,6 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         return None
 
 
-# test
-#print(balance_equation("C7H16+O2 -> CO2+H2O"))
-#print(balance_equation("Be12W->Be2W+W+Be")#+Be12W+Be+Be22W"))
-#print(balance_equation("Be12WO->Be2WO+W+Be+O2")#+Be12W+Be+Be22W"))
-#print(balance_equation("Be12W->Be22W+Be12W"))
-#print(balance_equation("Be12W->Be12W"))
-
-#1*C7H16+11*O2 ->7* CO2+8*H2O
-#None
-#None
-#None
-#1*Be12W->1*Be12W
 
 def check_eos_energies(energylist):
     """

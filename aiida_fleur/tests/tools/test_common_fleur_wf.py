@@ -93,7 +93,7 @@ def test_get_inputs_inpgen(aiida_profile, fixture_code, generate_structure):
 
     assert get_inputs_inpgen(**inputs) == returns
 
-@pytest.mark.skip(reason="Test not implemented")
+@pytest.mark.skip(reason="Test is not implemented")
 def test_get_scheduler_extras():
     from aiida_fleur.tools.common_fleur_wf import get_scheduler_extras
 
@@ -134,7 +134,7 @@ def test_get_kpoints_mesh_from_kdensity(aiida_profile, generate_structure):
     assert a == ([21, 21, 21], [0.0, 0.0, 0.0])
     assert isinstance(b, KpointsData)
 
-@pytest.mark.skip(reason="Test not implemented")
+@pytest.mark.skip(reason="Test is not implemented")
 def test_determine_favorable_reaction():
     from aiida_fleur.tools.common_fleur_wf import determine_favorable_reaction
 
