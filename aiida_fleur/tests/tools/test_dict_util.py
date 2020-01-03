@@ -2,20 +2,21 @@
 
 # dict_merger
 from __future__ import absolute_import
-def test_dict_merger_interface_dicts_lists_str_int():
+import pytest
+
+inputs = [({'a1' : {'b1' : [1]}}, {'a1' : {'b1': [2,3]}}),
+          ({'a1' : {'b2' : 1.0}}, {'a1' : {'b2' : 1}}),
+          ({'a1' : {'b3' : 'a'}}, {'a1' : {'b3' : 'b' }, 'a2': [1]}),
+          ({'a1' : {'b3' : 'b' }, 'a2': [1]}, {}),
+          ({}, {'a1' : {'b3' : 'b' }, 'a2': [1]}) ]
+
+outputs = [{'a1' : {'b1' : [1,2,3]}}, {'a1' : {'b2' : 2}}, {'a1' : {'b3' : 'ab'}, 'a2' : [1]},
+           {'a1' : {'b3' : 'b' }, 'a2': [1]}, {'a1' : {'b3' : 'b' }, 'a2': [1]}]
+
+@pytest.mark.parametrize("test_input,expected", zip(inputs,outputs))
+def test_dict_merger_interface_dicts_lists_str_int(test_input, expected):
     from aiida_fleur.tools.dict_util import dict_merger
-
-    dict1 = {'a1' : {'b1' : [1]}}
-    dict2 = {'a1' : {'b1': [2,3]}}
-    assert dict_merger(dict1, dict2) == {'a1' : {'b1' : [1,2,3]}}
-
-    dict3 = {'a1' : {'b2' : 1}}
-    dict4 = {'a1' : {'b2' : 1}}
-    assert dict_merger(dict3, dict4) == {'a1' : {'b2' : 2}}
-    
-    dict5 = {'a1' : {'b3' : 'a'}}
-    dict6 = {'a1' : {'b3' : 'b' }, 'a2': [1]}
-    assert dict_merger(dict5, dict6) == {'a1' : {'b3' : 'ab'}, 'a2' : [1]}
+    assert dict_merger(*test_input) == expected
 
 
 # extract_elementpara
