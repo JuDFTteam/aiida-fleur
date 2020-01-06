@@ -411,10 +411,11 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
     :param xpathn: a path where to place a new tag
     :param newelement: a tag name to be created
     :param create: if True and there is no given xpath in the FleurinpData, creates it
-    :param place_index: if create=True, defines the place where to put a created tag
-    :param tag_order: if create=True, defines a tag order
+    :param place_index: defines the place where to put a created tag
+    :param tag_order: defines a tag order
     """
     #root = xmltree.getroot()
+    newelement_name = newelement
     if not etree.iselement(newelement):
         #print('newelement from create_tag: {}'.format(newelement))
         #print('xpath from create_tag: {}'.format(xpath))
@@ -430,9 +431,28 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
             if place_index:
                 if tag_order:
                     # behind what shall I place it
+                    try:
+                        place_index = tag_order.index(newelement_name)
+                    except:
+                        raise ValueError('Did not find element name in the tag_order list')
                     behind_tags = tag_order[:place_index]
-                    #children = node_1.getchildren()
-                    # get all names of tag exisiting tags
+                    # check if children are in the same sequence as given in tag_order
+                    tags = []
+                    for child in node_1.iterchildren():
+                        if child.tag not in tags:
+                            tags.append(child.tag)
+                    prev = -1
+                    for name in tags:
+                        try:
+                            current = tag_order.index(name)
+                        except ValueError:
+                            raise ValueError('Did not find existing tag name in the tag_order list'
+                                             ': {}'.format(name))
+                        if current > prev:
+                            prev = current
+                        else:
+                            raise ValueError('Existing order does not correspond to tag_order list')
+                    # get all names of tag existing tags
                     was_set = False
                     for tag in reversed(behind_tags):
                         for child in node_1.iterchildren(tag=tag, reversed=False):
@@ -450,7 +470,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                             break
                     if not was_set:  # just append
                         try:
-                            node_1.append(newelement)
+                            node_1.insert(0, newelement)
                         except ValueError as v:
                             raise ValueError('{}. If this is a species, are you'
                                              ' sure this species exists in your inp.xml?'

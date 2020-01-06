@@ -242,3 +242,13 @@ def create_fleurinp():
         return fleurinp(files=[inpxmlfilepath])
 
     return _make_fleurinp
+
+@pytest.fixture
+def inpxml_etree():
+    """Returns the etree generator"""
+    def _get_etree(path):
+        from lxml import etree
+        with open(path, 'r') as inpxmlfile:
+            tree = etree.parse(inpxmlfile)
+        return tree
+    return _get_etree
