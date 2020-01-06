@@ -31,7 +31,7 @@ from aiida.engine import calcfunction as cf
 
 def read_cif_folder(path=os.getcwd(), recursive=True,
                     store=False, log=False,
-                    comments='', extras=''):
+                    comments='', extras='', logfile_name='read_cif_folder_logfile'):
     """
     Method to read in cif files from a folder and its subfolders.
     It can convert them into AiiDA structures and store them.
@@ -60,7 +60,6 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
     #####################
     filenames = []
     filepaths = []
-    logfile_name = 'read_cif_folder_logfile'
     infofilestring = ('Structure Formula, Structuredata pk, Structure Data uuid,'
                       ' cif-file-path, comment, extras \n')
 
@@ -116,11 +115,11 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
 
             # add comment or extras, only possible after storing
             if comment:
-                user = struc.get_user() # we are the creator
+                user = struc.user # we are the creator
                 struc.add_comment(comment, user)
             if extra:
                 if isinstance(extra, type(dict())):
-                    struc.set_extras(extra)
+                    struc.set_extra_many(extra)
                 else:
                     struc.set_extra('specification', extra)
             struc.set_extra('formula', formula)
@@ -136,8 +135,8 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
             # TODO? if not stored write not stored
             if store_db:
                 infofilestring = infofilestring + '{} {} {} {} {} {} \n'.format(
-                    formula, struc.dbnode.pk, struc.uuid,
-                    filepaths[i], struc.get_comments(), struc.get_extras())
+                    formula, struc.pk, struc.uuid,
+                    filepaths[i], struc.get_comments(), struc.extras)
             else:
                 infofilestring = (infofilestring + '{} notstored notstored {}'
                                   'notstored notstored \n'
@@ -146,7 +145,7 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
     # write a logfile
     if write_log:
         file1 = os.open(logfile_name, os.O_RDWR|os.O_CREAT)
-        os.write(file1, infofilestring)
+        os.write(file1, bytes(infofilestring, 'UTF8'))
         os.close(file1)
     print('{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count))
 
