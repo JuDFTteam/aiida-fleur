@@ -379,10 +379,10 @@ def xml_set_text_occ(xmltree, xpathn, text, create=False, occ=0, place_index=Non
         node[occ].text = text
 
 
-def xml_set_all_text(xmltree, xpathn, text, create=False):
+def xml_set_all_text(xmltree, xpathn, text, create=False, tag_order=None):
     """
     Routine sets the text of a tag in the xml file
-    
+
     :param xmltree: an xmltree that represents inp.xml
     :param xpathn: a path to the attribute
     :param text: text to be set
@@ -391,7 +391,7 @@ def xml_set_all_text(xmltree, xpathn, text, create=False):
     :param tag_order: if create=True, defines a tag order
     """
     root = xmltree.getroot()
-    nodes = eval_xpath3(root, xpathn, create=create)
+    nodes = eval_xpath3(root, xpathn, create=create, tag_order=tag_order)
     if is_sequence(text):
         for i, node in enumerate(nodes):
             node.text = text[i]
@@ -414,20 +414,18 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
     :param place_index: defines the place where to put a created tag
     :param tag_order: defines a tag order
     """
-    #root = xmltree.getroot()
+    import copy
     newelement_name = newelement
     if not etree.iselement(newelement):
-        #print('newelement from create_tag: {}'.format(newelement))
-        #print('xpath from create_tag: {}'.format(xpath))
         try:
             newelement = etree.Element(newelement)
         except ValueError as v:
             raise ValueError('{}. If this is a species, are you sure this species exists '
                              'in your inp.xml?'.format(v))
-    nodes = eval_xpath3(xmlnode, xpath, create=create, place_index=place_index, tag_order=tag_order)
-    #print('nodes found from create_tag: {}'.format(nodes))
+    nodes = eval_xpath3(xmlnode, xpath, create=create)
     if nodes:
         for node_1 in nodes:
+            element_to_write = copy.deepcopy(newelement)
             if place_index:
                 if tag_order:
                     # behind what shall I place it
@@ -459,7 +457,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                             # if tagname of elements==tag:
                             tag_index = node_1.index(child)
                             try:
-                                node_1.insert(tag_index + 1, newelement)
+                                node_1.insert(tag_index + 1, element_to_write)
                             except ValueError as v:
                                 raise ValueError('{}. If this is a species, are'
                                                  'you sure this species exists in your inp.xml?'
@@ -470,7 +468,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                             break
                     if not was_set:  # just append
                         try:
-                            node_1.insert(0, newelement)
+                            node_1.insert(0, element_to_write)
                         except ValueError as v:
                             raise ValueError('{}. If this is a species, are you'
                                              ' sure this species exists in your inp.xml?'
@@ -478,13 +476,13 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     # (or remove all and write them again in right order?)
                 else:
                     try:
-                        node_1.insert(place_index, newelement)
+                        node_1.insert(place_index, element_to_write)
                     except ValueError as v:
                         raise ValueError('{}. If this is a species, are you sure this species '
                                          'exists in your inp.xml?'.format(v))
             else:
                 try:
-                    node_1.append(newelement)
+                    node_1.append(element_to_write)
                 except ValueError as v:
                     raise ValueError('{}. If this is a species, are you sure this species exists'
                                      'in your inp.xml?'.format(v))
@@ -625,7 +623,8 @@ def get_inpgen_para_from_xml(inpxmlfile):
     new_parameters = {}
 
     #print('parsing inp.xml without XMLSchema')
-    tree = etree.parse(inpxmlfile)
+    #tree = etree.parse(inpxmlfile)
+    tree = inpxmlfile
     root = tree.getroot()
 
     # Create the cards
@@ -802,8 +801,6 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     xpath_electron_config = '{}/electronConfig'.format(xpath_species)
     xpath_core_occ = '{}/electronConfig/stateOccupation'.format(xpath_species)
     xpath_lda_u = '{}/ldaU'.format(xpath_species)
-    xpath_noco_params = '{}/nocoParams'.format(xpath_species)
-    xpath_noco_params_qss = '{}/nocoParams/qss'.format(xpath_species)
     xpath_soc_scale = '{}/special'.format(xpath_species)
 
     # can we get this out of schema file?
@@ -822,13 +819,13 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     for key, val in six.iteritems(attributedict):
         if key == 'mtSphere':  # always in inp.xml
             for attrib, value in six.iteritems(val):
-                xml_set_attribv_occ(fleurinp_tree_copy, xpath_mt, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_mt, attrib, value)
         elif key == 'atomicCutoffs':  # always in inp.xml
             for attrib, value in six.iteritems(val):
-                xml_set_attribv_occ(fleurinp_tree_copy, xpath_atomic_cutoffs, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_atomic_cutoffs, attrib, value)
         elif key == 'energyParameters':  # always in inp.xml
             for attrib, value in six.iteritems(val):
-                xml_set_attribv_occ(fleurinp_tree_copy, xpath_energy_parameters, attrib, value)
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_energy_parameters, attrib, value)
         elif key == 'lo':  # optional in inp.xml
             # policy: we DELETE all LOs, and create new ones from the given parameters.
             existinglos = eval_xpath3(fleurinp_tree_copy, xpath_lo)
@@ -838,23 +835,35 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
             # there can be multible LO tags, so I expect either one or a list
             if isinstance(val, dict):
+                create_tag(
+                           fleurinp_tree_copy,
+                           xpath_species,
+                           'lo',
+                           place_index=species_seq.index('lo'),
+                           tag_order=species_seq)
                 for attrib, value in six.iteritems(val):
-                    xml_set_attribv_occ(fleurinp_tree_copy, xpath_lo, attrib, value, create=create)
+                    xml_set_all_attribv(fleurinp_tree_copy, xpath_lo, attrib, value, create=True)
             else:  # I expect a list of dicts
                 # lonodes = eval_xpath3(root, xpathlo)#, create=True, place_index=species_seq.index('lo'), tag_order=species_seq)
                 #nlonodes = len(lonodes)
                 # ggf create more lo tags of needed
                 los_need = len(val)  # - nlonodes
                 for j in range(0, los_need):
-                    # , place_index=species_seq.index('lo'), tag_order=species_seq)
-                    create_tag(fleurinp_tree_copy, xpath_species, 'lo')
+                    create_tag(
+                               fleurinp_tree_copy,
+                               xpath_species,
+                               'lo',
+                               place_index=species_seq.index('lo'),
+                               tag_order=species_seq)
                 for i, lodict in enumerate(val):
                     for attrib, value in six.iteritems(lodict):
-                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lo, attrib, value, occ=[i])
+                        sets = []
+                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/lo'))//los_need):
+                            sets.append(k * los_need + i)
+                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lo, attrib, value, occ=sets)
 
         elif key == 'electronConfig':
             # eval electronConfig and ggf create tag at right place.
-            #print('index {}'.format(species_seq.index('electronConfig')))
             eval_xpath3(
                 fleurinp_tree_copy,
                 xpath_electron_config,
@@ -874,45 +883,37 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                             parent = occ.getparent()
                             parent.remove(occ)
                         if isinstance(edictlist, dict):
-                            # print('here')
                             for attrib, value in six.iteritems(edictlist):
-                                xml_set_attribv_occ(
-                                    fleurinp_tree_copy, xpath_core_occ, attrib, value, create=create)
+                                xml_set_all_attribv(
+                                    fleurinp_tree_copy, xpath_core_occ, attrib, value, create=True)
                         else:  # I expect a list of dicts
-                            #occnodes = eval_xpath3(root, xpathcoreocc)
-                            #noccnodes = len(occnodes)
-                            # ggf create more lo tags of needed
-                            nodes_need = len(edictlist)  # - noccnodes
+                            nodes_need = len(edictlist)
                             for j in range(0, nodes_need):
                                 create_tag(
                                     fleurinp_tree_copy,
                                     xpath_electron_config,
                                     'stateOccupation',
-                                    create=create)
+                                    create=True)
                             for i, occdict in enumerate(edictlist):
                                 # override them one after one
+                                sets = []
+                                for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_core_occ))//nodes_need):
+                                    sets.append(k * nodes_need + i)
                                 for attrib, value in six.iteritems(occdict):
                                     xml_set_attribv_occ(
-                                        fleurinp_tree_copy, xpath_core_occ, attrib, value, occ=[i])
+                                        fleurinp_tree_copy, xpath_core_occ, attrib, value, occ=sets)
 
                     else:
                         xpathconfig = xpath_electron_config + '/{}'.format(etag)
-                        xml_set_text(
+                        xml_set_all_text(
                             fleurinp_tree_copy,
                             xpathconfig,
                             edictlist,
                             create=create,
-                            place_index=species_seq.index('electronConfig'),
-                            tag_order=species_seq)
-        elif key == 'nocoParams':
-            for attrib, value in six.iteritems(val):
-                if attrib == 'qss':
-                    xml_set_text(fleurinp_tree_copy, xpath_noco_params_qss, attrib, value)
-                else:
-                    xml_set_attribv_occ(fleurinp_tree_copy, xpath_noco_params, attrib, value)
+                            tag_order=['coreConfig', 'valenceConfig', 'stateOccupation'])
         elif key == 'ldaU':
             for attrib, value in six.iteritems(val):
-                xml_set_attribv_occ(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=create)
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
         elif key == 'special':
             eval_xpath3(fleurinp_tree_copy,
                         xpath_soc_scale,
@@ -920,7 +921,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                         place_index=species_seq.index('special'),
                         tag_order=species_seq)
             for attrib, value in six.iteritems(val):
-                xml_set_attribv_occ(
+                xml_set_all_attribv(
                     fleurinp_tree_copy,
                     xpath_soc_scale,
                     attrib,
@@ -930,10 +931,6 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             xml_set_all_attribv(fleurinp_tree_copy, xpath_species, attrib, value)
 
     return fleurinp_tree_copy
-
-
-def add_lo(fleurinp_tree_copy, species_name, attributedict):
-    pass
 
 
 def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=False):

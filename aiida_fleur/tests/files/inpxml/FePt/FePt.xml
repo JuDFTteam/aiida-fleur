@@ -52,24 +52,24 @@
       <species name="Fe-1" element="Fe" atomicNumber="26" >
          <mtSphere radius="2.20000000" gridPoints="787" logIncrement=".01600000"/>
          <atomicCutoffs lmax="10" lnonsphr="6"/>
+         <energyParameters s="4" p="4" d="3" f="4"/>
          <electronConfig>
             <coreConfig>[Ar]</coreConfig>
             <valenceConfig>(4s1/2) (3d3/2) (3d5/2)</valenceConfig>
             <stateOccupation state="(3d3/2)" spinUp="2.00000000" spinDown="1.00000000"/>
             <stateOccupation state="(3d5/2)" spinUp="3.00000000" spinDown=".00000000"/>
          </electronConfig>
-        <energyParameters s="4" p="4" d="3" f="4"/>
       </species>
       <species name="Pt-1" element="Pt" atomicNumber="78" >
          <mtSphere radius="2.20000000" gridPoints="787" logIncrement=".01700000"/>
          <atomicCutoffs lmax="10" lnonsphr="6"/>
+         <energyParameters s="6" p="6" d="5" f="5"/>
          <electronConfig>
             <coreConfig>[Xe] (4f5/2) (4f7/2)</coreConfig>
             <valenceConfig>(6s1/2) (5d3/2) (5d5/2)</valenceConfig>
             <stateOccupation state="(6s1/2)" spinUp=".50000000" spinDown=".50000000"/>
             <stateOccupation state="(5d5/2)" spinUp="3.00000000" spinDown="2.00000000"/>
          </electronConfig>
-         <energyParameters s="6" p="6" d="5" f="5"/>
       </species>
    </atomSpecies>
    <atomGroups>

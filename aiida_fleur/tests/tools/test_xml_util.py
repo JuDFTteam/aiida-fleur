@@ -6,6 +6,7 @@ import pytest
 path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(path, 'tests/files/inpxml/FePt/FePt.xml')
 
+
 def test_xml_set_attribv_occ(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_attribv_occ, eval_xpath
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -20,6 +21,8 @@ def test_xml_set_attribv_occ(inpxml_etree):
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-2', 'TEST-2']
 
 # xml_set_first_attribv
+
+
 def test_xml_set_first_attribv(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_first_attribv, eval_xpath
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -31,6 +34,8 @@ def test_xml_set_first_attribv(inpxml_etree):
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-1', 'Pt-1']
 
 # xml_set_all_attribv
+
+
 def test_xml_set_all_attribv(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_all_attribv, eval_xpath
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -45,6 +50,8 @@ def test_xml_set_all_attribv(inpxml_etree):
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-1', '23']
 
 # xml_set_text
+
+
 def test_xml_set_text(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_text, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -56,6 +63,8 @@ def test_xml_set_text(inpxml_etree):
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == second_text
 
 # xml_set_all_text
+
+
 def test_xml_set_text_occ(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_text_occ, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -73,19 +82,23 @@ def test_xml_set_text_occ(inpxml_etree):
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_text'
 
  # xml_set_all_text
+
+
 def test_xml_set_all_text(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_all_text, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
     xml_set_all_text(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'test_text')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[0].text == 'test_text'
-    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_text'   
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_text'
 
     xml_set_all_text(etree, '/fleurInput/atomGroups/atomGroup/filmPos', ['test_text2', 'test_ext3'])
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[0].text == 'test_text2'
-    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_ext3'   
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_ext3'
 
 # create_tag
+
+
 def test_create_tag(inpxml_etree):
     from aiida_fleur.tools.xml_util import create_tag, eval_xpath3
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -108,7 +121,8 @@ def test_create_tag(inpxml_etree):
                place_index=True, tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2',
                                             'TEST_TAG4', 'row-3', 'TEST_TAG'])
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
-    assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
+    assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3',
+                         'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
 
     create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG0', create=False,
                place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2',
@@ -119,36 +133,222 @@ def test_create_tag(inpxml_etree):
 
     with pytest.raises(ValueError) as excinfo:
         create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG5', create=False,
-               place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
-                                            'TEST_TAG5', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
+                   place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
+                                                'TEST_TAG5', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
     assert str(excinfo.value) == "Existing order does not correspond to tag_order list"
 
     with pytest.raises(ValueError) as excinfo:
         create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG5', create=False,
-               place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
-                                            'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
+                   place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
+                                                'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
     assert str(excinfo.value) == "Did not find element name in the tag_order list"
+
+
+@pytest.mark.skip()
+def test_create_multiple_tags(inpxml_etree):
+    from aiida_fleur.tools.xml_util import create_tag, eval_xpath3
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+
+    create_tag(etree, '/fleurInput/atomSpecies/species', 'TEST_TAG', create=False)
+    #import lxml
+    # print(lxml.etree.tostring(etree))
+    print(eval_xpath3(etree, '/fleurInput/atomSpecies/species/TEST_TAG'))
+    print(eval_xpath3(etree, '/fleurInput/atomSpecies/species'))
+    assert 0
 
 
 # delete_att
 def test_delete_att(inpxml_etree):
-    from aiida_fleur.tools.xml_util import delete_att
-    pass
+    from aiida_fleur.tools.xml_util import delete_att, eval_xpath2
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+
+    assert eval_xpath2(
+        etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label')[0] == "                 222"
+
+    delete_att(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'label')
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label') == []
 
 # delete_tag
+
+
 def test_delete_tag(inpxml_etree):
-    from aiida_fleur.tools.xml_util import delete_tag
-    pass
+    from aiida_fleur.tools.xml_util import delete_tag, eval_xpath2
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos') != []
+
+    delete_tag(etree, '/fleurInput/atomGroups/atomGroup/filmPos')
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos') == []
 
 # replace_tag
+
+
 def test_replace_tag(inpxml_etree):
-    from aiida_fleur.tools.xml_util import replace_tag
-    pass
+    from aiida_fleur.tools.xml_util import replace_tag, eval_xpath2
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+
+    to_insert = eval_xpath2(etree, '/fleurInput/calculationSetup/cutoffs')[0]
+    print(to_insert)
+    print(eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos'))
+
+    replace_tag(etree, '/fleurInput/atomGroups/atomGroup/filmPos', to_insert)
+
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos') == []
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/cutoffs')[0] == to_insert
+
+
+@pytest.mark.skip(reason='econfig extraction is not implemented')
+def test_get_inpgen_para_from_xml(inpxml_etree):
+    from aiida_fleur.tools.xml_util import get_inpgen_para_from_xml
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+
+    result = {'comp': {'jspins': 2.0,
+                       'frcor': False,
+                       'ctail': True,
+                       'kcrel': '0',
+                       'gmax': 10.0,
+                       'gmaxxc': 8.7,
+                       'kmax': 4.0},
+              'atom0': {'z': 26,
+                        'rmt': 2.2,
+                        'dx': 0.016,
+                        'jri': 787,
+                        'lmax': 10,
+                        'lnonsph': 6,
+                        # 'econfig': <Element electronConfig at 0x1105d66e0>,
+                        'lo': '',
+                        'element': 'Fe'},
+              'atom1': {'z': 78,
+                        'rmt': 2.2,
+                        'dx': 0.017,
+                        'jri': 787,
+                        'lmax': 10,
+                        'lnonsph': 6,
+                        # 'econfig': <Element electronConfig at 0x110516d20>,
+                        'lo': '',
+                        'element': 'Pt'},
+              'title': 'A Fleur input generator calculation with aiida',
+              'exco': {'xctyp': 'vwn'}}
+
+    dict = get_inpgen_para_from_xml(etree)
+    assert dict == result
+
 
 # set_species
-def test_set_species(inpxml_etree):
-    from aiida_fleur.tools.xml_util import set_species
+def test_set_species_label(inpxml_etree):
+    from aiida_fleur.tools.xml_util import set_species_label
     pass
+
+
+class TestSetSpecies:
+    """Tests for set_species"""
+
+    paths = ['mtSphere/@radius',
+             'atomicCutoffs/@lmax',
+             'energyParameters/@s',
+             'electronConfig/coreConfig',
+             'electronConfig/stateOccupation/@state',
+             'electronConfig/stateOccupation/@state',
+             'special/@socscale',
+             'ldaU/@test_att',
+             'lo/@test_att',
+             'lo/@test_att'
+             ]
+
+    attdicts = [{'mtSphere': {'radius': 3.333}},
+                {'atomicCutoffs': {'lmax': 7.0}},
+                {'energyParameters': {'s': 3.0}},
+                {'electronConfig': {'coreConfig': 'test'}},
+                {'electronConfig': {'stateOccupation': {'state': 'state'}}},
+                {'electronConfig': {'stateOccupation': [{'state': 'state'},
+                                                        {'state': 'state2'}]}},
+                {'special': {'socscale': 1.0}},
+                {'ldaU': {'test_att': 2.0}},
+                {'lo': {'test_att': 2.0}},
+                {'lo': [{'test_att': 2.0}, {'test_att': 33.0}]}
+                #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
+                ]
+
+    results = ['3.333', '7.0', '3.0', 'test', 'state', [
+        'state', 'state2'], '1.0', '2.0', '2.0', ['2.0', '33.0']]
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_set_species(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species(etree, 'Fe-1', attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
+
+        if isinstance(correct_result, str):
+            if 'coreConfig' in path:
+                assert result[0].text == correct_result
+            else:
+                assert result[0] == correct_result
+        elif isinstance(correct_result, (float, int)):
+            assert result[0] == correct_result
+        else:
+            assert correct_result == result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_set_species_label(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species_label, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species_label(etree, "                 222", attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
+
+        if isinstance(correct_result, str):
+            if 'coreConfig' in path:
+                assert result[0].text == correct_result
+            else:
+                assert result[0] == correct_result
+        elif isinstance(correct_result, (float, int)):
+            assert result[0] == correct_result
+        else:
+            assert correct_result == result
+
+    results_all = [[x, x] if not isinstance(x, list) else [x[0], x[1], x[0], x[1]] for x in results]
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
+    def test_set_species_all(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species(etree, 'all', attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species/' + path)
+
+        import lxml
+        print(lxml.etree.tostring(etree))
+
+        if 'coreConfig' in path:
+            assert [x.text for x in result] == correct_result
+        else:
+            assert result == correct_result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
+    def test_set_species_label_all(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species_label, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species_label(etree, 'all', attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species/' + path)
+
+        import lxml
+        print(lxml.etree.tostring(etree))
+
+        if 'coreConfig' in path:
+            assert [x.text for x in result] == correct_result
+        else:
+            assert result == correct_result
+
 
 # change_atomgr_att
 def test_change_atomgr_att(inpxml_etree):
@@ -156,26 +356,36 @@ def test_change_atomgr_att(inpxml_etree):
     pass
 
 # add_num_to_att
+
+
 def test_add_num_to_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import add_num_to_att
     pass
 
 # eval_xpath
+
+
 def test_eval_xpath(inpxml_etree):
     from aiida_fleur.tools.xml_util import eval_xpath
     pass
 
 # eval_xpath2
+
+
 def test_eval_xpath2(inpxml_etree):
     from aiida_fleur.tools.xml_util import eval_xpath2
     pass
 
 # eval_xpath3
+
+
 def test_eval_xpath3(inpxml_etree):
     from aiida_fleur.tools.xml_util import eval_xpath3
     pass
 
 # get_xml_attribute
+
+
 def test_get_xml_attribute(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_xml_attribute
     pass
@@ -186,5 +396,3 @@ def test_get_xml_attribute(inpxml_etree):
 # I.e make for each Fleur schema file, complete inp.xml file version a test if the attributes exists.
 
 # make a test_class
-
-    
