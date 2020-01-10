@@ -992,7 +992,7 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
 
     if position:
         if not position == 'all':
-            xpathatmgroup = '/fleurInput/atomGroups/atomGroup/[/*Pos = "{}"]'.format(position)
+            xpathatmgroup = '/fleurInput/atomGroups/atomGroup[{}]'.format(position)
             xpathforce = '{}/force'.format(xpathatmgroup)
             xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
     if species:
@@ -1130,13 +1130,13 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
             'locy2': '/fleurInput/output/vacuumDOS',
             'nstm': '/fleurInput/output/vacuumDOS',
             'tworkf': '/fleurInput/output/vacuumDOS',
-            'numkpts': '/fleurInput/output/chargeDensitySlicing',
+            'numkpt': '/fleurInput/output/chargeDensitySlicing',
             'minEigenval': '/fleurInput/output/chargeDensitySlicing',
             'maxEigenval': '/fleurInput/output/chargeDensitySlicing',
             'nnne': '/fleurInput/output/chargeDensitySlicing',
             'dVac': '/fleurInput/cell/filmLattice',
             'dTilda': '/fleurInput/cell/filmLattice',
-            'xcFunctional': '/fleurInput/xcFunctional/@name',  # other_attributes_more
+            'xcFunctional': '/fleurInput/xcFunctional/name',  # other_attributes_more
             'name': {'/fleurInput/constantDefinitions', '/fleurInput/xcFunctional',
                     '/fleurInput/atomSpecies/species'},
             'value': '/fleurInput/constantDefinitions',
@@ -1417,27 +1417,18 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
     # TODO rename, name is misleaded just changes the tree.
     xmltree_new = inp_file_xmltree
 
-    # get all attributes of a inpxml file
-    #xmlinpstructure = get_inpxml_file_structure()
-
     pos_switch_once = xmlinpstructure[0]
     pos_switch_several = xmlinpstructure[1]
     pos_attrib_once = xmlinpstructure[2]
-    #pos_int_attributes_once = xmlinpstructure[3]
     pos_float_attributes_once = xmlinpstructure[4]
-    #pos_string_attributes_once = xmlinpstructure[5]
     pos_attrib_several = xmlinpstructure[6]
     pos_int_attributes_several = xmlinpstructure[7]
-    #pos_float_attributes_several = xmlinpstructure[8]
-    #pos_string_attributes_several = xmlinpstructure[9]
-    #pos_tags_several = xmlinpstructure[10]
     pos_text = xmlinpstructure[11]
     pos_xpaths = xmlinpstructure[12]
     expertkey = xmlinpstructure[13]
 
     for key in fleur_change_dic:
         if key in pos_switch_once:
-            # call routine set (key,value) in tree.
             # TODO: a test here if path is plausible and if exist
             # ggf. create tags and key.value is 'T' or 'F' if not convert,
             # if garbage, exception
@@ -1446,8 +1437,6 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
 
             xpath_set = pos_xpaths[key]
             # TODO: check if something in setup is inconsitent?
-
-            # apply change to tree
             xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_bool)
 
         elif key in pos_attrib_once:
@@ -1456,23 +1445,15 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             if key in pos_float_attributes_once:
                 newfloat = '{:.10f}'.format(fleur_change_dic[key])
                 xml_set_first_attribv(xmltree_new, xpath_set, key, newfloat)
+            elif key == 'xcFunctional':
+                xml_set_first_attribv(xmltree_new, xpath_set, 'name', fleur_change_dic[key])
             else:
                 xml_set_first_attribv(xmltree_new, xpath_set, key, fleur_change_dic[key])
-        elif key in pos_attrib_several:
-            # TODO What attribute shall be set? all, one or several specific onces?
-            pass
-        elif key in pos_switch_several:
-            # TODO
-            pass
         elif key in pos_text:
             # can be several times, therefore check
             xpath_set = pos_xpaths[key]
             xml_set_text(xmltree_new, xpath_set, fleur_change_dic[key])
-        elif key == expertkey:
-            # posibility for experts to set something, not suported by the plug-in directly
-            pass
         else:
-            # this key is not know to plug-in
             raise InputValidationError(
                 "You try to set the key:'{}' to : '{}', but the key is unknown"
                 " to the fleur plug-in".format(key, fleur_change_dic[key]))
@@ -1499,18 +1480,14 @@ def inpxml_todict(parent, xmlstr):
     xmlstructure = xmlstr
     pos_switch_once1 = xmlstructure[0]
     pos_switch_several1 = xmlstructure[1]
-    #pos_attrib_once1 = xmlstructure[2]
     int_attributes_once1 = xmlstructure[3]
     float_attributes_once1 = xmlstructure[4]
     string_attributes_once1 = xmlstructure[5]
-    #pos_attrib_several1 = xmlstructure[6]
     int_attributes_several1 = xmlstructure[7]
     float_attributes_several1 = xmlstructure[8]
     string_attributes_several1 = xmlstructure[9]
     tags_several1 = xmlstructure[10]
     pos_text1 = xmlstructure[11]
-    #pos_xpaths1 = xmlstructure[12]
-    #expertkey1 = xmlstructure[13]
 
     return_dict = {}
     if list(parent.items()):
@@ -1519,7 +1496,6 @@ def inpxml_todict(parent, xmlstr):
         for key in return_dict:
             if key in pos_switch_once1 or (key in pos_switch_several1):
                 return_dict[key] = convert_from_fortran_bool(return_dict[key])
-
             elif key in int_attributes_once1 or (key in int_attributes_several1):
                 # TODO int several
                 try:
@@ -1536,7 +1512,7 @@ def inpxml_todict(parent, xmlstr):
                 # TODO What attribute shall be set? all, one or several specific onces?
                 return_dict[key] = str(return_dict[key])
             elif key in pos_text1:
-                # TODO, prob not nessesary, since taken care of below check,
+                # Text is done by below check (parent.text)
                 pass
             else:
                 pass
@@ -1620,14 +1596,14 @@ def get_inpxml_file_structure():
         'dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco',
         'ctail', 'swsp', 'lflip', 'off', 'spav', 'l_soc', 'soc66', 'pot8',
         'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk', 'cdinf',
-        'disp', 'vacdos', 'integ', 'star', 'iplot', 'score', 'plplot', 'slice',
+        'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice',
         'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
 
     all_switches_several = ('calculate', 'flipSpin')
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
                            'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
-                           'nstars', 'nstm', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
+                           'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
 
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
                              'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
@@ -1665,7 +1641,8 @@ def get_inpxml_file_structure():
 
     # when parsing the xml file to a dict, these tags should become
     # list(sets, or tuples) instead of dictionaries.
-    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint')
+    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos',
+                    'species', 'kPoint', 'lo', 'stateOccupation')
 
     all_text = {'comment': 1, 'relPos': 3, 'filmPos': 3, 'absPos': 3,
                 'row-1': 3, 'row-2': 3, 'row-3': 3, 'a1': 1, 'qss': 3}
@@ -1705,10 +1682,8 @@ def get_inpxml_file_structure():
         'eig66': '/fleurInput/calculationSetup/expertModes',
         'l_f': '/fleurInput/calculationSetup/geometryOptimization',
         'gamma': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
-        'gauss': '',
-        'tria': '',
-        'invs': '',
-        'zrfs': '',
+        # 'invs': '',
+        # 'zrfs': '',
         'vchk': '/fleurInput/output/checks',
         'cdinf': '/fleurInput/output/checks',
         'disp': '/fleurInput/output/checks',
@@ -1758,7 +1733,7 @@ def get_inpxml_file_structure():
         'count': '/fleurInput/calculationSetup/kPointCount',
         'ellow': '/fleurInput/calculationSetup/energyParameterLimits',
         'elup': '/fleurInput/calculationSetup',
-        'filename': '/fleurInput/cell/symmetryFile',
+        #'filename': '/fleurInput/cell/symmetryFile',
         'scale': '/fleurInput/cell/bulkLattice',
         'ndir': '/fleurInput/output/densityOfStates',
         'minEnergy': '/fleurInput/output/densityOfStates',
@@ -1772,16 +1747,16 @@ def get_inpxml_file_structure():
         'locy2': '/fleurInput/output/vacuumDOS',
         'nstm': '/fleurInput/output/vacuumDOS',
         'tworkf': '/fleurInput/output/vacuumDOS',
-        'numkpts': '/fleurInput/output/chargeDensitySlicing',
+        'numkpt': '/fleurInput/output/chargeDensitySlicing',
         'minEigenval': '/fleurInput/output/chargeDensitySlicing',
         'maxEigenval': '/fleurInput/output/chargeDensitySlicing',
         'nnne': '/fleurInput/output/chargeDensitySlicing',
         'dVac': '/fleurInput/cell/filmLattice',
         'dTilda': '/fleurInput/cell/filmLattice',
-        'xcFunctional': '/fleurInput/xcFunctional/@name',  # other_attributes_more
-        'name': {'/fleurInput/constantDefinitions', '/fleurInput/xcFunctional',
-                 '/fleurInput/atomSpecies/species'},
-        'value': '/fleurInput/constantDefinitions',
+        'xcFunctional': '/fleurInput/xcFunctional',  # other_attributes_more
+        # 'name': {'/fleurInput/constantDefinitions', '/fleurInput/xcFunctional',
+        #          '/fleurInput/atomSpecies/species'},
+        # 'value': '/fleurInput/constantDefinitions',
         'element': '/fleurInput/atomSpecies/species',
         'atomicNumber': '/fleurInput/atomSpecies/species',
         'coreStates': '/fleurInput/atomSpecies/species',
@@ -1802,11 +1777,6 @@ def get_inpxml_file_structure():
         'species': '/fleurInput/atomGroups/atomGroup',
         'relaxXYZ': '/fleurInput/atomGroups/atomGroup/force'
     }
-    # 'constant': (name, value)
-    # 'xcFunctional' : name
-    # 'species' : (old_name, set_name)
-    # 'radius': (spcies_name, value), (species_id, value), (species_element, value)
-    # all tags paths, make this a dict?
 
     all_tag_xpaths = (
         '/fleurInput/constantDefinitions',

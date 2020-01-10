@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 import os
-import aiida_fleur
 import pytest
+import aiida_fleur
 
-path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(path, 'tests/files/inpxml/FePt/FePt.xml')
+aiida_path = os.path.dirname(aiida_fleur.__file__)
+TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/FePt/FePt.xml')
 
 
 def test_xml_set_attribv_occ(inpxml_etree):
@@ -341,23 +341,354 @@ class TestSetSpecies:
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species/' + path)
 
-        import lxml
-        print(lxml.etree.tostring(etree))
-
         if 'coreConfig' in path:
             assert [x.text for x in result] == correct_result
         else:
             assert result == correct_result
 
 
-# change_atomgr_att
-def test_change_atomgr_att(inpxml_etree):
-    from aiida_fleur.tools.xml_util import change_atomgr_att
-    pass
+class TestChangeAtomgrAtt:
+    """Tests for change_atomgr_att"""
+
+    paths = ['force/@relaxXYZ',
+             'nocoParams/@beta'
+             ]
+
+    attdicts = [{'force': [('relaxXYZ', 'FFF')]},
+                {'nocoParams': [('beta', 7.0)]}
+                ]
+
+    results = ['FFF', '7.0']
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_change_atomgr_att(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att(etree, attributedict=attr_dict, species='Fe-1')
+
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + path)
+
+        assert result[0] == correct_result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_change_atomgr_att_position(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att(etree, attributedict=attr_dict, position=1)
+
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
+
+        assert result[0] == correct_result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_change_atomgr_att_label(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att_label(etree, attributedict=attr_dict, at_label="                 222")
+
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + path)
+
+        assert result[0] == correct_result
+
+    results_all = [[x, x] for x in results]
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
+    def test_change_atomgr_att_all(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att(etree, attributedict=attr_dict, species='all')
+
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
+
+        assert result == correct_result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
+    def test_change_atomgr_att_label_all(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att_label(etree, attributedict=attr_dict, at_label="all")
+
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
+
+        assert result == correct_result
+
+    def test_change_atomgr_att_fail(self, inpxml_etree):
+        from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        change_atomgr_att(etree, attributedict=self.attdicts[0])
+
+        result = eval_xpath2(
+            etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0])
+
+        assert result[0] == 'TTT'
+
+
+class TestSetInpchanges:
+    from aiida_fleur.tools.xml_util import get_inpxml_file_structure
+
+    xml_structure = get_inpxml_file_structure()
+
+    paths = xml_structure[12]
+
+    @pytest.mark.parametrize('name,path', paths.items())
+    def test_set_inpchanges(self, inpxml_etree, name, path):
+        from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        skip_paths = ['atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice',
+                      'bravaisMatrix', 'a1']
+
+        if any(x in path for x in skip_paths):
+            pass
+        elif name in self.xml_structure[11].keys():
+            set_inpchanges(etree, change_dict={name: 'test'})
+            if name not in ['relPos', 'absPos']:
+                result = eval_xpath2(etree, path)[0]
+                assert result.text == 'test'
+        elif name in self.xml_structure[0]:
+            set_inpchanges(etree, change_dict={name: 'T'})
+            result = eval_xpath2(etree, path + '/@{}'.format(name))
+            assert result[0] == 'T'
+        elif name in self.xml_structure[4] or name in self.xml_structure[3]:
+            set_inpchanges(etree, change_dict={name: 33})
+            result = eval_xpath2(etree, path + '/@{}'.format(name))
+            assert float(result[0]) == 33
+        elif name in self.xml_structure[5]:
+            set_inpchanges(etree, change_dict={name: 'test'})
+            if name == 'xcFunctional':
+                result = eval_xpath2(etree, path + '/@{}'.format('name'))
+            else:
+                result = eval_xpath2(etree, path + '/@{}'.format(name))
+            assert result[0] == 'test'
+        else:
+            raise BaseException('A switch that you want to set is not one of the supported types.'
+                                'Or you made a mistake during new switch registration')
+
+    def test_set_inpchanges_fail(self, inpxml_etree):
+        from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
+        from aiida.common.exceptions import InputValidationError
+
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        with pytest.raises(InputValidationError):
+            set_inpchanges(etree, change_dict={'not_existing': 'test'})
+
+
+def test_inpxml_to_dict(inpxml_etree):
+    from aiida_fleur.tools.xml_util import inpxml_todict, get_inpxml_file_structure, clear_xml
+
+    correct = {
+        'fleurInputVersion': '0.30',
+        'comment': 'A Fleur input generator calculation with aiida',
+        'calculationSetup': {
+            'cutoffs': {
+                'Kmax': 4.0,
+                'Gmax': 10.0,
+                'GmaxXC': 8.7,
+                'numbands': 0,
+            },
+            'scfLoop': {
+                'itmax': 5,
+                'minDistance': 1e-05,
+                'maxIterBroyd': 99,
+                'imix': 'Anderson',
+                'alpha': 0.05,
+                'precondParam': '0.0',
+                'spinf': 2.0,
+            },
+            'coreElectrons': {
+                'ctail': True,
+                'frcor': False,
+                'kcrel': 0,
+                'coretail_lmax': '0',
+            },
+            'magnetism': {
+                'jspins': 2,
+                'l_noco': False,
+                'swsp': False,
+                'lflip': False,
+            },
+            'soc': {
+                'theta': 0.0,
+                'phi': 0.0,
+                'l_soc': False,
+                'spav': False,
+            },
+            'prodBasis': {
+                'gcutm': '2.90000000',
+                'tolerance': '.00010000',
+                'ewaldlambda': '3',
+                'lexp': '16',
+                'bands': '0',
+            },
+            'nocoParams': {
+                'l_ss': False,
+                'l_mperp': 'F',
+                'l_constr': 'F',
+                'mix_b': '.00000000',
+                'qss': '.0000000000 .0000000000 .0000000000',
+            },
+            'expertModes': {'gw': 0, 'secvar': False},
+            'geometryOptimization': {
+                'l_f': False,
+                'forcealpha': 1.0,
+                'forcemix': 'BFGS',
+                'epsdisp': 1e-05,
+                'epsforce': 1e-05,
+            },
+            'ldaU': {'l_linMix': 'F', 'mixParam': '.050000', 'spinf': 1.0},
+            'bzIntegration': {
+                'valenceElectrons': 18.0,
+                'mode': 'hist',
+                'fermiSmearingEnergy': 0.001,
+                'kPointList': {'name': 'default', 'count': 2,
+                               'kPoint': ['-0.250000     0.250000     0.000000', '0.250000     0.250000     0.000000']},
+            },
+            'energyParameterLimits': {'ellow': -0.8, 'elup': 0.5},
+            'symmetryOperations': {'symOp': {'row-1': '1 0 0 .0000000000',
+                                             'row-2': '0 -1 0 .0000000000',
+                                             'row-3': '0 0 1 .0000000000'}},
+        },
+        'cell': {'filmLattice': {
+            'scale': 1.0,
+            'dVac': 7.35,
+            'dTilda': 10.91,
+            'bravaisMatrix': {'row-1': '5.301179702900000 .000000000000000 .000000000000000',
+                              'row-2': '.000000000000000 7.497000033000000 .000000000000000',
+                              'row-3': '.000000000000000 .000000000000000 7.992850008800000'},
+            'vacuumEnergyParameters': {'vacuum': '2',
+                                       'spinUp': '-.25000000',
+                                       'spinDown': '-.25000000'},
+        }},
+        'xcFunctional': {'name': 'vwn', 'relativisticCorrections': False},
+        'atomSpecies': {'species': [{
+            'name': 'Fe-1',
+            'element': 'Fe',
+            'atomicNumber': 26,
+            'mtSphere': {'radius': 2.2, 'gridPoints': 787,
+                         'logIncrement': 0.016},
+            'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
+            'energyParameters': {
+                's': 4,
+                'p': 4,
+                'd': 3,
+                'f': 4,
+            },
+            'electronConfig': {'coreConfig': '[Ar]',
+                               'valenceConfig': '(4s1/2) (3d3/2) (3d5/2)',
+                               'stateOccupation': [{'state': '(3d3/2)',
+                                                    'spinUp': '2.00000000',
+                                                    'spinDown': '1.00000000'},
+                                                   {'state': '(3d5/2)',
+                                                    'spinUp': '3.00000000',
+                                                    'spinDown': '.00000000'}]},
+        }, {
+            'name': 'Pt-1',
+            'element': 'Pt',
+            'atomicNumber': 78,
+            'mtSphere': {'radius': 2.2, 'gridPoints': 787,
+                         'logIncrement': 0.017},
+            'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
+            'energyParameters': {
+                's': 6,
+                'p': 6,
+                'd': 5,
+                'f': 5,
+            },
+            'electronConfig': {'coreConfig': '[Xe] (4f5/2) (4f7/2)',
+                               'valenceConfig': '(6s1/2) (5d3/2) (5d5/2)',
+                               'stateOccupation': [{'state': '(6s1/2)',
+                                                    'spinUp': '.50000000',
+                                                    'spinDown': '.50000000'},
+                                                    {'state': '(5d5/2)',
+                                                     'spinUp': '3.00000000',
+                                                     'spinDown': '2.00000000'}]},
+        }]},
+        'atomGroups': {'atomGroup': [{
+            'species': 'Fe-1',
+            'filmPos': ['.0000000000 .0000000000 -.9964250044'],
+            'force': {'calculate': True, 'relaxXYZ': 'TTT'},
+            'nocoParams': {
+                'l_relax': 'F',
+                'alpha': 0.0,
+                'beta': '1.570796326',
+                'b_cons_x': '.00000000',
+                'b_cons_y': '.00000000',
+            },
+        }, {
+            'species': 'Pt-1',
+            'filmPos': ['1.000/2.000 1.000/2.000 .9964250044'],
+            'force': {'calculate': True, 'relaxXYZ': 'TTT'},
+            'nocoParams': {
+                'l_relax': 'F',
+                'alpha': 0.0,
+                'beta': '1.570796326',
+                'b_cons_x': '.00000000',
+                'b_cons_y': '.00000000',
+            },
+        }]},
+        'output': {
+            'dos': False,
+            'band': False,
+            'vacdos': False,
+            'slice': False,
+            'mcd': 'F',
+            'checks': {'vchk': False, 'cdinf': False},
+            'densityOfStates': {
+                'ndir': 0,
+                'minEnergy': -0.5,
+                'maxEnergy': 0.5,
+                'sigma': 0.015,
+            },
+            'vacuumDOS': {
+                'layers': 0,
+                'integ': False,
+                'star': False,
+                'nstars': 0,
+                'locx1': 0.0,
+                'locy1': 0.0,
+                'locx2': 0.0,
+                'locy2': 0.0,
+                'nstm': 0,
+                'tworkf': 0.0,
+            },
+            'unfoldingBand': {
+                'unfoldBand': 'F',
+                'supercellX': '1',
+                'supercellY': '1',
+                'supercellZ': '1',
+            },
+            'plotting': {'iplot': 0},
+            'chargeDensitySlicing': {
+                'numkpt': 0,
+                'minEigenval': 0.0,
+                'maxEigenval': 0.0,
+                'nnne': 0,
+                'pallst': False,
+            },
+            'specialOutput': {'eonly': False, 'bmt': False},
+            'magneticCircularDichroism': {'energyLo': '-10.00000000',
+                                          'energyUp': '.00000000'},
+        },
+    }
+
+    xml_structure = get_inpxml_file_structure()
+    etree = inpxml_etree(TEST_INP_XML_PATH)
+    inpxml_dict = inpxml_todict(clear_xml(etree).getroot(), xml_structure)
+
+    assert inpxml_dict == correct
+
 
 # add_num_to_att
-
-
 def test_add_num_to_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import add_num_to_att
     pass
