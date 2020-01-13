@@ -449,7 +449,7 @@ class TestSetInpchanges:
                       'bravaisMatrix', 'a1']
 
         if any(x in path for x in skip_paths):
-            pass
+            pytest.skip("this attribute is not tested for FePt.xml")
         elif name in self.xml_structure[11].keys():
             set_inpchanges(etree, change_dict={name: 'test'})
             if name not in ['relPos', 'absPos']:
@@ -609,9 +609,9 @@ def test_inpxml_to_dict(inpxml_etree):
                                'stateOccupation': [{'state': '(6s1/2)',
                                                     'spinUp': '.50000000',
                                                     'spinDown': '.50000000'},
-                                                    {'state': '(5d5/2)',
-                                                     'spinUp': '3.00000000',
-                                                     'spinDown': '2.00000000'}]},
+                                                   {'state': '(5d5/2)',
+                                                    'spinUp': '3.00000000',
+                                                    'spinDown': '2.00000000'}]},
         }]},
         'atomGroups': {'atomGroup': [{
             'species': 'Fe-1',
@@ -688,35 +688,125 @@ def test_inpxml_to_dict(inpxml_etree):
     assert inpxml_dict == correct
 
 
-# add_num_to_att
-def test_add_num_to_att(inpxml_etree):
-    from aiida_fleur.tools.xml_util import add_num_to_att
-    pass
+class TestShiftValue:
+    from aiida_fleur.tools.xml_util import get_inpxml_file_structure
+    xml_structure = get_inpxml_file_structure()
 
-# eval_xpath
+    attr_to_test = list(xml_structure[3])
+    attr_to_test.extend(xml_structure[4])
+
+    @pytest.mark.parametrize('attr_name', attr_to_test)
+    def test_shift_value(self, inpxml_etree, attr_name):
+        from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        path = self.xml_structure[12][attr_name]
+        result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
+
+        if not result_before:
+            pytest.skip("this attribute is not tested for FePt.xml")
+        else:
+            result_before = result_before[0]
+            shift_value(etree, {attr_name: 333})
+            result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
+
+            assert float(result) - float(result_before) == 333
+
+    attr_to_test_float = list(xml_structure[4])
+    @pytest.mark.parametrize('attr_name', attr_to_test_float)
+    def test_shift_value_rel(self, inpxml_etree, attr_name):
+        import math
+        from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        path = self.xml_structure[12][attr_name]
+        result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
+
+        if not result_before:
+            pytest.skip("this attribute is not tested for FePt.xml")
+        else:
+            result_before = result_before[0]
+            shift_value(etree, {attr_name: 1.2442}, mode='rel')
+            result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
+
+            if float(result_before) != 0:
+                assert math.isclose(float(result) / float(result_before), 1.2442, rel_tol=1e-6)
+            else:
+                assert float(result) == 0
+
+    def test_shift_value_errors(self, inpxml_etree, capsys):
+        from aiida_fleur.tools.xml_util import shift_value
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        with pytest.raises(ValueError) as excinfo:
+            shift_value(etree, {'does_not_exist': 1.2442})
+        assert "Given attribute name either does not ex" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            shift_value(etree, {'jspins': 3.3})
+        assert "You are trying to write a float" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            shift_value(etree, {'l_noco': 33})
+        assert "Given attribute name either does not ex" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            shift_value(etree, {'jspins': 33}, mode='not_a_mode')
+        assert "Mode should be 'res' " in str(excinfo.value)
+
+        shift_value(etree, {'nz': 333})
+        captured = capsys.readouterr()
+        assert captured.out == 'Can not find nz attribute in the inp.xml, skip it\n'
 
 
-def test_eval_xpath(inpxml_etree):
-    from aiida_fleur.tools.xml_util import eval_xpath
-    pass
+class TestAddNumToAtt:
+    from aiida_fleur.tools.xml_util import get_inpxml_file_structure
+    xml_structure = get_inpxml_file_structure()
 
-# eval_xpath2
+    attr_to_test = list(xml_structure[3])
+    attr_to_test.extend(xml_structure[4])
 
+    @pytest.mark.parametrize('attr_name', attr_to_test)
+    def test_add_num_to_att(self, inpxml_etree, attr_name):
+        from aiida_fleur.tools.xml_util import add_num_to_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
 
-def test_eval_xpath2(inpxml_etree):
-    from aiida_fleur.tools.xml_util import eval_xpath2
-    pass
+        path = self.xml_structure[12][attr_name]
+        result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
-# eval_xpath3
+        if not result_before:
+            pytest.skip("this attribute is not tested for FePt.xml")
+        else:
+            result_before = result_before[0]
+            add_num_to_att(etree, path, attr_name, 333)
+            result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
 
+            assert float(result) - float(result_before) == 333
 
-def test_eval_xpath3(inpxml_etree):
-    from aiida_fleur.tools.xml_util import eval_xpath3
-    pass
+    attr_to_test_float = list(xml_structure[4])
+    @pytest.mark.parametrize('attr_name', attr_to_test_float)
+    def test_shift_value_rel(self, inpxml_etree, attr_name):
+        import math
+        from aiida_fleur.tools.xml_util import add_num_to_att, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        path = self.xml_structure[12][attr_name]
+        result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
+
+        if not result_before:
+            pytest.skip("this attribute is not tested for FePt.xml")
+        else:
+            result_before = result_before[0]
+            add_num_to_att(etree, path, attr_name, 1.2442, mode='rel')
+            result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
+
+            if float(result_before) != 0:
+                assert math.isclose(float(result) / float(result_before), 1.2442, rel_tol=1e-6)
+            else:
+                assert float(result) == 0
+
 
 # get_xml_attribute
-
-
 def test_get_xml_attribute(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_xml_attribute
     pass
@@ -725,5 +815,3 @@ def test_get_xml_attribute(inpxml_etree):
 # IMPORTANT: Here we need thats that tell us when the plugin has to be maintained, i.e Know thing in the inp schema where changed
 # Is there a way to test for not yet know attributes? i.e if the plugin is complete? Back compatible?
 # I.e make for each Fleur schema file, complete inp.xml file version a test if the attributes exists.
-
-# make a test_class

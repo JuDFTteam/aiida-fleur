@@ -1168,12 +1168,13 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
 
     return new_tree
 
-def shift_value(fleurinp_tree_copy, change_dict):
+def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
     """
     Shifts numertical values of some tags directly in the inp.xml file.
 
     :param fleurinp_tree_copy: a lxml tree that represents inp.xml
     :param change_dict: a python dictionary with the keys to shift.
+    :param mode: 'abs' if change given is absolute, 'rel' if relative
 
     :returns new_tree: a lxml tree with shifted values
 
@@ -1188,11 +1189,11 @@ def shift_value(fleurinp_tree_copy, change_dict):
 
     change_to_write = {}
 
-    for key, value in six.iteritems(change_dict):
-        try:
-            key_path = all_attrib_xpath[key]
-        except KeyError:
-            raise KeyError('Found no xml path for {} attribute'.format(key))
+    for key, value_given in six.iteritems(change_dict):
+        if key not in float_attributes_once and key not in int_attributes_once:
+            raise ValueError('Given attribute name either does not exist or is not floar or int')
+
+        key_path = all_attrib_xpath[key]
 
         old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([key_path, key]))
 
@@ -1200,47 +1201,30 @@ def shift_value(fleurinp_tree_copy, change_dict):
             print('Can not find {} attribute in the inp.xml, skip it'.format(key))
             continue
         else:
-            old_val = old_val[0]
+            old_val = float(old_val[0])
+
+        if mode == 'rel':
+            value = value_given * old_val
+        elif mode == 'abs':
+            value = value_given + old_val
+        else:
+            raise ValueError("Mode should be 'res' or 'abs' only")
 
         if key in float_attributes_once:
-            change_to_write[key] = float(old_val) + value
+            change_to_write[key] = value
         elif key in int_attributes_once:
-            if abs(int(value)-value) > 1e-8:
+            if not value.is_integer():
                 raise ValueError('You are trying to write a float to an integer attribute')
-            change_to_write[key] = int(old_val) + int(value)
-        else:
-            raise ValueError('Shifting is supported for single integer of float attriutes')
+            change_to_write[key] = int(value)
 
     new_tree = set_inpchanges(fleurinp_tree_copy, change_to_write)
-    return new_tree
-
-def set_nkpts(fleurinp_tree_copy, count, gamma):
-    """
-    Sets a k-point mesh directly into inp.xml
-
-    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
-    :param count: number of k-points
-    :param gamma: a fortran-type boolean that controls if the gamma-point should be included
-                    in the k-point mesh
-
-    :returns new_tree: a lxml tree with applied changes
-    """
-
-    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-    #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
-
-    tree = fleurinp_tree_copy
-    new_kpo = etree.Element(
-        'kPointCount',
-        count="{}".format(count),
-        gamma="{}".format(gamma))
-    new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
-
     return new_tree
 
 def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None, create=False):
     """
     Routine adds something to the value of an attribute in the xml file (should be a number here)
+    This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shoft_value()` which
+    allows one to specife an arbitrary xml path.
 
     :param: an etree a xpath from root to the attribute and the attribute value
 
@@ -1276,6 +1260,31 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None
         pass
         # something was wrong, ...
     return xmltree
+
+def set_nkpts(fleurinp_tree_copy, count, gamma):
+    """
+    Sets a k-point mesh directly into inp.xml
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param count: number of k-points
+    :param gamma: a fortran-type boolean that controls if the gamma-point should be included
+                    in the k-point mesh
+
+    :returns new_tree: a lxml tree with applied changes
+    """
+
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
+    #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
+
+    tree = fleurinp_tree_copy
+    new_kpo = etree.Element(
+        'kPointCount',
+        count="{}".format(count),
+        gamma="{}".format(gamma))
+    new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
+
+    return new_tree
+
 
 ####### XML GETTERS #########
 # TODO parser infos do not really work, might need to be returned, here
@@ -1606,7 +1615,7 @@ def get_inpxml_file_structure():
                            'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
 
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
-                             'phi', 'xa', 'thetad', 'epsdisp', 'epsforce',
+                             'phi', 'epsdisp', 'epsforce',
                              'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
                              'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
                              'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
@@ -1624,7 +1633,7 @@ def get_inpxml_file_structure():
         'isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd',
         'imix', 'alpha', 'spinf', 'minDistance',
         'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
-        'xa', 'thetad', 'epsdisp', 'epsforce', 'valenceElectrons', 'mode',
+        'epsdisp', 'epsforce', 'valenceElectrons', 'mode',
         'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz', 'ellow', 'elup',
         'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
         'sigma', 'layers', 'nstars', 'locx1', 'locy1', 'locx2', 'locy2', 'nstm',
