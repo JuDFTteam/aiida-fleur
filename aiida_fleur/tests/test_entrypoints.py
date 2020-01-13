@@ -39,7 +39,7 @@ class TestFleurEntrypoints:
     def test_fleur_fleurinpdata_entry_point(self):
         from aiida.plugins import DataFactory
         from aiida_fleur.data.fleurinp import FleurinpData
-    
+
         fleurinp = DataFactory('fleur.fleurinp')
         assert fleurinp == FleurinpData
 

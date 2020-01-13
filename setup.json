@@ -1,12 +1,12 @@
 {
-    "version" : "1.0.0a",
-    "name" : "aiida-fleur",
-    "url" : "https://github.com/JuDFTteam/aiida-fleur",
-    "license" : "MIT License, see LICENSE.txt file.",
-    "author" : "JuDFTteam",
-    "author_email" : "j.broeder@fz-juelich.de",
-    "description" : "Python FLEUR simulation package containing an AiiDA Plugin for running the FLEUR-code and its input generator. Plus some workflows and utility",
-    "classifiers" : [
+    "version": "1.0.0a",
+    "name": "aiida-fleur",
+    "url": "https://github.com/JuDFTteam/aiida-fleur",
+    "license": "MIT License, see LICENSE.txt file.",
+    "author": "JuDFTteam",
+    "author_email": "j.broeder@fz-juelich.de",
+    "description": "Python FLEUR simulation package containing an AiiDA Plugin for running the FLEUR-code and its input generator. Plus some workflows and utility",
+    "classifiers": [
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
@@ -21,26 +21,26 @@
         "Topic :: Scientific/Engineering :: Physics",
         "Natural Language :: English"
     ],
-    "keywords" : "fleur aiida inpgen workflows flapw juelich dft all-electron",
-    "include_package_data" : true,
-    "setup_requires" : [
-            "reentry"
-        ],
-    "reentry_register" : true,
-    "install_requires" : [
-            "aiida-core >= 1.0.0b1[atomic_tools]",
-            "lxml >= 3.6.4",
-            "pytest-cov >= 2.5.0",
-            "pytest >= 2.9",
-            "pgtest",
-            "numpy>=1.16.0",
-            "sympy",
-            "masci-tools",
-            "future",
-            "ase",
-            "pymatgen"
+    "keywords": "fleur aiida inpgen workflows flapw juelich dft all-electron",
+    "include_package_data": true,
+    "setup_requires": [
+        "reentry"
     ],
-    "extras_require" : {
+    "reentry_register": true,
+    "install_requires": [
+        "aiida-core >= 1.0.0b1[atomic_tools]",
+        "lxml >= 3.6.4",
+        "pytest-cov >= 2.5.0",
+        "pytest >= 2.9",
+        "pgtest",
+        "numpy>=1.16.0",
+        "sympy",
+        "masci-tools",
+        "future",
+        "ase",
+        "pymatgen"
+    ],
+    "extras_require": {
         "graphs ": [
             "matplotlib",
             "masci-tools"
@@ -52,20 +52,20 @@
             "pylint==1.9.3"
         ]
     },
-    "entry_points" : {
-        "aiida.calculations" : [
+    "entry_points": {
+        "aiida.calculations": [
             "fleur.fleur = aiida_fleur.calculation.fleur:FleurCalculation",
             "fleur.inpgen = aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation"
         ],
-        "aiida.data" : [
-                "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData",
-                "fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier"
+        "aiida.data": [
+            "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData",
+            "fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier"
         ],
-        "aiida.parsers" : [
-                "fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser",
-                "fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser"
+        "aiida.parsers": [
+            "fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser",
+            "fleur.fleurinpgenparser = aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser"
         ],
-        "aiida.workflows" : [
+        "aiida.workflows": [
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.band = aiida_fleur.workflows.band:fleur_band_wc",
@@ -78,7 +78,7 @@
             "fleur.ssdisp_conv = aiida_fleur.workflows.ssdisp_conv:FleurSSDispConvWorkChain",
             "fleur.dmi = aiida_fleur.workflows.dmi:FleurDMIWorkChain",
             "fleur.relax = aiida_fleur.workflows.relax:FleurRelaxWorkChain",
-            "fleur.create_magnetic = aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain",
+            "fleur.create_magnetic = aiida_fleur.workflows.create_magnetic_film:FleurCreateMagneticWorkChain",
             "fleur.base_relax = aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain",
             "fleur.base = aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
         ]

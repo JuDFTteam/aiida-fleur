@@ -4,7 +4,7 @@ import pytest
 import aiida_fleur
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/FePt/FePt.xml')
+TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/FePt/inp.xml')
 
 
 def test_xml_set_attribv_occ(inpxml_etree):
@@ -20,8 +20,6 @@ def test_xml_set_attribv_occ(inpxml_etree):
     xml_set_attribv_occ(etree, '/fleurInput/atomGroups/atomGroup', 'species', 'TEST-2', [-1])
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-2', 'TEST-2']
 
-# xml_set_first_attribv
-
 
 def test_xml_set_first_attribv(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_first_attribv, eval_xpath
@@ -32,8 +30,6 @@ def test_xml_set_first_attribv(inpxml_etree):
 
     xml_set_first_attribv(etree, '/fleurInput/atomGroups/atomGroup', 'species', 'TEST-1')
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-1', 'Pt-1']
-
-# xml_set_all_attribv
 
 
 def test_xml_set_all_attribv(inpxml_etree):
@@ -49,8 +45,6 @@ def test_xml_set_all_attribv(inpxml_etree):
     xml_set_all_attribv(etree, '/fleurInput/atomGroups/atomGroup', 'species', ['TEST-1', 23])
     assert eval_xpath(etree, '/fleurInput/atomGroups/atomGroup/@species') == ['TEST-1', '23']
 
-# xml_set_text
-
 
 def test_xml_set_text(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_text, eval_xpath2
@@ -61,8 +55,6 @@ def test_xml_set_text(inpxml_etree):
     xml_set_text(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'test_text')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[0].text == 'test_text'
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == second_text
-
-# xml_set_all_text
 
 
 def test_xml_set_text_occ(inpxml_etree):
@@ -81,8 +73,6 @@ def test_xml_set_text_occ(inpxml_etree):
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[0].text == first_text
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_text'
 
- # xml_set_all_text
-
 
 def test_xml_set_all_text(inpxml_etree):
     from aiida_fleur.tools.xml_util import xml_set_all_text, eval_xpath2
@@ -95,8 +85,6 @@ def test_xml_set_all_text(inpxml_etree):
     xml_set_all_text(etree, '/fleurInput/atomGroups/atomGroup/filmPos', ['test_text2', 'test_ext3'])
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[0].text == 'test_text2'
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos')[1].text == 'test_ext3'
-
-# create_tag
 
 
 def test_create_tag(inpxml_etree):
@@ -157,7 +145,6 @@ def test_create_multiple_tags(inpxml_etree):
     assert 0
 
 
-# delete_att
 def test_delete_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import delete_att, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -168,8 +155,6 @@ def test_delete_att(inpxml_etree):
     delete_att(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'label')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label') == []
 
-# delete_tag
-
 
 def test_delete_tag(inpxml_etree):
     from aiida_fleur.tools.xml_util import delete_tag, eval_xpath2
@@ -179,8 +164,6 @@ def test_delete_tag(inpxml_etree):
 
     delete_tag(etree, '/fleurInput/atomGroups/atomGroup/filmPos')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos') == []
-
-# replace_tag
 
 
 def test_replace_tag(inpxml_etree):
@@ -230,14 +213,8 @@ def test_get_inpgen_para_from_xml(inpxml_etree):
               'title': 'A Fleur input generator calculation with aiida',
               'exco': {'xctyp': 'vwn'}}
 
-    dict = get_inpgen_para_from_xml(etree)
-    assert dict == result
-
-
-# set_species
-def test_set_species_label(inpxml_etree):
-    from aiida_fleur.tools.xml_util import set_species_label
-    pass
+    dict_result = get_inpgen_para_from_xml(etree)
+    assert dict_result == result
 
 
 class TestSetSpecies:
@@ -550,17 +527,19 @@ def test_inpxml_to_dict(inpxml_etree):
                 'valenceElectrons': 18.0,
                 'mode': 'hist',
                 'fermiSmearingEnergy': 0.001,
-                'kPointList': {'name': 'default', 'count': 2,
+                'kPointList': {'posScale': '1.00000000', 'weightScale': '1.00000000', 'count': 2,
                                'kPoint': ['-0.250000     0.250000     0.000000', '0.250000     0.250000     0.000000']},
             },
             'energyParameterLimits': {'ellow': -0.8, 'elup': 0.5},
+        },
+        'cell': {
             'symmetryOperations': {'symOp': {'row-1': '1 0 0 .0000000000',
                                              'row-2': '0 -1 0 .0000000000',
                                              'row-3': '0 0 1 .0000000000'}},
-        },
-        'cell': {'filmLattice': {
+            'filmLattice': {
             'scale': 1.0,
             'dVac': 7.35,
+            'latnam': 'any',
             'dTilda': 10.91,
             'bravaisMatrix': {'row-1': '5.301179702900000 .000000000000000 .000000000000000',
                               'row-2': '.000000000000000 7.497000033000000 .000000000000000',
@@ -574,6 +553,7 @@ def test_inpxml_to_dict(inpxml_etree):
             'name': 'Fe-1',
             'element': 'Fe',
             'atomicNumber': 26,
+            'coreStates': 2,
             'mtSphere': {'radius': 2.2, 'gridPoints': 787,
                          'logIncrement': 0.016},
             'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
@@ -595,6 +575,7 @@ def test_inpxml_to_dict(inpxml_etree):
             'name': 'Pt-1',
             'element': 'Pt',
             'atomicNumber': 78,
+            'coreStates': 2,
             'mtSphere': {'radius': 2.2, 'gridPoints': 787,
                          'logIncrement': 0.017},
             'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},

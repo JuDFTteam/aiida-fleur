@@ -17,12 +17,14 @@
       <geometryOptimization l_f="F" forcealpha="1.00000000" forcemix="BFGS" epsdisp=".00001000" epsforce=".00001000"/>
       <ldaU l_linMix="F" mixParam=".050000" spinf="1.000000"/>
       <bzIntegration valenceElectrons="18.00000000" mode="hist" fermiSmearingEnergy=".00100000">
-         <kPointList name="default" count="2">
+         <kPointList posScale="1.00000000" weightScale="1.00000000" count="2">
             <kPoint weight="    0.500000">   -0.250000     0.250000     0.000000</kPoint>
             <kPoint weight="    0.500000">    0.250000     0.250000     0.000000</kPoint>
          </kPointList>
       </bzIntegration>
       <energyParameterLimits ellow="-.80000000" elup=".50000000"/>
+   </calculationSetup>
+   <cell>
       <symmetryOperations>
         <symOp>
           <row-1>1 0 0 .0000000000</row-1>
@@ -35,9 +37,7 @@
           <row-3>0 0 1 .0000000000</row-3>
         </symOp>
       </symmetryOperations>
-   </calculationSetup>
-   <cell>
-     <filmLattice scale="1.00000000"  dVac="7.35000000" dTilda="10.91000000">
+     <filmLattice scale="1.00000000"  dVac="7.35000000" dTilda="10.91000000" latnam="any">
          <bravaisMatrix>
             <row-1>5.301179702900000 .000000000000000 .000000000000000</row-1>
             <row-2>.000000000000000 7.497000033000000 .000000000000000</row-2>
@@ -49,7 +49,7 @@
    </cell>
    <xcFunctional name="vwn" relativisticCorrections="F"/>
    <atomSpecies>
-      <species name="Fe-1" element="Fe" atomicNumber="26" >
+      <species name="Fe-1" element="Fe" atomicNumber="26" coreStates="2">
          <mtSphere radius="2.20000000" gridPoints="787" logIncrement=".01600000"/>
          <atomicCutoffs lmax="10" lnonsphr="6"/>
          <energyParameters s="4" p="4" d="3" f="4"/>
@@ -60,7 +60,7 @@
             <stateOccupation state="(3d5/2)" spinUp="3.00000000" spinDown=".00000000"/>
          </electronConfig>
       </species>
-      <species name="Pt-1" element="Pt" atomicNumber="78" >
+      <species name="Pt-1" element="Pt" atomicNumber="78"  coreStates="2">
          <mtSphere radius="2.20000000" gridPoints="787" logIncrement=".01700000"/>
          <atomicCutoffs lmax="10" lnonsphr="6"/>
          <energyParameters s="6" p="6" d="5" f="5"/>

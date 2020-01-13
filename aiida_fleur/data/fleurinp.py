@@ -868,8 +868,7 @@ class FleurinpData(Data):
 
         return self.get_kpointsdata_ncf()
 
-    # TODO: or move these outside...?
-    #@staticmethod
+
     def get_parameterdata_ncf(self):
         """
         This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
@@ -886,7 +885,7 @@ class FleurinpData(Data):
 
         # read in inpxml
         inpxmlfile = self.open(key='inp.xml', mode='r')
-        new_parameters = get_inpgen_paranode_from_xml(inpxmlfile)
+        new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
         inpxmlfile.close() # I don’t like this
         return new_parameters
 

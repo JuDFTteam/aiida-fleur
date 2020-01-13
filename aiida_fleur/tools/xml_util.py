@@ -836,11 +836,11 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             # there can be multible LO tags, so I expect either one or a list
             if isinstance(val, dict):
                 create_tag(
-                           fleurinp_tree_copy,
-                           xpath_species,
-                           'lo',
-                           place_index=species_seq.index('lo'),
-                           tag_order=species_seq)
+                    fleurinp_tree_copy,
+                    xpath_species,
+                    'lo',
+                    place_index=species_seq.index('lo'),
+                    tag_order=species_seq)
                 for attrib, value in six.iteritems(val):
                     xml_set_all_attribv(fleurinp_tree_copy, xpath_lo, attrib, value, create=True)
             else:  # I expect a list of dicts
@@ -850,11 +850,11 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                 los_need = len(val)  # - nlonodes
                 for j in range(0, los_need):
                     create_tag(
-                               fleurinp_tree_copy,
-                               xpath_species,
-                               'lo',
-                               place_index=species_seq.index('lo'),
-                               tag_order=species_seq)
+                        fleurinp_tree_copy,
+                        xpath_species,
+                        'lo',
+                        place_index=species_seq.index('lo'),
+                        tag_order=species_seq)
                 for i, lodict in enumerate(val):
                     for attrib, value in six.iteritems(lodict):
                         sets = []
@@ -933,7 +933,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     return fleurinp_tree_copy
 
 
-def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=False):
+def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`
     method for a certain atom specie that corresponds to an atom with a given label.
@@ -941,7 +941,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=
 
     if at_label == 'all':
         fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
-                                               species='all', create=create)
+                                               species='all')
         return fleurinp_tree_copy
 
     specie = ''
@@ -958,11 +958,11 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label, create=
                 specie = get_xml_attribute(group, 'species')
 
     fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
-                                           species=specie, create=create)
+                                           species=specie)
 
     return fleurinp_tree_copy
 
-def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
+def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None):
     """
     Method to set parameters of an atom group of the fleur inp.xml file.
 
@@ -1220,7 +1220,7 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
     new_tree = set_inpchanges(fleurinp_tree_copy, change_to_write)
     return new_tree
 
-def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None, create=False):
+def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None):
     """
     Routine adds something to the value of an attribute in the xml file (should be a number here)
     This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shoft_value()` which

@@ -14,6 +14,7 @@ import six
 
 pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
 
+
 @pytest.fixture(scope='function')
 def fixture_sandbox():
     """Return a `SandboxFolder`."""
@@ -118,7 +119,8 @@ def generate_calc_job_node():
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
-                basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):], test_name
+                basepath, 'parsers', 'fixtures', entry_point_name[len(
+                    'quantumespresso.'):], test_name
             )
 
             retrieved = orm.FolderData()
@@ -166,7 +168,8 @@ def generate_structure():
         cell = [[param / 2., param / 2., 0], [param / 2., 0, param / 2.], [0, param / 2., param / 2.]]
         structure = StructureData(cell=cell)
         structure.append_atom(position=(0., 0., 0.), symbols='Si', name='Si')
-        structure.append_atom(position=(param / 4., param / 4., param / 4.), symbols='Si', name='Si')
+        structure.append_atom(position=(param / 4., param / 4., param / 4.),
+                              symbols='Si', name='Si')
 
         return structure
 
@@ -242,6 +245,7 @@ def create_fleurinp():
         return fleurinp(files=[inpxmlfilepath])
 
     return _make_fleurinp
+
 
 @pytest.fixture
 def inpxml_etree():

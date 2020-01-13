@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="0.28">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="0.30">
 
    <xsd:element name="fleurInput" type="FleurInputType"/>
    
@@ -580,7 +580,7 @@
    </xsd:complexType>
 
    <xsd:complexType name="PlottingType">
-      <xsd:attribute default="F" name="iplot" type="FleurBool" use="optional"/>
+      <xsd:attribute default="0" name="iplot" type="xsd:integer" use="optional"/>
       <xsd:attribute default="F" name="score" type="FleurBool" use="optional"/>
       <xsd:attribute default="F" name="plplot" type="FleurBool" use="optional"/>
    </xsd:complexType>

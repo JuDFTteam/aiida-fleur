@@ -19,7 +19,7 @@ def test_create_group(aiida_profile, clear_database, capsys):
 
     assert captured.out == ('Group created with PK=1 and name test_group\n'
                             'Skipping not-existent-uuid, it does not exist in the DB\n'
-                            'added nodes: [1] to group test_group 1\n')
+                            'added nodes: [{}] to group test_group 1\n'.format(para.pk))
 
     para2 = para.clone()
     para2.store()
@@ -35,7 +35,7 @@ def test_create_group(aiida_profile, clear_database, capsys):
 
     assert captured.out == ('Group with name test_group and pk 1 already exists.\n'
                             'Adding nodes to the existing group test_group\n'
-                            'added nodes: [2] to group test_group 1\n')
+                            'added nodes: [{}] to group test_group 1\n'.format(para2.pk))
 
     assert isinstance(group, Group)
 
@@ -106,6 +106,7 @@ def test_import_extras(aiida_profile, clear_database, temp_dir, capsys):
     assert captured.out == ('The file has to be loadable by json. i.e json format'
                             ' (which it is not).\n')
 
+
 def test_delete_trash(aiida_profile, clear_database, monkeypatch):
     """Test removing trash nodes from the DB. Also covers delete_nodes."""
     from aiida_fleur.tools.common_aiida import delete_trash
@@ -127,6 +128,7 @@ def test_delete_trash(aiida_profile, clear_database, monkeypatch):
         pass
     else:
         assert 0
+
 
 def test_get_nodes_from_group(aiida_profile, clear_database):
     """Test retrieving nodes from a given group."""
@@ -155,4 +157,3 @@ def test_get_nodes_from_group(aiida_profile, clear_database):
         w = get_nodes_from_group(group, return_format='will_raise_a_ValueError')
 
     assert str(excinfo.value) == "return_format should be 'uuid' or 'pk'."
-
