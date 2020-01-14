@@ -132,19 +132,6 @@ def test_create_tag(inpxml_etree):
     assert str(excinfo.value) == "Did not find element name in the tag_order list"
 
 
-@pytest.mark.skip()
-def test_create_multiple_tags(inpxml_etree):
-    from aiida_fleur.tools.xml_util import create_tag, eval_xpath3
-    etree = inpxml_etree(TEST_INP_XML_PATH)
-
-    create_tag(etree, '/fleurInput/atomSpecies/species', 'TEST_TAG', create=False)
-    #import lxml
-    # print(lxml.etree.tostring(etree))
-    print(eval_xpath3(etree, '/fleurInput/atomSpecies/species/TEST_TAG'))
-    print(eval_xpath3(etree, '/fleurInput/atomSpecies/species'))
-    assert 0
-
-
 def test_delete_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import delete_att, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -426,7 +413,7 @@ class TestSetInpchanges:
                       'bravaisMatrix', 'a1']
 
         if any(x in path for x in skip_paths):
-            pytest.skip("this attribute is not tested for FePt.xml")
+            pytest.skip("this attribute is not tested for FePt/inp.xml")
         elif name in self.xml_structure[11].keys():
             set_inpchanges(etree, change_dict={name: 'test'})
             if name not in ['relPos', 'absPos']:
@@ -685,7 +672,7 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt.xml")
+            pytest.skip("this attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 333})
@@ -704,7 +691,7 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt.xml")
+            pytest.skip("this attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 1.2442}, mode='rel')
@@ -756,7 +743,7 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt.xml")
+            pytest.skip("this attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 333)
@@ -775,7 +762,7 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt.xml")
+            pytest.skip("this attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 1.2442, mode='rel')

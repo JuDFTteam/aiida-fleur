@@ -5,6 +5,7 @@ mkdir -p '.aiida';
 #pytest -v
 pytest --cov-report=term-missing --cov=aiida_fleur
 #pytest --cov-report=html --cov=aiida_fleur
+#pytest --cov-report=html --cov=aiida_fleur -vv -rXxs -x
 
 # to create badge (requires coverage-badge)
 #coverage-badge -o coverage.svg

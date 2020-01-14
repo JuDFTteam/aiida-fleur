@@ -838,7 +838,7 @@ def parse_xmlout_file(outxmlfile):
         else:
             # total energy
 
-            kmax_used = eval_xpath2(root, kmax_xpath)
+            kmax_used = eval_xpath2(root, kmax_xpath)[0]
             write_simple_outnode(kmax_used, 'float', 'kmax', simple_data)
 
             units_e = get_xml_attribute(

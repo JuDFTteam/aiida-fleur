@@ -16,7 +16,7 @@ def test_parse_xmlout_file():
     filename = os.path.abspath('./files/outxml/BeTi_out.xml')
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
-    
+
     expected_simple_out_dict = {'bandgap': 0.0052350388,
                                  'bandgap_units': 'eV',
                                  'charge_den_xc_den_integral': -45.0947551412,
@@ -34,6 +34,7 @@ def test_parse_xmlout_file():
                                  'fermi_energy': 0.3451127139,
                                  'fermi_energy_units': 'Htr',
                                  'force_largest': -0.0,
+                                 'kmax': 4.5,
                                  'number_of_atom_types': 2,
                                  'number_of_atoms': 2,
                                  'number_of_iterations': 19,
@@ -50,13 +51,13 @@ def test_parse_xmlout_file():
                                  'walltime': 24,
                                  'walltime_units': 'seconds',
                                  'warnings': {'debug': {}, 'error': {}, 'info': {}, 'warning': {}}}
-    
+
     expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.2beta',
                                 'parser_warnings': [],
                                 'unparsed': []}
     simple_out.pop('outputfile_path', None) # otherwise test will fail on different installations
-    # also this should go away any way... 
-    
+    # also this should go away any way...
+
     assert successful == True
     assert expected_simple_out_dict == simple_out
     assert expected_parser_info_out == parser_info_out
@@ -74,7 +75,7 @@ def test_parse_xmlout_file_broken_xmlout_file():
     filename = os.path.abspath('./files/outxml/special/broken_BeTi_out.xml')
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
-        
+
     expected_parser_info_out = {
         'last_iteration_parsed': 15,
         'parser_info': 'AiiDA Fleur Parser v0.2beta',
@@ -100,7 +101,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
     filename = os.path.abspath('./files/outxml/special/broken_first_BeTi_out.xml')
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
-        
+
     expected_parser_info_out = {
          'last_iteration_parsed': 1,
          'parser_info': 'AiiDA Fleur Parser v0.2beta',
@@ -137,7 +138,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
                       {'bandgap': None, 'iteration': '    1'},
                       {'fermi_energy': None, 'iteration': '    1'},
                       {'charge_density': None, 'iteration': '    1'}]}
-    
+
     assert successful == True
     assert 1 == parser_info_out['last_iteration_parsed']
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
@@ -147,7 +148,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
 def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     """
     tests the behavior of the parse_xmlout_file routine in the case of an individual 'garbage' in the out.xml file.
-    Fortran NANs and INFs will be parsed fine, ** will not be parsed.    
+    Fortran NANs and INFs will be parsed fine, ** will not be parsed.
     (which can happen in the case of some kill, or Non regular termination of FLEUR)
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
@@ -156,14 +157,14 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     filename = os.path.abspath('./files/outxml/special/Fortran_garbage_BeTi_out.xml')
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
-    
+
     exp_partial_simple_out_dict = {
         'bandgap_units': 'eV',
         'energy': float('Inf'),
         'energy_hartree':  float('Inf'),
         'fermi_energy': float('NaN'),
         'warnings': {'debug': {}, 'error': {}, 'info': {}, 'warning': {}}}
-    
+
     expected_parser_info_out = {
          'parser_info': 'AiiDA Fleur Parser v0.2beta',
          'parser_warnings': ['Could not convert: "**" to float, ValueError',
@@ -174,17 +175,17 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     #TODO maybe in the case on unpared, things should be initialized, here they are missing...
     def isNaN(num):
         return num != num
-    
+
     assert successful == True
     assert exp_partial_simple_out_dict['energy'] == simple_out['energy']
     assert exp_partial_simple_out_dict['energy_hartree'] == simple_out['energy_hartree']
     assert isNaN(exp_partial_simple_out_dict['fermi_energy']) == isNaN(simple_out['fermi_energy'])
     assert 'bandgap' not in list(simple_out.keys())
-    
+
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
 
-    
+
 def test_parse_xmlout_file_empty_file():
     """
     tests the behavior of the parse_xmlout_file routine in the case of an empty file
@@ -195,7 +196,7 @@ def test_parse_xmlout_file_empty_file():
     filename = os.path.abspath('./files/outxml/special/empty_out.xml')
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
-        
+
     expected_parser_info_out = {
          'parser_info': 'AiiDA Fleur Parser v0.2beta',
          'parser_warnings': ['The out.xml file is broken I try to repair it.',
@@ -224,9 +225,9 @@ def test_fleurparse_all_xmlout_file(xmloutfile):
     tests if the routine that parsers the outputfile, succeeds for all out files
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    
+
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(xmloutfile)
-    
+
     assert successful == True
 
 
@@ -237,7 +238,7 @@ def parse_dos_file():
     """
     from aiida_fleur.parsers.fleur import parse_dos_file
     pass
-    
+
     # test if array data is prodcued without error
 
 
@@ -251,7 +252,7 @@ def test_parse_bands_file():
     pass
 
     # test if a bandsdata object is produced
-    
+
 
 
 
