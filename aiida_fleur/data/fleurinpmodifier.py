@@ -184,16 +184,14 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
                                                    attributedict,
                                                    position=position,
-                                                   species=species,
-                                                   create=create)
+                                                   species=species)
             return fleurinp_tree_copy
 
         def change_atomgr_att2(fleurinp_tree_copy, attributedict,
                                atom_label, create=False):
             fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy,
                                                          attributedict,
-                                                         at_label=atom_label,
-                                                         create=create)
+                                                         at_label=atom_label)
             return fleurinp_tree_copy
 
         def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename,
@@ -205,8 +203,7 @@ class FleurinpModifier(object):
                                                 attributename,
                                                 set_val,
                                                 mode=mode,
-                                                occ=occ,
-                                                create=create)
+                                                occ=occ)
             return fleurinp_tree_copy
 
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
