@@ -104,6 +104,7 @@ def generate_calc_job_node():
         node.set_attribute('output_filename', 'aiida.out')
         node.set_attribute('error_filename', 'aiida.err')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        node.set_option('withmpi', True)
         node.set_option('max_wallclock_seconds', 1800)
 
         if attributes:
@@ -114,7 +115,7 @@ def generate_calc_job_node():
                 input_node.store()
                 node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
-        node.store()
+        # node.store()
 
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
@@ -256,3 +257,66 @@ def inpxml_etree():
             tree = etree.parse(inpxmlfile)
         return tree
     return _get_etree
+
+
+@pytest.fixture
+def generate_work_chain_node():
+    """Fixture to generate a mock `CalcJobNode` for testing parsers."""
+
+    def flatten_inputs(inputs, prefix=''):
+        """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
+        flat_inputs = []
+        for key, value in six.iteritems(inputs):
+            if isinstance(value, collections.Mapping):
+                flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
+            else:
+                flat_inputs.append((prefix + key, value))
+        return flat_inputs
+
+    def _generate_work_chain_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
+        """Fixture to generate a mock `CalcJobNode` for testing parsers.
+
+        :param entry_point_name: entry point name of the calculation class
+        :param computer: a `Computer` instance
+        :param test_name: relative path of directory with test output files in the `fixtures/{entry_point_name}` folder.
+        :param inputs: any optional nodes to add as input links to the corrent CalcJobNode
+        :param attributes: any optional attributes to set on the node
+        :return: `CalcJobNode` instance with an attached `FolderData` as the `retrieved` node
+        """
+        from aiida import orm
+        from aiida.common import LinkType
+        from aiida.plugins.entry_point import format_entry_point_string
+
+        entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
+
+        node = orm.WorkChainNode(computer=computer, process_type=entry_point)
+
+        if attributes:
+            node.set_attribute_many(attributes)
+
+        if inputs:
+            for link_label, input_node in flatten_inputs(inputs):
+                input_node.store()
+                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+
+        node.store()
+
+        if test_name is not None:
+            basepath = os.path.dirname(os.path.abspath(__file__))
+            filepath = os.path.join(
+                basepath, 'parsers', 'fixtures', entry_point_name[len(
+                    'quantumespresso.'):], test_name
+            )
+
+            retrieved = orm.FolderData()
+            retrieved.put_object_from_tree(filepath)
+            retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+            retrieved.store()
+
+            remote_folder = orm.RemoteData(computer=computer, remote_path='/tmp')
+            remote_folder.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
+            remote_folder.store()
+
+        return node
+
+    return _generate_work_chain_node

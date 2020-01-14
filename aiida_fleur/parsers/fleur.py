@@ -609,6 +609,7 @@ def parse_xmlout_file(outxmlfile):
         ##########  all xpaths (maintain this) ############
         # (specifies where to find things in the out.xml) #
 
+
         # density
         densityconvergence_xpath = 'densityConvergence'
         chargedensity_xpath = 'densityConvergence/chargeDensity'
@@ -700,6 +701,8 @@ def parse_xmlout_file(outxmlfile):
 
         film_lat_xpath = '/fleurOutput/inputData/cell/filmLattice/bravaisMatrix/'
         bulk_lat_xpath = '/fleurOutput/inputData/cell/bulkLattice/bravaisMatrix/'
+
+        kmax_xpath = '/fleurOutput/inputData/calculationSetup/cutoffs/@Kmax'
 
         ###################################################
 
@@ -834,6 +837,10 @@ def parse_xmlout_file(outxmlfile):
                 units_e[0], 'str', 'energy_units', simple_data)
         else:
             # total energy
+
+            kmax_used = eval_xpath2(root, kmax_xpath)
+            write_simple_outnode(kmax_used, 'float', 'kmax', simple_data)
+
             units_e = get_xml_attribute(
                 eval_xpath(iteration_node, totalenergy_xpath), units_name)
             write_simple_outnode(

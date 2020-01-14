@@ -435,7 +435,7 @@ def performance_extract_calcs(calcs):
             print(('skipping 3 {}, {}'.format(pk, calc.uuid)))
             continue
 
-        data_dict['bandgap'].append(gap)        
+        data_dict['bandgap'].append(gap)
         data_dict['fermi_energy'].append(efermi)
         data_dict['energy'].append(energy)
         data_dict['force_largest'].append(res.force_largest)
@@ -476,15 +476,16 @@ def performance_extract_calcs(calcs):
         natom = res.number_of_atoms
         data_dict['n_atoms'].append(natom)
 
-        fleurinp = calc.get_inputs_dict()['fleurinpdata']
-        kmax = fleurinp.inp_dict['calculationSetup']['cutoffs']['Kmax']
+        # fleurinp = calc.get_inputs_dict()['fleurinpdata']
+        # kmax = fleurinp.inp_dict['calculationSetup']['cutoffs']['Kmax']
+        kmax = res.kmax
         data_dict['kmax'].append(kmax)
 
 
         cost = calc_time_cost_function(natom, nkpt, kmax, nspins)
         total_cost = cost * niter
 
-        serial = not calc.get_withmpi()
+        serial = not calc.attributes['withmpi']
         #codename = calc.get_code().label
         #code_col.append(codename)
 
@@ -494,7 +495,7 @@ def performance_extract_calcs(calcs):
         #    serial = True
         data_dict['serial'].append(serial)
 
-        resources = calc.get_resources()
+        resources = calc.attributes['resources']
         mpi_proc = get_mpi_proc(resources)
 
         c_ratio = cost_ratio(cost, walltime_new, mpi_proc)
