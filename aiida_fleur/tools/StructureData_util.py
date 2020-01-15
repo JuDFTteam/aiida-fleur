@@ -13,7 +13,7 @@
 """
 Collection of utility routines dealing with StructureData objects
 """
-#TODO move imports to workfuncitons namespace?
+# TODO move imports to workfuncitons namespace?
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -45,34 +45,18 @@ def is_structure(structure):
 
     StructureData = DataFactory('structure')
 
-    #Test if StructureData
+    # Test if StructureData
     if isinstance(structure, StructureData):
         return structure
-    #Test if pk, if yes, is the corresponding node StructureData
-    pk = None
-    try:
-        pk = int(structure)
-    except ValueError:
-        pass
-    if pk:
-        structure = load_node(pk)
-        if isinstance(structure, StructureData):
-            return structure
-        else:
-            return None
-
-    uuid = str(structure)
 
     try:
-        structure = load_node(uuid)
+        structure = load_node(structure)
         if isinstance(structure, StructureData):
             return structure
         else:
             return None
     except NotExistent:
         return None
-
-    return None
 
 
 def is_primitive(structure):
@@ -84,7 +68,7 @@ def is_primitive(structure):
     refined_cell = find_primitive_cell(structure)
 
     prim = False
-    if refined_cell.cell == structure.cell:
+    if all(x in structure.cell for x in refined_cell.cell):
         prim = True
     return prim
 
@@ -119,10 +103,10 @@ def rescale_nowf(inp_structure, scale):
               and None if inp_structure was not a StructureData
     """
 
-    #test if structure:
+    # test if structure:
     structure = is_structure(inp_structure)
     if not structure:
-        #TODO: log something
+        # TODO: log something
         return None
 
     the_ase = structure.get_ase()
@@ -131,10 +115,11 @@ def rescale_nowf(inp_structure, scale):
                      np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
     rescaled_structure.label = '{}  rescaled {}'.format(scale, structure.uuid)
+    rescaled_structure.pbc = structure.pbc
 
     return rescaled_structure
 
-#@cf
+# @cf
 
 
 def rescale_xyz(inp_structure, scalevec):
@@ -173,10 +158,10 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     :returns StructureData, Node with supercell
     """
     #print('in create supercell')
-    #test if structure:
+    # test if structure:
     structure = is_structure(inp_structure)
     if not structure:
-        #TODO: log something
+        # TODO: log something
         return None
     old_cell = structure.cell
     old_a1 = old_cell[0]
@@ -189,20 +174,20 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     na2 = int(n_a2)
     na3 = int(n_a3)
 
-    #new cell
+    # new cell
     new_a1 = [i*na1 for i in old_a1]
     new_a2 = [i*na2 for i in old_a2]
     new_a3 = [i*na3 for i in old_a3]
     new_cell = [new_a1, new_a2, new_a3]
     new_structure = DataFactory('structure')(cell=new_cell, pbc=old_pbc)
 
-    #insert atoms
+    # insert atoms
     # first create all kinds
     old_kinds = structure.kinds
     for kind in old_kinds:
         new_structure.append_kind(kind)
 
-    #scale n_a1
+    # scale n_a1
     for site in old_sites:
         # get atom position
         kn = site.kind_name
@@ -211,7 +196,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
             pos = [pos_o[i] + j * old_a1[i] for i in range(0, len(old_a1))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
-    #scale n_a2
+    # scale n_a2
     o_sites = new_structure.sites
     for site in o_sites:
         # get atom position
@@ -221,7 +206,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
             pos = [pos_o[i] + j * old_a2[i] for i in range(0, len(old_a2))]
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
-    #scale n_a3
+    # scale n_a3
     o_sites = new_structure.sites
     for site in o_sites:
         # get atom position
@@ -238,7 +223,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     return new_structure
 
 
-#### Structure util
+# Structure util
 # after ths is in plugin code import these in fleurinp.
 def abs_to_rel(vector, cell):
     """
@@ -361,7 +346,7 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
         structure, atoms=atoms, site=sites, pos=pos,
         new_kinds_names=new_kinds_names, parameterData=parameterData)
 
-    return new_structure, para_new
+    return {'new_structure': new_structure, 'new_parameters': para_new}
 
 
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
@@ -402,10 +387,10 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     _atomic_numbers = {data['symbol']: num for num,
                        data in six.iteritems(PeriodicTableElements)}
 
-    #get all atoms, get the symbol of the atom
-    #if wanted make individual kind for that atom
-    #kind names will be atomsymbol+number
-    #create new structure with new kinds and atoms
+    # get all atoms, get the symbol of the atom
+    # if wanted make individual kind for that atom
+    # kind names will be atomsymbol+number
+    # create new structure with new kinds and atoms
     #Param = DataFactory('dict')
     symbol_count = {}  # Counts the atom symbol occurrence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
@@ -454,7 +439,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
             if symbol in symbol_count:
                 symbol_count[symbol] = symbol_count[symbol] + 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                print(symbol_new_kinds_names)
+                # print(symbol_new_kinds_names)
                 if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
                     newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
                 else:
@@ -497,7 +482,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
 
                                 symbol_new_kinds_names = new_kinds_names.get(
                                     symbol, [])
-                                #print(symbol_new_kinds_names)
+                                # print(symbol_new_kinds_names)
                                 if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
                                     species_name = symbol_new_kinds_names[symbol_count[symbol]-1]
                                 val_new.update({u'name': species_name})
@@ -505,7 +490,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
                                 new_parameterd[atomlistname] = val_new
             else:
                 pass
-                #TODO write basic parameter data node
+                # TODO write basic parameter data node
         else:
             newkindname = kind_name
             if not kind_name in new_structure.get_kind_names():
@@ -704,8 +689,8 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
                                    lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
                                    max_normal_search=max_normal_search, symmetrize=symmetrize)  # , reorient_lattice=reorient_lattice)
     for slab in all_slabs:
-        #print(slab)
-        #slab2 = #slab.get_orthogonal_c_slab()
+        # print(slab)
+        # slab2 = #slab.get_orthogonal_c_slab()
         film_struc = StructureData(pymatgen_structure=slab)
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
@@ -778,6 +763,8 @@ def center_film(structure):
 
        returns: AiiDA structure
     """
+    if structure.pbc != (True, True, False):
+        raise TypeError('Only film structures having surface normal to z are supported')
     sorted_struc = sort_atoms_z_value(structure)
     sites = sorted_struc.sites
     shift = [0, 0, -(sites[0].position[2]+sites[-1].position[2])/2.0]
@@ -835,14 +822,6 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
                   [0, 1, 0],
                   [0, 0, 1]]
 
-    if replacements is not None:
-        keys = six.viewkeys(replacements)
-        if max((abs(int(x)) for x in keys)) > size[2]:
-            raise ValueError(
-                '"replacements" has to contain numbers less than number of layers')
-    else:
-        replacements = {}
-
     if lattice == 'fcc':
         from ase.lattice.cubic import FaceCenteredCubic
         structure_factory = FaceCenteredCubic
@@ -856,15 +835,29 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
     structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant, size=size)
 
-    *_, layer_occupancies = get_layer_by_number(structure, 0)
-    layer_occupancies.append(0)
+    * _, layer_occupancies = get_layer_by_number(structure, 0)
+
+    if replacements is not None:
+        keys = six.viewkeys(replacements)
+        if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
+            raise ValueError('"replacements" has to contain numbers less than number of layers')
+    else:
+        replacements = {}
+
+    layer_occupancies.append(0)  # technical append
     atoms_to_pop = np.cumsum(np.array(layer_occupancies[-1::-1]))
     for i in range(atoms_to_pop[pop_last_layers]):
         structure.pop()
 
     current_symbols = structure.get_chemical_symbols()
     for i, at_type in six.iteritems(replacements):
-        current_symbols[int(i)] = at_type
+        layer, layer_z, layer_occupancies = get_layer_by_number(structure, i)
+        layer_occupancies.insert(0, 0)
+        if i < 0:
+            i = i - 1
+        atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
+        for k in range(layer_occupancies[i + 1]):
+            current_symbols[k+atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
 
     structure.positions = np.around(structure.positions, decimals=decimals)
@@ -927,6 +920,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
 
     # take relaxed interlayers
     magn_structure = StructureData(cell=sorted_struc.cell)
+    magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
         magn_structure.append_kind(kind)
 

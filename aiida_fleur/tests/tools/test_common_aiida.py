@@ -5,7 +5,7 @@ import json
 import pytest
 
 
-def test_create_group(aiida_profile, clear_database, capsys):
+def test_create_group(capsys):
     "Test group creation"
     from aiida_fleur.tools.common_aiida import create_group
     from aiida.orm import Group, Dict
@@ -45,7 +45,7 @@ def test_create_group(aiida_profile, clear_database, capsys):
     assert len(list_uuid) == 2
 
 
-def test_export_extras(aiida_profile, clear_database, temp_dir):
+def test_export_extras(temp_dir):
     """Test exporting extras to json file"""
     from aiida_fleur.tools.common_aiida import export_extras
     from aiida.orm import Dict
@@ -69,7 +69,7 @@ def test_export_extras(aiida_profile, clear_database, temp_dir):
     assert all(x in test_extras for x in [0, 1, 2])
 
 
-def test_import_extras(aiida_profile, clear_database, temp_dir, capsys):
+def test_import_extras(temp_dir, capsys):
     """Test importing extras from json file"""
     from aiida_fleur.tools.common_aiida import export_extras, import_extras
     from aiida.orm import Dict
@@ -107,7 +107,7 @@ def test_import_extras(aiida_profile, clear_database, temp_dir, capsys):
                             ' (which it is not).\n')
 
 
-def test_delete_trash(aiida_profile, clear_database, monkeypatch):
+def test_delete_trash(monkeypatch):
     """Test removing trash nodes from the DB. Also covers delete_nodes."""
     from aiida_fleur.tools.common_aiida import delete_trash
     from aiida.orm import Dict, load_node
@@ -130,7 +130,7 @@ def test_delete_trash(aiida_profile, clear_database, monkeypatch):
         assert 0
 
 
-def test_get_nodes_from_group(aiida_profile, clear_database):
+def test_get_nodes_from_group():
     """Test retrieving nodes from a given group."""
     from aiida_fleur.tools.common_aiida import get_nodes_from_group
     from aiida_fleur.tools.common_aiida import create_group

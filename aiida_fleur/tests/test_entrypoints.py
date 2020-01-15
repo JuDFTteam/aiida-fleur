@@ -13,7 +13,8 @@
 from __future__ import absolute_import
 import pytest
 
-@pytest.mark.usefixtures("aiida_profile")
+
+@pytest.mark.usefixtures("aiida_profile", "clear_database")
 class TestFleurEntrypoints:
     """
     tests all the entry points of the Fleur plugin. Therefore if the plugin is
@@ -33,7 +34,6 @@ class TestFleurEntrypoints:
         fleur_calculation = CalculationFactory('fleur.fleur')
         assert fleur_calculation is not None
 
-
     # Data
 
     def test_fleur_fleurinpdata_entry_point(self):
@@ -42,7 +42,6 @@ class TestFleurEntrypoints:
 
         fleurinp = DataFactory('fleur.fleurinp')
         assert fleurinp == FleurinpData
-
 
     # Parsers
 
@@ -59,7 +58,6 @@ class TestFleurEntrypoints:
 
         parser = ParserFactory('fleur.fleurparser')
         assert parser == FleurParser
-
 
     # Workflows/workchains
 

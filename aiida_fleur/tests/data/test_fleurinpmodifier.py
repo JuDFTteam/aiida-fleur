@@ -21,7 +21,7 @@ inpxmlfilefolder = os.path.dirname(os.path.abspath(__file__))
 inpxmlfilefolder = os.path.abspath(os.path.join(inpxmlfilefolder, file_path1))
 
 
-def test_fleurinp_modifier1(aiida_profile, clear_database, create_fleurinp):
+def test_fleurinp_modifier1(create_fleurinp):
     from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
     fleurinp_tmp = create_fleurinp(inpxmlfilefolder)
 
@@ -38,7 +38,7 @@ def test_fleurinp_modifier1(aiida_profile, clear_database, create_fleurinp):
     fm.freeze()
 
 
-def test_fleurinp_modifier2(aiida_profile, clear_database, create_fleurinp, inpxml_etree):
+def test_fleurinp_modifier2(create_fleurinp, inpxml_etree):
     from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
     from aiida_fleur.tools.xml_util import eval_xpath
     fleurinp_tmp = create_fleurinp(inpxmlfilefolder)

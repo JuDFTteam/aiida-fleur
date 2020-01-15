@@ -4,8 +4,6 @@
 This part of code is copied from aiida-quantumespresso"""
 from __future__ import absolute_import
 
-import shutil
-import tempfile
 import io
 import os
 import collections
@@ -261,7 +259,7 @@ def inpxml_etree():
 
 @pytest.fixture
 def generate_work_chain_node():
-    """Fixture to generate a mock `CalcJobNode` for testing parsers."""
+    """Fixture to generate a mock `WorkChainNode` for testing parsers."""
 
     def flatten_inputs(inputs, prefix=''):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
@@ -274,7 +272,7 @@ def generate_work_chain_node():
         return flat_inputs
 
     def _generate_work_chain_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
-        """Fixture to generate a mock `CalcJobNode` for testing parsers.
+        """Fixture to generate a mock `WorkChainNode` for testing parsers.
 
         :param entry_point_name: entry point name of the calculation class
         :param computer: a `Computer` instance
@@ -287,7 +285,7 @@ def generate_work_chain_node():
         from aiida.common import LinkType
         from aiida.plugins.entry_point import format_entry_point_string
 
-        entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
+        entry_point = format_entry_point_string('aiida.workchains', entry_point_name)
 
         node = orm.WorkChainNode(computer=computer, process_type=entry_point)
 
@@ -297,7 +295,7 @@ def generate_work_chain_node():
         if inputs:
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
-                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+                node.add_incoming(input_node, link_type=LinkType.INPUT_WORK, link_label=link_label)
 
         node.store()
 
@@ -320,3 +318,34 @@ def generate_work_chain_node():
         return node
 
     return _generate_work_chain_node
+
+
+@pytest.fixture
+def generate_film_structure():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_film_structure():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+
+        bohr_a_0 = 0.52917721092  # A
+        a = 7.497 * bohr_a_0
+        cell = [[0.7071068*a, 0.0, 0.0],
+                [0.0, 1.0*a, 0.0],
+                [0.0, 0.0, 0.7071068*a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., -1.99285*bohr_a_0), symbols='Fe')
+        structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
+        structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+        structure.pbc = (True, True, False)
+
+        return structure
+
+    return _generate_film_structure
+
+
+@pytest.fixture(scope='function', autouse=True)
+def clear_database_aiida_fleur(aiida_profile):  # pylint: disable=redefined-outer-name
+    """Clear the database before each test.
+    """
+    aiida_profile.reset_db()

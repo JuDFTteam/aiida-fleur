@@ -4,7 +4,7 @@ import pytest
 
 
 # read-cif_folder
-def test_read_cif_folder_interface(aiida_profile, clear_database, temp_dir):
+def test_read_cif_folder_interface(temp_dir):
     """
     this test set reads in the cif files in the ../files/cif/ directory and subdirs
     it stores the datastructures, with some comments and extras.

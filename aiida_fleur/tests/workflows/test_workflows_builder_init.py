@@ -14,7 +14,8 @@
 from __future__ import absolute_import
 import pytest
 
-@pytest.mark.usefixtures("aiida_profile")
+
+@pytest.mark.usefixtures("aiida_profile", "clear_database")
 class TestFleurWorkchainInterfaces:
     """
     Test all aiida-fleur workflow interfaces
@@ -24,8 +25,8 @@ class TestFleurWorkchainInterfaces:
     # structure, option, fleurinp, wfparameters
     # add to builder and see if he takes it
     # ggf if possible run initial step only, that the input is checked...
-    # In general the interfaces should be fixed and not changed. this is what 
-    # these tests are for, to test be aware of interface breaks 
+    # In general the interfaces should be fixed and not changed. this is what
+    # these tests are for, to test be aware of interface breaks
 
     def test_fleur_scf_wc_init(self):
         """
@@ -35,7 +36,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurScfWorkChain.get_builder()
 
-
     def test_fleur_eos_wc_init(self):
         """
         Test the interface of the eos workchain
@@ -43,7 +43,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.eos import FleurEosWorkChain
 
         builder = FleurEosWorkChain.get_builder()
-
 
     def test_fleur_dos_wc_init(self):
         """
@@ -53,7 +52,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = fleur_dos_wc.get_builder()
 
-
     def test_fleur_band_wc_init(self):
         """
         Test the interface of the band workchain
@@ -62,15 +60,13 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurScfWorkChain.get_builder()
 
-
-    #def test_fleur_band2_wc_init(self):
+    # def test_fleur_band2_wc_init(self):
     #    """
     #    Test the interface of the band2 workchain
     #    """
     #    from aiida_fleur.workflows.band2 import fleur_band2_wc
-    #    
+    #
     #    builder = fleur_band2_wc.get_builder()
-
 
     def test_fleur_corehole_wc_init(self):
         """
@@ -80,7 +76,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = fleur_corehole_wc.get_builder()
 
-
     def test_fleur_initial_cls_wc_init(self):
         """
         Test the interface of the scf workchain
@@ -88,7 +83,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
         builder = fleur_initial_cls_wc.get_builder()
-
 
     def test_fleur_delta_wc_init(self):
         """
@@ -98,7 +92,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = fleur_delta_wc.get_builder()
 
-
     def test_fleur_relax_wc_init(self):
         """
         Test the interface of the relax workchain
@@ -107,7 +100,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurRelaxWorkChain.get_builder()
 
-
     def test_fleur_optimize_para_wc_init(self):
         """
         Test the interface of the optimize_para_ workchain
@@ -115,7 +107,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
 
         builder = fleur_optimize_parameters_wc.get_builder()
-
 
     def test_fleur_mae_wc_init(self):
         """
@@ -132,7 +123,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.mae_conv import FleurMaeConvWorkChain
 
         builder = FleurMaeConvWorkChain.get_builder()
-
 
     def test_fleur_ssdisp_wc_init(self):
         """
