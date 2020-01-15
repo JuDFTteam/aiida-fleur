@@ -46,6 +46,11 @@
             "matplotlib",
             "masci-tools"
         ],
+        "docs":[
+            "Sphinx",
+            "docutils",
+            "sphinx_rtd_theme"
+        ],
         "pre-commit": [
             "pre-commit==1.11.0",
             "yapf==0.24.0",

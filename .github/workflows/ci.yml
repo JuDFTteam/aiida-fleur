@@ -27,7 +27,7 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install -e .
+        pip install -e .[docs]
 
     - name: Build documentation
       env:
