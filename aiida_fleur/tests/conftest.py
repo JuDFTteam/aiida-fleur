@@ -320,3 +320,27 @@ def generate_work_chain_node():
         return node
 
     return _generate_work_chain_node
+
+
+@pytest.fixture
+def generate_film_structure():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_film_structure():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+
+        bohr_a_0 = 0.52917721092  # A
+        a = 7.497 * bohr_a_0
+        cell = [[0.7071068*a, 0.0, 0.0],
+                [0.0, 1.0*a, 0.0],
+                [0.0, 0.0, 0.7071068*a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., -1.99285*bohr_a_0), symbols='Fe')
+        structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
+        structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+        structure.pbc = (True, True, False)
+
+        return structure
+
+    return _generate_film_structure

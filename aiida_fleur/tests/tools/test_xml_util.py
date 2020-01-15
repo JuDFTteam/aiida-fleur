@@ -413,7 +413,7 @@ class TestSetInpchanges:
                       'bravaisMatrix', 'a1']
 
         if any(x in path for x in skip_paths):
-            pytest.skip("this attribute is not tested for FePt/inp.xml")
+            pytest.skip("This attribute is not tested for FePt/inp.xml")
         elif name in self.xml_structure[11].keys():
             set_inpchanges(etree, change_dict={name: 'test'})
             if name not in ['relPos', 'absPos']:
@@ -672,7 +672,7 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt/inp.xml")
+            pytest.skip("This attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 333})
@@ -691,7 +691,7 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt/inp.xml")
+            pytest.skip("This attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 1.2442}, mode='rel')
@@ -743,7 +743,7 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt/inp.xml")
+            pytest.skip("This attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 333)
@@ -762,7 +762,7 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("this attribute is not tested for FePt/inp.xml")
+            pytest.skip("This attribute is not tested for FePt/inp.xml")
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 1.2442, mode='rel')
