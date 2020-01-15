@@ -60,10 +60,6 @@ jobs:
       run:
         pip install -e .
 
-    - name: Run pre-commit
-      run:
-        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
-
   tests:
 
     runs-on: ubuntu-latest
