@@ -4,7 +4,7 @@ import os
 
 
 # is_code
-def test_is_code_interface(aiida_profile, fixture_code):
+def test_is_code_interface(fixture_code):
     from aiida_fleur.tools.common_fleur_wf import is_code
 
     assert is_code('random_string') is None
@@ -60,7 +60,7 @@ def test_get_inputs_fleur():
                            'withmpi': False, 'resources': {"num_machines": 1}}
 
 
-def test_get_inputs_inpgen(aiida_profile, fixture_code, generate_structure):
+def test_get_inputs_inpgen(fixture_code, generate_structure):
     '''
     Tests if get_inputs_fleur assembles inputs correctly.
     Note it is the work of FleurinputgenCalculation
@@ -103,7 +103,7 @@ def test_get_scheduler_extras():
 # test_and_get_codenode
 
 
-def test_test_and_get_codenode_inpgen(aiida_profile, clear_database, fixture_code):
+def test_test_and_get_codenode_inpgen(fixture_code):
     from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
     from aiida.orm import Code
     from aiida.common.exceptions import NotExistent
@@ -132,7 +132,7 @@ def test_test_and_get_codenode_inpgen(aiida_profile, clear_database, fixture_cod
                               "    verdi code setup")
 
 
-def test_get_kpoints_mesh_from_kdensity(aiida_profile, generate_structure):
+def test_get_kpoints_mesh_from_kdensity(generate_structure):
     from aiida_fleur.tools.common_fleur_wf import get_kpoints_mesh_from_kdensity
     from aiida.orm import KpointsData
 
@@ -148,7 +148,7 @@ def test_determine_favorable_reaction():
 # @pytest.mark.skip(reason="There seems to be now way to add outputs to CalcJobNode")
 
 
-def test_performance_extract_calcs(aiida_profile, clear_database, fixture_localhost,
+def test_performance_extract_calcs(fixture_localhost,
                                    generate_calc_job_node):
     from aiida_fleur.tools.common_fleur_wf import performance_extract_calcs
     from aiida.common.links import LinkType
@@ -237,7 +237,7 @@ def test_optimize_calc_options():
     from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 
 
-def test_find_last_in_restart(aiida_profile, clear_database, fixture_localhost,
+def test_find_last_in_restart(fixture_localhost,
                               generate_calc_job_node, generate_work_chain_node):
     from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
     from aiida.common.links import LinkType

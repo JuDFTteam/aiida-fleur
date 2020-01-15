@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 
-def test_is_structure(aiida_profile, clear_database, generate_structure):
+def test_is_structure(generate_structure):
     from aiida_fleur.tools.StructureData_util import is_structure
     from aiida.orm import Dict
 
@@ -21,7 +21,7 @@ def test_is_structure(aiida_profile, clear_database, generate_structure):
     assert is_structure(dict_test.pk) is None
 
 
-def test_is_primitive(aiida_profile, clear_database, generate_structure):
+def test_is_primitive(generate_structure):
     from aiida_fleur.tools.StructureData_util import is_primitive
     structure = generate_structure()
     structure.store()
@@ -39,7 +39,7 @@ def test_is_primitive(aiida_profile, clear_database, generate_structure):
     assert not is_primitive(structure)
 
 
-def test_rescale_nowf(aiida_profile, clear_database, generate_structure):
+def test_rescale_nowf(generate_structure):
     from aiida_fleur.tools.StructureData_util import rescale_nowf
     structure = generate_structure()
     old_cell = np.array(structure.cell)
@@ -55,7 +55,7 @@ def test_rescale_nowf(aiida_profile, clear_database, generate_structure):
         assert tuple(pos * 1.05 ** (1 / 3.) for pos in position) in positions_rescaled
 
 
-def test_supercell(aiida_profile, clear_database, generate_structure):
+def test_supercell(generate_structure):
     from aiida_fleur.tools.StructureData_util import supercell
     from aiida.orm import Int
     from itertools import product
@@ -78,7 +78,7 @@ def test_supercell(aiida_profile, clear_database, generate_structure):
             assert test_pos in positions_rescaled
 
 
-def test_abs_to_rel(aiida_profile, clear_database, generate_structure):
+def test_abs_to_rel(generate_structure):
     from aiida_fleur.tools.StructureData_util import abs_to_rel
 
     structure = generate_structure()
@@ -89,7 +89,7 @@ def test_abs_to_rel(aiida_profile, clear_database, generate_structure):
     assert abs_to_rel([1], cell) == False
 
 
-def test_abs_to_rel_f(aiida_profile, clear_database, generate_film_structure):
+def test_abs_to_rel_f(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import abs_to_rel_f
 
     structure = generate_film_structure()
@@ -101,7 +101,7 @@ def test_abs_to_rel_f(aiida_profile, clear_database, generate_film_structure):
     assert abs_to_rel_f([1], cell, pbc=structure.pbc) == False
 
 
-def test_rel_to_abs(aiida_profile, clear_database, generate_structure):
+def test_rel_to_abs(generate_structure):
     from aiida_fleur.tools.StructureData_util import rel_to_abs
 
     structure = generate_structure()
@@ -112,7 +112,7 @@ def test_rel_to_abs(aiida_profile, clear_database, generate_structure):
     assert rel_to_abs([1], cell) == False
 
 
-def test_rel_to_abs_f(aiida_profile, clear_database, generate_film_structure):
+def test_rel_to_abs_f(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import rel_to_abs_f
 
     structure = generate_film_structure()
@@ -124,7 +124,7 @@ def test_rel_to_abs_f(aiida_profile, clear_database, generate_film_structure):
     assert rel_to_abs_f([1], cell) == False
 
 
-def test_break_symmetry_wf(aiida_profile, clear_database, generate_film_structure):
+def test_break_symmetry_wf(generate_film_structure):
     """
     Check if it does not crash and able to destroy all symmetries
     """
@@ -142,7 +142,7 @@ def test_break_symmetry_wf(aiida_profile, clear_database, generate_film_structur
         assert kind_name in kind_names
 
 
-def test_find_equi_atoms(aiida_profile, clear_database, generate_film_structure):
+def test_find_equi_atoms(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import find_equi_atoms, supercell_ncf
     from numpy import array
 
@@ -160,14 +160,14 @@ def test_find_equi_atoms(aiida_profile, clear_database, generate_film_structure)
     assert n_equi_info_symbol == {'Fe': 1, 'Pt': 2}
 
 
-def test_get_spacegroup(aiida_profile, clear_database, generate_film_structure):
+def test_get_spacegroup(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import get_spacegroup
 
     structure = generate_film_structure()
     assert get_spacegroup(structure) == 'Pmm2 (25)'
 
 
-def test_move_atoms_incell_wf(aiida_profile, clear_database, generate_structure):
+def test_move_atoms_incell_wf(generate_structure):
     from aiida_fleur.tools.StructureData_util import move_atoms_incell_wf
     from aiida.orm import Dict
 
@@ -183,7 +183,7 @@ def test_move_atoms_incell_wf(aiida_profile, clear_database, generate_structure)
         assert np.isclose(test_pos, positions_shifted).all(axis=1).any()
 
 
-def test_find_primitive_cell_wf(aiida_profile, clear_database, generate_structure):
+def test_find_primitive_cell_wf(generate_structure):
     from aiida_fleur.tools.StructureData_util import find_primitive_cell_wf, supercell_ncf
 
     structure_primitive = generate_structure()
@@ -195,7 +195,7 @@ def test_find_primitive_cell_wf(aiida_profile, clear_database, generate_structur
     assert all(x in structure_primitive.cell for x in result.cell)
 
 
-def test_center_film_wf(aiida_profile, clear_database, generate_film_structure, generate_structure):
+def test_center_film_wf(generate_film_structure, generate_structure):
     from aiida_fleur.tools.StructureData_util import center_film_wf, move_atoms_incell, center_film
 
     structure_film = generate_film_structure()
@@ -213,7 +213,7 @@ def test_center_film_wf(aiida_profile, clear_database, generate_film_structure, 
         center_film(structure_bulk)
 
 
-def test_get_layer_by_number(aiida_profile, clear_database, generate_film_structure):
+def test_get_layer_by_number(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import get_layer_by_number
 
     structure = generate_film_structure()
@@ -276,7 +276,7 @@ create_slab_positions = [np.array([[0., 0., 0.],
 
 
 @pytest.mark.parametrize('inputs,symbols,positions', zip(create_slab_inputs, create_slab_chem_elements, create_slab_positions))
-def test_create_manual_slab_ase(aiida_profile, inputs, symbols, positions):
+def test_create_manual_slab_ase(inputs, symbols, positions):
     from aiida_fleur.tools.StructureData_util import create_manual_slab_ase
 
     structure = create_manual_slab_ase(**inputs)
@@ -286,7 +286,7 @@ def test_create_manual_slab_ase(aiida_profile, inputs, symbols, positions):
     assert np.isclose(structure.positions, positions).all()
 
 
-def test_magnetic_slab_from_relaxed(aiida_profile, clear_database, generate_film_structure):
+def test_magnetic_slab_from_relaxed(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import magnetic_slab_from_relaxed, rescale_nowf
     from aiida_fleur.tools.StructureData_util import create_manual_slab_ase
     import math
