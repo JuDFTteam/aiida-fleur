@@ -46,16 +46,16 @@ def extract_structure_info(keys, structures=None):
         qb.append(StructureData)
         structures = qb.all()
         #elapsed = time.time() - t
-        #print "Total number of structures: {} (retrieved in {} s.)".format(len(structures), elapsed)
+        # print "Total number of structures: {} (retrieved in {} s.)".format(len(structures), elapsed)
         #t = time.time()
 
-    #for structure in structures:
+    # for structure in structures:
     #    structure_dict = {}
     #    struc = structure[0]
     #    for key in keys:
     #        structure_dict[key] = get_methods(key)(struc)
 
-    #get information
+    # get information
     for structure in structures:
         structure_dict = {}
 
@@ -81,7 +81,7 @@ def extract_structure_info(keys, structures=None):
         if 'description' in keys:
             structure_dict['description'] = struc.description
         if 'extras' in keys:
-            extras = struc.get_extras()
+            extras = struc.extras
             structure_dict['extras'] = str(extras)
         if 'symmetry' in keys:
             symmetry = get_spacegroup(struc)
@@ -90,7 +90,7 @@ def extract_structure_info(keys, structures=None):
             volume = struc.get_cell_volume()
             structure_dict['volume'] = volume
         if 'child_nodes' in keys:
-            child_nodes = len(struc.get_outputs())
+            child_nodes = len(struc.get_outgoing().all())
             structure_dict['child_nodes'] = child_nodes
         if 'primitive' in keys:
             prim = is_primitive(struc)
@@ -141,29 +141,31 @@ def extract_structure_info(keys, structures=None):
         structure_list.append(structure_dict)
 
     #elapsed = time.time() - t
-    #print "(needed {} s.!!!)".format(elapsed)
+    # print "(needed {} s.!!!)".format(elapsed)
 
     return structure_list
+
 
 def group_member(node):
     """
     Find to what groups a node belongs to.
-    
+
     Comment: currently very greedy!
     """
     from aiida.orm import Group
     member_in = []
-    #get all groups in db
+    # get all groups in db
     # for each group check if node is member of group
     # append group name to member_in
 
-    res = Group.query()
+    res = Group.objects.all()
     for group in res:
-        name = group.name
-        for gnode in group.nodes: # TODO: easier/better way?
+        name = group.label
+        for gnode in group.nodes:  # TODO: easier/better way?
             if gnode.uuid == node.uuid:
                 member_in.append(name)
     return member_in
+
 
 def input_of_workcal(name, node):
     """
@@ -172,26 +174,27 @@ def input_of_workcal(name, node):
     """
     from aiida.orm import WorkChainNode
     process_uuids = []
-    for out in node.get_outputs():
+    for out in node.get_outgoing().all_nodes():
         if isinstance(out, WorkChainNode):
-            label = out.get_attr('_process_label')
+            label = out.get_attribute('process_label')
             if label == name:
                 process_uuids.append(out.uuid)
     return process_uuids
+
 
 def input_of_calcfunctions(node, name=''):
     """
     checks if a given node was input into a certain calcfunction
     and returns a list of calcfunction uuids of calcfunction with the given name
     """
-    from aiida.orm import WorkChainNode
+    from aiida.orm import CalcFunctionNode
     process_uuids = []
     process_names = []
-    outputs = node.get_outputs()
+    outputs = node.get_outgoing().all_nodes()
     for out in outputs:
-        if isinstance(out, WorkChainNode):
-            try:# TODO: is there a better way
-                label = out.get_attr('function_name')
+        if isinstance(out, CalcFunctionNode):
+            try:  # TODO: is there a better way
+                label = out.get_attribute('process_label')
             except AttributeError:
                 label = None
                 continue
@@ -203,38 +206,37 @@ def input_of_calcfunctions(node, name=''):
                 process_names.append(label)
     return process_uuids, process_names
 
+
 def get_cif_file(node):
     """
     Finds out if (a structure) given as input was created from a cif file
     currently with the method wf_struc_from_cif
 
     params: node: structureData node
-    returns [cif_filename, cif_uuid, cif_folder]
+    returns [cif_filename, cif_uuid]
     """
-    from aiida.orm import WorkChainNode
-    from aiida.orm import CifData
-    inputs = node.get_inputs()
-    name = 'wf_struc_from_cif'# TODO: Bad solution, not general for me currently enough
-    cif_uuid, cif_filename, cif_folder = '', '', ''
+    from aiida.orm import CifData, CalcFunctionNode
+    inputs = node.get_incoming().all_nodes()
+    name = 'wf_struc_from_cif'  # TODO: Bad solution, not general for me currently enough
+    cif_uuid, cif_filename = '', ''
     for inp in inputs:
-        if isinstance(inp, WorkChainNode):
-            try:# TODO: is there a better way
-                label = inp.get_attr('function_name') #process_label
+        if isinstance(inp, CalcFunctionNode):
+            try:  # TODO: is there a better way
+                label = inp.get_attribute('process_label')
             except AttributeError:
                 label = None
                 continue
             if label == name:
-                inp_wc = inp.get_inputs()
+                inp_wc = inp.get_incoming().all_nodes()
                 for iwc in inp_wc:
                     if isinstance(iwc, CifData):
                         cif_uuid = iwc.uuid
                         cif_filename = iwc.filename
-                        cif_folder = iwc.folder.abspath
                         break
 
-    return [cif_filename, cif_uuid, cif_folder]
-#wf_struc_from_cif process_label
-#cif.filename
-#cif.uuid
-#cif.folder.abspath
-#wc.get_inputs()
+    return [cif_filename, cif_uuid]
+# wf_struc_from_cif process_label
+# cif.filename
+# cif.uuid
+# cif.folder.abspath
+# wc.get_incoming().all()
