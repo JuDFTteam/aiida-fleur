@@ -29,9 +29,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
 
 class FleurCreateMagneticWorkChain(WorkChain):
     """

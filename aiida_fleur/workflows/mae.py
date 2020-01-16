@@ -34,10 +34,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
 
 class FleurMaeWorkChain(WorkChain):
     """

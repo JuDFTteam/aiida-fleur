@@ -29,7 +29,7 @@
     ],
     "reentry_register": true,
     "install_requires": [
-        "aiida-core >= 1.0.0b1[atomic_tools]",
+        "aiida-core>=1.0.0b6,<2.0.0",
         "lxml >= 3.6.4",
         "pytest-cov >= 2.5.0",
         "pytest >= 2.9",
@@ -46,7 +46,7 @@
             "matplotlib",
             "masci-tools"
         ],
-        "docs":[
+        "docs": [
             "Sphinx",
             "docutils",
             "sphinx_rtd_theme"

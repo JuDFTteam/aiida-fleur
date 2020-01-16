@@ -29,11 +29,8 @@ from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-FleurCalc = CalculationFactory('fleur.fleur')
-# pylint: enable=invalid-name
 
 class FleurRelaxWorkChain(WorkChain):
     """
@@ -44,7 +41,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     _wf_default = {
         'relax_iter': 5,
-        'film_distance_relaxation' : False,
+        'film_distance_relaxation': False,
         'force_criterion': 0.001
     }
 
@@ -135,9 +132,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def get_inputs_first_scf(self):
         """
-        Initialize inputs for the first iteration. Here one can find initialization of different
-        input regimes described in
-        :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.validate()`.
+        Initialize inputs for the first iteration.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
@@ -154,7 +149,7 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.wf_dict['film_distance_relaxation']:
             scf_wf_dict['inpxml_changes'].append(
                 ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
-                                    'species':'all'}))
+                                    'species': 'all'}))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -317,7 +312,7 @@ class FleurRelaxWorkChain(WorkChain):
                'force': self.ctx.forces,
                'force_iter_done': self.ctx.loop_count,
                'last_scf_wc_uuid': self.ctx.scf_res.uuid
-              }
+               }
 
         if self.ctx.final_cell:
             structure = StructureData(cell=self.ctx.final_cell)
@@ -330,7 +325,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if self.ctx.pbc == (True, True, True):
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
                                           symbols=atom[0])
-                else: # assume z-direction is orthogonal to xy
+                else:  # assume z-direction is orthogonal to xy
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a),
                                           symbols=atom[0])
 
@@ -352,6 +347,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
+
 @cf
 def save_structure(structure):
     """
@@ -359,6 +355,7 @@ def save_structure(structure):
     """
     structure_return = structure.clone()
     return structure_return
+
 
 @cf
 def save_output_node(out):

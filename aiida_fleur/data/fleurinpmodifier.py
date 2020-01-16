@@ -24,8 +24,6 @@ from lxml import etree
 from aiida.plugins import DataFactory
 from aiida.engine.processes.functions import calcfunction as cf
 
-FleurinpData = DataFactory('fleur.fleurinp')
-
 
 class FleurinpModifier(object):
     """

@@ -36,9 +36,7 @@ from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_struc
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurEosWorkChain(WorkChain):

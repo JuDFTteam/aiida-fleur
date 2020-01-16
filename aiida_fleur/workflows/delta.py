@@ -38,7 +38,7 @@ import six
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
-FleurInpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_delta_wc(WorkChain):

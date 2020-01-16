@@ -29,7 +29,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 import six
 
-FleurInpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_dos_wc(WorkChain):
@@ -56,8 +56,8 @@ class fleur_dos_wc(WorkChain):
                         'nkpts' : 800,
                         'sigma' : 0.005,
                         'emin' : -0.30,
-                        'emax' :  0.80}    
-    
+                        'emax' :  0.80}
+
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
@@ -65,7 +65,7 @@ class fleur_dos_wc(WorkChain):
                    default=Dict(dict=cls._default_wf_para))#
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("settings", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False, 
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_options))
         spec.input("fleurinp", valid_type=FleurInpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
@@ -107,10 +107,10 @@ class fleur_dos_wc(WorkChain):
         inputs = self.inputs
         if 'options' in inputs:
             self.ctx.options = inputs.options.get_dict()
-        
+
         if 'remote_data' in inputs:
             self.ctx.remote = inputs.remote_data
-            
+
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
@@ -164,7 +164,7 @@ class fleur_dos_wc(WorkChain):
         code = self.inputs.fleur
 
         options = self.ctx.options
-        
+
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurCalculation, **inputs)
 

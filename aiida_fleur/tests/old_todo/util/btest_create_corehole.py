@@ -16,14 +16,13 @@ import sys,os
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_fleur_ad.util.create_corehole import create_corehole, create_corehole_fleurinp, write_change
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida.plugins import Code, CalculationFactory, DataFactory
 from aiida.orm import load_node
 from pprint import pprint
 from aiida_fleur.tools.StructureData_util import break_symmetry as bs
 
-StructureData = DataFactory('structure')
-ParameterData = DataFactory('parameter')
-FleurinpData = DataFactory('fleur.fleurinp')
+from aiida.orm import StructureData
 '''
 ids = [13586, 13934, 12748]#, 12927]
 

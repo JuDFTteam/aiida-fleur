@@ -17,6 +17,7 @@ allows to add scenarios to restart a calculation in an
 automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
+from aiida_fleur.data.fleurinp import FleurinpData
 import six
 
 from aiida import orm
@@ -27,10 +28,7 @@ from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
 
-# pylint: disable=invalid-name
-FleurProcess = CalculationFactory('fleur.fleur')
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.calculation.fleur import FleurCalculation as FleurProcess
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""

@@ -28,7 +28,7 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
 
-FleurinpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_band_wc(WorkChain):
@@ -42,7 +42,7 @@ class fleur_band_wc(WorkChain):
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
     _workflowversion = "0.3.3"
-    
+
     _default_options = {'resources': {"num_machines": 1},
                         'max_wallclock_seconds': 60*60,
                         'queue_name': '',
@@ -55,13 +55,13 @@ class fleur_band_wc(WorkChain):
                         'sigma' : 0.005,
                         'emin' : -0.50,
                         'emax' :  0.90}
-    
+
     @classmethod
     def define(cls, spec):
         super(fleur_band_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_wf_para))
-        spec.input("options", valid_type=Dict, required=False, 
+        spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_wf_para))
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
@@ -89,7 +89,7 @@ class fleur_band_wc(WorkChain):
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
-        
+
         inputs = self.inputs
 
         wf_dict = inputs.wf_parameters.get_dict()
@@ -102,10 +102,10 @@ class fleur_band_wc(WorkChain):
         #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
         #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
         #self.ctx.queue = wf_dict.get('queue_name', None)
-        
+
         if 'options' in inputs:
             self.ctx.options = inputs.options.get_dict()
-            
+
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
@@ -144,8 +144,8 @@ class fleur_band_wc(WorkChain):
         remote = self.inputs.remote_data
         code = self.inputs.fleur
         options = self.ctx.options
-        
-        
+
+
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = self.submit(FleurCalculation, **inputs)
 

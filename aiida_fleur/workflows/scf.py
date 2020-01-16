@@ -37,9 +37,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
 
 class FleurScfWorkChain(WorkChain):
     """

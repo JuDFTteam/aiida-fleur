@@ -1223,7 +1223,7 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
 def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None):
     """
     Routine adds something to the value of an attribute in the xml file (should be a number here)
-    This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shoft_value()` which
+    This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shift_value()` which
     allows one to specife an arbitrary xml path.
 
     :param: an etree a xpath from root to the attribute and the attribute value

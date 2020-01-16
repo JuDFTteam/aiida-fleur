@@ -24,6 +24,7 @@ Layout:
 # 1. Load the database environment. Imports and base class creation
 
 from __future__ import absolute_import
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
@@ -34,11 +35,10 @@ from aiida.engine.launch import submit, run
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 
 ParameterData = DataFactory('parameter')
-FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
 
-#######################    
+#######################
 # 2. Creation/loding of input nodes
 
 # Load the codes, thwy have to be setup in your database.
@@ -48,7 +48,7 @@ fleur_code =  Code.get_from_string(fleur_label)
 inpgen_code = Code.get_from_string(inpgen_label)
 
 ### Create wf_parameters (optional) and options
-wf_para = Dict(dict={'fleur_runmax' : 4, 
+wf_para = Dict(dict={'fleur_runmax' : 4,
                               'points' : 4,
                               'guess' : 1.0})
 
@@ -56,7 +56,7 @@ options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : '',
                               'max_wallclock_seconds':  60*60})
 
-# Create W bcc crystal structure 
+# Create W bcc crystal structure
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
@@ -96,9 +96,9 @@ inputs['label'] = 'eos test on W'
 inputs['options'] = options
 
 # submit workchain to the daemon
-# Noice that the nodes we created before are not yet stored in the database, 
-# but AiiDA will do so automaticly when we launch the workchain. 
-# To reuse nodes it might be a good idea, to save them before by hand and then load them 
+# Noice that the nodes we created before are not yet stored in the database,
+# but AiiDA will do so automaticly when we launch the workchain.
+# To reuse nodes it might be a good idea, to save them before by hand and then load them
 res = submit(FleurEosWorkChain, **inputs)
 
 # You can also run the workflow in the python interpreter as blocking

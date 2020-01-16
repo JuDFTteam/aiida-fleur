@@ -26,10 +26,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
 
 class FleurMaeConvWorkChain(WorkChain):
     """

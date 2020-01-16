@@ -5,33 +5,33 @@ This test tries to create a fleurinpdata and to modefy it
 """
 from __future__ import absolute_import
 from __future__ import print_function
+from aiida.orm import ParameterData
+import time
+import os
+from lxml.etree import XMLSyntaxError
+from lxml import etree
+from pprint import pprint
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida.plugins import DataFactory
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-from aiida.plugins import DataFactory
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from pprint import pprint
-from lxml import etree
-from lxml.etree import XMLSyntaxError
-import os
 
-import time
 start_time = time.time()
 
-ParameterData = DataFactory('parameter')
-FleurInpData = DataFactory('fleur.fleurinp')
 
-#schemanameQq
+# schemanameQq
 
 
-path = os.getcwd()#path.realpath(__file__)
+path = os.getcwd()  # path.realpath(__file__)
 print(path)
-filepath = path + '/inp.xml'  
-#'/Users/broeder/aiida/scratch/broeder/aiida_run2/ff/4c/c14d-8a1b-40b3-af95-400e23002bcb/inp.xml'
+filepath = path + '/inp.xml'
+# '/Users/broeder/aiida/scratch/broeder/aiida_run2/ff/4c/c14d-8a1b-40b3-af95-400e23002bcb/inp.xml'
 
-new_fleurinpData = FleurInpData(files= [filepath])
-#print(new_fleurinpData.get_file_abs_path('inp.xml'))
-#new_fleurinpData.store()
+new_fleurinpData = FleurInpData(files=[filepath])
+# print(new_fleurinpData.get_file_abs_path('inp.xml'))
+# new_fleurinpData.store()
 
 #new_fleurinpData= load_node(6)
 
@@ -45,8 +45,8 @@ fleurmode.set_inpchanges({'dos': True})
 tria = True
 nkpts = 800
 
-change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : -0.8,
-               'maxEnergy' : 0.8, 'sigma' : 0.005}
+change_dict = {'dos': True, 'ndir': -1, 'minEnergy': -0.8,
+               'maxEnergy': 0.8, 'sigma': 0.005}
 
 fleurmode.set_inpchanges(change_dict)
 if tria:
@@ -109,13 +109,12 @@ new_e.set('type', "SCLO")
 #fleurmode.set_species('W-2', {'lo': [{'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 3}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 4}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 5}, {'type':"SCLO", 'l' : 1, 'n' : 5, 'eDeriv'  : 6}]}, True)
 '''
 
-#fleurmode.changes()
-fleurmode.show(validate=True)#, display=False)
+# fleurmode.changes()
+fleurmode.show(validate=True)  # , display=False)
 
 print(fleurmode._original)
 print(fleurmode._tasks)
-out=''#fleurmode.freeze()
+out = ''  # fleurmode.freeze()
 
 print('out: {}'.format(out))
 print('in: {}'.format(new_fleurinpData))
-

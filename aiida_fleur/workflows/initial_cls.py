@@ -33,14 +33,13 @@ from aiida.orm import Code, load_node, Group
 from aiida.orm import StructureData, Dict, RemoteData
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
+from aiida_fleur.data.fleurinp import FleurinpData
 import six
 
 
-FleurinpData = DataFactory('fleur.fleurinp')
-FleurCalc = CalculationFactory('fleur.fleur')
 
 
 class fleur_initial_cls_wc(WorkChain):
@@ -90,8 +89,8 @@ class fleur_initial_cls_wc(WorkChain):
                         #'max_memory_kb' : None,
                         'import_sys_environment' : False,
                         'environment_variables' : {}}
-    
-                        
+
+
     ERROR_INVALID_INPUT_RESOURCES = 1
     ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
     ERROR_INVALID_CODE_PROVIDED = 3
@@ -101,7 +100,7 @@ class fleur_initial_cls_wc(WorkChain):
     ERROR_FLEUR_CALCULATION_FALIED = 7
     ERROR_CONVERGENCE_NOT_ARCHIVED = 8
     ERROR_REFERENCE_MISSING = 9
-    
+
 
     @classmethod
     def define(cls, spec):
@@ -412,7 +411,7 @@ class fleur_initial_cls_wc(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
-        #wf_parameter['options'] = self.ctx.options        
+        #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
         res_all = []
         options = Dict(dict=self.ctx.options)
@@ -529,7 +528,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = para
         wf_parameter['serial'] = self.ctx.serial
         # TODO maybe use less resources, or default of one machine
-        #wf_parameter['options'] = self.ctx.options 
+        #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
         options = Dict(dict=self.ctx.options)
 
@@ -731,7 +730,7 @@ class fleur_initial_cls_wc(WorkChain):
                 ref_total_en_norm[list(elm_dict.keys())[0]] = 1.0* val/list(elm_dict.values())[0]
             #print ref_total_en_norm
             #print total_en
-            
+
             formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
         else:
             formation_energy = [[]]
@@ -821,9 +820,9 @@ class fleur_initial_cls_wc(WorkChain):
         self.report(errormsg) # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
-        
-        return        
-       
+
+        return
+
 
 
 @cf
