@@ -48,27 +48,28 @@ class fleur_dos_wc(WorkChain):
     _default_options = {'resources': {"num_machines": 1},
                         'max_wallclock_seconds': 60*60,
                         'queue_name': '',
-                        'custom_scheduler_commands' : '',
-                        #'max_memory_kb' : None,
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
-    _default_wf_para = {'tria' : True,
-                        'nkpts' : 800,
-                        'sigma' : 0.005,
-                        'emin' : -0.30,
-                        'emax' :  0.80}
+                        'custom_scheduler_commands': '',
+                        # 'max_memory_kb' : None,
+                        'import_sys_environment': False,
+                        'environment_variables': {}}
+    _default_wf_para = {'tria': True,
+                        'nkpts': 800,
+                        'sigma': 0.005,
+                        'emin': -0.30,
+                        'emax':  0.80}
 
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
         spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))#
+                   default=Dict(dict=cls._default_wf_para))
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("settings", valid_type=Dict, required=False)
         spec.input("options", valid_type=Dict, required=False,
                    default=Dict(dict=cls._default_options))
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
-        spec.input("remote_data", valid_type=RemoteData, required=False)#TODO ggf run convergence first
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
+        # TODO ggf run convergence first
+        spec.input("remote_data", valid_type=RemoteData, required=False)
         #spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.outline(
@@ -77,19 +78,18 @@ class fleur_dos_wc(WorkChain):
             cls.run_fleur,
             cls.return_results
         )
-        #spec.dynamic_output()
-
+        # spec.dynamic_output()
 
     def start(self):
         '''
         check parameters, what condictions? complete?
         check input nodes
         '''
-        ### input check ### ? or done automaticly, how optional?
+        # input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
         self.report("Started dos workflow version {}"
-                    #"Workchain node identifiers: ")#{}"
-                    "".format(self._workflowversion))#ProcessRegistry().current_calc_node))
+                    # "Workchain node identifiers: ")#{}"
+                    "".format(self._workflowversion))  # ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
@@ -117,7 +117,7 @@ class fleur_dos_wc(WorkChain):
             except ValueError:
                 error = ("The code you provided for FLEUR does not "
                          "use the plugin fleur.fleur")
-                #self.control_end_wc(error)
+                # self.control_end_wc(error)
                 self.report(error)
                 return 1
 
@@ -136,11 +136,11 @@ class fleur_dos_wc(WorkChain):
 
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
 
-        #change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
-        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
-        #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
-        change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : emin,
-                       'maxEnergy' : emax, 'sigma' : sigma}
+        # change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
+        # 'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
+        # 'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
+        change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin,
+                       'maxEnergy': emax, 'sigma': sigma}
 
         fleurmode.set_inpchanges(change_dict)
         if tria:
@@ -148,12 +148,12 @@ class fleur_dos_wc(WorkChain):
             fleurmode.set_inpchanges(change_dict)
         if nkpts:
             fleurmode.set_nkpts(count=nkpts)
-            #fleurinp_new.replace_tag()
-        fleurmode.show(validate=True, display=False) # needed?
+            # fleurinp_new.replace_tag()
+        fleurmode.show(validate=True, display=False)  # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp1 = fleurinp_new
-        #print(fleurinp_new)
-        #print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
+        # print(fleurinp_new)
+        # print(fleurinp_new.folder.get_subfolder('path').get_abs_path(''))
 
     def run_fleur(self):
         """
@@ -168,8 +168,7 @@ class fleur_dos_wc(WorkChain):
         inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
         future = submit(FleurCalculation, **inputs)
 
-        return ToContext(last_calc=future) #calcs.append(future),
-
+        return ToContext(last_calc=future)  # calcs.append(future),
 
     def return_results(self):
         '''
@@ -177,16 +176,17 @@ class fleur_dos_wc(WorkChain):
         '''
         # TODO more here
         self.report('Dos workflow Done')
-        #self.report('A DOS was calculated for calculation {} and is found under pk=, '
+        # self.report('A DOS was calculated for calculation {} and is found under pk=, '
         #      'calculation {}')#.format(self.ctx.last_calc, ctx['last_calc'] )
 
-        #check if dos file exists: if not succesful = False
-        #TODO be careful with general DOS.X
-        dosfilename = 'DOS.1' # ['DOS.1', 'DOS.2', ...]
+        # check if dos file exists: if not succesful = False
+        # TODO be careful with general DOS.X
+        dosfilename = 'DOS.1'  # ['DOS.1', 'DOS.2', ...]
         # TODO this should be easier...
-        dosfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(dosfilename)
+        dosfilepath = self.ctx.last_calc.get_outputs_dict(
+        )['retrieved'].folder.get_subfolder('path').get_abs_path(dosfilename)
         print(dosfilepath)
-        #dosfilepath = "path to dosfile" # Array?
+        # dosfilepath = "path to dosfile" # Array?
         if os.path.isfile(dosfilepath):
             self.ctx.successful = True
         else:
@@ -204,16 +204,16 @@ class fleur_dos_wc(WorkChain):
         outputnode_dict['dosfile'] = dosfilepath
         # add nkpoints, emin, emax, sigma, tria
 
-        #print outputnode_dict
+        # print outputnode_dict
         outputnode = Dict(dict=outputnode_dict)
         outdict = {}
-        #TODO parse dos to dosnode
+        # TODO parse dos to dosnode
         #dosnode = ''
         #outdict['output_band'] = dosnode
-        #or if spin =2
+        # or if spin =2
         #outdict['output_band1'] = dosnode1
         #outdict['output_band2'] = dosnode2
         outdict['output_dos_wc_para'] = outputnode
-        #print outdict
+        # print outdict
         for k, v in six.iteritems(outdict):
             self.out(k, v)

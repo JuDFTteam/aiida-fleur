@@ -28,7 +28,7 @@ from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHand
 
 # pylint: disable=invalid-name
 RelaxProcess = WorkflowFactory('fleur.relax')
-FleurInpData = DataFactory('fleur.fleurinp')
+FleurinpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):

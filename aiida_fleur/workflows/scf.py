@@ -92,7 +92,7 @@ class FleurScfWorkChain(WorkChain):
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("settings", valid_type=Dict, required=False)
         spec.input("options", valid_type=Dict, required=False)
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
         spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
@@ -112,7 +112,7 @@ class FleurScfWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('fleurinp', valid_type=FleurInpData)
+        spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
@@ -338,12 +338,12 @@ class FleurScfWorkChain(WorkChain):
             retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
             try:
                 if self.ctx.wf_dict['use_relax_xml']:
-                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                    fleurin = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
                     self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
                 else:
                     raise ValueError
             except ValueError:
-                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
                 self.report('INFO: generated FleurinpData from inp.xml')
             fleurin.store()
         elif 'structure' in inputs:

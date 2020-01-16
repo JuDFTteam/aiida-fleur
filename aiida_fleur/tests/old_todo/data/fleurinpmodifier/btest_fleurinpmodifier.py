@@ -29,7 +29,7 @@ print(path)
 filepath = path + '/inp.xml'
 # '/Users/broeder/aiida/scratch/broeder/aiida_run2/ff/4c/c14d-8a1b-40b3-af95-400e23002bcb/inp.xml'
 
-new_fleurinpData = FleurInpData(files=[filepath])
+new_fleurinpData = FleurinpData(files=[filepath])
 # print(new_fleurinpData.get_file_abs_path('inp.xml'))
 # new_fleurinpData.store()
 

@@ -49,7 +49,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                    ' are performed.')
         spec.input('options', valid_type=orm.Dict,
                    help='Optional parameters to set up computational details.')
-        spec.input('fleurinpdata', valid_type=FleurInpData,
+        spec.input('fleurinpdata', valid_type=FleurinpData,
                    help='Optional parameter set up a ready-to-use fleurinp.')
         spec.input('description', valid_type=six.string_types, required=False, non_db=True,
                    help='Calculation description.')

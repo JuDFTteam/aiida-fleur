@@ -73,7 +73,7 @@ class FleurSSDispWorkChain(WorkChain):
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
@@ -251,7 +251,7 @@ class FleurSSDispWorkChain(WorkChain):
                     if isinstance(link.node, CalcJobNode):
                         parent_calc_node = link.node
                 retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
 
         #copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])

@@ -23,6 +23,7 @@ from lxml import etree
 
 from aiida.plugins import DataFactory
 from aiida.engine.processes.functions import calcfunction as cf
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurinpModifier(object):
