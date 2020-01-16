@@ -98,6 +98,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install numpy==1.16.4
+        pip install PyCifRW~=4.4
         pip install -e .
         reentry scan
 
