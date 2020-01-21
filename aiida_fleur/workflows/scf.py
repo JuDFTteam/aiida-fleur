@@ -39,6 +39,7 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 from aiida_fleur.data.fleurinp import FleurinpData
 
+
 class FleurScfWorkChain(WorkChain):
     """
     Workchain for converging a FLEUR calculation (SCF).
@@ -72,9 +73,9 @@ class FleurScfWorkChain(WorkChain):
                    'force_dict': {'qfix': 2,
                                   'forcealpha': 0.5,
                                   'forcemix': 'BFGS'},
-                   'use_relax_xml' : True,
+                   'use_relax_xml': True,
                    'inpxml_changes': [],
-                  }
+                   }
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -87,15 +88,15 @@ class FleurScfWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurScfWorkChain, cls).define(spec)
+        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False)
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("options", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -173,8 +174,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.options = options
 
         self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get(
-            'description', '') + '|fleur_scf_wc|'
+        self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
         self.ctx.default_itmax = self.ctx.wf_dict.get('itmax_per_run', 30)
 
@@ -210,23 +210,35 @@ class FleurScfWorkChain(WorkChain):
         if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
             if 'structure' in inputs:
-                warning = 'WARNING: Ignoring Structure input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: structure input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'inpgen' in inputs:
-                warning = 'WARNING: Ignoring inpgen code input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'calc_parameters' in inputs:
-                warning = 'WARNING: Ignoring parameter input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'remote_data' in inputs:
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
                 self.report(warning)
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
+            if 'structure' in inputs:
+                error = 'ERROR: structure input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            if 'inpgen' in inputs:
+                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
@@ -738,6 +750,7 @@ class FleurScfWorkChain(WorkChain):
         self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def create_scf_result_node(**kwargs):
