@@ -32,8 +32,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('Spin spiral dispersion force theorem.'
-                                              ' All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)

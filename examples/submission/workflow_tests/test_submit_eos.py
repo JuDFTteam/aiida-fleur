@@ -31,7 +31,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('Equation of states. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -52,10 +53,11 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'points': 9,
-                     'step': 0.002,
-                     'guess': 1.00
-                     })
+wf_para = Dict(dict={
+    'points': 9,
+    'step': 0.002,
+    'guess': 1.00
+})
 
 # Fe fcc structure
 bohr_a_0 = 0.52917721092  # A
@@ -69,19 +71,16 @@ structure.append_atom(position=(0.5*a, 0.5*a, 0.0*a), symbols='Fe', name='Fe2')
 structure.append_atom(position=(0.5*a, 0.0*a, 0.5*a), symbols='Fe', name='Fe31')
 structure.append_atom(position=(0.0*a, 0.5*a, 0.5*a), symbols='Fe', name='Fe43')
 parameters = Dict(dict={
-    'comp': {
-        'kmax': 3.4,
-    },
-    'atom': {
-        'element': 'Fe',
-        'bmu': 2.5,
-        'rmt': 2.15
-    },
-    'kpt': {
-        'div1': 4,
-        'div2': 4,
-        'div3': 4
-    }})
+    'comp': {'kmax': 3.4,
+             },
+    'atom': {'element': 'Fe',
+             'bmu': 2.5,
+             'rmt': 2.15
+             },
+    'kpt': {'div1': 4,
+            'div2': 4,
+            'div3': 4
+            }})
 
 wf_para_scf = {'fleur_runmax': 2,
                'itmax_per_run': 120,

@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the FleurMaeWorkChain
+Here we run the FleurSSDispWorkChain
 """
 # pylint: disable=invalid-name
 from __future__ import absolute_import
@@ -32,7 +32,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('MAE force theorem. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -123,18 +124,17 @@ fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
 inpgen_code = is_code(args.inpgen)
 inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
 
-inputs = {'scf': {
-    'wf_parameters': wf_para_scf,
-    'structure': structure,
-    'calc_parameters': parameters,
-    'options': options_scf,
-    'inpgen': inpgen_inp,
-    'fleur': fleur_inp
-},
-    'wf_parameters': wf_para,
-    'fleur': fleur_inp,
-    'options': options
-}
+inputs = {'scf': {'wf_parameters': wf_para_scf,
+                  'structure': structure,
+                  'calc_parameters': parameters,
+                  'options': options_scf,
+                  'inpgen': inpgen_inp,
+                  'fleur': fleur_inp
+                  },
+          'wf_parameters': wf_para,
+          'fleur': fleur_inp,
+          'options': options
+          }
 
 
 submit_wc = False
@@ -142,16 +142,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_mae_wc #####################")
+print("##################### TEST fleur_spst_wc #####################")
 
 if submit_wc:
     res = submit(FleurMaeWorkChain, **inputs)
-    print("##################### Submited fleur_mae_wc #####################")
+    print("##################### Submited fleur_spst_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_mae_wc #####################")
+    print("##################### Finished submiting fleur_spst_wc #####################")
 
 else:
-    print("##################### Running fleur_mae_wc #####################")
+    print("##################### Running fleur_spst_wc #####################")
     res = run(FleurMaeWorkChain, **inputs)
-    print("##################### Finished running fleur_mae_wc #####################")
+    print("##################### Finished running fleur_spst_wc #####################")

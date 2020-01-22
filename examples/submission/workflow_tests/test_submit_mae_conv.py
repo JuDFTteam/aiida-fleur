@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the FleurMaeConvWorkChain
+Here we run the FleurSSDispWorkChain
 """
 # pylint: disable=invalid-name
 from __future__ import absolute_import
@@ -32,7 +32,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('MAE converge. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -114,16 +115,15 @@ fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
 inpgen_code = is_code(args.inpgen)
 inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
 
-inputs = {'scf': {
-    'wf_parameters': wf_para_scf,
-    'structure': structure,
-    'calc_parameters': parameters,
-    'options': options_scf,
-    'inpgen': inpgen_inp,
-    'fleur': fleur_inp
-},
-    'wf_parameters': wf_para
-}
+inputs = {'scf': {'wf_parameters': wf_para_scf,
+                  'structure': structure,
+                  'calc_parameters': parameters,
+                  'options': options_scf,
+                  'inpgen': inpgen_inp,
+                  'fleur': fleur_inp
+                  },
+          'wf_parameters': wf_para
+          }
 
 
 submit_wc = False

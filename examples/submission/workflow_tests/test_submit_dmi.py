@@ -32,7 +32,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('DMI force theorem. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -57,10 +58,7 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax': 1,
-                     'itmax_per_run': 120,
-                     'density_converged': 0.2,
-                     'serial': False,
+wf_para = Dict(dict={'serial': False,
                      'beta': {'123': 1.57079},
                      'sqas_theta': [0.0, 1.57079, 1.57079],
                      'sqas_phi': [0.0, 0.0, 1.57079],
@@ -68,7 +66,6 @@ wf_para = Dict(dict={'fleur_runmax': 1,
                      'q_vectors': [[0.0, 0.0, 0.0],
                                    [0.1, 0.1, 0.0]],
                      'ref_qss': [0.0, 0.0, 0.0],
-                     'input_converged': False,
                      'inpxml_changes': []
                      })
 
@@ -129,18 +126,17 @@ fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
 inpgen_code = is_code(args.inpgen)
 inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
 
-inputs = {'scf': {
-    'wf_parameters': wf_para_scf,
-    'structure': structure,
-    'calc_parameters': parameters,
-    'options': options_scf,
-    'inpgen': inpgen_inp,
-    'fleur': fleur_inp
-},
-    'wf_parameters': wf_para,
-    'fleur': fleur_inp,
-    'options': options
-}
+inputs = {'scf': {'wf_parameters': wf_para_scf,
+                  'structure': structure,
+                  'calc_parameters': parameters,
+                  'options': options_scf,
+                  'inpgen': inpgen_inp,
+                  'fleur': fleur_inp
+                  },
+          'wf_parameters': wf_para,
+          'fleur': fleur_inp,
+          'options': options
+          }
 
 
 submit_wc = False
@@ -148,16 +144,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_dmi_wc #####################")
+print("##################### TEST fleur_spst_wc #####################")
 
 if submit_wc:
     res = submit(FleurDMIWorkChain, **inputs)
-    print("##################### Submited fleur_dmi_wc #####################")
+    print("##################### Submited fleur_spst_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_dmi_wc #####################")
+    print("##################### Finished submiting fleur_spst_wc #####################")
 
 else:
-    print("##################### Running fleur_dmi_wc #####################")
+    print("##################### Running fleur_spst_wc #####################")
     res = run(FleurDMIWorkChain, **inputs)
-    print("##################### Finished running fleur_dmi_wc #####################")
+    print("##################### Finished running fleur_spst_wc #####################")
