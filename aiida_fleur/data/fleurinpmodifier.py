@@ -210,8 +210,8 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
             return fleurinp_tree_copy
 
-        def shift_value1(fleurinp_tree_copy, change_dict):
-            fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict)
+        def shift_value1(fleurinp_tree_copy, change_dict, mode):
+            fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict, mode)
             return fleurinp_tree_copy
 
         def set_nkpts1(fleurinp_tree_copy, count, gamma):

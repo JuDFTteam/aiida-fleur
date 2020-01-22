@@ -26,7 +26,7 @@ Description/Purpose
 ^^^^^^^^^^^^^^^^^^^
 
 This workchain wraps :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`
-into :py:class:`~aiida_fleur.common.workchain.base.restart.BaseRestartWorkChain`
+into BaseRestartWorkChain
 workchain, which is a plain copy of a BaseRestartWorkChain originally implemented in
 AiiDA-QE. This workchain  automatically
 tracks and fixes crashes of the :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`.
