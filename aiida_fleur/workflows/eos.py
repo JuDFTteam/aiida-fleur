@@ -63,7 +63,7 @@ class FleurEosWorkChain(WorkChain):
         'points': 9,
         'step': 0.002,
         'guess': 1.00
-        }
+    }
 
     @classmethod
     def define(cls, spec):
@@ -82,7 +82,9 @@ class FleurEosWorkChain(WorkChain):
         spec.output('output_eos_wc_para', valid_type=Dict)
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
-        #exit codes
+        # exit codes
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message="Invalid input, please check input configuration.")
         spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
 
@@ -92,7 +94,6 @@ class FleurEosWorkChain(WorkChain):
         check input nodes
         """
         self.report("Started eos workflow version {}".format(self._workflowversion))
-
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -117,6 +118,15 @@ class FleurEosWorkChain(WorkChain):
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
+
+        extra_keys = []
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for EOS contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
@@ -238,7 +248,7 @@ class FleurEosWorkChain(WorkChain):
 
         write_defaults_fit = False
         # TODO: different fits
-        if len(en_array): # for some reason just en_array does not work
+        if len(en_array):  # for some reason just en_array does not work
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
 
             for i in volume, bulk_modulus, bulk_deriv, residuals:
@@ -291,7 +301,7 @@ class FleurEosWorkChain(WorkChain):
                'info': self.ctx.info,
                'warnings': self.ctx.warnings,
                'errors': self.ctx.errors
-              }
+               }
 
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
@@ -337,6 +347,7 @@ class FleurEosWorkChain(WorkChain):
 
         return
 
+
 @cf
 def create_eos_result_node(**kwargs):
     """
@@ -359,6 +370,7 @@ def create_eos_result_node(**kwargs):
         outdict['gs_structure'] = gs_structure
 
     return outdict
+
 
 @cf
 def save_structure(structure):
@@ -393,6 +405,8 @@ def eos_structures(inp_structure, scalelist):
     return re_structures
 
 # pylint: disable=invalid-name
+
+
 def birch_murnaghan_fit(energies, volumes):
     """
     least squares fit of a Birch-Murnaghan equation of state curve. From delta project

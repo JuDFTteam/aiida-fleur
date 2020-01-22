@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the FleurSSDispWorkChain
+Here we run the FleurMaeWorkChain
 """
 # pylint: disable=invalid-name
 from __future__ import absolute_import
@@ -32,8 +32,7 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
-                                              'the structure. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('MAE force theorem. All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -57,7 +56,7 @@ args = parser.parse_args()
 
 print(args)
 
-### Defaults ###e
+# Defaults ###e
 wf_para = Dict(dict={'sqa_ref': [0.7, 0.7],
                      'use_soc_ref': False,
                      'sqas_theta': [0.0, 1.57079, 1.57079],
@@ -65,14 +64,14 @@ wf_para = Dict(dict={'sqa_ref': [0.7, 0.7],
                      'serial': False,
                      'soc_off': [],
                      'inpxml_changes': [],
-                    })
+                     })
 
-options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
-                     'queue_name' : 'devel',
-                     'custom_scheduler_commands' : '',
+options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
+                     'queue_name': 'devel',
+                     'custom_scheduler_commands': '',
                      'max_wallclock_seconds':  60*60})
 
-bohr_a_0 = 0.52917721092 # A
+bohr_a_0 = 0.52917721092  # A
 a = 7.497*bohr_a_0
 cell = [[0.7071068*a, 0.0, 0.0],
         [0.0, 1.0*a, 0.0],
@@ -84,35 +83,35 @@ structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={
-    'atom':{
-        'element' : 'Pt',
-        'lmax' : 8
-        },
-    'atom2':{
-        'element' : 'Fe',
-        'lmax' : 8,
-        },
+    'atom': {
+        'element': 'Pt',
+        'lmax': 8
+    },
+    'atom2': {
+        'element': 'Fe',
+        'lmax': 8,
+    },
     'comp': {
         'kmax': 3.8,
-        },
+    },
     'kpt': {
         'div1': 20,
-        'div2' : 24,
-        'div3' : 1
-        }})
+        'div2': 24,
+        'div3': 1
+    }})
 
-wf_para_scf = {'fleur_runmax' : 2,
-               'itmax_per_run' : 120,
-               'density_converged' : 0.2,
-               'serial' : False,
-               'mode' : 'density'
-}
+wf_para_scf = {'fleur_runmax': 2,
+               'itmax_per_run': 120,
+               'density_converged': 0.2,
+               'serial': False,
+               'mode': 'density'
+               }
 
 wf_para_scf = Dict(dict=wf_para_scf)
 
-options_scf = Dict(dict={'resources' : {"num_machines": 2, "num_mpiprocs_per_machine" : 24},
-                         'queue_name' : 'devel',
-                         'custom_scheduler_commands' : '',
+options_scf = Dict(dict={'resources': {"num_machines": 2, "num_mpiprocs_per_machine": 24},
+                         'queue_name': 'devel',
+                         'custom_scheduler_commands': '',
                          'max_wallclock_seconds':  60*60})
 
 ####
@@ -125,18 +124,17 @@ inpgen_code = is_code(args.inpgen)
 inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
 
 inputs = {'scf': {
-                  'wf_parameters' : wf_para_scf,
-                  'structure' : structure,
-                  'calc_parameters' : parameters,
-                  'options' : options_scf,
-                  'inpgen' : inpgen_inp,
-                  'fleur' : fleur_inp
-                 },
-          'wf_parameters' : wf_para,
-          'fleur' : fleur_inp,
-          'options' : options
+    'wf_parameters': wf_para_scf,
+    'structure': structure,
+    'calc_parameters': parameters,
+    'options': options_scf,
+    'inpgen': inpgen_inp,
+    'fleur': fleur_inp
+},
+    'wf_parameters': wf_para,
+    'fleur': fleur_inp,
+    'options': options
 }
-
 
 
 submit_wc = False
@@ -144,16 +142,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_spst_wc #####################")
+print("##################### TEST fleur_mae_wc #####################")
 
 if submit_wc:
     res = submit(FleurMaeWorkChain, **inputs)
-    print("##################### Submited fleur_spst_wc #####################")
+    print("##################### Submited fleur_mae_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_spst_wc #####################")
+    print("##################### Finished submiting fleur_mae_wc #####################")
 
 else:
-    print("##################### Running fleur_spst_wc #####################")
+    print("##################### Running fleur_mae_wc #####################")
     res = run(FleurMaeWorkChain, **inputs)
-    print("##################### Finished running fleur_spst_wc #####################")
+    print("##################### Finished running fleur_mae_wc #####################")

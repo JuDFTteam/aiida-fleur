@@ -82,7 +82,7 @@ def extrac_corelevels(outxml):
 
     try:
         tree = etree.parse(outxmlfile, parser)
-    except XMLSyntaxError:
+    except etree.XMLSyntaxError:
         outfile_broken = True
     #print 'broken xml'
         parser_info['parser_warnings'].append('The out.xml file is broken I try to repair it.')
@@ -92,7 +92,7 @@ def extrac_corelevels(outxml):
         parser = etree.XMLParser(recover=True)#, remove_blank_text=True)
         try:
             tree = etree.parse(outxmlfile, parser)
-        except XMLSyntaxError:
+        except etree.XMLSyntaxError:
             print('here')
             parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False

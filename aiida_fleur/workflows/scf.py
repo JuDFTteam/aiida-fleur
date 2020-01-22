@@ -20,7 +20,6 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from __future__ import absolute_import
 from lxml import etree
-from lxml.etree import XMLSyntaxError
 import six
 from six.moves import range
 
@@ -205,8 +204,16 @@ class FleurScfWorkChain(WorkChain):
         # validate input and find out which path (1, or 2) to take
         # return True means run inpgen if false run fleur directly
         """
-        inputs = self.inputs
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in self._wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for DMI contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
+        inputs = self.inputs
         if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
             if 'structure' in inputs:
@@ -414,7 +421,7 @@ class FleurScfWorkChain(WorkChain):
         apply_c = True
         try:
             fleurmode.show(display=False, validate=True)
-        except XMLSyntaxError:
+        except etree.DocumentInvalid:
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             # fleurmode.show(display=True)#, validate=True)
             self.report(error)

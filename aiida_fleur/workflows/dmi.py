@@ -21,7 +21,7 @@ import copy
 import six
 from six.moves import range
 from six.moves import map
-from lxml.etree import XMLSyntaxError
+from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
@@ -39,6 +39,7 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 from aiida_fleur.data.fleurinp import FleurinpData
 
+
 class FleurDMIWorkChain(WorkChain):
     """
     This workflow calculates spin spiral dispersion of a structure.
@@ -47,32 +48,33 @@ class FleurDMIWorkChain(WorkChain):
     _workflowversion = "0.1.0"
 
     _default_options = {
-        'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 1},
-        'max_wallclock_seconds' : 2*60*60,
-        'queue_name' : '',
-        'custom_scheduler_commands' : '',
-        'import_sys_environment' : False,
-        'environment_variables' : {}
-        }
+        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+        'max_wallclock_seconds': 2*60*60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
 
     _wf_default = {
-        'serial' : False,
-        'beta' : {'all' : 1.57079},
-        'sqas_theta' : [0.0, 1.57079, 1.57079],
-        'sqas_phi' : [0.0, 0.0, 1.57079],
-        'soc_off' : [],
-        'prop_dir' : [1.0, 0.0, 0.0],
+        'serial': False,
+        'beta': {'all': 1.57079},
+        'sqas_theta': [0.0, 1.57079, 1.57079],
+        'sqas_phi': [0.0, 0.0, 1.57079],
+        'soc_off': [],
+        'prop_dir': [1.0, 0.0, 0.0],
         'q_vectors': [[0.0, 0.0, 0.0],
                       [0.125, 0.0, 0.0],
                       [0.250, 0.0, 0.0],
                       [0.375, 0.0, 0.0]],
-        'ref_qss' : [0.0, 0.0, 0.0],
-        'inpxml_changes' : []
-        }
+        'ref_qss': [0.0, 0.0, 0.0],
+        'inpxml_changes': []
+    }
 
     @classmethod
     def define(cls, spec):
         super(FleurDMIWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
@@ -93,7 +95,7 @@ class FleurDMIWorkChain(WorkChain):
 
         spec.output('out', valid_type=Dict)
 
-        #exit codes
+        # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
         spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
@@ -132,6 +134,15 @@ class FleurDMIWorkChain(WorkChain):
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
+
+        extra_keys = []
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for DMI contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
@@ -210,12 +221,12 @@ class FleurDMIWorkChain(WorkChain):
         # set up q vector for the reference calculation
         list_ref_qss = self.ctx.wf_dict['ref_qss']
         if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss' : self.ctx.wf_dict['ref_qss'],
+            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'],
                             'l_noco': True,
                             'ctail': False,
                             'l_ss': True}
         else:
-            changes_dict = {'qss' : ' 0.0 0.0 0.0 ',
+            changes_dict = {'qss': ' 0.0 0.0 0.0 ',
                             'l_noco': False,
                             'ctail': True,
                             'l_ss': False}
@@ -223,17 +234,17 @@ class FleurDMIWorkChain(WorkChain):
         scf_wf_dict['inpxml_changes'].append(
             ('set_inpchanges', {'change_dict': changes_dict}))
 
-        #change beta parameter
+        # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(
                 ('set_atomgr_att_label',
                  {'attributedict': {'nocoParams': [('beta', val)]},
                   'atom_label': key
-                 }))
+                  }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
-        if 'structure' in input_scf: # add info about spin spiral propagation
+        if 'structure' in input_scf:  # add info about spin spiral propagation
             if 'calc_parameters' in input_scf:
                 calc_parameters = input_scf.calc_parameters.get_dict()
             else:
@@ -271,57 +282,58 @@ class FleurDMIWorkChain(WorkChain):
                 retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
                 fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
 
-        #copy inpchanges from wf parameters
+        # copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
-        #create forceTheorem tags
+        # create forceTheorem tags
         fchanges.extend([('create_tag',
                           {'xpath': '/fleurInput',
                            'newelement': 'forceTheorem'
-                          }),
+                           }),
                          ('create_tag',
                           {'xpath': '/fleurInput/forceTheorem',
                            'newelement': 'DMI'
-                          }),
+                           }),
                          ('create_tag',
                           {'xpath': '/fleurInput/forceTheorem/DMI',
                            'newelement': 'qVectors'
-                          }),
+                           }),
                          ('xml_set_attribv_occ',
                           {'xpathn': '/fleurInput/forceTheorem/DMI',
                            'attributename': 'theta',
                            'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
-                          }),
+                           }),
                          ('xml_set_attribv_occ',
                           {'xpathn': '/fleurInput/forceTheorem/DMI',
                            'attributename': 'phi',
                            'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
-                          })
-                        ])
+                           })
+                         ])
 
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
             fchanges.append(('create_tag',
                              {'xpath': '/fleurInput/forceTheorem/DMI/qVectors',
                               'newelement': 'q'
-                             }))
+                              }))
             fchanges.append(('xml_set_text_occ',
                              {'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
                               'text': ' '.join(map(str, vectors)),
                               'create': False,
                               'occ': i
-                             }))
+                              }))
 
-        changes_dict = {'itmax' : 1,
+        changes_dict = {'itmax': 1,
                         'l_noco': True,
                         'ctail': False,
+                        # 'l_soc': True,
                         'l_ss': True}
-        fchanges.append(('set_inpchanges', {'change_dict' : changes_dict}))
+        fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
 
-        #change beta parameter
+        # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label',
                              {'attributedict': {'nocoParams': [('beta', val)]},
                               'atom_label': key
-                             }))
+                              }))
 
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
@@ -329,9 +341,9 @@ class FleurDMIWorkChain(WorkChain):
                              {'at_label': atom_label,
                               'attributedict': {'special': {'socscale': 0.0}},
                               'create': True
-                             }))
+                              }))
 
-        if fchanges:# change inp.xml file
+        if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
             avail_ac_dict = fleurmode.get_avail_actions()
 
@@ -348,16 +360,16 @@ class FleurDMIWorkChain(WorkChain):
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-                else:# apply change
+                else:  # apply change
                     method(**para)
 
             # validate?
             apply_c = True
             try:
                 fleurmode.show(display=False, validate=True)
-            except XMLSyntaxError:
+            except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                #fleurmode.show(display=True)#, validate=True)
+                # fleurmode.show(display=True)#, validate=True)
                 self.control_end_wc(error)
                 apply_c = False
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
@@ -367,7 +379,7 @@ class FleurDMIWorkChain(WorkChain):
                 out = fleurmode.freeze()
                 self.ctx.fleurinp = out
             return
-        else: # otherwise do not change the inp.xml
+        else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
             return
 
@@ -408,10 +420,10 @@ class FleurDMIWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp
 
-        #Do not copy broyd* files from the parent
+        # Do not copy broyd* files from the parent
         settings = {'remove_from_remotecopy_list': ['broyd*']}
 
-        #Retrieve remote folder of the reference calculation
+        # Retrieve remote folder of the reference calculation
         pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
@@ -450,10 +462,10 @@ class FleurDMIWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp
 
-        #Do not copy broyd* files from the parent
+        # Do not copy broyd* files from the parent
         settings = {'remove_from_remotecopy_list': ['broyd*']}
 
-        #Retrieve remote folder from the inputs
+        # Retrieve remote folder from the inputs
         remote = self.inputs.remote
 
         label = 'Force_theorem_calculation'
@@ -526,19 +538,19 @@ class FleurDMIWorkChain(WorkChain):
         """
         This function outputs results of the wc
         """
-        out = {'workflow_name' : self.__class__.__name__,
-               'workflow_version' : self._workflowversion,
+        out = {'workflow_name': self.__class__.__name__,
+               'workflow_version': self._workflowversion,
                # 'initial_structure': self.inputs.structure.uuid,
-               'energies' : self.ctx.t_energydict,
-               'q_vectors' : self.ctx.q_vectors,
-               'theta' : self.ctx.mae_thetas,
-               'phi' : self.ctx.mae_phis,
-               'angles' : self.ctx.num_ang-1,
-               'energy_units' : 'eV',
-               'info' : self.ctx.info,
-               'warnings' : self.ctx.warnings,
-               'errors' : self.ctx.errors,
-              }
+               'energies': self.ctx.t_energydict,
+               'q_vectors': self.ctx.q_vectors,
+               'theta': self.ctx.mae_thetas,
+               'phi': self.ctx.mae_phis,
+               'angles': self.ctx.num_ang-1,
+               'energy_units': 'eV',
+               'info': self.ctx.info,
+               'warnings': self.ctx.warnings,
+               'errors': self.ctx.errors,
+               }
 
         out = save_output_node(Dict(dict=out))
         self.out('out', out)
@@ -548,9 +560,10 @@ class FleurDMIWorkChain(WorkChain):
         Controlled way to shutdown the workchain. will initialize the output nodes
         The shutdown of the workchain will has to be done afterwards
         """
-        self.report(errormsg) # because return_results still fails somewhen
+        self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def save_output_node(out):

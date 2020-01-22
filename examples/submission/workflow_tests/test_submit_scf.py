@@ -59,10 +59,10 @@ print(args)
 
 ### Defaults ###
 wf_para = Dict(dict={'fleur_runmax' : 2,
-                     'density_converge' : 0.001,
-                     'energy_converge' : 0.002,
+                     'density_converged' : 0.001,
+                     'energy_converged' : 0.002,
                      'mode' : 'force', # 'force', 'energy' or 'density'
-                     'force_converge' : 0.02,
+                     'force_converged' : 0.02,
                      'itmax_per_run' : 10,
                      'force_dict' : {'qfix' : 2,
                                      'forcealpha' : 0.5,

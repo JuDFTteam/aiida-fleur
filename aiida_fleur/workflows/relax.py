@@ -113,6 +113,15 @@ class FleurRelaxWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in self._wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)

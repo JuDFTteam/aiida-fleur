@@ -73,8 +73,11 @@ class FleurinpModifier(object):
 
         tree = etree.parse(inpxmlfile, parser)
 
-        if not xmlschema.validate(clear_xml(tree)):
-            raise ValueError("Input file is not validated against the schema.")
+        try:
+            xmlschema.assertValid(clear_xml(tree))
+        except etree.DocumentInvalid:
+            print("Input file is not validated against the schema")
+            raise
 
         new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
                                                              modification_tasks=modification_tasks)
@@ -253,11 +256,12 @@ class FleurinpModifier(object):
 
             workingtree = action(workingtree, *task[1:])
 
-            if schema_tree:
-                if not xmlschema.validate(clear_xml(workingtree)):
-                    # TODO maybe even delete wrong task
-                    #print('changes were not valid: {}({})'.format(task[0], task[1:]))
-                    raise ValueError('changes were not valid: {}({})'.format(task[0], task[1:]))
+        if schema_tree:
+            try:
+                xmlschema.assertValid(clear_xml(workingtree))
+            except etree.DocumentInvalid:
+                print("changes were not valid: {}".format(modification_tasks))
+                raise
 
         return workingtree
 

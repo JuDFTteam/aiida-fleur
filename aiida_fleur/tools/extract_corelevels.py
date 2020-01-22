@@ -22,7 +22,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import six
 from lxml import etree#, objectify
-from lxml.etree import XMLSyntaxError
 
 from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
 #convert_to_float
@@ -145,7 +144,7 @@ def extract_corelevels(outxmlfile, options=None):
 
     try:
         tree = etree.parse(outxmlfile, parser)
-    except XMLSyntaxError:
+    except etree.XMLSyntaxError:
         outfile_broken = True
     #print 'broken xml'
         parser_info['parser_warnings'].append('The out.xml file is broken I try to repair it.')
@@ -155,7 +154,7 @@ def extract_corelevels(outxmlfile, options=None):
         parser = etree.XMLParser(recover=True)#, remove_blank_text=True)
         try:
             tree = etree.parse(outxmlfile, parser)
-        except XMLSyntaxError:
+        except etree.XMLSyntaxError:
             parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False
 

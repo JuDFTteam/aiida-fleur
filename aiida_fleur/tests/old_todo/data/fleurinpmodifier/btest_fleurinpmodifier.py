@@ -8,7 +8,6 @@ from __future__ import print_function
 from aiida.orm import ParameterData
 import time
 import os
-from lxml.etree import XMLSyntaxError
 from lxml import etree
 from pprint import pprint
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier

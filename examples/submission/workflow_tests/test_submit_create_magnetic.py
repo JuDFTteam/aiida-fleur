@@ -10,9 +10,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 
-"""
-Here we run the fleur_scf_wc for Si or some other material
-"""
 # pylint: disable=invalid-name
 from __future__ import absolute_import
 from __future__ import print_function
@@ -30,8 +27,8 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
-                                              'the structure. All arguments are pks, or uuids, '
+parser = argparse.ArgumentParser(description=('Create Magnetic WorkChain.'
+                                              ' All arguments are pks, or uuids, '
                                               'codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                     help='Some workflow parameters', required=False)
@@ -219,16 +216,16 @@ submit_wc = False
 if args.submit is not None:
     submit_wc = submit
 
-print("##################### TEST fleur_relax_wc #####################")
+print("##################### TEST fleur_create_magnetic_wc #####################")
 
 if submit_wc:
     res = submit(FleurCreateMagneticWorkChain, **inputs)
-    print("##################### Submitted fleur_relax_wc #####################")
+    print("##################### Submitted fleur_create_magnetic_wc #####################")
     print(("Runtime info: {}".format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_relax_wc #####################")
+    print("##################### Finished submiting fleur_create_magnetic_wc #####################")
 
 else:
-    print("##################### Running fleur_relax_wc #####################")
+    print("##################### Running fleur_create_magnetic_wc #####################")
     res = run(FleurCreateMagneticWorkChain, **inputs)
-    print("##################### Finished running fleur_relax_wc #####################")
+    print("##################### Finished running fleur_create_magnetic_wc #####################")
