@@ -72,7 +72,7 @@ substrate layers to the bottom. The final structure is z-centralised.
 Input nodes
 ^^^^^^^^^^^
 
-The `~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain` employs
+The :py:class:`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain` employs
 `exposed`_ feature of the AiiDA-core, thus inputs for the
 :ref:`EOS<eos_wc>` and :ref:`relaxation<relax_wc>` workchains should be passed in the namespaces
 ``eos`` and ``relax`` correspondingly (see :ref:`example of usage<example_use_create_magnetic>`).
@@ -127,7 +127,7 @@ on the setup of the inputs, one of four supported scenarios will happen:
 
 Error handling
 ^^^^^^^^^^^^^^
-A list of implemented exit codes:
+A list of implemented :ref:`exit codes<exit_codes>`:
 
 +------+------------------------------------------------------------------------------------------+
 | Code | Meaning                                                                                  |

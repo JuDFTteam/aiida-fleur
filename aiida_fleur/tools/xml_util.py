@@ -1227,9 +1227,11 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None
     allows one to specife an arbitrary xml path.
 
     :param: an etree a xpath from root to the attribute and the attribute value
-
-    :param: mode: 'abs', 'rel', change by absolut or relative amount
-    :return: None, or an etree
+    :param xpathn: an xml path to the attribute to change
+    :param attributename: a name of the attribute to change
+    :param set_val: a value to be added/multiplied to the previous value
+    :param mode: 'abs' if to add set_val, 'rel' if multiply
+    :param occ: a list of integers specifying number of occurrence to be set
 
     Comment: Element.set will add the attribute if it does not exist,
              xpath expression has to exist

@@ -8,29 +8,17 @@ Description
 The :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation` runs Fleur executable e.g.
 ``fleur`` or ``fleur_MPI``.
 
-Not supported code features
-'''''''''''''''''''''''''''''''''
-
-* sparring multiple fleur calculation with on execution of fleur in a certain subdir structure
-  (on can parse the commandline switches, but it will fail, because the subdirs have to be prepared
-  on the machine.)
-* 1D, not supported by the plugin, but currently also not tested in Fleur 0.27
-  (in principal possible, some plugin functionalities have to be updated.)
-
-
-Partially supported
-.......................
-
-* LDA+U, hybrid functionals and Wannier 90
-
-Sketch of nodes
-'''''''''''''''
 .. image:: images/fleur_calc.png
-    :width: 100%
+    :width: 60%
     :align: center
 
 Inputs
 ''''''
+
+To set up an input dictionary, consider using
+:py:func:`~aiida_fleur.tools.common_fleur_wf.get_inputs_fleur()` which assembles input nodes
+in a ready-to-use single dictionary.
+
 The table below shows all possible inputs for the FleurCalculation:
 
 +------------------+--------------+--------------------------------------+----------+
@@ -127,7 +115,7 @@ Example:
       +-> ERROR at 2019-07-17 14:57:01.097337+00:00
       | FLEUR calculation did not finishsuccessfully.
       +-> WARNING at 2019-07-17 14:57:01.056220+00:00
-      | The following was written into std error and piped to out.error : 
+      | The following was written into std error and piped to out.error :
       |  I/O warning : failed to load external entity "relax.xml"
       | rm: cannot remove ‘cdn_last.hdf’: No such file or directory
       | **************juDFT-Error*****************
@@ -140,42 +128,31 @@ Example:
 Moreover, all warnings and errors written by Fleur in the out.xml file are stored in the
 ParameterData under the key ``warnings``, and are accessible with ``Calculation.res.warnings``.
 
-More serious FLEUR calculation failures generate a non-zero exit code. If the exit code is zero,
-that means FLEUR calculation finished successfully:
+More serious FLEUR calculation failures generate a non-zero :ref:`exit code<exit_codes>`.
+Each exit code has it's own reason:
 
-.. code-block:: bash
++-----------+--------------------------------------------------------------+
+| Exit code | Reason                                                       |
++===========+==============================================================+
+| 300       | One of output files can not be opened                        |
++-----------+--------------------------------------------------------------+
+| 301       | No retrieved folder found                                    |
++-----------+--------------------------------------------------------------+
+| 302       | FLEUR calculation failed for unknown reason                  |
++-----------+--------------------------------------------------------------+
+| 303       | XML output file was not found                                |
++-----------+--------------------------------------------------------------+
+| 304       | Parsing of XML output file failed                            |
++-----------+--------------------------------------------------------------+
+| 305       | Parsing of relax XML output file failed                      |
++-----------+--------------------------------------------------------------+
+| 310       | FLEUR calculation failed due to memory issue                 |
++-----------+--------------------------------------------------------------+
+| 311       | FLEUR calculation failed because atoms spilled to the vacuum |
++-----------+--------------------------------------------------------------+
+| 312       | FLEUR calculation failed due to MT overlap                   |
++-----------+--------------------------------------------------------------+
 
-    (aiidapy)$ verdi process list -a -p 1
-       PK  Created    State             Process label             Process status
-     ----  ---------  ----------------  ------------------------  ----------------------------------
-       60  3m ago     ⏹ Finished [0]    FleurCalculation
-       68  3m ago     ⏹ Finished [302]  FleurCalculation
-
-means that the first calculation was successful and the second one failed because it could not open
-one of the output files for some reason. Each exit code has it's own reason:
-
-+-----------+---------------------------------------------+
-| Exit code | Reason                                      |
-+===========+=============================================+
-| 300       | One of output files can not be opened       |
-+-----------+---------------------------------------------+
-| 301       | No retrieved folder found                   |
-+-----------+---------------------------------------------+
-| 302       | FLEUR calculation failed for unknown reason |
-+-----------+---------------------------------------------+
-| 303       | XML output file was not found               |
-+-----------+---------------------------------------------+
-| 304       | Parsing of XML output file failed           |
-+-----------+---------------------------------------------+
-| 305       | Parsing of relax XML output file failed     |
-+-----------+---------------------------------------------+
-| 310       | FLEUR calculation failed due to memory issue|
-+-----------+---------------------------------------------+
-
-.. warning::
-
-    Due to Fleur implementation, the exit status 310 can be thrown only in case of using Intel
-    complier for the Fleur code.
 
 .. _Fleur_settings:
 

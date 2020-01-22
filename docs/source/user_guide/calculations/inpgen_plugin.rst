@@ -7,21 +7,23 @@ Fleur input generator plugin
 
 Description
 '''''''''''
+
 The input generator plugin is capable of running the Fleur input generator (inpgen).
 Similarly to inpgen code,
 :py:class:`~aiida_fleur.calculation.fleurinputgen.FleurinputgenCalculation` accepts
 a :py:class:`~aiida.orm.StructureData` and a list of other parameters via
-**calc_parameters**: :py:class:`~aiida.orm.Dict`
+**calc_parameters** (:py:class:`~aiida.orm.Dict` type)
 containing all other parameters that inpgen accepts as an input.
-As a result, an fleurinpData node
+As a result, an :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` node
 will be created which is a database representation of inp.xml and all other input files for FLEUR.
 
 
-Sketch of nodes
-'''''''''''''''
+To set up an input dictionary, consider using
+:py:func:`~aiida_fleur.tools.common_fleur_wf.get_inputs_inpgen()` which assembles input nodes
+in a ready-to-use single dictionary.
 
 .. image:: images/fleurinpgen_calc.png
-    :width: 100%
+    :width: 60%
     :align: center
 
 Inputs
@@ -29,19 +31,21 @@ Inputs
 The table below shows all the input nodes that can be passed into additional
 :py:class:`~aiida_fleur.calculation.fleurinputgen.FleurinputgenCalculation`:
 
-+------------------+---------------+-------------------------+----------+
-| name             | type          | description             | required |
-+==================+===============+=========================+==========+
-| code             | Code          | Inpgen code             | yes      |
-+------------------+---------------+-------------------------+----------+
-| structure        | StructureData | Structure data node     | yes      |
-+------------------+---------------+-------------------------+----------+
-| parameters       | Dict          | FLAPW parameters        | no       |
-+------------------+---------------+-------------------------+----------+
-| settings         | Dict          | special settings        | no       |
-+------------------+---------------+-------------------------+----------+
-| metadata.options | Dict          | computational resources | yes      |
-+------------------+---------------+-------------------------+----------+
++----------------------+---------------+-------------------------+----------+
+| name                 | type          | description             | required |
++======================+===============+=========================+==========+
+| code                 | Code          | Inpgen code             | yes      |
++----------------------+---------------+-------------------------+----------+
+| structure            | StructureData | Structure data node     | yes      |
++----------------------+---------------+-------------------------+----------+
+| parameters           | Dict          | FLAPW parameters        | no       |
++----------------------+---------------+-------------------------+----------+
+| metadata.options     | Dict          | computational resources | yes      |
++----------------------+---------------+-------------------------+----------+
+| metadata.label       | string        | computational resources | yes      |
++----------------------+---------------+-------------------------+----------+
+| metadata.description | string        | computational resources | yes      |
++----------------------+---------------+-------------------------+----------+
 
 * **code**: :py:class:`Code <aiida.orm.Code>` - the Code node of an inpgen executable
 
@@ -88,7 +92,6 @@ The table below shows all the input nodes that can be passed into additional
   The `atom` namelist can occur several times in the parameter dictionary representing different
   atom species. However, python does not accept the same key twice and one must use `atomN` keys
   where `N` is an integer which will be ignored during the simplified input generation.
-
   Note that there is no need to set `&input film` because it is set automatically according to
   the given **structure** input node. That is also the reason why `&lattice` input parameter is
   ignored, we only support setting structure via **structure** input node.
@@ -98,6 +101,9 @@ The table below shows all the input nodes that can be passed into additional
   An optional dictionary that allows the user to specify if additional files shall be received and
   other advanced non default stuff for inpgen.
 
+To set up an input dictionary, consider using
+:py:func:`~aiida_fleur.tools.common_fleur_wf.get_inputs_inpgen()` which assembles input nodes
+in a ready-to-use single dictionary.
 
 Outputs
 '''''''
@@ -135,7 +141,7 @@ All output nodes can be accessed via ``calculation.outputs``.
 
 Errors
 '''''''
-When a certain error appears, the calculation finishes with a non-zero exit status.
+When a certain error appears, the calculation finishes with a non-zero :ref:`exit code<exit_codes>`.
 
 +-----------+--------------------------------------------------+
 | Exit code | Reason                                           |

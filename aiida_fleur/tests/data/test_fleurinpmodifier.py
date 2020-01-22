@@ -32,7 +32,7 @@ def test_fleurinp_modifier1(create_fleurinp):
     fm.undo()
     changes = fm.changes()
     assert changes == [
-        ('set_inpchanges', {'Kmax': 3.9, 'dos': True}), ('shift_value', {'Kmax': 0.1})]
+        ('set_inpchanges', {'Kmax': 3.9, 'dos': True}), ('shift_value', {'Kmax': 0.1}, 'rel')]
 
     fm.show(validate=True)
     fm.freeze()

@@ -22,8 +22,8 @@ Description/Features
 
 
 :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` is an additional AiiDA data structure which
-represents everything a Fleur
-calculation needs, which is mainly a complete ``inp.xml`` file.
+represents everything a :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`
+needs, which is mainly a complete ``inp.xml`` file.
 
 .. note::
 
@@ -42,12 +42,10 @@ More detailed information about the methods can be found below and in the module
 
 .. note::
 
-          For changing the input file use the class
-          :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` class, because a new
-          :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object has to be stored
-          in the database which will be linked in the
-          database over a CalcFunction to the parent :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`.
-          Otherwise the provenance of from where the new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` comes from is likely lost.
+          If you want to change the input file use the
+          :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` (:ref:`fleurinp_mod`)
+          class, because a :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object
+          has to be stored in the database and usually sealed.
 
 Initialization:
 
@@ -57,34 +55,35 @@ Initialization:
   # or FleurinpData = DataFactory('fleur.fleurinp')
 
   F = FleurinpData(files=['path_to_inp.xml_file', <other files>])
-  #or
+  # or
   F = FleurinpData(files=['inp.xml', <other files>], node=<folder_data_pk>)
 
 If the ``node`` attribute is specified, AiiDA will try to get files from the
 :py:class:`~aiida.orm.FolderData` corresponding
-to the node. If not, it tries to find an ``inp.xml`` file using absolute path
-``path_to_inp.xml_file``. The use of absolute paths will be deprecated in the future hence it is
-recommended to always use files attached to a database node.
+to the node. If not, it tries to find an ``inp.xml`` file using an absolute path
+``path_to_inp.xml_file``.
 
 Be aware that the ``inp.xml`` file name has to be named 'inp.xml', i.e. no file names are
-changed, the files will be given with the provided names to Fleur (so far).
-Also if you add an other inp.xml file the first one will be overwritten.
+changed because the filenames will not be changed before submitting a Fleur Calculation.
+If you add another inp.xml file the first one will be overwritten.
 
 
 Properties
 ----------
 
-    * ``inp_dict``: Returns the inp_dict (the representation of the inp.xml file) as it will or is
+    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_dict`: Returns the
+      inp_dict (the representation of the inp.xml file) as it will or is
       stored in the database.
 
-    * ``files``: Returns a list of files, which were added to FleurinpData. Note that all of these
+    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.files`: Returns a list of files,
+      which were added to FleurinpData. Note that all of these
       files will be copied to the folder where FLEUR will be run.
 
-    * ``_schema_file_path``: Returns the absolute path of the xml schema file used for the current
-      inp.xml file.
+    .. * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData._schema_file_path`: Returns the absolute
+    ..   path of the xml schema file used for the current inp.xml file.
 
 .. note::
-  ``FleurinpData`` will first look in the ``aiida_fleur/fleur_schema/input/`` for matching Fleur
+  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will first look in the ``aiida_fleur/fleur_schema/input/`` for matching Fleur
   xml schema files to the ``inp.xml`` files.
   If it does not find a match there, it will recursively search in your PYTHONPATH
   and the current directory.
@@ -100,7 +99,7 @@ User Methods
       to :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_files()` - Adds several files from a
       folder node to :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
-    * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_fleur_modes()` - Analyse inp.xml and
+    * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_fleur_modes()` - Analyses inp.xml and
       get a corresponding calculation mode.
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_structuredata()` - A CalcFunction which
       returns an AiiDA :py:class:`~aiida.orm.StructureData`

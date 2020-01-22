@@ -8,9 +8,6 @@ Fleur equation of states (eos) workflow
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.eos``
 * **Workflow type**:  Technical
 * **Aim**: Vary the cell volume, to fit an equation of states, (Bulk modulus, ...)
-* **Computational demand**: 5-10 ``Fleur SCF workchains`` in parallel
-* **Database footprint**: Outputnode with information, full provenance, ``~ (10+10*FLEUR Jobs)*points`` nodes
-* **File repository footprint**: no addition to the ``JobCalculations`` run
 
 .. contents::
 
@@ -24,38 +21,44 @@ Import Example:
 
 Description/Purpose
 ^^^^^^^^^^^^^^^^^^^
-  Calculates an equation of state for a given crystal structure.
 
-  First, an input structure is scaled and a list of scaled structures is constructed.
-  Then, total energies of all the scaled structures are calculated via
-  ``FleurScfWorkChain``. Finally, resulting total energies are fitted via the Birch–Murnaghan
-  equation of state and the cell volume corresponding to the lowest energy is evaluated.
-  Other fit options are also available.
+Calculates equation of states for a given crystal structure.
 
-  * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
-  * ``inpgen``: :py:class:`~aiida.orm.Code`, optional - Inpgen code using the ``fleur.inpgen``
-    plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
-    of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
-    data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
-    FLAPW parameters, used by inpgen
-  * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, optional: Fleur input data
-    object representing the FLEUR input files
-  * ``remote_data``: :py:class:`~aiida.orm.RemoteData`, optional - The remote folder of
-    the previous calculation
-  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
-    (queues, cpus)
-  * ``settings``: :py:class:`~aiida.orm.Dict`, optional - special settings
-    for Fleur calculations.
+First, an input structure is scaled and a list of scaled structures is constructed.
+Then, total energies of all the scaled structures are calculated via
+:py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain` (:ref:`SCF<scf_wc>`). Finally,
+resulting total energies are fitted via the Birch–Murnaghan
+equation of state and the cell volume corresponding to the lowest energy is evaluated.
+Other fit options are also available.
+
+
+.. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
+
+Input nodes
+^^^^^^^^^^^
+The :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain` employs
+`exposed`_ feature of the AiiDA-core, thus inputs for the
+:ref:`SCF<scf_wc>` sub-workchain should be passed in the namespace called
+``scf`` (see :ref:`example of usage<example_use_eos>`).
+
++-----------------+--------------------------------------+-------------------------------------+----------+
+| name            | type                                 | description                         | required |
++=================+======================================+=====================================+==========+
+| wf_parameters   | :py:class:`~aiida.orm.Dict`          | Settings of the workchain           | no       |
++-----------------+--------------------------------------+-------------------------------------+----------+
+| structure       | :py:class:`~aiida.orm.StructureData` | input structure                     | no       |
++-----------------+--------------------------------------+-------------------------------------+----------+
 
 Returns nodes
 ^^^^^^^^^^^^^
-  * ``output_eos_wc_para``: :py:class:`~aiida.orm.Dict` - Information of
-    workflow results like success, list with convergence behavior
-  * ``output_eos_wc_structure``: :py:class:`~aiida.orm.StructureData` - Crystal
-    structure with the volume of the lowest total energy.
+
++-------------------------+----------------------------------------+--------------------------------------------------------------+
+| name                    | type                                   | comment                                                      |
++=========================+========================================+==============================================================+
+| output_eos_wc_para      | :py:class:`~aiida.orm.Dict`            | results of the workchain                                     |
++-------------------------+----------------------------------------+--------------------------------------------------------------+
+| output_eos_wc_structure | :py:class:`~aiida.orm.StructureData`   | Crystal structure with the volume of the lowest total energy |
++-------------------------+----------------------------------------+--------------------------------------------------------------+
 
 Layout
 ^^^^^^
@@ -102,10 +105,11 @@ Plot_fleur visualization
     :align: center
 
 
+.. _example_use_eos:
+
 Example usage
 ^^^^^^^^^^^^^
-  .. include:: ../../../../examples/tutorial/workflows/tutorial_submit_eos.py
-     :literal:
+   .. literalinclude:: code/tutorial_submit_eos.py
 
 
 Output node example
@@ -127,3 +131,7 @@ Error handling
   * Some calculations did not converge
   * Volume ground state does not lie in the calculated interval, interval refinement
 
+Exit codes
+^^^^^^^^^^
+
+:ref:`exit_codes` are not implemented for this WC.

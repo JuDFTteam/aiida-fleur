@@ -30,6 +30,7 @@ class FleurinpModifier(object):
     """
     A class which represents changes to the :class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     """
+
     def __init__(self, original):
         """
         Initiation of FleurinpModifier.
@@ -194,7 +195,7 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename,
-                            set_val, mode='abs', occ=None, create=False):
+                            set_val, mode='abs', occ=None):
             if occ is None:
                 occ = [0]
             fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy,
@@ -460,34 +461,41 @@ class FleurinpModifier(object):
         """
         self._tasks.append(('set_inpchanges', change_dict))
 
-    def shift_value(self, change_dict):
+    def shift_value(self, change_dict, mode='abs'):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_util.shift_value()` to
         the list of tasks that will be done on the FleurinpData.
 
         :param change_dict: a dictionary with changes
+        :param mode: 'abs' if change given is absolute, 'rel' if relative
 
         An example of change_dict::
 
             change_dict = {'itmax' : 1, dVac = -2}
         """
-        self._tasks.append(('shift_value', change_dict))
+        self._tasks.append(('shift_value', change_dict, mode))
 
     def set_nkpts(self, count, gamma='F'):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_util.set_nkpts()` to
         the list of tasks that will be done on the FleurinpData.
-
-        :param attributedict: a new tag
-        :param atom_label: Atom label which atom group will be set
-        :param create: if True and there is no given atom group in the FleurinpData, creates it
         """
         self._tasks.append(('set_nkpts', count, gamma))
 
-    def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None, create=False):
+    def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.add_num_to_att()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param xpathn: an xml path to the attribute to change
+        :param attributename: a name of the attribute to change
+        :param set_val: a value to be added/multiplied to the previous value
+        :param mode: 'abs' if to add set_val, 'rel' if multiply
+        :param occ: a list of integers specifying number of occurrence to be set
+        """
         if occ is None:
             occ = [0]
-        self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ, create))
+        self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ))
 
     def validate(self):
         """
