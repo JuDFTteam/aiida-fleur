@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import
 import copy
+import numpy as np
 
 import six
 from six.moves import range
@@ -62,7 +63,7 @@ class FleurDMIWorkChain(WorkChain):
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
         'soc_off': [],
-        'prop_dir': [1.0, 0.0, 0.0],
+        # 'prop_dir': [1.0, 0.0, 0.0],
         'q_vectors': [[0.0, 0.0, 0.0],
                       [0.125, 0.0, 0.0],
                       [0.250, 0.0, 0.0],
@@ -249,9 +250,10 @@ class FleurDMIWorkChain(WorkChain):
                 calc_parameters = input_scf.calc_parameters.get_dict()
             else:
                 calc_parameters = {}
-            calc_parameters['qss'] = {'x': self.ctx.wf_dict['prop_dir'][0],
-                                      'y': self.ctx.wf_dict['prop_dir'][1],
-                                      'z': self.ctx.wf_dict['prop_dir'][2]}
+            sum_vec  = np.array([np.pi/4.0, np.e/3.0, np.euler_gamma])
+            calc_parameters['qss'] = {'x': sum_vec[0],
+                                      'y': sum_vec[1],
+                                      'z': sum_vec[2]}
             input_scf.calc_parameters = Dict(dict=calc_parameters)
         return input_scf
 
