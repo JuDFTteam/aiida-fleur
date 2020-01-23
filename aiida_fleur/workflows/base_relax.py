@@ -31,6 +31,7 @@ RelaxProcess = WorkflowFactory('fleur.relax')
 FleurinpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
 
+
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
     _workflowversion = "0.1.0"
@@ -97,7 +98,15 @@ def _handle_not_conv_error(self, calculation):
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
 
         self.ctx.inputs.scf.remote_data = remote
+        if 'structure' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.structure
+        if 'inpgen' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.inpgen
+        if 'calc_parameters' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.calc_parameters
+
         return ErrorHandlerReport(True, True)
+
 
 @register_error_handler(FleurBaseRelaxWorkChain, 999)
 def _handle_general_error(self, calculation):
@@ -115,8 +124,9 @@ def _handle_general_error(self, calculation):
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
+
 @register_error_handler(FleurBaseRelaxWorkChain, 100)
-def _handle_general_error(self, calculation):
+def _handle_vacuum_spill(self, calculation):
     """
     Calculation failed for unknown reason.
     """

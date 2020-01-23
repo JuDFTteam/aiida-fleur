@@ -851,6 +851,8 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
 
     current_symbols = structure.get_chemical_symbols()
     for i, at_type in six.iteritems(replacements):
+        if isinstance(i, str):
+            i = int(i)
         layer, layer_z, layer_occupancies = get_layer_by_number(structure, i)
         layer_occupancies.insert(0, 0)
         if i < 0:

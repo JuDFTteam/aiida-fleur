@@ -209,7 +209,7 @@ class FleurScfWorkChain(WorkChain):
             if key not in self._wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for DMI contains extra keys: {}'.format(extra_keys)
+            error = 'ERROR: input wf_parameters for SCF contains extra keys: {}'.format(extra_keys)
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
