@@ -26,10 +26,8 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinp import FleurinpData
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
 
 class FleurMaeConvWorkChain(WorkChain):
     """
@@ -39,7 +37,7 @@ class FleurMaeConvWorkChain(WorkChain):
     _workflowversion = "0.1.0"
 
     _wf_default = {
-        'sqas': {'label' : [0.0, 0.0]},
+        'sqas': {'label': [0.0, 0.0]},
         'soc_off': []
     }
 
@@ -89,6 +87,16 @@ class FleurMaeConvWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        extra_keys = []
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for MAE Conv contains extra keys: {}'.format(
+                extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
@@ -130,7 +138,7 @@ class FleurMaeConvWorkChain(WorkChain):
                  {'at_label': atom_label,
                   'attributedict': {'special': {'socscale': 0.0}},
                   'create': True
-                 }))
+                  }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -203,7 +211,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
-               #'initial_structure': self.inputs.structure.uuid,
+               # 'initial_structure': self.inputs.structure.uuid,
                'mae': self.ctx.energydict,
                'sqa': self.ctx.wf_dict['sqas'],
                'failed_labels': failed_labels,
@@ -229,6 +237,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.report(errormsg)
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def save_output_node(out):

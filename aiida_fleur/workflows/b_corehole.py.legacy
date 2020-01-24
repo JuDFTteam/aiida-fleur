@@ -9,6 +9,7 @@ energies and corelevel shifts with different methods.
 # TODO alow certain kpoint path, or kpoint node, so far auto
 from __future__ import absolute_import
 from __future__ import print_function
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida import load_dbenv, is_dbenv_loaded
 import six
 if not is_dbenv_loaded():
@@ -29,7 +30,6 @@ from aiida_fleur.tools.create_corehole import create_corehole
 StructureData = DataFactory('structure')
 Dict = DataFactory('dict')
 RemoteData = DataFactory('remote')
-FleurinpData = DataFactory('fleur.fleurinp')
 FleurProcess = FleurCalculation.process()
 
 

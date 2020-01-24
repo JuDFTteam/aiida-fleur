@@ -56,9 +56,9 @@ def test_fleurinp_non_valid_inpxml(create_fleurinp, inpxmlfilepath):
     XMLSyntaxError error if the inp.xml does not correspond to the xml schema.
     """
     from aiida.common.exceptions import InputValidationError
-    from lxml.etree import XMLSyntaxError
+    from lxml import etree
 
-    with pytest.raises((InputValidationError, XMLSyntaxError)):
+    with pytest.raises((InputValidationError, etree.XMLSyntaxError)):
         create_fleurinp(inpxmlfilepath)
 
 

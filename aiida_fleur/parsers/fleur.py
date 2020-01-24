@@ -27,8 +27,7 @@ from aiida.parsers import Parser
 from aiida.plugins import DataFactory
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
-
-FleurinpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurParser(Parser):

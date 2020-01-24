@@ -12,6 +12,7 @@ from pprint import pprint
 from aiida.plugins import Code, DataFactory, CalculationFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
+from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from pprint import pprint
 
 StructureData = DataFactory('structure')
@@ -19,8 +20,6 @@ ParameterData = DataFactory('dict')
 KpointsData = DataFactory('array.kpoints')
 
 FleurInpCalc = CalculationFactory('fleur.inpgen')
-FleurCalc = CalculationFactory('fleur.fleur')
-
 
 import time
 start_time = time.time()
@@ -55,7 +54,7 @@ parser_info = {'parser_warnings': [], 'unparsed' : []}
 
 
 def extrac_corelevels(outxml):
-    """ 
+    """
     main routine extras corelevels out of out.xml files
     """
     ##########################################
@@ -83,7 +82,7 @@ def extrac_corelevels(outxml):
 
     try:
         tree = etree.parse(outxmlfile, parser)
-    except XMLSyntaxError:
+    except etree.XMLSyntaxError:
         outfile_broken = True
     #print 'broken xml'
         parser_info['parser_warnings'].append('The out.xml file is broken I try to repair it.')
@@ -93,7 +92,7 @@ def extrac_corelevels(outxml):
         parser = etree.XMLParser(recover=True)#, remove_blank_text=True)
         try:
             tree = etree.parse(outxmlfile, parser)
-        except XMLSyntaxError:
+        except etree.XMLSyntaxError:
             print('here')
             parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False
@@ -210,7 +209,7 @@ def parse_state_card(corestateNode, iteration_node):
     # get all corestate tags, (atomtypes * spin)
     corestateNodes = eval_xpath(iteration_node, coreStates_xpath)
     # for every corestate tag parse the attributes
-    
+
     # some only the first interation, then get all state tags of the corestate tag (atom depended)
     # parse each core state #Attention to spin
     states = []
@@ -234,7 +233,7 @@ def parse_state_card(corestateNode, iteration_node):
 def eval_xpath(node, xpath):
     """
     Tries to evalutate an xpath expression. If it fails it logs it.
-    
+
     :param root node of an etree and an xpath expression (relative, or absolute)
     :returns either nodes, or attributes, or text
     """
@@ -252,9 +251,9 @@ def eval_xpath(node, xpath):
 
 def convert_to_float(value_string):
     """
-    Tries to make a float out of a string. If it can't it logs a warning 
+    Tries to make a float out of a string. If it can't it logs a warning
     and returns True or False if convertion worked or not.
-    
+
     :param value_string: a string
     :returns value: the new float or value_string: the string given
     :retruns True or False
@@ -272,7 +271,7 @@ def convert_to_float(value_string):
 def get_xml_attribute(node, attributename):
     """
     Get an attribute value from a node.
-    
+
     :param node: a node from etree
     :param attributename: a string with the attribute name.
     :returns either attributevalue, or None

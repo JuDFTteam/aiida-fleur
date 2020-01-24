@@ -451,18 +451,18 @@ def test_inpxml_to_dict(inpxml_etree):
     from aiida_fleur.tools.xml_util import inpxml_todict, get_inpxml_file_structure, clear_xml
 
     correct = {
-        'fleurInputVersion': '0.30',
+        'fleurInputVersion': '0.31',
         'comment': 'A Fleur input generator calculation with aiida',
         'calculationSetup': {
             'cutoffs': {
-                'Kmax': 4.0,
-                'Gmax': 10.0,
-                'GmaxXC': 8.7,
+                'Kmax': 4.4,
+                'Gmax': 10.9,
+                'GmaxXC': 9.1,
                 'numbands': 0,
             },
             'scfLoop': {
-                'itmax': 5,
-                'minDistance': 1e-05,
+                'itmax': 60,
+                'minDistance': 2e-05,
                 'maxIterBroyd': 99,
                 'imix': 'Anderson',
                 'alpha': 0.05,
@@ -470,14 +470,14 @@ def test_inpxml_to_dict(inpxml_etree):
                 'spinf': 2.0,
             },
             'coreElectrons': {
-                'ctail': True,
+                'ctail': False,
                 'frcor': False,
                 'kcrel': 0,
                 'coretail_lmax': '0',
             },
             'magnetism': {
                 'jspins': 2,
-                'l_noco': False,
+                'l_noco': True,
                 'swsp': False,
                 'lflip': False,
             },
@@ -495,27 +495,37 @@ def test_inpxml_to_dict(inpxml_etree):
                 'bands': '0',
             },
             'nocoParams': {
-                'l_ss': False,
+                'l_ss': True,
                 'l_mperp': 'F',
                 'l_constr': 'F',
                 'mix_b': '.00000000',
-                'qss': '.0000000000 .0000000000 .0000000000',
+                'qss': '0.0 0.0 0.0',
             },
-            'expertModes': {'gw': 0, 'secvar': False},
+            'expertModes': {'eig66': False,
+                            'gw': 0,
+                            'isec1': 99,
+                            'lpr': 0,
+                            'pot8': False,
+                            'secvar': False},
             'geometryOptimization': {
                 'l_f': False,
                 'forcealpha': 1.0,
                 'forcemix': 'BFGS',
+                'force_converged': 1e-05,
+                'qfix': 0,
                 'epsdisp': 1e-05,
                 'epsforce': 1e-05,
             },
             'ldaU': {'l_linMix': 'F', 'mixParam': '.050000', 'spinf': 1.0},
             'bzIntegration': {
+                'altKPointSet': {'kPointCount': {'count': 240,
+                                                 'gamma': False},
+                                 'purpose': 'bands'},
                 'valenceElectrons': 18.0,
                 'mode': 'hist',
                 'fermiSmearingEnergy': 0.001,
-                'kPointList': {'posScale': '1.00000000', 'weightScale': '1.00000000', 'count': 2,
-                               'kPoint': ['-0.250000     0.250000     0.000000', '0.250000     0.250000     0.000000']},
+                'kPointList': {'posScale': '1.00000000', 'weightScale': '1.00000000', 'count': 1,
+                               'kPoint': ['0.000000     0.000000     0.000000']},
             },
             'energyParameterLimits': {'ellow': -0.8, 'elup': 0.5},
         },
@@ -524,23 +534,23 @@ def test_inpxml_to_dict(inpxml_etree):
                                              'row-2': '0 -1 0 .0000000000',
                                              'row-3': '0 0 1 .0000000000'}},
             'filmLattice': {
-            'scale': 1.0,
-            'dVac': 7.35,
-            'latnam': 'any',
-            'dTilda': 10.91,
-            'bravaisMatrix': {'row-1': '5.301179702900000 .000000000000000 .000000000000000',
-                              'row-2': '.000000000000000 7.497000033000000 .000000000000000',
-                              'row-3': '.000000000000000 .000000000000000 7.992850008800000'},
-            'vacuumEnergyParameters': {'vacuum': '2',
-                                       'spinUp': '-.25000000',
-                                       'spinDown': '-.25000000'},
-        }},
+                'scale': 1.0,
+                'dVac': 7.35,
+                'latnam': 'any',
+                'dTilda': 10.91,
+                'bravaisMatrix': {'row-1': '5.301179702900000 .000000000000000 .000000000000000',
+                                  'row-2': '.000000000000000 7.497000033000000 .000000000000000',
+                                  'row-3': '.000000000000000 .000000000000000 7.992850008800000'},
+                'vacuumEnergyParameters': {'vacuum': '2',
+                                           'spinUp': '-.25000000',
+                                           'spinDown': '-.25000000'},
+            }},
         'xcFunctional': {'name': 'vwn', 'relativisticCorrections': False},
         'atomSpecies': {'species': [{
             'name': 'Fe-1',
             'element': 'Fe',
             'atomicNumber': 26,
-            'coreStates': 2,
+            'coreStates': 7,
             'mtSphere': {'radius': 2.2, 'gridPoints': 787,
                          'logIncrement': 0.016},
             'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
@@ -550,6 +560,11 @@ def test_inpxml_to_dict(inpxml_etree):
                 'd': 3,
                 'f': 4,
             },
+            'flipSpin': True,
+            'magMom': 2.2,
+            'prodBasis': {'lcutm': '4',
+                          'lcutwf': '9',
+                          'select': '4 0 4 2'},
             'electronConfig': {'coreConfig': '[Ar]',
                                'valenceConfig': '(4s1/2) (3d3/2) (3d5/2)',
                                'stateOccupation': [{'state': '(3d3/2)',
@@ -562,7 +577,7 @@ def test_inpxml_to_dict(inpxml_etree):
             'name': 'Pt-1',
             'element': 'Pt',
             'atomicNumber': 78,
-            'coreStates': 2,
+            'coreStates': 19,
             'mtSphere': {'radius': 2.2, 'gridPoints': 787,
                          'logIncrement': 0.017},
             'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
@@ -572,6 +587,11 @@ def test_inpxml_to_dict(inpxml_etree):
                 'd': 5,
                 'f': 5,
             },
+            'flipSpin': True,
+            'magMom': 0.0,
+            'prodBasis': {'lcutm': '4',
+                          'lcutwf': '9',
+                          'select': '4 0 4 2'},
             'electronConfig': {'coreConfig': '[Xe] (4f5/2) (4f7/2)',
                                'valenceConfig': '(6s1/2) (5d3/2) (5d5/2)',
                                'stateOccupation': [{'state': '(6s1/2)',
@@ -635,7 +655,9 @@ def test_inpxml_to_dict(inpxml_etree):
                 'supercellY': '1',
                 'supercellZ': '1',
             },
-            'plotting': {'iplot': 0},
+            'plotting':  {'iplot': 0,
+                          'plplot': False,
+                          'score': False},
             'chargeDensitySlicing': {
                 'numkpt': 0,
                 'minEigenval': 0.0,
@@ -672,7 +694,9 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("This attribute is not tested for FePt/inp.xml")
+            if attr_name in ['nx', 'ny', 'nz', 'scale']:
+                pytest.skip("This attribute is not tested for FePt/inp.xml")
+            raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 333})
@@ -691,7 +715,9 @@ class TestShiftValue:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("This attribute is not tested for FePt/inp.xml")
+            if attr_name in ['scale']:
+                pytest.skip("This attribute is not tested for FePt/inp.xml")
+            raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
             shift_value(etree, {attr_name: 1.2442}, mode='rel')
@@ -743,7 +769,9 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("This attribute is not tested for FePt/inp.xml")
+            if attr_name in ['nx', 'ny', 'nz', 'scale']:
+                pytest.skip("This attribute is not tested for FePt/inp.xml")
+            raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 333)
@@ -753,7 +781,7 @@ class TestAddNumToAtt:
 
     attr_to_test_float = list(xml_structure[4])
     @pytest.mark.parametrize('attr_name', attr_to_test_float)
-    def test_shift_value_rel(self, inpxml_etree, attr_name):
+    def test_ad_num_to_att_rel(self, inpxml_etree, attr_name):
         import math
         from aiida_fleur.tools.xml_util import add_num_to_att, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -762,11 +790,14 @@ class TestAddNumToAtt:
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
 
         if not result_before:
-            pytest.skip("This attribute is not tested for FePt/inp.xml")
+            if attr_name in ['scale']:
+                pytest.skip("This attribute is not tested for FePt/inp.xml")
+            raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
             add_num_to_att(etree, path, attr_name, 1.2442, mode='rel')
             result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
+
 
             if float(result_before) != 0:
                 assert math.isclose(float(result) / float(result_before), 1.2442, rel_tol=1e-6)

@@ -4,7 +4,7 @@ Fleur Create Magnetic Film workchain
 --------------------------------------
 
 * **Current version**: 0.1.0
-* **Class**: :py:class:`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain`
+* **Class**: `~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.create_magnetic``
 * **Workflow type**: Scientific workchain
 
@@ -72,7 +72,7 @@ substrate layers to the bottom. The final structure is z-centralised.
 Input nodes
 ^^^^^^^^^^^
 
-The :py:class:`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain` employs
+The FleurCreateMagneticWorkChain employs
 `exposed`_ feature of the AiiDA-core, thus inputs for the
 :ref:`EOS<eos_wc>` and :ref:`relaxation<relax_wc>` workchains should be passed in the namespaces
 ``eos`` and ``relax`` correspondingly (see :ref:`example of usage<example_use_create_magnetic>`).
@@ -86,7 +86,7 @@ The :py:class:`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWo
 +-----------------+-----------------------------+-------------------------------------+----------+
 
 Similarly to other workchains,
-:py:class:`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain` behaves
+`~aiida_fleur.workflows.create_magnetic_film.FleurCreateMagneticWorkChain` behaves
 differently depending on the input nodes setup. The list of supported input configurations is
 given in the section :ref:`layout_create_magnetic`.
 
@@ -127,7 +127,7 @@ on the setup of the inputs, one of four supported scenarios will happen:
 
 Error handling
 ^^^^^^^^^^^^^^
-A list of implemented exit codes:
+A list of implemented :ref:`exit codes<exit_codes>`:
 
 +------+------------------------------------------------------------------------------------------+
 | Code | Meaning                                                                                  |

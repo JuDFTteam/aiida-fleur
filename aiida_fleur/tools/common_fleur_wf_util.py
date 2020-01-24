@@ -299,13 +299,11 @@ def powerset(L):
 def determine_reactions(formula, available_data):
     """
     Determines and balances theoretical possible reaction.
+    Stoichiometry 'Be12W', [Be12W, Be2W, Be, W, Be22W] -> [[Be22W+Be2W], [Be12W], [Be12+W],...]
 
-    Stoichiometry
-    'Be12W', [Be12W, Be2W, Be, W, Be22W] -> [[Be22W+Be2W], [Be12W], [Be12+W],...]
-    params formula: string, given educts (left side of equation),
-    params available_data: list of strings of compounds (products),
-                           from which all possibilities will be constructed
-
+    :params formula: string, given educts (left side of equation)
+    :params available_data: list of strings of compounds (products),
+                            from which all possibilities will be constructed
     """
 
     # 1. for each compound try to balance equation

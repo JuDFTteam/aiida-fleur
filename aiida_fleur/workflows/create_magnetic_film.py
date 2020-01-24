@@ -29,9 +29,8 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
+
 
 class FleurCreateMagneticWorkChain(WorkChain):
     """
@@ -89,11 +88,15 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.output('magnetic_structure', valid_type=StructureData)
 
         # exit codes
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
+                       message="Invalid input, please check input configuration.")
         spec.exit_code(401, 'ERROR_NOT_SUPPORTED_LATTICE',
                        message="Specified substrate has to be bcc or fcc.")
         spec.exit_code(402, 'ERROR_NO_EOS_OUTPUT',
                        message="eos_output was not specified, however, 'eos_needed' was set to "
                                "True.")
+        spec.exit_code(403, 'ERROR_RELAX_FAILED',
+                       message="Relaxation calculation failed.")
 
     def eos_needed(self):
         """
@@ -110,7 +113,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         inputs.structure = self.create_substrate_bulk()
 
         if not isinstance(inputs.structure, StructureData):
-            return inputs['structure'] # throws an exit code thrown in create_substrate_bulk
+            return inputs['structure']  # throws an exit code thrown in create_substrate_bulk
 
         return inputs
 
@@ -152,8 +155,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation'
-                    ' convergence calculation workflow version {}\n'.format(self._workflowversion))
+        self.report('INFO: started Create Magnetic Film'
+                    ' workflow version {}\n'.format(self._workflowversion))
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -166,6 +169,16 @@ class FleurCreateMagneticWorkChain(WorkChain):
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
+
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in self._wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for Create Magnetic contains extra keys: {}'.format(
+                extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
         if not wf_dict['eos_needed'] and 'eos_output' not in self.inputs:
             return self.exit_codes.ERROR_NO_EOS_OUTPUT
@@ -230,7 +243,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         inputs.scf.structure = self.create_film_to_relax()
 
         if not isinstance(inputs.scf.structure, StructureData):
-            return inputs.scf.structure # throws an exit code thrown in create_film_to_relax
+            return inputs.scf.structure  # throws an exit code thrown in create_film_to_relax
 
         return inputs
 
@@ -271,6 +284,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
         structure suitable for magnetic film calculations.
         """
         from aiida_fleur.tools.StructureData_util import magnetic_slab_from_relaxed
+
+        if not self.ctx.relax_wc.is_finished_ok:
+            return self.exit_codes.ERROR_RELAX_FAILED
 
         if self.ctx.wf_dict['relax_needed']:
             optimized_structure = self.ctx.relax_wc.outputs.optimized_structure

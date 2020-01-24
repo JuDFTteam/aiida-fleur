@@ -29,11 +29,8 @@ from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-FleurCalc = CalculationFactory('fleur.fleur')
-# pylint: enable=invalid-name
 
 class FleurRelaxWorkChain(WorkChain):
     """
@@ -44,7 +41,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     _wf_default = {
         'relax_iter': 5,
-        'film_distance_relaxation' : False,
+        'film_distance_relaxation': False,
         'force_criterion': 0.001
     }
 
@@ -83,6 +80,8 @@ class FleurRelaxWorkChain(WorkChain):
                        message="Found no relax.xml file in retrieved folder")
         spec.exit_code(354, 'ERROR_NO_FLEURINP_OUTPUT',
                        message="Found no fleurinpData in the last SCF workchain")
+        spec.exit_code(355, 'ERROR_SCF_WC_FAILED',
+                       message="SCF workchain failed for some reason")
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')
@@ -116,6 +115,16 @@ class FleurRelaxWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        extra_keys = []
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(
+                extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
@@ -135,9 +144,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     def get_inputs_first_scf(self):
         """
-        Initialize inputs for the first iteration. Here one can find initialization of different
-        input regimes described in
-        :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.validate()`.
+        Initialize inputs for the first iteration.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
@@ -154,7 +161,7 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.wf_dict['film_distance_relaxation']:
             scf_wf_dict['inpxml_changes'].append(
                 ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
-                                    'species':'all'}))
+                                    'species': 'all'}))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -165,6 +172,9 @@ class FleurRelaxWorkChain(WorkChain):
         Initializes inputs for further iterations.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        del input_scf.structure
+        del input_scf.inpgen
+        del input_scf.calc_parameters
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
@@ -195,15 +205,19 @@ class FleurRelaxWorkChain(WorkChain):
             return self.exit_codes.ERROR_RELAX_FAILED
 
         if not scf_wc.is_finished_ok:
-            fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
-            if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
-                self.control_end_wc('Failed due to atom and vacuum overlap')
-                return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-            elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII']):
-                self.control_end_wc('Failed due to MT overlap')
-                return self.exit_codes.ERROR_MT_RADII
+            exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
+            if scf_wc.exit_status == exit_statuses[0]:
+                fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
+                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+                    self.control_end_wc('Failed due to atom and vacuum overlap')
+                    return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
+                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII']):
+                    self.control_end_wc('Failed due to MT overlap')
+                    return self.exit_codes.ERROR_MT_RADII
+                else:
+                    return self.exit_codes.ERROR_RELAX_FAILED
             else:
-                return self.exit_codes.ERROR_RELAX_FAILED
+                return self.exit_codes.ERROR_SCF_WC_FAILED
 
     def condition(self):
         """
@@ -317,7 +331,7 @@ class FleurRelaxWorkChain(WorkChain):
                'force': self.ctx.forces,
                'force_iter_done': self.ctx.loop_count,
                'last_scf_wc_uuid': self.ctx.scf_res.uuid
-              }
+               }
 
         if self.ctx.final_cell:
             structure = StructureData(cell=self.ctx.final_cell)
@@ -330,7 +344,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if self.ctx.pbc == (True, True, True):
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
                                           symbols=atom[0])
-                else: # assume z-direction is orthogonal to xy
+                else:  # assume z-direction is orthogonal to xy
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a),
                                           symbols=atom[0])
 
@@ -352,6 +366,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
+
 @cf
 def save_structure(structure):
     """
@@ -359,6 +374,7 @@ def save_structure(structure):
     """
     structure_return = structure.clone()
     return structure_return
+
 
 @cf
 def save_output_node(out):

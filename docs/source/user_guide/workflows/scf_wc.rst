@@ -28,7 +28,8 @@ Description/Purpose
 Converges the charge *density*, the *total energy* or the *largest force* of a given structure,
 or stops because the maximum allowed retries are reached.
 
-The workchain is designed to converge only one parameter independently on other parameters.
+The workchain is designed to converge only one parameter independently on other parameters
+(*largest force* is an exception because FLEUR code first checks if density was converged).
 Simultaneous convergence of two or three parameters is not implemented to simplify the
 code logic and because one almost always interested in a particular parameter. Moreover,
 it was shown that the total energy tend to converge faster than the charge density.
@@ -93,6 +94,8 @@ Workchain parameters and its defaults
 
       Only one of ``density_converged``, ``energy_converged`` or ``force_converged``
       is used by the workchain that corresponds to the **'mode'**. The other two are ignored.
+      Exception: force mode uses both ``density_converged`` and ``force_converged`` because FLEUR
+      code always converges density before forces.
 
   * ``options``: :py:class:`~aiida.orm.Dict` - AiiDA options (computational resources).
     Example:
@@ -118,13 +121,15 @@ The table below shows all the possible output nodes of the SCF workchain.
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
 | fleurinp                | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`  | FleurinpData that was used (after all modifications) |
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
-| last_fleur_calc_output  | :py:class:`~aiida.orm.Dict`                          | Link to last `FleurCalculation` output dict          |
+| last_fleur_calc_output  | :py:class:`~aiida.orm.Dict`                          | Link to last FleurCalculation output dict            |
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
 
-More comments:
+More details:
 
-  * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` - A FleurinpData that was
-    actually used for last FleurCalculation. It usually differs from the input FleurinpData
+  * ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` - A
+    :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` that was
+    actually used for last :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain`.
+    It usually differs from the input :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
     because there are some hard-coded modifications in the SCF workchain.
   * ``last_fleur_calc_output``: :py:class:`~aiida.orm.Dict` - A link to the output node
     of the last Fleur calculation.
@@ -138,30 +143,33 @@ More comments:
 Layout
 ^^^^^^
 Similarly to :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`, SCF workchain has several
-input combinations that implicitly define the behaviour of the workchains during
+input combinations that implicitly define the behaviour of the workchain during
 inputs processing. Depending
-on the setup of the inputs, one of four supported scenarios will happen:
+on the setup of the inputs, one of the four supported scenarios will happen:
 
-1. **fleurinp**:
 
-      Files, belonging to the **fleurinp**, will be used as input for the first
-      FLEUR calculation.
-
-2. **fleurinp** + **remote_data** (FLEUR):
+1. **fleurinp** + **remote_data** (FLEUR):
 
       Files, belonging to the **fleurinp**, will be used as input for the first
       FLEUR calculation. Moreover, initial charge density will be
       copied from the folder of the remote folder.
+
+2. **fleurinp**:
+
+      Files, belonging to the **fleurinp**, will be used as input for the first
+      FLEUR calculation.
 
 3. **remote_data** (FLEUR):
 
       inp.xml file and initial
       charge density will be copied from the remote folder.
 
-4. **structure**:
+4. **structure** + **inpgen** + *calc_parameters*:
 
-      inpgen code will be used to generate a new **fleurinp** using a given structure.
-      Generated **fleurinp** will be used as input for the first FLEUR calculation.
+      inpgen code and optional *calc_parameters* will be used to generate a
+      new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` using a given **structure**.
+      Generated :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will
+      be used as an input for the first FLEUR calculation.
 
 For example, if you want to continue converging charge density, use the option 3.
 If you want to change
@@ -172,7 +180,7 @@ use it as an input together with the RemoteFolder.
 .. warning::
 
   One *must* keep one of the supported input configurations. In other case the workchain will
-  stop throwing non-zero exit status or more dangerously, will make unexpected actions.
+  stop throwing exit code 230.
 
 The general layout does not depend on the scenario, SCF workchain sequentially submits several
 FLEUR calculation to achieve a convergence criterion.
@@ -183,7 +191,7 @@ FLEUR calculation to achieve a convergence criterion.
 
 Error handling
 ^^^^^^^^^^^^^^
-In case of failure the SCF WorkChain should throw one of the exit errors:
+In case of failure the SCF WorkChain should throw one of the :ref:`exit codes<exit_codes>`:
 
 +-----------+---------------------------------------------+
 | Exit code | Reason                                      |
@@ -192,18 +200,18 @@ In case of failure the SCF WorkChain should throw one of the exit errors:
 |           | check input configuration                   |
 +-----------+---------------------------------------------+
 | 231       | Invalid code node specified, check inpgen   |
-|           | and fleur code nodes.                       |
+|           | and fleur code nodes                        |
 +-----------+---------------------------------------------+
 | 232       | Input file modification failed              |
 +-----------+---------------------------------------------+
-| 233       | Input file is corrupted after  modifications|
+| 233       |Input file was corrupted after  modifications|
 +-----------+---------------------------------------------+
 | 360       | Inpgen calculation failed                   |
 +-----------+---------------------------------------------+
 | 361       | Fleur calculation failed                    |
 +-----------+---------------------------------------------+
 | 362       | SCF cycle did not lead to convergence,      |
-|           | maximum number of iterations exceeded.      |
+|           | maximum number of iterations exceeded       |
 +-----------+---------------------------------------------+
 
 If your workchain crashes and stops in *Excepted* state, please open a new issue on the Github page

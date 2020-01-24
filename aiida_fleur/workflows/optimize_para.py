@@ -33,8 +33,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpge
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 import six
 
-
-FleurInpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_optimize_parameters_wc(WorkChain):
@@ -43,7 +42,7 @@ class fleur_optimize_parameters_wc(WorkChain):
     from a structure. For now, it runs inpgen on the structure and uses
     the Fleur defaults.
 
-    :param wf_parameters: Dict node, optional, protocol specification 
+    :param wf_parameters: Dict node, optional, protocol specification
                           will be parsed like this to fleur_eos_wc
     :param structure: StructureData node, bulk crystal structure
     :param inpgen: Code node,
@@ -109,12 +108,12 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|'
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
         self.ctx.resources = wf_dict.get('resources' , {"num_machines": 1})
-        self.ctx.queue = wf_dict.get('queue_name' , '') 
-        
+        self.ctx.queue = wf_dict.get('queue_name' , '')
+
         # codes
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', 
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen',
                                       use_exceptions=True)
             except ValueError:
                 error = ("The code you provided for inpgen of FLEUR does not "
@@ -124,7 +123,7 @@ class fleur_optimize_parameters_wc(WorkChain):
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', 
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur',
                                       use_exceptions=True)
             except ValueError:
                 error = ("The code you provided for FLEUR does not "
@@ -141,7 +140,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(self.ctx.description_wf, 
+        description = '{} inpgen on {}'.format(self.ctx.description_wf,
                                                self.ctx.formula)
 
         inpgencode = self.inputs.inpgen
@@ -154,7 +153,7 @@ class fleur_optimize_parameters_wc(WorkChain):
                    "resources": self.ctx.resources,
                    "queue_name" : self.ctx.queue}
 
-        inputs = get_inputs_inpgen(structure, inpgencode, options, label, 
+        inputs = get_inputs_inpgen(structure, inpgencode, options, label,
                                    description, params=params)
         self.report('INFO: run inpgen')
         future = submit(FleurinputgenCalculation, **inputs)
@@ -177,12 +176,12 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.ctx.optimal_parameters = fleurin.get_parameterdata(fleurin)
 
 
-    # TODO determine optimasation 
+    # TODO determine optimasation
     # look at number of atoms
     # basis size nvd not known, only after fleur run
     # can this be examined via kmax?
     # number of kpoints
-    # 
+    #
 
     def return_results(self):
         """

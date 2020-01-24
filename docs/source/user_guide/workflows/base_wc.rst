@@ -29,8 +29,7 @@ This workchain wraps :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`
 into BaseRestartWorkChain
 workchain, which is a plain copy of a BaseRestartWorkChain originally implemented in
 AiiDA-QE. This workchain  automatically
-tracks and fixes known technical problems of a CalcJob and, particularly, of a FleurCalculation
-that might occur due to instability of machinery. 
+tracks and fixes crashes of the :py:class:`~aiida_fleur.calculation.fleur.FleurCalculation`.
 
 .. note::
 
@@ -39,7 +38,15 @@ that might occur due to instability of machinery.
     a user does not feel the difference in the front-end behaviour of FleurCalculation and
     FleurBaseWorkChain.
 
-For now only problems with memory can be caught: if a FleurCalculation finishes with exit status 310
+The workchain works as follows:
+
+.. image:: images/base_restart_scheme.png
+    :width: 100%
+    :align: center
+
+For now only problems with memory can be fixed in
+:py:class:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain`
+:if a FleurCalculation finishes with exit status 310
 the FleurBaseWorkChain will resubmit it setting twice larger number of computational nodes.
 
 .. warning::
@@ -86,11 +93,29 @@ There is no OpenMPI parallelisation yet.
 
 Errors
 ^^^^^^
+See :ref:`exit_codes`.
 +-----------+------------------------------------------------------------------------------+
 | Exit code | Reason                                                                       |
 +===========+==============================================================================+
+| 101       | Maximum number of fixing an error is exceeded                                |
++-----------+------------------------------------------------------------------------------+
+| 102       | The calculation failed for an unknown reason, twice in a row                 |
+|           | This should probably never happen since there is a 399 exit code             |
++-----------+------------------------------------------------------------------------------+
 | 360       | :py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()` |
 |           | suggests less than 60% of node load                                          |
++-----------+------------------------------------------------------------------------------+
+
+
+Exit codes duplicating FleurCalculation exit codes:
+
++-----------+------------------------------------------------------------------------------+
+| Exit code | Reason                                                                       |
++===========+==============================================================================+
+| 311       | FleurCalculation failed because an atom spilled to the vacuum during         |
+|           | relaxation.                                                                  |
++-----------+------------------------------------------------------------------------------+
+| 312       | FleurCalculation failed due to MT overlap.                                   |
 +-----------+------------------------------------------------------------------------------+
 | 399       | FleurCalculation failed and FleurBaseWorkChain                               |
 |           | has no strategy to resolve this                                              |

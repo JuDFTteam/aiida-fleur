@@ -135,7 +135,7 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):
     Creates a super cell from a StructureData node.
     Keeps the provenance in the database.
 
-    :param StructureData, a StructureData node (pk, or uuid)
+    :param StructureData: a StructureData node (pk, or uuid)
     :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3,
                   or if cart =True in x,y,z
 
@@ -152,7 +152,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     Creates a super cell from a StructureData node.
     Does NOT keeps the provenance in the database.
 
-    :param StructureData, a StructureData node (pk, or uuid)
+    :param StructureData: a StructureData node (pk, or uuid)
     :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart=True in x,y,z
 
     :returns StructureData, Node with supercell
@@ -851,6 +851,8 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
 
     current_symbols = structure.get_chemical_symbols()
     for i, at_type in six.iteritems(replacements):
+        if isinstance(i, str):
+            i = int(i)
         layer, layer_z, layer_occupancies = get_layer_by_number(structure, i)
         layer_occupancies.insert(0, 0)
         if i < 0:

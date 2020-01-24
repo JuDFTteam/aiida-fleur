@@ -59,7 +59,8 @@ class BaseRestartWorkChain(WorkChain):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
 
         if self._calculation_class is None or not issubclass(self._calculation_class, (CalcJob, WorkChain)):
-            raise ValueError('no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
+            raise ValueError(
+                'no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
 
         self._load_error_handlers()
 
@@ -86,13 +87,13 @@ class BaseRestartWorkChain(WorkChain):
         # pylint: disable=bad-continuation
         super(BaseRestartWorkChain, cls).define(spec)
         spec.input('max_iterations', valid_type=orm.Int, default=orm.Int(3),
-            help='Maximum number of iterations the work chain will restart the calculation to finish successfully.')
+                   help='Maximum number of iterations the work chain will restart the calculation to finish successfully.')
         spec.input('clean_workdir', valid_type=orm.Bool, default=orm.Bool(False),
-            help='If `True`, work directories of all called calculation will be cleaned at the end of execution.')
+                   help='If `True`, work directories of all called calculation will be cleaned at the end of execution.')
         spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
-            message='The maximum number of iterations was exceeded.')
+                       message='The maximum number of iterations was exceeded.')
         spec.exit_code(102, 'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
-            message='The calculation failed for an unknown reason, twice in a row.')
+                       message='The calculation failed for an unknown reason, twice in a row.')
 
     def setup(self):
         """Initialize context variables that are used during the logical flow of the `BaseRestartWorkChain`."""
@@ -124,7 +125,8 @@ class BaseRestartWorkChain(WorkChain):
         inputs = prepare_process_inputs(self._calculation_class, unwrapped_inputs)
         calculation = self.submit(self._calculation_class, **inputs)
 
-        self.report('launching {}<{}> iteration #{}'.format(self.ctx.calc_name, calculation.pk, self.ctx.iteration))
+        self.report('launching {}<{}> iteration #{}'.format(
+            self.ctx.calc_name, calculation.pk, self.ctx.iteration))
 
         return ToContext(calculations=append_(calculation))
 
@@ -138,7 +140,8 @@ class BaseRestartWorkChain(WorkChain):
             # Perform an optional sanity check. If it returns an `ExitCode` this means an unrecoverable situation was
             # detected and the work chain should be aborted. If it returns `False`, the sanity check detected a problem
             # but has handled the problem and we should restart the cycle.
-            result = self._handle_calculation_sanity_checks(calculation)  # pylint: disable=assignment-from-no-return
+            result = self._handle_calculation_sanity_checks(
+                calculation)  # pylint: disable=assignment-from-no-return
 
             if isinstance(result, ExitCode):
                 # No need to reset the `unexpected_failure` because the work chain will terminate due to the exit code
@@ -191,7 +194,8 @@ class BaseRestartWorkChain(WorkChain):
             else:
                 self.out(name, node)
                 if self._verbose:
-                    self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+                    self.report("attaching the node {}<{}> as '{}'".format(
+                        node.__class__.__name__, node.pk, name))
 
     def on_terminated(self):
         """Clean the working directories of all child calculations if `clean_workdir=True` in the inputs."""

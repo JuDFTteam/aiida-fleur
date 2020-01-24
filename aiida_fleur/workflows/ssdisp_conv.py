@@ -27,9 +27,8 @@ from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
+
 
 class FleurSSDispConvWorkChain(WorkChain):
     """
@@ -39,10 +38,10 @@ class FleurSSDispConvWorkChain(WorkChain):
     _workflowversion = "0.1.0"
 
     _wf_default = {
-        'beta': {'all' : 1.57079},
+        'beta': {'all': 1.57079},
         'q_vectors': {'label': [0.0, 0.0, 0.0],
                       'label2': [0.125, 0.0, 0.0]
-                     }
+                      }
     }
 
     @classmethod
@@ -87,6 +86,16 @@ class FleurSSDispConvWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        extra_keys = []
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(
+                extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
@@ -124,7 +133,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         if 'inpxml_changes' not in scf_wf_dict:
             scf_wf_dict['inpxml_changes'] = []
 
-        #change beta parameter
+        # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label',
                                                   {'attributedict': {'nocoParams': [('beta', val)]},
@@ -201,7 +210,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         out = {'workflow_name': self.__class__.__name__,
                'workflow_version': self._workflowversion,
-               #'initial_structure': self.inputs.structure.uuid,
+               # 'initial_structure': self.inputs.structure.uuid,
                'energies': self.ctx.energydict,
                'q_vectors': self.ctx.wf_dict['q_vectors'],
                'failed_labels': failed_labels,
@@ -227,6 +236,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         self.report(errormsg)
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def save_output_node(out):

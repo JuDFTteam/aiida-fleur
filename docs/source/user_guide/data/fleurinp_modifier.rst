@@ -19,8 +19,8 @@ In principle a user can do everything, since he could prepare a FLEUR input hims
 
 .. note::
     In the open provenance model nodes stored in the database
-    cannot be changed (except extras and comments). Therefore, to modify something in the
-    inp.xml file one has to create a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
+    cannot be changed (except extras and comments). Therefore, to modify something in a stored
+    `inp.xml` file one has to create a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
     which is not stored, modify it and store it
     again. However, this node would pop into existence unlinked in the database and this would mean
     we loose the origin from what data it comes from and what was done to it. This is the task of
@@ -32,8 +32,8 @@ To modify an existing :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`, a
 :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` instance
 has to be initialised staring from the
 :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
-Then a user can register
-certain modifications which will be cached and can be previewed. They can only be applied on
+After that, a user should register
+certain modifications which will be cached and can be previewed. They will be applied on
 a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
 object when the freeze method is executed. A code example:
 
@@ -41,7 +41,7 @@ object when the freeze method is executed. A code example:
 
   from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
 
-  F = FleurinpData(files=['inp.xml', <other files>], node=<folder_data_pk>)
+  F = FleurinpData(files=['inp.xml'])
   fm = FleurinpModifier(F)                                # Initialise FleurinpModifier class
   fm.set_inpchanges({'dos' : True, 'Kmax': 3.9 })         # Add changes
   fm.show()                                               # Preview
@@ -82,7 +82,7 @@ All of them require an xpath input:
       attribute of a specific occurrence of xml elements
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_first_attribv()`: Set
       an attribute of first occurrence of xml element
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_attribv()`: Set 
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_attribv()`: Set
       attributes of all occurrences of the xml element
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text()`: Set the text
       of first occurrence of xml element
@@ -98,6 +98,8 @@ All of them require an xpath input:
       an xml element.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()`: Replace
       an xml element.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_num_to_att()`: Adds
+      a value or multiplies on it given attribute.
 
 On the other hand, there are shortcut methods that already know some paths:
 
@@ -111,6 +113,8 @@ On the other hand, there are shortcut methods that already know some paths:
       method to change atom group parameters of an atom with a certain label.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_inpchanges()`: Specific
       user-friendly method for easy changes of attribute key value type.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.shift_value()`: Specific
+      user-friendly method to shift value of an attribute.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nkpts()`: Specific
       method to set the number of kpoints.
 

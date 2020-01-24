@@ -130,9 +130,9 @@ class FleurinputgenCalculation(CalcJob):
                        message='Fleur lattice needs atom positions as input.')
         spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
                        message='Excessive input parameters were specified.')
-        spec.exit_code(301, 'ERROR_NO_RETRIEVED_FOLDER',
+        spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
-        spec.exit_code(300, 'ERROR_OPENING_OUTPUTS',
+        spec.exit_code(301, 'ERROR_OPENING_OUTPUTS',
                        message='One of the output files can not be opened.')
         spec.exit_code(306, 'ERROR_NO_INPXML',
                        message='XML input file was not found.')

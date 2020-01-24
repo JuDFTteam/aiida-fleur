@@ -53,18 +53,14 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax': 2,
-                     'density_converged': 0.02,
-                     'serial': False,
-                     'itmax_per_run': 60,
-                     'inpxml_changes': [],
-                     'points': 9,
-                     'step': 0.002,
-                     'guess': 1.00
-                    })
+wf_para = Dict(dict={
+    'points': 9,
+    'step': 0.002,
+    'guess': 1.00
+})
 
 # Fe fcc structure
-bohr_a_0 = 0.52917721092 # A
+bohr_a_0 = 0.52917721092  # A
 a = 3.4100000000*2**(0.5)
 cell = [[a, 0, 0],
         [0, a, 0],
@@ -75,32 +71,29 @@ structure.append_atom(position=(0.5*a, 0.5*a, 0.0*a), symbols='Fe', name='Fe2')
 structure.append_atom(position=(0.5*a, 0.0*a, 0.5*a), symbols='Fe', name='Fe31')
 structure.append_atom(position=(0.0*a, 0.5*a, 0.5*a), symbols='Fe', name='Fe43')
 parameters = Dict(dict={
-    'comp': {
-        'kmax': 3.4,
-        },
-    'atom' : {
-        'element' : 'Fe',
-        'bmu' : 2.5,
-        'rmt' : 2.15
-        },
-    'kpt': {
-        'div1': 4,
-        'div2' : 4,
-        'div3' : 4
-        }})
+    'comp': {'kmax': 3.4,
+             },
+    'atom': {'element': 'Fe',
+             'bmu': 2.5,
+             'rmt': 2.15
+             },
+    'kpt': {'div1': 4,
+            'div2': 4,
+            'div3': 4
+            }})
 
-wf_para_scf = {'fleur_runmax' : 2,
-               'itmax_per_run' : 120,
-               'density_converged' : 0.2,
-               'serial' : False,
-               'mode' : 'density'
-}
+wf_para_scf = {'fleur_runmax': 2,
+               'itmax_per_run': 120,
+               'density_converged': 0.2,
+               'serial': False,
+               'mode': 'density'
+               }
 
 wf_para_scf = Dict(dict=wf_para_scf)
 
-options_scf = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 8},
-                         'queue_name' : 'devel',
-                         'custom_scheduler_commands' : '',
+options_scf = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 8},
+                         'queue_name': 'devel',
+                         'custom_scheduler_commands': '',
                          'max_wallclock_seconds':  60*60})
 
 ####
@@ -112,17 +105,15 @@ fleur_inp = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
 inpgen_code = is_code(args.inpgen)
 inpgen_inp = test_and_get_codenode(inpgen_code, expected_code_type='fleur.inpgen')
 
-inputs = {'scf': {
-                  'wf_parameters' : wf_para_scf,
-                  'calc_parameters' : parameters,
-                  'options' : options_scf,
-                  'inpgen' : inpgen_inp,
-                  'fleur' : fleur_inp
-                 },
-          'wf_parameters' : wf_para,
-          'structure' : structure
-}
-
+inputs = {'scf': {'wf_parameters': wf_para_scf,
+                  'calc_parameters': parameters,
+                  'options': options_scf,
+                  'inpgen': inpgen_inp,
+                  'fleur': fleur_inp
+                  },
+          'wf_parameters': wf_para,
+          'structure': structure
+          }
 
 
 submit_wc = False

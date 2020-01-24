@@ -48,7 +48,7 @@ from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 import six
 
-FleurinpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_corehole_wc(WorkChain):
@@ -123,9 +123,9 @@ class fleur_corehole_wc(WorkChain):
                         'queue_name' : '',
                         'custom_scheduler_commands' : '',
                         'import_sys_environment' : False,
-                        'environment_variables' : {}}    
+                        'environment_variables' : {}}
 
-     
+
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
@@ -172,7 +172,7 @@ class fleur_corehole_wc(WorkChain):
             cls.check_scf,
             cls.return_results
         )
-         
+
         spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES',
             message="The input resources are invalid.")
         spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
@@ -189,10 +189,10 @@ class fleur_corehole_wc(WorkChain):
             message="At least one FLEUR calculation FAILED, check the output and log.")
         spec.exit_code(8, 'ERROR_CONVERGENCE_NOT_ARCHIVED',
             message=("At least one FLEUR calculation did not/could not reach the"
-                     "desired convergece Criteria, with the current parameters."))            
+                     "desired convergece Criteria, with the current parameters."))
         spec.exit_code(9, 'ERROR_IN_REFERENCE_CREATION',
             message=("Something went wrong in the determiation what coreholes to "
-                    "calculate, probably the input format was not correct. Check log."))    
+                    "calculate, probably the input format was not correct. Check log."))
 
     def check_input(self):
         """
@@ -233,7 +233,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.supercell_size = wf_dict.get('supercell_size', [2, 1, 1]) # 2x2x2 or smaller?
         self.ctx.hole_charge = wf_dict.get('hole_charge', 1.0)
         self.ctx.magnetic = wf_dict.get('magnetic', True)
-        
+
         defaultoptions = self._default_options
         options = wf_dict.get('options', defaultoptions)
         if 'options' in self.inputs:
@@ -243,7 +243,7 @@ class fleur_corehole_wc(WorkChain):
         for key, val in six.iteritems(defaultoptions):
             options[key] = options.get(key, val)
         self.ctx.options = options
-        
+
         #self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         #self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
         #self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))

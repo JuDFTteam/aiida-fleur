@@ -20,7 +20,7 @@ import copy
 
 import six
 from six.moves import map
-from lxml.etree import XMLSyntaxError
+from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
@@ -34,10 +34,8 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinp import FleurinpData
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
 
 class FleurMaeWorkChain(WorkChain):
     """
@@ -71,7 +69,7 @@ class FleurMaeWorkChain(WorkChain):
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("fleur", valid_type=Code, required=True)
         spec.input("remote", valid_type=RemoteData, required=False)
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("options", valid_type=Dict, required=False)
 
         spec.outline(
@@ -88,7 +86,7 @@ class FleurMaeWorkChain(WorkChain):
 
         spec.output('out', valid_type=Dict)
 
-        #exit codes
+        # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
         spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
@@ -125,6 +123,15 @@ class FleurMaeWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in self._wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for MAE contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
@@ -137,7 +144,7 @@ class FleurMaeWorkChain(WorkChain):
                  {'at_label': atom_label,
                   'attributedict': {'special': {'socscale': 0.0}},
                   'create': True
-                 }))
+                  }))
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
@@ -208,8 +215,8 @@ class FleurMaeWorkChain(WorkChain):
         if not self.ctx.wf_dict.get('use_soc_ref'):
             scf_wf_dict['inpxml_changes'].append(
                 ('set_inpchanges', {'change_dict': {'l_soc': False}}))
-        else: # set soc parameters explicitly
-            changes_dict = {'theta' : soc[0], 'phi': soc[1], 'l_soc': True}
+        else:  # set soc parameters explicitly
+            changes_dict = {'theta': soc[0], 'phi': soc[1], 'l_soc': True}
             scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
@@ -247,7 +254,7 @@ class FleurMaeWorkChain(WorkChain):
                     if isinstance(link.node, CalcJobNode):
                         parent_calc_node = link.node
                 retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
 
         # copy default changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -256,23 +263,23 @@ class FleurMaeWorkChain(WorkChain):
         fchanges.extend([('create_tag',
                           {'xpath': '/fleurInput',
                            'newelement': 'forceTheorem'
-                          }),
+                           }),
                          ('create_tag',
                           {'xpath': '/fleurInput/forceTheorem',
                            'newelement': 'MAE'
-                          }),
+                           }),
                          ('xml_set_attribv_occ',
                           {'xpathn': '/fleurInput/forceTheorem/MAE',
                            'attributename': 'theta',
                            'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
-                          }),
+                           }),
                          ('xml_set_attribv_occ',
                           {'xpathn': '/fleurInput/forceTheorem/MAE',
                            'attributename': 'phi',
                            'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
-                          }),
-                         ('set_inpchanges', {'change_dict': {'itmax': 1}})
-                        ])
+                           }),
+                         ('set_inpchanges', {'change_dict': {'itmax': 1, 'l_soc': True}}),
+                         ])
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
@@ -298,7 +305,7 @@ class FleurMaeWorkChain(WorkChain):
             apply_c = True
             try:
                 fleurmode.show(display=False, validate=True)
-            except XMLSyntaxError:
+            except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 # fleurmode.show(display=True)#, validate=True)
                 self.report(error)
@@ -353,7 +360,7 @@ class FleurMaeWorkChain(WorkChain):
         # Do not copy broyd* files from the parent
         settings = {'remove_from_remotecopy_list': ['broyd*']}
 
-        #Retrieve remote folder of the reference calculation
+        # Retrieve remote folder of the reference calculation
         pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
@@ -392,10 +399,10 @@ class FleurMaeWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp
 
-        #Do not copy broyd* files from the parent
+        # Do not copy broyd* files from the parent
         settings = {'remove_from_remotecopy_list': ['broyd*']}
 
-        #Retrieve remote folder from the inputs
+        # Retrieve remote folder from the inputs
         remote = self.inputs.remote
 
         label = 'Force_theorem_calculation'
@@ -482,6 +489,7 @@ class FleurMaeWorkChain(WorkChain):
         self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def save_output_node(out):

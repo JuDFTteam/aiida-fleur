@@ -38,7 +38,7 @@ import six
 #from aiida_fleur.tools.xml_util import eval_xpath2
 #from lxml import etree
 
-FleurInpData = DataFactory('fleur.fleurinp')
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class fleur_delta_wc(WorkChain):
@@ -524,7 +524,7 @@ if __name__ == "__main__":
                         help='The crystal structure node', required=False)
     parser.add_argument('--calc_para', type=Dict, dest='calc_parameters',
                         help='Parameters for the FLEUR calculation', required=False)
-    parser.add_argument('--fleurinp', type=FleurInpData, dest='fleurinp',
+    parser.add_argument('--fleurinp', type=FleurinpData, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)
     parser.add_argument('--remote', type=RemoteData, dest='remote_data',
                         help=('Remote Data of older FLEUR calculation, '

@@ -20,7 +20,6 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from __future__ import absolute_import
 from lxml import etree
-from lxml.etree import XMLSyntaxError
 import six
 from six.moves import range
 
@@ -37,9 +36,8 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-# pylint: disable=invalid-name
-FleurInpData = DataFactory('fleur.fleurinp')
-# pylint: enable=invalid-name
+from aiida_fleur.data.fleurinp import FleurinpData
+
 
 class FleurScfWorkChain(WorkChain):
     """
@@ -74,9 +72,9 @@ class FleurScfWorkChain(WorkChain):
                    'force_dict': {'qfix': 2,
                                   'forcealpha': 0.5,
                                   'forcemix': 'BFGS'},
-                   'use_relax_xml' : True,
+                   'use_relax_xml': True,
                    'inpxml_changes': [],
-                  }
+                   }
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -89,15 +87,15 @@ class FleurScfWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurScfWorkChain, cls).define(spec)
+        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False)
-        spec.input("fleurinp", valid_type=FleurInpData, required=False)
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=False)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("options", valid_type=Dict, required=False)
+        spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -114,7 +112,7 @@ class FleurScfWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('fleurinp', valid_type=FleurInpData)
+        spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
@@ -175,8 +173,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.options = options
 
         self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get(
-            'description', '') + '|fleur_scf_wc|'
+        self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
         self.ctx.default_itmax = self.ctx.wf_dict.get('itmax_per_run', 30)
 
@@ -207,28 +204,48 @@ class FleurScfWorkChain(WorkChain):
         # validate input and find out which path (1, or 2) to take
         # return True means run inpgen if false run fleur directly
         """
-        inputs = self.inputs
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in self._wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = 'ERROR: input wf_parameters for SCF contains extra keys: {}'.format(extra_keys)
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
 
+        inputs = self.inputs
         if 'fleurinp' in inputs:
             self.ctx.run_inpgen = False
             if 'structure' in inputs:
-                warning = 'WARNING: Ignoring Structure input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: structure input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'inpgen' in inputs:
-                warning = 'WARNING: Ignoring inpgen code input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'calc_parameters' in inputs:
-                warning = 'WARNING: Ignoring parameter input because Fleurinp was given'
-                self.ctx.warnings.append(warning)
-                self.report(warning)
+                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
             if 'remote_data' in inputs:
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
                 self.report(warning)
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
+            if 'structure' in inputs:
+                error = 'ERROR: structure input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            if 'inpgen' in inputs:
+                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
@@ -340,12 +357,12 @@ class FleurScfWorkChain(WorkChain):
             retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
             try:
                 if self.ctx.wf_dict['use_relax_xml']:
-                    fleurin = FleurInpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+                    fleurin = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
                     self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
                 else:
                     raise ValueError
             except ValueError:
-                fleurin = FleurInpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
                 self.report('INFO: generated FleurinpData from inp.xml')
             fleurin.store()
         elif 'structure' in inputs:
@@ -404,7 +421,7 @@ class FleurScfWorkChain(WorkChain):
         apply_c = True
         try:
             fleurmode.show(display=False, validate=True)
-        except XMLSyntaxError:
+        except etree.DocumentInvalid:
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             # fleurmode.show(display=True)#, validate=True)
             self.report(error)
@@ -740,6 +757,7 @@ class FleurScfWorkChain(WorkChain):
         self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
 
 @cf
 def create_scf_result_node(**kwargs):

@@ -58,24 +58,24 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax' : 2,
-                     'density_converge' : 0.001,
-                     'energy_converge' : 0.002,
-                     'mode' : 'force', # 'force', 'energy' or 'density'
-                     'force_converge' : 0.02,
-                     'itmax_per_run' : 10,
-                     'force_dict' : {'qfix' : 2,
-                                     'forcealpha' : 0.5,
-                                     'forcemix' : 'BFGS'},
-                     'serial' : False})
+wf_para = Dict(dict={'fleur_runmax': 2,
+                     'density_converged': 0.001,
+                     'energy_converged': 0.002,
+                     'mode': 'force',  # 'force', 'energy' or 'density'
+                     'force_converged': 0.02,
+                     'itmax_per_run': 10,
+                     'force_dict': {'qfix': 2,
+                                    'forcealpha': 0.5,
+                                    'forcemix': 'BFGS'},
+                     'serial': False})
 
-options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
-                     'queue_name' : 'devel',
-                     'custom_scheduler_commands' : '',
+options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
+                     'queue_name': 'devel',
+                     'custom_scheduler_commands': '',
                      'max_wallclock_seconds':  60*60})
 
 
-bohr_a_0 = 0.52917721092 # A
+bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0
 cell = [[0.7071068*a, 0.0, 0.0],
         [0.0, 1.0*a, 0.0],
@@ -87,32 +87,28 @@ structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
 structure.pbc = (True, True, False)
 
 parameters = Dict(dict={
-    'atom':{
-        'element' : 'Pt',
-        #'jri' : 833,
-        #'rmt' : 2.3,
-        #'dx' : 0.015,
-        'lmax' : 8,
-        #'lo' : '5p',
-        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-        },
-    'atom2':{
-        'element' : 'Fe',
-        #'jri' : 833,
-        #'rmt' : 2.3,
-        #'dx' : 0.015,
-        'lmax' : 8,
-        #'lo' : '5p',
-        #'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-        },
-    'comp': {
-        'kmax': 3.8,
-        },
-    'kpt': {
-        'div1': 12,
-        'div2' : 10,
-        'div3' : 1
-        }})
+    'atom': {'element': 'Pt',
+             # 'jri' : 833,
+             # 'rmt' : 2.3,
+             # 'dx' : 0.015,
+             'lmax': 8,
+             # 'lo' : '5p',
+             # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+             },
+    'atom2': {'element': 'Fe',
+              # 'jri' : 833,
+              # 'rmt' : 2.3,
+              # 'dx' : 0.015,
+              'lmax': 8,
+              # 'lo' : '5p',
+              # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+              },
+    'comp': {'kmax': 3.8,
+             },
+    'kpt': {'div1': 12,
+            'div2': 10,
+            'div3': 1
+            }})
 '''
 
 # Fe fcc structure
@@ -140,11 +136,11 @@ parameters = Dict(dict={
         'div3' : 1
         }})
 '''
-default = {'structure' : structure,
+default = {'structure': structure,
            'wf_parameters': wf_para,
-           'options' : options,
-           'calc_parameters' : parameters
-          }
+           'options': options,
+           'calc_parameters': parameters
+           }
 
 ####
 
@@ -164,7 +160,6 @@ else:
 if args.calc_parameters is not None:
     inputs['calc_parameters'] = load_node(args.calc_parameters)
 else:
-    #pass
     inputs['calc_parameters'] = default['calc_parameters']
 
 if args.fleurinp is not None:

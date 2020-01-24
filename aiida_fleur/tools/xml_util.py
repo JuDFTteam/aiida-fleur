@@ -1223,13 +1223,15 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
 def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None):
     """
     Routine adds something to the value of an attribute in the xml file (should be a number here)
-    This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shoft_value()` which
+    This is a lower-level version of :func:`~aiida_fleur.tools.xml_util.shift_value()` which
     allows one to specife an arbitrary xml path.
 
     :param: an etree a xpath from root to the attribute and the attribute value
-
-    :param: mode: 'abs', 'rel', change by absolut or relative amount
-    :return: None, or an etree
+    :param xpathn: an xml path to the attribute to change
+    :param attributename: a name of the attribute to change
+    :param set_val: a value to be added/multiplied to the previous value
+    :param mode: 'abs' if to add set_val, 'rel' if multiply
+    :param occ: a list of integers specifying number of occurrence to be set
 
     Comment: Element.set will add the attribute if it does not exist,
              xpath expression has to exist
@@ -1739,11 +1741,12 @@ def get_inpxml_file_structure():
         'nx': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'ny': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'nz': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
-        'count': '/fleurInput/calculationSetup/kPointCount',
+        'count': '/ fleurInput/calculationSetup/bzIntegration/kPointList',
         'ellow': '/fleurInput/calculationSetup/energyParameterLimits',
-        'elup': '/fleurInput/calculationSetup',
+        'elup': '/fleurInput/calculationSetup/energyParameterLimits',
         #'filename': '/fleurInput/cell/symmetryFile',
         'scale': '/fleurInput/cell/bulkLattice',
+        # 'film_scale': '/fleurInput/cell/filmLattice',
         'ndir': '/fleurInput/output/densityOfStates',
         'minEnergy': '/fleurInput/output/densityOfStates',
         'maxEnergy': '/fleurInput/output/densityOfStates',
