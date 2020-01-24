@@ -933,6 +933,62 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     return fleurinp_tree_copy
 
 
+def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_given, mode='abs'):
+    """
+    Shifts value of a specie by label
+    """
+    specie = ''
+    at_label = "{: >20}".format(at_label)
+    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    for group in all_groups:
+        positions = eval_xpath2(group, 'filmPos')
+        if not positions:
+            positions = eval_xpath2(group, 'relPos')
+        for atom in positions:
+            atom_label = get_xml_attribute(atom, 'label')
+            if atom_label == at_label:
+                specie = get_xml_attribute(group, 'species')
+
+    xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
+    xpath_mt = '{}/mtSphere'.format(xpath_species)
+    xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
+    xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
+    xpath_final = 'initialise'
+
+    if attr_name in ['radius', 'gridPoints', 'logIncrement']:
+        xpath_final = xpath_mt
+    elif attr_name in ['lmax', 'lnonsphr']:
+        xpath_final = xpath_atomic_cutoffs
+    elif attr_name in ['s', 'p', 'd', 'f']:
+        xpath_final = xpath_energy_parameters
+
+    old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name]))
+
+    if not old_val:
+        print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
+    else:
+        old_val = float(old_val[0])
+
+    if mode == 'rel':
+        value = value_given * old_val
+    elif mode == 'abs':
+        value = value_given + old_val
+    else:
+        raise ValueError("Mode should be 'res' or 'abs' only")
+
+    if attr_name in ['radius', 'logIncrement']:
+        value_to_write = value
+    else:
+        if not value.is_integer():
+            raise ValueError('You are trying to write a float to an integer attribute')
+        value_to_write = int(value)
+
+    xml_set_first_attribv(fleurinp_tree_copy, xpath_final, attr_name,value_to_write)
+
+    return fleurinp_tree_copy
+
+
 def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`

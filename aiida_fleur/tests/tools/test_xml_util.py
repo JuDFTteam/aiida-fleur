@@ -752,6 +752,39 @@ class TestShiftValue:
         captured = capsys.readouterr()
         assert captured.out == 'Can not find nz attribute in the inp.xml, skip it\n'
 
+class TestShiftSpeciesLabel:
+    attr_names = ['radius', 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f']
+    tags = ['mtSphere', 'mtSphere', 'mtSphere', 'atomicCutoffs', 'atomicCutoffs',
+            'energyParameters','energyParameters', 'energyParameters', 'energyParameters']
+
+    @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))
+    def test_shift_species_label(self, inpxml_etree, att_name, tag):
+        from aiida_fleur.tools.xml_util import shift_value_species_label, eval_xpath2
+        import math
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        path = '/fleurInput/atomSpecies/species[@name = "Fe-1"]/' + tag + '/@' + att_name
+        old_result = eval_xpath2(etree, path)[0]
+
+        shift_value_species_label(etree, '                 222', att_name, 3, mode='abs')
+        result = eval_xpath2(etree, path)[0]
+
+        assert math.isclose(float(result) - float(old_result), 3)
+
+    attr_names_float = ['radius', 'logIncrement']
+    tags_float = ['mtSphere', 'mtSphere']
+
+    @pytest.mark.parametrize('att_name,tag', zip(attr_names_float, tags_float))
+    def test_shift_species_label_rel(self, inpxml_etree, att_name, tag):
+        from aiida_fleur.tools.xml_util import shift_value_species_label, eval_xpath2
+        import math
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        path = '/fleurInput/atomSpecies/species[@name = "Fe-1"]/' + tag + '/@' + att_name
+        old_result = eval_xpath2(etree, path)[0]
+
+        shift_value_species_label(etree, '                 222', att_name, 3.2, mode='rel')
+        result = eval_xpath2(etree, path)[0]
+
+        assert math.isclose(float(result)/float(old_result), 3.2)
 
 class TestAddNumToAtt:
     from aiida_fleur.tools.xml_util import get_inpxml_file_structure
