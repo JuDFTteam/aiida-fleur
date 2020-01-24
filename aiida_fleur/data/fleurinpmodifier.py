@@ -120,6 +120,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, shift_value
+        from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename,
@@ -217,6 +218,11 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict, mode)
             return fleurinp_tree_copy
 
+        def shift_value_species_label1(fleurinp_tree_copy, label, att_name, value, mode):
+            fleurinp_tree_copy = shift_value_species_label(
+                fleurinp_tree_copy, label, att_name, value, mode)
+            return fleurinp_tree_copy
+
         def set_nkpts1(fleurinp_tree_copy, count, gamma):
             fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
             return fleurinp_tree_copy
@@ -238,6 +244,7 @@ class FleurinpModifier(object):
             'set_atomgr_att_label': change_atomgr_att2,
             'set_inpchanges': set_inpchanges1,
             'shift_value': shift_value1,
+            'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
             'add_num_to_att': add_num_to_att1
 
@@ -286,6 +293,7 @@ class FleurinpModifier(object):
             'set_atomgr_att_label': self.set_atomgr_att_label,
             'set_inpchanges': self.set_inpchanges,
             'shift_value': self.shift_value,
+            'shift_value_species_label': self.shift_value_species_label,
             'set_nkpts': self.set_nkpts,
             'add_num_to_att': self.add_num_to_att
 
@@ -478,6 +486,18 @@ class FleurinpModifier(object):
             change_dict = {'itmax' : 1, dVac = -2}
         """
         self._tasks.append(('shift_value', change_dict, mode))
+
+    def shift_value_species_label(self, label, att_name, value, mode='abs'):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.shift_value_species_label()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param label: a label of an atom
+        :param att_name: attrubute name of a specie
+        :param value: value to set
+        :param mode: 'abs' if change given is absolute, 'rel' if relative
+        """
+        self._tasks.append(('shift_value_species_label', label, att_name, value, mode))
 
     def set_nkpts(self, count, gamma='F'):
         """

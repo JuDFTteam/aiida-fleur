@@ -28,11 +28,13 @@ def test_fleurinp_modifier1(create_fleurinp):
     fm = FleurinpModifier(fleurinp_tmp)
     fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
     fm.shift_value({'Kmax': 0.1}, 'rel')
+    fm.shift_value_species_label('                 222', 'radius', 3, mode='abs')
     fm.set_species('all', {'mtSphere': {'radius': 3.333}})
     fm.undo()
     changes = fm.changes()
     assert changes == [
-        ('set_inpchanges', {'Kmax': 3.9, 'dos': True}), ('shift_value', {'Kmax': 0.1}, 'rel')]
+        ('set_inpchanges', {'Kmax': 3.9, 'dos': True}), ('shift_value', {'Kmax': 0.1}, 'rel'),
+        ('shift_value_species_label', '                 222', 'radius', 3, 'abs')]
 
     fm.show(validate=True)
     fm.freeze()
