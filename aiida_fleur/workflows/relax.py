@@ -87,6 +87,8 @@ class FleurRelaxWorkChain(WorkChain):
                                'vacuum during relaxation')
         spec.exit_code(312, 'ERROR_MT_RADII',
                        message='FLEUR calculation failed due to MT overlap.')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
+                       message='Overlapping MT-spheres during relaxation.')
 
     def start(self):
         """
@@ -172,9 +174,10 @@ class FleurRelaxWorkChain(WorkChain):
         Initializes inputs for further iterations.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        del input_scf.structure
-        del input_scf.inpgen
-        del input_scf.calc_parameters
+        if 'structure' in input_scf:
+            del input_scf.structure
+            del input_scf.inpgen
+            del input_scf.calc_parameters
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
@@ -207,13 +210,14 @@ class FleurRelaxWorkChain(WorkChain):
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
-                fleur_calc = load_node(scf_wc.outputs.out_scf_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+                fleur_calc = load_node(
+                    scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII']):
+                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('Failed due to MT overlap')
-                    return self.exit_codes.ERROR_MT_RADII
+                    return self.exit_codes.ERROR_MT_RADII_RELAX
                 else:
                     return self.exit_codes.ERROR_RELAX_FAILED
             else:

@@ -30,6 +30,7 @@ from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHand
 
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurProcess
 
+
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
     _workflowversion = "0.1.0"
@@ -85,6 +86,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                                'vacuum during relaxation')
         spec.exit_code(312, 'ERROR_MT_RADII',
                        message='FLEUR calculation failed due to MT overlap.')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
+                       message='Overlapping MT-spheres during relaxation.')
 
     def validate_inputs(self):
         """
@@ -130,7 +133,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                 self.report('ERROR: Not optimal computational resources.')
                 return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
 
-
     def check_kpts(self):
         """
         This routine checks if the total number of requested cpus
@@ -165,8 +167,9 @@ def _handle_general_error(self, calculation):
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
+
 @register_error_handler(FleurBaseWorkChain, 52)
-def _handle_general_error(self, calculation):
+def _handle_vacuum_spill_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
@@ -178,8 +181,22 @@ def _handle_general_error(self, calculation):
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_VACUUM_SPILL_RELAX)
 
+
 @register_error_handler(FleurBaseWorkChain, 51)
-def _handle_general_error(self, calculation):
+def _handle_mt_relax_error(self, calculation):
+    """
+    Calculation failed for unknown reason.
+    """
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('FLEUR calculation failed due to MT overlap.')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
+
+
+@register_error_handler(FleurBaseWorkChain, 54)
+def _handle_mt_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
@@ -189,6 +206,7 @@ def _handle_general_error(self, calculation):
         self.report('FLEUR calculation failed due to MT overlap.')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII)
+
 
 @register_error_handler(FleurBaseWorkChain, 50)
 def _handle_not_enough_memory(self, calculation):

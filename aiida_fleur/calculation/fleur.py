@@ -238,6 +238,7 @@ class FleurCalculation(CalcJob):
         spec.output('output_parameters', valid_type=Dict, required=False)
         spec.output('output_params_complex', valid_type=Dict, required=False)
         spec.output('relax_parameters', valid_type=Dict, required=False)
+        spec.output('error_params', valid_type=Dict, required=False)
         spec.default_output_node = 'output_parameters'
 
         # exit codes
@@ -260,6 +261,8 @@ class FleurCalculation(CalcJob):
                                'vacuum during relaxation')
         spec.exit_code(312, 'ERROR_MT_RADII',
                        message='FLEUR calculation failed due to MT overlap.')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
+                       message='Overlapping MT-spheres during relaxation.')
 
     @classproperty
     def _get_outut_folder(self):

@@ -155,6 +155,18 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
+                    elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
+                        over_indices = re.findall(
+                            r'relaxation: \S+ \S+ +\d.\d+', error_file_lines)[0].split()[1:]
+                        error_params = {'error_name': 'MT_OVERLAP_RELAX',
+                                        'description': ('This output node contains information'
+                                                        'about FLEUR error'),
+                                        'overlapped_indices': over_indices[:2],
+                                        'overlaping_value': over_indices[2]}
+                        link_name = self.get_linkname_outparams()
+                        error_params = Dict(dict=error_params)
+                        self.out('error_params', error_params)
+                        return self.exit_codes.ERROR_MT_RADII_RELAX
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
