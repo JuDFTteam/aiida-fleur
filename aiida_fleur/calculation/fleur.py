@@ -242,10 +242,10 @@ class FleurCalculation(CalcJob):
         spec.default_output_node = 'output_parameters'
 
         # exit codes
-        spec.exit_code(300, 'ERROR_OPENING_OUTPUTS',
-                       message='One of the output files can not be opened.')
-        spec.exit_code(301, 'ERROR_NO_RETRIEVED_FOLDER',
+        spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
+        spec.exit_code(301, 'ERROR_OPENING_OUTPUTS',
+                       message='One of the output files can not be opened.')
         spec.exit_code(302, 'ERROR_FLEUR_CALC_FAILED',
                        message='FLEUR calculation failed for unknown reason.')
         spec.exit_code(303, 'ERROR_NO_OUTXML',

@@ -120,11 +120,11 @@ class FleurScfWorkChain(WorkChain):
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
         spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
+                       message="Input codes do not correspond to fleur or inpgen respectively.")
         spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
         spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
-                       message="Input file is corrupted after user's modifications.")
+                       message="Input file was corrupted after user's modifications.")
         spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED',
                        message="Inpgen calculation failed.")
         spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED',
@@ -418,20 +418,17 @@ class FleurScfWorkChain(WorkChain):
                     method(**para)
 
         # validate?
-        apply_c = True
         try:
             fleurmode.show(display=False, validate=True)
         except etree.DocumentInvalid:
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
-            # fleurmode.show(display=True)#, validate=True)
             self.report(error)
             apply_c = False
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
         # apply
-        if apply_c:
-            out = fleurmode.freeze()
-            self.ctx.fleurinp = out
+        out = fleurmode.freeze()
+        self.ctx.fleurinp = out
         return
 
     def run_fleur(self):

@@ -60,8 +60,6 @@ class FleurSSDispConvWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
         spec.exit_code(340, 'ERROR_ALL_QVECTORS_FAILED',
                        message="Convergence SSDisp calculation failed for all q-vectors.")
         spec.exit_code(341, 'ERROR_SOME_QVECTORS_FAILED',

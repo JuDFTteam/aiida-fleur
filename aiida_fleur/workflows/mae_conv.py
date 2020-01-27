@@ -57,8 +57,6 @@ class FleurMaeConvWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
         spec.exit_code(343, 'ERROR_ALL_SQAS_FAILED',
                        message="Convergence MAE calculation failed for all SQAs.")
         spec.exit_code(344, 'ERROR_SOME_SQAS_FAILED',

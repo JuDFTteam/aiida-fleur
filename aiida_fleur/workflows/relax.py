@@ -70,23 +70,19 @@ class FleurRelaxWorkChain(WorkChain):
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
-        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(350, 'ERROR_DID_NOT_CONVERGE',
+        spec.exit_code(350, 'ERROR_DID_NOT_RELAX',
                        message="Optimization cycle did not lead to convergence of forces.")
-        spec.exit_code(351, 'ERROR_RELAX_FAILED',
-                       message="New positions calculation failed.")
+        spec.exit_code(351, 'ERROR_SCF_FAILED',
+                       message="SCF Workchains failed for some reason.")
         spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT',
-                       message="Found no relax.xml file in retrieved folder")
-        spec.exit_code(354, 'ERROR_NO_FLEURINP_OUTPUT',
-                       message="Found no fleurinpData in the last SCF workchain")
+                       message="Found no relaxed structure info in the output of SCF")
+        spec.exit_code(352, 'ERROR_NO_SCF_OUTPUT',
+                       message="Found no SCF output")
         spec.exit_code(355, 'ERROR_SCF_WC_FAILED',
                        message="SCF workchain failed for some reason")
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')
-        spec.exit_code(312, 'ERROR_MT_RADII',
-                       message='FLEUR calculation failed due to MT overlap.')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
                        message='Overlapping MT-spheres during relaxation.')
 
@@ -205,7 +201,7 @@ class FleurRelaxWorkChain(WorkChain):
         except AttributeError:
             message = 'ERROR: Something went wrong I do not have new atom positions calculation'
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_RELAX_FAILED
+            return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
@@ -218,10 +214,7 @@ class FleurRelaxWorkChain(WorkChain):
                 elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
-                else:
-                    return self.exit_codes.ERROR_RELAX_FAILED
-            else:
-                return self.exit_codes.ERROR_SCF_WC_FAILED
+            return self.exit_codes.ERROR_SCF_FAILED
 
     def condition(self):
         """
@@ -271,7 +264,7 @@ class FleurRelaxWorkChain(WorkChain):
         try:
             relax_parsed = last_calc.outputs.relax_parameters
         except NotExistent:
-            return self.exit_codes.ERROR_NO_RELAX_OUTPUT
+            return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
         new_fleurinp = self.analyse_relax(relax_parsed)
 
@@ -303,7 +296,7 @@ class FleurRelaxWorkChain(WorkChain):
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
         except NotExistent:
-            return self.exit_codes.ERROR_NO_RELAX_OUTPUT
+            return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
         relax_out = relax_out.get_dict()
 
@@ -359,7 +352,7 @@ class FleurRelaxWorkChain(WorkChain):
         out = save_output_node(Dict(dict=out))
         self.out('out', out)
         if not self.ctx.reached_relax:
-            return self.exit_codes.ERROR_DID_NOT_CONVERGE
+            return self.exit_codes.ERROR_DID_NOT_RELAX
 
     def control_end_wc(self, errormsg):
         """

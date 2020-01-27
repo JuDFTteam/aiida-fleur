@@ -74,20 +74,19 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.output('remote_folder', valid_type=orm.RemoteData, required=False)
         spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
-        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
-                       message='Something went wrong. More verbose output will be implemented.')
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message='Neither the `options` nor `automatic_parallelisation` input was '
                        'specified.')
-        spec.exit_code(360, 'ERROR_NOT_OPTIMAL_RESOURCES',
-                       message="Computational resources are not optimal.")
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')
-        spec.exit_code(312, 'ERROR_MT_RADII',
-                       message='FLEUR calculation failed due to MT overlap.')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
                        message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES',
+                       message="Computational resources are not optimal.")
+        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
+                       message='FleurCalculation failed and FleurBaseWorkChain has no strategy '
+                               'to resolve this')
 
     def validate_inputs(self):
         """
@@ -160,7 +159,7 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED', 'ERROR_MT_RADII']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for unknown reason, stop the Base workchain')
@@ -193,19 +192,6 @@ def _handle_mt_relax_error(self, calculation):
         self.report('FLEUR calculation failed due to MT overlap.')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
-
-
-@register_error_handler(FleurBaseWorkChain, 54)
-def _handle_mt_error(self, calculation):
-    """
-    Calculation failed for unknown reason.
-    """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII']):
-        self.ctx.restart_calc = calculation
-        self.ctx.is_finished = True
-        self.report('FLEUR calculation failed due to MT overlap.')
-        self.results()
-        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII)
 
 
 @register_error_handler(FleurBaseWorkChain, 50)

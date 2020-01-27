@@ -124,12 +124,12 @@ class FleurinputgenCalculation(CalcJob):
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
         # exit codes
-        spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',
-                       message='Input parameters for inpgen contain unknown keys.')
-        spec.exit_code(253, 'ERROR_ATOM_POSITION_NEEDED',
-                       message='Fleur lattice needs atom positions as input.')
-        spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
-                       message='Excessive input parameters were specified.')
+        # spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',
+        #                message='Input parameters for inpgen contain unknown keys.')
+        # spec.exit_code(253, 'ERROR_ATOM_POSITION_NEEDED',
+        #                message='Fleur lattice needs atom positions as input.')
+        # spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
+        #                message='Excessive input parameters were specified.')
         spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER',
                        message='No retrieved folder found.')
         spec.exit_code(301, 'ERROR_OPENING_OUTPUTS',

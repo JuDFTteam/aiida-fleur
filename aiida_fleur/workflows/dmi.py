@@ -104,7 +104,7 @@ class FleurDMIWorkChain(WorkChain):
         spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
         spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
-                       message="Input file is corrupted after user's modifications.")
+                       message="Input file was corrupted after user's modifications.")
         spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
                        message="Reference calculation failed.")
         spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE',
@@ -366,20 +366,16 @@ class FleurDMIWorkChain(WorkChain):
                     method(**para)
 
             # validate?
-            apply_c = True
             try:
                 fleurmode.show(display=False, validate=True)
             except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                # fleurmode.show(display=True)#, validate=True)
                 self.control_end_wc(error)
-                apply_c = False
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
             # apply
-            if apply_c:
-                out = fleurmode.freeze()
-                self.ctx.fleurinp = out
+            out = fleurmode.freeze()
+            self.ctx.fleurinp = out
             return
         else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
@@ -429,7 +425,7 @@ class FleurDMIWorkChain(WorkChain):
         pk_last = 0
         scf_ref_node = load_node(calc.pk)
         for i in scf_ref_node.called:
-            if i.node_type == u'process.workflow.workchain.WorkChainNode.':
+            if i.node_type == 'process.workflow.workchain.WorkChainNode.':
                 if i.process_class is FleurBaseWorkChain:
                     if pk_last < i.pk:
                         pk_last = i.pk

@@ -60,11 +60,12 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         spec.expose_outputs(RelaxProcess)
 
-        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
-                       message='Something went wrong. More verbose output will be implemented.')
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message='Neither the `options` nor `automatic_parallelisation` input was '
                        'specified.')
+        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
+                       message='FleurRelaxWorkChain failed and FleurBaseRelaxWorkChain has no'
+                               ' strategy to resolve this')
 
     def validate_inputs(self):
         """
@@ -89,7 +90,7 @@ def _handle_not_conv_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_CONVERGE']):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_RELAX']):
         self.ctx.is_finished = False
         self.report('Relax WC did not lead to convergence, submit next RelaxWC')
         last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
@@ -113,11 +114,10 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for a reason that can not be fixed automatically.
     """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_RELAX_FAILED',
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_SCF_FAILED',
                                                                   'ERROR_INVALID_INPUT_RESOURCES',
                                                                   'ERROR_INVALID_CODE_PROVIDED',
-                                                                  'ERROR_NO_RELAX_OUTPUT',
-                                                                  'ERROR_NO_FLEURINP_OUTPUT']):
+                                                                  'ERROR_NO_RELAX_OUTPUT']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be fixed automatically')

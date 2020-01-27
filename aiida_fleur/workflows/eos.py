@@ -85,8 +85,6 @@ class FleurEosWorkChain(WorkChain):
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
                        message="Invalid input, please check input configuration.")
-        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
 
     def start(self):
         """
