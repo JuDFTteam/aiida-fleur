@@ -39,14 +39,6 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
     _workflowversion = "0.1.0"
 
-    _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 2 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}}
-
     _wf_default = {
         'lattice': 'fcc',
         'miller': [[-1, 1, 0],
@@ -73,6 +65,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.expose_inputs(FleurBaseRelaxWorkChain, namespace='relax', exclude=('structure', ))
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("eos_output", valid_type=Dict, required=False)
+        spec.input("optimized_structure", valid_type=StructureData, required=False)
 
         spec.outline(
             cls.start,
@@ -101,7 +94,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Returns True if EOS WorkChain should be submitted
         """
-        return self.ctx.wf_dict['eos_needed']
+        return self.ctx.eos_needed
 
     def prepare_eos(self):
         """
@@ -112,16 +105,18 @@ class FleurCreateMagneticWorkChain(WorkChain):
         inputs.structure = self.create_substrate_bulk()
 
         if not isinstance(inputs.structure, StructureData):
-            return inputs['structure']  # throws an exit code thrown in create_substrate_bulk
+            return inputs, inputs.structure  # exit code thrown in create_substrate_bulk
 
-        return inputs
+        return inputs, None
 
     def run_eos(self):
         """
         Optimize lattice parameter for substrate bulk structure.
         """
         inputs = {}
-        inputs = self.prepare_eos()
+        inputs, error = self.prepare_eos()
+        if not error:
+            return error
         res = self.submit(FleurEosWorkChain, **inputs)
         self.to_context(eos_wc=res)
 
@@ -179,58 +174,64 @@ class FleurCreateMagneticWorkChain(WorkChain):
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        if not wf_dict['eos_needed'] and 'eos_output' not in self.inputs:
-            return self.exit_codes.ERROR_NO_EOS_OUTPUT
-
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        # initialize the dictionary using defaults if no options are given
-        defaultoptions = self._default_options
-        if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
-        else:
-            options = defaultoptions
-
-        # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
-            options[key] = options.get(key, val)
-        self.ctx.options = options
-
-        # Check if user gave valid inpgen and fleur executables
         inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        if 'fleur' in inputs:
-            try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        if inputs.eos:
+            self.ctx.eos_needed = True
+            self.ctx.relax_needed = True
+            if 'eos_output' in inputs:
+                self.report('ERROR: you specified both eos_output and eos wc inputs.')
+                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if not inputs.relax:
+                self.report('ERROR: no relax wc input was given despite EOS is needed.')
+                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'optimized_structure' in inputs:
+                self.report('ERROR: optimized structure was given despite EOS is needed.')
+                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        else:
+            if 'eos_output' in inputs:
+                self.ctx.eos_needed = False
+                self.ctx.relax_needed = True
+                if not inputs.relax:
+                    self.report('ERROR: no relax wc input was given despite EOS is needed.')
+                    return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                if 'optimized_structure' in inputs:
+                    self.report('ERROR: optimized structure was given despite relax is needed.')
+                    return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            else:
+                if 'optimized_structure' in inputs:
+                    self.ctx.eos_needed = False
+                    self.ctx.relax_needed = False
+                    if inputs.relax:
+                        if inputs.relax:
+                            self.report('ERROR: relax wc input was given but relax is not needed.')
+                            return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                else:
+                    self.ctx.eos_needed = False
+                    self.ctx.relax_needed = True
+                    if inputs.relax:
+                        if not inputs.relax:
+                            self.report('ERROR: relax wc input was not given but relax is needed.')
+                            return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
     def relax_needed(self):
         """
         Returns true if interlayer relaxation should be performed.
         """
-        return self.ctx.wf_dict['relax_needed']
+        return self.ctx.relax_needed
 
     def run_relax(self):
         """
         Optimize interlayer distance.
         """
         inputs = {}
-        inputs = self.prepare_relax()
+        inputs, error = self.prepare_relax()
+        if not error:
+            return error
         res = self.submit(FleurBaseRelaxWorkChain, **inputs)
         self.to_context(relax_wc=res)
 
@@ -239,12 +240,14 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Initialise inputs for Relax workchain
         """
         inputs = AttributeDict(self.exposed_inputs(FleurBaseRelaxWorkChain, namespace='relax'))
-        inputs.scf.structure = self.create_film_to_relax()
 
-        if not isinstance(inputs.scf.structure, StructureData):
-            return inputs.scf.structure  # throws an exit code thrown in create_film_to_relax
+        if self.ctx.eos_needed or 'eos_output' in self.inputs:
+            inputs.scf.structure = self.create_film_to_relax()
 
-        return inputs
+            if not isinstance(inputs.scf.structure, StructureData):
+                return inputs, inputs.scf.structure
+
+        return inputs, None
 
     def create_film_to_relax(self):
         """
@@ -254,7 +257,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         miller = self.ctx.wf_dict['miller']
         host_symbol = self.ctx.wf_dict['host_symbol']
-        if not self.ctx.wf_dict['eos_needed']:
+        if not self.ctx.eos_needed:
             eos_output = self.inputs.eos_output
         else:
             eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
@@ -287,7 +290,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         if not self.ctx.relax_wc.is_finished_ok:
             return self.exit_codes.ERROR_RELAX_FAILED
 
-        if self.ctx.wf_dict['relax_needed']:
+        if self.ctx.relax_needed:
             optimized_structure = self.ctx.relax_wc.outputs.optimized_structure
         else:
             optimized_structure = self.inputs.optimized_structure
