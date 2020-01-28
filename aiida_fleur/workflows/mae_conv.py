@@ -21,12 +21,10 @@ import six
 
 from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
 from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurMaeConvWorkChain(WorkChain):

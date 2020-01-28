@@ -26,7 +26,6 @@ from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
 from aiida.orm import RemoteData, Dict
 from aiida.common import AttributeDict
@@ -43,7 +42,7 @@ from aiida_fleur.data.fleurinp import FleurinpData
 
 class FleurDMIWorkChain(WorkChain):
     """
-    This workflow calculates spin spiral dispersion of a structure.
+    This workflow calculates DMI energy dispersion of a structure.
     """
 
     _workflowversion = "0.1.0"

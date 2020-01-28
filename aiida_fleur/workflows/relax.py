@@ -22,7 +22,6 @@ import six
 
 from aiida.engine import WorkChain, ToContext, while_
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import load_node
 from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict

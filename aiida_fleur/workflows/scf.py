@@ -23,7 +23,6 @@ from lxml import etree
 import six
 from six.moves import range
 
-from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
 from aiida.orm import StructureData, RemoteData, Dict
 from aiida.engine import WorkChain, while_, if_, ToContext
@@ -425,7 +424,6 @@ class FleurScfWorkChain(WorkChain):
         except etree.DocumentInvalid:
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             self.report(error)
-            apply_c = False
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
         # apply

@@ -25,7 +25,6 @@ import numpy as np
 import six
 from six.moves import range
 
-from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict
 from aiida.engine import WorkChain, ToContext
@@ -35,8 +34,6 @@ from aiida.common import AttributeDict
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
-
-from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurEosWorkChain(WorkChain):

@@ -24,7 +24,6 @@ from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node, CalcJobNode
 from aiida.orm import RemoteData, Dict
 from aiida.common import AttributeDict
@@ -44,7 +43,7 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.2.0"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},

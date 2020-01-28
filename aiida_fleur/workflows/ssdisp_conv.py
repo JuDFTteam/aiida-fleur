@@ -12,7 +12,7 @@
 
 """
     In this module you find the workflow 'FleurSSDispConvWorkChain' for the calculation of
-    Magnetic Anisotropy Energy converging all the directions.
+    Spin Spiral energy Dispersion converging all the directions.
 """
 
 from __future__ import absolute_import
@@ -21,18 +21,15 @@ import six
 
 from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
 from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-from aiida_fleur.data.fleurinp import FleurinpData
-
 
 class FleurSSDispConvWorkChain(WorkChain):
     """
-        This workflow calculates the Magnetic Anisotropy Energy of a structure.
+        This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
     _workflowversion = "0.1.0"
