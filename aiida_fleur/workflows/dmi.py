@@ -45,7 +45,7 @@ class FleurDMIWorkChain(WorkChain):
     This workflow calculates DMI energy dispersion of a structure.
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.2.0"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -186,7 +186,7 @@ class FleurDMIWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # Check if user gave an input setup making any sense
-        if 'remote_data' in inputs.scf or 'fleurinp' in inputs.scf or 'structure' in inputs.scf:
+        if inputs.scf:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = "ERROR: you gave SCF input + remote for the FT"

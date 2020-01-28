@@ -1,20 +1,18 @@
 from aiida.orm import load_node, Dict
 from aiida.engine import submit
 
-from aiida_fleur.workflows.mae import FleurMaeWorkChain
+from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
 
-structure = load_node(STRUCTURE_PK)
 fleur_code = load_node(FLEUR_PK)
 inpgen_code = load_node(INPGEN_PK)
+structure = load_node(STRUCTURE_PK)
 
-wf_para = Dict(dict={'sqa_ref': [0.7, 0.7],
-                     'use_soc_ref': False,
-                     'sqas_theta': [0.0, 1.57079, 1.57079],
-                     'sqas_phi': [0.0, 0.0, 1.57079],
-                     'serial': False,
-                     'soc_off': [],
-                     'inpxml_changes': [],
+wf_para = Dict(dict={'beta': {'all': 1.57079},
+                     'q_vectors': {'label': [0.0, 0.0, 0.0],
+                                   'label2': [0.125, 0.0, 0.0]
+                                   }
                      })
+
 
 options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
                      'queue_name': 'devel',
@@ -57,9 +55,7 @@ inputs = {'scf': {'wf_parameters': wf_para_scf,
                   'fleur': fleur_code
                   },
           'wf_parameters': wf_para,
-          'fleur': fleur_code,
-          'options': options
           }
 
 
-res = submit(FleurMaeWorkChain, **inputs)
+res = submit(FleurSSDispConvWorkChain, **inputs)

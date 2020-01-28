@@ -12,6 +12,3 @@
 
 'total_number_layers': 4,          # use this total number of layers
 'num_relaxed_layers': 2,           # use this number of relaxed interlayer distances
-
-'eos_needed': False,               # False if EOS should be omitted
-'relax_needed': True               # False if relaxation should be omitted

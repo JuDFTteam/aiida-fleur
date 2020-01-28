@@ -1,16 +1,16 @@
 .. _ssdisp_conv_wc:
 
-Fleur Spin-Spiral Dispersion workchain
---------------------------------------
+Fleur Spin-Spiral Dispersion Converge workchain
+-----------------------------------------------
 
-* **Current version**: 0.1.0
+* **Current version**: 0.2.0
 * **Class**: :py:class:`~aiida_fleur.workflows.ssdisp_conv.FleurSSDispConvWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.ssdisp_conv``
 * **Workflow type**: Scientific workchain, self-consistent subgroup
-* **Aim**: Calculate spin-spiral energy dispersion over given q-points.
+* **Aim**: Calculate spin-spiral energy dispersion over given q-points converging all the q_points.
 
 .. contents::
-
+    :depth: 2
 
 Import Example:
 
@@ -23,65 +23,158 @@ Import Example:
 Description/Purpose
 ^^^^^^^^^^^^^^^^^^^
 This workchain calculates spin spiral energy  dispersion over a given set of q-points.
-Charge density is converged for all given q-points which means
-a FleurScfWorkChain is submitted for each q-point. This requires more computational cost than
-FleurMaeWorkChain but gives more accurate results.
+Resulting energies do not contain terms, corresponding to DMI energies. To take into account DMI,
+see the :ref:`dmi_wc` documentation.
+
+In this workchain the force-theorem is employed which means the workchain converges
+a reference charge density first
+and then submits a single FleurCalculation with a ``<forceTheorem>`` tag. However, it is possible
+to specify inputs to use external pre-converged charge density to use it as a reference.
+
+The task of the workchain us to calculate the energy difference between two or several structures
+having a different magnetisation profile:
+
+.. image:: images/SSDisp_energies.png
+    :width: 60%
+    :align: center
+
+To do this, the workchain employs the force theorem approach:
+
+.. image:: images/SSDisp_conv.png
+    :width: 110%
+    :align: center
+
+.. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
 
 Input nodes
 ^^^^^^^^^^^
 
-  * ``fleur``: :py:class:`~aiida.orm.Code` - Fleur code using the ``fleur.fleur`` plugin
-  * ``inpgen``, optional: :py:class:`~aiida.orm.Code` - Inpgen code using the ``fleur.inpgen``
-    plugin
-  * ``wf_parameters``: :py:class:`~aiida.orm.Dict`, optional - Settings
-    of the workflow behavior
-  * ``structure``: :py:class:`~aiida.orm.StructureData`, optional: Crystal structure
-    data node.
-  * ``calc_parameters``: :py:class:`~aiida.orm.Dict`, optional -
-    FLAPW parameters, used by inpgen
-  * ``options``: :py:class:`~aiida.orm.Dict`, optional - AiiDA options
-    (queues, cpus)
+The FleurSSDispWorkChain employs
+`exposed`_ feature of the AiiDA, thus inputs for the nested
+:ref:`SCF<scf_wc>` workchain should be passed in the namespace
+``scf``.
 
-Returns nodes
-^^^^^^^^^^^^^
++-----------------+-----------------------------+---------------------------------+----------+
+| name            | type                        | description                     | required |
++=================+=============================+=================================+==========+
+| scf             | namespace                   | inputs for nested SCF WorkChain | yes      |
++-----------------+-----------------------------+---------------------------------+----------+
+| wf_parameters   | :py:class:`~aiida.orm.Dict` | Settings of the workchain       | no       |
++-----------------+-----------------------------+---------------------------------+----------+
 
-  * ``out`` (*ParameterData*): Information of workflow results like success,
-    last result node, list with convergence behavior
- 
-Default inputs
-^^^^^^^^^^^^^^
-Workflow parameters.
+Workchain parameters and its defaults
+.....................................
+
+
+``wf_parameters``
+,,,,,,,,,,,,,,,,,
+
+``wf_parameters``: :py:class:`~aiida.orm.Dict` - Settings of the workflow behavior. All possible
+keys and their defaults are listed below:
+
+.. literalinclude:: code/ssdisp_conv_parameters.py
+
+**beta** is a python dictionary containing a ``key: value`` pairs. Each pair sets **beta** parameter
+in an inp.xml file. ``key`` specifies the atom label to change, ``key`` equal to `'all'` sets all
+atoms groups. For example,
 
 .. code-block:: python
 
-    wf_parameters_dict = {
-        'fleur_runmax': 10,
-        'beta': {'all' : 1.57079},
-        'q_vectors': {'label': [0.0, 0.0, 0.0],
-                      'label2': [0.125, 0.0, 0.0]
-                     },
-        'alpha_mix': 0.05,
-        'density_converged': 0.00005,
-        'serial': False,
-        'itmax_per_run': 30,
-        'soc_off': [],
-        'inpxml_changes': [],
-    }
+    'beta' : {'222' : 1.57079}
 
+changes
+
+.. code-block:: html
+
+      <atomGroup species="Fe-1">
+        <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta="0.00000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+
+to:
+
+.. code-block:: html
+
+      <atomGroup species="Fe-1">
+        <filmPos label="                 222">.0000000000 .0000000000 -11.4075100502</filmPos>
+        <force calculate="T" relaxXYZ="TTT"/>
+        <nocoParams l_relax="F" alpha=".00000000" beta="1.57079" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+
+.. note::
+
+      **beta** actually sets a beta parameter for a whole atomGroup.
+      It can be that the atomGroup correspond to several atoms and **beta** switches sets beta
+      for atoms
+      that was not intended to change. You must be careful and make sure that several atoms do not
+      correspond to a given specie.
+
+**q_vectors** is a python dictionary (``key: value`` pairs). The ``key`` can be any string which
+sets a label of the q-vector. ``value`` must be a list of 3 values: $$q_x, q_y, q_z$$.
+
+
+Output nodes
+^^^^^^^^^^^^^
+
+  * ``out``: :py:class:`~aiida.orm.Dict` -  Information of
+    workflow results like success, last result node, list with convergence behavior
+
+    .. code-block:: python
+
+        {
+            "energies": {
+                "label": 0.0,
+                "label2": 0.014235119451769
+            },
+            "energy_units": "eV",
+            "errors": [],
+            "failed_labels": [],
+            "info": [],
+            "q_vectors": {
+                "label": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "label2": [
+                    0.125,
+                    0.0,
+                    0.0
+                ]
+            },
+            "warnings": [],
+            "workflow_name": "FleurSSDispConvWorkChain",
+            "workflow_version": "0.1.0"
+        }
+
+    Resulting Spin Spiral energies are listed according to given labels.
+
+.. _layout_ssdisp_conv:
 
 Layout
-^^^^^^
-Still has to be documented
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+SSDisp converge always starts with a structure and a list of q-vectors to calculate. There is no
+way to continue from pre-converged charge density.
+
+
+Error handling
+^^^^^^^^^^^^^^
+A list of implemented :ref:`exit codes<exit_codes>`:
+
++------+------------------------------------------------------------------------------------------+
+| Code | Meaning                                                                                  |
++======+==========================================================================================+
+| 230  | Invalid workchain parameters                                                             |
++------+------------------------------------------------------------------------------------------+
+| 340  | Convergence SSDisp calculation failed for all q-vectors                                  |
++------+------------------------------------------------------------------------------------------+
+| 341  | Convergence SSDisp calculation failed for some q-vectors                                 |
++------+------------------------------------------------------------------------------------------+
 
 
 Example usage
 ^^^^^^^^^^^^^
-Still has to be documented
 
-Output node example
-^^^^^^^^^^^^^^^^^^^
-Still has to be documented
-
-Error handling
-^^^^^^^^^^^^^^
-Still has to be documented
+  .. literalinclude:: code/ssdisp_conv_wc_submission.py

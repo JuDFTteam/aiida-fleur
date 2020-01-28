@@ -3,7 +3,7 @@
 Fleur equation of states (eos) workflow
 ---------------------------------------
 
-* **Current version**: 0.3.4
+* **Current version**: 0.3.5
 * **Class**: :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.eos``
 * **Workflow type**:  Technical
@@ -44,6 +44,8 @@ The :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain` employs
 +-----------------+--------------------------------------+-------------------------------------+----------+
 | name            | type                                 | description                         | required |
 +=================+======================================+=====================================+==========+
+| scf             | namespace                            | inputs for nested SCF WorkChain     | no       |
++-----------------+--------------------------------------+-------------------------------------+----------+
 | wf_parameters   | :py:class:`~aiida.orm.Dict`          | Settings of the workchain           | no       |
 +-----------------+--------------------------------------+-------------------------------------+----------+
 | structure       | :py:class:`~aiida.orm.StructureData` | input structure                     | no       |
@@ -119,19 +121,24 @@ Output node example
 
 Error handling
 ^^^^^^^^^^^^^^
-  Still has to be documented...
 
-  Total energy check:
+Total energy check:
 
-  The workflow quickly checks the behavior of the total energy for outliers.
-  Which might occur, because the chosen FLAPW parameters might not be good for
-  all volumes. Also local Orbital setup and so on might matter.
+The workflow quickly checks the behavior of the total energy for outliers.
+Which might occur, because the chosen FLAPW parameters might not be good for
+all volumes. Also local Orbital setup and so on might matter.
 
-  * Not enough points for fit
-  * Some calculations did not converge
-  * Volume ground state does not lie in the calculated interval, interval refinement
+* Not enough points for fit
+* Some calculations did not converge
+* Volume ground state does not lie in the calculated interval, interval refinement
 
 Exit codes
 ^^^^^^^^^^
 
-:ref:`exit_codes` are not implemented for this WC.
+A list of implemented :ref:`exit codes<exit_codes>`:
+
++------+------------------------------------------------------------------------------------------+
+| Code | Meaning                                                                                  |
++======+==========================================================================================+
+| 230  | Invalid workchain parameters                                                             |
++------+------------------------------------------------------------------------------------------+

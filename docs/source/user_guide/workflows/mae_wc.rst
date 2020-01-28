@@ -3,7 +3,7 @@
 Fleur Magnetic Anisotropy Energy workflow
 -----------------------------------------
 
-* **Current version**: 0.1.0
+* **Current version**: 0.2.0
 * **Class**: :py:class:`~aiida_fleur.workflows.mae.FleurMaeWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.mae``
 * **Workflow type**: Scientific workchain, force-theorem subgroup
@@ -27,40 +27,55 @@ This workchain calculates Magnetic Anisotropy Energy over a given set of spin-qu
 The force-theorem is employed which means the workchain converges a reference charge density first
 then it submits a single FleurCalculation with a `<forceTheorem>` tag.
 
+The task of the workchain us to calculate the energy difference between two or several structures
+having a different magnetisation profile:
+
+.. image:: images/MAE_energies.png
+    :width: 60%
+    :align: center
+
+To do this, the workchain employs the force theorem approach:
+
+.. image:: images/MAE_force.png
+    :width: 110%
+    :align: center
+
+It is not always necessary to start with a structure. Setting up input
+parameters correctly (see :ref:`layout_ssdisp`) one can start from a given FleuinpData, inp.xml
+or converged/not-fully-converged reference charge density.
+
+.. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
+
 Input nodes
 ^^^^^^^^^^^
+
+The FleurMaeWorkChain employs
+`exposed`_ feature of the AiiDA, thus inputs for the nested
+:ref:`SCF<scf_wc>` workchain should be passed in the namespace
+``scf``.
 
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | name            | type                                               | description                             | required |
 +=================+====================================================+=========================================+==========+
-| fleur           | :py:class:`~aiida.orm.Code`                        | Fleur code                              | yes      |
+| scf             | namespace                                          | inputs for nested SCF WorkChain         | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| inpgen          | :py:class:`~aiida.orm.Code`                        | Inpgen code                             | no       |
+| fleur           | :py:class:`~aiida.orm.Code`                        | Fleur code                              | yes      |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | wf_parameters   | :py:class:`~aiida.orm.Dict`                        | Settings of the workchain               | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| structure       | :py:class:`~aiida.orm.StructureData`               | Structure data node                     | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| calc_parameters | :py:class:`~aiida.orm.Dict`                        | inpgen :ref:`parameters<scf_wc_layout>` | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | fleurinp        | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`| :ref:`FLEUR input<fleurinp_data>`       | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| remote_data     | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
+| remote          | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | options         | :py:class:`~aiida.orm.Dict`                        | AiiDA options (computational resources) | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| settings        | :py:class:`~aiida.orm.Dict`                        | Special :ref:`settings<fleurinp_data>`  |          |
-|                 |                                                    | for Fleur calculation                   | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
 
-Only ``fleur`` input is required. However, it does not mean that it is enough to specify ``fleur``
+Only **fleur** input is required. However, it does not mean that it is enough to specify **fleur**
 only. One *must* keep one of the supported input configurations described in the
 :ref:`layout_mae` section.
 
 Workchain parameters and its defaults
 .....................................
-
-.. _FLEUR relaxation: https://www.flapw.de/site/xml-inp/#structure-relaxations-with-fleur
 
 ``wf_parameters``
 ,,,,,,,,,,,,,,,,,
@@ -70,20 +85,16 @@ keys and their defaults are listed below:
 
 .. literalinclude:: code/mae_parameters.py
 
-Workchain parameters contain a set of parameters needed by the SCF workchain.
-There are also DMI-specific parameters such as ``alpha-mix``, ``sqas_theta``, ``sqas_phi``,
-``soc_off``, ``input_converged``, ``sqa_ref``, ``use_soc_ref``.
-
-``soc_off`` is a python list containing atoms labels. SOC is switched off for species,
+**soc_off** is a python list containing atoms labels. SOC is switched off for species,
 corresponding to the atom with a given label.
 
 .. note::
 
-    It can be that the spice correspond to several atoms and ``soc_off`` switches off SOC for atoms
-    that was not intended to change. You must be careful with this. For more information, see the
-    LINK.
+    It can be that the specie correspond to several atoms and **soc_off** switches off SOC for atoms
+    that was not intended to change. You must be careful and make sure that several atoms do not
+    correspond to a given specie.
 
-An example of ``soc_off`` work:
+An example of **soc_off** work:
 
 .. code-block:: python
 
@@ -123,18 +134,10 @@ to:
 As you can see, I was careful about "Ir-2" specie  and it contained a single atom with a
 label 458.
 
-.. _Fleur forceTheorem documentation: https://www.flapw.de/site/xml-advanced/#magnetic-anisotropy-energy-mae
+**sqas_theta** and **sqas_phi** are python lists that set SOC theta and phi values.
 
-``sqas_theta`` and ``sqas_phi`` are python lists that set SOC theta and phi values. For detailed
-explanation see `Fleur forceTheorem documentation`_.
-
-``sqa_ref`` sets a spin quantization axis [theta, phi] for the reference calculation if SOC terms
-are switched on by ``use_soc_ref``.
-
-``input_converged`` is used only if a ``remote_date`` node is given in the input. Is has to be set
-True if there is no need to converge a given charge density and it can be used directly for the
-force-theorem step. If it is set to False, input charge density will be submitted into scf
-workchain before the force-theorem step to achieve the convergence.
+**sqa_ref** sets a spin quantization axis [theta, phi] for the reference calculation if SOC terms
+are switched on by **use_soc_ref**.
 
 ``options``
 ,,,,,,,,,,,
@@ -193,65 +196,56 @@ Supported input configurations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 MAE workchain has several
-input combinations that implicitly define the workchain layout. Depending
-on the setup of the inputs, one of four supported scenarios will happen:
+input combinations that implicitly define the workchain layout. Only **scf**, **fleurinp** and
+**remote** nodes control the behaviour, other input nodes are truly optional.
+Depending on the setup of the inputs, one of several supported scenarios will happen:
 
-1. **fleurinp**:
+1. **scf**:
 
-      Files, belonging to the **fleurinp**, will be used as input for the first
-      FLEUR calculation. Submits SCF workchain to obtain the reference charge density, then
-      makes a force-theorem FLEUR calculation.
+      SCF workchain will be submitted to converge the reference charge density which will
+      be followed be the force theorem calculation. Depending on the inputs given in the SCF
+      namespace, SCF will start from the structure or FleurinpData or will continue
+      converging from the given remote_data (see details in :ref:`SCF WorkChain<scf_wc>`).
 
-      Workchain parameters that are used:
+2. **remote**:
 
-        #. SCF-related parameters
-        #. beta
-        #. alpha_mix
-        #. sqas_theta
-        #. sqas_phi
-        #. soc_off
-        #. inpxml_changes
+      Files which belong to the **remote** will be used for the direct submission of the force
+      theorem calculation. ``inp.xml`` file will be converted to FleurinpData and charge density
+      will be used as a reference charge density.
 
-      The other are ignored.
+3. **remote** + **fleurinp**:
 
-2. **fleurinp** + **parent_folder** (FLEUR):
+      Charge density which belongs to **remote** will be used as a reference charge density, however
+      ``inp.xml`` from the **remote** will be ignored. Instead, the given **fleurinp** will be used.
+      The aforementioned input files will be used for direct submission of the force theorem
+      calculation.
 
-      Files, belonging to the **fleurinp**, will be used as input for the first
-      FLEUR calculation. Moreover, initial charge density will be
-      copied from the folder of the parent calculation. If ``input_converged`` set to False,
-      first submits a SCF workchain to converge given charge density further; directly submits
-      a force-theorem calculation otherwise.
+Other combinations of the input nodes **scf**, **fleurinp** and **remote** are forbidden.
 
+.. warning::
 
-3. **parent_folder** (FLEUR):
-
-      inp.xml file and initial
-      charge density will be copied from the folder of the parent FLEUR calculation.
-      If ``input_converged`` set to False, first
-      submits a SCF workchain to converge given charge density further; directly submits
-      a force-theorem calculation otherwise.
-
-4. **structure**:
-
-      Submits inpgen calculation to generate a new **fleurinp** using a given structure which
-      is followed by the SCF workchain to obtain the reference charge density. Submits a
-      force-theorem FLEUR calculation after.
+  One *must* follow one of the supported input configurations. To protect a user from the
+  workchain misbehaviour, an error will be thrown if one specifies e.g. both **scf** and **remote**
+  inputs because in this case the intention of the user is not clear either he/she wants to
+  converge a new charge density or use the given one.
 
 
 Error handling
 ^^^^^^^^^^^^^^
-A list of implemented exit codes:
+A list of implemented :ref:`exit codes<exit_codes>`:
 
 +------+------------------------------------------------------------------------------------------+
 | Code | Meaning                                                                                  |
 +======+==========================================================================================+
-| 230  | Input nodes do not correspond to any valid input configuration.                          |
+| 230  | Invalid workchain parameters                                                             |
 +------+------------------------------------------------------------------------------------------+
-| 231  | Input codes do not correspond to fleur or inpgen codes respectively.                     |
+| 231  | Invalid input configuration                                                              |
 +------+------------------------------------------------------------------------------------------+
-| 232  | Input file modification failed.                                                          |
+| 233  | Input codes do not correspond to fleur or inpgen codes respectively.                     |
 +------+------------------------------------------------------------------------------------------+
-| 233  | Input file is corrupted after user's modifications.                                      |
+| 235  | Input file modification failed.                                                          |
++------+------------------------------------------------------------------------------------------+
+| 236  | Input file was corrupted after modifications                                             |
 +------+------------------------------------------------------------------------------------------+
 | 334  | Reference calculation failed.                                                            |
 +------+------------------------------------------------------------------------------------------+

@@ -32,7 +32,7 @@ class FleurMaeConvWorkChain(WorkChain):
     This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = "0.2.0"
 
     _wf_default = {
         'sqas': {'label': [0.0, 0.0]},

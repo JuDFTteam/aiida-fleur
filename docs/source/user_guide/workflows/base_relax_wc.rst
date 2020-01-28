@@ -1,7 +1,7 @@
 .. _base_relax_wc:
 
-Fleur structure optimization workchain
---------------------------------------
+Fleur structure optimization Base workchain
+-------------------------------------------
 
 * **Current version**: 0.1.0
 * **Class**: `~aiida_fleur.workflows.base_relax.FleurBaseRelaxWorkChain`
