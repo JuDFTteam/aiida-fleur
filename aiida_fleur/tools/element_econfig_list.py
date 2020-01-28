@@ -23,7 +23,7 @@ atomic_numbers = {data['symbol'] : num for num, data in six.iteritems(PeriodicTa
 # TODO
 # FLEUR econfig=[core states|valence states]
 # general comments to the econfiguration.
-# the electron configuration is important for the atomic generated start density. Sometimes in some cases an other (valence)electron config might be a better choice and lead to different results. 
+# the electron configuration is important for the atomic generated start density. Sometimes in some cases an other (valence)electron config might be a better choice and lead to different results.
 # ie if electrons are put in the s or the fs. or s and d.
 # because the starting point matters, especially in the magnetic case.
 
@@ -453,7 +453,11 @@ def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
 # in eV
 # TODO maybe use a panda file format or something for this...
 # export to json, read in here.
-fn = open('exp_bindingenergies.json,'r')
+import aiida_fleur
+import os
+aiida_path = os.path.dirname(aiida_fleur.__file__)
+EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
+fn = open(EXP_BINDENERGIES_PATH, 'r')
 exp_bindingenergies = json.load(fn)
 fn.close()
 """
