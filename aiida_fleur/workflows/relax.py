@@ -68,8 +68,8 @@ class FleurRelaxWorkChain(WorkChain):
         spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, please check input configuration.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
         spec.exit_code(350, 'ERROR_DID_NOT_RELAX',
                        message="Optimization cycle did not lead to convergence of forces.")
         spec.exit_code(351, 'ERROR_SCF_FAILED',
@@ -121,7 +121,7 @@ class FleurRelaxWorkChain(WorkChain):
             error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(
                 extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):

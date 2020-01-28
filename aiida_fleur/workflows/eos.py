@@ -83,8 +83,8 @@ class FleurEosWorkChain(WorkChain):
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, please check input configuration.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
 
     def start(self):
         """
@@ -124,7 +124,7 @@ class FleurEosWorkChain(WorkChain):
         if extra_keys:
             error = 'ERROR: input wf_parameters for EOS contains extra keys: {}'.format(extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):

@@ -57,6 +57,8 @@ class FleurMaeConvWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
         spec.exit_code(343, 'ERROR_ALL_SQAS_FAILED',
                        message="Convergence MAE calculation failed for all SQAs.")
         spec.exit_code(344, 'ERROR_SOME_SQAS_FAILED',
@@ -93,7 +95,7 @@ class FleurMaeConvWorkChain(WorkChain):
             error = 'ERROR: input wf_parameters for MAE Conv contains extra keys: {}'.format(
                 extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):

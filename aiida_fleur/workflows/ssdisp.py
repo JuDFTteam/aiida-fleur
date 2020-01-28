@@ -92,13 +92,15 @@ class FleurSSDispWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, please check input configuration.")
-        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG',
+                       message="Invalid input configuration.")
+        spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
-        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
+        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file was corrupted after user's modifications.")
         spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED',
                        message="Reference calculation failed.")
@@ -133,7 +135,7 @@ class FleurSSDispWorkChain(WorkChain):
             error = 'ERROR: input wf_parameters for SSDisp contains extra keys: {}'.format(
                 extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
@@ -144,7 +146,7 @@ class FleurSSDispWorkChain(WorkChain):
             error = ("The first q_vector of the forceTheorem step has to be equal to"
                      "the q vector of the reference calculation.")
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # initialize the dictionary using defaults if no options are given
         defaultoptions = self._default_options
@@ -174,15 +176,15 @@ class FleurSSDispWorkChain(WorkChain):
             if 'remote' in inputs:
                 error = "ERROR: you gave SCF input + remote for the FT"
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
                 error = "ERROR: you gave SCF input + fleurinp for the FT"
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
             error = "ERROR: you gave neither SCF input nor remote for the FT"
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
 

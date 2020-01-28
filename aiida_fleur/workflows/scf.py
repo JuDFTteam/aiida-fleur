@@ -117,13 +117,15 @@ class FleurScfWorkChain(WorkChain):
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message="Invalid input, please check input configuration.")
-        spec.exit_code(231, 'ERROR_INVALID_CODE_PROVIDED',
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG',
+                       message="Invalid input configuration.")
+        spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Input codes do not correspond to fleur or inpgen respectively.")
-        spec.exit_code(232, 'ERROR_CHANGING_FLEURINPUT_FAILED',
+        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message="Input file modification failed.")
-        spec.exit_code(233, 'ERROR_INVALID_INPUT_FILE',
+        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE',
                        message="Input file was corrupted after user's modifications.")
         spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED',
                        message="Inpgen calculation failed.")
@@ -211,7 +213,7 @@ class FleurScfWorkChain(WorkChain):
         if extra_keys:
             error = 'ERROR: input wf_parameters for SCF contains extra keys: {}'.format(extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         inputs = self.inputs
         if 'fleurinp' in inputs:
@@ -219,15 +221,15 @@ class FleurScfWorkChain(WorkChain):
             if 'structure' in inputs:
                 error = 'ERROR: structure input is not needed because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'inpgen' in inputs:
                 error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'calc_parameters' in inputs:
                 error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'remote_data' in inputs:
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
@@ -237,24 +239,24 @@ class FleurScfWorkChain(WorkChain):
             if 'structure' in inputs:
                 error = 'ERROR: structure input is not needed because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'inpgen' in inputs:
                 error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'calc_parameters' in inputs:
                 error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             error = 'ERROR: No StructureData nor FleurinpData nor RemoteData was provided'
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
         if 'inpgen' in inputs:
             try:
@@ -279,12 +281,12 @@ class FleurScfWorkChain(WorkChain):
         if mode not in ['force', 'density', 'energy']:
             error = ("ERROR: Wrong mode of convergence"
                      ": one of 'force', 'density' or 'energy' was expected.")
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
         if max_iters <= 1:
             error = ("ERROR: 'itmax_per_run' should be equal at least 2")
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # check format of inpxml_changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -294,7 +296,7 @@ class FleurScfWorkChain(WorkChain):
                 if (not isinstance(change, tuple)) and (not isinstance(change, list)):
                     error = ('ERROR: Wrong Input inpxml_changes wrong format of'
                              ': {} should be tuple of 2. I abort'.format(change))
-                    return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+                    return self.exit_codes.ERROR_INVALID_INPUT_PARAM
         return
 
     def fleurinpgen_needed(self):

@@ -74,9 +74,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.output('remote_folder', valid_type=orm.RemoteData, required=False)
         spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message='Neither the `options` nor `automatic_parallelisation` input was '
-                       'specified.')
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')

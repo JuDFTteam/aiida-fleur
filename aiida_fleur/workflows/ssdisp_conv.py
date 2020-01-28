@@ -60,6 +60,8 @@ class FleurSSDispConvWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
+                       message="Invalid workchain parameters.")
         spec.exit_code(340, 'ERROR_ALL_QVECTORS_FAILED',
                        message="Convergence SSDisp calculation failed for all q-vectors.")
         spec.exit_code(341, 'ERROR_SOME_QVECTORS_FAILED',
@@ -92,7 +94,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(
                 extra_keys)
             self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
         for key, val in six.iteritems(wf_default):
