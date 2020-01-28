@@ -170,20 +170,32 @@ class FleurMaeWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
+                error = ("The code you provided for FLEUR does not use the plugin fleur.fleur")
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
+        # Check if user gave an input setup making any sense
+        if 'remote_data' in inputs.scf or 'fleurinp' in inputs.scf or 'structure' in inputs.scf:
+            self.ctx.scf_needed = True
+            if 'remote' in inputs:
+                error = "ERROR: you gave SCF input + remote for the FT"
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+            if 'fleurinp' in inputs:
+                error = "ERROR: you gave SCF input + fleurinp for the FT"
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        elif 'remote' not in inputs:
+            error = "ERROR: you gave neither SCF input nor remote for the FT"
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        else:
+            self.ctx.scf_needed = False
+
     def scf_needed(self):
         """
-        This function handles setting of required parameters
-        for force theorem calculation depending on if scf is needed
-        or not.
+        Returns True if SCF WC is needed.
         """
-        self.ctx.scf_needed = True
-        if 'fleurinp' in self.inputs or 'remote' in self.inputs:
-            self.ctx.scf_needed = False
         return self.ctx.scf_needed
 
     def converge_scf(self):
