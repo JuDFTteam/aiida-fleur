@@ -31,13 +31,13 @@ to specify inputs to use external pre-converged charge density and use is as a r
 The task of the workchain us to calculate the energy difference between two or several structures
 having a different magnetisation profile (theta and phi values can also vary):
 
-.. image:: images/SSDisp_energies.png
+.. image:: images/ssdisp_energies.png
     :width: 60%
     :align: center
 
 To do this, the workchain employs the force theorem approach:
 
-.. image:: images/DMI.png
+.. image:: images/dmi.png
     :width: 110%
     :align: center
 

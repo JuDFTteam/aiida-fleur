@@ -30,13 +30,13 @@ then it submits a single FleurCalculation with a `<forceTheorem>` tag.
 The task of the workchain us to calculate the energy difference between two or several structures
 having a different magnetisation profile:
 
-.. image:: images/MAE_energies.png
+.. image:: images/mae_energies.png
     :width: 60%
     :align: center
 
 To do this, the workchain employs the force theorem approach:
 
-.. image:: images/MAE_force.png
+.. image:: images/mae_force.png
     :width: 110%
     :align: center
 
