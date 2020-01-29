@@ -174,18 +174,26 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                     adv_omp_per_mpi)
 
 
-@register_error_handler(FleurBaseWorkChain, 999)
+@register_error_handler(FleurBaseWorkChain, 1)
 def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED',
-                                                                  'ERROR_MT_RADII']):
+                                                                  'ERROR_MT_RADII',
+                                                                  'ERROR_NO_RETRIEVED_FOLDER',
+                                                                  'ERROR_OPENING_OUTPUTS',
+                                                                  'ERROR_NO_OUTXML',
+                                                                  'ERROR_XMLOUT_PARSING_FAILED',
+                                                                  'ERROR_RELAX_PARSING_FAILED']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be resolved automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+    else:
+        raise ValueError('Calculation failed for unknown reason, please register the '
+                         'corresponding exit code in this error handler')
 
 
 @register_error_handler(FleurBaseWorkChain, 52)

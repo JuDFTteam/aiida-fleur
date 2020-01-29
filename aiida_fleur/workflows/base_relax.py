@@ -60,9 +60,6 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         spec.expose_outputs(RelaxProcess)
 
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_RESOURCES',
-                       message='Neither the `options` nor `automatic_parallelisation` input was '
-                       'specified.')
         spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
                        message='FleurRelaxWorkChain failed and FleurBaseRelaxWorkChain has no'
                                ' strategy to resolve this')
@@ -109,20 +106,23 @@ def _handle_not_conv_error(self, calculation):
         return ErrorHandlerReport(True, True)
 
 
-@register_error_handler(FleurBaseRelaxWorkChain, 999)
+@register_error_handler(FleurBaseRelaxWorkChain, 1)
 def _handle_general_error(self, calculation):
     """
     Calculation failed for a reason that can not be fixed automatically.
     """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_SCF_FAILED',
-                                                                  'ERROR_INVALID_INPUT_RESOURCES',
-                                                                  'ERROR_INVALID_CODE_PROVIDED',
-                                                                  'ERROR_NO_RELAX_OUTPUT']):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_INVALID_INPUT_PARAM',
+                                                                  'ERROR_SCF_FAILED',
+                                                                  'ERROR_NO_RELAX_OUTPUT',
+                                                                  'ERROR_NO_SCF_OUTPUT']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be fixed automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+    else:
+        raise ValueError('Calculation failed for unknown reason, please register the '
+                         'corresponding exit code in this error handler')
 
 
 @register_error_handler(FleurBaseRelaxWorkChain, 100)
