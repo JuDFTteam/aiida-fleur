@@ -79,6 +79,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                                'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
                        message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION',
+                       message="Computational resources are not optimal.")
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES',
                        message="Computational resources are not optimal.")
         spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
@@ -121,10 +123,20 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             self.ctx.num_machines = int(resources_input['num_machines'])
             self.ctx.num_mpiprocs_per_machine = int(resources_input['num_mpiprocs_per_machine'])
         except KeyError:
+            self.ctx.can_be_optimised = False
             self.report('WARNING: Computation resources were not optimised.')
         else:
             try:
+                self.ctx.num_cores_per_mpiproc = int(resources_input['num_cores_per_mpiproc'])
+                self.ctx.use_omp = True
+                self.ctx.suggest_mpi_omp_ratio = self.ctx.num_mpiprocs_per_machine / self.ctx.num_cores_per_mpiproc
+            except KeyError:
+                self.ctx.num_cores_per_mpiproc = 1
+                self.ctx.use_omp = False
+
+            try:
                 self.check_kpts()
+                self.ctx.can_be_optimised = True
             except Warning:
                 self.report('ERROR: Not optimal computational resources.')
                 return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
@@ -138,17 +150,28 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         requested, it throws an exit code and calculation stop withour submission.
         """
         fleurinp = self.ctx.inputs.fleurinpdata
-        mach = self.ctx.num_machines
-        procs = self.ctx.num_mpiprocs_per_machine
-        adv_nodes, adv_cpu_nodes, message, exit_code = optimize_calc_options(fleurinp, mach, procs)
+        machines = self.ctx.num_machines
+        mpi_proc = self.ctx.num_mpiprocs_per_machine
+        omp_per_mpi = self.ctx.num_cores_per_mpiproc
+        try:
+            adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(
+                machines, mpi_proc, omp_per_mpi, self.ctx.use_omp, self.ctx.suggest_mpi_omp_ratio, fleurinp)
+        except ValueError:
+            raise Warning('Not optimal computational resources, load less than 60%')
 
         self.report(message)
 
-        if exit_code:
-            raise Warning('Not optimal computational resources, load less than 60%')
-
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
-        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_cpu_nodes
+        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
+        if self.ctx.use_om:
+            self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
+            if self.ctx.inputs.metadata.options['environment_variables']:
+                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+                    adv_omp_per_mpi)
+            else:
+                self.ctx.inputs.metadata.options['environment_variables'] = {}
+                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+                    adv_omp_per_mpi)
 
 
 @register_error_handler(FleurBaseWorkChain, 999)
@@ -156,10 +179,11 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED', 'ERROR_MT_RADII']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED',
+                                                                  'ERROR_MT_RADII']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Calculation failed for unknown reason, stop the Base workchain')
+        self.report('Calculation failed for a reason that can not be resolved automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
@@ -173,7 +197,7 @@ def _handle_vacuum_spill_error(self, calculation):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('FLEUR calculation failed because an atom spilled to the vacuum during'
-                    'relaxation. Please, change the MT radii.')
+                    'relaxation. Can be fixed via RelaxBaseWorkChain.')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_VACUUM_SPILL_RELAX)
 
@@ -186,7 +210,8 @@ def _handle_mt_relax_error(self, calculation):
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('FLEUR calculation failed due to MT overlap.')
+        self.report('FLEUR calculation failed due to MT overlap.'
+                    ' Can be fixed via RelaxBaseWorkChain')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
 
@@ -199,11 +224,19 @@ def _handle_not_enough_memory(self, calculation):
     """
 
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_NOT_ENOUGH_MEMORY']):
-        self.ctx.restart_calc = None
-        self.ctx.is_finished = False
-        self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
-                    ' amount of computational nodes')
-        self.ctx.num_machines = self.ctx.num_machines * 2
-        self.check_kpts()
-
-        return ErrorHandlerReport(True, True)
+        if self.ctx.can_be_optimised:
+            self.ctx.restart_calc = None
+            self.ctx.is_finished = False
+            self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
+                        ' amount of computational nodes and smaller MPI/OMP ratio')
+            self.ctx.num_machines = self.ctx.num_machines * 2
+            self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
+            self.check_kpts()
+            return ErrorHandlerReport(True, True)
+        else:
+            self.ctx.restart_calc = calculation
+            self.ctx.is_finished = True
+            self.report('FLEUR calculation failed due to MT overlap.'
+                        ' Can be fixed via RelaxBaseWorkChain')
+            self.results()
+            return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)

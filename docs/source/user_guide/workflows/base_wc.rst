@@ -95,17 +95,19 @@ Errors
 ^^^^^^
 See :ref:`exit_codes`.
 
-+-----------+------------------------------------------------------------------------------+
-| Exit code | Reason                                                                       |
-+===========+==============================================================================+
-| 101       | Maximum number of fixing an error is exceeded                                |
-+-----------+------------------------------------------------------------------------------+
-| 102       | The calculation failed for an unknown reason, twice in a row                 |
-|           | This should probably never happen since there is a 399 exit code             |
-+-----------+------------------------------------------------------------------------------+
-| 360       | :py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()` |
-|           | suggests less than 60% of node load                                          |
-+-----------+------------------------------------------------------------------------------+
++-----------+-------------------------------------------------------------------------------------------+
+| Exit code | Reason                                                                                    |
++===========+===========================================================================================+
+| 101       | Maximum number of fixing an error is exceeded                                             |
++-----------+-------------------------------------------------------------------------------------------+
+| 102       | The calculation failed for an unknown reason, twice in a row                              |
+|           | This should probably never happen since there is a 399 exit code                          |
++-----------+-------------------------------------------------------------------------------------------+
+| 360       | :py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()`              |
+|           | suggests less than 60% of node load                                                       |
++-----------+-------------------------------------------------------------------------------------------+
+| 389       | FLEUR calculation failed due to memory issue and it can not be solved for this scheduler  |
++-----------+-------------------------------------------------------------------------------------------+
 
 
 Exit codes duplicating FleurCalculation exit codes:

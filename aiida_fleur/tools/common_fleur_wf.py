@@ -206,7 +206,7 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
 
     # get the scheduler type from the computer the code is run on.
     com = code.computer
-    #com_name = com.get_name()
+    # com_name = com.get_name()
     scheduler_type = com.get_scheduler_type()
 
     default_per_machine = com.get_default_mpiprocs_per_machine()
@@ -231,16 +231,16 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
 ###############################
 # codename = 'inpgen@local_mac'#'inpgen_v0.28@iff003'#'inpgen_iff@local_iff'
 # codename2 = 'fleur_v0.28@iff003'#'fleur_mpi_v0.28@iff003'# 'fleur_iff_0.28@local_iff''
-#codename2 = 'fleur_max_1.3_dev@iff003'
-#codename2 = 'fleur_mpi_max_1.3_dev@iff003'
-#codename4 = 'fleur_mpi_v0.28@claix'
+# codename2 = 'fleur_max_1.3_dev@iff003'
+# codename2 = 'fleur_mpi_max_1.3_dev@iff003'
+# codename4 = 'fleur_mpi_v0.28@claix'
 ###############################
-#code = Code.get_from_string(codename)
-#code2 = Code.get_from_string(codename2)
-#code4 = Code.get_from_string(codename4)
-#print(get_scheduler_extras(code, {'num_machines' : 1}))
-#print(get_scheduler_extras(code2, {'num_machines' : 2}))
-#print(get_scheduler_extras(code4, {'num_machines' : 1}))
+# code = Code.get_from_string(codename)
+# code2 = Code.get_from_string(codename2)
+# code4 = Code.get_from_string(codename4)
+# print(get_scheduler_extras(code, {'num_machines' : 1}))
+# print(get_scheduler_extras(code2, {'num_machines' : 2}))
+# print(get_scheduler_extras(code4, {'num_machines' : 1}))
 
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     """
@@ -390,25 +390,25 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 
 
 # test
-#reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
+# reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
 # workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
 #                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4',
 #                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc',
 #                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
 #                  'Be' : 0.0}
-#reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
+# reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
 # print reac_list
-#{'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
+# {'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
 # 0.0
-#{'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
+# {'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
 # 0.114321037514
-#{'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
+# {'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
 # -0.868053153884
-#{'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
+# {'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
 # -0.0946046496213
-#{'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
+# {'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
 # 0.180159355144
-#[['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
+# [['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
 
 
 def performance_extract_calcs(calcs):
@@ -511,7 +511,7 @@ def performance_extract_calcs(calcs):
         total_cost = cost * niter
 
         serial = not calc.attributes['withmpi']
-        #codename = calc.get_code().label
+        # codename = calc.get_code().label
         # code_col.append(codename)
 
         # if 'mpi' in codename:
@@ -560,52 +560,101 @@ def cost_ratio(total_costs, walltime_sec, ncores):
     return ratio
 
 
-def optimize_calc_options(fleurinpData, nodes, cpus_per_node):
+def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
+                          mpi_omp_ratio, fleurinpData=None, kpts=None, sacrifice_level=0.9):
     """
-    This routine checks if the total number of requested cpus
-    is a factor of kpts and suggests the optimisation.
+    Makes a suggestion on parallelisation setup for a particular fleurinpData.
+    Only the total number of k-points is analysed: the function suggests ideal k-point
+    parallelisation + OMP parallelisation (if required). Note: the total number of used CPUs
+    per node will not exceed mpi_per_node * omp_per_mpi.
+
+    Sometimes perfect parallelisation is terms of idle CPUs is not what
+    used wanted because it can harm MPI/OMP ratio. Thus the function first chooses first top
+    parallelisations in terms of total CPUs used
+    (bigger than sacrifice_level * maximal_number_CPUs_possible). Then a parallelisation which is
+    the closest to the MPI/OMP ratio is chosen among them and returned.
+
+    :param nodes: maximal number of nodes that can be used
+    :param mpi_per_node: an input suggestion of MPI tasks per node
+    :param omp_per_mpi: an input suggestion for OMP tasks per MPI process
+    :param use_omp: False if OMP parallelisation is not needed
+    :param mpi_omp_ratio: requested MPI/OMP ratio
+    :param fleurinpData: FleurinpData to extract total number of kpts from
+    :param kpts: the total number of kpts
+    :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
+                            MPI/OMP ratio.
+    :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
+                                                     the last one is an exit message.
     """
     from sympy.ntheory.factor_ import divisors
-    kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
-    kpts = int(kpts[0])
+    import numpy as np
+
+    cpus_per_node = mpi_per_node * omp_per_mpi
+    if fleurinpData:
+        kpts = fleurinpData.get_tag('/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
+        kpts = int(kpts[0])
+    elif not kpts:
+        raise ValueError('You must specify either kpts of fleurinpData')
     divisors_kpts = divisors(kpts)
     possible_nodes = [x for x in divisors_kpts if x <= nodes]
     suggestions = []
     for n_n in possible_nodes:
-        adviced_cpu_per_node = max([x for x in divisors(kpts//n_n) if x <= cpus_per_node])
-        suggestions.append((n_n, adviced_cpu_per_node))
+        advise_cpus = [x for x in divisors(kpts//n_n) if x <= cpus_per_node]
+        for advised_cpu_per_node in advise_cpus:
+            suggestions.append((n_n, advised_cpu_per_node))
+
+    def add_omp(suggestions):
+        """
+        Also adds possibility of omp parallelisation
+        """
+        final_suggestion = []
+        for suggestion in suggestions:
+            if use_omp:
+                omp = cpus_per_node // suggestion[1]
+            else:
+                omp = 1
+            final_suggestion.append([suggestion[0], suggestion[1], omp])
+        return final_suggestion
+
+    # all possible suggestions taking into account omp
+    suggestions = np.array(add_omp(suggestions))
+
+    best_resources = max(np.prod(suggestions, axis=1))
+    top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
 
     def best_criterion(suggestion):
-        """
-        The best setup uses as many as possible total number of
-        CPUs. If there are more than one such a setup, it is more efficient
-        to use less computations nodes.
-        """
-        return (suggestion[0]*suggestion[1], 1.0/suggestion[0])
+        if use_omp:
+            return -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio)
+        return (suggestion[0]*suggestion[1], -suggestion[0])
 
-    best_suggestion = max(suggestions, key=best_criterion)
+    best_suggestion = max(top_suggestions, key=best_criterion)
+
     message = ''
-    exit_status = 0
 
-    if float(best_suggestion[1])/cpus_per_node < 0.6:
-        exit_status = 1
-        message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
+    if float(best_suggestion[1] * best_suggestion[2])/cpus_per_node < 0.6:
+        message = ('WARNING: Changed the number of MPIs per node from {} to {} and OMP per MPI '
+                   'from {} to {}.'
                    'Changed the number of nodes from {} to {}. '
                    'Computational setup, needed for a given number k-points ({})'
                    ' provides less then 60% of node load.'
-                   ''.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
-    elif best_suggestion[1] == cpus_per_node:
+                   ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
+                             nodes, best_suggestion[0], kpts))
+        raise ValueError(message)
+    elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
             message = ('WARNING: Changed the number of nodes from {} to {}'
                        ''.format(nodes, best_suggestion[0]))
         else:
-            message = ('Computational setup is perfect! Nodes: {}, CPUs per node {}. Number of '
-                       'k-points is {}'.format(best_suggestion[0], best_suggestion[1], kpts))
+            message = ('Computational setup is perfect! Nodes: {}, MPIs per node {}, OMP per MPI '
+                       '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1],
+                                                             best_suggestion[2], kpts))
     else:
-        message = ('WARNING: Changed the number of CPUs per node from {} to {}. '
-                   'Changed the number of nodes from {} to {}. Number of k-points is {}.'
-                   ''.format(cpus_per_node, best_suggestion[1], nodes, best_suggestion[0], kpts))
-    return best_suggestion[0], best_suggestion[1], message, exit_status
+        message = ('WARNING: Changed the number of MPIs per node from {} to {} an OMP from {} to {}'
+                   '. Changed the number of nodes from {} to {}. Number of k-points is {}.'
+                   ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
+                             nodes, best_suggestion[0], kpts))
+
+    return best_suggestion[0], best_suggestion[1], best_suggestion[2], message
 
 
 def find_last_in_restart(restart_wc):

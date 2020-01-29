@@ -232,9 +232,27 @@ def test_performance_extract_calcs(fixture_localhost,
                       'resources': [{'num_machines': 1, 'num_mpiprocs_per_machine': 1}]}
 
 
-@pytest.mark.skip(reason="The optimize_calc_options function will be refactored soon")
-def test_optimize_calc_options():
+inputs_optimize = [(4, 8, 3, True, 0.5, None, 720),
+                   (4, 8, 3, True, 2, None, 720),
+                   (4, 8, 3, True, 100, None, 720),
+                   (4, 8, 3, True, 100, None, 720, 0.5),
+                   (4, 8, 3, False, 0.5, None, 720)]
+
+results_optimize = [
+    (4, 3, 8, 'Computational setup is perfect! Nodes: 4, MPIs per node 3, OMP per MPI 8. Number of k-points is 720'),
+    (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
+    (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
+    (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
+    (4, 20, 1, 'WARNING: Changed the number of MPIs per node from 8 to 20 an OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.')]
+
+
+@pytest.mark.parametrize('input,result_correct', zip(inputs_optimize, results_optimize))
+def test_optimize_calc_options(input, result_correct):
     from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
+
+    result = optimize_calc_options(*input)
+
+    assert result == result_correct
 
 
 def test_find_last_in_restart(fixture_localhost,

@@ -160,6 +160,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+--------------------------------------------------------------------------------------------------------+------------------------+
 | 382       | Relaxation calculation failed.                                                                         | CreateMagnetic         |
 +-----------+--------------------------------------------------------------------------------------------------------+------------------------+
+| 389       | FLEUR calculation failed due to memory issue and it can not be solved for this scheduler               | FleurBase              |
++-----------+--------------------------------------------------------------------------------------------------------+------------------------+
 | 390       | check_kpts() suggests less than 60% of node load                                                       | FleurBase              |
 +-----------+--------------------------------------------------------------------------------------------------------+------------------------+
 | 399       | FleurCalculation failed and FleurBaseWorkChain has no strategy to resolve this                         | FleurBase              |

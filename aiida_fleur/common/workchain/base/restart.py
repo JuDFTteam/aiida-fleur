@@ -140,8 +140,8 @@ class BaseRestartWorkChain(WorkChain):
             # Perform an optional sanity check. If it returns an `ExitCode` this means an unrecoverable situation was
             # detected and the work chain should be aborted. If it returns `False`, the sanity check detected a problem
             # but has handled the problem and we should restart the cycle.
-            result = self._handle_calculation_sanity_checks(
-                calculation)  # pylint: disable=assignment-from-no-return
+            result = self._handle_calculation_sanity_checks(  # pylint: disable=assignment-from-no-return
+                calculation)
 
             if isinstance(result, ExitCode):
                 # No need to reset the `unexpected_failure` because the work chain will terminate due to the exit code
