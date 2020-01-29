@@ -34,35 +34,24 @@ proposed by FLEUR.
 
 All structure optimization routines implemented in the FLEUR code, the workchain only wraps it.
 
+.. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
+
 Input nodes
 ^^^^^^^^^^^
 
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| name            | type                                               | description                             | required |
-+=================+====================================================+=========================================+==========+
-| fleur           | :py:class:`~aiida.orm.Code`                        | Fleur code                              | yes      |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| inpgen          | :py:class:`~aiida.orm.Code`                        | Inpgen code                             | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| wf_parameters   | :py:class:`~aiida.orm.Dict`                        | Settings of the workchain               | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| structure       | :py:class:`~aiida.orm.StructureData`               | Structure data node                     | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| calc_parameters | :py:class:`~aiida.orm.Dict`                        | inpgen :ref:`parameters<scf_wc_layout>` | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| fleurinp        | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`| :ref:`FLEUR input<fleurinp_data>`       | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| remote_data     | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| options         | :py:class:`~aiida.orm.Dict`                        | AiiDA options (computational resources) | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| settings        | :py:class:`~aiida.orm.Dict`                        | Special :ref:`settings<fleurinp_data>`  |          |
-|                 |                                                    | for Fleur calculation                   | no       |
-+-----------------+----------------------------------------------------+-----------------------------------------+----------+
+The FleurSSDispWorkChain employs
+`exposed`_ feature of the AiiDA, thus inputs for the nested
+:ref:`SCF<scf_wc>` workchain should be passed in the namespace
+``scf``.
 
-Only ``fleur`` input is required. However, it does not mean that it is enough to specify ``fleur``
-only. One *must* keep one of the supported input configurations described in the
-:ref:`layout_relax` section.
++-----------------+-----------------------------+---------------------------------+----------+
+| name            | type                        | description                     | required |
++=================+=============================+=================================+==========+
+| scf             | namespace                   | inputs for nested SCF WorkChain | yes      |
++-----------------+-----------------------------+---------------------------------+----------+
+| wf_parameters   | :py:class:`~aiida.orm.Dict` | Settings of the workchain       | no       |
++-----------------+-----------------------------+---------------------------------+----------+
+
 
 Workchain parameters and its defaults
 .....................................
@@ -74,26 +63,6 @@ Workchain parameters and its defaults
 
     .. literalinclude:: code/relax_parameters.py
 
-    **'force_dict'** contains parameters that will be inserted into the ``inp.xml`` in case of
-    force convergence mode. Usually this sub-dictionary does not affect the convergence, it affects
-    only the generation of ``relax.xml`` file. Read more in `FLEUR relaxation`_ documentation.
-
-    .. note::
-
-      Only one of ``density_converged``, ``energy_converged`` or ``force_converged``
-      is used by the workchain that corresponds to the **'mode'**. The other two are ignored.
-
-  * ``options``: :py:class:`~aiida.orm.Dict` - AiiDA options (computational resources).
-    Example:
-
-    .. code-block:: python
-
-         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-         'max_wallclock_seconds': 6*60*60,
-         'queue_name': '',
-         'custom_scheduler_commands': '',
-         'import_sys_environment': False,
-         'environment_variables': {}
 
 Output nodes
 ^^^^^^^^^^^^^
@@ -103,37 +72,10 @@ Output nodes
 
 .. _layout_relax:
 
-Supported input configurations
+Layout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Geometry optimization workchain has several
-input combinations that implicitly define the input processing. Depending
-on the setup of the inputs, one of four supported scenarios will happen:
-
-1. **fleurinp**:
-
-      Files, belonging to the **fleurinp**, will be used as input for the first
-      FLEUR calculation.
-
-2. **fleurinp** + **parent_folder** (FLEUR):
-
-      Files, belonging to the **fleurinp**, will be used as input for the first
-      FLEUR calculation. Moreover, initial charge density will be
-      copied from the folder of the parent calculation.
-
-3. **parent_folder** (FLEUR):
-
-      inp.xml file and initial
-      charge density will be copied from the folder of the parent FLEUR calculation.
-
-4. **structure**:
-
-      inpgen code will be used to generate a new **fleurinp** using a given structure.
-
-.. warning::
-
-  One *must* keep one of the supported input configurations. In other case the workchain will
-  stop throwing non-zero exit status or more dangerously, will make unexpected actions.
-
+Geometry optimization workchain always submits SCF WC using inputs given in the ``scf`` namespace.
+Thus one can start with a structure, FleurinpData or converged/not-fully-converged charge density.
 
 Output nodes
 ^^^^^^^^^^^^^^^^^^^
@@ -169,25 +111,31 @@ Error handling
 ^^^^^^^^^^^^^^
 A list of implemented exit codes:
 
-+------+--------------------------------------------------------------------------------------------------------+
-| Code | Meaning                                                                                                |
-+------+--------------------------------------------------------------------------------------------------------+
-| 230  | Input nodes do not correspond to any valid input configuration.                                        |
-+------+--------------------------------------------------------------------------------------------------------+
-| 231  | Input codes do not correspond to fleur or inpgen codes respectively.                                   |
-+------+--------------------------------------------------------------------------------------------------------+
-| 350  | The workchain execution did not lead to relaxation criterion. Thrown in the vary end of the workchain. |
-+------+--------------------------------------------------------------------------------------------------------+
-| 351  | A relaxation iteration (a SCF workchain) failed.                                                       |
-+------+--------------------------------------------------------------------------------------------------------+
-| 352  | No parsed relax.xml output of SCF workchain found.                                                     |
-+------+--------------------------------------------------------------------------------------------------------+
-| 354  | Found no fleurinpData in the last SCF workchain                                                        |
-+------+--------------------------------------------------------------------------------------------------------+
++------+--------------------------------------------------------------------------+
+| Code | Meaning                                                                  |
++------+--------------------------------------------------------------------------+
+| 230  | Input nodes do not correspond to any valid input configuration.          |
++------+--------------------------------------------------------------------------+
+| 350  | Optimization cycle did not lead to convergence of forces                 |
++------+--------------------------------------------------------------------------+
+| 351  | SCF Workchains failed for some reason.                                   |
++------+--------------------------------------------------------------------------+
+| 352  | Found no SCF output.                                                     |
++------+--------------------------------------------------------------------------+
+| 354  | Found no fleurinpData in the last SCF workchain                          |
++------+--------------------------------------------------------------------------+
 
-If your workchain crashes and stops in *Excepted* state, please open a new issue on the Github page
-and describe the details of the failure.
+Exit codes duplicating FleurCalculation exit codes:
+
++-----------+------------------------------------------------------------------------------+
+| Exit code | Reason                                                                       |
++===========+==============================================================================+
+| 311       | FLEUR calculation failed because atoms spilled to the vacuum                 |
++-----------+------------------------------------------------------------------------------+
+| 313       | Overlapping MT-spheres during relaxation                                     |
++-----------+------------------------------------------------------------------------------+
 
 Example usage
 ^^^^^^^^^^^^^
-Has to be documented.
+
+.. literalinclude:: code/relax_submission.py

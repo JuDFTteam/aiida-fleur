@@ -77,8 +77,6 @@ class FleurRelaxWorkChain(WorkChain):
                        message="Found no relaxed structure info in the output of SCF")
         spec.exit_code(352, 'ERROR_NO_SCF_OUTPUT',
                        message="Found no SCF output")
-        spec.exit_code(355, 'ERROR_SCF_WC_FAILED',
-                       message="SCF workchain failed for some reason")
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')

@@ -60,11 +60,12 @@ options_eos = Dict(dict=options_eos)
 
 wf_relax = {'film_distance_relaxation': False,
             'force_criterion': 0.049,
-            'use_relax_xml': True
+            'relax_iter': 5
             }
 
 wf_relax_scf = {'fleur_runmax': 5,
                 'serial': False,
+                'use_relax_xml': True,
                 'itmax_per_run': 50,
                 'alpha_mix': 0.015,
                 'relax_iter': 25,
@@ -108,20 +109,24 @@ options_relax = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4,
 
 inputs = {
     'eos': {
-        'wf_parameters': wf_eos,
-        'calc_parameters': calc_eos,
-        'inpgen': inpgen_code,
-        'fleur': fleur_code,
-        'options': options_eos
+        'scf': {
+            'wf_parameters': wf_eos_scf,
+            'calc_parameters': calc_eos,
+            'options': options_eos,
+            'inpgen': inpgen_code,
+            'fleur': fleur_code
+        },
+        'wf_parameters': wf_eos
     },
     'relax': {
+        'scf': {
+            'wf_parameters': wf_relax_scf,
+            'calc_parameters': calc_relax,
+            'options': options_relax,
+            'inpgen': inpgen_code,
+            'fleur': fleur_code
+        },
         'wf_parameters': wf_relax,
-        'calc_parameters': calc_relax,
-        'inpgen': inpgen_code,
-        'fleur': fleur_code,
-        'options': options_relax,
-        'label': 'relaxation',
-        'description': 'describtion'
     },
     'wf_parameters': wf_para
 }
