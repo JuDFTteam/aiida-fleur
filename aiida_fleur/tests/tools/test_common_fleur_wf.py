@@ -43,7 +43,7 @@ def test_get_inputs_fleur():
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'
-    assert out_options == {'custom_scheduler_commands': 'test_command',
+    assert out_options == {'custom_scheduler_commands': 'test_command\ncat /proc/meminfo > memory_avail.txt',
                            'withmpi': True}
     assert out_settings == {'test': 1}
 
@@ -56,7 +56,7 @@ def test_get_inputs_fleur():
 
     assert results['description'] == ''
     assert results['label'] == ''
-    assert out_options == {'custom_scheduler_commands': 'test_command',
+    assert out_options == {'custom_scheduler_commands': 'test_command\ncat /proc/meminfo > memory_avail.txt',
                            'withmpi': False, 'resources': {"num_machines": 1}}
 
 
