@@ -240,6 +240,14 @@ def _handle_not_enough_memory(self, calculation):
             self.ctx.num_machines = self.ctx.num_machines * 2
             self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
             self.check_kpts()
+
+            if 'settings' not in self.ctx.inputs:
+                self.ctx.inputs.settings = {}
+            else:
+                self.ctx.inputs.settings = self.inputs.settings.get_dict()
+            self.ctx.inputs.settings.setdefault(
+                'remove_from_remotecopy_list', []).append('mixing_history*')
+
             return ErrorHandlerReport(True, True)
         else:
             self.ctx.restart_calc = calculation

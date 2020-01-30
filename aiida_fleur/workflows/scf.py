@@ -15,7 +15,7 @@ In this module you find the workchain 'FleurScfWorkChain' for the self-consisten
 cycle management of a FLEUR calculation with AiiDA.
 """
 # TODO: more info in output, log warnings
-# TODO: make smarter, ggf delete broyd or restart with more or less iterations
+# TODO: make smarter, ggf delete mixing_history or restart with more or less iterations
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from __future__ import absolute_import

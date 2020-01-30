@@ -235,7 +235,7 @@ you can add those files as a list as follows (here in the case of a file named
 Copy more files remotely
 ........................
 
-The plugin copies by default the ``broyd*`` files if a parent_folder is given
+The plugin copies by default the ``mixing_history*`` files if a parent_folder is given
 in the input.
 
 If you know that for your calculation you need some other files on the remote machine, you can add

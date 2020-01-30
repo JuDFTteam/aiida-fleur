@@ -66,7 +66,7 @@ class FleurCalculation(CalcJob):
     _KPTS_FILE_NAME = 'kpts'
     _QPTS_FILE_NAME = 'qpts'
     _PLOT_INP_FILE_NAME = 'plot_inp'
-    _BROYD_FILE_NAME = 'broyd*'
+    _MIX_HISTORY_FILE_NAME = 'mixing_history*'
     _POT_FILE_NAME = 'pot*'
     _POT1_FILE_NAME = 'pottot'
     _POT2_FILE_NAME = 'potcoul'
@@ -171,7 +171,7 @@ class FleurCalculation(CalcJob):
     _copy_scf_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME],
                      [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
-    _copy_filelist_scf_remote = [_BROYD_FILE_NAME]
+    _copy_filelist_scf_remote = [_MIX_HISTORY_FILE_NAME]
 
     _copy_filelist3 = [_INP_FILE_NAME,
                        _ENPARA_FILE_NAME,
@@ -180,7 +180,7 @@ class FleurCalculation(CalcJob):
                        _KPTS_FILE_NAME,
                        _STARS_FILE_NAME,
                        _WKF2_FILE_NAME,
-                       _BROYD_FILE_NAME,
+                       _MIX_HISTORY_FILE_NAME,
                        _OUT_FILE_NAME,
                        _POT_FILE_NAME]
 

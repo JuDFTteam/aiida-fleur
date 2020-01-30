@@ -366,8 +366,8 @@ class FleurMaeWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp
 
-        # Do not copy broyd* files from the parent
-        settings = {'remove_from_remotecopy_list': ['broyd*']}
+        # Do not copy mixing_history* files from the parent
+        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
 
         # Retrieve remote folder of the reference calculation
         pk_last = 0
@@ -408,8 +408,8 @@ class FleurMaeWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp
 
-        # Do not copy broyd* files from the parent
-        settings = {'remove_from_remotecopy_list': ['broyd*']}
+        # Do not copy mixing_history* files from the parent
+        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
 
         # Retrieve remote folder from the inputs
         remote = self.inputs.remote
