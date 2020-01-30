@@ -22,12 +22,11 @@ from __future__ import absolute_import
 import os
 import re
 from datetime import date
+from lxml import etree
 
 from aiida.parsers import Parser
-from aiida.plugins import DataFactory
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurParser(Parser):
@@ -261,8 +260,9 @@ class FleurParser(Parser):
             with output_folder.open(relax_name, 'r') as rlx:
                 new_relax_text = rlx.read()
                 if new_relax_text != old_relax_text:
-                    relax_dict = parse_relax_file(rlx)
-                    if relax_dict == 313:
+                    try:
+                        relax_dict = parse_relax_file(rlx)
+                    except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
 
@@ -1157,14 +1157,11 @@ def parse_relax_file(rlx):
     This function parsers relax.xml output file and
     returns a Dict containing all the data given there.
     """
-    from lxml import etree
     from aiida_fleur.tools.xml_util import eval_xpath2
 
     rlx.seek(0)
-    try:
-        tree = etree.parse(rlx)
-    except etree.XMLSyntaxError:
-        return 313
+    tree = etree.parse(rlx)
+
 
     xpath_disp = '/relaxation/displacements/displace'
     xpath_energy = '/relaxation/relaxation-history/step/@energy'
