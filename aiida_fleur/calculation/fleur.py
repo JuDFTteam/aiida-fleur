@@ -86,6 +86,7 @@ class FleurCalculation(CalcJob):
     _FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
     _JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
     _QFIX_FILE_NAME = 'qfix'
+    _USAGE_FILE_NAME = 'usage.json'
 
     # relax (geometry optimization) files
     _RELAX_FILE_NAME = 'relax.xml'
@@ -409,20 +410,15 @@ class FleurCalculation(CalcJob):
 
             # add files to mode_retrieved_filelist
             if modes['band']:
-                mode_retrieved_filelist.append(
-                    self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(
-                    self._BAND_GNU_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
             if modes['dos']:
-                mode_retrieved_filelist.append(
-                    self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._DOS_FILE_NAME)
             if modes['forces']:
                 # if l_f="T" retrieve relax.xml
-                mode_retrieved_filelist.append(
-                    self._RELAX_FILE_NAME)
+                mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
-                mode_retrieved_filelist.append(
-                    self._NMMPMAT_FILE_NAME)
+                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
@@ -536,6 +532,7 @@ class FleurCalculation(CalcJob):
             self._SHELLOUTPUT_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
         retrieve_list.append('memory_avail.txt')
+        retrieve_list.append(self._USAGE_FILE_NAME)
         # retrieve_list.append(self._TIME_INFO_FILE_NAME)
         # retrieve_list.append(self._OUT_FILE_NAME)
         if with_hdf5:
