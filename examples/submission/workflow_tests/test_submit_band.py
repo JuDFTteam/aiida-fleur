@@ -29,7 +29,7 @@ from pprint import pprint
 ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
-    
+
 parser = argparse.ArgumentParser(description=('Bandstructure with FLEUR. workflow to'
                  ' calculate a band structure. all arguments are pks, or uuids, codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
@@ -41,7 +41,7 @@ parser.add_argument('--fleurinp', type=int, dest='fleurinp',
                         help='FleurinpData from which to run the FLEUR calculation', required=False)
 parser.add_argument('--remote', type=int, dest='remote_data',
                         help=('Remote Data of older FLEUR calculation, '
-                        'from which files will be copied (broyd ...)'), required=False)
+                              'from which files will be copied (mixing_history ...)'), required=False)
 
 parser.add_argument('--fleur', type=int, dest='fleur',
                         help='The FLEUR code node to use', required=True)
@@ -68,14 +68,14 @@ wf_para = Dict(dict={'fleur_runmax' : 4,
                               'kpath' : 'auto',
                               'nkpts' : 800,
                               'sigma' : 0.005,
-                              'emin' : -0.30, 
+                              'emin' : -0.30,
                               'emax' :  0.80})
 
 options = Dict(dict={'resources' : {"num_machines": 1},
                               'queue_name' : 'th1',#23_node',
                               'max_wallclock_seconds':  60*60})
 
-# W bcc structure 
+# W bcc structure
 file_path = '../../inp_xml_files/W/inp.xml'
 
 
@@ -90,9 +90,9 @@ default = {'fleurinp' : fleurinp,
            }
 
 ####
-           
+
 inputs = {}
-     
+
 if args.wf_parameters is not None:
     inputs['wf_parameters'] = load_node(args.wf_parameters)
 else:
@@ -102,10 +102,10 @@ if args.fleurinp is not None:
     inputs['fleurinp'] = load_node(args.fleurinp)
 else:
     inputs['fleurinp'] = default['fleurinp']
-    
+
 if args.remote_data is not None:
     inputs['remote_data'] = load_node(args.remote_data)
- 
+
 if args.options is not None:
     inputs['options'] = load_node(args.options)
 else:

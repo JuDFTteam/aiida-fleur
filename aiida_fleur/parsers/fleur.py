@@ -21,13 +21,13 @@ the parser. Makes testing and portability easier.
 from __future__ import absolute_import
 import os
 import re
+import json
 from datetime import date
+from lxml import etree
 
 from aiida.parsers import Parser
-from aiida.plugins import DataFactory
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurParser(Parser):
@@ -138,14 +138,13 @@ class FleurParser(Parser):
                     mpiprocs = self.node.get_attribute('resources').get(
                         'num_mpiprocs_per_machine', 1)
 
-                    with output_folder.open('memory_avail.txt', 'r') as mem_file:
-                        mem = mem_file.readline()
-                        mem_kb_avail = float(mem.split()[1])
-
-                    try:
-                        line_used = re.findall(r'used.+', error_file_lines)[0]
-                        kb_used = int(re.findall(r'\d+', line_used)[2])
-                    except IndexError:
+                    if FleurCalculation._USAGE_DATA_FILE_NAME in list_of_files:
+                        with output_folder.open(FleurCalculation._USAGE_FILE_NAME, 'r') as us_file:
+                            usage = json.load(us_file)
+                        kb_used = usage['VmPeak']
+                        mem_kb_avail = usage['MemTotal']
+                    else:
+                        mem_kb_avail = 1.0
                         kb_used = 0.0
                         self.logger.info('Did not manage to find memory usage info.')
 
@@ -261,8 +260,9 @@ class FleurParser(Parser):
             with output_folder.open(relax_name, 'r') as rlx:
                 new_relax_text = rlx.read()
                 if new_relax_text != old_relax_text:
-                    relax_dict = parse_relax_file(rlx)
-                    if relax_dict == 313:
+                    try:
+                        relax_dict = parse_relax_file(rlx)
+                    except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
 
@@ -1157,14 +1157,11 @@ def parse_relax_file(rlx):
     This function parsers relax.xml output file and
     returns a Dict containing all the data given there.
     """
-    from lxml import etree
     from aiida_fleur.tools.xml_util import eval_xpath2
 
     rlx.seek(0)
-    try:
-        tree = etree.parse(rlx)
-    except etree.XMLSyntaxError:
-        return 313
+    tree = etree.parse(rlx)
+
 
     xpath_disp = '/relaxation/displacements/displace'
     xpath_energy = '/relaxation/relaxation-history/step/@energy'

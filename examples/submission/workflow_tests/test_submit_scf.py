@@ -44,7 +44,7 @@ parser.add_argument('--fleurinp', type=int, dest='fleurinp',
                     help='FleurinpData from which to run the FLEUR calculation', required=False)
 parser.add_argument('--remote', type=int, dest='remote_data',
                     help=('Remote Data of older FLEUR calculation, '
-                          'from which files will be copied (broyd ...)'), required=False)
+                          'from which files will be copied (mixing_history ...)'), required=False)
 parser.add_argument('--inpgen', type=int, dest='inpgen',
                     help='The inpgen code node to use', required=False)
 parser.add_argument('--fleur', type=int, dest='fleur',

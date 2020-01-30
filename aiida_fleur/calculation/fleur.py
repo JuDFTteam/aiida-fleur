@@ -66,7 +66,7 @@ class FleurCalculation(CalcJob):
     _KPTS_FILE_NAME = 'kpts'
     _QPTS_FILE_NAME = 'qpts'
     _PLOT_INP_FILE_NAME = 'plot_inp'
-    _BROYD_FILE_NAME = 'broyd*'
+    _MIX_HISTORY_FILE_NAME = 'mixing_history*'
     _POT_FILE_NAME = 'pot*'
     _POT1_FILE_NAME = 'pottot'
     _POT2_FILE_NAME = 'potcoul'
@@ -86,6 +86,7 @@ class FleurCalculation(CalcJob):
     _FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
     _JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
     _QFIX_FILE_NAME = 'qfix'
+    _USAGE_FILE_NAME = 'usage.json'
 
     # relax (geometry optimization) files
     _RELAX_FILE_NAME = 'relax.xml'
@@ -171,7 +172,7 @@ class FleurCalculation(CalcJob):
     _copy_scf_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME],
                      [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
-    _copy_filelist_scf_remote = [_BROYD_FILE_NAME]
+    _copy_filelist_scf_remote = [_MIX_HISTORY_FILE_NAME]
 
     _copy_filelist3 = [_INP_FILE_NAME,
                        _ENPARA_FILE_NAME,
@@ -180,7 +181,7 @@ class FleurCalculation(CalcJob):
                        _KPTS_FILE_NAME,
                        _STARS_FILE_NAME,
                        _WKF2_FILE_NAME,
-                       _BROYD_FILE_NAME,
+                       _MIX_HISTORY_FILE_NAME,
                        _OUT_FILE_NAME,
                        _POT_FILE_NAME]
 
@@ -409,20 +410,15 @@ class FleurCalculation(CalcJob):
 
             # add files to mode_retrieved_filelist
             if modes['band']:
-                mode_retrieved_filelist.append(
-                    self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(
-                    self._BAND_GNU_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
             if modes['dos']:
-                mode_retrieved_filelist.append(
-                    self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._DOS_FILE_NAME)
             if modes['forces']:
                 # if l_f="T" retrieve relax.xml
-                mode_retrieved_filelist.append(
-                    self._RELAX_FILE_NAME)
+                mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
-                mode_retrieved_filelist.append(
-                    self._NMMPMAT_FILE_NAME)
+                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
@@ -535,7 +531,7 @@ class FleurCalculation(CalcJob):
         retrieve_list.append(
             self._SHELLOUTPUT_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
-        retrieve_list.append('memory_avail.txt')
+        retrieve_list.append(self._USAGE_FILE_NAME)
         # retrieve_list.append(self._TIME_INFO_FILE_NAME)
         # retrieve_list.append(self._OUT_FILE_NAME)
         if with_hdf5:
