@@ -36,7 +36,7 @@ Keep in mind, your workflow should never:
 
 7.1 end up in a while true (because of a calculation or subworkflow failure)
 7.2 crash with at a later point because a calculation or subworkflow failed.
-(The user won't understand so easily what append, also this makes it impossible to build useful error handling of your workflow on top (when using your workflow as a subworkflow))
+(The user won't understand so easily what happend, also this makes it impossible to build useful error handling of your workflow on top (when using your workflow as a subworkflow))
 ....
 
 
@@ -49,7 +49,7 @@ FLEUR Specific:
 1. Output nodes of a workflow has the naming convention 'output_name_description'
    i.e 'output_scf_wc_para'
 
-2. Every workflow should give back one parameter output node named 'output_wfname_para'
+2. Every workflow should give back one parameter output node named 'output_wcname_para'
    which contains all the 'physical results' the workflow is designed to provide,
    or at least information to access these results directly (if stored in files and so on)
    further the node should contain valuable information to make sense/judge the quality of the data.
