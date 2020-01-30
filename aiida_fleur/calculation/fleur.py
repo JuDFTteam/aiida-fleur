@@ -531,7 +531,6 @@ class FleurCalculation(CalcJob):
         retrieve_list.append(
             self._SHELLOUTPUT_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
-        retrieve_list.append('memory_avail.txt')
         retrieve_list.append(self._USAGE_FILE_NAME)
         # retrieve_list.append(self._TIME_INFO_FILE_NAME)
         # retrieve_list.append(self._OUT_FILE_NAME)
