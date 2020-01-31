@@ -38,7 +38,13 @@ that might be helpful for you.
 
 If you use this package please cite:
 
-* The plugin and workflows: ```J. Broeder, D. Wortmann, and S. Bl\"ugel, Using the AiiDA-FLEUR package for all-electron ab initio electronic structure data generation and processing in materials science, In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48```
+* The plugin and workflows: 
+```
+J. Broeder, D. Wortmann, and S. Blügel, 
+Using the AiiDA-FLEUR package for all-electron ab initio electronic structure 
+data generation and processing in materials science, 
+In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48
+```
 
 * The FLEUR code: http:/www.flapw.de
 
