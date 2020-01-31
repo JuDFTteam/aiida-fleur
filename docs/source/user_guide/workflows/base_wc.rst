@@ -67,27 +67,30 @@ a factor of the total number of k-points. Therefore a user actually specifies no
 resources to be used in a calculation but their maximum possible values.
 
 The :py:func:`~aiida_fleur.tools.common_fleur_wf.optimize_calc_options()`, which is used by
-:py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()`, have five main inputs:
+:py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()`, has five main inputs:
 maximal number of nodes, first guess for a number of MPI tasks per node, first guess for a number
 of OMP threads per MPI task, required MPI_per_node / OMP_per_MPI ratio and finally, a
 switch that sets up if OMP parallelisation is needed. A user does not have to use
 the :py:func:`~aiida_fleur.tools.common_fleur_wf.optimize_calc_options()` explicitly, it will
-be run automatically taking ``options['resources']``  specified by user. ``'nodes'`` input
-(maximal number of node that can be used) is taken from ``"num_machines"``. ``'mpi_per_node'`` is copied
-from ``"num_mpiprocs_per_machine"`` and ``'omp_per_mpi'`` is taken from ``"num_cores_per_mpiproc"`` if the
-latter is given. In this case ``'use_omp'`` is set to true (calculation will use OMP threading),
-``'mpi_omp_ratio'`` will be set to "num_mpiprocs_per_machine" / "num_cores_per_mpiproc" and number of
-available CPUs per node is calculated as "num_mpiprocs_per_machine" * "num_cores_per_mpiproc".
-In other case, when "num_cores_per_mpiproc" is not given, 'use_omp' is set to False and
+be run automatically taking ``options['resources']``  specified by user. ``nodes`` input
+(maximal number of nodes that can be used) is taken from ``"num_machines"``.
+``mpi_per_node`` is copied
+from ``"num_mpiprocs_per_machine"`` and ``omp_per_mpi`` is taken from ``"num_cores_per_mpiproc"``
+if the latter is given. In this case ``use_omp`` is set to **True**
+(calculation will use OMP threading),
+``mpi_omp_ratio`` will be set to ``"num_mpiprocs_per_machine"`` / ``"num_cores_per_mpiproc"``
+and number of
+available CPUs per node is calculated as ``"num_mpiprocs_per_machine"`` * ``"num_cores_per_mpiproc"``.
+In other case, when ``"num_cores_per_mpiproc"`` is not given, ``use_omp`` is set to **False** and
 the number of available CPUs per node is assumed to be equal to ``"num_mpiprocs_per_machine"`` and
-``'mpi_omp_ratio'`` will be ignored.
+``mpi_omp_ratio`` will be ignored.
 
 
 .. note::
 
     The error handler, which is responsible for dealing with memory issues, tries to decrease the
     MPI_per_node / OMP_per_MPI ratio and additionally decreases the value passed to
-    `'mpi_omp_ratio'` by the factor of 0.5.
+    ``mpi_omp_ratio`` by the factor of 0.5.
 
 .. note::
 
