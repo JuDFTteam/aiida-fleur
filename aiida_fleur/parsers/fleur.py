@@ -138,9 +138,10 @@ class FleurParser(Parser):
                     mpiprocs = self.node.get_attribute('resources').get(
                         'num_mpiprocs_per_machine', 1)
 
-                    with output_folder.open('memory_avail.txt', 'r') as mem_file:
-                        mem = mem_file.readline()
-                        mem_kb_avail = float(mem.split()[1])
+                    with output_folder.open('out.xml', 'r') as out_file: #lazy out.xml parsing
+                        outlines = out_file.readline()
+                        line_avail = re.findall(r'<mem memoryPerNode ="\d+', outlines)[0]
+                        mem_kb_avail =int(re.findall(r'\d+', line_avail)[0])
 
                     if FleurCalculation._USAGE_DATA_FILE_NAME in list_of_files:
                         with output_folder.open(FleurCalculation._USAGE_FILE_NAME, 'r') as us_file:
