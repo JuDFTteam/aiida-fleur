@@ -138,15 +138,22 @@ class FleurParser(Parser):
                     mpiprocs = self.node.get_attribute('resources').get(
                         'num_mpiprocs_per_machine', 1)
 
+                    with output_folder.open('out.xml', 'r') as out_file: #lazy out.xml parsing
+                        outlines = out_file.readline()
+                        line_avail = re.findall(r'<mem memoryPerNode ="\d+', outlines)[0]
+                        mem_kb_avail =int(re.findall(r'\d+', line_avail)[0])
+
                     if FleurCalculation._USAGE_DATA_FILE_NAME in list_of_files:
                         with output_folder.open(FleurCalculation._USAGE_FILE_NAME, 'r') as us_file:
                             usage = json.load(us_file)
                         kb_used = usage['VmPeak']
-                        mem_kb_avail = usage['MemTotal']
                     else:
-                        mem_kb_avail = 1.0
-                        kb_used = 0.0
-                        self.logger.info('Did not manage to find memory usage info.')
+                        try:
+                            line_used = re.findall(r'used.+', error_file_lines)[0]
+                            kb_used = int(re.findall(r'\d+', line_used)[2])
+                        except IndexError:
+                            kb_used = 0.0
+                            self.logger.info('Did not manage to find memory usage info.')
 
                     if kb_used * mpiprocs / mem_kb_avail > 0.93:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
