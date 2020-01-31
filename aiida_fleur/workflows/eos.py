@@ -196,6 +196,7 @@ class FleurEosWorkChain(WorkChain):
         outnodedict = {}
         natoms = len(self.inputs.structure.sites)
         htr_to_ev = 27.21138602
+        e_u = 'eV'
 
         for label in self.ctx.labels:
             calc = self.ctx[label]
