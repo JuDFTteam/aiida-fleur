@@ -64,6 +64,7 @@ wf_para = Dict(dict={'fleur_runmax': 2,
                      'mode': 'force',  # 'force', 'energy' or 'density'
                      'force_converged': 0.02,
                      'itmax_per_run': 10,
+                     'use_relax_xml': False,
                      'force_dict': {'qfix': 2,
                                     'forcealpha': 0.5,
                                     'forcemix': 'BFGS'},

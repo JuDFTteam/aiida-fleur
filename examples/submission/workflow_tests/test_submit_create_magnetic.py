@@ -71,10 +71,7 @@ wf_para = {
         'pop_last_layers': 1,
 
         'total_number_layers': 8,
-        'num_relaxed_layers': 3,
-
-        'eos_needed': True,
-        'relax_needed': True
+        'num_relaxed_layers': 3
     }
 
 wf_para = Dict(dict=wf_para)

@@ -125,8 +125,8 @@ class FleurMaeWorkChain(WorkChain):
             wf_dict = wf_default
 
         extra_keys = []
-        for key in self.ctx.wf_dict.keys():
-            if key not in self._wf_default.keys():
+        for key in wf_dict.keys():
+            if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
             error = 'ERROR: input wf_parameters for MAE contains extra keys: {}'.format(extra_keys)

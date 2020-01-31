@@ -133,6 +133,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             except KeyError:
                 self.ctx.num_cores_per_mpiproc = 1
                 self.ctx.use_omp = False
+                self.ctx.suggest_mpi_omp_ratio = 1
 
             try:
                 self.check_kpts()
@@ -163,7 +164,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
-        if self.ctx.use_om:
+        if self.ctx.use_omp:
             self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
             if self.ctx.inputs.metadata.options['environment_variables']:
                 self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
