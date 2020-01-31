@@ -134,7 +134,7 @@ most important are:
 * aiida_core >= 1.0.0
 * lxml
 * ase
-
+* masci-tools
 
 Mainly AiiDA:
 
@@ -144,8 +144,7 @@ Mainly AiiDA:
 Easy plotting and other useful routines that do not depend on aiida_core are part of 
 the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository. 
 
-For easy ploting we recommend installing 'plot_methods' (not yet integrated into this package):
-https://bitbucket.org/broeder-j/plot_methods
+For easy ploting we recommend using 'plot_methods' from masci-tools, which are also deployed by the 'plot_fleur(<node(s)>)' function.
 
 ## Further Information <a name="FurtherInfo"></a>
 
