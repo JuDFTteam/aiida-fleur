@@ -28,12 +28,12 @@ See the license file.
 ### How to cite:
 If you use this package please consider citing:
 ```
-J. Broeder, D. Wortmann, and S. Blügel, 
-Using the AiiDA-FLEUR package for all-electron ab initio electronic structure 
-data generation and processing in materials science, 
+J. Broeder, D. Wortmann, and S. Blügel,
+Using the AiiDA-FLEUR package for all-electron ab initio electronic structure
+data generation and processing in materials science,
 In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48
 ```
- 
+
 
 ### Comments/Disclaimer:
 
@@ -91,7 +91,7 @@ merge_parameter.py | Methods to handle parameterData nodes, i.e merge them. Whic
 xml_util.py | All xml functions that are used, by parsers and other tools are in here. Some are 'general' some a very specific to Fleur.
 read_cif.py | This can be used as stand-alone to create StructureData nodes from .cif files from an directory tree.
 
-Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository, 
+Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository,
 which is a dependency of aiida-fleur.
 
 ## Installation Instructions <a name="Installation"></a>
@@ -141,7 +141,7 @@ Requirements are listed in 'setup_requirements.txt' and setup.json.
 
 most important are:
 
-* aiida_core >= 1.0.0
+* aiida_core >= 1.0.1
 * lxml
 * ase
 * masci-tools
@@ -151,8 +151,8 @@ Mainly AiiDA:
 1. Download from [www.aiida.net -> Download](www.aiida.net)
 2. install and setup -> [aiida's documentation](http://aiida-core.readthedocs.org/en/stable)
 
-Easy plotting and other useful routines that do not depend on aiida_core are part of 
-the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository. 
+Easy plotting and other useful routines that do not depend on aiida_core are part of
+the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository.
 
 For easy ploting we recommend using 'plot_methods' from masci-tools, which are also deployed by the 'plot_fleur(<node(s)>)' function.
 
@@ -165,7 +165,7 @@ Usage examples are shown in 'examples'.
 
 ## Acknowledgements
 
-Besides the Forschungszentrum Juelich, this work is supported by the [MaX 
+Besides the Forschungszentrum Juelich, this work is supported by the [MaX
 European Centre of Excellence](<http://www.max-centre.eu/>) funded by the Horizon 2020 EINFRA-5 program,
 Grant No. 676598.
 

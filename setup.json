@@ -32,7 +32,7 @@
         "pytest-cov >= 2.5.0",
         "pytest >= 2.9",
         "pgtest",
-        "numpy>=1.17.0",
+        "numpy>=1.16.4",
         "sympy",
         "masci-tools",
         "future",
