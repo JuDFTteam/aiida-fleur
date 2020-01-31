@@ -1,3 +1,15 @@
+## v1.1.0
+### release compatible with AiiDA-core 1.1.0
+- support of Fleur Max4 version (release branch)
+- make use of namespaces for nested workchains
+- inputs for the workchains are checked more strictly
+- exit codes are organised and consistent
+- FleurRestart workchain: automatic parallelisation is able to make OMP threading
+- new: BaseRelax workchain wrapping RelaxWorkChain and fixes its failures
+- new: CreateMagnetic workchain that creates relaxed film structure
+- increased unit test coverage for tools and utilities
+- code clean-ups, pylint score increased to 7.49
+
 ## v1.0.0a
 ### release compatible with AiiDA-core 1.0.0b5
 - added magnetic workchains

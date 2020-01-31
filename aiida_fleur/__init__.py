@@ -13,4 +13,4 @@
 '''
 AiiDA-FLEUR
 '''
-__version__ = "1.0.0a"
+__version__ = "1.1.0"
