@@ -72,15 +72,15 @@ maximal number of nodes, first guess for a number of MPI tasks per node, first g
 of OMP threads per MPI task, required MPI_per_node / OMP_per_MPI ratio and finally, a
 switch that sets up if OMP parallelisation is needed. A user does not have to use
 the :py:func:`~aiida_fleur.tools.common_fleur_wf.optimize_calc_options()` explicitly, it will
-be run automatically taking `options['resources']`  specified by user. `'nodes'` input
-(maximal number of node that can be used) is taken from `"num_machines"`. `'mpi_per_node'` is copied
-from `"num_mpiprocs_per_machine"` and `'omp_per_mpi'` is taken from `"num_cores_per_mpiproc"` if the
-latter is given. In this case `'use_omp'` is set to true (calculation will use OMP threading),
-`'mpi_omp_ratio'` will be set to "num_mpiprocs_per_machine" / "num_cores_per_mpiproc" and number of
+be run automatically taking ``options['resources']``  specified by user. ``'nodes'`` input
+(maximal number of node that can be used) is taken from ``"num_machines"``. ``'mpi_per_node'`` is copied
+from ``"num_mpiprocs_per_machine"`` and ``'omp_per_mpi'`` is taken from ``"num_cores_per_mpiproc"`` if the
+latter is given. In this case ``'use_omp'`` is set to true (calculation will use OMP threading),
+``'mpi_omp_ratio'`` will be set to "num_mpiprocs_per_machine" / "num_cores_per_mpiproc" and number of
 available CPUs per node is calculated as "num_mpiprocs_per_machine" * "num_cores_per_mpiproc".
 In other case, when "num_cores_per_mpiproc" is not given, 'use_omp' is set to False and
-the number of available CPUs per node is assumed to be equal to `"num_mpiprocs_per_machine"` and
-`'mpi_omp_ratio'` will be ignored.
+the number of available CPUs per node is assumed to be equal to ``"num_mpiprocs_per_machine"`` and
+``'mpi_omp_ratio'`` will be ignored.
 
 
 .. note::

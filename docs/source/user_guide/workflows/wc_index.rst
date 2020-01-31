@@ -9,9 +9,6 @@ All of the WorkChains have a similar interface and they share several common inp
 Inputs
 ''''''
 
-First, all of the workflows accept FLEUR and inpgen :py:class:`~aiida.orm.Code`
-nodes as an input for Fleur and inpgen submission during the workchain.
-
 There is always a ``wf_parameters``:
 :py:class:`~aiida.orm.Dict` node for controlling the workflow behaviour.
 It contains all the parameters related to physical aspects of the
@@ -19,7 +16,7 @@ workchain and its content vary between different workchains.
 
 .. note::
 
-    ``inpxml_changes`` key of ``wf_parameters`` exists for all the workchains.
+    ``inpxml_changes`` key of ``wf_parameters`` exists for most of the workchains.
     This list can be used to apply any
     supported change to inp.xml that will be used in calculations. To add a required change,
     simply append a two-element tuple where the first element is the name of the
@@ -42,16 +39,17 @@ Regarding an input crystal structure, it can be set in two ways in the most of t
        create a new FleurinpData that will be used in the workchain.
     2. Provide a ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` node
        which contains a complete input for a FLEUR calculation.
+    3. Provide a ``remote_data``: :py:class:`~aiida.orm.RemoteData` and
+       the last charge density and ``inp.xml`` from the previous
+       calculation will be used.
 
-Next, a ``remote_data``: :py:class:`~aiida.orm.RemoteData`
-can be optionally given to use the last charge density or other files from the previous
-calculation. For example, it is used when one wants to start a SCF calculation from a given charge
-density to speed up the calculation.
+Input for the nested workchains has to be specified via a corresponding namespace. Please,
+refer to the documentation of a particular workchain to see the details.
 
 Outputs
 '''''''
 Most of the workchains return a workflow specific *ParameterData*
-(:py:class:`~aiida.orm.Dict`) node named ``output_name_wc_para``
+(:py:class:`~aiida.orm.Dict`) node named ``output_name_wc_para`` or simple ``out``
 which contains the main results and some information about the workchain.
 
 There are additional workflow specific input and output nodes, please read the
