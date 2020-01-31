@@ -25,6 +25,11 @@ For other information see the AiiDA-core docs or http://www.flapw.de.
 MIT license.
 See the license file.
 
+### How to cite:
+If you use this package please consider citing:
+```J. Broeder, D. Wortmann, and S. Bl\"ugel, Using the AiiDA-FLEUR package for all-electron ab initio electronic structure data generation and processing in materials science, In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48```
+ 
+
 ### Comments/Disclaimer:
 
 The plug-in and the workflows will only work with a Fleur version using xml files as I/O.
