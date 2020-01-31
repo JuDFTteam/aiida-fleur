@@ -52,22 +52,22 @@ The Fleur plugin consists of:
     2. inpgen calculation
     3. FLEUR calculation
     4. Workchains
-
+    5. utility
 
 ### Workchains in this package:
 
-workflow name | Description
+workflow entry point name | Description
 --------------|------------
-scf | SCF-cycle of Fleur. Converge the charge density and the Total energy with multiple FLEUR runs
-eos | Calculate and Equation of States (Lattice constant) with FLEUR
-dos | Calculate a Density of States (DOS) with FLEUR
-bands | Calculate a Band structure with FLEUR
-relax | Relaxation of a crystal structure with FLEUR
-initial_cls | initial corelevel shifts and formation energies with FLEUR
-corehole | Workflow for corehole calculations, calculation of Binding energies with FLEUR
-dmi | Calculates Dzyaloshinskii–Moriya Interaction energy dispersion of a spin spiral
-ssdisp | Calculates exchange interaction energy dispersion of a spin spiral
-mae | Calculates Magnetic Anisotropy Energy
+fleur.scf | SCF-cycle of Fleur. Converge the charge density and the Total energy with multiple FLEUR runs
+fleur.eos | Calculate and Equation of States with FLEUR (currently cubic systems only)
+fleur.dos | Calculate a Density of States (DOS) with FLEUR
+fleur.band | Calculate a Band structure with FLEUR
+fleur.relax | Relaxation of the atomic positions of a crystal structure with FLEUR
+fleur.init_cls | Calculate initial corelevel shifts and formation energies with FLEUR
+fleur.corehole | Workflow for corehole calculations, calculation of Binding energies with FLEUR
+fleur.dmi | Calculates Dzyaloshinskii–Moriya Interaction energy dispersion of a spin spiral
+fleur.ssdisp | Calculates exchange interaction energy dispersion of a spin spiral
+fleur.mae | Calculates Magnetic Anisotropy Energy
 
 See the AiiDA documentation for general info about the AiiDA workflow system or how to write workflows.
 
@@ -103,7 +103,7 @@ Or install latest release version from pypi:
 ### Test Installation
 To test rather the installation was successful use:
 ```bash
-$ verdi calculation plugins
+$ verdi plugins list aiida.calculations
 ```
 ```bash
    # example output:
@@ -163,7 +163,4 @@ Grant No. 676598.
 For this work essential is AiiDA, which itself is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>) funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>).
 
 
-![MaX](miscellaneous/logos/MaX.png)
-
-
-
+![MaX](docs/source/images/MaX.png)
