@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <fleurOutput fleurOutputVersion="0.27">
    <programVersion version="fleur 31">
       <compilationInfo date="2020-01-16T16:01:03" user="tseplyaev1" host="jrl10" flag="-I/usr/local/software/jureca/Stages/2018b/software/HDF5/1.8.20-iimpi-2018b.1/include -I/usr/local/software/jureca/Stages/2018b/software/ELPA/2018.05.001-intel-2018b.1-hybrid/include/elpa_openmp-2018.05.001/modules  -I/usr/local/software/jureca/Stages/2018b/software/HDF5/1.8.20-iimpi-2018b.1/include -I/usr/local/software/jureca/Stages/2018b/software/ELPA/2018.05.001-intel-2018b.1-hybrid/include/elpa_openmp-2018.05.001/modules  -mkl -qopenmp -assume byterecl" link="-lelpa_openmp;-lxml2;-L/usr/local/software/jureca/Stages/2018b/software/HDF5/1.8.20-iimpi-2018b.1/lib;-L/usr/local/software/jureca/Stages/2018b/software/ELPA/2018.05.001-intel-2018b.1-hybrid/lib;-lmkl_scalapack_lp64;-lmkl_blacs_intelmpi_lp64"/>
@@ -1116,8 +1115,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2176623480" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1485844683" vzInf="0.0221650739" value="-0.2278349261"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0002883108" units="eV"/>
          <sumValenceSingleParticleEnergies value="-51.8226012458" units="Htr"/>
          <FermiEnergy value="-0.1581199792" units="Htr"/>
@@ -1234,8 +1231,8 @@
             <magneticMoment atomType="2" moment="0.0549872762" spinUpCharge="5.9314900417" spinDownCharge="5.8765027655"/>
             <magneticMoment atomType="3" moment="0.1537382665" spinUpCharge="5.7329361449" spinDownCharge="5.5791978784"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.5429500540" units="Htr">
-            <sumOfEigenvalues                            value="   -23478.6280134902">
+         <totalEnergy value="   -38166.5429500540" units="Htr">
+            <sumOfEigenvalues value="   -23478.6280134902">
                <coreElectrons value="-23426.8054122445"/>
                <valenceElectrons value="-51.8226012458"/>
             </sumOfEigenvalues>
@@ -1306,8 +1303,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2185433359" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="0.0555158173" vzInf="0.2255471887" value="-0.0244528113"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0005111160" units="eV"/>
          <sumValenceSingleParticleEnergies value="-46.3392274503" units="Htr"/>
          <FermiEnergy value="-0.0391573800" units="Htr"/>
@@ -1424,8 +1419,8 @@
             <magneticMoment atomType="2" moment="0.0531073826" spinUpCharge="6.5460684718" spinDownCharge="6.4929610892"/>
             <magneticMoment atomType="3" moment="0.0571055191" spinUpCharge="7.0560164472" spinDownCharge="6.9989109281"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.3577368241" units="Htr">
-            <sumOfEigenvalues                            value="   -23468.4958605748">
+         <totalEnergy value="   -38166.3577368241" units="Htr">
+            <sumOfEigenvalues value="   -23468.4958605748">
                <coreElectrons value="-23422.1566331245"/>
                <valenceElectrons value="-46.3392274503"/>
             </sumOfEigenvalues>
@@ -1496,8 +1491,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2259528361" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.0721774266" vzInf="0.0958849169" value="-0.1541150831"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0000970443" units="eV"/>
          <sumValenceSingleParticleEnergies value="-49.9778264979" units="Htr"/>
          <FermiEnergy value="-0.1317518720" units="Htr"/>
@@ -1614,8 +1607,8 @@
             <magneticMoment atomType="2" moment="0.2033205337" spinUpCharge="6.4562742293" spinDownCharge="6.2529536956"/>
             <magneticMoment atomType="3" moment="0.1842316634" spinUpCharge="6.7217492870" spinDownCharge="6.5375176236"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.2304829059" units="Htr">
-            <sumOfEigenvalues                            value="   -23480.4284651393">
+         <totalEnergy value="   -38166.2304829059" units="Htr">
+            <sumOfEigenvalues value="   -23480.4284651393">
                <coreElectrons value="-23430.4506386414"/>
                <valenceElectrons value="-49.9778264979"/>
             </sumOfEigenvalues>
@@ -1686,8 +1679,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2268897901" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.0801188441" vzInf="0.0871519926" value="-0.1628480074"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0009890518" units="eV"/>
          <sumValenceSingleParticleEnergies value="-50.2226457473" units="Htr"/>
          <FermiEnergy value="-0.1364600387" units="Htr"/>
@@ -1804,8 +1795,8 @@
             <magneticMoment atomType="2" moment="0.2049645477" spinUpCharge="6.5071387646" spinDownCharge="6.3021742169"/>
             <magneticMoment atomType="3" moment="0.1877334209" spinUpCharge="6.7203092343" spinDownCharge="6.5325758135"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.2221837624" units="Htr">
-            <sumOfEigenvalues                            value="   -23481.8774417797">
+         <totalEnergy value="   -38166.2221837624" units="Htr">
+            <sumOfEigenvalues value="   -23481.8774417797">
                <coreElectrons value="-23431.6547960324"/>
                <valenceElectrons value="-50.2226457473"/>
             </sumOfEigenvalues>
@@ -1876,8 +1867,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2309649669" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1137206279" vzInf="0.0469935695" value="-0.2030064305"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0056017238" units="eV"/>
          <sumValenceSingleParticleEnergies value="-51.0832857202" units="Htr"/>
          <FermiEnergy value="-0.1515307955" units="Htr"/>
@@ -1994,8 +1983,8 @@
             <magneticMoment atomType="2" moment="0.2175343855" spinUpCharge="6.7091820912" spinDownCharge="6.4916477057"/>
             <magneticMoment atomType="3" moment="0.2004503951" spinUpCharge="6.8173178740" spinDownCharge="6.6168674789"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1860504485" units="Htr">
-            <sumOfEigenvalues                            value="   -23488.4525396560">
+         <totalEnergy value="   -38166.1860504485" units="Htr">
+            <sumOfEigenvalues value="   -23488.4525396560">
                <coreElectrons value="-23437.3692539359"/>
                <valenceElectrons value="-51.0832857202"/>
             </sumOfEigenvalues>
@@ -2066,8 +2055,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2321465769" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1534607972" vzInf="-0.0024450693" value="-0.2524450693"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0044239237" units="eV"/>
          <sumValenceSingleParticleEnergies value="-51.7485873956" units="Htr"/>
          <FermiEnergy value="-0.1656283020" units="Htr"/>
@@ -2184,8 +2171,8 @@
             <magneticMoment atomType="2" moment="0.2356786517" spinUpCharge="6.6792224427" spinDownCharge="6.4435437910"/>
             <magneticMoment atomType="3" moment="0.2108278363" spinUpCharge="6.8337328692" spinDownCharge="6.6229050329"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1687629239" units="Htr">
-            <sumOfEigenvalues                            value="   -23492.9376752924">
+         <totalEnergy value="   -38166.1687629239" units="Htr">
+            <sumOfEigenvalues value="   -23492.9376752924">
                <coreElectrons value="-23441.1890878967"/>
                <valenceElectrons value="-51.7485873956"/>
             </sumOfEigenvalues>
@@ -2256,8 +2243,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2330615323" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1707437597" vzInf="-0.0263738185" value="-0.2763738185"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0012620657" units="eV"/>
          <sumValenceSingleParticleEnergies value="-52.0874938744" units="Htr"/>
          <FermiEnergy value="-0.1708428477" units="Htr"/>
@@ -2374,8 +2359,8 @@
             <magneticMoment atomType="2" moment="0.2590513995" spinUpCharge="6.7528857408" spinDownCharge="6.4938343414"/>
             <magneticMoment atomType="3" moment="0.2177749714" spinUpCharge="6.9018521429" spinDownCharge="6.6840771715"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1715563273" units="Htr">
-            <sumOfEigenvalues                            value="   -23495.5704138846">
+         <totalEnergy value="   -38166.1715563273" units="Htr">
+            <sumOfEigenvalues value="   -23495.5704138846">
                <coreElectrons value="-23443.4829200102"/>
                <valenceElectrons value="-52.0874938744"/>
             </sumOfEigenvalues>
@@ -2446,8 +2431,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2304466372" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1706338374" vzInf="-0.0293285127" value="-0.2793285127"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0005248987" units="eV"/>
          <sumValenceSingleParticleEnergies value="-52.1537568952" units="Htr"/>
          <FermiEnergy value="-0.1717979138" units="Htr"/>
@@ -2564,8 +2547,8 @@
             <magneticMoment atomType="2" moment="0.2808999866" spinUpCharge="6.7497406097" spinDownCharge="6.4688406231"/>
             <magneticMoment atomType="3" moment="0.2438920914" spinUpCharge="6.8680263094" spinDownCharge="6.6241342180"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1752120342" units="Htr">
-            <sumOfEigenvalues                            value="   -23493.4366671454">
+         <totalEnergy value="   -38166.1752120342" units="Htr">
+            <sumOfEigenvalues value="   -23493.4366671454">
                <coreElectrons value="-23441.2829102502"/>
                <valenceElectrons value="-52.1537568952"/>
             </sumOfEigenvalues>
@@ -2636,8 +2619,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2308994174" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1785732967" vzInf="-0.0381344781" value="-0.2881344781"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0012778836" units="eV"/>
          <sumValenceSingleParticleEnergies value="-52.5338672869" units="Htr"/>
          <FermiEnergy value="-0.1786976746" units="Htr"/>
@@ -2754,8 +2735,8 @@
             <magneticMoment atomType="2" moment="0.2904477219" spinUpCharge="6.8216247720" spinDownCharge="6.5311770501"/>
             <magneticMoment atomType="3" moment="0.2663777983" spinUpCharge="6.8599689778" spinDownCharge="6.5935911795"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1752147626" units="Htr">
-            <sumOfEigenvalues                            value="   -23494.4713277679">
+         <totalEnergy value="   -38166.1752147626" units="Htr">
+            <sumOfEigenvalues value="   -23494.4713277679">
                <coreElectrons value="-23441.9374604810"/>
                <valenceElectrons value="-52.5338672869"/>
             </sumOfEigenvalues>
@@ -2826,8 +2807,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2326473401" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1898569385" vzInf="-0.0488653053" value="-0.2988653053"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0078569239" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.0253589418" units="Htr"/>
          <FermiEnergy value="-0.1879611501" units="Htr"/>
@@ -2944,8 +2923,8 @@
             <magneticMoment atomType="2" moment="0.2886977612" spinUpCharge="6.8675725639" spinDownCharge="6.5788748027"/>
             <magneticMoment atomType="3" moment="0.2787431867" spinUpCharge="6.8615754038" spinDownCharge="6.5828322171"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1759199307" units="Htr">
-            <sumOfEigenvalues                            value="   -23496.7036514440">
+         <totalEnergy value="   -38166.1759199307" units="Htr">
+            <sumOfEigenvalues value="   -23496.7036514440">
                <coreElectrons value="-23443.6782925021"/>
                <valenceElectrons value="-53.0253589418"/>
             </sumOfEigenvalues>
@@ -3016,8 +2995,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2331558798" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1908120642" vzInf="-0.0487972115" value="-0.2987972115"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0015380434" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.1405755697" units="Htr"/>
          <FermiEnergy value="-0.1897779571" units="Htr"/>
@@ -3134,8 +3111,8 @@
             <magneticMoment atomType="2" moment="0.3058512284" spinUpCharge="6.8563073400" spinDownCharge="6.5504561117"/>
             <magneticMoment atomType="3" moment="0.2863779182" spinUpCharge="6.8816746653" spinDownCharge="6.5952967471"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1771271965" units="Htr">
-            <sumOfEigenvalues                            value="   -23497.1671257506">
+         <totalEnergy value="   -38166.1771271965" units="Htr">
+            <sumOfEigenvalues value="   -23497.1671257506">
                <coreElectrons value="-23444.0265501809"/>
                <valenceElectrons value="-53.1405755697"/>
             </sumOfEigenvalues>
@@ -3206,8 +3183,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2325623536" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1870595412" vzInf="-0.0446073689" value="-0.2946073689"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0031295014" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.0169978582" units="Htr"/>
          <FermiEnergy value="-0.1872907612" units="Htr"/>
@@ -3324,8 +3299,8 @@
             <magneticMoment atomType="2" moment="0.3175149686" spinUpCharge="6.8341673683" spinDownCharge="6.5166523996"/>
             <magneticMoment atomType="3" moment="0.2961857032" spinUpCharge="6.8712217158" spinDownCharge="6.5750360125"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769766565" units="Htr">
-            <sumOfEigenvalues                            value="   -23496.5505261517">
+         <totalEnergy value="   -38166.1769766565" units="Htr">
+            <sumOfEigenvalues value="   -23496.5505261517">
                <coreElectrons value="-23443.5335282936"/>
                <valenceElectrons value="-53.0169978582"/>
             </sumOfEigenvalues>
@@ -3396,8 +3371,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2326879637" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1858356815" vzInf="-0.0430537670" value="-0.2930537670"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0012780592" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.0372803385" units="Htr"/>
          <FermiEnergy value="-0.1874083658" units="Htr"/>
@@ -3514,8 +3487,8 @@
             <magneticMoment atomType="2" moment="0.3161463801" spinUpCharge="6.8506881766" spinDownCharge="6.5345417965"/>
             <magneticMoment atomType="3" moment="0.3034671150" spinUpCharge="6.8648992137" spinDownCharge="6.5614320987"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769942494" units="Htr">
-            <sumOfEigenvalues                            value="   -23496.7157718454">
+         <totalEnergy value="   -38166.1769942494" units="Htr">
+            <sumOfEigenvalues value="   -23496.7157718454">
                <coreElectrons value="-23443.6784915069"/>
                <valenceElectrons value="-53.0372803385"/>
             </sumOfEigenvalues>
@@ -3586,8 +3559,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2327862571" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1841916405" vzInf="-0.0408932995" value="-0.2908932995"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0007090122" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.0310922967" units="Htr"/>
          <FermiEnergy value="-0.1871148475" units="Htr"/>
@@ -3704,8 +3675,8 @@
             <magneticMoment atomType="2" moment="0.3204202676" spinUpCharge="6.8516577791" spinDownCharge="6.5312375115"/>
             <magneticMoment atomType="3" moment="0.3129723641" spinUpCharge="6.8573713416" spinDownCharge="6.5443989775"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1770095532" units="Htr">
-            <sumOfEigenvalues                            value="   -23496.5708050315">
+         <totalEnergy value="   -38166.1770095532" units="Htr">
+            <sumOfEigenvalues value="   -23496.5708050315">
                <coreElectrons value="-23443.5397127348"/>
                <valenceElectrons value="-53.0310922967"/>
             </sumOfEigenvalues>
@@ -3776,8 +3747,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2345810931" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1888581759" vzInf="-0.0459030215" value="-0.2959030215"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0005288169" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.1878900691" units="Htr"/>
          <FermiEnergy value="-0.1902578069" units="Htr"/>
@@ -3894,8 +3863,8 @@
             <magneticMoment atomType="2" moment="0.3269192262" spinUpCharge="6.8571976938" spinDownCharge="6.5302784676"/>
             <magneticMoment atomType="3" moment="0.3211211317" spinUpCharge="6.8701764071" spinDownCharge="6.5490552753"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769878223" units="Htr">
-            <sumOfEigenvalues                            value="   -23497.2071007379">
+         <totalEnergy value="   -38166.1769878223" units="Htr">
+            <sumOfEigenvalues value="   -23497.2071007379">
                <coreElectrons value="-23444.0192106688"/>
                <valenceElectrons value="-53.1878900691"/>
             </sumOfEigenvalues>
@@ -3966,8 +3935,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2346058841" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1894107888" vzInf="-0.0464728086" value="-0.2964728086"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0009820852" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.2044788124" units="Htr"/>
          <FermiEnergy value="-0.1906021786" units="Htr"/>
@@ -4084,8 +4051,8 @@
             <magneticMoment atomType="2" moment="0.3277718365" spinUpCharge="6.8572350234" spinDownCharge="6.5294631869"/>
             <magneticMoment atomType="3" moment="0.3251793126" spinUpCharge="6.8655811901" spinDownCharge="6.5404018775"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769540944" units="Htr">
-            <sumOfEigenvalues                            value="   -23497.2573007274">
+         <totalEnergy value="   -38166.1769540944" units="Htr">
+            <sumOfEigenvalues value="   -23497.2573007274">
                <coreElectrons value="-23444.0528219150"/>
                <valenceElectrons value="-53.2044788124"/>
             </sumOfEigenvalues>
@@ -4156,8 +4123,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2344929321" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1888949052" vzInf="-0.0458980866" value="-0.2958980866"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0011336191" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.1963832710" units="Htr"/>
          <FermiEnergy value="-0.1903847716" units="Htr"/>
@@ -4274,8 +4239,8 @@
             <magneticMoment atomType="2" moment="0.3315569350" spinUpCharge="6.8569834418" spinDownCharge="6.5254265068"/>
             <magneticMoment atomType="3" moment="0.3303931320" spinUpCharge="6.8670532122" spinDownCharge="6.5366600802"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769355657" units="Htr">
-            <sumOfEigenvalues                            value="   -23497.2076079847">
+         <totalEnergy value="   -38166.1769355657" units="Htr">
+            <sumOfEigenvalues value="   -23497.2076079847">
                <coreElectrons value="-23444.0112247137"/>
                <valenceElectrons value="-53.1963832710"/>
             </sumOfEigenvalues>
@@ -4346,8 +4311,6 @@
             <vacuumEP vacuum="1" spin="2" vzIR="-0.2344129641" vzInf="0.0000000000" value="-0.2500000000"/>
             <vacuumEP vacuum="2" spin="2" vzIR="-0.1884666835" vzInf="-0.0454511349" value="-0.2954511349"/>
          </energyParameters>
-         <eigenvalues>
-         </eigenvalues>
          <bandgap value="0.0008953412" units="eV"/>
          <sumValenceSingleParticleEnergies value="-53.1905118550" units="Htr"/>
          <FermiEnergy value="-0.1901896420" units="Htr"/>
@@ -4464,8 +4427,8 @@
             <magneticMoment atomType="2" moment="0.3338874127" spinUpCharge="6.8596201441" spinDownCharge="6.5257327314"/>
             <magneticMoment atomType="3" moment="0.3343263624" spinUpCharge="6.8696352554" spinDownCharge="6.5353088930"/>
          </magneticMomentsInMTSpheres>
-         <totalEnergy                                    value="   -38166.1769328833" units="Htr">
-            <sumOfEigenvalues                            value="   -23497.1927759383">
+         <totalEnergy value="   -38166.1769328833" units="Htr">
+            <sumOfEigenvalues value="   -23497.1927759383">
                <coreElectrons value="-23444.0022640833"/>
                <valenceElectrons value="-53.1905118550"/>
             </sumOfEigenvalues>
