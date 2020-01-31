@@ -29,7 +29,8 @@ See the license file.
 If you use this package please consider citing:
 ```
 J. Broeder, D. Wortmann, and S. Blügel, 
-Using the AiiDA-FLEUR package for all-electron ab initio electronic structure data generation and processing in materials science, 
+Using the AiiDA-FLEUR package for all-electron ab initio electronic structure 
+data generation and processing in materials science, 
 In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48
 ```
  
