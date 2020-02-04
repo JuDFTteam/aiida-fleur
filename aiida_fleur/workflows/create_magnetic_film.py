@@ -110,9 +110,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Optimize lattice parameter for substrate bulk structure.
         """
+        self.report('INFO: submit EOS WorkChain')
         inputs = {}
         inputs, error = self.prepare_eos()
-        if not error:
+        if error:
             return error
         res = self.submit(FleurEosWorkChain, **inputs)
         self.to_context(eos_wc=res)
@@ -129,7 +130,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             from ase.lattice.cubic import BodyCenteredCubic
             structure_factory = BodyCenteredCubic
         else:
-            return self.ctx.exit_codes.ERROR_NOT_SUPPORTED_LATTICE
+            return self.exit_codes.ERROR_NOT_SUPPORTED_LATTICE
 
         miller = [[1, 0, 0],
                   [0, 1, 0],
@@ -178,42 +179,46 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         inputs = self.inputs
         if inputs.eos:
+            self.report('INFO: EOS workchain will be submitted')
             self.ctx.eos_needed = True
             self.ctx.relax_needed = True
             if 'eos_output' in inputs:
                 self.report('ERROR: you specified both eos_output and eos wc inputs.')
-                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if not inputs.relax:
                 self.report('ERROR: no relax wc input was given despite EOS is needed.')
-                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'optimized_structure' in inputs:
                 self.report('ERROR: optimized structure was given despite EOS is needed.')
-                return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             if 'eos_output' in inputs:
+                self.report('INFO: Outputs of the given EOS workchain will be used for relaxation')
                 self.ctx.eos_needed = False
                 self.ctx.relax_needed = True
                 if not inputs.relax:
                     self.report('ERROR: no relax wc input was given despite EOS is needed.')
-                    return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                    return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
                 if 'optimized_structure' in inputs:
                     self.report('ERROR: optimized structure was given despite relax is needed.')
-                    return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                    return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             else:
                 if 'optimized_structure' in inputs:
+                    self.report('INFO: given relaxed structure will be used, no EOS or relax WC')
                     self.ctx.eos_needed = False
                     self.ctx.relax_needed = False
                     if inputs.relax:
                         if inputs.relax:
                             self.report('ERROR: relax wc input was given but relax is not needed.')
-                            return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
                 else:
                     self.ctx.eos_needed = False
                     self.ctx.relax_needed = True
+                    self.report('INFO: relaxation will be continued; no EOS')
                     if inputs.relax:
                         if not inputs.relax:
                             self.report('ERROR: relax wc input was not given but relax is needed.')
-                            return self.ctx.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
     def relax_needed(self):
         """
@@ -225,9 +230,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Optimize interlayer distance.
         """
+        self.report('INFO: submit Relaxation WorkChain')
         inputs = {}
         inputs, error = self.prepare_relax()
-        if not error:
+        if error:
             return error
         res = self.submit(FleurBaseRelaxWorkChain, **inputs)
         self.to_context(relax_wc=res)
