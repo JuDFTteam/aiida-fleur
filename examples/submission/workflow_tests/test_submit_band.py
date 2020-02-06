@@ -71,9 +71,10 @@ wf_para = Dict(dict={'fleur_runmax' : 4,
                               'emin' : -0.30,
                               'emax' :  0.80})
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
-                              'max_wallclock_seconds':  60*60})
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 24},
+                     'queue_name' : 'devel',
+                     'custom_scheduler_commands' : '#SBATCH --account="jpgi10"',
+                     'max_wallclock_seconds':  60*60})
 
 # W bcc structure
 file_path = '../../inp_xml_files/W/inp.xml'
