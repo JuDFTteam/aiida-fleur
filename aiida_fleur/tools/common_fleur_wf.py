@@ -653,7 +653,7 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
                    ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
                              nodes, best_suggestion[0], kpts))
 
-    return best_suggestion[0], best_suggestion[1], best_suggestion[2], message
+    return int(best_suggestion[0]), int(best_suggestion[1]), int(best_suggestion[2]), message
 
 
 def find_last_in_restart(restart_wc):
