@@ -303,6 +303,7 @@ class FleurStrainWorkChain(WorkChain):
         # TODO: different fits
         if len(en_array): # for some reason just en_array does not work
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
+            dprime = deformation_potential(vol_unitcell_array, eg_array)
 
             volumes = self.ctx.volume
             gs_scale = volume * natoms / self.ctx.org_volume
@@ -319,9 +320,8 @@ class FleurStrainWorkChain(WorkChain):
             volume = 0
             bulk_modulus = None
             bulk_deriv = None
-
-        if len(eg_array):
-            dprime = deformation_potential(vol_unitcell_array, eg_array)
+            dprime = None
+            
         
         outputnode_dict={}
         outputnode_dict['workflow_name']= self.__class__.__name__,
