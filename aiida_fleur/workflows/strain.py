@@ -141,7 +141,7 @@ class FleurStrainWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        self.ctx.points = wf_dict.get('points', 9)
+        self.ctx.points = wf_dict.get('points', 3)
         self.ctx.step = wf_dict.get('step', 0.02)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)  # True
@@ -293,7 +293,8 @@ class FleurStrainWorkChain(WorkChain):
             t_energylist_peratom.append(t_e / natoms)
             vol_peratom_success.append(self.ctx.volume_peratom[label])
             distancelist.append(dis)
-            bandgaplist.append(calc.outputs.last_fleur_calc_output.get_dict()['bandgap'])
+            calc_uuid = outpara.get('last_calc_uuid')
+            bandgaplist.append(load_node(calc_uuid).res.bandgap)
 
         en_array = np.array(t_energylist_peratom)
         vol_array = np.array(vol_peratom_success)
@@ -326,6 +327,7 @@ class FleurStrainWorkChain(WorkChain):
         outputnode_dict={}
         outputnode_dict['workflow_name']= self.__class__.__name__,
         outputnode_dict['workflow_version']= self._workflowversion,
+        outputnode_dict['material'] = self.inputs.structure.get_formula()
         outputnode_dict['deformation_potential']= dprime,
         outputnode_dict['scaling']= self.ctx.scalelist,
         outputnode_dict['scaling_gs']= gs_scale,
