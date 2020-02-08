@@ -99,7 +99,6 @@ class FleurStrainWorkChain(WorkChain):
         )
 
         spec.output('output_strain_wc_para', valid_type=Dict)
-        spec.output('output_strain_wc_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
@@ -258,6 +257,7 @@ class FleurStrainWorkChain(WorkChain):
         t_energylist = []
         t_energylist_peratom = []
         bandgaplist = []
+        calc_uuids=[]
         vol_peratom_success = []
         natoms = len(self.inputs.structure.sites)
         htr_to_ev = 27.21138602
@@ -294,6 +294,7 @@ class FleurStrainWorkChain(WorkChain):
             vol_peratom_success.append(self.ctx.volume_peratom[label])
             distancelist.append(dis)
             calc_uuid = outpara.get('last_calc_uuid')
+            calc_uuids.append(calc_uuid)
             bandgaplist.append(load_node(calc_uuid).res.bandgap)
 
         en_array = np.array(t_energylist_peratom)
@@ -301,8 +302,7 @@ class FleurStrainWorkChain(WorkChain):
         eg_array = np.array(bandgaplist)
         vol_unitcell_array = vol_array*natoms
 
-        # TODO: different fits
-        if len(en_array): # for some reason just en_array does not work
+        if len(en_array):
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
             dprime = deformation_potential(vol_unitcell_array, eg_array)
 
@@ -313,7 +313,6 @@ class FleurStrainWorkChain(WorkChain):
                 hint = ('Consider rerunning around point {}'.format(gs_scale))
                 self.ctx.info.append(hint)
                 self.ctx.warnings.append(warn)
-                # TODO maybe make it a feature to rerun with centred around the gs.
         else:
             volumes = None
             gs_scale = None
@@ -340,10 +339,11 @@ class FleurStrainWorkChain(WorkChain):
         outputnode_dict['total_energy_units']= e_u,
         outputnode_dict['bandgaps']=bandgaplist,
         outputnode_dict['structures']= self.ctx.structurs_uuids,
+        outputnode_dict['calculations']=calc_uuids,
         outputnode_dict['distance_charge']= distancelist,
         outputnode_dict['distance_charge_units']= dis_u,
         outputnode_dict['nsteps']= self.ctx.points,
-        outputnode_dict['guess']= self.ctx.guess,
+        # outputnode_dict['guess']= self.ctx.guess,
         outputnode_dict['stepsize']= self.ctx.step,
         outputnode_dict['residuals']= residuals,
         outputnode_dict['bulk_deriv']= bulk_deriv,
