@@ -321,12 +321,18 @@ class FleurStrainWorkChain(WorkChain):
             bulk_modulus = None
             bulk_deriv = None
             dprime = None
+
+        if (self.inputs.structure.get_extra('local_name')):
+            local_name=self.inputs.structure.get_extra('local_name')
+        else:
+            local_name=''
             
         
         outputnode_dict={}
         outputnode_dict['workflow_name']= self.__class__.__name__,
         outputnode_dict['workflow_version']= self._workflowversion,
-        outputnode_dict['material'] = self.inputs.structure.get_formula()
+        outputnode_dict['material'] = self.inputs.structure.get_formula(),
+        outputnode_dict['local_name'] = local_name,
         outputnode_dict['deformation_potential']= dprime,
         outputnode_dict['scaling']= self.ctx.scalelist,
         outputnode_dict['scaling_gs']= gs_scale,
