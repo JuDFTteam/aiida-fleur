@@ -259,12 +259,16 @@ def test_find_last_in_restart(fixture_localhost,
                               generate_calc_job_node, generate_work_chain_node):
     from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
     from aiida.common.links import LinkType
+    from aiida.common.exceptions import NotExistent
 
     node1 = generate_calc_job_node('fleur.fleur', fixture_localhost)
     node2 = generate_calc_job_node('fleur.fleur', fixture_localhost)
     node3 = generate_calc_job_node('fleur.fleur', fixture_localhost)
 
     node_main = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+
+    with pytest.raises(NotExistent):
+        result = find_last_in_restart(node_main)
 
     node1.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')
     node2.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')

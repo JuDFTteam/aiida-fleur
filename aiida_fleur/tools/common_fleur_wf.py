@@ -661,7 +661,11 @@ def find_last_in_restart(restart_wc):
     Finds the last CalcJob submitted in a restart_wc
     and returns it's uuid
     """
+    from aiida.common.exceptions import NotExistent
     links = restart_wc.get_outgoing().all()
     calls = list([x for x in links if x.link_label == 'CALL'])
-    calls = sorted(calls, key=lambda x: x.node.pk)
-    return calls[-1].node.uuid
+    if calls:
+        calls = sorted(calls, key=lambda x: x.node.pk)
+        return calls[-1].node.uuid
+    else:
+        raise NotExistent

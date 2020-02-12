@@ -627,7 +627,10 @@ class FleurScfWorkChain(WorkChain):
         """
         from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
         if self.ctx.last_calc:
-            last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            try:
+                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            except NotExistent:
+                last_calc_uuid = None
         else:
             last_calc_uuid = None
 
