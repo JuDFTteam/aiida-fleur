@@ -243,7 +243,7 @@ results_optimize = [
     (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
     (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
     (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
-    (4, 20, 1, 'WARNING: Changed the number of MPIs per node from 8 to 20 an OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.')]
+    (4, 20, 1, 'WARNING: Changed the number of MPIs per node from 8 to 20 and OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.')]
 
 
 @pytest.mark.parametrize('input,result_correct', zip(inputs_optimize, results_optimize))

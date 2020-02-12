@@ -648,12 +648,12 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
                        '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1],
                                                              best_suggestion[2], kpts))
     else:
-        message = ('WARNING: Changed the number of MPIs per node from {} to {} an OMP from {} to {}'
+        message = ('WARNING: Changed the number of MPIs per node from {} to {} and OMP from {} to {}'
                    '. Changed the number of nodes from {} to {}. Number of k-points is {}.'
                    ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
                              nodes, best_suggestion[0], kpts))
 
-    return best_suggestion[0], best_suggestion[1], best_suggestion[2], message
+    return int(best_suggestion[0]), int(best_suggestion[1]), int(best_suggestion[2]), message
 
 
 def find_last_in_restart(restart_wc):
