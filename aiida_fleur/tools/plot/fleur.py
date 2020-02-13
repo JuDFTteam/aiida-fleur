@@ -11,13 +11,9 @@
 ###############################################################################
 
 """
-In this module are plot routines collected to create default plots out of certain
-AiiDA output nodes from certain workflows with matplot lib.
-
-Comment: This makes plot_methods shorter to use for a Fleur, AiiDA user.
-Be aware that requirements are the aiida-fleur plugin and aiida-fleur-based
-Since we have a dependence to AiiDA here, it might be better to make a separate repo,
-if this evolves.
+In this module is the plot_fleur method and its logic. The methods allows for the visualization on
+every database node specifc to aiida-fleur. It depends on plot more general plot routines from
+masci-tools which use matplotlib or bokeh as backend.
 """
 # TODO but allow to optional parse information for saving and title,
 #  (that user can put pks or structure formulas in there)
@@ -194,7 +190,7 @@ def plot_fleur_mn(nodelist, save=False):
             plotf = FUNCTIONS_DICT[node_key]
         except KeyError:
             print(('Sorry, I do not know how to visualize'
-                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist)))            
+                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist)))
             continue
         plot_res = plotf(nodelist, labels=node_labels)
 
