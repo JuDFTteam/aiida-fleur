@@ -21,15 +21,12 @@ import six
 
 from aiida.engine import WorkChain, if_
 from aiida.engine import calcfunction as cf
-from aiida.plugins import DataFactory
 from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
+from aiida.common.exceptions import NotExistent
 
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 from aiida_fleur.workflows.base_relax import FleurBaseRelaxWorkChain
-
-from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurCreateMagneticWorkChain(WorkChain):
@@ -86,6 +83,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
                        message="Specified substrate has to be bcc or fcc.")
         spec.exit_code(382, 'ERROR_RELAX_FAILED',
                        message="Relaxation calculation failed.")
+        spec.exit_code(383, 'ERROR_EOS_FAILED',
+                       message="EOS WorkChain failed.")
 
     def eos_needed(self):
         """
@@ -267,7 +266,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         if not self.ctx.eos_needed:
             eos_output = self.inputs.eos_output
         else:
-            eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
+            try:
+                eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
+            except NotExistent:
+                return self.ctx.ERROR_EOS_FAILED
         scaling_parameter = eos_output.get_dict()['scaling_gs']
         latticeconstant = self.ctx.wf_dict['latticeconstant'] * scaling_parameter
         size = self.ctx.wf_dict['size']

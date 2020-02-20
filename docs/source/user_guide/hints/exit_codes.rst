@@ -171,6 +171,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 382       | Relaxation calculation failed.                          | CreateMagnetic         |
 +-----------+---------------------------------------------------------+------------------------+
+| 383       | EOS WorkChain failed.                                   | CreateMagnetic         |
++-----------+---------------------------------------------------------+------------------------+
 | 389       | FLEUR calculation failed due to memory issue            | FleurBase              |
 |           | and it can not be solved for this scheduler             |                        |
 +-----------+---------------------------------------------------------+------------------------+
