@@ -17,6 +17,8 @@ masci-tools which use matplotlib or bokeh as backend.
 """
 # TODO but allow to optional parse information for saving and title,
 #  (that user can put pks or structure formulas in there)
+# INFO: AiiDAlab has implemented an extendable viewer class for data structures,
+# which might be some point moved to aiida-core and extensible over entrypoints.
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -49,8 +51,8 @@ def plot_fleur(*args, **kwargs):
 
     save: bool, should the plots be saved automatically
     backend: str, 'bokeh' or else matplotlib
-    show_dict: bool, print the output dictionaries of the given nodes  
-    
+    show_dict: bool, print the output dictionaries of the given nodes
+
     returns a list of plot objects for further modification or handling
     this might be used for a quick dashboard build.
     """
@@ -71,6 +73,7 @@ def plot_fleur(*args, **kwargs):
 
     save = False
     show_dict = False
+    show = True
     backend = 'matplotlib'
     for key, val in six.iteritems(kwargs):
         if key == 'save':
@@ -79,25 +82,27 @@ def plot_fleur(*args, **kwargs):
             show_dict = val
         if key == 'backend':
             backend = val
+        if key == 'show':
+            show = val
     #    # the rest we ignore for know
     #Just call set plot defaults
     # TODO, or rather parse it onto plot functions...?
     set_plot_defaults(**kwargs)
-    
+
     all_plots = []
     for arg in args:
         if isinstance(arg, list):
             # try plot together
-            p1 = plot_fleur_mn(arg, save=save, backend=backend)
+            p1 = plot_fleur_mn(arg, show=show, save=save, backend=backend)
         else:
             #print(arg)
             # plot alone
-            p1 = plot_fleur_sn(arg, show_dict=show_dict, save=save, backend=backend)
+            p1 = plot_fleur_sn(arg, show_dict=show_dict, show=show, save=save, backend=backend)
         all_plots.append(p1)
-    
+
     return all_plots
 
-def plot_fleur_sn(node, show_dict=False, save=False, backend='bokeh'):
+def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh'):
     """
     This methods takes any single AiiDA node and starts the standard visualisation for
     if it finds one
@@ -137,7 +142,7 @@ def plot_fleur_sn(node, show_dict=False, save=False, backend='bokeh'):
                 if show_dict:
                     pprint(p_dict)
                 return
-            p1 = plotf(node, backend=backend)
+            p1 = plotf(node, backend=backend, save=save, show=show)
         else:
             print('I do not know how to visualize this node: {}, type {}'.format(node, type(node)))
     else:
@@ -150,7 +155,7 @@ def plot_fleur_sn(node, show_dict=False, save=False, backend='bokeh'):
     #else say I do not know
     return p1
 
-def plot_fleur_mn(nodelist, save=False, backend='bokeh'):
+def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
     """
     This methods takes any amount of AiiDA node as a list and starts
     the standard visualisation for it, if it finds one.
@@ -212,7 +217,7 @@ def plot_fleur_mn(nodelist, save=False, backend='bokeh'):
             print(('Sorry, I do not know how to visualize'
                    ' these nodes (multiplot): {} {}'.format(node_key, nodelist)))
             continue
-        plot_res = plotf(nodelist, labels=node_labels, backend=backend)
+        plot_res = plotf(nodelist, labels=node_labels, save=save, show=show, backend=backend)
         all_plot_res.append(plot_res)
     return all_plot_res
 
@@ -220,7 +225,7 @@ def plot_fleur_mn(nodelist, save=False, backend='bokeh'):
 ## general plot routine  ##
 ###########################
 
-def plot_fleur_scf_wc(nodes, labels=None, backend='bokeh'):
+def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'):
     """
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
@@ -273,22 +278,24 @@ def plot_fleur_scf_wc(nodes, labels=None, backend='bokeh'):
         if len(distance_all) == 2*len(total_energy):                   # not sure if this is best solution
             # magnetic calculation, we plot only spin 1 for now.
             distance_all = [distance_all[j] for j in range(0,len(distance_all),2)]
-       
+
         iterations.append(iteration)
         distance_all_n.append(distance_all)
         total_energy_n.append(total_energy)
         modes.append(mode)
-        
+
     #plot_convergence_results(distance_all, total_energy, iteration)
     if labels:
-        p = plot_convergence_results_m(distance_all_n, total_energy_n, iterations,
-                                   plot_labels=labels, nodes=nodes_pk, modes=modes)
+        plt = plot_convergence_results_m(distance_all_n, total_energy_n, iterations,
+                                   plot_labels=labels, nodes=nodes_pk, modes=modes, show=show)
     else:
-        p = plot_convergence_results_m(distance_all_n, total_energy_n, iterations, nodes=nodes_pk, modes=modes)
-    
-    return p
+        plt = plot_convergence_results_m(distance_all_n, total_energy_n,
+                                       iterations, nodes=nodes_pk, modes=modes, show=show)
 
-def plot_fleur_dos_wc(node, labels=None):
+    return plt
+
+
+def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
@@ -312,7 +319,8 @@ def plot_fleur_dos_wc(node, labels=None):
     else:
         print('Could not retrieve dos file path from output node')
 
-def plot_fleur_eos_wc(node, labels=None):
+
+def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
@@ -359,7 +367,8 @@ def plot_fleur_eos_wc(node, labels=None):
     plot_lattice_constant(Total_energy, scaling)#, fit_y)
     return
 
-def plot_fleur_band_wc(node, labels=None):
+
+def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes an AiiDA output parameter node from a band structure
     workchain and plots a simple band structure
@@ -386,7 +395,8 @@ def plot_fleur_band_wc(node, labels=None):
     else:
         print('Could not retrieve dos file path from output node')
 
-def plot_fleur_relax_wc(node, labels=None):
+
+def plot_fleur_relax_wc(node, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes an AiiDA output parameter node from a relaxation
     workchain and plots some information about atom movements and forces
@@ -398,7 +408,8 @@ def plot_fleur_relax_wc(node, labels=None):
 
     #plot_relaxation_results
 
-def plot_fleur_corehole_wc(nodes, labels=None):
+
+def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a corehole
     workchain and plots some information about Binding energies
@@ -409,7 +420,8 @@ def plot_fleur_corehole_wc(nodes, labels=None):
 
     pass
 
-def plot_fleur_initial_cls_wc(nodes, labels=None):
+
+def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a initial_cls
     workchain and plots some information about corelevel shifts.
