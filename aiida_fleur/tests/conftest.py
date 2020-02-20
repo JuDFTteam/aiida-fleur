@@ -332,3 +332,219 @@ def clear_database_aiida_fleur(aiida_profile):  # pylint: disable=redefined-oute
     """Clear the database before each test.
     """
     aiida_profile.reset_db()
+
+# These outputnode fixtures are hardcoded, it would be nice
+# if they produced by workflow test on the fly to ensure that the functions which use them can
+# deal with the current version of the output nodes. and if there would be only one fixture
+# ggf also backcompability checks of output node versions would be nice
+
+
+@pytest.fixture
+def generate_output_node_from_file(jsonfilepath):
+    """returns a dict read from a json file to construcut and Outputnode of a Calculation or Workchain"""
+    pass
+
+
+@pytest.fixture
+def generate_fleur_outpara_node():
+    """returns a dict of a Outputnode of a FleurCalcJob"""
+
+    para_dict = {
+        "CalcJob_uuid": "a6511a00-7759-484a-839d-c100dafd6118",
+        "bandgap": 0.0029975592,
+        "bandgap_units": "eV",
+        "charge_den_xc_den_integral": -3105.2785777045,
+        "charge_density1": 3.55653e-05,
+        "charge_density2": 6.70788e-05,
+        "creator_name": "fleur 27",
+        "creator_target_architecture": "GEN",
+        "creator_target_structure": " ",
+        "density_convergence_units": "me/bohr^3",
+        "end_date": {
+            "date": "2019/07/17",
+            "time": "12:50:27"
+        },
+        "energy": -4405621.1469633,
+        "energy_core_electrons": -99592.985569309,
+        "energy_hartree": -161903.59225823,
+        "energy_hartree_units": "Htr",
+        "energy_units": "eV",
+        "energy_valence_electrons": -158.7015525598,
+        "fermi_energy": -0.2017877885,
+        "fermi_energy_units": "Htr",
+        "force_largest": 0.0,
+        "magnetic_moment_units": "muBohr",
+        "magnetic_moments": [
+            2.7677822875,
+            2.47601e-05,
+            2.22588e-05,
+            6.05518e-05,
+            0.0001608849,
+            0.0001504687,
+            0.0001321699,
+            -3.35528e-05,
+            1.87169e-05,
+            -0.0002957294
+        ],
+        "magnetic_spin_down_charges": [
+            5.8532354421,
+            6.7738647125,
+            6.8081938915,
+            6.8073232631,
+            6.8162583243,
+            6.8156475799,
+            6.8188399492,
+            6.813423175,
+            6.7733972589,
+            6.6797683064
+        ],
+        "magnetic_spin_up_charges": [
+            8.6210177296,
+            6.7738894726,
+            6.8082161503,
+            6.8073838149,
+            6.8164192092,
+            6.8157980486,
+            6.8189721191,
+            6.8133896222,
+            6.7734159758,
+            6.679472577
+        ],
+        "number_of_atom_types": 10,
+        "number_of_atoms": 10,
+        "number_of_iterations": 49,
+        "number_of_iterations_total": 49,
+        "number_of_kpoints": 240,
+        "number_of_species": 1,
+        "number_of_spin_components": 2,
+        "number_of_symmetries": 2,
+        "orbital_magnetic_moment_units": "muBohr",
+        "orbital_magnetic_moments": [],
+        "orbital_magnetic_spin_down_charges": [],
+        "orbital_magnetic_spin_up_charges": [],
+        "output_file_version": "0.27",
+        "overall_charge_density": 7.25099e-05,
+        "parser_info": "AiiDA Fleur Parser v0.2beta",
+        "parser_warnings": [],
+        "spin_density": 7.91911e-05,
+        "start_date": {
+            "date": "2019/07/17",
+            "time": "10:38:24"
+        },
+        "sum_of_eigenvalues": -99751.687121869,
+        "title": "A Fleur input generator calculation with aiida",
+        "unparsed": [],
+        "walltime": 7923,
+        "walltime_units": "seconds",
+        "warnings": {
+            "debug": {},
+            "error": {},
+            "info": {},
+            "warning": {}
+        }
+    }
+
+    return para_dict
+
+
+@pytest.fixture
+def generate_fleur_scf_outpara_node():
+    """returns a dict of a Outputnode of a FleurScfWorkchain"""
+    para_dict = {
+        "conv_mode": "density",
+        "distance_charge": 0.1406279038,
+        "distance_charge_all": [
+            61.1110641131,
+            43.7556515683,  # deleted some
+            43.7556515683,
+        ],
+        "distance_charge_units": "me/bohr^3",
+        "errors": [],
+        "force_diff_last": "can not be determined",
+        "force_largest": 0.0,
+        "info": [],
+        "iterations_total": 23,
+        "last_calc_uuid": "b20b5b94-5d80-41a8-82bf-b4d8eee9bddc",
+        "loop_count": 1,
+        "material": "FePt2",
+        "total_energy": -38166.176928494,
+        "total_energy_all": [
+            -38166.542950054,
+            -38166.345602746,  # deleted some
+            -38166.345602746,
+        ],
+        "total_energy_units": "Htr",
+        "total_wall_time": 245,
+        "total_wall_time_units": "s",
+        "warnings": [],
+        "workflow_name": "FleurScfWorkChain",
+        "workflow_version": "0.4.0"
+    }
+
+    return para_dict
+
+
+@pytest.fixture
+def generate_fleur_eos_outpara_node():
+    """returns a dict of a Outputnode of a FleurEOSWorkchain"""
+
+    para_dict = {
+        "bulk_deriv": -612.513884563477,
+        "bulk_modulus": 29201.4098068761,
+        "bulk_modulus_units": "GPa",
+        "calculations": [],
+        "distance_charge": [
+            4.4141e-06,
+            4.8132e-06,
+            1.02898e-05,
+            1.85615e-05
+        ],
+        "distance_charge_units": "me/bohr^3",
+        "errors": [],
+        "guess": 1.0,
+        "info": [
+            "Consider refining your basis set."
+        ],
+        "initial_structure": "d6985712-7eca-4730-991f-1d924cbd1062",
+        "natoms": 1,
+        "nsteps": 4,
+        "residuals": [],
+        "scaling": [
+            0.998,
+            1.0,
+            1.002,
+            1.004
+        ],
+        "scaling_gs": 1.00286268683922,
+        "scf_wfs": [],
+        "stepsize": 0.002,
+        "structures": [
+            "f7fddbb5-51af-4dac-a4ba-021d1bf5795b",
+            "28e9ed28-837c-447e-aae7-371b70454dc4",
+            "fc340850-1a54-4be4-abed-576621b3015f",
+            "77fd128b-e88c-4d7d-9aea-d909166926cb"
+        ],
+        "successful": True,
+        "total_energy": [
+            -439902.565469453,
+            -439902.560450163,
+            -439902.564547518,
+            -439902.563105211
+        ],
+        "total_energy_units": "Htr",
+        "volume_gs": 16.2724654374658,
+        "volume_units": "A^3",
+        "volumes": [
+            16.1935634057491,
+            16.2260154366224,
+            16.2584674674955,
+            16.290919498369
+        ],
+        "warnings": [
+            "Abnormality in Total energy list detected. Check entr(ies) [1]."
+        ],
+        "workflow_name": "fleur_eos_wc",
+        "workflow_version": "0.3.3"
+    }
+
+    return para_dict
