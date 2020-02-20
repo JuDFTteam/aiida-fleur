@@ -99,6 +99,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
         wf_param, options, calculation parameters, codes, structure
         """
         inputs = AttributeDict(self.exposed_inputs(FleurEosWorkChain, namespace='eos'))
+        inputs.metadata.label = 'EOS_substrate'
+        inputs.metadata.description = 'The EOS workchain finding equilibrium substrate'
         inputs.structure = self.create_substrate_bulk()
 
         if not isinstance(inputs.structure, StructureData):
@@ -243,6 +245,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
         Initialise inputs for Relax workchain
         """
         inputs = AttributeDict(self.exposed_inputs(FleurBaseRelaxWorkChain, namespace='relax'))
+        inputs.metadata.label = 'Relax_symmetric_film'
+        inputs.metadata.description = 'The Relax workchain relaxing film structure'
 
         if self.ctx.eos_needed or 'eos_output' in self.inputs:
             inputs.scf.structure = self.create_film_to_relax()

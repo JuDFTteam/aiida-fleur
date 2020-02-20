@@ -142,6 +142,8 @@ class FleurRelaxWorkChain(WorkChain):
         Initialize inputs for the first iteration.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        input_scf.metadata.label = 'SCF_forces'
+        input_scf.metadata.description = 'The SCF workchain converging forces, part of the Relax'
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}

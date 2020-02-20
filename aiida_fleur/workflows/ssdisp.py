@@ -207,6 +207,9 @@ class FleurSSDispWorkChain(WorkChain):
         Initialize inputs for the scf cycle
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        input_scf.metadata.label = 'reference_scf_SSDisp'
+        input_scf.metadata.description = ('The SCF workchain converging reference charge'
+                                          ' density for Spin Spiral Dispersion')
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
@@ -436,8 +439,8 @@ class FleurSSDispWorkChain(WorkChain):
         # Retrieve remote folder from the inputs
         remote = self.inputs.remote
 
-        label = 'Force_theorem_calculation'
-        description = 'This is a force theorem calculation for all SQA'
+        label = 'SSDisp_force_theorem'
+        description = 'This is the force theorem calculation for Spin Spiral Dispersion.'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()

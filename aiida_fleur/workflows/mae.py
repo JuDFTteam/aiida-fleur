@@ -384,8 +384,8 @@ class FleurMaeWorkChain(WorkChain):
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
 
-        label = 'Force_theorem_calculation'
-        description = 'This is a force theorem calculation for all SQA'
+        label = 'MAE_force_theorem'
+        description = 'This is the force theorem calculation for MAE.'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
