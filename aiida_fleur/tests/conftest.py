@@ -136,25 +136,6 @@ def generate_calc_job_node():
     return _generate_calc_job_node
 
 
-@pytest.fixture(scope='session')
-def generate_upf_data():
-    """Return a `UpfData` instance for the given element a file for which should exist in `tests/fixtures/pseudos`."""
-
-    def _generate_upf_data(element):
-        """Return `UpfData` node."""
-        from aiida.orm import UpfData
-
-        filename = os.path.join('tests', 'fixtures', 'pseudos', '{}.upf'.format(element))
-        filepath = os.path.abspath(filename)
-
-        with io.open(filepath, 'r') as handle:
-            upf = UpfData(file=handle.name)
-
-        return upf
-
-    return _generate_upf_data
-
-
 @pytest.fixture
 def generate_structure():
     """Return a `StructureData` representing bulk silicon."""
@@ -233,6 +214,8 @@ def generate_remote_data():
     return _generate_remote_data
 
 ############### Here AiiDA-Fleur fixtures begin ##################
+
+
 @pytest.fixture
 def create_fleurinp():
     """Returns fleurinp constuctor"""
