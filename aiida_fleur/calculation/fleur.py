@@ -14,7 +14,6 @@
 This file contains a CalcJob that represents FLEUR calculation.
 """
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import io
 import six
@@ -26,7 +25,6 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError
 from aiida.common.exceptions import UniquenessError
-
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 

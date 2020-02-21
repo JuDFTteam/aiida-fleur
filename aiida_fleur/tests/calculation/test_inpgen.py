@@ -6,8 +6,8 @@ from aiida.common import datastructures
 from aiida_fleur.calculation.fleur import FleurCalculation
 
 
-def test_fleurinpgen_default(aiida_profile, fixture_sandbox, generate_calc_job,
-                             fixture_code, generate_structure):  # file_regression
+def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job,
+                                      fixture_code, generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
 
@@ -25,7 +25,7 @@ def test_fleurinpgen_default(aiida_profile, fixture_sandbox, generate_calc_job,
     }
 
     calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
-
+    codes_info = calc_info.codes_info
     cmdline_params = ['-explicit']
     local_copy_list = []
     retrieve_list = ['inp.xml', 'out', 'shell.out', 'out.error', 'struct.xsf', 'aiida.in']
@@ -33,7 +33,6 @@ def test_fleurinpgen_default(aiida_profile, fixture_sandbox, generate_calc_job,
 
     # Check the attributes of the returned `CalcInfo`
     assert isinstance(calc_info, datastructures.CalcInfo)
-    codes_info = calc_info.codes_info
     assert sorted(codes_info[0].cmdline_params) == sorted(cmdline_params)
     assert sorted(calc_info.local_copy_list) == sorted(local_copy_list)
     assert sorted(calc_info.retrieve_list) == sorted(retrieve_list)
@@ -52,6 +51,52 @@ def test_fleurinpgen_default(aiida_profile, fixture_sandbox, generate_calc_job,
 
       2\n         14       0.0000000000       0.0000000000       0.0000000000
          14       0.2500000000       0.2500000000       0.2500000000\n"""
+    # Checks on the files written to the sandbox folder as raw input
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
+    assert input_written == aiida_in_text
+    #file_regression.check(input_written, encoding='utf-8', extension='.in')
+
+
+def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job,
+                                     fixture_code, generate_structure):  # file_regression
+    """Test a default `FleurinputgenCalculation`."""
+    entry_point_name = 'fleur.inpgen'
+
+    parameters = {'atom': {'element': "Si", 'rmt': 2.1, 'jri': 981, 'lmax': 12, 'lnonsph': 6},
+                  'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
+                  'kpt': {'div1': 17, 'div2': 17, 'div3': 17, 'tkb': 0.0005}}
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': generate_structure(),
+        'parameters': orm.Dict(dict=parameters),
+        'metadata': {
+            'options': {'resources': {'num_machines': 1},
+                        'max_wallclock_seconds': int(100),
+                        'withmpi': False}
+        }
+    }
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+
+    with fixture_sandbox.open('aiida.in') as handle:
+        input_written = handle.read()
+
+    aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
+      5.1306064508       5.1306064508       0.0000000000
+      5.1306064508       0.0000000000       5.1306064508
+      0.0000000000       5.1306064508       5.1306064508
+      1.0000000000
+      1.0000000000       1.0000000000       1.0000000000
+
+      2\n         14       0.0000000000       0.0000000000       0.0000000000
+         14       0.2500000000       0.2500000000       0.2500000000
+&atom
+  element="Si"   jri=981   lmax=12   lnonsph=6   rmt=2.1 /
+&comp
+  gmax=15.0   gmaxxc=12.5   kmax=5.0 /
+&kpt
+  div1=17   div2=17   div3=17   tkb=0.0005 /
+"""
     # Checks on the files written to the sandbox folder as raw input
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
     assert input_written == aiida_in_text
