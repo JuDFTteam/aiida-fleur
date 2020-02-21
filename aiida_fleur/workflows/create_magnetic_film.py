@@ -209,17 +209,15 @@ class FleurCreateMagneticWorkChain(WorkChain):
                     self.ctx.eos_needed = False
                     self.ctx.relax_needed = False
                     if inputs.relax:
-                        if inputs.relax:
-                            self.report('ERROR: relax wc input was given but relax is not needed.')
-                            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                        self.report('ERROR: relax wc input was given but relax is not needed.')
+                        return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
                 else:
                     self.ctx.eos_needed = False
                     self.ctx.relax_needed = True
                     self.report('INFO: relaxation will be continued; no EOS')
-                    if inputs.relax:
-                        if not inputs.relax:
-                            self.report('ERROR: relax wc input was not given but relax is needed.')
-                            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                    if not inputs.relax:
+                        self.report('ERROR: relax wc input was not given but relax is needed.')
+                        return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
     def relax_needed(self):
         """
