@@ -93,7 +93,7 @@ def plot_fleur(*args, **kwargs):
     for arg in args:
         if isinstance(arg, list):
             # try plot together
-            p1 = plot_fleur_mn(arg, show=show, save=save, backend=backend)
+            p1 = plot_fleur_mn(arg, save=save, show=show, backend=backend)
         else:
             #print(arg)
             # plot alone
@@ -142,7 +142,7 @@ def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh')
                 if show_dict:
                     pprint(p_dict)
                 return
-            p1 = plotf(node, backend=backend, save=save, show=show)
+            p1 = plotf(node, save=save, show=show, backend=backend)
         else:
             print('I do not know how to visualize this node: {}, type {}'.format(node, type(node)))
     else:
@@ -315,10 +315,11 @@ def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     path_to_dosfile = output_d.get('dosfile', None)
     print(path_to_dosfile)
     if path_to_dosfile:
-        plot_dos(path_to_dosfile, only_total=False)
+        p1 = plot_dos(path_to_dosfile, only_total=False, show=show)
     else:
         print('Could not retrieve dos file path from output node')
 
+    return p1
 
 def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
     """
@@ -347,7 +348,7 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
                 plotlables.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}'
                                    ''.format(volume_gs, scale_gs, i)))
                 plotlables.append(r'fit results {}'.format(i))
-            plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables)
+            plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables, show=show)
             return # TODO
         else:
             node = node[0]
@@ -364,8 +365,8 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
 
     #fit_y = []
     #fit_y = [parabola(scale2, fit[0], fit[1], fit[2]) for scale2 in scaling]
-    plot_lattice_constant(Total_energy, scaling)#, fit_y)
-    return
+    p1 = plot_lattice_constant(Total_energy, scaling, show=show)#, fit_y)
+    return p1
 
 
 def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):

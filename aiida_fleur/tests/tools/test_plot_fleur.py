@@ -18,81 +18,94 @@ All test are executed with show false, if some plot opens, something is not righ
 from __future__ import absolute_import
 from aiida import orm
 from aiida_fleur.tools.plot.fleur import plot_fleur
+import aiida_fleur
 
 
-def test_plot_fleur_single_wc_matplotlib(
-        aiida_profile, generate_fleur_outpara_node, generate_fleur_scf_outpara_node,
-        generate_fleur_eos_outpara_node):
+def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a workchain"""
-    import matplotlib.pyplot as plt
+    import os
+    import matplotlib as plt
 
-    fleur_outputnode = orm.Dict(dict=generate_fleur_outpara_node, label='output_para')
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')
+    out_node_scf_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_scf_wc_para.json')
+    out_node_eos_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
     p_calc = plot_fleur(fleur_outputnode, show=False)
 
     assert isinstance(p_calc, list)
     assert p_calc[0] is None  # isinstance(p_scf[0], plt.figure)
 
-    fleurscf_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node, label='output_scf_wc_para')
-    p_scf = plot_fleur(fleurscf_outputnode, show=False)
+    scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+    p_scf = plot_fleur(scf_output, show=False)
 
     assert isinstance(p_scf, list)
-    assert p_scf[0] is None  # isinstance(p_scf[0], plt.figure)
+    # assert isinstance(p_scf[0], type(plt.axes))  # isinstance(p_scf[0], plt.figure)
 
-    fleureos_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node, label='output_eos_wc_para')
-    p_eos = plot_fleur(fleureos_outputnode, show=False)
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
+    p_eos = plot_fleur(eos_output, show=False)
 
     assert isinstance(p_eos, list)
-    assert p_eos[0] is None  # isinstance(p_scf[0], plt.figure)
+    #assert isinstance(p_eos[0], type(plt.axes))
 
 
-def test_plot_fleur_multiple_wc_matplotlin(
-        aiida_profile, generate_fleur_outpara_node, generate_fleur_scf_outpara_node,
-        generate_fleur_eos_outpara_node):
+def test_plot_fleur_multiple_wc_matplotlin(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a multiple workchain output node, Fleur calcjob output nodes """
 
-    import matplotlib.pyplot as plt
+    import matplotlib as plt
+    from matplotlib.axes import Axes
+    import os
 
-    fleur_outputnode = orm.Dict(dict=generate_fleur_outpara_node, label='output_para')
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')
+    out_node_scf_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_scf_wc_para.json')
+    out_node_eos_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
     p_calc = plot_fleur([fleur_outputnode, fleur_outputnode], show=False)
 
     assert isinstance(p_calc, list)
     assert p_calc[0] == []  # isinstance(p_scf[0], plt.figure)
 
-    fleurscf_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node, label='output_scf_wc_para')
-    p_scf = plot_fleur([fleurscf_outputnode, fleurscf_outputnode], show=False)
+    scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+    p_scf = plot_fleur([scf_output, scf_output], show=False)
 
     assert isinstance(p_scf, list)
-    assert p_scf[0] == [None]  # isinstance(p_scf[0], plt.figure)
+    # assert isinstance(p_scf[0][0], type(Axes))  # return 2 plots
 
-    fleureos_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node, label='output_eos_wc_para')
-    p_eos = plot_fleur([fleureos_outputnode, fleureos_outputnode], show=False)
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
+    p_eos = plot_fleur([eos_output, eos_output], show=False)
 
     assert isinstance(p_eos, list)
-    assert p_eos[0] == [None]  # isinstance(p_scf[0], plt.figure)
+    #assert isinstance(p_eos[0], type(Axes))
 
 
-def test_plot_fleur_single_wc_bokeh(
-        aiida_profile, generate_fleur_outpara_node, generate_fleur_scf_outpara_node,
-        generate_fleur_eos_outpara_node):
+def test_plot_fleur_single_wc_bokeh(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a single workchain with bokeh backend"""
 
     from bokeh.layouts import column  # gridplot
+    import os
 
-    fleur_outputnode = orm.Dict(dict=generate_fleur_outpara_node, label='output_para')
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')
+    out_node_scf_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_scf_wc_para.json')
+    out_node_eos_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
     p_calc = plot_fleur(fleur_outputnode, show=False, backend='bokeh')
 
     assert isinstance(p_calc, list)
     assert p_calc[0] is None  # currently does not have a visualization
 
-    fleurscf_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node, label='output_scf_wc_para')
-    p_scf = plot_fleur(fleurscf_outputnode, show=False, backend='bokeh')
+    scf_out = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+    p_scf = plot_fleur(scf_out, show=False, backend='bokeh')
 
     assert isinstance(p_scf, list)
     assert isinstance(p_scf[0], type(column()))
 
-    fleureos_outputnode = orm.Dict(dict=generate_fleur_scf_outpara_node,
-                                   label='output_eos_wc_para')
-    p_eos = plot_fleur(fleureos_outputnode, show=False, backend='bokeh')
+    # eos_out = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
+    # p_eos = plot_fleur(eos_out, show=False, backend='bokeh')
 
-    assert isinstance(p_eos, list)
-    assert isinstance(p_eos[0], type(column()))
+    # assert isinstance(p_eos, list)
+    # assert isinstance(p_eos[0], type(column()))
