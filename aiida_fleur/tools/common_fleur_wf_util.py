@@ -170,7 +170,7 @@ def get_atomprocent(formula):
 
 # test
 
-
+'''
 def get_weight_procent(formula):
     """
     This converts a formula to a dictionary with element : weightprocent
@@ -182,7 +182,7 @@ def get_weight_procent(formula):
     """
 
     pass
-
+'''
 
 #def norm_total_energy_peratom(totalenergy, formula)
 #def norm_total_energy_perunitcell(totalenergy, )
@@ -230,7 +230,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
 
 def determine_convex_hull(formation_en_grid):
     """
-    Wraps the scipy.spatial ConvexHull algo for our purposes.
+    Wraps the pyhull packge implementing the qhull algo for our purposes.
     For now only for 2D phase diagrams
     Adds the points [1.0, 0.0] and [0.0, 1.0], because in material science these
     are always there.
@@ -239,7 +239,9 @@ def determine_convex_hull(formation_en_grid):
     :returns: a hul datatype
     """
     import numpy as np
-    from scipy.spatial import ConvexHull
+    #from scipy.spatial import ConvexHull # Buggy in python 3... some ugly segfault
+    from pyhull.convex_hull import ConvexHull
+
 
     # TODO multi d
     # check if endpoints are in
@@ -331,12 +333,11 @@ def determine_reactions(formula, available_data):
             continue
     return reactions
 
-# test reac = determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W'])
+# test
+# reac = determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W'])
 #print(reac ['1*Be12W->1*Be12W', '1*Be12W->1*Be2W+10*Be', '2*Be12W->1*Be2W+1*Be22W',
 #             '1*Be12W->12*Be+1*W', '11*Be12W->5*W+6*Be22W'])
-
-#reac = determine_reactions('Be12Ti', ['Be12Ti', 'Be17Ti2', 'BeTi', 'Ti', 'Be',
-#                                       'Be2Ti', 'Be8Ti4'])
+#reac = determine_reactions('Be12Ti', ['Be12Ti', 'Be17Ti2', 'BeTi', 'Ti', 'Be', 'Be2Ti', 'Be8Ti4'])
 #print(reac ['1*Be12Ti->1*Be12Ti', '2*Be12Ti->1*Be17Ti2+7*Be', '1*Be12Ti->1*BeTi+11*Be',
 #             '1*Be12Ti->1*Ti+12*Be', '1*Be12Ti->10*Be+1*Be2Ti', '4*Be12Ti->40*Be+1*Be8Ti4'])
 

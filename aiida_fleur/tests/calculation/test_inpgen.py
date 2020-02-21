@@ -60,9 +60,13 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
 def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job,
                                      fixture_code, generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
+
+    # Todo add (more) tests with full parameter possibilities, i.e econfig, los, ....
+
     entry_point_name = 'fleur.inpgen'
 
-    parameters = {'atom': {'element': "Si", 'rmt': 2.1, 'jri': 981, 'lmax': 12, 'lnonsph': 6},
+    parameters = {'atom': {'element': "Si", 'rmt': 2.1, 'jri': 981, 'lmax': 12,
+                           'lnonsph': 6},  # ,  'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
                   'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
                   'kpt': {'div1': 17, 'div2': 17, 'div3': 17, 'tkb': 0.0005}}
 
