@@ -43,31 +43,34 @@ class FleurBandWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.3"
+    _workflowversion = "0.3.4"
 
-    _default_options = {'resources': {"num_machines": 1},
-                        'max_wallclock_seconds': 60*60,
-                        'queue_name': '',
-                        'custom_scheduler_commands' : '',
-                        #'max_memory_kb' : None,
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
-    _default_wf_para = {'kpath' : 'auto',
-                        'nkpts' : 800,
-                        'sigma' : 0.005,
-                        'emin' : -0.50,
-                        'emax' :  0.90}
+    _default_options = {
+        'resources': {"num_machines": 1,
+        "num_mpiprocs_per_machine": 1},
+        'max_wallclock_seconds': 60*60,
+        'queue_name': '',
+        'custom_scheduler_commands' : '',
+        #'max_memory_kb' : None,
+        'import_sys_environment' : False,
+        'environment_variables' : {}}
+    _wf_default = {
+        'fleur_runmax': 4,
+        'kpath' : 'auto',
+        # 'nkpts' : 800,
+        'sigma' : 0.005,
+        'emin' : -0.50,
+        'emax' :  0.90}
 
     @classmethod
     def define(cls, spec):
-        super(fleur_band_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
-        spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
+        super(FleurBandWorkChain, cls).define(spec)
+        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input("options", valid_type=Dict, required=False)
         spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
+        
         spec.outline(
             cls.start,
             cls.create_new_fleurinp,
@@ -75,6 +78,7 @@ class FleurBandWorkChain(WorkChain):
             cls.return_results
         )
 
+        spec.output('output_band_wc_para', valid_type=Dict)
 
     def start(self):
         '''
