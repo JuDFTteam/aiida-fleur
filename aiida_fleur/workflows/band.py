@@ -154,20 +154,22 @@ class FleurBandWorkChain(WorkChain):
         """
         run a FLEUR calculation
         """
+        self.report('INFO: run FLEUR')
+
         fleurin = self.ctx.fleurinp1
         remote = self.inputs.remote_data
         code = self.inputs.fleur
         options = self.ctx.options
 
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = self.submit(FleurCalculation, **inputs)
+        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
+        future = self.submit(FleurScfWorkChain, **inputs_builder)
+        self.ctx.calcs.append(future)
 
-        return ToContext(last_calc=future) #calcs.append(future),
+        return ToContext(last_calc=future)
 
 
-
-    def return_results(self):
+    def return_results(self):   
         '''
         return the results of the calculations
         '''
@@ -176,51 +178,85 @@ class FleurBandWorkChain(WorkChain):
         self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
               'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
 
+
+        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+        if self.ctx.last_calc:
+            try:
+                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            except NotExistent:
+                last_calc_uuid = None
+        else:
+            last_calc_uuid = None
+
+        try:  # if something failed, we still might be able to retrieve something
+            last_calc_out = self.ctx.last_calc.outputs.output_parameters
+            retrieved = self.ctx.last_calc.outputs.retrieved
+            last_calc_out_dict = last_calc_out.get_dict()
+        except (NotExistent, AttributeError):
+            last_calc_out = None
+            last_calc_out_dict = {}
+            retrieved = None
+
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
+        # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
 
-        bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
-        # TODO this should be easier...
-        last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
-        bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print(bandfilepath)
-        #bandfilepath = "path to bandfile" # Array?
-        if os.path.isfile(bandfilepath):
-            self.ctx.successful = True
-        else:
-            bandfilepath = None
-            self.report('!NO bandstructure file was found, something went wrong!')
-        #TODO corret efermi:
-        # get efermi from last calculation
-        efermi1 = self.inputs.remote_data.get_inputs()[-1].res.fermi_energy
-        #get efermi from this caclulation
-        efermi2 = self.ctx.last_calc.res.fermi_energy
-        diff_efermi = efermi1 - efermi2
-        # store difference in output node
-        # adjust difference in band.gnu
-        #filename = 'gnutest2'
+        # last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
+        # bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
+        # print(bandfilepath)
+        # #bandfilepath = "path to bandfile" # Array?
+        # if os.path.isfile(bandfilepath):
+        #     self.ctx.successful = True
+        # else:
+        #     bandfilepath = None
+        #     self.report('!NO bandstructure file was found, something went wrong!')
+
+        # #TODO corret efermi:
+        # # get efermi from last calculation
+        efermi_scf = self.inputs.remote_data.get_incoming().all()[-1].node.res.fermi_energy
+        # #get efermi from this caclulation
+        efermi_band = last_calc_out_dict['fermi_energy']
+        diff_efermi = efermi_scf - efermi_band
 
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
+        outputnode_dict['last_calc_uuid'] = last_calc_uuid
+        outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
+        outputnode_dict['fermi_energy'] = efermi_band
         outputnode_dict['diff_efermi'] = diff_efermi
-        #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
-        #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
-        outputnode_dict['bandfile'] = bandfilepath
-        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
-        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
-        #print outputnode_dict
-        outputnode = Dict(dict=outputnode_dict)
-        outdict = {}
+        # outputnode_dict['bandfile'] = bandfilepath
+
+        outputnode_t = Dict(dict=outputnode_dict)
+        if last_calc_out:
+            outdict = create_band_result_node(
+                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)
+        else:
+            outdict = create_band_result_node(outpara=outputnode_t)
+
         #TODO parse Bandstructure
-        #bandstructurenode = ''
-        #outdict['output_band'] = bandstructurenode
-        #or if spin =2
-        #outdict['output_band1'] = bandstructurenode1
-        #outdict['output_band2'] = bandstructurenode1
-        outdict['output_band_wc_para'] = outputnode
-        #print outdict
-        for key, val in six.iteritems(outdict):
-            self.out(key, val)
+        for link_name, node in six.iteritems(outdict):
+            self.out(link_name, node)
+
+@cf
+def create_band_result_node(**kwargs):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    for key, val in six.iteritems(kwargs):
+        if key == 'outpara':  # should be always there
+            outpara = val
+    outdict = {}
+    outputnode = outpara.clone()
+    outputnode.label = 'output_band_wc_para'
+    outputnode.description = ('Contains band calculation results')
+
+    outdict['output_band_wc_para'] = outputnode
+
+    return outdict
