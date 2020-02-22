@@ -22,8 +22,10 @@ import os.path
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, ToContext
+from aiida.engine import calcfunction as cf
+from aiida.common.exceptions import NotExistent
 
-from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 import six
@@ -31,7 +33,7 @@ import six
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
-class fleur_band_wc(WorkChain):
+class FleurBandWorkChain(WorkChain):
     '''
     This workflow calculated a bandstructure from a Fleur calculation
 
