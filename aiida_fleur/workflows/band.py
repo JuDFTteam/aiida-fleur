@@ -95,47 +95,55 @@ class FleurBandWorkChain(WorkChain):
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
+        self.ctx.calcs = []
 
-        inputs = self.inputs
+        wf_default = self._wf_default
+        if 'wf_parameters' in self.inputs:
+            wf_dict = self.inputs.wf_parameters.get_dict()
+        else:
+            wf_dict = wf_default
 
-        wf_dict = inputs.wf_parameters.get_dict()
-
+        for key, val in six.iteritems(wf_default):
+            wf_dict[key] = wf_dict.get(key, val)
+        self.ctx.wf_dict = wf_dict
         # if MPI in code name, execute parallel
-        self.ctx.serial = wf_dict.get('serial', False)
+        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
+
+        defaultoptions = self._default_options
+        if 'options' in self.inputs:
+            options = self.inputs.options.get_dict()
+        else:
+            options = defaultoptions
+
+        # extend options given by user using defaults
+        for key, val in six.iteritems(defaultoptions):
+            options[key] = options.get(key, val)
+        self.ctx.options = options
 
         # set values, or defaults
-        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        #self.ctx.queue = wf_dict.get('queue_name', None)
-
-        if 'options' in inputs:
-            self.ctx.options = inputs.options.get_dict()
+        self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
 
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
         """
         # TODO allow change of kpoint mesh?, tria?
-        wf_dict = self.inputs.wf_parameters.get_dict()
-        nkpts = wf_dict.get('nkpts', 500)
+        wf_dict = self.ctx.wf_dict
+        # nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
 
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
-
-        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
-        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
-        #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
+    
         change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
                        'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
 
         fleurmode.set_inpchanges(change_dict)
 
-        if nkpts:
-            fleurmode.set_nkpts(count=nkpts)
+        # if nkpts:
+            # fleurmode.set_nkpts(count=nkpts)
             #fleurinp_new.replace_tag()
 
         fleurmode.show(validate=True, display=False) # needed?
