@@ -91,7 +91,7 @@ class FleurBandWorkChain(WorkChain):
         #print("Workchain node identifiers: ")#'{}'
               #"".format(ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp1 = ""
+        self.ctx.fleurinp_band = ""
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
@@ -148,7 +148,7 @@ class FleurBandWorkChain(WorkChain):
 
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
-        self.ctx.fleurinp1 = fleurinp_new
+        self.ctx.fleurinp_band = fleurinp_new
 
     def run_fleur(self):
         """
@@ -156,13 +156,15 @@ class FleurBandWorkChain(WorkChain):
         """
         self.report('INFO: run FLEUR')
 
-        fleurin = self.ctx.fleurinp1
+        fleurin = self.ctx.fleurinp_band
         remote = self.inputs.remote_data
         code = self.inputs.fleur
         options = self.ctx.options
 
+        label = ' '
+        description = ' '
 
-        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
+        inputs_builder = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         future = self.submit(FleurScfWorkChain, **inputs_builder)
         self.ctx.calcs.append(future)
 
