@@ -56,9 +56,9 @@ class TestFleurWorkchainInterfaces:
         """
         Test the interface of the band workchain
         """
-        from aiida_fleur.workflows.scf import FleurScfWorkChain
+        from aiida_fleur.workflows.band import FleurBandWorkChain
 
-        builder = FleurScfWorkChain.get_builder()
+        builder = FleurBandWorkChain.get_builder()
 
     # def test_fleur_band2_wc_init(self):
     #    """
