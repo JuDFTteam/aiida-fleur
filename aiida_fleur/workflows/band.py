@@ -227,19 +227,30 @@ class FleurBandWorkChain(WorkChain):
 
         # #TODO corret efermi:
         # # get efermi from last calculation
-        # efermi_scf = self.inputs.remote_data.get_incoming().all()[-1].node.res.fermi_energy
-        # #get efermi from this caclulation
-        # efermi_band = last_calc_out_dict['fermi_energy']
-        # diff_efermi = efermi_scf - efermi_band
+        scf_results  = self.inputs.scf.remote_data.get_incoming().all()[-1].node.res
+        efermi_scf   = scf_results.fermi_energy
+        bandgap_scf  = scf_results.bandgap
+        # efermi_band  = last_calc_out_dict['fermi_energy']
+        # bandgap_band = last_calc_out_dict['bandgap']
+ 
+        # diff_efermi  = efermi_scf - efermi_band
+        # diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
 
-        outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['Warnings'] = self.ctx.warnings
-        outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid
-        outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
-        # outputnode_dict['fermi_energy'] = efermi_band
+        outputnode_dict['workflow_name']      = self.__class__.__name__
+        outputnode_dict['Warnings']           = self.ctx.warnings
+        outputnode_dict['successful']         = self.ctx.successful
+        # outputnode_dict['last_calc_uuid']     = last_calc_uuid
+        # outputnode_dict['last_calc_pk']       = self.ctx.last_calc.pk
+        # outputnode_dict['remote_dir']         = self.ctx.last_calc.get_remote_workdir()
+        # outputnode_dict['fermi_energy_band']  = efermi_band
+        # outputnode_dict['bandgap_band']       = bandgap_band
+        outputnode_dict['fermi_energy_scf']   = efermi_scf
+        outputnode_dict['bandgap_scf']        = bandgap_scf
+        # outputnode_dict['diff_efermi']        = diff_efermi
+        # outputnode_dict['diff_bandgap']       = diff_bandgap
+
         # outputnode_dict['diff_efermi'] = diff_efermi
         # outputnode_dict['bandfile'] = bandfilepath
 
