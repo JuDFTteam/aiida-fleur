@@ -77,10 +77,10 @@ class TestFleurEntrypoints:
 
     def test_fleur_band_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.band import fleur_band_wc
+        from aiida_fleur.workflows.band import FleurBandWorkChain
 
         workflow = WorkflowFactory('fleur.band')
-        assert workflow == fleur_band_wc
+        assert workflow == FleurBandWorkChain
 
     def test_fleur_eos_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory

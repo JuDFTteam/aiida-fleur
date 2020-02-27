@@ -22,16 +22,20 @@ import os.path
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, ToContext
+from aiida.engine import calcfunction as cf
+from aiida.common.exceptions import NotExistent
+from aiida.common import AttributeDict
 
-from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, is_code
 import six
 
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
-class fleur_band_wc(WorkChain):
+class FleurBandWorkChain(WorkChain):
     '''
     This workflow calculated a bandstructure from a Fleur calculation
 
@@ -41,31 +45,30 @@ class fleur_band_wc(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.3"
+    _workflowversion = "0.3.4"
 
-    _default_options = {'resources': {"num_machines": 1},
-                        'max_wallclock_seconds': 60*60,
-                        'queue_name': '',
-                        'custom_scheduler_commands' : '',
-                        #'max_memory_kb' : None,
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
-    _default_wf_para = {'kpath' : 'auto',
-                        'nkpts' : 800,
-                        'sigma' : 0.005,
-                        'emin' : -0.50,
-                        'emax' :  0.90}
+    _default_options = {
+        'resources': {'num_machines': 1,
+        'num_mpiprocs_per_machine': 1},
+        'max_wallclock_seconds': 60*60,
+        'queue_name': '',
+        'custom_scheduler_commands' : '',
+        'import_sys_environment' : False,
+        'environment_variables' : {}}
+    _wf_default = {
+        'fleur_runmax': 4,
+        'kpath' : 'auto',
+        # 'nkpts' : 800,
+        'sigma' : 0.005,
+        'emin' : -0.50,
+        'emax' :  0.90}
 
     @classmethod
     def define(cls, spec):
-        super(fleur_band_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
-        spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
-        spec.input("remote_data", valid_type=RemoteData, required=True)#TODO ggf run convergence first
+        super(FleurBandWorkChain, cls).define(spec)
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("fleurinp", valid_type=FleurinpData, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
+        
         spec.outline(
             cls.start,
             cls.create_new_fleurinp,
@@ -73,6 +76,10 @@ class fleur_band_wc(WorkChain):
             cls.return_results
         )
 
+        spec.output('output_band_wc_para', valid_type=Dict)
+
+        spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
+                       message="Invalid code node specified, check inpgen and fleur code nodes.")
 
     def start(self):
         '''
@@ -85,75 +92,98 @@ class fleur_band_wc(WorkChain):
         #print("Workchain node identifiers: ")#'{}'
               #"".format(ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp1 = ""
+        self.ctx.fleurinp_band = ""
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
+        self.ctx.calcs = []
 
-        inputs = self.inputs
+        wf_default = self._wf_default
+        if 'wf_parameters' in self.inputs:
+            wf_dict = self.inputs.wf_parameters.get_dict()
+        else:
+            wf_dict = wf_default
 
-        wf_dict = inputs.wf_parameters.get_dict()
-
+        for key, val in six.iteritems(wf_default):
+            wf_dict[key] = wf_dict.get(key, val)
+        self.ctx.wf_dict = wf_dict
         # if MPI in code name, execute parallel
-        self.ctx.serial = wf_dict.get('serial', False)
+        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
+
+        defaultoptions = self._default_options
+        if 'options' in self.inputs:
+            options = self.inputs.options.get_dict()
+        else:
+            options = defaultoptions
+
+        # extend options given by user using defaults
+        for key, val in six.iteritems(defaultoptions):
+            options[key] = options.get(key, val)
+        self.ctx.options = options
 
         # set values, or defaults
-        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        #self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
-        #self.ctx.walltime_sec = wf_dict.get('walltime_sec', 10*30)
-        #self.ctx.queue = wf_dict.get('queue_name', None)
+        self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
 
-        if 'options' in inputs:
-            self.ctx.options = inputs.options.get_dict()
+        # Check if user gave valid fleur executable
+        inputs = self.inputs
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = ("The code you provided for FLEUR does not use the plugin fleur.fleur")
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
     def create_new_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
         """
         # TODO allow change of kpoint mesh?, tria?
-        wf_dict = self.inputs.wf_parameters.get_dict()
-        nkpts = wf_dict.get('nkpts', 500)
+        wf_dict = self.ctx.wf_dict
+        # nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
 
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
-
-        #change_dict = {'band': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
-        #'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
-        #'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
+    
         change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
-                       'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1, 'pot8' : True
+                       'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1,
 
         fleurmode.set_inpchanges(change_dict)
 
-        if nkpts:
-            fleurmode.set_nkpts(count=nkpts)
+        # if nkpts:
+            # fleurmode.set_nkpts(count=nkpts)
             #fleurinp_new.replace_tag()
 
         fleurmode.show(validate=True, display=False) # needed?
         fleurinp_new = fleurmode.freeze()
-        self.ctx.fleurinp1 = fleurinp_new
+        self.ctx.fleurinp_band = fleurinp_new
 
     def run_fleur(self):
         """
         run a FLEUR calculation
         """
-        fleurin = self.ctx.fleurinp1
-        remote = self.inputs.remote_data
-        code = self.inputs.fleur
-        options = self.ctx.options
+        self.report('INFO: run FLEUR')
+        inputs = self.get_inputs_scf()
+        future = self.submit(FleurScfWorkChain, **inputs)
+        self.ctx.calcs.append(future)
+
+        return ToContext(last_calc=future)
+
+    def get_inputs_scf(self):
+        """
+        Initialize inputs for scf workflow:
+        wf_param, options, calculation parameters, codes, structure
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        input_scf.fleurinp = self.ctx.fleurinp_band
+
+        return input_scf
 
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
-        future = self.submit(FleurCalculation, **inputs)
-
-        return ToContext(last_calc=future) #calcs.append(future),
-
-
-
-    def return_results(self):
+    def return_results(self):   
         '''
         return the results of the calculations
         '''
@@ -162,51 +192,105 @@ class fleur_band_wc(WorkChain):
         self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
               'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
 
+
+        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+        if self.ctx.last_calc:
+            try:
+                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            except NotExistent:
+                last_calc_uuid = None
+        else:
+            last_calc_uuid = None
+
+        try:  # if something failed, we still might be able to retrieve something
+            last_calc_out = self.ctx.last_calc.outputs.output_parameters
+            retrieved = self.ctx.last_calc.outputs.retrieved
+            last_calc_out_dict = last_calc_out.get_dict()
+        except (NotExistent, AttributeError):
+            last_calc_out = None
+            last_calc_out_dict = {}
+            retrieved = None
+
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
+        # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
 
-        bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
-        # TODO this should be easier...
-        last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
-        bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        print(bandfilepath)
-        #bandfilepath = "path to bandfile" # Array?
-        if os.path.isfile(bandfilepath):
-            self.ctx.successful = True
-        else:
-            bandfilepath = None
-            self.report('!NO bandstructure file was found, something went wrong!')
-        #TODO corret efermi:
-        # get efermi from last calculation
-        efermi1 = self.inputs.remote_data.get_inputs()[-1].res.fermi_energy
-        #get efermi from this caclulation
-        efermi2 = self.ctx.last_calc.res.fermi_energy
-        diff_efermi = efermi1 - efermi2
-        # store difference in output node
-        # adjust difference in band.gnu
-        #filename = 'gnutest2'
+        # last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
+        # bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
+        # print(bandfilepath)
+        # #bandfilepath = "path to bandfile" # Array?
+        # if os.path.isfile(bandfilepath):
+        #     self.ctx.successful = True
+        # else:
+        #     bandfilepath = None
+        #     self.report('!NO bandstructure file was found, something went wrong!')
+
+        # #TODO corret efermi:
+        # # get efermi from last calculation
+        scf_results  = self.inputs.scf.remote_data.get_incoming().all()[-1].node.res
+        efermi_scf   = scf_results.fermi_energy
+        bandgap_scf  = scf_results.bandgap
+        # efermi_band  = last_calc_out_dict['fermi_energy']
+        # bandgap_band = last_calc_out_dict['bandgap']
+ 
+        # diff_efermi  = efermi_scf - efermi_band
+        # diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
 
-        outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['Warnings'] = self.ctx.warnings
-        outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['diff_efermi'] = diff_efermi
-        #outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
-        #outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
-        outputnode_dict['bandfile'] = bandfilepath
-        outputnode_dict['last_calc_uuid'] = self.ctx.last_calc.uuid
-        outputnode_dict['last_calc_retrieved'] = last_calc_retrieved
-        #print outputnode_dict
-        outputnode = Dict(dict=outputnode_dict)
-        outdict = {}
+        outputnode_dict['workflow_name']      = self.__class__.__name__
+        outputnode_dict['Warnings']           = self.ctx.warnings
+        outputnode_dict['successful']         = self.ctx.successful
+        # outputnode_dict['last_calc_uuid']     = last_calc_uuid
+        # outputnode_dict['last_calc_pk']       = self.ctx.last_calc.pk
+        # outputnode_dict['remote_dir']         = self.ctx.last_calc.get_remote_workdir()
+        # outputnode_dict['fermi_energy_band']  = efermi_band
+        # outputnode_dict['bandgap_band']       = bandgap_band
+        outputnode_dict['fermi_energy_scf']   = efermi_scf
+        outputnode_dict['bandgap_scf']        = bandgap_scf
+        # outputnode_dict['diff_efermi']        = diff_efermi
+        # outputnode_dict['diff_bandgap']       = diff_bandgap
+
+        # outputnode_dict['diff_efermi'] = diff_efermi
+        # outputnode_dict['bandfile'] = bandfilepath
+
+        outputnode_t = Dict(dict=outputnode_dict)
+        if last_calc_out:
+            outdict = create_band_result_node(
+                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)
+        else:
+            outdict = create_band_result_node(outpara=outputnode_t)
+
         #TODO parse Bandstructure
-        #bandstructurenode = ''
-        #outdict['output_band'] = bandstructurenode
-        #or if spin =2
-        #outdict['output_band1'] = bandstructurenode1
-        #outdict['output_band2'] = bandstructurenode1
-        outdict['output_band_wc_para'] = outputnode
-        #print outdict
-        for key, val in six.iteritems(outdict):
-            self.out(key, val)
+        for link_name, node in six.iteritems(outdict):
+            self.out(link_name, node)
+
+    def control_end_wc(self, errormsg):
+        """
+        Controlled way to shutdown the workchain. will initialize the output nodes
+        The shutdown of the workchain will has to be done afterwards
+        """
+        self.report(errormsg)  # because return_results still fails somewhen
+        self.ctx.errors.append(errormsg)
+        self.return_results()
+
+@cf
+def create_band_result_node(**kwargs):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    for key, val in six.iteritems(kwargs):
+        if key == 'outpara':  # should be always there
+            outpara = val
+    outdict = {}
+    outputnode = outpara.clone()
+    outputnode.label = 'output_band_wc_para'
+    outputnode.description = ('Contains band calculation results')
+
+    outdict['output_band_wc_para'] = outputnode
+
+    return outdict

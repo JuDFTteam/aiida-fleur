@@ -9,7 +9,7 @@ Fleur dos/band workflows
 
 These are two seperate workflows which are pretty similar so we treat them here together
 
-* **Class**: :py:class:`~aiida_fleur.workflows.dos.fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.band.fleur_band_wc`
+* **Class**: :py:class:`~aiida_fleur.workflows.dos.fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.band.FleurBandWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.dos``, ``fleur.band``
 * **Workflow type**:  Workflow (lv 1)
 * **Aim**: Calculate a density of states. Calculate a Band structure.
@@ -28,7 +28,7 @@ Import Example:
     #or
     WorkflowFactory('fleur.dos')
 
-    from aiida_fleur.workflows.band import fleur_band_wc
+    from aiida_fleur.workflows.band import FleurBandWorkChain
     #or
     WorkflowFactory('fleur.band')
 
