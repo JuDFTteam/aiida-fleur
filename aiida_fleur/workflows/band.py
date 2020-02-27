@@ -19,14 +19,17 @@ electron bandstructure.
 from __future__ import absolute_import
 from __future__ import print_function
 import os.path
+import copy
+
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
-from aiida.engine import WorkChain, ToContext
+from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, is_code
@@ -66,13 +69,23 @@ class FleurBandWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurBandWorkChain, cls).define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("fleurinp", valid_type=FleurinpData, required=True)
+        # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input("fleur", valid_type=Code, required=True)
+        spec.input("remote", valid_type=RemoteData, required=False)
+        spec.input("fleurinp", valid_type=FleurinpData, required=False)
+        spec.input("options", valid_type=Dict, required=False)
         
         spec.outline(
             cls.start,
-            cls.create_new_fleurinp,
-            cls.run_fleur,
+            if_(cls.scf_needed)(
+                cls.converge_scf,
+                cls.create_new_fleurinp, 
+                cls.run_fleur,
+            ).else_(
+                cls.create_new_fleurinp, 
+                cls.run_fleur,
+            ),
             cls.return_results
         )
 
@@ -80,6 +93,8 @@ class FleurBandWorkChain(WorkChain):
 
         spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG',
+                       message="Invalid input configuration.")
 
     def start(self):
         '''
@@ -95,12 +110,16 @@ class FleurBandWorkChain(WorkChain):
         self.ctx.fleurinp_band = ""
         self.ctx.last_calc = None
         self.ctx.successful = False
+        self.ctx.info = []
         self.ctx.warnings = []
+        self.ctx.errors = []
         self.ctx.calcs = []
 
-        wf_default = self._wf_default
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
+        inputs = self.inputs
+
+        wf_default = copy.deepcopy(self._wf_default)
+        if 'wf_parameters' in inputs:
+            wf_dict = inputs.wf_parameters.get_dict()
         else:
             wf_dict = wf_default
 
@@ -111,8 +130,8 @@ class FleurBandWorkChain(WorkChain):
         self.ctx.serial = self.ctx.wf_dict.get('serial', False)
 
         defaultoptions = self._default_options
-        if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
+        if 'options' in inputs:
+            options = inputs.options.get_dict()
         else:
             options = defaultoptions
 
@@ -125,14 +144,26 @@ class FleurBandWorkChain(WorkChain):
         self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
 
         # Check if user gave valid fleur executable
-        inputs = self.inputs
-        if 'fleur' in inputs:
-            try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
-            except ValueError:
-                error = ("The code you provided for FLEUR does not use the plugin fleur.fleur")
+        # if 'fleur' in inputs.scf:
+        #     try:
+        #         test_and_get_codenode(inputs.scf.fleur, 'fleur.fleur', use_exceptions=True)
+        #     except ValueError:
+        #         error = ("The code you provided for FLEUR does not use the plugin fleur.fleur")
+        #         self.control_end_wc(error)
+        #         return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+
+        if 'scf' in inputs:
+            self.ctx.scf_needed = True
+            if 'remote' in inputs:
+                error = "ERROR: you gave SCF input + remote for the FT"
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'remote' not in inputs:
+            error = "ERROR: you gave neither SCF input nor remote for the FT"
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        else:
+            self.ctx.scf_needed = False
 
     def create_new_fleurinp(self):
         """
@@ -161,13 +192,33 @@ class FleurBandWorkChain(WorkChain):
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp_band = fleurinp_new
 
+    def scf_needed(self):
+        """
+        Returns True if SCF WC is needed.
+        """
+        return self.ctx.scf_needed
+
+    def converge_scf(self):
+        """
+        Converge charge density.
+        """
+        pass
+
     def run_fleur(self):
         """
         run a FLEUR calculation
         """
         self.report('INFO: run FLEUR')
-        inputs = self.get_inputs_scf()
-        future = self.submit(FleurScfWorkChain, **inputs)
+        # inputs = self.get_inputs_scf()
+        fleurin = self.ctx.fleurinp_band
+        remote = self.inputs.remote
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+        label = 'bansdtructure_calculation'
+        description = 'Bandstructure is calculated for the given structure'
+
+        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
+        future = self.submit(FleurBaseWorkChain, **inputs)
         self.ctx.calcs.append(future)
 
         return ToContext(last_calc=future)
@@ -227,7 +278,7 @@ class FleurBandWorkChain(WorkChain):
 
         # #TODO corret efermi:
         # # get efermi from last calculation
-        scf_results  = self.inputs.scf.remote_data.get_incoming().all()[-1].node.res
+        scf_results  = self.inputs.remote_data.get_incoming().all()[-1].node.res
         efermi_scf   = scf_results.fermi_energy
         bandgap_scf  = scf_results.bandgap
         # efermi_band  = last_calc_out_dict['fermi_energy']
