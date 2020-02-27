@@ -9,7 +9,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 
-'''
+
 def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job,
                                       fixture_code, generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
@@ -70,7 +70,7 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     entry_point_name = 'fleur.inpgen'
 
     parameters = {'atom': {'element': "Si", 'rmt': 2.1, 'jri': 981, 'lmax': 12,
-                           'lnonsph': 6},  # ,  'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
+                           'lnonsph': 6}, #'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
                   'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
                   'kpt': {'div1': 17, 'div2': 17, 'div3': 17, 'tkb': 0.0005}}
 
@@ -111,21 +111,19 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_FleurinpgenJobCalc_full():
+
+def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
 
     """
-    pass
-'''
-
-
-def test_basic(aiida_profile, mock_code_factory, generate_structure2):  # pylint: disable=redefined-outer-name
-    """
-    Basic check of the mock code functionality.
-    """
     CALC_ENTRY_POINT = 'fleur.inpgen'
+
+    parameters = {'atom': {'element': "W", 'rmt': 2.1, 'jri': 981, 'lmax': 12,
+                           'lnonsph': 6, 'econfig': '[Kr] 4d10 4f14 | 5s2 5p6 6s2 5d4', 'lo': '5s 5p'},
+                  'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
+                  'kpt': {'div1': 3, 'div2': 3, 'div3': 3, 'tkb': 0.0005}}
 
     mock_code = mock_code_factory(
         label='inpgen',
@@ -134,8 +132,8 @@ def test_basic(aiida_profile, mock_code_factory, generate_structure2):  # pylint
         ignore_files=['_aiidasubmit.sh']
     )
     inputs = {
-        'structure': generate_structure2(),
-        # 'parameters': orm.Dict(dict=parameters),
+        'structure': generate_structure_W(),
+        'parameters': orm.Dict(dict=parameters),
         'metadata': {
             'options': {'resources': {'num_machines': 1, 'tot_num_mpiprocs': 1},
                         'max_wallclock_seconds': int(100),
@@ -143,14 +141,11 @@ def test_basic(aiida_profile, mock_code_factory, generate_structure2):  # pylint
         }
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
-    print(calc)
 
-    # calc.prepare_for_submission(folder=os.path.join(
-    #    os.path.dirname(os.path.abspath(__file__)), 'test_data'))
     res, node = run_get_node(
         CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
-    print((res['remote_folder'].list_objects()))
-    print((res['retrieved'].list_objects()))
-    print((node.process_state))
+    #print((res['remote_folder'].list_objects()))
+    #print((res['retrieved'].list_objects()))
     assert node.is_finished_ok
+
