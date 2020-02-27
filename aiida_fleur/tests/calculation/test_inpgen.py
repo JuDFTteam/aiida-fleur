@@ -1,11 +1,15 @@
 """Tests for the `FleurinputgenCalculation` class."""
 
 from __future__ import absolute_import
+from __future__ import print_function
+import os
 from aiida import orm
 from aiida.common import datastructures
 from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida.engine import run_get_node
+from aiida.plugins import CalculationFactory, DataFactory
 
-
+'''
 def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job,
                                       fixture_code, generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
@@ -36,7 +40,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     assert sorted(codes_info[0].cmdline_params) == sorted(cmdline_params)
     assert sorted(calc_info.local_copy_list) == sorted(local_copy_list)
     assert sorted(calc_info.retrieve_list) == sorted(retrieve_list)
-    #assert sorted(calc_info.retrieve_temporary_list) == sorted(retrieve_temporary_list)
+    # assert sorted(calc_info.retrieve_temporary_list) == sorted(retrieve_temporary_list)
     assert sorted(calc_info.remote_symlink_list) == sorted([])
 
     with fixture_sandbox.open('aiida.in') as handle:
@@ -54,7 +58,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     # Checks on the files written to the sandbox folder as raw input
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
     assert input_written == aiida_in_text
-    #file_regression.check(input_written, encoding='utf-8', extension='.in')
+    # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
 def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job,
@@ -104,4 +108,49 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # Checks on the files written to the sandbox folder as raw input
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
     assert input_written == aiida_in_text
-    #file_regression.check(input_written, encoding='utf-8', extension='.in')
+    # file_regression.check(input_written, encoding='utf-8', extension='.in')
+
+
+def test_FleurinpgenJobCalc_full():
+    """
+    Tests the fleur inputgenerate with a mock executable if the datafiles are their,
+    otherwise runs inpgen itself if a executable was specified
+
+    """
+    pass
+'''
+
+
+def test_basic(aiida_profile, mock_code_factory, generate_structure2):  # pylint: disable=redefined-outer-name
+    """
+    Basic check of the mock code functionality.
+    """
+    CALC_ENTRY_POINT = 'fleur.inpgen'
+
+    mock_code = mock_code_factory(
+        label='inpgen',
+        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
+        entry_point=CALC_ENTRY_POINT,
+        ignore_files=['_aiidasubmit.sh']
+    )
+    inputs = {
+        'structure': generate_structure2(),
+        # 'parameters': orm.Dict(dict=parameters),
+        'metadata': {
+            'options': {'resources': {'num_machines': 1, 'tot_num_mpiprocs': 1},
+                        'max_wallclock_seconds': int(100),
+                        'withmpi': False}
+        }
+    }
+    calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
+    print(calc)
+
+    # calc.prepare_for_submission(folder=os.path.join(
+    #    os.path.dirname(os.path.abspath(__file__)), 'test_data'))
+    res, node = run_get_node(
+        CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+
+    print((res['remote_folder'].list_objects()))
+    print((res['retrieved'].list_objects()))
+    print((node.process_state))
+    assert node.is_finished_ok
