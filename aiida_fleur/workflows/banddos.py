@@ -49,7 +49,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.4"
+    _workflowversion = "0.3.5"
 
     _default_options = {
         'resources': {'num_machines': 1,
@@ -90,7 +90,7 @@ class FleurBandDosWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('output_band_wc_para', valid_type=Dict)
+        spec.output('output_banddos_wc_para', valid_type=Dict)
 
         spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
                        message="Invalid code node specified, check inpgen and fleur code nodes.")
@@ -104,7 +104,7 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        self.report('started bands workflow version {}'.format(self._workflowversion))
+        self.report('started bandsdos workflow version {}'.format(self._workflowversion))
         #print("Workchain node identifiers: ")#'{}'
               #"".format(ProcessRegistry().current_calc_node))
 
@@ -156,11 +156,15 @@ class FleurBandDosWorkChain(WorkChain):
         if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
-                error = "ERROR: you gave SCF input + remote for the FT"
+                error = "ERROR: you gave SCF input + remote"
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'structure' and 'fleurinp' in inputs:
+                error = "ERROR: you gave SCF input structure and fleurinp"
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
-            error = "ERROR: you gave neither SCF input nor remote for the FT"
+            error = "ERROR: you gave neither SCF input nor remote"
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
@@ -226,8 +230,9 @@ class FleurBandDosWorkChain(WorkChain):
         remote = self.inputs.remote
         code = self.inputs.fleur
         options = self.ctx.options.copy()
-        label = 'bansdtructure_calculation'
-        description = 'Bandstructure is calculated for the given structure'
+        
+        label = 'bansddos_calculation'
+        description = 'Bandstructure or DOS is calculated for the given structure'
 
         inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         future = self.submit(FleurBaseWorkChain, **inputs)
@@ -288,33 +293,36 @@ class FleurBandDosWorkChain(WorkChain):
         #     bandfilepath = None
         #     self.report('!NO bandstructure file was found, something went wrong!')
 
-        # #TODO corret efermi:
         # # get efermi from last calculation
-        scf_results  = self.inputs.remote.get_incoming().all()[-1].node.res
-        efermi_scf   = scf_results.fermi_energy
-        bandgap_scf  = scf_results.bandgap
-        # efermi_band  = last_calc_out_dict['fermi_energy']
-        # bandgap_band = last_calc_out_dict['bandgap']
+        if 'remote' in self.inputs:
+          scf_results  = self.inputs.remote.get_incoming().all()[-1].node.res #CalcJobNode
+          efermi_scf   = scf_results.fermi_energy
+          bandgap_scf  = scf_results.bandgap
+
+        # for i in self.ctx.last_calc.get_outgoing():
+          # if isinstance(i.node, CalcJobNode):
+            # results=load_node(i.node.pk).res
+
+        efermi_band  = last_calc_out_dict['fermi_energy']
+        bandgap_band = last_calc_out_dict['bandgap']
  
-        # diff_efermi  = efermi_scf - efermi_band
-        # diff_bandgap = bandgap_scf - bandgap_band
+        diff_efermi  = efermi_scf - efermi_band
+        diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
 
         outputnode_dict['workflow_name']      = self.__class__.__name__
         outputnode_dict['Warnings']           = self.ctx.warnings
         outputnode_dict['successful']         = self.ctx.successful
-        # outputnode_dict['last_calc_uuid']     = last_calc_uuid
-        # outputnode_dict['last_calc_pk']       = self.ctx.last_calc.pk
-        # outputnode_dict['remote_dir']         = self.ctx.last_calc.get_remote_workdir()
-        # outputnode_dict['fermi_energy_band']  = efermi_band
-        # outputnode_dict['bandgap_band']       = bandgap_band
+        outputnode_dict['last_calc_uuid']     = last_calc_uuid
+        outputnode_dict['last_calc_pk']       = self.ctx.last_calc.pk
+        outputnode_dict['remote_dir']         = self.ctx.last_calc.get_remote_workdir()
+        outputnode_dict['fermi_energy_band']  = efermi_band
+        outputnode_dict['bandgap_band']       = bandgap_band
         outputnode_dict['fermi_energy_scf']   = efermi_scf
         outputnode_dict['bandgap_scf']        = bandgap_scf
-        # outputnode_dict['diff_efermi']        = diff_efermi
-        # outputnode_dict['diff_bandgap']       = diff_bandgap
-
-        # outputnode_dict['diff_efermi'] = diff_efermi
+        outputnode_dict['diff_efermi']        = diff_efermi
+        outputnode_dict['diff_bandgap']       = diff_bandgap
         # outputnode_dict['bandfile'] = bandfilepath
 
         outputnode_t = Dict(dict=outputnode_dict)
@@ -351,9 +359,9 @@ def create_band_result_node(**kwargs):
             outpara = val
     outdict = {}
     outputnode = outpara.clone()
-    outputnode.label = 'output_band_wc_para'
+    outputnode.label = 'output_banddos_wc_para'
     outputnode.description = ('Contains band calculation results')
 
-    outdict['output_band_wc_para'] = outputnode
+    outdict['output_banddos_wc_para'] = outputnode
 
     return outdict
