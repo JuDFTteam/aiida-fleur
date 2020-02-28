@@ -73,7 +73,7 @@ class FleurBandDosWorkChain(WorkChain):
         # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("remote", valid_type=RemoteData, required=False)
+        spec.input("remote", valid_type=RemoteData, required=True)
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("options", valid_type=Dict, required=False)
         
@@ -109,6 +109,7 @@ class FleurBandDosWorkChain(WorkChain):
               #"".format(ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp_scf = None
+        self.ctx.scf_needed = False
         self.ctx.fleurinp_banddos = None
         self.ctx.last_calc = None
         self.ctx.successful = False
@@ -145,31 +146,27 @@ class FleurBandDosWorkChain(WorkChain):
         # set values, or defaults
         self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
 
-        # Check if user gave valid fleur executable
-        # if 'fleur' in inputs.scf:
-        #     try:
-        #         test_and_get_codenode(inputs.scf.fleur, 'fleur.fleur', use_exceptions=True)
-        #     except ValueError:
-        #         error = ("The code you provided for FLEUR does not use the plugin fleur.fleur")
+        # if 'scf' in self.inputs:
+        #     self.ctx.scf_needed = True
+        #     if 'remote' in self.inputs.scf:
+        #       error = "ERROR: you gave SCF input + remote"
+        #       self.control_end_wc(error)
+        #       return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        #     if 'structure' and 'fleurinp' in self.inputs.scf:
+        #       error = "ERROR: you gave SCF input structure and fleurinp"
+        #       self.control_end_wc(error)
+        #       return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        #     if 'structure' in self.inputs.scf:
+        #       if 'inpgen' not in self.inputs:
+        #         error = "ERROR: you gave SCF input structure and not inpgen"
         #         self.control_end_wc(error)
-        #         return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        if 'scf' in inputs:
-            self.ctx.scf_needed = True
-            if 'remote' in inputs:
-                error = "ERROR: you gave SCF input + remote"
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'structure' and 'fleurinp' in inputs:
-                error = "ERROR: you gave SCF input structure and fleurinp"
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs:
-            error = "ERROR: you gave neither SCF input nor remote"
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        else:
-            self.ctx.scf_needed = False
+        #         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        # elif 'remote' not in self.inputs:
+        #     error = "ERROR: you gave neither SCF input nor remote"
+        #     self.control_end_wc(error)
+        #     return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        # else:
+        #     self.ctx.scf_needed = False
 
     def create_new_fleurinp(self):
         """
@@ -185,10 +182,10 @@ class FleurBandDosWorkChain(WorkChain):
         else:
           self.ctx.fleurinp_scf = self.inputs.fleurinp
 
-        nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         fleurmode = FleurinpModifier(self.ctx.fleurinp_scf)
 
+        nkpts = wf_dict.get('nkpts', 500)
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
@@ -202,7 +199,6 @@ class FleurBandDosWorkChain(WorkChain):
 
         fleurmode.set_inpchanges(change_dict)
 
-        self.report(wf_dict.get('kpath'))
         if wf_dict.get('kpath') != 'auto':
           fleurmode.set_kpath(wf_dict.get('kpath'), nkpts)
 
@@ -287,15 +283,15 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
+        # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
 
-        bandfile =retrieved.open(bandfilename).name
+        # bandfile =retrieved.open(bandfilename).name
         
-        if os.path.isfile(bandfile):
-            self.ctx.successful = True
-        else:
-            bandfile = None
-            self.report('!NO bandstructure file was found, something went wrong!')
+        # if os.path.isfile(bandfile):
+        #     self.ctx.successful = True
+        # else:
+        #     bandfile = None
+        #     self.report('!NO bandstructure file was found, something went wrong!')
 
         # # get efermi from last calculation
         if 'remote' in self.inputs:
@@ -324,7 +320,7 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['diff_bandgap']       = diff_bandgap
         outputnode_dict['bandgap_units']      = 'eV'
         outputnode_dict['fermi_energy_units'] = 'Htr'
-        outputnode_dict['bandfile']           = bandfile
+        # outputnode_dict['bandfile']           = bandfile
 
         outputnode_t = Dict(dict=outputnode_dict)
         if last_calc_out:
