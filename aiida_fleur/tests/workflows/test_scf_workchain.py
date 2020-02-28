@@ -13,8 +13,10 @@
 # Here we test if the interfaces of the workflows are still the same
 from __future__ import absolute_import
 from __future__ import print_function
+
 import pytest
 import aiida_fleur
+import os
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
