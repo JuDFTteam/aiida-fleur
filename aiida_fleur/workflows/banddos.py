@@ -108,7 +108,8 @@ class FleurBandDosWorkChain(WorkChain):
         #print("Workchain node identifiers: ")#'{}'
               #"".format(ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp_banddos = ""
+        self.ctx.fleurinp_scf = None
+        self.ctx.fleurinp_banddos = None
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.info = []
@@ -180,12 +181,13 @@ class FleurBandDosWorkChain(WorkChain):
         if 'fleurinp' not in self.inputs:
           for i in self.inputs.remote.get_incoming():
             if isinstance(i.node, CalcJobNode):
-              fleurinp=load_node(i.node.pk).get_incoming().get_node_by_label('fleurinpdata')
+              self.ctx.fleurinp_scf=load_node(i.node.pk).get_incoming().get_node_by_label('fleurinpdata')
         else:
-          fleurinp = self.inputs.fleurinp
+          self.ctx.fleurinp_scf = self.inputs.fleurinp
+
         # nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
-        fleurmode = FleurinpModifier(fleurinp)
+        fleurmode = FleurinpModifier(self.ctx.fleurinp_scf)
 
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
@@ -258,7 +260,7 @@ class FleurBandDosWorkChain(WorkChain):
         # TODO more here
         self.report('Band workflow Done')
         self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-              'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
+              'calculation {}'.format(self.ctx.fleurinp_scf, self.ctx.last_calc.pk, self.ctx.last_calc))
 
 
         from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
@@ -299,10 +301,6 @@ class FleurBandDosWorkChain(WorkChain):
           efermi_scf   = scf_results.fermi_energy
           bandgap_scf  = scf_results.bandgap
 
-        # for i in self.ctx.last_calc.get_outgoing():
-          # if isinstance(i.node, CalcJobNode):
-            # results=load_node(i.node.pk).res
-
         efermi_band  = last_calc_out_dict['fermi_energy']
         bandgap_band = last_calc_out_dict['bandgap']
  
@@ -316,7 +314,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['successful']         = self.ctx.successful
         outputnode_dict['last_calc_uuid']     = last_calc_uuid
         outputnode_dict['last_calc_pk']       = self.ctx.last_calc.pk
-        outputnode_dict['remote_dir']         = self.ctx.last_calc.get_remote_workdir()
         outputnode_dict['fermi_energy_band']  = efermi_band
         outputnode_dict['bandgap_band']       = bandgap_band
         outputnode_dict['fermi_energy_scf']   = efermi_scf
