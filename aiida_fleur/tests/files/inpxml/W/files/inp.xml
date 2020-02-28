@@ -13,7 +13,7 @@
          <qss>.0000000000 .0000000000 .0000000000</qss>
       </nocoParams>
       <expertModes gw="0" pot8="F" eig66="F" lpr="0" isec1="99" secvar="F"/>
-      <geometryOptimization l_f="F" xa="2.00000000" thetad="330.00000000" epsdisp=".00001000" epsforce=".00001000"/>
+      <geometryOptimization l_f="F" epsdisp=".00001000" epsforce=".00001000"/>
       <bzIntegration valenceElectrons="14.00000000" mode="hist" fermiSmearingEnergy=".00100000">
          <kPointList posScale="24.00000000" weightScale="1728.00000000" count="68">
             <kPoint weight="    8.000000">   -9.000000    11.000000    11.000000</kPoint>
@@ -360,7 +360,7 @@
       <checks vchk="F" cdinf="F" disp="F"/>
       <densityOfStates ndir="0" minEnergy="-.50000000" maxEnergy=".50000000" sigma=".01500000"/>
       <vacuumDOS layers="0" integ="F" star="F" nstars="0" locx1=".00000000" locy1=".00000000" locx2=".00000000" locy2=".00000000" nstm="0" tworkf=".00000000"/>
-      <plotting iplot="F" score="F" plplot="F"/>
+      <plotting score="F" plplot="F"/>
       <chargeDensitySlicing numkpt="0" minEigenval=".00000000" maxEigenval=".00000000" nnne="0" pallst="F"/>
       <specialOutput form66="F" eonly="F" bmt="F"/>
    </output>

@@ -131,6 +131,7 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         entry_point=CALC_ENTRY_POINT,
         ignore_files=['_aiidasubmit.sh']
     )
+    print(mock_code)
     inputs = {
         'structure': generate_structure_W(),
         'parameters': orm.Dict(dict=parameters),
@@ -141,11 +142,11 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         }
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
-
+    print(calc)
     res, node = run_get_node(
         CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
-    #print((res['remote_folder'].list_objects()))
-    #print((res['retrieved'].list_objects()))
+    print((res['remote_folder'].list_objects()))
+    print((res['retrieved'].list_objects()))
     assert node.is_finished_ok
 
