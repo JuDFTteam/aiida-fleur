@@ -283,17 +283,15 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
+        bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
 
-        # last_calc_retrieved = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path('')
-        # bandfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(bandfilename)
-        # print(bandfilepath)
-        # #bandfilepath = "path to bandfile" # Array?
-        # if os.path.isfile(bandfilepath):
-        #     self.ctx.successful = True
-        # else:
-        #     bandfilepath = None
-        #     self.report('!NO bandstructure file was found, something went wrong!')
+        bandfile =retrieved.open(bandfilename).name
+        
+        if os.path.isfile(bandfile):
+            self.ctx.successful = True
+        else:
+            bandfile = None
+            self.report('!NO bandstructure file was found, something went wrong!')
 
         # # get efermi from last calculation
         if 'remote' in self.inputs:
@@ -320,7 +318,9 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['bandgap_scf']        = bandgap_scf
         outputnode_dict['diff_efermi']        = diff_efermi
         outputnode_dict['diff_bandgap']       = diff_bandgap
-        # outputnode_dict['bandfile'] = bandfilepath
+        outputnode_dict['bandgap_units']      = 'eV'
+        outputnode_dict['fermi_energy_units'] = 'Htr'
+        outputnode_dict['bandfile']           = bandfile
 
         outputnode_t = Dict(dict=outputnode_dict)
         if last_calc_out:
