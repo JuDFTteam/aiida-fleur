@@ -185,7 +185,7 @@ class FleurBandDosWorkChain(WorkChain):
         else:
           self.ctx.fleurinp_scf = self.inputs.fleurinp
 
-        # nkpts = wf_dict.get('nkpts', 500)
+        nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         fleurmode = FleurinpModifier(self.ctx.fleurinp_scf)
 
@@ -201,6 +201,10 @@ class FleurBandDosWorkChain(WorkChain):
                        'maxEnergy' : emax, 'sigma' : sigma} 
 
         fleurmode.set_inpchanges(change_dict)
+
+        self.report(wf_dict.get('kpath'))
+        if wf_dict.get('kpath') != 'auto':
+          fleurmode.set_kpath(wf_dict.get('kpath'), nkpts)
 
         # if nkpts:
             # fleurmode.set_nkpts(count=nkpts)
