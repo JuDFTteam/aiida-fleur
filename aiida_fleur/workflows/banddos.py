@@ -23,6 +23,7 @@ import copy
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
+from aiida.orm import load_node, CalcJobNode
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -171,15 +172,22 @@ class FleurBandDosWorkChain(WorkChain):
         """
         # TODO allow change of kpoint mesh?, tria?
         wf_dict = self.ctx.wf_dict
+
+        if 'fleurinp' not in self.inputs:
+          for i in self.inputs.remote.get_incoming():
+            if isinstance(i.node, CalcJobNode):
+              fleurinp=load_node(i.node.pk).get_incoming().get_node_by_label('fleurinpdata')
+        else:
+          fleurinp = self.inputs.fleurinp
         # nkpts = wf_dict.get('nkpts', 500)
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
-        fleurmode = FleurinpModifier(self.inputs.fleurinp)
+        fleurmode = FleurinpModifier(fleurinp)
 
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
 
-        if wf_dict.mode == 'dos':
+        if wf_dict.get('mode') == 'dos':
           change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin,
                        'maxEnergy': emax, 'sigma': sigma}
         else:
