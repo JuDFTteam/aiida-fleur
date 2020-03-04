@@ -109,7 +109,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         # TODO not every machine/scheduler type takes number of machines
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
-        options['resources'] = {"num_machines": 1}
+        options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
     else:
         options['withmpi'] = True
 
@@ -169,7 +169,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
         options = {}
     # inpgen run always serial
     options['withmpi'] = False
-    options['resources'] = {"num_machines": 1}
+    options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
 
     if options:
         inputs.metadata.options = options
