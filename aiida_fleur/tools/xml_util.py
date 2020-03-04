@@ -1343,6 +1343,32 @@ def set_nkpts(fleurinp_tree_copy, count, gamma):
 
     return new_tree
 
+def set_kpath(fleurinp_tree_copy, kpath, count, gamma):
+    """
+    Sets a k-path directly into inp.xml
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param kpath: a dictionary with kpoint name as key and k point coordinate as value
+    :param count: number of k-points
+    :param gamma: a fortran-type boolean that controls if the gamma-point should be included
+                    in the k-point mesh
+
+    :returns new_tree: a lxml tree with applied changes
+    """
+
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/altKPointSet/kPointCount'
+    #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
+
+    tree = fleurinp_tree_copy
+    new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
+    for key in kpath:
+        new_k = etree.Element('specialPoint', name="{}".format(key))
+        new_k.text = "{} {} {}".format(kpath[key][0], kpath[key][1], kpath[key][2])
+        new_kpo.append(new_k)
+
+    new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
+
+    return new_tree
 
 ####### XML GETTERS #########
 # TODO parser infos do not really work, might need to be returned, here
