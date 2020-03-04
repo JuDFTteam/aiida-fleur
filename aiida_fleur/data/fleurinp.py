@@ -406,6 +406,7 @@ class FleurinpData(Data):
         inpxmlstructure = get_inpxml_file_structure()
 
         # read xmlinp file into an etree with autocomplition from schema
+        # we do not validate here because we want this to always succeed
         inpxmlfile = self.open(key='inp.xml', mode='r')
 
         xmlschema_doc = etree.parse(self._schema_file_path)
@@ -420,7 +421,22 @@ class FleurinpData(Data):
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
-            raise InputValidationError("Input file is not validated against the schema.")
+            # get a more information on what does not validate
+            message = ''
+            try:
+                parser = etree.XMLParser(attribute_defaults=True, schema=xmlschema)#dtd_validation=True,
+                inpxmlfile = self.open(key='inp.xml', mode='r')
+                try:
+                    tree_x = etree.parse(inpxmlfile, parser)
+                finally:
+                    inpxmlfile.close()
+                #all errors will be raised
+            except etree.XMLSyntaxError as msg:
+                message = msg
+                raise InputValidationError("Input file does not validate against the schema: {}".format(message))
+
+            #other error occured, we still stop
+            raise InputValidationError("Input file does not validate against the schema, some other error occured, (no XMLSyntaxError).}")
 
         # convert etree into python dictionary
         root = tree_x.getroot()
