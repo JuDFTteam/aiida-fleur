@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import pytest
 from aiida import orm
 from aiida.common import datastructures
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -109,7 +110,6 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
-
 
 
 def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
