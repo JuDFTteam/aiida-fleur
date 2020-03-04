@@ -55,8 +55,8 @@ class Test_FleurScfWorkChain():
         builder = FleurScfWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
         builder.metadata.label = 'FleurSCF_test_Si_bulk'
-        builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.options = Dict(dict=options)
+        builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+        builder.options = Dict(dict=options).store()
         builder.fleur = FleurCode
 
         print(builder)
@@ -67,6 +67,7 @@ class Test_FleurScfWorkChain():
         # check output
         n = out['output_scf_wc_para']
         n = n.get_dict()
+        print(n)
         assert n.get('successful')
         assert n.get('errors') == []
         #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
