@@ -528,7 +528,7 @@ class FleurinpModifier(object):
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        out = self.modify_fleurinpdata(
+        out = modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
             metadata={'label': 'fleurinp modifier',

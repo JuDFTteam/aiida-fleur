@@ -19,11 +19,13 @@ from __future__ import print_function
 import argparse
 from pprint import pprint
 
+from aiida import load_profile
+load_profile()
 
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.engine import submit, run
-
+from aiida.manage.caching import enable_caching
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 
@@ -68,7 +70,7 @@ wf_para = Dict(dict={'fleur_runmax': 2,
                      'force_dict': {'qfix': 2,
                                     'forcealpha': 0.5,
                                     'forcemix': 'BFGS'},
-                     'serial': False})
+                     'serial': True})
 
 options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
                      'queue_name': 'devel',
@@ -195,5 +197,6 @@ if submit_wc:
     print("##################### Finished submiting FleurScfWorkChain #####################")
 else:
     print("##################### Running FleurScfWorkChain #####################")
-    res = run(FleurScfWorkChain, **inputs)
+    with enable_caching():
+        res = run(FleurScfWorkChain, **inputs)
     print("##################### Finished running FleurScfWorkChain #####################")
