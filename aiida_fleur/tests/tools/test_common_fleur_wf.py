@@ -57,7 +57,7 @@ def test_get_inputs_fleur():
     assert results['description'] == ''
     assert results['label'] == ''
     assert out_options == {'custom_scheduler_commands': 'test_command',
-                           'withmpi': False, 'resources': {"num_machines": 1}}
+                           'withmpi': False, 'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1}}
 
 
 def test_get_inputs_inpgen(fixture_code, generate_structure):
@@ -78,7 +78,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
               'label': 'label', 'description': 'description',
               'params': params}
     returns = {'metadata': {
-        'options': {'withmpi': False, 'resources': {'num_machines': 1}},
+        'options': {'withmpi': False, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}},
         'description': 'description', 'label': 'label'},
         'code': code, 'parameters': params, 'structure': structure
     }
@@ -89,7 +89,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     inputs = {'structure': structure, 'inpgencode': code, 'options': {},
               'params': params}
     returns = {'metadata': {
-        'options': {'withmpi': False, 'resources': {'num_machines': 1}},
+        'options': {'withmpi': False, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}},
         'description': '', 'label': ''},
         'code': code, 'parameters': params, 'structure': structure}
 

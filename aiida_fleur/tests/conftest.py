@@ -11,8 +11,7 @@ import pytest
 import six
 
 # aiida_pytest_mock_codes might be moved to aiida-core, not yet a stable dependency..
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures',
-                  'aiida_mock_codes']  # pylint: disable=invalid-name
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
