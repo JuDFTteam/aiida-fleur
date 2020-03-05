@@ -6,7 +6,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_CIF = os.path.join(aiida_path, 'tests/files/cif/AlB.cif')
 
 
-def test_extract_structure_info(generate_structure,
+def test_extract_structure_info(clear_database_aiida_fleur, generate_structure,
                                 generate_work_chain_node,
                                 fixture_localhost):
     """
@@ -60,7 +60,7 @@ def test_extract_structure_info(generate_structure,
 
     # print(result)
     # assert 0
-    correct_result = [{
+    correct_result = [sorted({
         'formula': 'AlB2',
         'pk': cif_structure.pk,
         'uuid': cif_structure.uuid,
@@ -83,7 +83,7 @@ def test_extract_structure_info(generate_structure,
         'init_cls': [],
         'corehole': [],
         'calcfunctions': [[], []],
-    }, {
+    }), sorted({
         'formula': 'SeSi2',
         'pk': pks[2],
         'uuid': uuids[2],
@@ -107,7 +107,7 @@ def test_extract_structure_info(generate_structure,
         'corehole': [],
         'calcfunctions': [[calc_function.uuid],
                           ['test_label']],
-    }, {
+    }), sorted({
         'formula': 'SeSi2',
         'pk': pks[1],
         'uuid': uuids[1],
@@ -130,7 +130,7 @@ def test_extract_structure_info(generate_structure,
         'init_cls': [],
         'corehole': [],
         'calcfunctions': [[], []],
-    }, {
+    }), sorted({
         'formula': 'SeSi2',
         'pk': pks[0],
         'uuid': uuids[0],
@@ -153,7 +153,7 @@ def test_extract_structure_info(generate_structure,
         'init_cls': [],
         'corehole': [],
         'calcfunctions': [[], []],
-    }]
+    })]
 
     for i in result:
-        assert i in correct_result
+        assert sorted(i) in correct_result
