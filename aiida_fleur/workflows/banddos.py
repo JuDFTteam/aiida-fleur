@@ -294,10 +294,16 @@ class FleurBandDosWorkChain(WorkChain):
         #     self.report('!NO bandstructure file was found, something went wrong!')
 
         # # get efermi from last calculation
+        scf_results  = None
+        efermi_scf = 0
+        bandgap_scf = 0
         if 'remote' in self.inputs:
-          scf_results  = self.inputs.remote.get_incoming().all()[-1].node.res #CalcJobNode
-          efermi_scf   = scf_results.fermi_energy
-          bandgap_scf  = scf_results.bandgap
+            for w in self.inputs.remote.get_incoming().all():
+                if isinstance(w.node, CalcJobNode):
+                    scf_results  = load_node(w.node.pk).res
+                    efermi_scf   = scf_results.fermi_energy
+                    bandgap_scf  = scf_results.bandgap
+            
 
         efermi_band  = last_calc_out_dict['fermi_energy']
         bandgap_band = last_calc_out_dict['bandgap']
