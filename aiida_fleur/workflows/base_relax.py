@@ -128,9 +128,20 @@ def _handle_general_error(self, calculation):
 @register_error_handler(FleurBaseRelaxWorkChain, 100)
 def _handle_vacuum_spill(self, calculation):
     """
-    Calculation failed for unknown reason.
+    Calculation failed because atom spilled to the vacuum region.
     """
     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
+        if 'remote_data' in self.ctx.inputs.scf:
+            inputs = find_inputs_relax(self.ctx.inputs.scf.remote_data)
+            del self.ctx.inputs.scf.remote_data
+            if isinstance(inputs, FleurinpData):
+                self.ctx.inputs.scf.fleurinp = inputs
+            else:
+                self.ctx.inputs.scf.structure = inputs[0]
+                self.ctx.inputs.scf.inpgen = inputs[1]
+                if len(inputs) == 3:
+                    self.ctx.inputs.scf.calc_parameters = inputs[2]
+
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum '
                     'parameter')
@@ -146,15 +157,26 @@ def _handle_vacuum_spill(self, calculation):
 @register_error_handler(FleurBaseRelaxWorkChain, 101)
 def _handle_mt_overlap(self, calculation):
     """
-    Calculation failed for unknown reason.
+    Calculation failed because MT overlapped during calculation.
     """
     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
+        if 'remote_data' in self.ctx.inputs.scf:
+            inputs = find_inputs_relax(self.ctx.inputs.scf.remote_data)
+            del self.ctx.inputs.scf.remote_data
+            if isinstance(inputs, FleurinpData):
+                self.ctx.inputs.scf.fleurinp = inputs
+            else:
+                self.ctx.inputs.scf.structure = inputs[0]
+                self.ctx.inputs.scf.inpgen = inputs[1]
+                if len(inputs) == 3:
+                    self.ctx.inputs.scf.calc_parameters = inputs[2]
+
         last_scf_wc_uuid = calculation.outputs.out.get_dict()['last_scf_wc_uuid']
         last_scf = load_node(last_scf_wc_uuid)
         last_fleur = load_node(last_scf.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         error_params = last_fleur.outputs.error_params.get_dict()
-        label1 = error_params['overlapped_indices'][0]
-        label2 = error_params['overlapped_indices'][1]
+        label1 = int(error_params['overlapped_indices'][0])
+        label2 = int(error_params['overlapped_indices'][1])
         value = -(float(error_params['overlaping_value'])+0.01)/2
 
         self.ctx.is_finished = False
@@ -170,3 +192,30 @@ def _handle_mt_overlap(self, calculation):
         wf_para_dict['inpxml_changes'] = inpxml_changes
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
         return ErrorHandlerReport(True, True)
+
+
+def find_inputs_relax(remote_node):
+    """
+    Finds the original inputs of the relaxation workchain which can be either
+    FleurinpData or structure+inpgen+calc_param.
+    """
+    from aiida.orm import WorkChainNode
+    inc_nodes = remote_node.get_incoming().all()
+    for link in inc_nodes:
+        if isinstance(link.node, WorkChainNode):
+            base_wc = link.node
+            break
+
+    scf_wc_node = base_wc.get_incoming().get_node_by_label('CALL')
+
+    if 'remote_data' in scf_wc_node.inputs:
+        return find_inputs_relax(scf_wc_node.inputs.remote_data)
+
+    if 'structure' in scf_wc_node.inputs:
+        if 'calc_parameters' in scf_wc_node.inputs:
+            return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen, scf_wc_node.inputs.calc_parameters
+        return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen
+    elif 'fleurinp' in scf_wc_node.inputs:
+        return scf_wc_node.inputs.fleurinp
+
+    raise ValueError('Did not find original inputs for Relax WC')
