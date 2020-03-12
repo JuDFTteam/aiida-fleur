@@ -139,7 +139,7 @@ class FleurParser(Parser):
                         'num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open('out.xml', 'r') as out_file: #lazy out.xml parsing
+                    with output_folder.open('out.xml', 'r') as out_file:  # lazy out.xml parsing
                         outlines = out_file.read()
                         try:
                             line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
@@ -152,7 +152,7 @@ class FleurParser(Parser):
                             if usage_json in list_of_files:
                                 with output_folder.open(usage_json, 'r') as us_file:
                                     usage = json.load(us_file)
-                                kb_used = usage['VmPeak']
+                                kb_used = usage['data']['VmPeak']
                             else:
                                 try:
                                     line_used = re.findall(r'used.+', error_file_lines)[0]
@@ -167,13 +167,13 @@ class FleurParser(Parser):
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
-                        over_indices = re.findall(
-                            r'relaxation: +\S+ +\S+ +\S+', error_file_lines)[0].split()[1:]
+                        overlap_line = re.findall(r'\S+ +\S+ olap: +\S+',
+                                                  error_file_lines)[0].split()
                         error_params = {'error_name': 'MT_OVERLAP_RELAX',
                                         'description': ('This output node contains information'
                                                         'about FLEUR error'),
-                                        'overlapped_indices': over_indices[:2],
-                                        'overlaping_value': over_indices[2]}
+                                        'overlapped_indices': overlap_line[:2],
+                                        'overlaping_value': overlap_line[3]}
                         link_name = self.get_linkname_outparams()
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
@@ -632,7 +632,6 @@ def parse_xmlout_file(outxmlfile):
         ##########  all xpaths (maintain this) ############
         # (specifies where to find things in the out.xml) #
 
-
         # density
         densityconvergence_xpath = 'densityConvergence'
         chargedensity_xpath = 'densityConvergence/chargeDensity'
@@ -925,7 +924,7 @@ def parse_xmlout_file(outxmlfile):
                 units, 'str', 'density_convergence_units', simple_data)
 
             if jspin == 1:
-                if not relax: # there are no charge densities written if relax
+                if not relax:  # there are no charge densities written if relax
                     charge_density = get_xml_attribute(
                         eval_xpath(iteration_node, chargedensity_xpath), distance_name)
                     write_simple_outnode(
@@ -935,7 +934,7 @@ def parse_xmlout_file(outxmlfile):
                 charge_densitys = eval_xpath2(
                     iteration_node, chargedensity_xpath)
 
-                if not relax: # there are no charge densities written if relax
+                if not relax:  # there are no charge densities written if relax
                     if charge_densitys:  # otherwise we get a keyerror if calculation failed.
                         charge_density1 = get_xml_attribute(
                             charge_densitys[0], distance_name)
@@ -1174,7 +1173,6 @@ def parse_relax_file(rlx):
     rlx.seek(0)
     tree = etree.parse(rlx)
 
-
     xpath_disp = '/relaxation/displacements/displace'
     xpath_energy = '/relaxation/relaxation-history/step/@energy'
     xpath_steps = '/relaxation/relaxation-history/step'
@@ -1206,6 +1204,7 @@ def parse_relax_file(rlx):
     out_dict['posforces'] = float_posforces
 
     return Dict(dict=out_dict)
+
 
 def convert_frac(ratio):
     """ Converts ratio strings into float, e.g. 1.0/2.0 -> 0.5 """
