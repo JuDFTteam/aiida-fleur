@@ -56,7 +56,7 @@ print(args)
 wf_para = Dict(dict={
     'relax_iter': 2,
     'film_distance_relaxation': False,
-    'force_criterion': 0.005
+    'force_criterion': 0.02
 })
 
 bohr_a_0 = 0.52917721092  # A
@@ -90,7 +90,7 @@ parameters = Dict(dict={
 
 wf_para_scf = {'fleur_runmax': 2,
                'itmax_per_run': 120,
-               'force_converged': 0.02,
+               'force_converged': 0.002,
                'force_dict': {'qfix': 2,
                               'forcealpha': 0.75,
                               'forcemix': 'straight'},

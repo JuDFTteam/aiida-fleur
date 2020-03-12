@@ -32,7 +32,7 @@
         "pytest-cov >= 2.5.0",
         "pytest >= 2.9",
         "pgtest",
-        "numpy>=1.16.4",
+        "numpy>=1.16.4,<1.18.0",
         "sympy",
         "masci-tools",
         "future",
@@ -72,7 +72,8 @@
         "aiida.workflows": [
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
-            "fleur.band = aiida_fleur.workflows.band:fleur_band_wc",
+            "fleur.band = aiida_fleur.workflows.band:FleurBandWorkChain",
+            "fleur.banddos = aiida_fleur.workflows.banddos:FleurBandDosWorkChain",
             "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
             "fleur.corehole = aiida_fleur.workflows.corehole:fleur_corehole_wc",

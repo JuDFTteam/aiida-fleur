@@ -12,19 +12,18 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import aiida_fleur
+import aiida
 import sys
 import os
 import time
 # Following 3 lines avoid the need of importing load_dbenv() for compiling the
 # documentation -> works also without verdi install
-sys.path.append( os.path.join( os.path.split(__file__)[0],
-                                           os.pardir,os.pardir) )
-sys.path.append( os.path.join( os.path.split(__file__)[0],
-                                           os.pardir))
+sys.path.append(os.path.join(os.path.split(__file__)[0],
+                             os.pardir, os.pardir))
+sys.path.append(os.path.join(os.path.split(__file__)[0],
+                             os.pardir))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'rtd_settings'
-
-import aiida
-import aiida_fleur
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -42,19 +41,19 @@ needs_sphinx = '1.5'
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
-              'sphinx.ext.doctest', 
-              'sphinx.ext.todo', 
-              'sphinx.ext.coverage',  
-              'sphinx.ext.ifconfig', 
+              'sphinx.ext.doctest',
+              'sphinx.ext.todo',
+              'sphinx.ext.coverage',
+              'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode']
 
 todo_include_todos = True
 
 intersphinx_mapping = {
-#    'python': ('https://docs.python.org/2.7', None),
-     'aiida': ('http://aiida_core.readthedocs.io/en/latest/', None),
-    }
+    #    'python': ('https://docs.python.org/2.7', None),
+    'aiida': ('http://aiida_core.readthedocs.io/en/latest/', None),
+}
 
 nitpick_ignore = [('py:obj', 'module')]
 
@@ -78,7 +77,8 @@ copyright_first_year = 2016
 copyright_owners = u"FZ Jülich GmbH, Germany"
 
 current_year = time.localtime().tm_year
-copyright_year_string = current_year if current_year == copyright_first_year else "{}-{}".format(copyright_first_year, current_year)
+copyright_year_string = current_year if current_year == copyright_first_year else "{}-{}".format(
+    copyright_first_year, current_year)
 copyright = u'{}, {}. All rights reserved'.format(copyright_year_string, copyright_owners)
 
 
@@ -138,7 +138,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme' #'default'
+html_theme = 'sphinx_rtd_theme'  # 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -228,22 +228,22 @@ htmlhelp_basename = 'aiida-fleurdoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
-   author.replace(',',r'\and'), 'manual'),
+    ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
+     author.replace(',', r'\and'), 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -274,9 +274,9 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 # Following 3 lines avoid the need of importing load_dbenv() for compiling the
 # documentation -> works also without verdi install
-#sys.path.append( os.path.join( os.path.split(__file__)[0],
+# sys.path.append( os.path.join( os.path.split(__file__)[0],
 #                                           os.pardir,os.pardir) )
-#sys.path.append( os.path.join( os.path.split(__file__)[0],
+# sys.path.append( os.path.join( os.path.split(__file__)[0],
 #                                           os.pardir))
 #os.environ['DJANGO_SETTINGS_MODULE'] = 'rtd_settings'
 
@@ -364,9 +364,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'aiida-fleur', u'AiiDA-Fleur Documentation',
-   author, 'aiida-fleur', 'One line description of project.',
-   'Miscellaneous'),
+    ('index', 'aiida-fleur', u'AiiDA-Fleur Documentation',
+     author, 'aiida-fleur', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -431,3 +431,11 @@ for line in open('nitpick-exceptions'):
     dtype, target = line.split(None, 1)
     target = target.strip()
     nitpick_ignore.append((dtype, target))
+
+html_static_path = ['_static']
+
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css',  # override wide tables in RTD theme
+    ],
+}

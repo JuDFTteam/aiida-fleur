@@ -119,7 +119,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import delete_att, set_species
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
-        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, shift_value
+        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
 
@@ -227,6 +227,10 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
             return fleurinp_tree_copy
 
+        def set_kpath1(fleurinp_tree_copy, kpath, count, gamma):
+            fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
+            return fleurinp_tree_copy
+
         actions = {
             'xml_set_attribv_occ': xml_set_attribv_occ1,
             'xml_set_first_attribv': xml_set_first_attribv1,
@@ -246,6 +250,7 @@ class FleurinpModifier(object):
             'shift_value': shift_value1,
             'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
+            'set_kpath': set_kpath1,
             'add_num_to_att': add_num_to_att1
 
         }
@@ -505,6 +510,13 @@ class FleurinpModifier(object):
         the list of tasks that will be done on the FleurinpData.
         """
         self._tasks.append(('set_nkpts', count, gamma))
+
+    def set_kpath(self, kpath, count, gamma='F'):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_kpath()` to
+        the list of tasks that will be done on the FleurinpData.
+        """
+        self._tasks.append(('set_kpath', kpath, count, gamma))
 
     def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
         """

@@ -109,7 +109,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         # TODO not every machine/scheduler type takes number of machines
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
-        options['resources'] = {"num_machines": 1}
+        options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
     else:
         options['withmpi'] = True
 
@@ -169,7 +169,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
         options = {}
     # inpgen run always serial
     options['withmpi'] = False
-    options['resources'] = {"num_machines": 1}
+    options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
 
     if options:
         inputs.metadata.options = options
@@ -648,7 +648,7 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
                        '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1],
                                                              best_suggestion[2], kpts))
     else:
-        message = ('WARNING: Changed the number of MPIs per node from {} to {} an OMP from {} to {}'
+        message = ('WARNING: Changed the number of MPIs per node from {} to {} and OMP from {} to {}'
                    '. Changed the number of nodes from {} to {}. Number of k-points is {}.'
                    ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
                              nodes, best_suggestion[0], kpts))
@@ -661,7 +661,11 @@ def find_last_in_restart(restart_wc):
     Finds the last CalcJob submitted in a restart_wc
     and returns it's uuid
     """
+    from aiida.common.exceptions import NotExistent
     links = restart_wc.get_outgoing().all()
     calls = list([x for x in links if x.link_label == 'CALL'])
-    calls = sorted(calls, key=lambda x: x.node.pk)
-    return calls[-1].node.uuid
+    if calls:
+        calls = sorted(calls, key=lambda x: x.node.pk)
+        return calls[-1].node.uuid
+    else:
+        raise NotExistent

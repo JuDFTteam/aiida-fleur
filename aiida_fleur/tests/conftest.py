@@ -10,6 +10,7 @@ import collections
 import pytest
 import six
 
+# aiida_pytest_mock_codes might be moved to aiida-core, not yet a stable dependency..
 pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
 
 
@@ -136,25 +137,6 @@ def generate_calc_job_node():
     return _generate_calc_job_node
 
 
-@pytest.fixture(scope='session')
-def generate_upf_data():
-    """Return a `UpfData` instance for the given element a file for which should exist in `tests/fixtures/pseudos`."""
-
-    def _generate_upf_data(element):
-        """Return `UpfData` node."""
-        from aiida.orm import UpfData
-
-        filename = os.path.join('tests', 'fixtures', 'pseudos', '{}.upf'.format(element))
-        filepath = os.path.abspath(filename)
-
-        with io.open(filepath, 'r') as handle:
-            upf = UpfData(file=handle.name)
-
-        return upf
-
-    return _generate_upf_data
-
-
 @pytest.fixture
 def generate_structure():
     """Return a `StructureData` representing bulk silicon."""
@@ -173,6 +155,60 @@ def generate_structure():
         return structure
 
     return _generate_structure
+
+
+@pytest.fixture
+def generate_structure2():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_structure2():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+
+        def rel_to_abs(vector, cell):
+            """
+            converts interal coordinates to absolut coordinates in Angstroem.
+            """
+            if len(vector) == 3:
+                postionR = vector
+                row1 = cell[0]
+                row2 = cell[1]
+                row3 = cell[2]
+                new_abs_pos = [postionR[0]*row1[0] + postionR[1]*row2[0] + postionR[2]*row3[0],
+                               postionR[0]*row1[1] + postionR[1]*row2[1] + postionR[2]*row3[1],
+                               postionR[0]*row1[2] + postionR[1]*row2[2] + postionR[2]*row3[2]]
+                return new_abs_pos
+
+        bohr_a_0 = 0.52917721092  # A
+        a = 5.167355275190*bohr_a_0
+        cell = [[0.0, a, a], [a, 0.0, a], [a, a, 0.0]]
+        structure = StructureData(cell=cell)
+        pos1 = rel_to_abs((1./8., 1./8., 1./8.), cell)
+        pos2 = rel_to_abs((-1./8., -1./8., -1./8.), cell)
+        structure.append_atom(position=pos1, symbols='Si')
+        structure.append_atom(position=pos2, symbols='Si')
+
+        return structure
+
+    return _generate_structure2
+
+
+@pytest.fixture
+def generate_structure_W():
+    """Return a `StructureData` representing bulk tungsten."""
+
+    def _generate_structureW():
+        """Return a `StructureData` representing bulk tungsten."""
+        from aiida.orm import StructureData
+
+        param = 3.18968 # 1.58950065353588 * 0.5291772109
+        cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
+
+        return structure
+
+    return _generate_structureW
 
 
 @pytest.fixture
@@ -233,6 +269,8 @@ def generate_remote_data():
     return _generate_remote_data
 
 ############### Here AiiDA-Fleur fixtures begin ##################
+
+
 @pytest.fixture
 def create_fleurinp():
     """Returns fleurinp constuctor"""
@@ -349,3 +387,20 @@ def clear_database_aiida_fleur(aiida_profile):  # pylint: disable=redefined-oute
     """Clear the database before each test.
     """
     aiida_profile.reset_db()
+
+
+@pytest.fixture
+def read_dict_from_file():
+    """returns a dict read from a json file to construct and Outputnode of a JobCalc or Workchain"""
+
+    def _read_dict_from_file(jsonfilepath):
+        """Return dict from json"""
+        import json
+
+        node_dict = {}
+        with open(jsonfilepath, 'r') as jfile:
+            node_dict = json.load(jfile)
+
+        return node_dict
+
+    return _read_dict_from_file

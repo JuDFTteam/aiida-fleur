@@ -11,7 +11,7 @@
 ###############################################################################
 
 """
-Here we run the fleur_band_wc for W or some other material
+Here we run the FleurBandWorkChain for W or some other material
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -23,7 +23,7 @@ from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.engine import submit, run
-from aiida_fleur.workflows.band import fleur_band_wc
+from aiida_fleur.workflows.band import FleurBandWorkChain
 from pprint import pprint
 ################################################################
 ParameterData = DataFactory('dict')
@@ -121,14 +121,14 @@ if args.submit is not None:
 pprint(inputs)
 
 
-print("##################### TEST fleur_band_wc #####################")
+print("##################### TEST FleurBandWorkChain #####################")
 
 if submit_wc:
-    res = submit(fleur_band_wc, **inputs)
-    print("##################### Submited fleur_band_wc #####################")
+    res = submit(FleurBandWorkChain, **inputs)
+    print("##################### Submited FleurBandWorkChain #####################")
     print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting fleur_band_wc #####################")
+    print("##################### Finished submiting FleurBandWorkChain #####################")
 else:
     print("##################### Running fleur_dos_wc #####################")
-    res = run(fleur_band_wc, **inputs)
-    print("##################### Finished running fleur_band_wc #####################")
+    res = run(FleurBandWorkChain, **inputs)
+    print("##################### Finished running FleurBandWorkChain #####################")

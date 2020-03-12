@@ -236,15 +236,15 @@ class FleurScfWorkChain(WorkChain):
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
             if 'structure' in inputs:
-                error = 'ERROR: structure input is not needed because Fleurinp was given'
+                error = 'ERROR: structure input is not needed because remote_data was given'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'inpgen' in inputs:
-                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
+                error = 'ERROR: inpgen code is not needed input because remote_data was given'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'calc_parameters' in inputs:
-                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                error = 'ERROR: calc_parameter input is not needed because remote_data was given'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'structure' in inputs:
@@ -627,7 +627,10 @@ class FleurScfWorkChain(WorkChain):
         """
         from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
         if self.ctx.last_calc:
-            last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            try:
+                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+            except NotExistent:
+                last_calc_uuid = None
         else:
             last_calc_uuid = None
 

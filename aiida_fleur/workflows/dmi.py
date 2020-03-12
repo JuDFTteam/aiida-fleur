@@ -479,8 +479,8 @@ class FleurDMIWorkChain(WorkChain):
         # Retrieve remote folder from the inputs
         remote = self.inputs.remote
 
-        label = 'Force_theorem_calculation'
-        description = 'This is a force theorem calculation for all SQA'
+        label = 'DMI_force_theorem'
+        description = 'The is the force theorem calculation for DMI energy.'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()

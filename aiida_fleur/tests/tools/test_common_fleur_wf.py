@@ -57,7 +57,7 @@ def test_get_inputs_fleur():
     assert results['description'] == ''
     assert results['label'] == ''
     assert out_options == {'custom_scheduler_commands': 'test_command',
-                           'withmpi': False, 'resources': {"num_machines": 1}}
+                           'withmpi': False, 'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1}}
 
 
 def test_get_inputs_inpgen(fixture_code, generate_structure):
@@ -78,7 +78,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
               'label': 'label', 'description': 'description',
               'params': params}
     returns = {'metadata': {
-        'options': {'withmpi': False, 'resources': {'num_machines': 1}},
+        'options': {'withmpi': False, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}},
         'description': 'description', 'label': 'label'},
         'code': code, 'parameters': params, 'structure': structure
     }
@@ -89,7 +89,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     inputs = {'structure': structure, 'inpgencode': code, 'options': {},
               'params': params}
     returns = {'metadata': {
-        'options': {'withmpi': False, 'resources': {'num_machines': 1}},
+        'options': {'withmpi': False, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}},
         'description': '', 'label': ''},
         'code': code, 'parameters': params, 'structure': structure}
 
@@ -243,7 +243,7 @@ results_optimize = [
     (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
     (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
     (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
-    (4, 20, 1, 'WARNING: Changed the number of MPIs per node from 8 to 20 an OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.')]
+    (4, 20, 1, 'WARNING: Changed the number of MPIs per node from 8 to 20 and OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.')]
 
 
 @pytest.mark.parametrize('input,result_correct', zip(inputs_optimize, results_optimize))
@@ -259,12 +259,16 @@ def test_find_last_in_restart(fixture_localhost,
                               generate_calc_job_node, generate_work_chain_node):
     from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
     from aiida.common.links import LinkType
+    from aiida.common.exceptions import NotExistent
 
     node1 = generate_calc_job_node('fleur.fleur', fixture_localhost)
     node2 = generate_calc_job_node('fleur.fleur', fixture_localhost)
     node3 = generate_calc_job_node('fleur.fleur', fixture_localhost)
 
     node_main = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+
+    with pytest.raises(NotExistent):
+        result = find_last_in_restart(node_main)
 
     node1.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')
     node2.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')

@@ -58,7 +58,7 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install -e .
+        pip install .
 
   tests:
 
@@ -99,7 +99,7 @@ jobs:
       run: |
         pip install numpy==1.16.4
         pip install PyCifRW~=4.4
-        pip install -e .
+        pip install .
         reentry scan
 
     - name: Run pytest
