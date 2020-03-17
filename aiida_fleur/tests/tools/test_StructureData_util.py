@@ -205,29 +205,33 @@ def test_center_film_wf(generate_film_structure, generate_structure):
 
     centered_film = center_film_wf(structure_film)
     assert [x.position for x in centered_film.sites] == [
-        (0.0, 0.0, -1.2286013141372),
-        (1.4026317387183, 1.9836207751336, -0.17403050935524),
-        (0.0, 0.0, 1.2286013141372)]
+        (0.0, 0.0, -1.2286013142),
+        (1.4026317387, 1.9836207751, -0.1740305093),
+        (0.0, 0.0, 1.2286013141)]
 
     with pytest.raises(TypeError):
         center_film(structure_bulk)
 
 
-def test_get_layer_by_number(generate_film_structure):
-    from aiida_fleur.tools.StructureData_util import get_layer_by_number
+def test_get_layers(generate_film_structure):
+    from aiida_fleur.tools.StructureData_util import get_layers
 
     structure = generate_film_structure()
 
-    assert get_layer_by_number(structure, 2) == ([((0.0, 0.0, 1.4026318234924429), 'Pt')],
-                                                 [-1.0545708048, 0.0, 1.4026318235],
-                                                 [1, 1, 1])
+    assert get_layers(structure) == ([[([0.0, 0.0, -1.054570804781922], 'Fe')],
+                                      [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
+                                      [([0.0, 0.0, 1.4026318234924429], 'Pt')]],
+                                     [-1.0545708048, 0.0, 1.4026318235],
+                                     [1, 1, 1])
 
     bohr_a_0 = 0.52917721092
     structure.append_atom(position=(1.0, 0., -1.99285 * bohr_a_0), symbols='Fe')
-    assert get_layer_by_number(structure, 0) == ([((0.0, 0.0, -1.054570804781922), 'Fe'),
-                                                  ((1.0, 0.0, -1.054570804781922), 'Fe')],
-                                                 [-1.0545708048, 0.0, 1.4026318235],
-                                                 [2, 1, 1])
+    assert get_layers(structure) == ([[([0.0, 0.0, -1.054570804781922], 'Fe'),
+                                       ([1.0, 0.0, -1.054570804781922], 'Fe')],
+                                      [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
+                                      [([0.0, 0.0, 1.4026318234924429], 'Pt')]],
+                                     [-1.0545708048, 0.0, 1.4026318235],
+                                     [2, 1, 1])
 
 
 create_slab_inputs = [{'lattice': 'fcc', 'miller': None, 'host_symbol': 'Fe',
@@ -308,3 +312,47 @@ def test_magnetic_slab_from_relaxed(generate_film_structure):
     for site, correct_name, correct_position in zip(result.sites, names, z_positions):
         assert site.kind_name == correct_name
         assert math.isclose(site.position[2], correct_position)
+
+
+def test_request_average_bond_length(generate_film_structure):
+    import os
+    from aiida_fleur.tools.StructureData_util import request_average_bond_length
+
+    user_api_key = os.getenv('USER_API_KEY')
+    if not user_api_key:
+        pytest.skip('No USER_API_KEY given, skip the test')
+
+    structure = generate_film_structure()
+    result = request_average_bond_length(structure)
+    assert result == {'Fe': {'Fe': 2.4651768430600254, 'Pt': 2.633878591723135},
+                      'Pt': {'Fe': 2.633878591723135, 'Pt': 2.8120017054377606}}
+
+    result = request_average_bond_length(structure, 'Pt')
+    assert result == {'Fe': {'Fe': 0.8766626415243433, 'Pt': 0.9366561146210628},
+                      'Pt': {'Fe': 0.9366561146210628, 'Pt': 1.0}}
+
+    with pytest.raises(ValueError) as msg:
+        request_average_bond_length(structure, 'Ir')
+    assert str(msg.value) == ("There is no scale_as element in the given film structure")
+
+
+def test_adjust_film_relaxation(generate_film_structure):
+    import os
+    from aiida_fleur.tools.StructureData_util import adjust_film_relaxation
+
+    user_api_key = os.getenv('USER_API_KEY')
+    if not user_api_key:
+        pytest.skip('No USER_API_KEY given, skip the test')
+
+    structure = generate_film_structure()
+    result = adjust_film_relaxation(structure)
+    print(structure.sites)
+    print(result.sites)
+    assert np.linalg.norm(np.array(result.sites[1].position) -
+                          np.array(result.sites[2].position)) - 2.8120017054377606 < 1e-7
+    assert np.linalg.norm(np.array(result.sites[1].position) -
+                          np.array(result.sites[0].position)) - 2.633878591723135 < 1e-7
+
+    result = adjust_film_relaxation(structure, 'Pt', 2.77)
+    assert np.linalg.norm(np.array(result.sites[1].position) -
+                          np.array(result.sites[2].position)) - 2.77 < 1e-7
