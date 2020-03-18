@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In here we put all things util (methods, code snipets) that are often useful, but not yet in AiiDA
 itself.
@@ -55,15 +54,14 @@ def export_extras(nodes, filename='node_extras.txt'):
 
     outdict = {}
     for node in nodes:
-        if not isinstance(node, Node): # pk or uuid
+        if not isinstance(node, Node):  # pk or uuid
             node = load_node(node)
 
         uuid = node.uuid
         extras_dict = node.extras
         outdict[uuid] = extras_dict
 
-    json.dump(outdict, open(filename, 'w'), sort_keys=True,
-              indent=4, separators=(',', ': '))
+    json.dump(outdict, open(filename, 'w'), sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def import_extras(filename):
@@ -104,7 +102,6 @@ def import_extras(filename):
     return
 
 
-
 def delete_nodes(pks_to_delete):
     """
     Delete a set of nodes. (From AiiDA cockbook)
@@ -130,12 +127,16 @@ def delete_nodes(pks_to_delete):
     # all children nodes.
     all_pks_to_delete = set(pks_to_delete)
     for pk in pks_to_delete:
-        all_pks_to_delete.update(models.DbNode.objects.filter(
-            input_links__in=pks_to_delete).values_list('pk', flat=True))
+        all_pks_to_delete.update(
+            models.DbNode.objects.filter(input_links__in=pks_to_delete
+                                         ).values_list('pk', flat=True)
+        )
 
-    print(("I am going to delete {} nodes, including ALL THE CHILDREN"
-           "of the nodes you specified. Do you want to continue? [y/N]"
-           "".format(len(all_pks_to_delete))))
+    print((
+        "I am going to delete {} nodes, including ALL THE CHILDREN"
+        "of the nodes you specified. Do you want to continue? [y/N]"
+        "".format(len(all_pks_to_delete))
+    ))
     answer = input()
 
     if answer.strip().lower() == 'y':
@@ -150,8 +151,8 @@ def delete_nodes(pks_to_delete):
         with transaction.atomic():
             # Delete all links pointing to or from a given node
             models.DbLink.objects.filter(
-                Q(input__in=all_pks_to_delete) |
-                Q(output__in=all_pks_to_delete)).delete()
+                Q(input__in=all_pks_to_delete) | Q(output__in=all_pks_to_delete)
+            ).delete()
             # now delete nodes
             models.DbNode.objects.filter(pk__in=all_pks_to_delete).delete()
 
@@ -161,6 +162,7 @@ def delete_nodes(pks_to_delete):
         # There seem to be no folders in AiiDA 1.0
         # for f in folders:
         #     f.erase()
+
 
 def delete_trash():
     """
@@ -174,7 +176,7 @@ def delete_trash():
     q = QueryBuilder()
     nodes_to_delete_pks = []
 
-    q.append(Node, filters = {'extras.trash': {'==' : True}})
+    q.append(Node, filters={'extras.trash': {'==': True}})
 
     res = q.all()
     for node in res:
@@ -187,6 +189,7 @@ def delete_trash():
     delete_nodes(nodes_to_delete_pks)
 
     return
+
 
 def create_group(name, nodes, description=None, add_if_exist=False):
     """
@@ -216,8 +219,7 @@ def create_group(name, nodes, description=None, add_if_exist=False):
     if created:
         print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists.'
-               ''.format(group.label, group.pk)))
+        print(('Group with name {} and pk {} already exists.' ''.format(group.label, group.pk)))
 
         if add_if_exist:
             print('Adding nodes to the existing group {}'.format(group.label))
@@ -252,8 +254,8 @@ def get_nodes_from_group(group, return_format='uuid'):
     """
 
     if return_format == 'uuid':
-        return [x.uuid for x in  group.nodes]
+        return [x.uuid for x in group.nodes]
     if return_format == 'pk':
-        return [x.pk for x in  group.nodes]
+        return [x.pk for x in group.nodes]
     else:
         raise ValueError("return_format should be 'uuid' or 'pk'.")

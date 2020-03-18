@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this file/module, YOU, the user can specify some default resource values for
 queues of different computers
@@ -21,6 +20,8 @@ You can modify, adjust this file to your needs
 # TODO find AiiDA solution for this
 
 from __future__ import print_function
+
+
 def queue_defaults(queue_name, computer=None):
     """
     In this class you specify defaults methods which you can use for workflows
@@ -35,11 +36,23 @@ def queue_defaults(queue_name, computer=None):
     queue_resources = None
     print(queue_name)
     computers = {
-        'iff003':
-            {'th1' : {'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
-                      'walltime_sec' : 30 * 60},
-             'th1_small' : {'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
-                            'walltime_sec' : 20 * 60}}}
+        'iff003': {
+            'th1': {
+                'resources': {
+                    "num_machines": 1,
+                    "num_mpiprocs_per_machine": 12
+                },
+                'walltime_sec': 30 * 60
+            },
+            'th1_small': {
+                'resources': {
+                    "num_machines": 1,
+                    "num_mpiprocs_per_machine": 12
+                },
+                'walltime_sec': 20 * 60
+            }
+        }
+    }
 
     if computer:
         #print 'computer'
@@ -59,7 +72,7 @@ def queue_defaults(queue_name, computer=None):
                 res = queue.get('resources', None)
                 wt = queue.get('walltime_sec', None)
 
-    queue_resources = {'resources' : res, 'walltime_sec' : wt}
+    queue_resources = {'resources': res, 'walltime_sec': wt}
     #print queue_resources
 
     return queue_resources

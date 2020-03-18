@@ -76,15 +76,15 @@ class FleurBandDosWorkChain(WorkChain):
         spec.input("remote", valid_type=RemoteData, required=True)
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("options", valid_type=Dict, required=False)
-        
+
         spec.outline(
             cls.start,
             if_(cls.scf_needed)(
                 cls.converge_scf,
-                cls.create_new_fleurinp, 
+                cls.create_new_fleurinp,
                 cls.run_fleur,
             ).else_(
-                cls.create_new_fleurinp, 
+                cls.create_new_fleurinp,
                 cls.run_fleur,
             ),
             cls.return_results

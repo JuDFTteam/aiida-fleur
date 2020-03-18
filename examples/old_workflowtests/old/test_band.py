@@ -18,7 +18,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
-codename2 = 'fleur_iff@local_iff'#'fleur_iff003_v0_27@iff003'
+codename2 = 'fleur_iff@local_iff'  #'fleur_iff003_v0_27@iff003'
 codename2 = 'fleur_iff003_v0_27@iff003'
 ###############################
 
@@ -27,8 +27,7 @@ code2 = Code.get_from_string(codename2)
 fleurinp = load_node(1684)
 fleur_calc = load_node(1693)
 remote = fleur_calc.out.remote_folder
-wf_para = Dict(dict={'queue' : 'th123_node'})
-
+wf_para = Dict(dict={'queue': 'th123_node'})
 
 #res = band.run(fleurinp=fleurinp, remote=remote, fleur=code2)
 res = FleurBandWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp, remote=remote, fleur=code2)

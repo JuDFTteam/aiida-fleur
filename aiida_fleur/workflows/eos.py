@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find the workflow 'FleurEosWorkChain' for the calculation of
 of an equation of state
@@ -56,11 +55,7 @@ class FleurEosWorkChain(WorkChain):
 
     _workflowversion = "0.3.5"
 
-    _wf_default = {
-        'points': 9,
-        'step': 0.002,
-        'guess': 1.00
-    }
+    _wf_default = {'points': 9, 'step': 0.002, 'guess': 1.00}
 
     @classmethod
     def define(cls, spec):
@@ -69,19 +64,13 @@ class FleurEosWorkChain(WorkChain):
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
 
-        spec.outline(
-            cls.start,
-            cls.structures,
-            cls.converge_scf,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
 
         spec.output('output_eos_wc_para', valid_type=Dict)
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
-                       message="Invalid workchain parameters.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
 
     def start(self):
         """
@@ -197,7 +186,7 @@ class FleurEosWorkChain(WorkChain):
         natoms = len(self.inputs.structure.sites)
         htr_to_ev = 27.21138602
         e_u = 'eV'
-
+        dis_u = 'me/bohr^3'
         for label in self.ctx.labels:
             calc = self.ctx[label]
 
@@ -212,7 +201,8 @@ class FleurEosWorkChain(WorkChain):
             except KeyError:
                 message = (
                     'One SCF workflow failed, no scf output node: {}.'
-                    ' I skip this one.'.format(label))
+                    ' I skip this one.'.format(label)
+                )
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
@@ -224,7 +214,7 @@ class FleurEosWorkChain(WorkChain):
             if e_u == 'Htr' or 'htr':
                 t_e = t_e * htr_to_ev
             dis = outpara.get('distance_charge', float('nan'))
-            dis_u = outpara.get('distance_charge_units')
+            dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             t_energylist.append(t_e)
             t_energylist_peratom.append(t_e / natoms)
             vol_peratom_success.append(self.ctx.volume_peratom[label])
@@ -233,8 +223,10 @@ class FleurEosWorkChain(WorkChain):
         not_ok, an_index = check_eos_energies(t_energylist_peratom)
 
         if not_ok:
-            message = ('Abnormality in Total energy list detected. Check '
-                       'entr(ies) {}.'.format(an_index))
+            message = (
+                'Abnormality in Total energy list detected. Check '
+                'entr(ies) {}.'.format(an_index)
+            )
             hint = ('Consider refining your basis set.')
             self.ctx.info.append(hint)
             self.ctx.warnings.append(message)
@@ -252,6 +244,7 @@ class FleurEosWorkChain(WorkChain):
                     write_defaults_fit = True
             volumes = self.ctx.volume
             gs_scale = volume * natoms / self.ctx.org_volume
+            bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
             if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
                 warn = ('Groundstate volume was not in the scaling range.')
                 hint = ('Consider rerunning around point {}'.format(gs_scale))
@@ -269,42 +262,44 @@ class FleurEosWorkChain(WorkChain):
             bulk_modulus = None
             bulk_deriv = None
 
-        out = {'workflow_name': self.__class__.__name__,
-               'workflow_version': self._workflowversion,
-               'scaling': self.ctx.scalelist,
-               'scaling_gs': gs_scale,
-               'initial_structure': self.inputs.structure.uuid,
-               'volume_gs': volume * natoms,
-               'volumes': volumes,
-               'volume_units': 'A^3',
-               'natoms': natoms,
-               'total_energy': t_energylist,
-               'total_energy_units': e_u,
-               'structures': self.ctx.structurs_uuids,
-               'calculations': [],  # self.ctx.calcs1,
-               'scf_wfs': [],  # self.converge_scf_uuids,
-               'distance_charge': distancelist,
-               'distance_charge_units': dis_u,
-               'nsteps': self.ctx.points,
-               'guess': self.ctx.guess,
-               'stepsize': self.ctx.step,
-               # 'fitresults' : [a, latticeconstant, c],
-               # 'fit' : fit_new,
-               'residuals': residuals,
-               'bulk_deriv': bulk_deriv,
-               'bulk_modulus': bulk_modulus * 160.217733,  # * echarge * 1.0e21,#GPa
-               'bulk_modulus_units': 'GPa',
-               'info': self.ctx.info,
-               'warnings': self.ctx.warnings,
-               'errors': self.ctx.errors
-               }
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            'scaling': self.ctx.scalelist,
+            'scaling_gs': gs_scale,
+            'initial_structure': self.inputs.structure.uuid,
+            'volume_gs': volume * natoms,
+            'volumes': volumes,
+            'volume_units': 'A^3',
+            'natoms': natoms,
+            'total_energy': t_energylist,
+            'total_energy_units': e_u,
+            'structures': self.ctx.structurs_uuids,
+            'calculations': [],  # self.ctx.calcs1,
+            'scf_wfs': [],  # self.converge_scf_uuids,
+            'distance_charge': distancelist,
+            'distance_charge_units': dis_u,
+            'nsteps': self.ctx.points,
+            'guess': self.ctx.guess,
+            'stepsize': self.ctx.step,
+            # 'fitresults' : [a, latticeconstant, c],
+            # 'fit' : fit_new,
+            'residuals': residuals,
+            'bulk_deriv': bulk_deriv,
+            'bulk_modulus': bulk_modulus,
+            'bulk_modulus_units': 'GPa',
+            'info': self.ctx.info,
+            'warnings': self.ctx.warnings,
+            'errors': self.ctx.errors
+        }
 
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
         else:
             self.report(
                 'Done, but something went wrong.... Probably some individual calculation failed or'
-                ' a scf-cycle did not reach the desired distance.')
+                ' a scf-cycle did not reach the desired distance.'
+            )
 
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -313,8 +308,10 @@ class FleurEosWorkChain(WorkChain):
         outputnode_dict = create_eos_result_node(**outnodedict)
         outputnode = outputnode_dict.get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
-        outputnode.description = ('Contains equation of states results and information of an '
-                                  'FleurEosWorkChain run.')
+        outputnode.description = (
+            'Contains equation of states results and information of an '
+            'FleurEosWorkChain run.'
+        )
 
         returndict = {}
         returndict['output_eos_wc_para'] = outputnode
@@ -322,8 +319,10 @@ class FleurEosWorkChain(WorkChain):
         outputstructure = outputnode_dict.get('gs_structure', None)
         if outputstructure:
             outputstructure.label = 'output_eos_wc_structure'
-            outputstructure.description = ('Structure with the scaling/volume of the lowest total '
-                                           'energy extracted from FleurEosWorkChain')
+            outputstructure.description = (
+                'Structure with the scaling/volume of the lowest total '
+                'energy extracted from FleurEosWorkChain'
+            )
             outputstructure = save_structure(outputstructure)
             returndict['output_eos_wc_structure'] = outputstructure
 
@@ -400,6 +399,7 @@ def eos_structures(inp_structure, scalelist):
 
     return re_structures
 
+
 # pylint: disable=invalid-name
 
 
@@ -436,8 +436,7 @@ def birch_murnaghan_fit(energies, volumes):
         exit()
 
     derivV2 = 4. / 9. * x**5. * deriv2(x)
-    derivV3 = (-20. / 9. * x**(13. / 2.) * deriv2(x) -
-               8. / 27. * x**(15. / 2.) * deriv3(x))
+    derivV3 = (-20. / 9. * x**(13. / 2.) * deriv2(x) - 8. / 27. * x**(15. / 2.) * deriv3(x))
     bulk_modulus0 = derivV2 / x**(3. / 2.)
     bulk_deriv0 = -1 - x**(-3. / 2.) * derivV3 / derivV2
 
@@ -459,6 +458,7 @@ def birch_murnaghan(volumes, volume0, bulk_modulus0, bulk_deriv0):
             (1 + 3 / 4. * (dbm - 4) * ((v0 / vol)**(2 / 3.) - 1))
         PV.append(pv_val)
         ev_val = 9 * bm * v0 / 16. * ((dbm * (v0 / vol)**(2 / 3.) - 1)**(3) *
-                                      ((v0 / vol)**(2 / 3.) - 1)**2 * (6 - 4 * (v0 / vol)**(2 / 3.)))
+                                      ((v0 / vol)**(2 / 3.) - 1)**2 *
+                                      (6 - 4 * (v0 / vol)**(2 / 3.)))
         EV.append(ev_val)
     return EV, PV

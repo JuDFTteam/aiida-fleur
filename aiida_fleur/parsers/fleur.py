@@ -101,8 +101,7 @@ class FleurParser(Parser):
 
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
-            self.logger.error(
-                "XML out not found '{}'".format(FleurCalculation._OUTXML_FILE_NAME))
+            self.logger.error("XML out not found '{}'".format(FleurCalculation._OUTXML_FILE_NAME))
             return self.exit_codes.ERROR_NO_OUTXML
         else:
             has_xml_outfile = True
@@ -112,7 +111,8 @@ class FleurParser(Parser):
             if file not in list_of_files:
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
-                    " was probably not created by fleur".format(file))
+                    " was probably not created by fleur".format(file)
+                )
 
         # check if something was written to the error file
         if FleurCalculation._ERROR_FILE_NAME in list_of_files:
@@ -122,8 +122,7 @@ class FleurParser(Parser):
                 with output_folder.open(errorfile, 'r') as efile:
                     error_file_lines = efile.read()  # Note: read(), not readlines()
             except IOError:
-                self.logger.error(
-                    "Failed to open error file: {}.".format(errorfile))
+                self.logger.error("Failed to open error file: {}.".format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
             if error_file_lines:
@@ -131,15 +130,15 @@ class FleurParser(Parser):
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning(
                         'The following was written into std error and piped to {}'
-                        ' : \n {}'.format(errorfile, error_file_lines))
-                    self.logger.error('FLEUR calculation did not finish'
-                                      ' successfully.')
+                        ' : \n {}'.format(errorfile, error_file_lines)
+                    )
+                    self.logger.error('FLEUR calculation did not finish' ' successfully.')
 
-                    mpiprocs = self.node.get_attribute('resources').get(
-                        'num_mpiprocs_per_machine', 1)
+                    mpiprocs = self.node.get_attribute('resources'
+                                                       ).get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open('out.xml', 'r') as out_file: #lazy out.xml parsing
+                    with output_folder.open('out.xml', 'r') as out_file:  #lazy out.xml parsing
                         outlines = out_file.read()
                         try:
                             line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
@@ -167,13 +166,16 @@ class FleurParser(Parser):
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
-                        over_indices = re.findall(
-                            r'relaxation: +\S+ +\S+ +\S+', error_file_lines)[0].split()[1:]
-                        error_params = {'error_name': 'MT_OVERLAP_RELAX',
-                                        'description': ('This output node contains information'
-                                                        'about FLEUR error'),
-                                        'overlapped_indices': over_indices[:2],
-                                        'overlaping_value': over_indices[2]}
+                        over_indices = re.findall(r'relaxation: +\S+ +\S+ +\S+',
+                                                  error_file_lines)[0].split()[1:]
+                        error_params = {
+                            'error_name': 'MT_OVERLAP_RELAX',
+                            'description':
+                            ('This output node contains information'
+                             'about FLEUR error'),
+                            'overlapped_indices': over_indices[:2],
+                            'overlaping_value': over_indices[2]
+                        }
                         link_name = self.get_linkname_outparams()
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
@@ -201,26 +203,22 @@ class FleurParser(Parser):
 
             # Call routines for output node creation
             if not success:
-                self.logger.error(
-                    'Parsing of XML output file was not successfull.')
+                self.logger.error('Parsing of XML output file was not successfull.')
                 return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
             elif simpledata:
-                outputdata = dict(list(simpledata.items()) +
-                                  list(parser_info.items()))
+                outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
                 outputdata['CalcJob_uuid'] = self.node.uuid
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
             elif complexdata:
-                parameter_data = dict(
-                    list(complexdata.items()) + list(parser_info.items()))
+                parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
                 parameter_data['CalcJob_uuid'] = self.node.uuid
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)
             else:
-                self.logger.error(
-                    "Something went wrong, neither simpledata nor complexdata found")
+                self.logger.error("Something went wrong, neither simpledata nor complexdata found")
                 parameter_data = dict(list(parser_info.items()))
                 outxml_params = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams()
@@ -235,8 +233,7 @@ class FleurParser(Parser):
                 with output_folder.open(dos_file, 'r') as dosf:
                     dos_lines = dosf.read()  # Note: read() and not readlines()
             except IOError:
-                self.logger.error(
-                    'Failed to open DOS file: {}.'.format(dos_file))
+                self.logger.error('Failed to open DOS file: {}.'.format(dos_file))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             dos_data = parse_dos_file(dos_lines)  # , number_of_atom_types)
 
@@ -250,8 +247,7 @@ class FleurParser(Parser):
                 with output_folder.open(band_file, 'r') as bandf:
                     bands_lines = bandf.read()  # Note: read() and not readlines()
             except IOError:
-                self.logger.error("Failed to open bandstructure file: {}."
-                                  "".format(band_file))
+                self.logger.error("Failed to open bandstructure file: {}." "".format(band_file))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             bands_data = parse_bands_file(bands_lines)
 
@@ -296,8 +292,7 @@ def parse_xmlout_file(outxmlfile):
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
     parser_version = '0.2beta'
-    parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(
-        parser_version)
+    parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 
     successful = True
@@ -309,8 +304,7 @@ def parse_xmlout_file(outxmlfile):
         tree = etree.parse(outxmlfile, parser)
     except etree.XMLSyntaxError:
         outfile_broken = True
-        parser_info_out['parser_warnings'].append(
-            'The out.xml file is broken I try to repair it.')
+        parser_info_out['parser_warnings'].append('The out.xml file is broken I try to repair it.')
 
     if outfile_broken:
         # repair xmlfile and try to parse what is possible.
@@ -320,7 +314,8 @@ def parse_xmlout_file(outxmlfile):
         except etree.XMLSyntaxError:
             parser_info_out['parser_warnings'].append(
                 'Skipping the parsing of the xml file. '
-                'Repairing was not possible.')
+                'Repairing was not possible.'
+            )
             parse_xml = False
             successful = False
 
@@ -384,7 +379,7 @@ def parse_xmlout_file(outxmlfile):
         # (if modes (dos and co) maybe parse anyway if broken?)
         if outfile_broken and (n_iters >= 2):
             iteration_to_parse = iteration_nodes[-2]
-            parser_info_out['last_iteration_parsed'] = n_iters-2
+            parser_info_out['last_iteration_parsed'] = n_iters - 2
         elif outfile_broken and (n_iters == 1):
             iteration_to_parse = iteration_nodes[0]
             parser_info_out['last_iteration_parsed'] = n_iters
@@ -394,7 +389,8 @@ def parse_xmlout_file(outxmlfile):
             # only the starting charge density could be generated
             parser_info_out['parser_warnings'].append(
                 'There was no iteration found in the outfile, either just a '
-                'starting density was generated or something went wrong.')
+                'starting density was generated or something went wrong.'
+            )
             data_exists = False
             iteration_to_parse = None
 
@@ -419,9 +415,10 @@ def parse_xmlout_file(outxmlfile):
         # should they be lists or dicts?
         warnings = {'info': {}, 'debug': {}, 'warning': {}, 'error': {}}
 
-        simple_data['number_of_atoms'] = (len(eval_xpath2(root, relPos_xpath))
-                                          + len(eval_xpath2(root, absPos_xpath))
-                                          + len(eval_xpath2(root, filmPos_xpath)))
+        simple_data['number_of_atoms'] = (
+            len(eval_xpath2(root, relPos_xpath)) + len(eval_xpath2(root, absPos_xpath)) +
+            len(eval_xpath2(root, filmPos_xpath))
+        )
         simple_data['number_of_atom_types'] = len(eval_xpath2(root, atomstypes_xpath))
         simple_data['number_of_iterations'] = n_iters
         simple_data['number_of_symmetries'] = len(eval_xpath2(root, symmetries_xpath))
@@ -435,11 +432,10 @@ def parse_xmlout_file(outxmlfile):
         simple_data['title'] = title
         simple_data['creator_name'] = eval_xpath(root, creator_name_xpath)
         simple_data['creator_target_architecture'] = eval_xpath(
-            root, creator_target_architecture_xpath)
-        simple_data['creator_target_structure'] = eval_xpath(
-            root, creator_target_structure_xpath)
-        simple_data['output_file_version'] = eval_xpath(
-            root, output_version_xpath)
+            root, creator_target_architecture_xpath
+        )
+        simple_data['creator_target_structure'] = eval_xpath(root, creator_target_structure_xpath)
+        simple_data['output_file_version'] = eval_xpath(root, output_version_xpath)
 
         # time
         # Maybe change the behavior if things could not be parsed...
@@ -475,8 +471,10 @@ def parse_xmlout_file(outxmlfile):
                 diff = date_e - date_s
                 offset = diff.days * 86400
         # ncores = 12 #TODO parse parallelization_Parameters
-        time = offset + (int(endtimes[0])-int(starttimes[0]))*60*60 + (
-            int(endtimes[1])-int(starttimes[1]))*60 + int(endtimes[2]) - int(starttimes[2])
+        time = offset + (int(endtimes[0]) - int(starttimes[0])
+                         ) * 60 * 60 + (int(endtimes[1]) - int(starttimes[1])) * 60 + int(
+                             endtimes[2]
+                         ) - int(starttimes[2])
         simple_data['walltime'] = time
         simple_data['walltime_units'] = 'seconds'
         #simple_data['core_hours'] = time*ncores*1.0/3600
@@ -507,7 +505,8 @@ def parse_xmlout_file(outxmlfile):
             parser_info_out['parser_warnings'].append(
                 'There was a XpathEvalError on the xpath: {} \n Either it does '
                 'not exist, or something is wrong with the expression.'
-                ''.format(xpath))
+                ''.format(xpath)
+            )
             return []  # or rather None?
         if len(return_value) == 1:
             return return_value[0]
@@ -529,7 +528,8 @@ def parse_xmlout_file(outxmlfile):
             parser_info_out['parser_warnings'].append(
                 'There was a XpathEvalError on the xpath: {} \n Either it does '
                 'not exist, or something is wrong with the expression.'
-                ''.format(xpath))
+                ''.format(xpath)
+            )
             return []
         return return_value
 
@@ -549,13 +549,15 @@ def parse_xmlout_file(outxmlfile):
                 parser_info_out['parser_warnings'].append(
                     'Tried to get attribute: "{}" from element {}.\n '
                     'I received "{}", maybe the attribute does not exist'
-                    ''.format(attributename, node, attrib_value))
+                    ''.format(attributename, node, attrib_value)
+                )
                 return None
         else:  # something doesn't work here, some nodes get through here
             parser_info_out['parser_warnings'].append(
                 'Can not get attributename: "{}" from node "{}", '
                 'because node is not an element of etree.'
-                ''.format(attributename, node))
+                ''.format(attributename, node)
+            )
 
             return None
 
@@ -573,12 +575,14 @@ def parse_xmlout_file(outxmlfile):
         except TypeError:
             parser_info_out['parser_warnings'].append(
                 'Could not convert: "{}" to float, TypeError'
-                ''.format(value_string))
+                ''.format(value_string)
+            )
             return value_string, False
         except ValueError:
             parser_info_out['parser_warnings'].append(
                 'Could not convert: "{}" to float, ValueError'
-                ''.format(value_string))
+                ''.format(value_string)
+            )
             return value_string, False
         return value, True
 
@@ -596,12 +600,14 @@ def parse_xmlout_file(outxmlfile):
         except TypeError:
             parser_info_out['parser_warnings'].append(
                 'Could not convert: "{}" to int, TypeError'
-                ''.format(value_string))
+                ''.format(value_string)
+            )
             return value_string, False
         except ValueError:
             parser_info_out['parser_warnings'].append(
                 'Could not convert: "{}" to int, ValueError'
-                ''.format(value_string))
+                ''.format(value_string)
+            )
             return value_string, False
         return value, True
 
@@ -613,7 +619,7 @@ def parse_xmlout_file(outxmlfile):
         suc = False
         value_to_save, suc = convert_to_float(value)
         if suc:
-            return value_to_save*htr
+            return value_to_save * htr
         else:
             return value
 
@@ -631,7 +637,6 @@ def parse_xmlout_file(outxmlfile):
         ###################################################
         ##########  all xpaths (maintain this) ############
         # (specifies where to find things in the out.xml) #
-
 
         # density
         densityconvergence_xpath = 'densityConvergence'
@@ -789,213 +794,181 @@ def parse_xmlout_file(outxmlfile):
             if suc:
                 dict_out[value_name] = value_to_save
             else:
-                parser_info_out['unparsed'].append(
-                    {value_name: value,
-                     'iteration': get_xml_attribute(iteration_node, iteration_current_number_name)})
+                parser_info_out['unparsed'].append({
+                    value_name:
+                    value,
+                    'iteration':
+                    get_xml_attribute(iteration_node, iteration_current_number_name)
+                })
 
         if eval_xpath(iteration_node, mae_force_theta_xpath) != []:
             # extract MAE force theorem parameters
-            mae_force_theta = eval_xpath2(
-                iteration_node, mae_force_theta_xpath)
-            write_simple_outnode(
-                mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
+            mae_force_theta = eval_xpath2(iteration_node, mae_force_theta_xpath)
+            write_simple_outnode(mae_force_theta, 'list_floats', 'mae_force_theta', simple_data)
 
-            mae_force_evsum = eval_xpath2(
-                iteration_node, mae_force_evsum_xpath)
-            write_simple_outnode(
-                mae_force_evsum, 'list_floats', 'mae_force_evSum', simple_data)
+            mae_force_evsum = eval_xpath2(iteration_node, mae_force_evsum_xpath)
+            write_simple_outnode(mae_force_evsum, 'list_floats', 'mae_force_evSum', simple_data)
 
             mae_force_phi = eval_xpath2(iteration_node, mae_force_phi_xpath)
-            write_simple_outnode(
-                mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
+            write_simple_outnode(mae_force_phi, 'list_floats', 'mae_force_phi', simple_data)
 
             units_e = eval_xpath2(iteration_node, mae_force_energ_units_xpath)
-            write_simple_outnode(
-                units_e[0], 'str', 'energy_units', simple_data)
+            write_simple_outnode(units_e[0], 'str', 'energy_units', simple_data)
         elif eval_xpath(iteration_node, spst_force_xpath) != []:
             # extract Spin spiral dispersion force theorem parameters
             spst_force_q = eval_xpath2(iteration_node, spst_force_q_xpath)
-            write_simple_outnode(
-                spst_force_q, 'list_floats', 'spst_force_q', simple_data)
+            write_simple_outnode(spst_force_q, 'list_floats', 'spst_force_q', simple_data)
 
-            spst_force_evsum = eval_xpath2(
-                iteration_node, spst_force_evsum_xpath)
-            write_simple_outnode(
-                spst_force_evsum, 'list_floats', 'spst_force_evSum', simple_data)
+            spst_force_evsum = eval_xpath2(iteration_node, spst_force_evsum_xpath)
+            write_simple_outnode(spst_force_evsum, 'list_floats', 'spst_force_evSum', simple_data)
 
             units_e = eval_xpath2(iteration_node, spst_force_energ_units_xpath)
-            write_simple_outnode(
-                units_e[0], 'str', 'energy_units', simple_data)
+            write_simple_outnode(units_e[0], 'str', 'energy_units', simple_data)
         elif eval_xpath(iteration_node, dmi_force_xpath) != []:
             # extract DMI force theorem parameters
             dmi_force_q = eval_xpath2(iteration_node, dmi_force_q_xpath)
-            write_simple_outnode(
-                dmi_force_q, 'list_ints', 'dmi_force_q', simple_data)
+            write_simple_outnode(dmi_force_q, 'list_ints', 'dmi_force_q', simple_data)
 
-            dmi_force_evsum = eval_xpath2(
-                iteration_node, dmi_force_evsum_xpath)
-            write_simple_outnode(
-                dmi_force_evsum, 'list_floats', 'dmi_force_evSum', simple_data)
+            dmi_force_evsum = eval_xpath2(iteration_node, dmi_force_evsum_xpath)
+            write_simple_outnode(dmi_force_evsum, 'list_floats', 'dmi_force_evSum', simple_data)
 
-            dmi_force_theta = eval_xpath2(
-                iteration_node, dmi_force_theta_xpath)
-            write_simple_outnode(
-                dmi_force_theta, 'list_floats', 'dmi_force_theta', simple_data)
+            dmi_force_theta = eval_xpath2(iteration_node, dmi_force_theta_xpath)
+            write_simple_outnode(dmi_force_theta, 'list_floats', 'dmi_force_theta', simple_data)
 
             dmi_force_phi = eval_xpath2(iteration_node, dmi_force_phi_xpath)
-            write_simple_outnode(
-                dmi_force_phi, 'list_floats', 'dmi_force_phi', simple_data)
+            write_simple_outnode(dmi_force_phi, 'list_floats', 'dmi_force_phi', simple_data)
 
-            dmi_force_angles = eval_xpath(
-                iteration_node, dmi_force_angles_xpath)
-            write_simple_outnode(
-                dmi_force_angles, 'int', 'dmi_force_angles', simple_data)
+            dmi_force_angles = eval_xpath(iteration_node, dmi_force_angles_xpath)
+            write_simple_outnode(dmi_force_angles, 'int', 'dmi_force_angles', simple_data)
 
             dmi_force_qs = eval_xpath(iteration_node, dmi_force_qs_xpath)
-            write_simple_outnode(
-                dmi_force_qs, 'int', 'dmi_force_qs', simple_data)
+            write_simple_outnode(dmi_force_qs, 'int', 'dmi_force_qs', simple_data)
 
             units_e = eval_xpath2(iteration_node, dmi_force_energ_units_xpath)
-            write_simple_outnode(
-                units_e[0], 'str', 'energy_units', simple_data)
+            write_simple_outnode(units_e[0], 'str', 'energy_units', simple_data)
         else:
             # total energy
 
             kmax_used = eval_xpath2(root, kmax_xpath)[0]
             write_simple_outnode(kmax_used, 'float', 'kmax', simple_data)
 
-            units_e = get_xml_attribute(
-                eval_xpath(iteration_node, totalenergy_xpath), units_name)
-            write_simple_outnode(
-                units_e, 'str', 'energy_hartree_units', simple_data)
+            units_e = get_xml_attribute(eval_xpath(iteration_node, totalenergy_xpath), units_name)
+            write_simple_outnode(units_e, 'str', 'energy_hartree_units', simple_data)
 
-            tE_htr = get_xml_attribute(
-                eval_xpath(iteration_node, totalenergy_xpath), value_name)
-            write_simple_outnode(
-                tE_htr, 'float', 'energy_hartree', simple_data)
+            tE_htr = get_xml_attribute(eval_xpath(iteration_node, totalenergy_xpath), value_name)
+            write_simple_outnode(tE_htr, 'float', 'energy_hartree', simple_data)
 
-            write_simple_outnode(
-                convert_htr_to_ev(tE_htr), 'float', 'energy', simple_data)
+            write_simple_outnode(convert_htr_to_ev(tE_htr), 'float', 'energy', simple_data)
             write_simple_outnode('eV', 'str', 'energy_units', simple_data)
 
             sumofeigenvalues = get_xml_attribute(
-                eval_xpath(iteration_node, sumofeigenvalues_xpath), value_name)
-            write_simple_outnode(
-                sumofeigenvalues, 'float', 'sum_of_eigenvalues', simple_data)
+                eval_xpath(iteration_node, sumofeigenvalues_xpath), value_name
+            )
+            write_simple_outnode(sumofeigenvalues, 'float', 'sum_of_eigenvalues', simple_data)
 
             coreElectrons = get_xml_attribute(
-                eval_xpath(iteration_node, core_electrons_xpath), value_name)
-            write_simple_outnode(
-                coreElectrons, 'float', 'energy_core_electrons', simple_data)
+                eval_xpath(iteration_node, core_electrons_xpath), value_name
+            )
+            write_simple_outnode(coreElectrons, 'float', 'energy_core_electrons', simple_data)
 
             valenceElectrons = get_xml_attribute(
-                eval_xpath(iteration_node, valence_electrons_xpath), value_name)
-            write_simple_outnode(
-                valenceElectrons, 'float', 'energy_valence_electrons', simple_data)
+                eval_xpath(iteration_node, valence_electrons_xpath), value_name
+            )
+            write_simple_outnode(valenceElectrons, 'float', 'energy_valence_electrons', simple_data)
 
             ch_d_xc_d_inte = get_xml_attribute(
-                eval_xpath(iteration_node, chargeden_xc_den_integral_xpath), value_name)
-            write_simple_outnode(
-                ch_d_xc_d_inte, 'float', 'charge_den_xc_den_integral', simple_data)
+                eval_xpath(iteration_node, chargeden_xc_den_integral_xpath), value_name
+            )
+            write_simple_outnode(ch_d_xc_d_inte, 'float', 'charge_den_xc_den_integral', simple_data)
 
             # bandgap
-            units_bandgap = get_xml_attribute(
-                eval_xpath(iteration_node, bandgap_xpath), units_name)
-            write_simple_outnode(units_bandgap, 'str',
-                                 'bandgap_units', simple_data)
+            units_bandgap = get_xml_attribute(eval_xpath(iteration_node, bandgap_xpath), units_name)
+            write_simple_outnode(units_bandgap, 'str', 'bandgap_units', simple_data)
 
-            bandgap = get_xml_attribute(
-                eval_xpath(iteration_node, bandgap_xpath), value_name)
+            bandgap = get_xml_attribute(eval_xpath(iteration_node, bandgap_xpath), value_name)
             write_simple_outnode(bandgap, 'float', 'bandgap', simple_data)
 
             # fermi
             fermi_energy = get_xml_attribute(
-                eval_xpath(iteration_node, fermi_energy_xpath), value_name)
-            write_simple_outnode(fermi_energy, 'float',
-                                 'fermi_energy', simple_data)
+                eval_xpath(iteration_node, fermi_energy_xpath), value_name
+            )
+            write_simple_outnode(fermi_energy, 'float', 'fermi_energy', simple_data)
             units_fermi_energy = get_xml_attribute(
-                eval_xpath(iteration_node, fermi_energy_xpath), units_name)
-            write_simple_outnode(
-                units_fermi_energy, 'str', 'fermi_energy_units', simple_data)
+                eval_xpath(iteration_node, fermi_energy_xpath), units_name
+            )
+            write_simple_outnode(units_fermi_energy, 'str', 'fermi_energy_units', simple_data)
 
             # density convergence
             units = get_xml_attribute(
-                eval_xpath(iteration_node, densityconvergence_xpath), units_name)
-            write_simple_outnode(
-                units, 'str', 'density_convergence_units', simple_data)
+                eval_xpath(iteration_node, densityconvergence_xpath), units_name
+            )
+            write_simple_outnode(units, 'str', 'density_convergence_units', simple_data)
 
             if jspin == 1:
-                if not relax: # there are no charge densities written if relax
+                if not relax:  # there are no charge densities written if relax
                     charge_density = get_xml_attribute(
-                        eval_xpath(iteration_node, chargedensity_xpath), distance_name)
-                    write_simple_outnode(
-                        charge_density, 'float', 'charge_density', simple_data)
+                        eval_xpath(iteration_node, chargedensity_xpath), distance_name
+                    )
+                    write_simple_outnode(charge_density, 'float', 'charge_density', simple_data)
 
             elif jspin == 2:
-                charge_densitys = eval_xpath2(
-                    iteration_node, chargedensity_xpath)
+                charge_densitys = eval_xpath2(iteration_node, chargedensity_xpath)
 
-                if not relax: # there are no charge densities written if relax
+                if not relax:  # there are no charge densities written if relax
                     if charge_densitys:  # otherwise we get a keyerror if calculation failed.
-                        charge_density1 = get_xml_attribute(
-                            charge_densitys[0], distance_name)
-                        charge_density2 = get_xml_attribute(
-                            charge_densitys[1], distance_name)
+                        charge_density1 = get_xml_attribute(charge_densitys[0], distance_name)
+                        charge_density2 = get_xml_attribute(charge_densitys[1], distance_name)
                     else:  # Is non a problem?
                         charge_density1 = None
                         charge_density2 = None
-                    write_simple_outnode(
-                        charge_density1, 'float', 'charge_density1', simple_data)
-                    write_simple_outnode(
-                        charge_density2, 'float', 'charge_density2', simple_data)
+                    write_simple_outnode(charge_density1, 'float', 'charge_density1', simple_data)
+                    write_simple_outnode(charge_density2, 'float', 'charge_density2', simple_data)
 
                     spin_density = get_xml_attribute(
-                        eval_xpath(iteration_node, spindensity_xpath), distance_name)
-                    write_simple_outnode(
-                        spin_density, 'float', 'spin_density', simple_data)
+                        eval_xpath(iteration_node, spindensity_xpath), distance_name
+                    )
+                    write_simple_outnode(spin_density, 'float', 'spin_density', simple_data)
 
                     overall_charge_density = get_xml_attribute(
-                        eval_xpath(iteration_node, overallchargedensity_xpath), distance_name)
+                        eval_xpath(iteration_node, overallchargedensity_xpath), distance_name
+                    )
                     write_simple_outnode(
-                        overall_charge_density, 'float', 'overall_charge_density', simple_data)
+                        overall_charge_density, 'float', 'overall_charge_density', simple_data
+                    )
 
                 # magnetic moments            #TODO orbMag Moment
                 m_units = get_xml_attribute(
-                    eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
-                write_simple_outnode(
-                    m_units, 'str', 'magnetic_moment_units', simple_data)
-                write_simple_outnode(
-                    m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
+                    eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name
+                )
+                write_simple_outnode(m_units, 'str', 'magnetic_moment_units', simple_data)
+                write_simple_outnode(m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
 
                 moments = eval_xpath(iteration_node, magneticmoments_xpath)
-                write_simple_outnode(
-                    moments, 'list_floats', 'magnetic_moments', simple_data)
+                write_simple_outnode(moments, 'list_floats', 'magnetic_moments', simple_data)
 
-                spinup = eval_xpath(
-                    iteration_node, magneticmoments_spinupcharge_xpath)
-                write_simple_outnode(
-                    spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
+                spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)
+                write_simple_outnode(spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
 
-                spindown = eval_xpath(
-                    iteration_node, magneticmoments_spindowncharge_xpath)
+                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
                 write_simple_outnode(
-                    spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
+                    spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data
+                )
 
                 # orbital magnetic moments
-                orbmoments = eval_xpath(
-                    iteration_node, orbmagneticmoments_xpath)
+                orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
                 write_simple_outnode(
-                    orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
+                    orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data
+                )
 
-                orbspinup = eval_xpath(
-                    iteration_node, orbmagneticmoments_spinupcharge_xpath)
+                orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)
                 write_simple_outnode(
-                    orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data)
+                    orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data
+                )
 
-                orbspindown = eval_xpath(
-                    iteration_node, orbmagneticmoments_spindowncharge_xpath)
+                orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
                 write_simple_outnode(
-                    orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
+                    orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data
+                )
 
                 # TODO: atomtype dependence
                 # moment = get_xml_attribute(
@@ -1041,20 +1014,19 @@ def parse_xmlout_file(outxmlfile):
                     type_positions = eval_xpath2(a_type, pos_attr)
                     for pos in type_positions:
                         pos = [convert_frac(x) for x in pos.text.split()]
-                        atom_positions.append([element]+pos)
+                        atom_positions.append([element] + pos)
 
-                write_simple_outnode(
-                    relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
-                write_simple_outnode(
-                    atom_positions, 'list', 'relax_atom_positions', simple_data)
-                write_simple_outnode(
-                    str(bool(film)), 'str', 'film', simple_data)
+                write_simple_outnode(relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
+                write_simple_outnode(atom_positions, 'list', 'relax_atom_positions', simple_data)
+                write_simple_outnode(str(bool(film)), 'str', 'film', simple_data)
 
             # total iterations
             number_of_iterations_total = get_xml_attribute(
-                eval_xpath(iteration_node, iteration_xpath), overall_number_name)
+                eval_xpath(iteration_node, iteration_xpath), overall_number_name
+            )
             write_simple_outnode(
-                number_of_iterations_total, 'int', 'number_of_iterations_total', simple_data)
+                number_of_iterations_total, 'int', 'number_of_iterations_total', simple_data
+            )
 
             # forces atomtype dependend
             forces = eval_xpath2(iteration_node, forces_total_xpath)
@@ -1064,20 +1036,24 @@ def parse_xmlout_file(outxmlfile):
                 atomtype, _ = convert_to_int(get_xml_attribute(force, atomtype_name))
 
                 forces_unit = get_xml_attribute(
-                    eval_xpath(iteration_node, forces_units_xpath), units_name)
+                    eval_xpath(iteration_node, forces_units_xpath), units_name
+                )
                 write_simple_outnode(forces_unit, 'str', 'force_units', simple_data)
 
                 force_x = get_xml_attribute(force, f_x_name)
                 write_simple_outnode(
-                    force_x, 'float', 'force_x_type{}'.format(atomtype), simple_data)
+                    force_x, 'float', 'force_x_type{}'.format(atomtype), simple_data
+                )
 
                 force_y = get_xml_attribute(force, f_y_name)
                 write_simple_outnode(
-                    force_y, 'float', 'force_y_type{}'.format(atomtype), simple_data)
+                    force_y, 'float', 'force_y_type{}'.format(atomtype), simple_data
+                )
 
                 force_z = get_xml_attribute(force, f_z_name)
                 write_simple_outnode(
-                    force_z, 'float', 'force_z_type{}'.format(atomtype), simple_data)
+                    force_z, 'float', 'force_z_type{}'.format(atomtype), simple_data
+                )
 
                 force_xf, suc1 = convert_to_float(force_x)
                 force_yf, suc2 = convert_to_float(force_y)
@@ -1093,16 +1069,18 @@ def parse_xmlout_file(outxmlfile):
 
                 pos_x = get_xml_attribute(force, new_x_name)
                 write_simple_outnode(
-                    pos_x, 'float', 'abspos_x_type{}'.format(atomtype), simple_data)
+                    pos_x, 'float', 'abspos_x_type{}'.format(atomtype), simple_data
+                )
                 pos_y = get_xml_attribute(force, new_y_name)
                 write_simple_outnode(
-                    pos_y, 'float', 'abspos_y_type{}'.format(atomtype), simple_data)
+                    pos_y, 'float', 'abspos_y_type{}'.format(atomtype), simple_data
+                )
                 pos_z = get_xml_attribute(force, new_z_name)
                 write_simple_outnode(
-                    pos_z, 'float', 'abspos_z_type{}'.format(atomtype), simple_data)
+                    pos_z, 'float', 'abspos_z_type{}'.format(atomtype), simple_data
+                )
 
-            write_simple_outnode(
-                largest_force, 'float', 'force_largest', simple_data)
+            write_simple_outnode(largest_force, 'float', 'force_largest', simple_data)
 
         return simple_data
 
@@ -1155,9 +1133,7 @@ def parse_bands_file(bands_lines):
     fleur_bands = BandsData()
     # fleur_bands.set_cell(cell)
     #fleur_bands.set_kpoints(kpoints, cartesian=True)
-    fleur_bands.set_bands(bands=bands_values,
-                          units='eV',
-                          labels=bands_labels)
+    fleur_bands.set_bands(bands=bands_values, units='eV', labels=bands_labels)
 
     for line in bands_lines:
         pass
@@ -1173,7 +1149,6 @@ def parse_relax_file(rlx):
 
     rlx.seek(0)
     tree = etree.parse(rlx)
-
 
     xpath_disp = '/relaxation/displacements/displace'
     xpath_energy = '/relaxation/relaxation-history/step/@energy'
@@ -1206,6 +1181,7 @@ def parse_relax_file(rlx):
     out_dict['posforces'] = float_posforces
 
     return Dict(dict=out_dict)
+
 
 def convert_frac(ratio):
     """ Converts ratio strings into float, e.g. 1.0/2.0 -> 0.5 """
