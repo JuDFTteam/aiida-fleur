@@ -11,8 +11,9 @@ from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 
 
-def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job,
-                                      fixture_code, generate_structure):  # file_regression
+def test_fleurinpgen_default_calcinfo(
+    aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, generate_structure
+):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
 
@@ -23,9 +24,13 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
         'structure': generate_structure(),
         # 'parameters': orm.Dict(dict=parameters),
         'metadata': {
-            'options': {'resources': {'num_machines': 1},
-                        'max_wallclock_seconds': int(100),
-                        'withmpi': False}
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
         }
     }
 
@@ -48,9 +53,9 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
         input_written = handle.read()
 
     aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
-      5.1306064508       5.1306064508       0.0000000000
-      5.1306064508       0.0000000000       5.1306064508
       0.0000000000       5.1306064508       5.1306064508
+      5.1306064508       0.0000000000       5.1306064508
+      5.1306064508       5.1306064508       0.0000000000
       1.0000000000
       1.0000000000       1.0000000000       1.0000000000
 
@@ -62,27 +67,48 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job,
-                                     fixture_code, generate_structure):  # file_regression
+def test_fleurinpgen_with_parameters(
+    aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, generate_structure
+):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
 
     # Todo add (more) tests with full parameter possibilities, i.e econfig, los, ....
 
     entry_point_name = 'fleur.inpgen'
 
-    parameters = {'atom': {'element': "Si", 'rmt': 2.1, 'jri': 981, 'lmax': 12,
-                           'lnonsph': 6}, #'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
-                  'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
-                  'kpt': {'div1': 17, 'div2': 17, 'div3': 17, 'tkb': 0.0005}}
+    parameters = {
+        'atom': {
+            'element': "Si",
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },  #'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
+        'comp': {
+            'kmax': 5.0,
+            'gmaxxc': 12.5,
+            'gmax': 15.0
+        },
+        'kpt': {
+            'div1': 17,
+            'div2': 17,
+            'div3': 17,
+            'tkb': 0.0005
+        }
+    }
 
     inputs = {
         'code': fixture_code(entry_point_name),
         'structure': generate_structure(),
         'parameters': orm.Dict(dict=parameters),
         'metadata': {
-            'options': {'resources': {'num_machines': 1},
-                        'max_wallclock_seconds': int(100),
-                        'withmpi': False}
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
         }
     }
     calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
@@ -91,9 +117,9 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
         input_written = handle.read()
 
     aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
-      5.1306064508       5.1306064508       0.0000000000
-      5.1306064508       0.0000000000       5.1306064508
       0.0000000000       5.1306064508       5.1306064508
+      5.1306064508       0.0000000000       5.1306064508
+      5.1306064508       5.1306064508       0.0000000000
       1.0000000000
       1.0000000000       1.0000000000       1.0000000000
 
@@ -120,10 +146,28 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
     """
     CALC_ENTRY_POINT = 'fleur.inpgen'
 
-    parameters = {'atom': {'element': "W", 'rmt': 2.1, 'jri': 981, 'lmax': 12,
-                           'lnonsph': 6, 'econfig': '[Kr] 4d10 4f14 | 5s2 5p6 6s2 5d4', 'lo': '5s 5p'},
-                  'comp': {'kmax': 5.0, 'gmaxxc': 12.5, 'gmax': 15.0},
-                  'kpt': {'div1': 3, 'div2': 3, 'div3': 3, 'tkb': 0.0005}}
+    parameters = {
+        'atom': {
+            'element': "W",
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6,
+            'econfig': '[Kr] 4d10 4f14 | 5s2 5p6 6s2 5d4',
+            'lo': '5s 5p'
+        },
+        'comp': {
+            'kmax': 5.0,
+            'gmaxxc': 12.5,
+            'gmax': 15.0
+        },
+        'kpt': {
+            'div1': 3,
+            'div2': 3,
+            'div3': 3,
+            'tkb': 0.0005
+        }
+    }
 
     mock_code = mock_code_factory(
         label='inpgen',
@@ -136,17 +180,20 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         'structure': generate_structure_W(),
         'parameters': orm.Dict(dict=parameters),
         'metadata': {
-            'options': {'resources': {'num_machines': 1, 'tot_num_mpiprocs': 1},
-                        'max_wallclock_seconds': int(100),
-                        'withmpi': False}
+            'options': {
+                'resources': {
+                    'num_machines': 1,
+                    'tot_num_mpiprocs': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
         }
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
     print(calc)
-    res, node = run_get_node(
-        CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
     print((res['remote_folder'].list_objects()))
     print((res['retrieved'].list_objects()))
     assert node.is_finished_ok
-

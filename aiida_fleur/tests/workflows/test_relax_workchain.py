@@ -17,11 +17,13 @@ from __future__ import print_function
 import pytest
 import aiida_fleur
 import os
+from aiida.engine import run_get_node
+from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
-
+CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
@@ -38,7 +40,6 @@ class Test_FleurRelaxWorkChain():
         """
         from aiida.orm import Code, load_node, Dict, StructureData
         from numpy import array
-        from aiida_fleur.workflows.relax import FleurScfWorkChain
 
         options = {'resources': {"num_machines": 1},
                    'max_wallclock_seconds': 5 * 60,
@@ -88,14 +89,60 @@ class Test_FleurRelaxWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
+    def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """
         Test the validation behavior of FleurRelaxWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
         """
-        assert False
+        from aiida.orm import Dict
+
+        # prepare input nodes and dicts
+        options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+                   'max_wallclock_seconds': 5 * 60,
+                   'withmpi': False, 'custom_scheduler_commands': ''}
+        options = Dict(dict=options).store()
+
+        FleurCode = mock_code_factory(
+            label='fleur',
+            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
+            entry_point=CALC_ENTRY_POINT,
+            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+        InpgenCode = mock_code_factory(
+            label='inpgen',
+            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
+            entry_point=CALC2_ENTRY_POINT,
+            ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+
+        wf_parameters = Dict(dict={'relax_iter': 5,
+                                   'film_distance_relaxation': False,
+                                   'force_criterion': 0.001,
+                                   'wrong_key' : None})
+        wf_parameters.store()
+        structure = generate_structure2()
+        structure.store()
+
+        ################
+        # Create builders
+        # interface of exposed scf is tested elsewhere
+
+        # 1. create builder with wrong wf parameters
+        builder_additionalkeys = FleurRelaxWorkChain.get_builder()
+        builder_additionalkeys.scf.structure = structure
+        builder_additionalkeys.wf_parameters = wf_parameters
+        builder_additionalkeys.scf.fleur = FleurCode
+        builder_additionalkeys.scf.inpgen = InpgenCode
+
+
+        ###################
+        # now run the builders all should fail early with exit codes
+
+        # 1. structure and fleurinp given
+        out, node = run_get_node(builder_additionalkeys)
+        assert out == {}
+        assert node.is_finished == True
+        assert node.is_finished_ok == False
+        assert node.exit_status == 230
 
 # maybe validate common interface of code acknostic worklfows and builders, to make sure it can take
 # the protocol.

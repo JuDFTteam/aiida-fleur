@@ -20,6 +20,7 @@ class TestFleurWorkchainInterfaces:
     """
     Test all aiida-fleur workflow interfaces
     """
+
     # TODO
     # prepare some nodes:
     # structure, option, fleurinp, wfparameters

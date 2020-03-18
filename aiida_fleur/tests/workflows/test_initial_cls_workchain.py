@@ -17,6 +17,8 @@ from __future__ import print_function
 import pytest
 import aiida_fleur
 import os
+from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+from aiida.engine import run_get_node
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
@@ -38,8 +40,6 @@ class Test_fleur_initial_cls_wc():
         uses the same structure as reference.
         """
         from aiida.orm import Code, load_node, Dict, StructureData
-        from numpy import array
-        from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
         options = {'resources': {"num_machines": 1},
                    'max_wallclock_seconds': 5 * 60,

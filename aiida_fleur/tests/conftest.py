@@ -146,7 +146,7 @@ def generate_structure():
         from aiida.orm import StructureData
 
         param = 5.43
-        cell = [[param / 2., param / 2., 0], [param / 2., 0, param / 2.], [0, param / 2., param / 2.]]
+        cell = [[0, param / 2., param / 2.], [param / 2., 0, param / 2.], [param / 2., param / 2., 0]]
         structure = StructureData(cell=cell)
         structure.append_atom(position=(0., 0., 0.), symbols='Si', name='Si')
         structure.append_atom(position=(param / 4., param / 4., param / 4.),
@@ -197,7 +197,7 @@ def generate_structure2():
 def generate_structure_W():
     """Return a `StructureData` representing bulk tungsten."""
 
-    def _generate_structureW():
+    def _generate_structure_W():
         """Return a `StructureData` representing bulk tungsten."""
         from aiida.orm import StructureData
 
@@ -208,7 +208,24 @@ def generate_structure_W():
 
         return structure
 
-    return _generate_structureW
+    return _generate_structure_W
+
+@pytest.fixture
+def generate_structure_cif():
+    """Return a `StructureData` from a cif file path."""
+
+    def _generate_structure_cif(cifilepath):
+        """Return a `StructureData` from a cif file."""
+        import os
+        from aiida.orm import CifData
+        #import aiida_fleur
+
+        #aiida_path = os.path.dirname(aiida_fleur.__file__)
+        #filepath = os.path.join(aiida_path, 'tests/files/cif/W43421.cif')
+        structure = CifData.get_or_create(ciffilepath)[0].get_structure()
+        return structure
+
+    return _generate_structure_cif
 
 
 @pytest.fixture
@@ -382,12 +399,13 @@ def generate_film_structure():
     return _generate_film_structure
 
 
-@pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(aiida_profile):  # pylint: disable=redefined-outer-name
+@pytest.fixture(scope='function', autouse=False)#True)
+def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
     """Clear the database before each test.
     """
-    aiida_profile.reset_db()
-
+    #aiida_profile.reset_db()
+    yield
+    #aiida_profile.reset_db()
 
 @pytest.fixture
 def read_dict_from_file():

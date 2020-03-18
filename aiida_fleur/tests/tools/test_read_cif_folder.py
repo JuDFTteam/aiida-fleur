@@ -19,14 +19,19 @@ def test_read_cif_folder_interface(temp_dir):
     out_filename = os.path.join(temp_dir, 'out.txt')
 
     #read_in
-    structure_data, filenames = read_cif_folder(path=os.getcwd(), recursive=True,
-                                                store=True, log=True,
-                                                comments='Test_comment', extras={'test' : 1},
-                                                logfile_name=out_filename)
+    structure_data, filenames = read_cif_folder(
+        path=os.getcwd(),
+        recursive=True,
+        store=True,
+        log=True,
+        comments='Test_comment',
+        extras={'test': 1},
+        logfile_name=out_filename
+    )
 
-    structure_data, filenames = read_cif_folder(path=cif_folderpath, recursive=False,
-                                                store=False, log=False,
-                                                comments='', extras='')
+    structure_data, filenames = read_cif_folder(
+        path=cif_folderpath, recursive=False, store=False, log=False, comments='', extras=''
+    )
     #test number of structurs written
     #test number of cif files written
     #test if extras are set right

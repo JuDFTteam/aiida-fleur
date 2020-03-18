@@ -40,16 +40,23 @@ class Test_FleurBaseWorkChain():
         from numpy import array
         from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-        options = {'resources': {"num_machines": 1},
-                   'max_wallclock_seconds': 5 * 60,
-                   'withmpi': False, 'custom_scheduler_commands': ''}
+        options = {
+            'resources': {
+                "num_machines": 1
+            },
+            'max_wallclock_seconds': 5 * 60,
+            'withmpi': False,
+            'custom_scheduler_commands': ''
+        }
 
         FleurCode = mock_code = mock_code_factory(
             label='fleur',
             data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out',
-                          'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
+            ignore_files=[
+                '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
+                'cdn??'
+            ]
         )
         # create process builder to set parameters
         builder = FleurBaseWorkChain.get_builder()
