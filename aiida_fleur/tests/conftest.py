@@ -399,7 +399,7 @@ def generate_film_structure():
     return _generate_film_structure
 
 
-@pytest.fixture(scope='function', autouse=False)#True)
+@pytest.fixture(scope='function', autouse=True)
 def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
     """Clear the database before each test.
     """
@@ -422,3 +422,4 @@ def read_dict_from_file():
         return node_dict
 
     return _read_dict_from_file
+
