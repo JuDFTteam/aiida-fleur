@@ -25,7 +25,7 @@ import six
 from six.moves import range
 
 from aiida.orm import load_node
-from aiida.orm import Float, StructureData, Dict
+from aiida.orm import Float, StructureData, Dict, List
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
@@ -53,7 +53,7 @@ class FleurEosWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = "0.3.5"
+    _workflowversion = "0.4.0"
 
     _wf_default = {'points': 9, 'step': 0.002, 'guess': 1.00}
 
@@ -84,7 +84,7 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.calcs_future = []
         self.ctx.structures = []
         self.ctx.temp_calc = None
-        self.ctx.structurs_uuids = []
+        self.ctx.structures_uuids = []
         self.ctx.scalelist = []
         self.ctx.volume = []
         self.ctx.volume_peratom = {}
@@ -137,7 +137,10 @@ class FleurEosWorkChain(WorkChain):
 
         self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
-        self.ctx.structurs = eos_structures(self.inputs.structure, self.ctx.scalelist)
+
+        struc_dict = eos_structures(self.inputs.structure, List(list=self.ctx.scalelist))
+        # since cf this has to be a dict, we sort to assure ordering of scale
+        self.ctx.structures = [struc_dict[key] for key in sorted(struc_dict)]
 
     def converge_scf(self):
         """
@@ -145,7 +148,7 @@ class FleurEosWorkChain(WorkChain):
         """
         calcs = {}
 
-        for i, struc in enumerate(self.ctx.structurs):
+        for i, struc in enumerate(self.ctx.structures):
             inputs = self.get_inputs_scf()
             inputs.structure = struc
             natoms = len(struc.sites)
@@ -157,7 +160,7 @@ class FleurEosWorkChain(WorkChain):
 
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
-            self.ctx.structurs_uuids.append(struc.uuid)
+            self.ctx.structures_uuids.append(struc.uuid)
 
             result = self.submit(FleurScfWorkChain, **inputs)
             self.ctx.labels.append(label)
@@ -197,7 +200,7 @@ class FleurEosWorkChain(WorkChain):
                 continue
 
             try:
-                _ = calc.outputs.output_scf_wc_para
+                outputnode_scf = calc.outputs.output_scf_wc_para
             except KeyError:
                 message = (
                     'One SCF workflow failed, no scf output node: {}.'
@@ -207,7 +210,12 @@ class FleurEosWorkChain(WorkChain):
                 self.ctx.successful = False
                 continue
 
-            outpara = calc.outputs.output_scf_wc_para.get_dict()
+            # we loose the connection of the failed scf here.
+            # link labels cannot contain '.'
+            link_label = 'scale_{}'.format(label).replace('.','_')
+            outnodedict[link_label] = outputnode_scf
+
+            outpara = outputnode_scf.get_dict()
 
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
@@ -239,9 +247,15 @@ class FleurEosWorkChain(WorkChain):
         if len(en_array):  # for some reason just en_array does not work
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
 
+            #something went wrong with the fit
             for i in volume, bulk_modulus, bulk_deriv, residuals:
                 if issubclass(type(i), np.complex):
                     write_defaults_fit = True
+
+            # cast float, because np datatypes are sometimes not serialable
+            volume, bulk_modulus = float(volume), float(bulk_modulus)
+            bulk_deriv, residuals = float(bulk_deriv), float(residuals)
+
             volumes = self.ctx.volume
             gs_scale = volume * natoms / self.ctx.org_volume
             bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
@@ -274,7 +288,7 @@ class FleurEosWorkChain(WorkChain):
             'natoms': natoms,
             'total_energy': t_energylist,
             'total_energy_units': e_u,
-            'structures': self.ctx.structurs_uuids,
+            'structures': self.ctx.structures_uuids,
             'calculations': [],  # self.ctx.calcs1,
             'scf_wfs': [],  # self.converge_scf_uuids,
             'distance_charge': distancelist,
@@ -323,7 +337,7 @@ class FleurEosWorkChain(WorkChain):
                 'Structure with the scaling/volume of the lowest total '
                 'energy extracted from FleurEosWorkChain'
             )
-            outputstructure = save_structure(outputstructure)
+
             returndict['output_eos_wc_structure'] = outputstructure
 
         # create link to workchain node
@@ -346,10 +360,12 @@ class FleurEosWorkChain(WorkChain):
 @cf
 def create_eos_result_node(**kwargs):
     """
-    This is a pseudo wf, to create the right graph structure of AiiDA.
-    This wokfunction will create the output node in the database.
-    It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy
+    This is a pseudo cf, to create the right graph structure of AiiDA.
+    This calcfunction will create the output nodes in the database.
+    It also connects the output_nodes to all nodes the information comes from.
+    This includes the output_parameter node for the eos, connections to run scfs,
+    and returning of the gs_structure (best scale)
+    So far it is just parsed in as kwargs argument, because we are to lazy
     to put most of the code overworked from return_results in here.
     """
     outdict = {}
@@ -366,36 +382,52 @@ def create_eos_result_node(**kwargs):
 
     return outdict
 
-
 @cf
-def save_structure(structure):
-    """
-    Saves a structure data node
-    """
-    structure_return = structure.clone()
-    return structure_return
-
-
 def eos_structures(inp_structure, scalelist):
     """
+    Calcfunction, which creates many rescaled StructureData nodes out of a given crystal structure.
+    Keeps the provenance in the database
+
+    :param StructureData, a StructureData node
+    :param scalelist, AiiDA List, list of floats, scaling factors for the cell
+
+    :returns: dict of New StructureData nodes with rescalled structure, which are linked to input
+              Structure
+    """
+    # we do this in one calcfunction now to store less nodes in the DB
+    re_strucs = eos_structures_nocf(inp_structure, scalelist)
+
+    # in AiiDA link labels are always strings, because of namespaces '.' are not allowed.
+    # replace '.' by underscore to store floats in link label
+    res_new = {}
+    for key, struc in re_strucs.items():
+        #label already set by rescale_nowf
+        struc.description = str(key)
+        link_name = 'scale_{}'.format(key).replace('.', '_')
+        res_new[link_name] = struc
+
+    return res_new
+
+
+def eos_structures_nocf(inp_structure, scalelist):
+    """
     Creates many rescalled StructureData nodes out of a crystal structure.
-    Keeps the provenance in the database.
+    Does NOT keep the provenance in the database.
 
     :param StructureData, a StructureData node (pk, sor uuid)
     :param scalelist, list of floats, scaling factors for the cell
 
-    :returns: list of New StructureData nodes with rescalled structure, which are linked to input
-              Structure
+    :returns: dict of New StructureData nodes with rescalled structure, key=scale
     """
     structure = is_structure(inp_structure)
     if not structure:
         # TODO: log something (test if it gets here at all)
         return None
-    re_structures = []
+    re_structures = {}
 
     for scale in scalelist:
-        structure_rescaled = rescale(structure, Float(scale))  # this is a wf
-        re_structures.append(structure_rescaled)
+        structure_rescaled = rescale_nowf(structure, scale)  # this is not a cf
+        re_structures[scale] = structure_rescaled
 
     return re_structures
 
@@ -417,8 +449,11 @@ def birch_murnaghan_fit(energies, volumes):
     fitdata = np.polyfit(volumes[:]**(-2. / 3.), energies[:], 3, full=True)
     ssr = fitdata[1]
     sst = np.sum((energies[:] - np.average(energies[:]))**2.)
-
-    residuals0 = ssr / sst
+    print(ssr, sst, energies)
+    if sst == 0:
+        residuals0 = -1
+    else:
+        residuals0 = ssr / sst
     deriv0 = np.poly1d(fitdata[0])
     deriv1 = np.polyder(deriv0, 1)
     deriv2 = np.polyder(deriv1, 1)
