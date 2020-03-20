@@ -44,7 +44,7 @@ def clear_spec():
 def test_fleur_scf_fleurinp_Si(
     #run_with_cache,
     with_export_cache,
-    mock_code_factory,
+    fleur_local_code,
     create_fleurinp, clear_database
 ):
     """
@@ -62,17 +62,8 @@ def test_fleur_scf_fleurinp_Si(
         'custom_scheduler_commands': ''
     }
 
-    FleurCode = mock_code = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-        ),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=[
-            '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
-            'cdn??'
-        ]
-    )
+    FleurCode = fleur_local_code
+
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
@@ -92,16 +83,19 @@ def test_fleur_scf_fleurinp_Si(
     #print(out)
     #print(node)
 
+    assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
     #print(n)
-    assert abs(n.get('distance_charge') - 9.8993e-06) < 10**-14
+    assert abs(n.get('distance_charge') - 9.8993e-06) < 10**-9
     assert n.get('errors') == []
     #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
 
+
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_Si(run_with_cache, aiida_local_code_factory, mock_code_factory, generate_structure2):
+def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code,
+inpgen_local_code, generate_structure2):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
@@ -117,37 +111,21 @@ def test_fleur_scf_structure_Si(run_with_cache, aiida_local_code_factory, mock_c
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-    FleurCode = aiida_local_code_factory(executable="/Users/broeder/codes/aiida/fleur/max_r4/serial/fleur", entry_point='fleur.fleur')
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
 
-    #FleurCode = mock_code_factory(
-    #    label='fleur',
-    #    data_dir_abspath=os.path.join(
-    #        os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-    #    ),
-    #    entry_point=CALC_ENTRY_POINT,
-    #    ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
-    #)
-    InpgenCode = mock_code_factory(
-        label='inpgen',
-        data_dir_abspath=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-        ),
-        entry_point=CALC2_ENTRY_POINT,
-        ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd']
-    )
-
-    wf_parameters = {'serial': True, 'itmax_per_run': 10}
+    wf_parameters = {'serial': True, 'itmax_per_run': 30}
 
     calc_parameters = {
         'atom': {
             'element': "Si",
             'rmt': 2.1,
             'jri': 981,
-            'lmax': 12,
+            'lmax': 8,
             'lnonsph': 6
         },
         'comp': {
-            'kmax': 3.2
+            'kmax': 3.4
         },
         'kpt': {
             'div1': 10,
@@ -164,8 +142,8 @@ def test_fleur_scf_structure_Si(run_with_cache, aiida_local_code_factory, mock_c
 
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
-    builder.metadata.description = 'Simple Fleur SCF test for W bulk with structure, calc para and wf para given'
-    builder.metadata.label = 'FleurSCF_test_W_bulk'
+    builder.metadata.description = 'Simple Fleur SCF test for Si bulk with structure, calc para and wf para given'
+    builder.metadata.label = 'FleurSCF_test_Si_bulk'
     builder.structure = generate_structure2().store()
     builder.options = Dict(dict=options).store()
     builder.calc_parameters = Dict(dict=calc_parameters).store()
@@ -180,19 +158,84 @@ def test_fleur_scf_structure_Si(run_with_cache, aiida_local_code_factory, mock_c
     print(out)
     print(node)
 
+    assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
     print(n)
-    assert abs(n.get('distance_charge') - 0.0001552065) < 10**-14
+    assert abs(n.get('distance_charge') - 8.0987e-06) < 10**-9
     assert n.get('errors') == []
+
+
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_code,
+inpgen_local_code, generate_structure2):
+    """
+    Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
+    Check if calc parameters are given through, check if wf default parameters are updated
+    """
+    clear_spec()
+    # prepare input nodes and dicts
+    options = {
+        'resources': {
+            "num_machines": 1,
+            "num_mpiprocs_per_machine": 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    wf_parameters = {'serial': True, 'itmax_per_run': 3}
+
+    calc_parameters = {
+        'atom': {
+            'element': "Si",
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 8,
+            'lnonsph': 6
+        },
+        'comp': {
+            'kmax': 3.4
+        },
+        'kpt': {
+            'div1': 10,
+            'div2': 10,
+            'div3': 10,
+            'tkb': 0.0005
+        }
+    }
+
+    # create process builder to set parameters
+    builder = FleurScfWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur SCF test for Si bulk which does not converge'
+    builder.metadata.label = 'FleurSCF_test_Si_bulk'
+    builder.structure = generate_structure2().store()
+    builder.options = Dict(dict=options).store()
+    builder.calc_parameters = Dict(dict=calc_parameters).store()
+    builder.wf_parameters = Dict(dict=wf_parameters).store()
+    builder.fleur = FleurCode.store()
+    builder.inpgen = InpgenCode.store()
+    print(builder)
+
+    # now run scf with cache fixture
+    out, node = run_with_cache(builder)
+    print(out)
+    print(node)
+    assert not node.is_finished_ok
+    assert node.exit_status == 362
+
 
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si_modifications(
     #run_with_cache,
     with_export_cache,
     #mock_code_factory,
-    aiida_local_code_factory,
+    #aiida_local_code_factory,
+    fleur_local_code,
     create_fleurinp, clear_database
 ):
     """
@@ -231,18 +274,8 @@ def test_fleur_scf_fleurinp_Si_modifications(
         'custom_scheduler_commands': ''
     }
 
-    FleurCode = aiida_local_code_factory(executable="/Users/broeder/codes/aiida/fleur/max_r4/serial/fleur", entry_point='fleur.fleur')
-    #FleurCode = mock_code = mock_code_factory(
-    #    label='fleur',
-    #    data_dir_abspath=os.path.join(
-    #        os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-    #    ),
-    #    entry_point=CALC_ENTRY_POINT,
-    #    ignore_files=[
-    #        '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
-    #        'cdn??'
-    #    ]
-    #)
+    FleurCode = fleur_local_code
+
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given and mod request'
@@ -263,7 +296,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
         out, node = run_get_node(builder)
     print(out)
     #print(node)
-
+    assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
@@ -275,7 +308,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
 
     print(n)
     #get kmax and minDistance
-    assert abs(n.get('distance_charge') - 0.0001714547) < 10**-14
+    assert abs(n.get('distance_charge') - 0.0001714547) < 10**-9
     assert n.get('errors') == []
     assert lasto['kmax'] == 3.6
 
