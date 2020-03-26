@@ -1086,11 +1086,17 @@ def parse_xmlout_file(outxmlfile):
 
     if parse_xml:
         root = tree.getroot()
-        simple_out = parse_simplexmlout_file(root, outfile_broken)
-        #simple_out['outputfile_path'] = outxmlfile
-        # TODO: parse complex out
-        complex_out = {}  # parse_xmlout_file(root)
-        return simple_out, complex_out, parser_info_out, successful
+        if root is None:
+            parser_info_out['parser_warnings'].append(
+                'Somehow the root from the xmltree is None, which it should not be, I skip the parsing.')
+            successful = False
+            return {}, {}, parser_info_out, successful
+        else:
+            simple_out = parse_simplexmlout_file(root, outfile_broken)
+            #simple_out['outputfile_path'] = outxmlfile
+            # TODO: parse complex out
+            complex_out = {}  # parse_xmlout_file(root)
+            return simple_out, complex_out, parser_info_out, successful
     else:
         return {}, {}, parser_info_out, successful
 
