@@ -28,7 +28,7 @@ import re
 import numpy as np
 from pprint import pprint
 from aiida.plugins import DataFactory
-from aiida.orm import Code, load_node
+from aiida.orm import Code, load_node, CalcJobNode
 from aiida.orm import Int, StructureData, Dict, RemoteData
 from aiida.engine import WorkChain, if_, ToContext
 from aiida.engine import submit
@@ -115,16 +115,16 @@ class fleur_corehole_wc(WorkChain):
     # Hints:
     # 1. This workflow does not work with local codes!
 
-    _workflowversion = "0.3.2"
+    _workflowversion = "0.4.0"
     _default_options = {
         'resources': {
-            "num_machines": 1
+            "num_machines": 1, "num_mpiprocs_per_machine": 1,
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}
+        #'custom_scheduler_commands': '',
+        #'import_sys_environment': False,
+        #'environment_variables': {}
     }
 
     @classmethod
@@ -134,30 +134,30 @@ class fleur_corehole_wc(WorkChain):
             "wf_parameters",
             valid_type=Dict,
             required=False,
-            default=Dict(
-                dict={
-                    'method':
-                    'valence',  # what method to use, default for valence to highest open shell
-                    'hole_charge': 1.0,  # what is the charge of the corehole? 0<1.0
-                    'atoms': [
-                        'all'
-                    ],  # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
-                    'corelevel': ['all'
-                                  ],  # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
-                    'supercell_size': [2, 1, 1],  # size of the supercell [nx,ny,nz]
-                    'para_group': None,  # use parameter nodes from a parameter group
-                    #'references' : 'calculate',# at some point aiida will have fast forwarding
-                    #'relax' : False,          # relax the unit cell first?
-                    #'relax_mode': 'Fleur',    # what releaxation do you want
-                    #'relax_para' : 'default', # parameter dict for the relaxation
-                    'scf_para': 'default',  # wf parameter dict for the scfs
-                    'same_para':
-                    True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
-                    'serial': True,  # run fleur in serial, or parallel?
-                    #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-                    'magnetic': True
-                }
-            )
+            #default=Dict(
+            #    dict={
+            #        'method':
+            #        'valence',  # what method to use, default for valence to highest open shell
+            #        'hole_charge': 1.0,  # what is the charge of the corehole? 0<1.0
+            #        'atoms': [
+            #            'all'
+            #        ],  # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
+            #        'corelevel': ['all'
+            #                      ],  # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
+            #        'supercell_size': [2, 1, 1],  # size of the supercell [nx,ny,nz]
+            #        'para_group': None,  # use parameter nodes from a parameter group
+            #        #'references' : 'calculate',# at some point aiida will have fast forwarding
+            #        #'relax' : False,          # relax the unit cell first?
+            #        #'relax_mode': 'Fleur',    # what releaxation do you want
+            #        #'relax_para' : 'default', # parameter dict for the relaxation
+            #        'scf_para': 'default',  # wf parameter dict for the scfs
+            #        'same_para':
+            #        True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
+            #        'serial': True,  # run fleur in serial, or parallel?
+            #        #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
+            #        'magnetic': True
+            #    }
+            #)
         )
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
@@ -167,19 +167,19 @@ class fleur_corehole_wc(WorkChain):
         spec.input(
             "options",
             valid_type=Dict,
-            required=False,
-            default=Dict(
-                dict={
-                    'resources': {
-                        "num_machines": 1
-                    },
-                    'max_wallclock_seconds': 60 * 60,
-                    'queue_name': '',
-                    'custom_scheduler_commands': '',
-                    'import_sys_environment': False,
-                    'environment_variables': {}
-                }
-            )
+            required=False#,
+            #default=Dict(
+            #    dict={
+            #        'resources': {
+            #            "num_machines": 1, "num_mpiprocs_per_machine": 1,
+            #        },
+            #        'max_wallclock_seconds': 60 * 60,
+            #        'queue_name': '',
+            #        'custom_scheduler_commands': '',
+            #        'import_sys_environment': False,
+            #        'environment_variables': {}
+            #    }
+            #)
         )
         spec.outline(
             cls.check_input,  # first check if input is consistent
@@ -197,6 +197,7 @@ class fleur_corehole_wc(WorkChain):
             cls.check_scf,
             cls.return_results
         )
+        spec.output('output_corehole_wc_para', valid_type=Dict)
 
         spec.exit_code(
             1, 'ERROR_INVALID_INPUT_RESOURCES', message="The input resources are invalid."
@@ -362,8 +363,8 @@ class fleur_corehole_wc(WorkChain):
             Int(supercell_base[0]),
             Int(supercell_base[1]),
             Int(supercell_base[2]),
-            label=u'supercell_wf',
-            description=description
+            metadata = {'label' : u'supercell_wf',
+                        'description' : description}
         )
 
         # overwrite label and description of new structure
@@ -652,7 +653,6 @@ class fleur_corehole_wc(WorkChain):
                                 -1.0000,  #-hole_charge,  #one electron was added by ingen, we remove it
                                 'mode': 'abs',
                                 'occ': [0],
-                                'create': False
                             }
                         )
                         fleurinp_change.append(charge_change)
@@ -666,7 +666,6 @@ class fleur_corehole_wc(WorkChain):
                                 -1.0000 + hole_charge,  # one electron was already added by inpgen
                                 'mode': 'abs',
                                 'occ': [0],
-                                'create': False
                             }
                         )
                         fleurinp_change.append(charge_change)
@@ -816,8 +815,8 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    label=scf_label,
-                    description=scf_desc
+                    metadata={'label' : scf_label,
+                              'description' : scf_desc}
                 )  #
             elif isinstance(node, FleurinpData):
                 res = self.submit(
@@ -827,8 +826,8 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    label=scf_label,
-                    _description=scf_desc
+                    metadata={'label' : scf_label,
+                              'description' : scf_desc}
                 )  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
@@ -840,8 +839,8 @@ class fleur_corehole_wc(WorkChain):
                         structure=node[0],
                         inpgen=self.inputs.inpgen,
                         fleur=self.inputs.fleur,
-                        label=scf_label,
-                        description=scf_desc
+                        metadata={'label' : scf_label,
+                                  'description' : scf_desc}
                     )  #
                 else:
                     self.report(
@@ -932,8 +931,8 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    label=scf_label,
-                    description=scf_desc
+                    metadata={'label' : scf_label,
+                              'description' : scf_desc}
                 )  #
             elif isinstance(node, FleurinpData):
                 res = self.submit(
@@ -943,8 +942,8 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    label=scf_label,
-                    description=scf_desc
+                    metadata={'label' : scf_label,
+                              'description' : scf_desc}
                 )  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
@@ -957,8 +956,8 @@ class fleur_corehole_wc(WorkChain):
                             options=options,
                             inpgen=self.inputs.inpgen,
                             fleur=self.inputs.fleur,
-                            label=scf_label,
-                            description=scf_desc
+                            metadata={'label' : scf_label,
+                                      'description' : scf_desc}
                         )  #
             else:
                 self.report(
@@ -1185,7 +1184,7 @@ def prepare_struc_corehole_wf(
         site=[],
         pos=[(pos[0], pos[1], pos[2])],
         new_kinds_names=new_kinds_names,
-        Dict=para
+        parameterdata=para
     )
     #kinds = new_struc.kinds
     #for kind in kinds:
@@ -1199,7 +1198,7 @@ def prepare_struc_corehole_wf(
         moved_struc,
         species_name,  #wf_para_dict['kindname'],
         wf_para_dict['econfig'],
-        Dict=new_para,
+        parameterdata=new_para,
         species_name=species_name
     )
 
@@ -1218,7 +1217,8 @@ def extract_results_corehole(calcs):
 
     calc_uuids = []
     for calc in calcs:
-        #print(calc)
+        print(calc)
+        print(calc.get_outgoing().all())
         calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
     #print(calc_uuids)
@@ -1239,15 +1239,19 @@ def extract_results_corehole(calcs):
     # check if calculation pks belong to successful fleur calculations
     for i, uuid in enumerate(calc_uuids):
         calc = load_node(uuid)
-        if (not isinstance(calc, FleurCalculation)):
+        if (not isinstance(calc, CalcJobNode)):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue
-        if not calc.is_finished_ok:
+        if calc.is_finished_ok:
             # get out.xml file of calculation
-            outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
+            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
+            outxml = calc.outputs.retrieved.open('out.xml')
             #print outxml
-            corelevels, atomtypes = extract_corelevels(outxml)
+            try:
+                corelevels, atomtypes = extract_corelevels(outxml)
+            finally:
+                outxml.close()
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))
@@ -1276,11 +1280,11 @@ def extract_results_corehole(calcs):
             #all_total_energies[number] = total_energy
         else:
             # log and continue
-            total_energy = float('nan')
-            bandgap = float('nan')
-            efermi = float('nan')
-            corelevels = [float('nan')]
-            atomtypes = [float('nan')]
+            total_energy = 2e308#float('nan'))
+            bandgap = 2e308#float('nan')
+            efermi = 2e308#float('nan')
+            corelevels = [2e308]#[float('nan')]
+            atomtypes = [2e308]#[float('nan')]
             #continue
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
         fermi_energies.append(efermi)

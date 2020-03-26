@@ -17,10 +17,26 @@ from __future__ import print_function
 import pytest
 import aiida_fleur
 import os
+from aiida.orm import Code, load_node, Dict, StructureData
+from aiida_fleur.workflows.corehole import fleur_corehole_wc
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
-CALC_ENTRY_POINT = 'fleur.fleur'
+#aiida_path = os.path.dirname(aiida_fleur.__file__)
+#TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
+#CALC_ENTRY_POINT = 'fleur.fleur'
+
+
+def clear_spec():
+    if hasattr(FleurScfWorkChain, '_spec'):
+        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
+        # otherwise we will run into DbNode matching query does not exist
+        del FleurScfWorkChain._spec
+    if hasattr(FleurBaseWorkChain, '_spec'):
+        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
+        # otherwise we will run into DbNode matching query does not exist
+        del FleurBaseWorkChain._spec
+
 
 
 # tests
@@ -29,42 +45,100 @@ class Test_fleur_corehole_wc():
     """
     Regression tests for the fleur_corehole_wc
     """
-    @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_corehole_fleurinp_Si_minimal(self, run_with_cache, mock_code_factory, create_fleurinp):
+    def test_fleur_corehole_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
+generate_structure_W):
         """
-        full example using fleur_corehole_wc with just a fleurinp data as input.
-        Several fleur runs needed till convergence, calculation of all only certain coreholes
+        full example using fleur_corehole_wc on W.
+        Several fleur runs needed, calculation of all only certain coreholes
         """
-        from aiida.orm import Code, load_node, Dict, StructureData
-        from numpy import array
-        from aiida_fleur.workflows.corehole import fleur_corehole_wc
+        clear_spec()
 
-        options = {'resources': {"num_machines": 1},
-                   'max_wallclock_seconds': 5 * 60,
-                   'withmpi': False, 'custom_scheduler_commands': ''}
+        options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+                   'max_wallclock_seconds': 60 * 60, "queue_name" : ''}
+                   #'withmpi': False, 'custom_scheduler_commands': ''}
 
-        FleurCode = mock_code = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out',
-                          'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
-        )
+        parameters = Dict(dict={
+                  'atom':{
+                        'element' : 'W',
+                        'jri' : 833,
+                        'rmt' : 2.3,
+                        'dx' : 0.015,
+                        'lmax' : 8,
+                        'lo' : '5p',
+                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                        },
+                  'comp': {
+                        'kmax': 3.0,
+                        },
+                  'kpt': {
+                        'nkpt': 100,
+                        }})
+        parameters.store()
+
+        #structure = generate_structure_W()
+        # W bcc structure
+        bohr_a_0 = 0.52917721092  # A
+        a = 3.013812049196 * bohr_a_0
+        cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., 0.), symbols='W')
+
+        structure.store()
+        wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
+        wf_para = Dict(dict={
+                    'method': 'valence',
+                    'hole_charge': 0.5,
+                    'atoms': ['all'],
+                    'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
+                    'supercell_size': [2, 1, 1],
+                    'magnetic': True})
+
+
+        FleurCode = fleur_local_code
+        InpgenCode = inpgen_local_code
+
         # create process builder to set parameters
-        builder = FleurScfWorkChain.get_builder()
-        builder.metadata.description = 'Simple fleur_corehole_wc test for Si bulk with fleurinp data given'
-        builder.metadata.label = 'fleur_corehole_wc_test_Si_bulk'
-        builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.options = Dict(dict=options)
-        builder.fleur = FleurCode
+        inputs = {
+            #'metadata' : {
+            #    'description' : 'Simple fleur_corehole_wc test with W bulk',
+            #    'label' : 'fleur_corehole_wc_test_W_bulk'},
+        'options' :  Dict(dict=options),
+        'fleur' : FleurCode,
+        'inpgen' : InpgenCode,
+        'wf_parameters' : wf_para,
+        'calc_parameters' : parameters,
+        'structure' : structure
+        }
 
         # now run calculation
-        out, node = run_with_cache(builder)
+        out, node = run_with_cache(inputs, process_class=fleur_corehole_wc)
+
+
+        # check general run
+        assert node.is_finished_ok
 
         # check output
+        # corelevel shift should be zero
+        outn = out.get('output_corehole_wc_para', None)
+        assert outn != None
+        outd = outn.get_dict()
 
-        #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
+        assert outd.get('successful')
+        assert outd.get('warnings') == []
+
+        assert outd.get("weighted_binding_energy") == [
+                            470.54883993999,
+                            402.52235778002, 32.112260220107, 29.829247920075]
+
+
+        assert outd.get("binding_energy") == [
+        235.27441997,
+        201.26117889001,
+        16.056130110053,
+        14.914623960038]
+
+
 
     @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')

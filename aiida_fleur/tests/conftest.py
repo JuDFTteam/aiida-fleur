@@ -399,10 +399,18 @@ def generate_structure_W():
         """Return a `StructureData` representing bulk tungsten."""
         from aiida.orm import StructureData
 
-        param = 3.18968 # 1.58950065353588 * 0.5291772109
-        cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
+
+        # W bcc structure
+        bohr_a_0= 0.52917721092 # A
+        a = 3.013812049196*bohr_a_0
+        cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
         structure = StructureData(cell=cell)
-        structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
+        structure.append_atom(position=(0.,0.,0.), symbols='W', name='W')
+
+        #param = 3.18968 # 1.58950065353588 * 0.5291772109
+        #cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
+        #structure = StructureData(cell=cell)
+        #structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
 
         return structure
 
