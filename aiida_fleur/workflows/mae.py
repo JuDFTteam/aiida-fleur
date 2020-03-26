@@ -41,7 +41,7 @@ class FleurMaeWorkChain(WorkChain):
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = "0.3.0"
 
     _default_options = {
         'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
@@ -83,7 +83,7 @@ class FleurMaeWorkChain(WorkChain):
             cls.return_results
         )
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_mae_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
@@ -116,6 +116,7 @@ class FleurMaeWorkChain(WorkChain):
         self.ctx.t_energydict = []
         self.ctx.mae_thetas = []
         self.ctx.mae_phis = []
+        self.ctx.fleuroutuuid =  None
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._wf_default)
@@ -434,6 +435,7 @@ class FleurMaeWorkChain(WorkChain):
         mae_thetas = []
         mae_phis = []
         htr_to_ev = 27.21138602
+        fleur_output_uuid = None
 
         try:
             calculation = self.ctx.f_t
@@ -448,7 +450,9 @@ class FleurMaeWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         try:
-            out_dict = calculation.outputs.output_parameters.dict
+            fleurout = calculation.outputs.output_parameters
+            fleur_output_uuid = fleurout.uuid
+            out_dict = fleurout.dict
             t_energydict = out_dict.mae_force_evSum
             mae_thetas = out_dict.mae_force_theta
             mae_phis = out_dict.mae_force_phi
@@ -461,14 +465,15 @@ class FleurMaeWorkChain(WorkChain):
             else:
                 t_energydict = [(x-minenergy) for x in t_energydict]
 
-        except AttributeError:
-            message = ('Did not manage to read evSum or energy units after FT calculation.')
+        except AttributeError as e_message:
+            message = ('Did not manage to read evSum or energy units after FT calculation. {}'.format(e_message))
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         self.ctx.t_energydict = t_energydict
         self.ctx.mae_thetas = mae_thetas
         self.ctx.mae_phis = mae_phis
+        self.ctx.fleuroutuuid = fleur_output_uuid
 
     def return_results(self):
         """
@@ -487,8 +492,18 @@ class FleurMaeWorkChain(WorkChain):
                'warnings': self.ctx.warnings,
                'errors': self.ctx.errors}
 
-        out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+
+        # ensure provenance of output nodes
+
+        out_dict = {'out' : Dict(dict=out)}
+        if self.ctx.fleuroutuuid is not None:
+            out_dict['last_fleur_out'] = load_node(self.ctx.fleuroutuuid)
+
+        out_nodes = save_mae_output_node(**out_dict)
+        out = out_nodes.get('output_mae_wc_para')
+
+        # make wc return out node
+        self.out('output_mae_wc_para', out)
 
     def control_end_wc(self, errormsg):
         """
@@ -500,10 +515,29 @@ class FleurMaeWorkChain(WorkChain):
         self.return_results()
 
 
+
+
 @cf
-def save_output_node(out):
+def save_mae_output_node(**kwargs):
     """
-    This calcfunction saves the out dict in the db
+    This is a pseudo cf, to create the right graph structure of AiiDA.
+    This calcfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information comes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
     """
-    out_wc = out.clone()
-    return out_wc
+    for key, val in six.iteritems(kwargs):
+        if key == 'out':  # should be always there
+            outpara = val
+    outdict = {}
+
+    # clone, because we rather produce the same node twice then have a circle in the database for
+    outputnode = outpara.clone()
+    outputnode.label = 'output_mae_wc_para'
+    outputnode.description = ('Contains magnetic anisotropy results and '
+                              'information of an FleurMaeWorkChain run.')
+
+    outdict['output_mae_wc_para'] = outputnode
+
+    return outdict
+
