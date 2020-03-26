@@ -17,6 +17,7 @@ from __future__ import print_function
 import pytest
 import aiida_fleur
 import os
+from aiida.orm import load_node
 from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 from aiida.engine import run_get_node
 
@@ -42,7 +43,7 @@ class Test_fleur_initial_cls_wc():
     """
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
-                                 generate_structure_W):
+                                 generate_structure_W, export_cache, load_cache):
         """
         full example using fleur_initial_cls_wc with just elemental W as input
         (W, onw atoms per unit cell)
@@ -54,6 +55,11 @@ class Test_fleur_initial_cls_wc():
                    'max_wallclock_seconds': 5 * 60,
                    'withmpi': False, 'custom_scheduler_commands': ''}
 
+
+        # Since we parse uuid in input caching does not work if we recreate the nodes so we have to
+        # import them
+
+        '''
         parameters = Dict(dict={
                   'atom':{
                         'element' : 'W',
@@ -72,8 +78,16 @@ class Test_fleur_initial_cls_wc():
                         }}).store()
 
         structure = generate_structure_W().store()
-        wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
+        export_cache([structure, parameters], 'W_structure_para.tar.gz')
+        '''
+        load_cache('data_dir/W_structure_para.tar.gz')
 
+        #print(structure.uuid, structure.pk)
+        #print(parameters.uuid, parameters.pk)
+        structure = load_node('6c7addb7-f688-4afd-8492-7c64861efd70')
+        parameters = load_node('b5275b1a-bff7-4cdc-8efc-36c5ddd67f28')
+
+        wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -110,6 +124,7 @@ class Test_fleur_initial_cls_wc():
                [[0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]}
 
         assert outd.get('formation_energy') == [0.0]
+
 
     @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')
