@@ -110,6 +110,9 @@ class FleurinpData(Data):
             else:
                 self.set_files(files)
 
+    # ignore machine dependent attributes in hash
+    _hash_ignored_attributes = ['_schema_file_path', '_search_paths']
+
     @property
     def _has_schema(self):
         """
