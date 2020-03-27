@@ -222,12 +222,17 @@ class FleurCreateMagneticWorkChain(WorkChain):
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
                     return self.ctx.ERROR_EOS_FAILED
-
+            #print(eos_output.get_dict())
             scaling_param = eos_output.get_dict()['scaling_gs']
+            #print('wf_dict', self.ctx.wf_dict)
+            #print(scaling_param)
+            Dict(dict=self.ctx.wf_dict)
 
-            inputs.scf.structure, substrate = create_film_to_relax(
-                wf_dict_node=Dict(dict=self.ctx.wf_dict), scaling_parameter=Float(scaling_param)
-            )
+            res_dict= create_film_to_relax(
+                wf_dict_node=Dict(dict=self.ctx.wf_dict),
+                scaling_parameter=Float(float(scaling_param)))
+            inputs.scf.structure = res_dict.get('centered_film')
+            substrate = res_dict.get('substrate')
             # TODO: error handling might be needed
             self.ctx.substrate = substrate.uuid  # can not store aiida data nodes directly in ctx.
 
@@ -342,7 +347,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter):
 
     miller = wf_dict['miller']
     host_symbol = wf_dict['host_symbol']
-    latticeconstant = wf_dict['latticeconstant'] * scaling_parameter
+    latticeconstant = wf_dict['latticeconstant'] * float(scaling_parameter) # get rid of Float
     size = wf_dict['size']
     replacements = wf_dict['replacements']
     pop_last_layers = wf_dict['pop_last_layers']
@@ -371,4 +376,4 @@ def create_film_to_relax(wf_dict_node, scaling_parameter):
 
     centered_structure = center_film(StructureData(ase=structure))
 
-    return centered_structure, StructureData(ase=substrate)
+    return {'centered_film' : centered_structure, 'substrate' : StructureData(ase=substrate)}
