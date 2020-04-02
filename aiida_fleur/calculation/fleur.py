@@ -200,7 +200,7 @@ class FleurCalculation(CalcJob):
                       'cmdline']
     # possible modes?
     _fleur_modes = ['band', 'dos', 'forces', 'chargeDen',
-                    'latticeCo', 'scf']
+                    'latticeCo', 'scf', 'force_theorem', 'gw']
 
     @classmethod
     def define(cls, spec):

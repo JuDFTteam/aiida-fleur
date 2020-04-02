@@ -138,7 +138,7 @@ class FleurParser(Parser):
                                                        ).get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open('out.xml', 'r') as out_file:  #lazy out.xml parsing
+                    with output_folder.open('out.xml', 'r') as out_file:  # lazy out.xml parsing
                         outlines = out_file.read()
                         try:
                             line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
@@ -151,7 +151,7 @@ class FleurParser(Parser):
                             if usage_json in list_of_files:
                                 with output_folder.open(usage_json, 'r') as us_file:
                                     usage = json.load(us_file)
-                                kb_used = usage['VmPeak']
+                                kb_used = usage['data']['VmPeak']
                             else:
                                 try:
                                     line_used = re.findall(r'used.+', error_file_lines)[0]
@@ -166,16 +166,13 @@ class FleurParser(Parser):
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
-                        over_indices = re.findall(r'relaxation: +\S+ +\S+ +\S+',
-                                                  error_file_lines)[0].split()[1:]
-                        error_params = {
-                            'error_name': 'MT_OVERLAP_RELAX',
-                            'description':
-                            ('This output node contains information'
-                             'about FLEUR error'),
-                            'overlapped_indices': over_indices[:2],
-                            'overlaping_value': over_indices[2]
-                        }
+                        overlap_line = re.findall(r'\S+ +\S+ olap: +\S+',
+                                                  error_file_lines)[0].split()
+                        error_params = {'error_name': 'MT_OVERLAP_RELAX',
+                                        'description': ('This output node contains information'
+                                                        'about FLEUR error'),
+                                        'overlapped_indices': overlap_line[:2],
+                                        'overlaping_value': overlap_line[3]}
                         link_name = self.get_linkname_outparams()
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
