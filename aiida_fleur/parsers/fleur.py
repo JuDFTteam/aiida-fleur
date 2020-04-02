@@ -207,13 +207,13 @@ class FleurParser(Parser):
                 return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
             elif simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
-                outputdata['CalcJob_uuid'] = self.node.uuid
+                #outputdata['CalcJob_uuid'] = self.node.uuid
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
             elif complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
-                parameter_data['CalcJob_uuid'] = self.node.uuid
+                #parameter_data['CalcJob_uuid'] = self.node.uuid
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)
@@ -291,7 +291,7 @@ def parse_xmlout_file(outxmlfile):
     global parser_info_out
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
-    parser_version = '0.2beta'
+    parser_version = '0.3.0'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 

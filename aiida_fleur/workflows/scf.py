@@ -60,7 +60,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = "0.4.0"
+    _workflowversion = "0.4.1"
     _wf_default = {'fleur_runmax': 4,
                    'density_converged': 0.00002,
                    'energy_converged': 0.002,
@@ -524,12 +524,15 @@ class FleurScfWorkChain(WorkChain):
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_calc = self.ctx.last_calc
-
+            print(last_calc)
             # TODO: dangerous, can fail, error catching
             # TODO: is there a way to use a standard parser?
             out_para = last_calc.outputs.output_parameters
-            fleur_calcjob = load_node(out_para.get_dict()['CalcJob_uuid'])
-            outxmlfile_opened = last_calc.outputs.retrieved.open(
+            fleur_calcjob = out_para.get_incoming().all()[-1].node
+            # might be fragile, better make link label unique
+            #last_calc.outputs.outputs_parameters #load_node(out_para.get_dict()['CalcJob_uuid'])
+            #outxmlfile_opened = last_calc
+            outxmlfile_opened = fleur_calcjob.outputs.retrieved.open(
                 fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r')
 
             walltime = last_calc.outputs.output_parameters.dict.walltime
