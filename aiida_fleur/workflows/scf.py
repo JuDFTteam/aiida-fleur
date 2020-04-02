@@ -416,7 +416,14 @@ class FleurScfWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:  # apply change
-                    method(**para)
+                    try:
+                        method(**para)
+                    except ValueError as vale:
+                        error= ("ERROR: Changing the inp.xml file failed. Tried to apply {}"
+                                ", which failed with {}. I abort, good luck next time!"
+                                "".format(change, vale))
+                        self.control_end_wc(error)
+                        return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # validate?
         try:
