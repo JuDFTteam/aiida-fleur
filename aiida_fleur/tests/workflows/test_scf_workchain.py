@@ -28,16 +28,6 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-def clear_spec():
-    if hasattr(FleurScfWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurScfWorkChain._spec
-    if hasattr(FleurBaseWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurBaseWorkChain._spec
-
 # tests
 #@pytest.mark.skip(reason='fleur executable fails here, test prob works')
 @pytest.mark.timeout(500, method='thread')
@@ -45,13 +35,12 @@ def test_fleur_scf_fleurinp_Si(
     #run_with_cache,
     with_export_cache,
     fleur_local_code,
-    create_fleurinp, clear_database
+    create_fleurinp, clear_database, clear_spec
 ):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence
     """
-    clear_spec()
     options = {
         'resources': {
             "num_machines": 1,
@@ -95,12 +84,11 @@ def test_fleur_scf_fleurinp_Si(
 
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code,
-inpgen_local_code, generate_structure2):
+inpgen_local_code, generate_structure2, clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
     """
-    clear_spec()
     # prepare input nodes and dicts
     options = {
         'resources': {
@@ -169,12 +157,11 @@ inpgen_local_code, generate_structure2):
 
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_code,
-inpgen_local_code, generate_structure2):
+inpgen_local_code, generate_structure2, clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
     """
-    clear_spec()
     # prepare input nodes and dicts
     options = {
         'resources': {
@@ -236,13 +223,12 @@ def test_fleur_scf_fleurinp_Si_modifications(
     #mock_code_factory,
     #aiida_local_code_factory,
     fleur_local_code,
-    create_fleurinp, clear_database
+    create_fleurinp, clear_database, clear_spec
 ):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
     but adjusting the Fleur input file before the fleur run.
     """
-    clear_spec()
 
     wf_parameters = {
         'fleur_runmax': 4,
@@ -323,7 +309,7 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
 
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_validation_wrong_inputs(
-    run_with_cache, mock_code_factory, create_fleurinp, generate_structure2
+    run_with_cache, mock_code_factory, create_fleurinp, generate_structure2, clear_spec
 ):
     """
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw
@@ -331,7 +317,7 @@ def test_fleur_scf_validation_wrong_inputs(
     """
     from aiida.engine import run_get_node
 
-    clear_spec()
+    #clear_spec()
 
     # prepare input nodes and dicts
     options = {

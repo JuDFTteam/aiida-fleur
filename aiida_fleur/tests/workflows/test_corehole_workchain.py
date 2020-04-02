@@ -22,23 +22,6 @@ from aiida_fleur.workflows.corehole import fleur_corehole_wc
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-#aiida_path = os.path.dirname(aiida_fleur.__file__)
-#TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
-#CALC_ENTRY_POINT = 'fleur.fleur'
-
-
-def clear_spec():
-    if hasattr(FleurScfWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurScfWorkChain._spec
-    if hasattr(FleurBaseWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurBaseWorkChain._spec
-
-
-
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_fleur_corehole_wc():
@@ -47,13 +30,12 @@ class Test_fleur_corehole_wc():
     """
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_corehole_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
-generate_structure_W):
+generate_structure_W, clear_spec):
         """
         full example using fleur_corehole_wc on W.
         Several fleur runs needed, calculation of all only certain coreholes
         """
-        clear_spec()
-
+        from aiida.engine import run_get_node
         options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
                    'max_wallclock_seconds': 60 * 60, "queue_name" : ''}
                    #'withmpi': False, 'custom_scheduler_commands': ''}
@@ -85,7 +67,6 @@ generate_structure_W):
         structure.append_atom(position=(0., 0., 0.), symbols='W')
 
         structure.store()
-        wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
         wf_para = Dict(dict={
                     'method': 'valence',
                     'hole_charge': 0.5,
@@ -113,7 +94,7 @@ generate_structure_W):
 
         # now run calculation
         out, node = run_with_cache(inputs, process_class=fleur_corehole_wc)
-
+        #out, node = run_get_node(fleur_corehole_wc, **inputs)
 
         # check general run
         assert node.is_finished_ok

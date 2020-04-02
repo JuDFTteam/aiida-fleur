@@ -114,7 +114,8 @@ def rescale_nowf(inp_structure, scale):
     new_ase.set_cell(the_ase.get_cell() *
                      np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = '{}  rescaled {}'.format(scale, structure.uuid)
+    rescaled_structure.label = '{}  rescaled'.format(scale)#, structure.uuid)
+    #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
 
     return rescaled_structure

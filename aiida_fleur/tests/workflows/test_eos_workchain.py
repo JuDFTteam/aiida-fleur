@@ -33,7 +33,8 @@ class Test_FleurEosWorkChain:
     Regression tests for the FleurEosWorkChain
     """
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_eos_structure_Si(self, run_with_cache, fleur_local_code, inpgen_local_code, generate_structure2):
+    def test_fleur_eos_structure_Si(self, run_with_cache, fleur_local_code, inpgen_local_code,
+generate_structure2, clear_spec):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence

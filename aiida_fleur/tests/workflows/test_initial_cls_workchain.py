@@ -21,19 +21,6 @@ from aiida.orm import load_node
 from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 from aiida.engine import run_get_node
 
-#aiida_path = os.path.dirname(aiida_fleur.__file__)
-#TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
-#CALC_ENTRY_POINT = 'fleur.fleur'
-
-def clear_spec():
-    if hasattr(FleurScfWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurScfWorkChain._spec
-    if hasattr(FleurBaseWorkChain, '_spec'):
-        # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-        # otherwise we will run into DbNode matching query does not exist
-        del FleurBaseWorkChain._spec
 
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
@@ -43,7 +30,7 @@ class Test_fleur_initial_cls_wc():
     """
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
-                                 generate_structure_W, export_cache, load_cache):
+                                 generate_structure_W, export_cache, load_cache, clear_spec):
         """
         full example using fleur_initial_cls_wc with just elemental W as input
         (W, onw atoms per unit cell)
