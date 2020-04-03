@@ -4,55 +4,55 @@
  --------------------------------------------------------
  Number of OMP-threads:           6
  --------------------------------------------------------
- Iteration:           1  Distance:   8.14211820818848     
+ Iteration:           1  Distance:   8.14211820818857     
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           2  Distance:   7.69204733499303     
+ Iteration:           2  Distance:   7.69204733499305     
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           3  Distance:  0.856944507777165     
+ Iteration:           3  Distance:  0.856944507774482     
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           4  Distance:  0.501438298307176     
+ Iteration:           4  Distance:  0.501438298333166     
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           5  Distance:  0.205605182859230     
+ Iteration:           5  Distance:  0.205605182835176     
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           6  Distance:  1.852288798054865E-002
+ Iteration:           6  Distance:  1.852288794887397E-002
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           7  Distance:  1.291466957961721E-002
+ Iteration:           7  Distance:  1.291466956872122E-002
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           8  Distance:  1.303177345210700E-003
+ Iteration:           8  Distance:  1.303177341130901E-003
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           9  Distance:  1.207653956855241E-003
+ Iteration:           9  Distance:  1.207653876674686E-003
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          10  Distance:  1.741120769436712E-004
+ Iteration:          10  Distance:  1.741120625902552E-004
  Test for time of next iteration:
  Time provided (min):          10
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          11  Distance:  3.295334770331485E-005
+ Iteration:          11  Distance:  3.295348349644261E-005
  Usage data send using curl: usage.json

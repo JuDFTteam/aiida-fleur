@@ -170,30 +170,30 @@
                      "subtimers": [
                         {
                            "timername" : "Updating energy parameters",
+                           "totaltime" : 1.00000,
+                           "mintime"   : 0.0000E+00,
+                           "maxtime"   : 1.00000,
+                           "ncalls"    : 11
+                        },
+                        {
+                           "timername" : "tlmplm",
                            "totaltime" : 0.0000E+00,
                            "mintime"   : 0.0000E+00,
                            "maxtime"   : 0.0000E+00,
                            "ncalls"    : 11
                         },
                         {
-                           "timername" : "tlmplm",
-                           "totaltime" : 1.00000,
-                           "mintime"   : 0.0000E+00,
-                           "maxtime"   : 1.00000,
-                           "ncalls"    : 11
-                        },
-                        {
                            "timername" : "Setup of H&S matrices",
-                           "totaltime" : 1.00000,
+                           "totaltime" : 2.00000,
                            "mintime"   : 0.0000E+00,
                            "maxtime"   : 1.00000,
                            "ncalls"    : 660,
                            "subtimers": [
                               {
                                  "timername" : "Interstitial part",
-                                 "totaltime" : 0.0000E+00,
+                                 "totaltime" : 1.00000,
                                  "mintime"   : 0.0000E+00,
-                                 "maxtime"   : 0.0000E+00,
+                                 "maxtime"   : 1.00000,
                                  "ncalls"    : 660
                               },
                               {
@@ -244,9 +244,9 @@
                         },
                         {
                            "timername" : "Diagonalization",
-                           "totaltime" : 1.00000,
+                           "totaltime" : 0.0000E+00,
                            "mintime"   : 0.0000E+00,
-                           "maxtime"   : 1.00000,
+                           "maxtime"   : 0.0000E+00,
                            "ncalls"    : 660
                         },
                         {
