@@ -106,5 +106,9 @@ jobs:
         reentry scan
 
     - name: Run pytest
-      run:
-        cd ./aiida_fleur/tests/ && ./run_all_cov.sh
+      run: |
+       # create fake codes for tests to work on ci
+       cd ./aiida_fleur/tests/
+       touch fleur_code/inpgen && chmod +x fleur_code/inpgen
+       touch fleur_code/fleur && chmod +x fleur_code/fleur 
+       ./run_all_cov.sh
