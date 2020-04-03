@@ -58,7 +58,7 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install .
+        pip install .[pre-commit]
 
   tests:
 
@@ -99,7 +99,10 @@ jobs:
       run: |
         pip install numpy==1.16.4
         pip install PyCifRW~=4.4
-        pip install .
+        # install aiida-testing manually
+        #pip install git+https://github.com/broeder-j/aiida-testing.git@fa44c3ba4e57192fdbdee1cf3581576acc93800c
+        #pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install .[testing]
         reentry scan
 
     - name: Run pytest

@@ -57,7 +57,7 @@
             "pytest >= 2.9",
             "pytest-cov >= 2.5.0",
             "pgtest",
-            "aiida-testing"
+            "aiida-testing @ git+https://github.com/aiidateam/aiida-testing@export_cache"
         ]
     },
     "entry_points": {
