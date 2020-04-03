@@ -463,7 +463,7 @@ def inpgen_local_code(create_or_fake_local_code):
     """
     import os
     executable = 'inpgen'           # name of the inpgen executable
-    exec_rel_path = 'fleur_code/'   # location where it is found
+    exec_rel_path = 'local_exe/'   # location where it is found
     entrypoint = 'fleur.inpgen'    # entrypoint
     # prepend text to be added before execution
     inpgen_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
@@ -476,7 +476,7 @@ def fleur_local_code(create_or_fake_local_code):
     Create or load Fleur code
     """
     executable = 'fleur'            # name of the KKRhost executable
-    exec_rel_path = 'fleur_code/'   # location where it is found
+    exec_rel_path = 'local_exe/'   # location where it is found
     entrypoint = 'fleur.fleur'      # entrypoint
     fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
 

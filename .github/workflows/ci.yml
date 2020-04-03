@@ -109,6 +109,6 @@ jobs:
       run: |
        # create fake codes for tests to work on ci
        cd ./aiida_fleur/tests/
-       touch fleur_code/inpgen && chmod +x fleur_code/inpgen
-       touch fleur_code/fleur && chmod +x fleur_code/fleur 
+       touch local_exe/inpgen && chmod +x local_exe/inpgen
+       touch local_exe/fleur && chmod +x local_exe/fleur 
        ./run_all_cov.sh
