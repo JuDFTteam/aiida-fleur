@@ -28,17 +28,20 @@ class Test_fleur_corehole_wc():
     """
     Regression tests for the fleur_corehole_wc
     """
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_corehole_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
-generate_structure_W, clear_spec):
+    @pytest.mark.timeout(5000, method='thread')
+    def test_fleur_corehole_W(self, #run_with_cache, 
+inpgen_local_code, fleur_local_code,
+generate_structure_W):#, clear_spec):
         """
         full example using fleur_corehole_wc on W.
         Several fleur runs needed, calculation of all only certain coreholes
         """
         from aiida.engine import run_get_node
-        options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-                   'max_wallclock_seconds': 60 * 60, "queue_name" : ''}
+        options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+                   'max_wallclock_seconds': 60 * 60, 'queue_name' : ''})
                    #'withmpi': False, 'custom_scheduler_commands': ''}
+        options.store()
+
 
         parameters = Dict(dict={
                   'atom':{
@@ -84,7 +87,7 @@ generate_structure_W, clear_spec):
             #'metadata' : {
             #    'description' : 'Simple fleur_corehole_wc test with W bulk',
             #    'label' : 'fleur_corehole_wc_test_W_bulk'},
-        'options' :  Dict(dict=options),
+        'options' : options,
         'fleur' : FleurCode,
         'inpgen' : InpgenCode,
         'wf_parameters' : wf_para,
@@ -93,8 +96,8 @@ generate_structure_W, clear_spec):
         }
 
         # now run calculation
-        out, node = run_with_cache(inputs, process_class=fleur_corehole_wc)
-        #out, node = run_get_node(fleur_corehole_wc, **inputs)
+        #out, node = run_with_cache(inputs, process_class=fleur_corehole_wc)
+        out, node = run_get_node(fleur_corehole_wc, **inputs)
 
         # check general run
         assert node.is_finished_ok

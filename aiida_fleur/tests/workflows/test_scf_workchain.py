@@ -245,7 +245,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
         },
         'inpxml_changes': [('set_inpchanges', {
             'change_dict': {
-                'Kmax': 3.6
+                'Kmax': 3.8
             }
         })],
     }
@@ -294,9 +294,9 @@ def test_fleur_scf_fleurinp_Si_modifications(
 
     print(n)
     #get kmax and minDistance
-    assert abs(n.get('distance_charge') - 0.0001714547) < 10**-9
+    assert abs(n.get('distance_charge') - 0.0001671267) < 10**-9
     assert n.get('errors') == []
-    assert lasto['kmax'] == 3.6
+    assert lasto['kmax'] == 3.8
 
 @pytest.mark.skip(reason="Test is not implemented")
 @pytest.mark.timeout(500, method='thread')

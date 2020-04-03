@@ -55,6 +55,7 @@
         ],
         "testing" : [
             "pytest >= 2.9",
+            "pytest-timeout",
             "pytest-cov >= 2.5.0",
             "pgtest",
             "aiida-testing @ git+https://github.com/aiidateam/aiida-testing@export_cache"
