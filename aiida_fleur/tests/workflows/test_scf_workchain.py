@@ -309,7 +309,8 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
 
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_validation_wrong_inputs(
-    run_with_cache, mock_code_factory, create_fleurinp, generate_structure2, clear_spec
+    run_with_cache, mock_code_factory, create_fleurinp, generate_structure2, clear_spec,
+clear_database
 ):
     """
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw

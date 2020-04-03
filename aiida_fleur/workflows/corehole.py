@@ -597,7 +597,7 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['econfig'] = econfigs
                         tempd = dict_corelevel.get(elm_cl[0], {})
                         together = dict_merger(dict_corelevel_elm, tempd)
-                        pprint(together)
+                        #pprint(together)
                         dict_corelevel[elm_cl[0]] = together
                     else:
                         pass
@@ -634,7 +634,7 @@ class fleur_corehole_wc(WorkChain):
                         ch_occ=hole_charge
                     )
                     attributedict = {'electronConfig': {'stateOccupation': state_tag_list}}
-                    pprint(state_tag_list)
+                    #pprint(state_tag_list)
                     change = (
                         'set_species', {
                             'species_name': change_kind,
@@ -706,8 +706,8 @@ class fleur_corehole_wc(WorkChain):
             moved_struc = ret_dict['moved_struc']
             calc_para = ret_dict['hole_para']
             #print('calc_para:')
-            pprint(calc_para.get_dict())
-            pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
+            #pprint(calc_para.get_dict())
+            #pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
             # create_wf para or write in last line what should be in 'fleur_change'
             #  for scf, which with the changes in the inp.xml needed
             para = self.ctx.scf_para.copy(
@@ -757,7 +757,7 @@ class fleur_corehole_wc(WorkChain):
 
         # TODO: idea instead of a list, just use a dictionary...
         self.report('INFO: In run_ref_scf fleur_corehole_wc')
-
+        print('INFO: In run_ref_scf fleur_corehole_wc')
         para = self.ctx.scf_para
         if para == 'default':
             wf_parameter = {}
@@ -772,7 +772,7 @@ class fleur_corehole_wc(WorkChain):
 
         i = 0
         for node in self.ctx.calcs_ref_torun: # usually just 1, but we leave the default.
-            print node
+            #print(node)
             i = i+1
             if isinstance(node, StructureData):
                 res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
@@ -782,7 +782,7 @@ class fleur_corehole_wc(WorkChain):
                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, tuple):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
-                    print(node[1].get_dict())
+                    #print(node[1].get_dict())
                     res = fleur_scf_wc.run(wf_parameters=wf_parameters, calc_parameters=node[1], structure=node[0],
                                 inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
                 else:
@@ -868,7 +868,14 @@ class fleur_corehole_wc(WorkChain):
         If unsuccesful abort, because makes no sense to continue.
         """
         #so far not implemented
-        pass
+
+        for i, label in enumerate(self.ctx.labels):
+            calc = self.ctx[label]
+            print('collect results ...')
+            print(calc)
+            if not calc.is_finished_ok:
+                self.report('SCF workchain {} failed'.format(calc))
+                print('SCF workchain {} failed'.format(calc))
 
     def relaxation_needed(self):
         """
@@ -901,7 +908,7 @@ class fleur_corehole_wc(WorkChain):
         Run a scf for the all corehole calculations in parallel super cell
         """
         self.report('INFO: In run_scfs fleur_corehole_wc')
-
+        print('INFO: In run_scfs fleur_corehole_wc')
         para = self.ctx.scf_para
         if para == 'default':
             wf_parameter = {}
@@ -974,8 +981,9 @@ class fleur_corehole_wc(WorkChain):
             #self.ctx.calcs_res.append(res)
             #self.ctx.calcs_torun.remove(node)
             #print res
+            self.to_context(**{label : res})
         self.ctx.calcs_torun = []
-        return ToContext(**calcs)
+        #return ToContext(**calcs)
 
     def collect_results(self):
         """
@@ -999,6 +1007,11 @@ class fleur_corehole_wc(WorkChain):
         #calcs = self.ctx.calcs_res
         for i, label in enumerate(self.ctx.labels):
             calc = self.ctx[label]
+            #print('collect results ...')
+            #print(calc)
+            #if not calc.is_finished_ok:
+            #    print('calculation failed')
+            #    continue
             if i == 0:
                 ref_calcs.append(calc)
             else:
@@ -1038,9 +1051,9 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.ref_total_energies = ref_total_energies
         self.ctx.bindingenergies = bindingenergies
         self.ctx.wbindingenergies = weighted_binding_energies
-        print(bindingenergies)
-        print(weighted_binding_energies)
-        return
+        #print(bindingenergies)
+        #print(weighted_binding_energies)
+        #return
 
     def return_results(self):
         """
@@ -1102,10 +1115,15 @@ class fleur_corehole_wc(WorkChain):
         outnode = Dict(dict=outputnode_dict)
         outnodedict['results_node'] = outnode
 
-        # TODO: bad design, put in calcfunction and make bullet proof.
+        # TODO: bad design, make bullet proof.
         for i, label in enumerate(self.ctx.labels):
             calc = self.ctx[label]
-            calc_dict = calc.outputs.output_scf_wc_para
+            #print(calc)
+            #print(calc.get_outgoing().all())
+            try:
+                calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')#calc.outputs.output_scf_wc_para
+            except:
+               print('continue 2')
             outnodedict[label] = calc_dict
 
         outdict = create_corehole_result_node(**outnodedict)
@@ -1218,8 +1236,13 @@ def extract_results_corehole(calcs):
     calc_uuids = []
     for calc in calcs:
         print(calc)
+        print(calc.exit_status, calc.exit_message)
         print(calc.get_outgoing().all())
-        calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+        try:
+            calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+        except:
+            print('continue')
+            continue
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
     #print(calc_uuids)
 

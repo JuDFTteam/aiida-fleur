@@ -27,6 +27,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
 # tests
+@pytest.mark.skip
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_FleurEosWorkChain:
     """

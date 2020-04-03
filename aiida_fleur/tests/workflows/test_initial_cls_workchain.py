@@ -23,6 +23,7 @@ from aiida.engine import run_get_node
 
 
 # tests
+@pytest.mark.skip
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_fleur_initial_cls_wc():
     """
