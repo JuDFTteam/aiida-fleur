@@ -177,19 +177,29 @@ def _handle_mt_overlap(self, calculation):
         error_params = last_fleur.outputs.error_params.get_dict()
         label1 = int(error_params['overlapped_indices'][0])
         label2 = int(error_params['overlapped_indices'][1])
-        value = -(float(error_params['overlaping_value'])+0.01)/2
+        value = -(float(error_params['overlaping_value']) + 0.01) / 2
 
         self.ctx.is_finished = False
-        self.report('Relax WC failed because MT overlapped during relaxation. I reduce mt radii')
+        self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
-        inpxml_changes = wf_para_dict.get('inpxml_changes', [])
-        inpxml_changes.append(('shift_value_species_label',
-                               {'label': "{: >20}".format(label1),
-                                'att_name': 'radius', 'value': value, 'mode': 'abs'}))
-        inpxml_changes.append(('shift_value_species_label',
-                               {'label': "{: >20}".format(label2),
-                                'att_name': 'radius', 'value': value, 'mode': 'abs'}))
-        wf_para_dict['inpxml_changes'] = inpxml_changes
+
+        # if value < -0.2 and error_params['iteration_number'] == 3:
+        #     wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 10
+        #     self.report('forcealpha might be too small.')
+        if value < -0.1 and error_params['iteration_number'] == 2:
+            wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
+            self.report('forcealpha might be too large.')
+        else:  # reduce MT radii
+            self.report('MT radii might be too large.')
+            inpxml_changes = wf_para_dict.get('inpxml_changes', [])
+            inpxml_changes.append(('shift_value_species_label',
+                                   {'label': "{: >20}".format(label1),
+                                    'att_name': 'radius', 'value': value, 'mode': 'abs'}))
+            inpxml_changes.append(('shift_value_species_label',
+                                   {'label': "{: >20}".format(label2),
+                                    'att_name': 'radius', 'value': value, 'mode': 'abs'}))
+            wf_para_dict['inpxml_changes'] = inpxml_changes
+
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
         return ErrorHandlerReport(True, True)
 

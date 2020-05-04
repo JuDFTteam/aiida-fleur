@@ -800,7 +800,7 @@ def sort_atoms_z_value(structure):
 
 def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
                            latticeconstant=4.0, size=(1, 1, 5), replacements=None, decimals=10,
-                           pop_last_layers=0):
+                           pop_last_layers=0, inverse=False):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
@@ -862,7 +862,11 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
             current_symbols[k+atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
 
-    structure.positions = np.around(structure.positions, decimals=decimals)
+    if inverse:
+        structure.positions[:, 2] = -structure.positions[:, 2]
+        structure.positions = np.around(structure.positions, decimals=decimals)
+    else:
+        structure.positions = np.around(structure.positions, decimals=decimals)
 
     return structure
 
@@ -906,8 +910,13 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     num_layers = len(layers)
     max_layers_to_extract = num_layers // 2 + num_layers % 2
 
+    if isinstance(orig_structure, StructureData):
+        positions = orig_structure.get_ase().positions
+    else:
+        positions = orig_structure.positions
+
     num_layers_org = len({np.around(x[2], decimals=tolerance_decimals)
-                          for x in orig_structure.positions})
+                          for x in positions})
 
     if num_layers_org > num_layers:
         raise ValueError('Your original structure contains more layers than given in relaxed '
@@ -937,9 +946,10 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
             layer, pos_z, _ = get_layers(orig_structure)
-            add_distance = abs(pos_z[k]-pos_z[k-1])
+            add_distance = abs(pos_z[k] - pos_z[k - 1])
+            prev_layer_z = magn_structure.sites[-1].position[2]
             for atom in layer[k]:
-                atom[0][2] = magn_structure.sites[-1].position[2] + add_distance
+                atom[0][2] = prev_layer_z + add_distance
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
@@ -990,7 +1000,7 @@ def get_layers(structure, decimals=10):
     return layers, layer_z_positions, layer_occupancies
 
 
-def adjust_film_relaxation(structure, scale_as=None, bond_length=None):
+def adjust_film_relaxation(structure, scale_as=None, bond_length=None, hold_layers=3, api_mat=None):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     This function only works if USER_API_KEY was set.
@@ -1018,7 +1028,7 @@ def adjust_film_relaxation(structure, scale_as=None, bond_length=None):
     structure = sort_atoms_z_value(structure)
     layers, z_positions, occupancies = get_layers(structure)
 
-    suggestion = request_average_bond_length(structure, scale_as)
+    suggestion = request_average_bond_length(structure, scale_as, api_mat)
 
     def suggest_distance_to_previous(num_layer):
         z_distances = []
@@ -1035,36 +1045,70 @@ def adjust_film_relaxation(structure, scale_as=None, bond_length=None):
                     pass
                 else:
                     z_distances.append((bond_length_sq - xy_dist_sq)**(0.5))
-        if z_distances:
-            return max(z_distances)
-        else:
-            return 0
+
+        # find suggestion for distance to 2nd layer back
+        z_distances2 = []
+        if num_layer != 1:
+            for atom_prev in layers[num_layer - 2]:
+                pos_prev = np.array(atom_prev[0])[0:2]
+                for atom_this in layers[num_layer]:
+                    pos_this = np.array(atom_this[0])[0:2]
+                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this) ** 2
+                    if scale_as:
+                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+                    else:
+                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+                    if xy_dist_sq > bond_length_sq:
+                        pass
+                    else:
+                        z_distances2.append((bond_length_sq - xy_dist_sq)**(0.5))
+
+        if not z_distances:
+            z_distances = [0]
+
+        if not z_distances2:
+            z_distances2 = [0]
+
+        return max(z_distances), max(z_distances2)
 
     # take relaxed interlayers
     rebuilt_structure = StructureData(cell=structure.cell)
     rebuilt_structure.pbc = (True, True, False)
-    for kind in structure.kinds:
-        rebuilt_structure.append_kind(kind)
+    # for kind in structure.kinds:
+    #     rebuilt_structure.append_kind(kind)
 
     for atom in layers[0]:
-        a = Site(kind_name=atom[1], position=atom[0])
-        rebuilt_structure.append_site(a)
+        # a = Site(kind_name=atom[1], position=atom[0])
+        # minus because I build from bottom (inversed structure)
+        rebuilt_structure.append_atom(symbols=atom[1], position=(
+            atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]+'49')
 
+    prev_distance = 0
     for i, layer in enumerate(layers[1:]):
-        add_distance = suggest_distance_to_previous(i + 1)
-        if not add_distance:
-            continue
+        add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
+        add_distance2 = add_distance2 - prev_distance
+        if add_distance1 <= 0 and add_distance2 <= 0:
+            raise ValueError('error not implemented')
+        prev_distance = max(add_distance1, add_distance2)
+        if i == len(layers) - 2:
+            prev_distance = prev_distance * 0.85  # last layer should be closer
+
         layer_copy = deepcopy(layer)
+        prev_layer_z = rebuilt_structure.sites[-1].position[2]
         for atom in layer_copy:
-            atom[0][2] = rebuilt_structure.sites[-1].position[2] + add_distance
-            a = Site(kind_name=atom[1], position=atom[0])
-            rebuilt_structure.append_site(a)
+            atom[0][2] = prev_layer_z - prev_distance  # minus because I build from bottom (inverse)
+            # a = Site(kind_name=atom[1], position=atom[0])
+            # rebuilt_structure.append_site(a)
+            if i < hold_layers-1:
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1]+'49')
+            else:
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
 
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
 
-def request_average_bond_length(structure, scale_as):
+def request_average_bond_length(structure, scale_as=None, user_api_key=None):
     """
     Requests MaterialsProject to estimate thermal average bond length between elements present
     in the given structure.
@@ -1080,7 +1124,6 @@ def request_average_bond_length(structure, scale_as):
     from pymatgen.ext.matproj import MPRester
     from aiida.orm import StructureData
 
-    user_api_key = os.getenv('USER_API_KEY')
     if not user_api_key:
         raise ValueError('You should specify env variable USER_API_KEY')
 
