@@ -1000,7 +1000,7 @@ def get_layers(structure, decimals=10):
     return layers, layer_z_positions, layer_occupancies
 
 
-def adjust_film_relaxation(structure, scale_as=None, bond_length=None, hold_layers=3, api_mat=None):
+def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     This function only works if USER_API_KEY was set.
@@ -1017,10 +1017,21 @@ def adjust_film_relaxation(structure, scale_as=None, bond_length=None, hold_laye
         This should work ony for metallic bonding since bond length can drastically
         depend on the atom hybridisation.
 
-    :param structure: ase film structure
+    :param structure: ase film structure which will be adjusted
+    :param suggestion: dictionary containing average bond length between different elements,
+                       is is basically the result of
+                       :py:func:`~aiida_fleur.tools.StructureData.request_average_bond_length()`
+    :param scale_as: an element name, for which the El-El bond length will be enforced. It is
+                     can be helpful to enforce the same interlayer distance in the substrate,
+                     i.e. adjust deposited film interlayer distances only.
+    :param bond_length: a float that sets the bond length for scale_as element
+    :param hold_layers: this parameters sets the number of layers that will be marked via the
+                        certain label. The label is reserved for future use in the relaxation WC:
+                        all the atoms marked with the label will not be relaxed.
     """
     from aiida.orm import StructureData
     from copy import deepcopy
+    from itertools import product
 
     if scale_as and not bond_length:
         raise ValueError('bond_length is required when scale_as was provided')
@@ -1028,7 +1039,11 @@ def adjust_film_relaxation(structure, scale_as=None, bond_length=None, hold_laye
     structure = sort_atoms_z_value(structure)
     layers, z_positions, occupancies = get_layers(structure)
 
-    suggestion = request_average_bond_length(structure, scale_as, api_mat)
+    suggestion = deepcopy(suggestion)
+    if scale_as:
+        norm = suggestion[scale_as][scale_as]
+        for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
+            suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
 
     def suggest_distance_to_previous(num_layer):
         z_distances = []
@@ -1108,35 +1123,25 @@ def adjust_film_relaxation(structure, scale_as=None, bond_length=None, hold_laye
     return rebuilt_structure
 
 
-def request_average_bond_length(structure, scale_as=None, user_api_key=None):
-    """
-    Requests MaterialsProject to estimate thermal average bond length between elements present
-    in the given structure.
+def request_average_bond_length_store(symbols, user_api_key):
+    result = request_average_bond_length(symbols, user_api_key)
+    result.store()
+    return result
 
-    :param structure: structure to extract elements from
+
+def request_average_bond_length(symbols, user_api_key):
+    """
+    Requests MaterialsProject to estimate thermal average bond length between given elements.
+
+    :param symbols: element list to calculate average bond length between
     :return bond_data: a list of 3-element tuples where first two are element names and the third
                        is an averaged bond length.
 
     """
-    import os
     from itertools import product, combinations
     from math import exp
+    from aiida.orm import Dict
     from pymatgen.ext.matproj import MPRester
-    from aiida.orm import StructureData
-
-    if not user_api_key:
-        raise ValueError('You should specify env variable USER_API_KEY')
-
-    if isinstance(structure, StructureData):
-        structure = structure.get_ase()
-
-    if all(structure.pbc):
-        raise ValueError('Input structure has to be a film')
-
-    symbols = set(structure.get_chemical_symbols())
-
-    if scale_as and scale_as not in symbols:
-        raise ValueError('There is no scale_as element in the given film structure')
 
     with MPRester(user_api_key) as mat_project:
         mp_entries = mat_project.get_entries_in_chemsys(symbols)
@@ -1190,12 +1195,7 @@ def request_average_bond_length(structure, scale_as=None, user_api_key=None):
         distance = distance / partition_function
         bond_data[sym][sym] = distance
 
-    if scale_as:
-        norm = bond_data[scale_as][scale_as]
-        for sym1, sym2 in product(symbols, symbols):
-            bond_data[sym1][sym2] = bond_data[sym1][sym2] / norm
-
-    return bond_data
+    return Dict(dict=bond_data)
 
 
 def estimate_mt_radii(structure, stepsize=0.05):

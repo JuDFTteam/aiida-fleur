@@ -62,7 +62,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("eos_output", valid_type=Dict, required=False)
         spec.input("optimized_structure", valid_type=StructureData, required=False)
-        spec.input("api_mat", valid_type=Str, required=False, non_db=True)
+        spec.input("distance_suggestion", valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -195,6 +195,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
                         self.report('ERROR: relax wc input was not given but relax is needed.')
                         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
+        if "relax" in inputs and "distance_suggestion" not in inputs:
+            self.report('ERROR: relax wc input was given but distance_suggestion was not.')
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+
     def relax_needed(self):
         """
         Returns true if interlayer relaxation should be performed.
@@ -245,7 +249,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
             out_create_structure = create_film_to_relax(
                 wf_dict_node=Dict(dict=self.ctx.wf_dict), scaling_parameter=Float(scaling_param),
-                api_key=self.inputs.api_mat)
+                suggestion_node=self.inputs.distance_suggestion)
             inputs.scf.structure = out_create_structure['structure']
             substrate = out_create_structure['substrate']
             # TODO: error handling might be needed
@@ -352,7 +356,7 @@ def create_substrate_bulk(wf_dict_node):
 
 
 @cf
-def create_film_to_relax(wf_dict_node, scaling_parameter, api_key):
+def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     """
     Create a film structure those interlayers will be relaxed.
     """
@@ -390,8 +394,10 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, api_key):
 
     bond_length = find_min_distance_unary_struct(tmp_substrate)
 
+    suggestion = suggestion_node.get_dict()
+
     # structure will be reversed here
-    structure = adjust_film_relaxation(structure, host_symbol, bond_length, hold_layers, api_key)
+    structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, hold_layers)
 
     centered_structure = center_film(structure)
 
