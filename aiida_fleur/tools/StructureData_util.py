@@ -1095,8 +1095,12 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     for atom in layers[0]:
         # a = Site(kind_name=atom[1], position=atom[0])
         # minus because I build from bottom (inversed structure)
-        rebuilt_structure.append_atom(symbols=atom[1], position=(
-            atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]+'49')
+        if hold_layers < 1:
+            rebuilt_structure.append_atom(symbols=atom[1], position=(
+                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1])
+        else:
+            rebuilt_structure.append_atom(symbols=atom[1], position=(
+                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]+'49')
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):

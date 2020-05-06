@@ -323,17 +323,9 @@ def test_request_average_bond_length(generate_film_structure):
         pytest.skip('No USER_API_KEY given, skip the test')
 
     structure = generate_film_structure()
-    result = request_average_bond_length(structure)
+    result = request_average_bond_length(['Fe', 'Pt'], user_api_key).get_dict()
     assert result == {'Fe': {'Fe': 2.4651768430600254, 'Pt': 2.633878591723135},
                       'Pt': {'Fe': 2.633878591723135, 'Pt': 2.8120017054377606}}
-
-    result = request_average_bond_length(structure, 'Pt')
-    assert result == {'Fe': {'Fe': 0.8766626415243433, 'Pt': 0.9366561146210628},
-                      'Pt': {'Fe': 0.9366561146210628, 'Pt': 1.0}}
-
-    with pytest.raises(ValueError) as msg:
-        request_average_bond_length(structure, 'Ir')
-    assert str(msg.value) == ("There is no scale_as element in the given film structure")
 
 
 def test_adjust_film_relaxation(generate_film_structure):
@@ -344,15 +336,18 @@ def test_adjust_film_relaxation(generate_film_structure):
     if not user_api_key:
         pytest.skip('No USER_API_KEY given, skip the test')
 
+    suggestion = {'Fe': {'Fe': 2.4651768430600254, 'Pt': 2.633878591723135},
+                  'Pt': {'Fe': 2.633878591723135, 'Pt': 2.8120017054377606}}
+
     structure = generate_film_structure()
-    result = adjust_film_relaxation(structure)
+    result = adjust_film_relaxation(structure, suggestion, hold_layers=0)
     print(structure.sites)
     print(result.sites)
-    assert np.linalg.norm(np.array(result.sites[1].position) -
-                          np.array(result.sites[2].position)) - 2.8120017054377606 < 1e-7
-    assert np.linalg.norm(np.array(result.sites[1].position) -
-                          np.array(result.sites[0].position)) - 2.633878591723135 < 1e-7
+    assert result.sites[0].position[2] == -1.1957065898
+    assert result.sites[1].position[2] == 0.1782640794
+    assert result.sites[2].position[2] == 1.1957065898
 
-    result = adjust_film_relaxation(structure, 'Pt', 2.77)
-    assert np.linalg.norm(np.array(result.sites[1].position) -
-                          np.array(result.sites[2].position)) - 2.77 < 1e-7
+    result = adjust_film_relaxation(structure, suggestion, 'Pt', 2.77)
+    assert result.sites[0].position[2] == -1.1709859694
+    assert result.sites[1].position[2] == 0.2602185234
+    assert result.sites[2].position[2] == 1.1709859694
