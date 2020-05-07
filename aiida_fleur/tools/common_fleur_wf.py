@@ -591,16 +591,15 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
     cpus_per_node = mpi_per_node * omp_per_mpi
     if fleurinpData:
         modes = fleurinpData.get_fleur_modes()
+        kpts = fleurinpData.attributes['inp_dict']['calculationSetup']['bzIntegration']
         if modes['band'] or modes['gw']:
-            kpts = fleurinpData.get_tag(
-                '/fleurInput/calculationSetup/bzIntegration/altKPointSet/@count')
+            kpts = kpts['altKPointSet']['count']
         else:
-            kpts = fleurinpData.get_tag(
-                '/fleurInput/calculationSetup/bzIntegration/kPointList/@count')
-            if not kpts:
-                fleurinpData.get_tag(
-                    '/fleurInput/calculationSetup/bzIntegration/kPointCount/@count')
-        kpts = int(kpts[0])
+            if 'kPointList' in kpts:
+                kpts = kpts['kPointList']['count']
+            else:
+                kpts = kpts['kPointCount']['count']
+        kpts = int(kpts)
     elif not kpts:
         raise ValueError('You must specify either kpts of fleurinpData')
     divisors_kpts = divisors(kpts)

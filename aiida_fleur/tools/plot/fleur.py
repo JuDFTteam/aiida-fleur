@@ -441,6 +441,7 @@ FUNCTIONS_DICT = {
         'FleurEosWorkChain' : plot_fleur_eos_wc,
         'fleur_dos_wc' : plot_fleur_dos_wc,
         'fleur_band_wc' : plot_fleur_band_wc,
+        'FleurBandWorkChain': plot_fleur_band_wc,
         #'fleur_corehole_wc' : plot_fleur_corehole_wc,
         #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc
         }

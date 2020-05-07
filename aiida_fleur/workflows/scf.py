@@ -72,7 +72,7 @@ class FleurScfWorkChain(WorkChain):
                    'force_dict': {'qfix': 2,
                                   'forcealpha': 0.5,
                                   'forcemix': 'BFGS'},
-                   'use_relax_xml': True,
+                   'use_relax_xml': False,
                    'inpxml_changes': [],
                    }
 
@@ -459,7 +459,7 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_base_wc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs:
+        elif 'remote_data' in self.inputs and not self.ctx.wf_dict['use_relax_xml']:
             remote = self.inputs.remote_data
         else:
             remote = None

@@ -158,7 +158,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 
     :returns StructureData, Node with supercell
     """
-    #print('in create supercell')
+    # print('in create supercell')
     # test if structure:
     structure = is_structure(inp_structure)
     if not structure:
@@ -392,7 +392,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     # if wanted make individual kind for that atom
     # kind names will be atomsymbol+number
     # create new structure with new kinds and atoms
-    #Param = DataFactory('dict')
+    # Param = DataFactory('dict')
     symbol_count = {}  # Counts the atom symbol occurrence to set id's and kind names right
     replace = []  # all atoms symbols ('W') to be replaced
     replace_siteN = []  # all site integers to be replaced
@@ -406,7 +406,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     cell = struc.cell
     pbc = struc.pbc
     sites = struc.sites
-    #natoms = len(sites)
+    # natoms = len(sites)
     new_structure = DataFactory('structure')(cell=cell, pbc=pbc)
 
     for sym in atoms:
@@ -600,7 +600,7 @@ def move_atoms_incell(structure, vector):
 
     for site in sites:
         pos = site.position
-        new_pos = np.array(pos) + np.array(vector)
+        new_pos = np.around(np.array(pos) + np.array(vector), decimals=10)
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
         new_structure.label = structure.label
@@ -624,14 +624,14 @@ def find_primitive_cell(structure):
     StructureData = DataFactory('structure')
 
     symprec = 1e-7
-    #print('old {}'.format(len(structure.sites)))
+    # print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
     lattice, scaled_positions, numbers = find_primitive(
         ase_structure, symprec=symprec)
     new_structure_ase = Atoms(
         numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
-    #print('new {}'.format(len(new_structure.sites)))
+    # print('new {}'.format(len(new_structure.sites)))
 
     new_structure.label = structure.label + ' primitive'
     new_structure.description = structure.description + ' primitive cell'
@@ -707,7 +707,7 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     """
     StructureData = DataFactory('structure')
     aiida_strucs = {}
-    #pymat_struc = initial_structure.get_pymatgen_structure()
+    # pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
         slab = create_slap(initial_structure, index,
@@ -731,7 +731,7 @@ def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=
                           lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
                           max_normal_search=max_normal_search)
     slab = slabg.get_slab()
-    #slab2 = slab.get_orthogonal_c_slab()
+    # slab2 = slab.get_orthogonal_c_slab()
     film_struc = StructureData(pymatgen_structure=slab)
     film_struc.pbc = (True, True, False)
 
@@ -801,7 +801,7 @@ def sort_atoms_z_value(structure):
 
 def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
                            latticeconstant=4.0, size=(1, 1, 5), replacements=None, decimals=10,
-                           pop_last_layers=0):
+                           pop_last_layers=0, inverse=False):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
@@ -836,7 +836,7 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
     structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant, size=size)
 
-    * _, layer_occupancies = get_layer_by_number(structure, 0)
+    *_, layer_occupancies = get_layers(structure)
 
     if replacements is not None:
         keys = six.viewkeys(replacements)
@@ -851,11 +851,11 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
         structure.pop()
 
     current_symbols = structure.get_chemical_symbols()
+    * _, layer_occupancies = get_layers(structure)
+    layer_occupancies.insert(0, 0)
     for i, at_type in six.iteritems(replacements):
         if isinstance(i, str):
             i = int(i)
-        layer, layer_z, layer_occupancies = get_layer_by_number(structure, i)
-        layer_occupancies.insert(0, 0)
         if i < 0:
             i = i - 1
         atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
@@ -863,7 +863,11 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
             current_symbols[k+atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
 
-    structure.positions = np.around(structure.positions, decimals=decimals)
+    if inverse:
+        structure.positions[:, 2] = -structure.positions[:, 2]
+        structure.positions = np.around(structure.positions, decimals=decimals)
+    else:
+        structure.positions = np.around(structure.positions, decimals=decimals)
 
     return structure
 
@@ -907,8 +911,13 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     num_layers = len(layers)
     max_layers_to_extract = num_layers // 2 + num_layers % 2
 
+    if isinstance(orig_structure, StructureData):
+        positions = orig_structure.get_ase().positions
+    else:
+        positions = orig_structure.positions
+
     num_layers_org = len({np.around(x[2], decimals=tolerance_decimals)
-                          for x in orig_structure.positions})
+                          for x in positions})
 
     if num_layers_org > num_layers:
         raise ValueError('Your original structure contains more layers than given in relaxed '
@@ -930,17 +939,18 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     done_layers = 0
     while True:
         if done_layers < num_relaxed_layers:
-            layer, *_ = get_layer_by_number(sorted_struc, done_layers)
-            for atom in layer:
+            layer, *_ = get_layers(sorted_struc)
+            for atom in layer[done_layers]:
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
-            layer, pos_z, _ = get_layer_by_number(orig_structure, k)
-            for atom in layer:
-                add_distance = abs(pos_z[k]-pos_z[k-1])
-                atom[0][2] = magn_structure.sites[-1].position[2] + add_distance
+            layer, pos_z, _ = get_layers(orig_structure)
+            add_distance = abs(pos_z[k] - pos_z[k - 1])
+            prev_layer_z = magn_structure.sites[-1].position[2]
+            for atom in layer[k]:
+                atom[0][2] = prev_layer_z + add_distance
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
@@ -951,7 +961,7 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     return magn_structure
 
 
-def get_layer_by_number(structure, number, decimals=10):
+def get_layers(structure, decimals=10):
     """
     Extracts atom positions and their types belonging to the same layer
 
@@ -971,7 +981,7 @@ def get_layer_by_number(structure, number, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [(x.position, x.kind_name)
+        reformat = [(list(x.position), x.kind_name)
                     for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
         reformat = list(
@@ -988,12 +998,214 @@ def get_layer_by_number(structure, number, decimals=10):
         layers.append(layer_content)
         layer_occupancies.append(len(layer_content))
 
-    return layers[number], layer_z_positions, layer_occupancies
+    return layers, layer_z_positions, layer_occupancies
+
+
+def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3):
+    """
+    Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
+    This function only works if USER_API_KEY was set.
+
+    For now only binary structures are analysed to ensure the closest contact between two
+    elements of the interest. In case of trinary systems (like ABC) I can not not guarantee that
+    A and C will be the nearest neighbours.
+
+    The same is true for interlayer distances of the same element. To ensure the nearest-neighbour
+    condition I use unary compounds.
+
+    .. warning:
+
+        This should work ony for metallic bonding since bond length can drastically
+        depend on the atom hybridisation.
+
+    :param structure: ase film structure which will be adjusted
+    :param suggestion: dictionary containing average bond length between different elements,
+                       is is basically the result of
+                       :py:func:`~aiida_fleur.tools.StructureData.request_average_bond_length()`
+    :param scale_as: an element name, for which the El-El bond length will be enforced. It is
+                     can be helpful to enforce the same interlayer distance in the substrate,
+                     i.e. adjust deposited film interlayer distances only.
+    :param bond_length: a float that sets the bond length for scale_as element
+    :param hold_layers: this parameters sets the number of layers that will be marked via the
+                        certain label. The label is reserved for future use in the relaxation WC:
+                        all the atoms marked with the label will not be relaxed.
+    """
+    from aiida.orm import StructureData
+    from copy import deepcopy
+    from itertools import product
+
+    if scale_as and not bond_length:
+        raise ValueError('bond_length is required when scale_as was provided')
+
+    structure = sort_atoms_z_value(structure)
+    layers, z_positions, occupancies = get_layers(structure)
+
+    suggestion = deepcopy(suggestion)
+    if scale_as:
+        norm = suggestion[scale_as][scale_as]
+        for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
+            suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
+
+    def suggest_distance_to_previous(num_layer):
+        z_distances = []
+        for atom_prev in layers[num_layer - 1]:
+            pos_prev = np.array(atom_prev[0])[0:2]
+            for atom_this in layers[num_layer]:
+                pos_this = np.array(atom_this[0])[0:2]
+                xy_dist_sq = np.linalg.norm(pos_prev - pos_this) ** 2
+                if scale_as:
+                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+                else:
+                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+                if xy_dist_sq > bond_length_sq:
+                    pass
+                else:
+                    z_distances.append((bond_length_sq - xy_dist_sq)**(0.5))
+
+        # find suggestion for distance to 2nd layer back
+        z_distances2 = []
+        if num_layer != 1:
+            for atom_prev in layers[num_layer - 2]:
+                pos_prev = np.array(atom_prev[0])[0:2]
+                for atom_this in layers[num_layer]:
+                    pos_this = np.array(atom_this[0])[0:2]
+                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this) ** 2
+                    if scale_as:
+                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+                    else:
+                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+                    if xy_dist_sq > bond_length_sq:
+                        pass
+                    else:
+                        z_distances2.append((bond_length_sq - xy_dist_sq)**(0.5))
+
+        if not z_distances:
+            z_distances = [0]
+
+        if not z_distances2:
+            z_distances2 = [0]
+
+        return max(z_distances), max(z_distances2)
+
+    # take relaxed interlayers
+    rebuilt_structure = StructureData(cell=structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+    # for kind in structure.kinds:
+    #     rebuilt_structure.append_kind(kind)
+
+    for atom in layers[0]:
+        # a = Site(kind_name=atom[1], position=atom[0])
+        # minus because I build from bottom (inversed structure)
+        if hold_layers < 1:
+            rebuilt_structure.append_atom(symbols=atom[1], position=(
+                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1])
+        else:
+            rebuilt_structure.append_atom(symbols=atom[1], position=(
+                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]+'49')
+
+    prev_distance = 0
+    for i, layer in enumerate(layers[1:]):
+        add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
+        add_distance2 = add_distance2 - prev_distance
+        if add_distance1 <= 0 and add_distance2 <= 0:
+            raise ValueError('error not implemented')
+        prev_distance = max(add_distance1, add_distance2)
+        if i == len(layers) - 2:
+            prev_distance = prev_distance * 0.85  # last layer should be closer
+
+        layer_copy = deepcopy(layer)
+        prev_layer_z = rebuilt_structure.sites[-1].position[2]
+        for atom in layer_copy:
+            atom[0][2] = prev_layer_z - prev_distance  # minus because I build from bottom (inverse)
+            # a = Site(kind_name=atom[1], position=atom[0])
+            # rebuilt_structure.append_site(a)
+            if i < hold_layers-1:
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1]+'49')
+            else:
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+
+    rebuilt_structure = center_film(rebuilt_structure)
+    return rebuilt_structure
+
+
+def request_average_bond_length_store(symbols, user_api_key):
+    result = request_average_bond_length(symbols, user_api_key)
+    result.store()
+    return result
+
+
+def request_average_bond_length(symbols, user_api_key):
+    """
+    Requests MaterialsProject to estimate thermal average bond length between given elements.
+
+    :param symbols: element list to calculate average bond length between
+    :return bond_data: a list of 3-element tuples where first two are element names and the third
+                       is an averaged bond length.
+
+    """
+    from itertools import product, combinations
+    from math import exp
+    from aiida.orm import Dict
+    from pymatgen.ext.matproj import MPRester
+
+    with MPRester(user_api_key) as mat_project:
+        mp_entries = mat_project.get_entries_in_chemsys(symbols)
+
+    bond_data = {}
+    for sym1 in symbols:
+        bond_data[sym1] = {}
+        for sym2 in symbols:
+            bond_data[sym1][sym2] = 0.0
+
+    for sym1, sym2 in combinations(symbols, 2):
+        distance = 0
+        partition_function = 0
+        for entry in mp_entries:
+            name = ''.join([i for i in entry.name if not i.isdigit()])
+            if name not in (sym1 + sym2, sym2 + sym1):
+                continue
+            with MPRester(user_api_key) as mat_project:
+                structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
+                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
+                    0]['energy_per_atom']
+                structure_analyse.make_supercell([2, 2, 2])
+            factor = exp(-(en_per_atom/0.0259))
+            partition_function = partition_function + factor
+            indices1 = structure_analyse.indices_from_symbol(sym1)
+            indices2 = structure_analyse.indices_from_symbol(sym2)
+            distances = (structure_analyse.get_distance(x, y)
+                         for x, y in product(indices1, indices2))
+            distance = distance + min(distances) * factor
+        distance = distance / partition_function
+        bond_data[sym1][sym2] = distance
+        bond_data[sym2][sym1] = distance
+
+    for sym in symbols:
+        distance = 0
+        partition_function = 0
+        for entry in mp_entries:
+            if sym != entry.name:
+                continue
+            with MPRester(user_api_key) as mat_project:
+                structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
+                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
+                    0]['energy_per_atom']
+                structure_analyse.make_supercell([2, 2, 2])
+            factor = exp(-(en_per_atom/0.0259))
+            partition_function = partition_function + factor
+            indices1 = structure_analyse.indices_from_symbol(sym)
+            distances = (structure_analyse.get_distance(x, y)
+                         for x, y in combinations(indices1, 2))
+            distance = distance + min(distances) * factor
+        distance = distance / partition_function
+        bond_data[sym][sym] = distance
+
+    return Dict(dict=bond_data)
 
 
 def estimate_mt_radii(structure, stepsize=0.05):
     """
-    #TODO implement
+    # TODO implement
     This method returns for every atom type (group/kind) in the structure a range of
     possible muffin tin radii (min, max).
     Or maybe just the maximal muffin tin radii (or sets of maximal muffin tin radii)
@@ -1013,7 +1225,7 @@ def estimate_mt_radii(structure, stepsize=0.05):
 
 def common_mt(max_muffin_tins):
     """
-    #TODO implement
+    # TODO implement
     From a list of dictionary given return smallest common set.
 
 
@@ -1025,7 +1237,7 @@ def common_mt(max_muffin_tins):
 
 def find_common_mt(structures):
     """
-    #TODO implement
+    # TODO implement
     From a given list of structures, estimate the muffin tin radii and return
     the smallest common set. (therefore a choice for rmt that would work for every structure given)
 

@@ -37,7 +37,12 @@ class FleurRelaxWorkChain(WorkChain):
 
     _workflowversion = "0.1.3"
 
-    _wf_default = {'relax_iter': 5, 'film_distance_relaxation': False, 'force_criterion': 0.001}
+    _wf_default = {
+        'relax_iter': 5,
+        'film_distance_relaxation': False,
+        'force_criterion': 0.001,
+        'atoms_off': []  # '49' is reserved
+    }
 
     @classmethod
     def define(cls, spec):
@@ -130,6 +135,11 @@ class FleurRelaxWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+        if '49' in wf_dict['atoms_off']:
+            error = '"49" label for atoms_off is reserved for internal use'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
     def converge_scf(self):
         """
         Submits :class:`aiida_fleur.workflows.scf.FleurScfWorkChain`.
@@ -169,6 +179,15 @@ class FleurRelaxWorkChain(WorkChain):
                     'species': 'all'
                 }
             ))
+
+        for specie_off in self.ctx.wf_dict['atoms_off']:
+            scf_wf_dict['inpxml_changes'].append(
+                ('set_atomgr_att_label', {'attributedict': {'force': [('relaxXYZ', 'FFF')]},
+                                          'atom_label': specie_off}))
+
+        scf_wf_dict['inpxml_changes'].append(
+            ('set_atomgr_att_label', {'attributedict': {'force': [('relaxXYZ', 'FFF')]},
+                                      'atom_label': '49'}))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -238,14 +257,22 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wc = self.ctx.scf_res
 
         try:
-            self.ctx.forces.append(scf_wc.outputs.output_scf_wc_para.dict.force_largest)
-        except AttributeError:
+            last_calc = load_node(scf_wc.outputs.output_scf_wc_para.dict.last_calc_uuid)
+        except (NotExistent, AttributeError):
+            # TODO: throw exit code
             # message = 'ERROR: Did not manage to read the largest force'
             # self.control_end_wc(message)
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
+        else:
+            forces_data = last_calc.outputs.relax_parameters.get_dict()["posforces"][-1]
+            all_forces = []
+            for force in forces_data:
+                all_forces.extend(force[-3:])
+            all_forces = [abs(x) for x in all_forces]
+            self.ctx.forces.append(max(all_forces))
 
-        largest_now = abs(self.ctx.forces[-1])
+        largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
             self.report(

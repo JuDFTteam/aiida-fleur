@@ -168,11 +168,15 @@ class FleurParser(Parser):
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+',
                                                   error_file_lines)[0].split()
+                        with output_folder.open('relax.xml', 'r') as rlx:
+                            relax_dict = parse_relax_file(rlx)
+                            it_number = len(relax_dict['energies']) + 1  # relax.xml was not updated
                         error_params = {'error_name': 'MT_OVERLAP_RELAX',
                                         'description': ('This output node contains information'
                                                         'about FLEUR error'),
                                         'overlapped_indices': overlap_line[:2],
-                                        'overlaping_value': overlap_line[3]}
+                                        'overlaping_value': overlap_line[3],
+                                        'iteration_number': it_number}
                         link_name = self.get_linkname_outparams()
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
