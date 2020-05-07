@@ -64,7 +64,11 @@ class FleurEosWorkChain(WorkChain):
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
 
-        spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
+        spec.outline(
+            cls.start,
+            cls.structures,
+            cls.converge_scf,
+            cls.return_results)
 
         spec.output('output_eos_wc_para', valid_type=Dict)
         spec.output('output_eos_wc_structure', valid_type=StructureData)
@@ -212,7 +216,7 @@ class FleurEosWorkChain(WorkChain):
 
             # we loose the connection of the failed scf here.
             # link labels cannot contain '.'
-            link_label = 'scale_{}'.format(label).replace('.','_')
+            link_label = 'scale_{}'.format(label).replace('.', '_')
             outnodedict[link_label] = outputnode_scf
 
             outpara = outputnode_scf.get_dict()
@@ -247,7 +251,7 @@ class FleurEosWorkChain(WorkChain):
         if len(en_array):  # for some reason just en_array does not work
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
 
-            #something went wrong with the fit
+            # something went wrong with the fit
             for i in volume, bulk_modulus, bulk_deriv, residuals:
                 if issubclass(type(i), np.complex):
                     write_defaults_fit = True
@@ -382,6 +386,7 @@ def create_eos_result_node(**kwargs):
 
     return outdict
 
+
 @cf
 def eos_structures(inp_structure, scalelist):
     """
@@ -401,7 +406,7 @@ def eos_structures(inp_structure, scalelist):
     # replace '.' by underscore to store floats in link label
     res_new = {}
     for key, struc in re_strucs.items():
-        #label already set by rescale_nowf
+        # label already set by rescale_nowf
         struc.description = str(key)
         link_name = 'scale_{}'.format(key).replace('.', '_')
         res_new[link_name] = struc
