@@ -424,28 +424,7 @@ class FleurinpData(Data):
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
-            # get a more information on what does not validate
-            message = ''
-            try:
-                parser = etree.XMLParser(
-                    attribute_defaults=True, schema=xmlschema
-                )  #dtd_validation=True,
-                inpxmlfile = self.open(key='inp.xml', mode='r')
-                try:
-                    tree_x = etree.parse(inpxmlfile, parser)
-                finally:
-                    inpxmlfile.close()
-                #all errors will be raised
-            except etree.XMLSyntaxError as msg:
-                message = msg
-                raise InputValidationError(
-                    "Input file does not validate against the schema: {}".format(message)
-                )
-
-            #other error occured, we still stop
-            raise InputValidationError(
-                "Input file does not validate against the schema, some other error occured, (no XMLSyntaxError).}"
-            )
+            raise InputValidationError("Input file is not validated against the schema.")
 
         # convert etree into python dictionary
         root = tree_x.getroot()
@@ -504,7 +483,7 @@ class FleurinpData(Data):
             'ldau': '',
             'forces': '',
             'force_theorem': '',
-            'gw' : ''
+            'gw': ''
         }
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins']
@@ -622,7 +601,7 @@ class FleurinpData(Data):
                 row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
                 row3[i] = float(cor) * BOHR_A
-            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+            # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
@@ -727,7 +706,7 @@ class FleurinpData(Data):
                         symbols=species_dict[current_species][species_attrib_element]
                     )
             else:
-                #TODO throw error
+                # TODO throw error
                 print('I should never get here, 1D not supported yet, '
                       'I only know relPos, absPos, filmPos')
                 # TODO throw error
@@ -850,7 +829,7 @@ class FleurinpData(Data):
                 row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
                 row3[i] = float(cor) * BOHR_A
-            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+            # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
 
