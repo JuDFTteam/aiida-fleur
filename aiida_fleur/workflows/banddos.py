@@ -195,7 +195,7 @@ class FleurBandDosWorkChain(WorkChain):
                        'maxEnergy': emax, 'sigma': sigma}
         else:
           change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
-                       'maxEnergy' : emax, 'sigma' : sigma} 
+                       'maxEnergy' : emax, 'sigma' : sigma}
 
         fleurmode.set_inpchanges(change_dict)
 
@@ -232,7 +232,7 @@ class FleurBandDosWorkChain(WorkChain):
         remote = self.inputs.remote
         code = self.inputs.fleur
         options = self.ctx.options.copy()
-        
+
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
 
@@ -253,7 +253,7 @@ class FleurBandDosWorkChain(WorkChain):
         return input_scf
 
 
-    def return_results(self):   
+    def return_results(self):
         '''
         return the results of the calculations
         '''
@@ -263,10 +263,10 @@ class FleurBandDosWorkChain(WorkChain):
               'calculation {}'.format(self.ctx.fleurinp_scf, self.ctx.last_calc.pk, self.ctx.last_calc))
 
 
-        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+        from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.last_calc:
             try:
-                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_calc)
             except NotExistent:
                 last_calc_uuid = None
         else:
@@ -286,7 +286,7 @@ class FleurBandDosWorkChain(WorkChain):
         # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
 
         # bandfile =retrieved.open(bandfilename).name
-        
+
         # if os.path.isfile(bandfile):
         #     self.ctx.successful = True
         # else:
@@ -303,11 +303,11 @@ class FleurBandDosWorkChain(WorkChain):
                     scf_results  = load_node(w.node.pk).res
                     efermi_scf   = scf_results.fermi_energy
                     bandgap_scf  = scf_results.bandgap
-            
+
 
         efermi_band  = last_calc_out_dict['fermi_energy']
         bandgap_band = last_calc_out_dict['bandgap']
- 
+
         diff_efermi  = efermi_scf - efermi_band
         diff_bandgap = bandgap_scf - bandgap_band
 

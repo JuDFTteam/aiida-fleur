@@ -282,8 +282,6 @@ def generate_work_chain_node():
                 input_node.store()
                 node.add_incoming(input_node, link_type=LinkType.INPUT_WORK, link_label=link_label)
 
-        node.store()
-
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(

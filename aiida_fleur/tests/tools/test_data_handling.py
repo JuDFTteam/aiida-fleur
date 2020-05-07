@@ -45,6 +45,7 @@ def test_extract_structure_info(clear_database_aiida_fleur, generate_structure,
     scf_wc = generate_work_chain_node(computer=fixture_localhost,
                                       entry_point_name='aiida_fleur.scf',
                                       inputs={'structure': load_node(pks[1])})
+    scf_wc.store()
     scf_wc.set_attribute('process_label', 'fleur_scf_wc')
 
     # create a group

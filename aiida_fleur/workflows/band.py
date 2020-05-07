@@ -75,15 +75,15 @@ class FleurBandWorkChain(WorkChain):
         spec.input("remote", valid_type=RemoteData, required=False)
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("options", valid_type=Dict, required=False)
-        
+
         spec.outline(
             cls.start,
             if_(cls.scf_needed)(
                 cls.converge_scf,
-                cls.create_new_fleurinp, 
+                cls.create_new_fleurinp,
                 cls.run_fleur,
             ).else_(
-                cls.create_new_fleurinp, 
+                cls.create_new_fleurinp,
                 cls.run_fleur,
             ),
             cls.return_results
@@ -178,7 +178,7 @@ class FleurBandWorkChain(WorkChain):
         emax = wf_dict.get('emax', 0.80)
 
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
-    
+
         change_dict = {'band': True, 'ndir' : 0, 'minEnergy' : emin,
                        'maxEnergy' : emax, 'sigma' : sigma} #'ndir' : 1,
 
@@ -234,7 +234,7 @@ class FleurBandWorkChain(WorkChain):
         return input_scf
 
 
-    def return_results(self):   
+    def return_results(self):
         '''
         return the results of the calculations
         '''
@@ -244,10 +244,10 @@ class FleurBandWorkChain(WorkChain):
               'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
 
 
-        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+        from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.last_calc:
             try:
-                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_calc)
             except NotExistent:
                 last_calc_uuid = None
         else:
@@ -283,7 +283,7 @@ class FleurBandWorkChain(WorkChain):
         bandgap_scf  = scf_results.bandgap
         # efermi_band  = last_calc_out_dict['fermi_energy']
         # bandgap_band = last_calc_out_dict['bandgap']
- 
+
         # diff_efermi  = efermi_scf - efermi_band
         # diff_bandgap = bandgap_scf - bandgap_band
 
