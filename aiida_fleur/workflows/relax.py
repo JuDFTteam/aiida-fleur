@@ -353,13 +353,13 @@ class FleurRelaxWorkChain(WorkChain):
                }
 
         if self.ctx.final_cell:
-            structure = StructureData(cell=self.ctx.final_cell)
             bohr_a = 0.52917721092
+            np_cell = np.array(self.ctx.final_cell) * bohr_a
+            structure = StructureData(cell=np_cell.tolist())
 
             for atom in self.ctx.final_atom_positions:
-                np_cell = np.array(self.ctx.final_cell)
-                np_pos = np.array(atom[1:]) * bohr_a
-                pos_abs = list(np.dot(np_cell, np_pos))
+                np_pos = np.array(atom[1:])
+                pos_abs = np_pos @ np_cell
                 if self.ctx.pbc == (True, True, True):
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
                                           symbols=atom[0])
