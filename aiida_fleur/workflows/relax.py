@@ -42,6 +42,7 @@ class FleurRelaxWorkChain(WorkChain):
         'relax_iter': 5,
         'film_distance_relaxation': False,
         'force_criterion': 0.001,
+        'change_mixing_criterion': 0.025,
         'atoms_off': []  # '49' is reserved
     }
 
@@ -76,8 +77,9 @@ class FleurRelaxWorkChain(WorkChain):
                        message="SCF Workchains failed for some reason.")
         spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT',
                        message="Found no relaxed structure info in the output of SCF")
-        spec.exit_code(352, 'ERROR_NO_SCF_OUTPUT',
+        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT',
                        message="Found no SCF output")
+        spec.exit_code(354, 'ERROR_SWITCH_BFGS', message='Force is small, switch to BFGS')
         spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
                                'vacuum during relaxation')
@@ -102,6 +104,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_atom_positions = None
         self.ctx.pbc = None
         self.ctx.reached_relax = True
+        self.ctx.switch_bfgs = False
         self.ctx.scf_res = None
 
         # initialize the dictionary using defaults if no wf paramters are given
@@ -260,6 +263,12 @@ class FleurRelaxWorkChain(WorkChain):
             self.report('Structure is converged to the largest force'
                         '{}'.format(self.ctx.forces[-1]))
             return False
+        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict']['forcemix'] == 'straight':
+            self.report('Seems it is safe to switch to BFGS. Current largest force: '
+                        '{}'.format(self.ctx.forces[-1]))
+            self.ctx.switch_bfgs = True
+            return False
+
 
         self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
@@ -375,6 +384,8 @@ class FleurRelaxWorkChain(WorkChain):
         self.out('out', out)
         if not self.ctx.reached_relax:
             return self.exit_codes.ERROR_DID_NOT_RELAX
+        if self.ctx.switch_bfgs:
+            return self.exit_codes.ERROR_SWITCH_BFGS
 
     def control_end_wc(self, errormsg):
         """

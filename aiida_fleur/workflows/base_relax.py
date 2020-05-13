@@ -105,6 +105,35 @@ def _handle_not_conv_error(self, calculation):
 
         return ErrorHandlerReport(True, True)
 
+@register_error_handler(FleurBaseRelaxWorkChain, 49)
+def _handle_switch_to_bfgs(self, calculation):
+    """
+    SCF can be switched to BFGS. For now cdn and relax.xml are kept because the current progress is
+    treated as successful.
+    """
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_SWITCH_BFGS']):
+        self.ctx.is_finished = False
+        self.report('It is time to switch from straight to BFGS relaxation')
+        last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
+        last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+        last_fleur_calc = load_node(last_fleur_calc)
+        remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+
+        self.ctx.inputs.scf.remote_data = remote
+
+        scf_para = self.ctx.inputs.scf.wf_parameters.get_dict()
+        scf_para['force_dict']['forcemix'] = 'BFGS'
+        self.ctx.inputs.scf.wf_parameters = Dict(dict=scf_para)
+
+        if 'structure' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.structure
+        if 'inpgen' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.inpgen
+        if 'calc_parameters' in self.ctx.inputs.scf:
+            del self.ctx.inputs.scf.calc_parameters
+
+        return ErrorHandlerReport(True, True)
+
 
 @register_error_handler(FleurBaseRelaxWorkChain, 1)
 def _handle_general_error(self, calculation):
@@ -183,10 +212,16 @@ def _handle_mt_overlap(self, calculation):
         self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
-        # if value < -0.2 and error_params['iteration_number'] == 3:
-        #     wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 10
-        #     self.report('forcealpha might be too small.')
-        if value < -0.1 and error_params['iteration_number'] == 2:
+        if value < -0.2 and error_params['iteration_number'] >= 3:
+            wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
+            wf_para_dict['force_dict']['forcemix'] = 'straight'
+
+            self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
+            self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.25
+            self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
+            self.report('Seems it is too early for BFGS. I switch back to straight mixing'
+                        ' and reduce change_mixing_criterion by a factor of 1.25')
+        elif value < -0.1 and error_params['iteration_number'] == 2:
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
             self.report('forcealpha might be too large.')
         else:  # reduce MT radii

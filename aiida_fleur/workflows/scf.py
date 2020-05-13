@@ -69,8 +69,8 @@ class FleurScfWorkChain(WorkChain):
                    'serial': False,
                    'itmax_per_run': 30,
                    'force_dict': {'qfix': 2,
-                                  'forcealpha': 0.5,
-                                  'forcemix': 'BFGS'},
+                                  'forcealpha': 1.0,
+                                  'forcemix': 'straight'},
                    'use_relax_xml': False,
                    'inpxml_changes': [],
                    }
