@@ -8,4 +8,3 @@ __license__ = "MIT license, see LICENSE.txt file."
 __contributors__ = "Jens Broeder"
 __paper__ = ""
 __paper_short__ = ""
-

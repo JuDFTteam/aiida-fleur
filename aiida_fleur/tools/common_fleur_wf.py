@@ -664,14 +664,31 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
     return int(best_suggestion[0]), int(best_suggestion[1]), int(best_suggestion[2]), message
 
 
-def find_last_in_restart(restart_wc):
+def find_last_submitted_calcjob(restart_wc):
     """
-    Finds the last CalcJob submitted in a restart_wc
+    Finds the last CalcJob submitted in a higher-level workchain
     and returns it's uuid
     """
     from aiida.common.exceptions import NotExistent
+    from aiida.orm import CalcJobNode
     links = restart_wc.get_outgoing().all()
-    calls = list([x for x in links if x.link_label == 'CALL'])
+    calls = list([x for x in links if isinstance(x.node, CalcJobNode)])
+    if calls:
+        calls = sorted(calls, key=lambda x: x.node.pk)
+        return calls[-1].node.uuid
+    else:
+        raise NotExistent
+
+
+def find_last_submitted_workchain(restart_wc):
+    """
+    Finds the last CalcJob submitted in a higher-level workchain
+    and returns it's uuid
+    """
+    from aiida.common.exceptions import NotExistent
+    from aiida.orm import WorkChainNode
+    links = restart_wc.get_outgoing().all()
+    calls = list([x for x in links if isinstance(x.node, WorkChainNode)])
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid

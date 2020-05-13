@@ -1,0 +1,3 @@
+mock_code: 
+    inpgen: local_exe/inpgen #~/codes/aiida/inpgen/max_r4/inpgen
+    fleur: local_exe/fleur #~/codes/aiida/fleur/max_r4/serial/fleur 

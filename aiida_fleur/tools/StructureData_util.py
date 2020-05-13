@@ -114,7 +114,8 @@ def rescale_nowf(inp_structure, scale):
     new_ase.set_cell(the_ase.get_cell() *
                      np.power(float(scale), 1.0/3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = '{}  rescaled {}'.format(scale, structure.uuid)
+    rescaled_structure.label = '{}  rescaled'.format(scale)#, structure.uuid)
+    #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
 
     return rescaled_structure
@@ -307,7 +308,7 @@ def rel_to_abs_f(vector, cell):
 
 
 @cf
-def break_symmetry_wf(structure, wf_para, parameterData=None):
+def break_symmetry_wf(structure, wf_para, parameterdata=None):
     """
     This is the calcfunction of the routine break_symmetry, which
     introduces different 'kind objects' in a structure
@@ -331,12 +332,12 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
                           Be carefull the number given has to match EXACTLY the position
                           in the structure.
 
-    :params parameterData: AiiDa ParameterData
+    :params parameterdata: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
     Dict = DataFactory('dict')
-    if parameterData is None:
-        parameterData = Dict(dict={})
+    if parameterdata is None:
+        parameterdata = Dict(dict={})
     wf_dict = wf_para.get_dict()
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
@@ -344,14 +345,14 @@ def break_symmetry_wf(structure, wf_para, parameterData=None):
     new_kinds_names = wf_dict.get('new_kinds_names', {})
     new_structure, para_new = break_symmetry(
         structure, atoms=atoms, site=sites, pos=pos,
-        new_kinds_names=new_kinds_names, parameterData=parameterData)
+        new_kinds_names=new_kinds_names, parameterdata=parameterdata)
 
     return {'new_structure': new_structure, 'new_parameters': para_new}
 
 
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
 def break_symmetry(structure, atoms=None, site=None, pos=None,
-                   new_kinds_names=None, parameterData=None):
+                   new_kinds_names=None, parameterdata=None):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -415,8 +416,8 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     for atom in site:
         replace_siteN.append(atom)
 
-    if parameterData:
-        para = parameterData.get_dict()
+    if parameterdata:
+        para = parameterdata.get_dict()
         new_parameterd = dict(para)
     else:
         new_parameterd = {}
@@ -455,7 +456,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
             new_structure.append_kind(new_kind)
 
             # now we have to add an atom list to parameterData with the corresponding id.
-            if parameterData:
+            if parameterdata:
                 # '{}.{}'.format(charge, symbol_count[symbol])
                 id_a = symbol_count[symbol]
                 for key, val in six.iteritems(para):
@@ -497,7 +498,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
                 new_structure.append_kind(kind)
         new_structure.append_site(Site(kind_name=newkindname, position=pos))
 
-    if parameterData:
+    if parameterdata:
         para_new = Dict(dict=new_parameterd)
     else:
         para_new = None

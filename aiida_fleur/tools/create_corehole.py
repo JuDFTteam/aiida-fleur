@@ -19,7 +19,7 @@ import six
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
 #355
 
-def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
+def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterdata=None):
     """
     This methods sets of electron configurations for a kind
     or position given, make sure to break the symmetry for this position/kind
@@ -30,7 +30,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     param: econfig, string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
     ! THis is the new econfig therefore
 
-    returns a parameterData node
+    returns a Dict node
     """
 
     from aiida.common.constants import elements as PeriodicTableElements
@@ -50,8 +50,8 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     # get kind symbol, get kind name,
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /
     #count = 0
-    if parameterData:
-        new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
+    if parameterdata:
+        new_parameterd = parameterdata.get_dict() # dict()otherwise parameterdata is changed
         for key, val in six.iteritems(new_parameterd):
             if 'atom' in key:
                 if val.get('element', None) == symbol:
@@ -74,8 +74,8 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
 
     from aiida.orm import Dict
     new_parameter= Dict(dict=new_parameterd)
-    #if parameterData:
-    #    new_parameter = merge_parameter(parameterData, new_parameter)
+    #if parameterdata:
+    #    new_parameter = merge_parameter(parameterdata, new_parameter)
     return new_parameter#structure
 
 

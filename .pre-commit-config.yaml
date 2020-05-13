@@ -1,9 +1,30 @@
-# modernizer: make sure our code-base is Python 3 ready
-- repo: https://github.com/python-modernize/python-modernize.git
-  sha: a234ce4e185cf77a55632888f1811d83b4ad9ef2
+repos:
+
+- repo: git://github.com/pre-commit/mirrors-yapf
+  rev: v0.28.0
   hooks:
-  - id: python-modernize
-    exclude: ^docs/
-    args:
-      - --write
-      - --nobackups
+  - id: yapf
+    language: system
+    exclude: '^(docs/)'
+
+- repo: local
+  hooks:
+
+  - id: prospector
+    name: prospector
+    entry: prospector
+    types: [file, python]
+    language: system
+    exclude: '^(docs/)|(examples/)'
+
+  - id: version-number
+    name: Check version numbers
+    entry: python ./utils/validate_version_consistency.py
+    language: system
+    files: >-
+      (?x)^(
+        setup.json|
+        utils/validate_version_consistency.py|
+        aiida_fleur/__init__.py
+      )$
+    pass_filenames: false

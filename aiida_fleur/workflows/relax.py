@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
     In this module you find the workflow 'FleurRelaxWorkChain' for geometry optimization.
 """
@@ -90,8 +89,10 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started structure relaxation workflow version {}\n'
-                    ''.format(self._workflowversion))
+        self.report(
+            'INFO: started structure relaxation workflow version {}\n'
+            ''.format(self._workflowversion)
+        )
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -120,7 +121,8 @@ class FleurRelaxWorkChain(WorkChain):
                 extra_keys.append(key)
         if extra_keys:
             error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(
-                extra_keys)
+                extra_keys
+            )
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -165,9 +167,14 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wf_dict['mode'] = 'force'
 
         if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append(
-                ('set_atomgr_att', {'attributedict': {'force': [('relaxXYZ', 'FFT')]},
-                                    'species': 'all'}))
+            scf_wf_dict['inpxml_changes'].append((
+                'set_atomgr_att', {
+                    'attributedict': {
+                        'force': [('relaxXYZ', 'FFT')]
+                    },
+                    'species': 'all'
+                }
+            ))
 
         for specie_off in self.ctx.wf_dict['atoms_off']:
             scf_wf_dict['inpxml_changes'].append(
@@ -224,11 +231,15 @@ class FleurRelaxWorkChain(WorkChain):
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
                 fleur_calc = load_node(
-                    scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
+                    scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+                )
+                if fleur_calc.exit_status == FleurCalc.get_exit_statuses([
+                    'ERROR_VACUUM_SPILL_RELAX'
+                ])[0]:
                     self.control_end_wc('Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX']
+                                                                           )[0]:
                     self.control_end_wc('Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -260,8 +271,10 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report('Structure is converged to the largest force'
-                        '{}'.format(self.ctx.forces[-1]))
+            self.report(
+                'Structure is converged to the largest force'
+                '{}'.format(self.ctx.forces[-1])
+            )
             return False
         elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict']['forcemix'] == 'straight':
             self.report('Seems it is safe to switch to BFGS. Current largest force: '
@@ -273,14 +286,20 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
             self.ctx.reached_relax = False
-            self.report('INFO: Reached optimization iteration number {}. Largest force is {}, '
-                        'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
-                                                       self.ctx.wf_dict['force_criterion']))
+            self.report(
+                'INFO: Reached optimization iteration number {}. Largest force is {}, '
+                'force criterion is {}'.format(
+                    self.ctx.loop_count + 1, largest_now, self.ctx.wf_dict['force_criterion']
+                )
+            )
             return False
 
-        self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
-                    'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
-                                                   self.ctx.wf_dict['force_criterion']))
+        self.report(
+            'INFO: submit optimization iteration number {}. Largest force is {}, '
+            'force criterion is {}'.format(
+                self.ctx.loop_count + 1, largest_now, self.ctx.wf_dict['force_criterion']
+            )
+        )
 
         return True
 
@@ -290,6 +309,7 @@ class FleurRelaxWorkChain(WorkChain):
         :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.analyse_relax()`.
         New FleurinpData is stored in the context.
         """
+        # TODO do we loose provenance here, which we like to keep?
         scf_wc = self.ctx.scf_res
         last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         try:
@@ -312,7 +332,7 @@ class FleurRelaxWorkChain(WorkChain):
         :param relax_dict: parsed relax.xml from the previous calculation
         :return new_fleurinp: new FleurinpData object that will be used for next relax iteration
         """
-        # TODO: implement this function, now always use relax.xml gemerated in FLEUR
+        # TODO: implement this function, now always use relax.xml generated in FLEUR
         if False:
             return 1
 
@@ -350,16 +370,18 @@ class FleurRelaxWorkChain(WorkChain):
         """
         This function stores results of the workchain into the output nodes.
         """
-
-        out = {'workflow_name': self.__class__.__name__,
-               'workflow_version': self._workflowversion,
-               'info': self.ctx.info,
-               'warnings': self.ctx.warnings,
-               'errors': self.ctx.errors,
-               'force': self.ctx.forces,
-               'force_iter_done': self.ctx.loop_count,
-               'last_scf_wc_uuid': self.ctx.scf_res.uuid
-               }
+        #TODO maybe we want to have a more detailed array output node with the force and
+        # position history of all atoms?
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            'info': self.ctx.info,
+            'warnings': self.ctx.warnings,
+            'errors': self.ctx.errors,
+            'force': self.ctx.forces,
+            'force_iter_done': self.ctx.loop_count,
+            'last_scf_wc_uuid': self.ctx.scf_res.uuid
+        }
 
         if self.ctx.final_cell:
             bohr_a = 0.52917721092
@@ -370,11 +392,13 @@ class FleurRelaxWorkChain(WorkChain):
                 np_pos = np.array(atom[1:])
                 pos_abs = np_pos @ np_cell
                 if self.ctx.pbc == (True, True, True):
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
-                                          symbols=atom[0])
+                    structure.append_atom(
+                        position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=atom[0]
+                    )
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a),
-                                          symbols=atom[0])
+                    structure.append_atom(
+                        position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a), symbols=atom[0]
+                    )
 
             structure.pbc = self.ctx.pbc
             structure = save_structure(structure)

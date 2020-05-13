@@ -27,27 +27,45 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(description=('Create Magnetic WorkChain.'
-                                              ' All arguments are pks, or uuids, '
-                                              'codes can be names'))
-parser.add_argument('--wf_para', type=int, dest='wf_parameters',
-                    help='Some workflow parameters', required=False)
-parser.add_argument('--structure', type=int, dest='structure',
-                    help='The crystal structure node', required=False)
-parser.add_argument('--calc_para', type=int, dest='calc_parameters',
-                    help='Parameters for the FLEUR calculation', required=False)
-parser.add_argument('--inpgen', type=int, dest='inpgen',
-                    help='The inpgen code node to use', required=False)
-parser.add_argument('--fleur', type=int, dest='fleur',
-                    help='The FLEUR code node to use', required=True)
-parser.add_argument('--submit', type=bool, dest='submit',
-                    help='should the workflow be submitted or run', required=False)
-parser.add_argument('--options', type=int, dest='options',
-                    help='options of the workflow', required=False)
+parser = argparse.ArgumentParser(
+    description=(
+        'Create Magnetic WorkChain.'
+        ' All arguments are pks, or uuids, '
+        'codes can be names'
+    )
+)
+parser.add_argument(
+    '--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False
+)
+parser.add_argument(
+    '--structure', type=int, dest='structure', help='The crystal structure node', required=False
+)
+parser.add_argument(
+    '--calc_para',
+    type=int,
+    dest='calc_parameters',
+    help='Parameters for the FLEUR calculation',
+    required=False
+)
+parser.add_argument(
+    '--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False
+)
+parser.add_argument(
+    '--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True
+)
+parser.add_argument(
+    '--submit',
+    type=bool,
+    dest='submit',
+    help='should the workflow be submitted or run',
+    required=False
+)
+parser.add_argument(
+    '--options', type=int, dest='options', help='options of the workflow', required=False
+)
 args = parser.parse_args()
 
 print(args)
-
 
 fleur_code = is_code(args.fleur)
 fleur_code = test_and_get_codenode(fleur_code, expected_code_type='fleur.fleur')
@@ -59,27 +77,23 @@ if args.inpgen is not None:
 ####
 wf_para = {
     'lattice': 'fcc',
-    'miller': [[-1, 1, 0],
-               [0, 0, 1],
-               [1, 1, 0]],
+    'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
     'host_symbol': 'Pt',
     'latticeconstant': 4.0,
     'size': (1, 1, 5),
-    'replacements': {0: 'Fe', -1: 'Fe'},
+    'replacements': {
+        0: 'Fe',
+        -1: 'Fe'
+    },
     'decimals': 10,
     'pop_last_layers': 1,
-
     'total_number_layers': 8,
     'num_relaxed_layers': 3
 }
 
 wf_para = Dict(dict=wf_para)
 
-wf_eos = {
-    'points': 15,
-    'step': 0.015,
-    'guess': 1.00
-}
+wf_eos = {'points': 15, 'step': 0.015, 'guess': 1.00}
 
 wf_eos_scf = {
     'fleur_runmax': 4,
@@ -106,19 +120,23 @@ calc_eos = {
 
 calc_eos = Dict(dict=calc_eos)
 
-options_eos = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4, "num_cores_per_mpiproc": 6},
-               'queue_name': 'devel',
-               'environment_variables': {'OMP_NUM_THREADS': '6'},
-               'custom_scheduler_commands': '',
-               'max_wallclock_seconds':  1*60*60}
+options_eos = {
+    'resources': {
+        "num_machines": 1,
+        "num_mpiprocs_per_machine": 4,
+        "num_cores_per_mpiproc": 6
+    },
+    'queue_name': 'devel',
+    'environment_variables': {
+        'OMP_NUM_THREADS': '6'
+    },
+    'custom_scheduler_commands': '',
+    'max_wallclock_seconds': 1 * 60 * 60
+}
 
 options_eos = Dict(dict=options_eos)
 
-wf_relax = {
-    'film_distance_relaxation': False,
-    'force_criterion': 0.049,
-    'use_relax_xml': True
-}
+wf_relax = {'film_distance_relaxation': False, 'force_criterion': 0.049, 'use_relax_xml': True}
 
 wf_relax_scf = {
     'fleur_runmax': 5,
@@ -127,9 +145,11 @@ wf_relax_scf = {
     'alpha_mix': 0.015,
     'relax_iter': 25,
     'force_converged': 0.001,
-    'force_dict': {'qfix': 2,
-                   'forcealpha': 0.75,
-                   'forcemix': 'straight'},
+    'force_dict': {
+        'qfix': 2,
+        'forcealpha': 0.75,
+        'forcemix': 'straight'
+    },
     'inpxml_changes': []
 }
 
@@ -163,11 +183,19 @@ calc_relax = {
 
 calc_relax = Dict(dict=calc_relax)
 
-options_relax = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4, "num_cores_per_mpiproc": 6},
-                 'queue_name': 'devel',
-                 'environment_variables': {'OMP_NUM_THREADS': '6'},
-                 'custom_scheduler_commands': '',
-                 'max_wallclock_seconds':  1*60*60}
+options_relax = {
+    'resources': {
+        "num_machines": 1,
+        "num_mpiprocs_per_machine": 4,
+        "num_cores_per_mpiproc": 6
+    },
+    'queue_name': 'devel',
+    'environment_variables': {
+        'OMP_NUM_THREADS': '6'
+    },
+    'custom_scheduler_commands': '',
+    'max_wallclock_seconds': 1 * 60 * 60
+}
 
 options_relax = Dict(dict=options_relax)
 
@@ -206,7 +234,6 @@ inputs = {
     'wf_parameters': wf_para
     # 'eos_output': load_node(14405)
 }
-
 
 submit_wc = False
 if args.submit is not None:

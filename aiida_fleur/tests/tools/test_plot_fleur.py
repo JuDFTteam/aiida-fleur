@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Tests for the `plot_fleur` function.
 All test are executed with show false, if some plot opens, something is not right
@@ -22,6 +21,7 @@ from aiida_fleur.tools.plot.fleur import plot_fleur
 import aiida_fleur
 import matplotlib
 matplotlib.use('Agg')
+
 
 def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a workchain"""
@@ -81,6 +81,7 @@ def test_plot_fleur_multiple_wc_matplotlib(aiida_profile, read_dict_from_file):
 
     assert isinstance(p_eos, list)
     #assert isinstance(p_eos[0], type(Axes))
+
 
 @pytest.mark.skip(reason="does work, but requires current masci-tool develop branch >0.10.3")
 def test_plot_fleur_single_wc_bokeh(aiida_profile, read_dict_from_file):

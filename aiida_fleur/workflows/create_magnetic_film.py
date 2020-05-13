@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
     In this module you find the workflow 'FleurCreateMagneticWorkChain' for creation of relaxed
     film deposited on a cubic substrate.
@@ -37,9 +36,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
     _wf_default = {
         'lattice': 'fcc',
-        'miller': [[-1, 1, 0],
-                   [0, 0, 1],
-                   [1, 1, 0]],
+        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,  # if equals to 0, use distance_suggestion
         'size': (1, 1, 5),
@@ -47,7 +44,6 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'hold_n_first_layers': 3,
         'decimals': 10,
         'pop_last_layers': 1,
-
         'total_number_layers': 4,
         'num_relaxed_layers': 2
     }
@@ -67,11 +63,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.outline(
             cls.start,
             if_(cls.eos_needed)(
-                cls.run_eos,
-            ),
+                cls.run_eos, ),
             if_(cls.relax_needed)(
-                cls.run_relax,
-            ),
+                cls.run_relax,),
             cls.make_magnetic
         )
 
@@ -80,8 +74,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
-        spec.exit_code(380, 'ERROR_NOT_SUPPORTED_LATTICE',
-                       message="Specified substrate has to be bcc or fcc.")
+        spec.exit_code(
+            380, 'ERROR_NOT_SUPPORTED_LATTICE', message="Specified substrate has to be bcc or fcc."
+        )
         spec.exit_code(382, 'ERROR_RELAX_FAILED', message="Relaxation calculation failed.")
         spec.exit_code(383, 'ERROR_EOS_FAILED', message="EOS WorkChain failed.")
 
@@ -124,8 +119,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Create Magnetic Film'
-                    ' workflow version {}\n'.format(self._workflowversion))
+        self.report(
+            'INFO: started Create Magnetic Film'
+            ' workflow version {}\n'.format(self._workflowversion)
+        )
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -146,7 +143,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 extra_keys.append(key)
         if extra_keys:
             error = 'ERROR: input wf_parameters for Create Magnetic contains extra keys: {}'.format(
-                extra_keys)
+                extra_keys
+            )
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -249,7 +247,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
                     return self.ctx.ERROR_EOS_FAILED
-
+            # print(eos_output.get_dict())
             scaling_param = eos_output.get_dict()['scaling_gs']
 
             out_create_structure = create_film_to_relax(
@@ -280,8 +278,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         else:
             optimized_structure = self.inputs.optimized_structure
 
-        para_dict = {'total_number_layers': self.ctx.wf_dict['total_number_layers'],
-                     'num_relaxed_layers':  self.ctx.wf_dict['num_relaxed_layers']}
+        para_dict = {
+            'total_number_layers': self.ctx.wf_dict['total_number_layers'],
+            'num_relaxed_layers': self.ctx.wf_dict['num_relaxed_layers']
+        }
 
         if not self.ctx.substrate:  # workchain was stated from remote->Relax or optimized_structure
             if 'optimized_structure' in self.inputs:
@@ -291,12 +291,14 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 self.ctx.substrate = find_substrate(remote=self.inputs.relax.scf.remote_data)
 
         # to track the provenance from which structures it was created
-        magnetic = magnetic_slab_from_relaxed_cf(optimized_structure, load_node(self.ctx.substrate),
-                                                 Dict(dict=para_dict))
+        magnetic = magnetic_slab_from_relaxed_cf(
+            optimized_structure, load_node(self.ctx.substrate), Dict(dict=para_dict)
+        )
         magnetic.label = 'magnetic_structure'
-        magnetic.description = ('Magnetic structure slab created within FleurCreateMagneticWorkChain, '
-                                'created from : {} and {}'.format(
-                                    optimized_structure.uuid, self.ctx.substrate))
+        magnetic.description = (
+            'Magnetic structure slab created within FleurCreateMagneticWorkChain, '
+            'created from : {} and {}'.format(optimized_structure.uuid, self.ctx.substrate)
+        )
 
         self.out('magnetic_structure', magnetic)
 
@@ -310,8 +312,6 @@ def save_structure(structure):
     structure_return = structure.clone()
     return structure_return
 '''
-
-
 @cf
 def magnetic_slab_from_relaxed_cf(optimized_structure, substrate, para_dict):
     """ calcfunction which wraps magnetic_slab_from_relaxed to keep provenance """
@@ -348,12 +348,11 @@ def create_substrate_bulk(wf_dict_node, distance_suggestion):
         structure_factory = BodyCenteredCubic
         suggestion_factor = 2 / sqrt(3)
     else:
-        return ExitCode(380, 'ERROR_NOT_SUPPORTED_LATTICE',
-                        message="Specified substrate has to be bcc or fcc.")
+        return ExitCode(
+            380, 'ERROR_NOT_SUPPORTED_LATTICE', message="Specified substrate has to be bcc or fcc."
+        )
 
-    miller = [[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]
+    miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     host_symbol = wf_dict['host_symbol']
     latticeconstant = wf_dict['latticeconstant']
     if not latticeconstant:
@@ -361,8 +360,13 @@ def create_substrate_bulk(wf_dict_node, distance_suggestion):
         dict_suggestion = distance_suggestion.get_dict()
         latticeconstant = suggestion_factor * dict_suggestion[host_symbol][host_symbol]
     size = (1, 1, 1)
-    structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 1),
-                                  latticeconstant=latticeconstant, size=size)
+    structure = structure_factory(
+        miller=miller,
+        symbol=host_symbol,
+        pbc=(1, 1, 1),
+        latticeconstant=latticeconstant,
+        size=size
+    )
 
     return StructureData(ase=structure)
 

@@ -30,8 +30,6 @@
         "aiida-core>=1.0.1,<2.0.0",
         "lxml >= 3.6.4",
         "pytest-cov >= 2.5.0",
-        "pytest >= 2.9",
-        "pgtest",
         "numpy>=1.16.4,<1.18.0",
         "sympy",
         "masci-tools",
@@ -54,6 +52,13 @@
             "yapf==0.24.0",
             "prospector==0.12.11",
             "pylint==1.9.3"
+        ],
+        "testing" : [
+            "pytest >= 2.9",
+            "pytest-timeout",
+            "pytest-cov >= 2.5.0",
+            "pgtest",
+            "aiida-testing @ git+https://github.com/aiidateam/aiida-testing@export_cache"
         ]
     },
     "entry_points": {

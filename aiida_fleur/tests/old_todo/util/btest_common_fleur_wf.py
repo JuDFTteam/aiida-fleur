@@ -22,8 +22,10 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.tools.common_fleur_wf import is_code, get_inputs_fleur, get_inputs_inpgen
 
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__copyright__ = (
+    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+    "IAS-1/PGI-1, Germany. All rights reserved."
+)
 __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
@@ -48,37 +50,38 @@ print(is_code(nocode))
 
 remote = load_node(2357)
 fleurinp = load_node(2351)
-options = { "max_wallclock_seconds": 360,
-            "resources": {"num_machines": 1},
-            "custom_scheduler_commands": 'bla',
-            "queue_name": 'th1',
-            #"computer": Computer,
-            "withmpi": True,
-            #"mpirun_extra_params": Any(list, tuple),
-            "import_sys_environment": False,
-            "environment_variables": {},
-            "priority": 'High',
-            "max_memory_kb": 62,
-            "prepend_text": 'this is a test',
-            "append_text": 'this was a test'}
+options = {
+    "max_wallclock_seconds": 360,
+    "resources": {
+        "num_machines": 1
+    },
+    "custom_scheduler_commands": 'bla',
+    "queue_name": 'th1',
+    #"computer": Computer,
+    "withmpi": True,
+    #"mpirun_extra_params": Any(list, tuple),
+    "import_sys_environment": False,
+    "environment_variables": {},
+    "priority": 'High',
+    "max_memory_kb": 62,
+    "prepend_text": 'this is a test',
+    "append_text": 'this was a test'
+}
 inp = get_inputs_fleur(codeNode, remote, fleurinp, options, serial=False)
 print(inp)
 
 inputs = {}
-options2 = {"max_wallclock_seconds": 360,
-            "resources": {"num_machines": 1}}
+options2 = {"max_wallclock_seconds": 360, "resources": {"num_machines": 1}}
 inputs = get_inputs_fleur(codeNode, remote, fleurinp, options2, serial=True)
 #print inputs
 #future = submit(FleurProcess, **inputs)
 print('run Fleur')
 
-
 # test get inputs_fleur
 inputs = {}
-structure =load_node(2469)
+structure = load_node(2469)
 inpgencode = is_code(2)
-options2 = {"max_wallclock_seconds": 360,
-            "resources": {"num_machines": 1}}
+options2 = {"max_wallclock_seconds": 360, "resources": {"num_machines": 1}}
 inputs = get_inputs_inpgen(structure, inpgencode, options2, params=None)
 future = submit(InpgenProcess, **inputs)
 print('run inpgen')

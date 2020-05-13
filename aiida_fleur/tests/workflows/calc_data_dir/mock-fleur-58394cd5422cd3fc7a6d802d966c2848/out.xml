@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fleurOutput fleurOutputVersion="0.27">
+   <programVersion version="fleur 31">
+      <compilationInfo date="2020-03-13T16:42:33" user="broeder" host="iff1209" flag="-mkl  -mkl -mkl -qopenmp -assume byterecl" link="-lxml2"/>
+      <gitInfo version="MaX-R4-19-gedef532" branch="release" lastCommitHash="edef532aab1ed2ab5ee26ab6faf6413a84e58506"/>
+      <targetComputerArchitectures>GEN</targetComputerArchitectures>
+      <precision type="DOUBLE"/>
+      <targetStructureClass> </targetStructureClass>
+   </programVersion>
+   <parallelSetup>
+      <openMP ompThreads="6"/>
+   </parallelSetup>
+   <startDateAndTime date="2020/03/18" time="12:44:23" zone="+0100"/>
+   <inputData>
+   <comment>
+      A Fleur input generator calculation with aiida                                  
+   </comment>
+   <calculationSetup>
+      <cutoffs Kmax="3.20000000" Gmax="11.00000000" GmaxXC="9.20000000" numbands="0"/>
+      <scfLoop itmax="10" minDistance=".00002000" maxIterBroyd="99" imix="Anderson" alpha=".05000000" precondParam="0.0" spinf="2.00000000"/>
+      <coreElectrons ctail="T" frcor="F" kcrel="0" coretail_lmax="0"/>
+      <magnetism jspins="1" l_noco="F" swsp="F" lflip="F"/>
+      <soc theta=".00000000" phi=".00000000" l_soc="F" spav="F"/>
+      <prodBasis gcutm="3.20000000" tolerance=".00010000" ewaldlambda="3" lexp="16" bands="0"/>
+      <nocoParams l_ss="F" l_mperp="F" l_constr="F" mix_b=".00000000">
+         <qss>.0000000000 .0000000000 .0000000000</qss>
+      </nocoParams>
+      <expertModes gw="0" secvar="F"/>
+      <geometryOptimization l_f="F" forcealpha="1.00000000" forcemix="BFGS" epsdisp=".00001000" epsforce=".00001000"/>
+      <ldaU l_linMix="F" mixParam=".050000" spinf="1.000000"/>
+      <bzIntegration valenceElectrons="8.00000000" mode="hist" fermiSmearingEnergy=".00050000">
+         <kPointList posScale="1.00000000" weightScale="1.00000000" count="110">
+            <kPoint weight="    0.002000">    0.450000     0.450000     0.450000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.450000     0.450000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.450000     0.450000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.450000     0.450000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.450000     0.450000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.500000     0.500000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.550000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.550000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.550000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.450000     0.450000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.350000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.350000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.350000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.400000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.450000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.500000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.550000     0.650000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.450000     0.650000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.450000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.250000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.300000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.400000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.450000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.450000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.500000     0.700000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.450000     0.650000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.450000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.300000     0.300000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.400000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.450000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.450000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.450000     0.700000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.500000     0.650000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.450000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.400000     0.400000     0.450000</kPoint>
+            <kPoint weight="    0.012000">    0.400000     0.450000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.400000     0.450000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.550000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.550000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.500000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.450000     0.500000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.400000     0.500000     0.550000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.500000     0.550000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.500000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.400000     0.400000     0.550000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.400000     0.550000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.400000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.300000     0.300000     0.550000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.350000     0.550000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.350000     0.550000</kPoint>
+            <kPoint weight="    0.002000">    0.350000     0.350000     0.350000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.350000     0.350000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.350000     0.350000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.350000     0.350000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.400000     0.400000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.500000     0.500000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.600000     0.600000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.350000     0.650000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.250000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.250000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.300000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.350000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.400000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.500000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.400000     0.650000</kPoint>
+            <kPoint weight="    0.006000">    0.200000     0.200000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.300000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.350000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.350000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.400000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.500000     0.650000</kPoint>
+            <kPoint weight="    0.006000">    0.300000     0.300000     0.350000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.350000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.350000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.300000     0.350000     0.600000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.400000     0.700000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.400000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.400000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.400000     0.600000</kPoint>
+            <kPoint weight="    0.006000">    0.350000     0.500000     0.500000</kPoint>
+            <kPoint weight="    0.012000">    0.350000     0.500000     0.600000</kPoint>
+            <kPoint weight="    0.006000">    0.400000     0.400000     0.650000</kPoint>
+            <kPoint weight="    0.002000">    0.250000     0.250000     0.250000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.250000     0.250000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.250000     0.250000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.300000     0.300000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.400000     0.400000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.500000     0.500000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.150000     0.250000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.200000     0.250000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.250000     0.300000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.300000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.400000     0.500000</kPoint>
+            <kPoint weight="    0.006000">    0.200000     0.200000     0.250000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.250000     0.300000</kPoint>
+            <kPoint weight="    0.012000">    0.200000     0.250000     0.400000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.300000     0.500000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.300000     0.300000</kPoint>
+            <kPoint weight="    0.012000">    0.250000     0.300000     0.400000</kPoint>
+            <kPoint weight="    0.006000">    0.250000     0.400000     0.400000</kPoint>
+            <kPoint weight="    0.002000">    0.150000     0.150000     0.150000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.150000     0.150000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.200000     0.200000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.300000     0.300000</kPoint>
+            <kPoint weight="    0.006000">    0.100000     0.100000     0.150000</kPoint>
+            <kPoint weight="    0.012000">    0.100000     0.150000     0.200000</kPoint>
+            <kPoint weight="    0.012000">    0.150000     0.200000     0.300000</kPoint>
+            <kPoint weight="    0.006000">    0.150000     0.200000     0.200000</kPoint>
+            <kPoint weight="    0.002000">    0.050000     0.050000     0.050000</kPoint>
+            <kPoint weight="    0.006000">    0.050000     0.100000     0.100000</kPoint>
+         </kPointList>
+      </bzIntegration>
+      <energyParameterLimits ellow="-.80000000" elup="1.00000000"/>
+   </calculationSetup>
+   <cell>
+      <symmetryOperations>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>-1 -1 -1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>0 0 -1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 1 1 .5000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 1 .0000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>0 -1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>1 1 1 .5000000000</row-2>
+            <row-3>-1 0 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 0 1 .0000000000</row-2>
+            <row-3>0 1 0 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 1 0 .0000000000</row-1>
+            <row-2>-1 -1 -1 .5000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 -1 0 .0000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 0 0 .0000000000</row-1>
+            <row-2>0 0 -1 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>1 0 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>-1 -1 -1 .5000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>0 0 -1 .0000000000</row-1>
+            <row-2>-1 0 0 .0000000000</row-2>
+            <row-3>1 1 1 .5000000000</row-3>
+         </symOp>
+      </symmetryOperations>
+      <bulkLattice scale="1.0000000000" latnam="any">
+         <bravaisMatrix>
+            <row-1>.000000000000000 5.167355297900000 5.167355297900000</row-1>
+            <row-2>5.167355297900000 .000000000000000 5.167355297900000</row-2>
+            <row-3>5.167355297900000 5.167355297900000 .000000000000000</row-3>
+         </bravaisMatrix>
+      </bulkLattice>
+   </cell>
+   <xcFunctional name="pbe" relativisticCorrections="F"/>
+   <atomSpecies>
+      <species name="Si-1" element="Si" atomicNumber="14" coreStates="4" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="2.10000000" gridPoints="981" logIncrement=".01600000"/>
+         <atomicCutoffs lmax="12" lnonsphr="6"/>
+         <energyParameters s="3" p="3" d="3" f="4"/>
+         <prodBasis lcutm="4" lcutwf="11" select="4 0 4 2"/>
+      </species>
+   </atomSpecies>
+   <atomGroups>
+      <atomGroup species="Si-1">
+         <relPos label="                   1">1.000/8.000 1.000/8.000 1.000/8.000</relPos>
+         <relPos label="                   2">-1.000/8.000 -1.000/8.000 -1.000/8.000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+   </atomGroups>
+   <output dos="F" band="F" vacdos="F" slice="F" mcd="F">
+      <checks vchk="F" cdinf="F"/>
+      <densityOfStates ndir="0" minEnergy="-.50000000" maxEnergy=".50000000" sigma=".01500000"/>
+      <vacuumDOS layers="1" integ="F" star="F" nstars="0" locx1=".00000" locy1=".00000" locx2=".00000" locy2=".00000" nstm="0" tworkf=".00000"/>
+      <unfoldingBand unfoldBand="F" supercellX="1" supercellY="1" supercellZ="1"/>
+      <plotting iplot="0" score="F" plplot="F"/>
+      <chargeDensitySlicing numkpt="0" minEigenval=".00000000" maxEigenval=".00000000" nnne="0" pallst="F"/>
+      <specialOutput eonly="F" bmt="F"/>
+      <magneticCircularDichroism energyLo="-10.00000000" energyUp=".00000000"/>
+   </output>
+   </inputData>
+   <numericalParameters>
+      <atomsInCell nat="2" ntype="1" jmtd="981" n_u="0"/>
+      <basis nvd="165" lmaxd="12" nlotot="0"/>
+      <density ng3="199" ng2="2"/>
+      <bands numbands="7"/>
+      <volumes unitCell="275.952903" interstitial="198.368130">
+         <mtVolume atomType="1" mtRadius="2.10000000" mtVolume="38.79238609"/>
+      </volumes>
+      <kPointList posScale="1.00000000" weightScale="1.00000000" count="  110">
+         <kPoint weight="0.002000">0.450000            0.450000            0.450000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.450000            0.450000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.450000            0.450000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.450000            0.450000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.450000            0.450000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.500000            0.500000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.550000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.550000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.550000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.450000            0.450000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.350000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.350000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.350000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.400000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.450000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.500000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.550000            0.650000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.450000            0.650000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.450000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.250000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.300000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.400000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.450000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.450000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.500000            0.700000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.450000            0.650000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.450000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.300000            0.300000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.400000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.450000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.450000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.450000            0.700000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.500000            0.650000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.450000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.400000            0.400000            0.450000</kPoint>
+         <kPoint weight="0.012000">0.400000            0.450000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.400000            0.450000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.550000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.550000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.500000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.450000            0.500000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.400000            0.500000            0.550000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.500000            0.550000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.500000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.400000            0.400000            0.550000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.400000            0.550000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.400000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.300000            0.300000            0.550000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.350000            0.550000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.350000            0.550000</kPoint>
+         <kPoint weight="0.002000">0.350000            0.350000            0.350000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.350000            0.350000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.350000            0.350000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.350000            0.350000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.400000            0.400000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.500000            0.500000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.600000            0.600000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.350000            0.650000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.250000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.250000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.300000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.350000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.400000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.500000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.400000            0.650000</kPoint>
+         <kPoint weight="0.006000">0.200000            0.200000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.300000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.350000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.350000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.400000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.500000            0.650000</kPoint>
+         <kPoint weight="0.006000">0.300000            0.300000            0.350000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.350000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.350000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.300000            0.350000            0.600000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.400000            0.700000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.400000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.400000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.400000            0.600000</kPoint>
+         <kPoint weight="0.006000">0.350000            0.500000            0.500000</kPoint>
+         <kPoint weight="0.012000">0.350000            0.500000            0.600000</kPoint>
+         <kPoint weight="0.006000">0.400000            0.400000            0.650000</kPoint>
+         <kPoint weight="0.002000">0.250000            0.250000            0.250000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.250000            0.250000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.250000            0.250000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.300000            0.300000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.400000            0.400000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.500000            0.500000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.150000            0.250000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.200000            0.250000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.250000            0.300000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.300000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.400000            0.500000</kPoint>
+         <kPoint weight="0.006000">0.200000            0.200000            0.250000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.250000            0.300000</kPoint>
+         <kPoint weight="0.012000">0.200000            0.250000            0.400000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.300000            0.500000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.300000            0.300000</kPoint>
+         <kPoint weight="0.012000">0.250000            0.300000            0.400000</kPoint>
+         <kPoint weight="0.006000">0.250000            0.400000            0.400000</kPoint>
+         <kPoint weight="0.002000">0.150000            0.150000            0.150000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.150000            0.150000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.200000            0.200000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.300000            0.300000</kPoint>
+         <kPoint weight="0.006000">0.100000            0.100000            0.150000</kPoint>
+         <kPoint weight="0.012000">0.100000            0.150000            0.200000</kPoint>
+         <kPoint weight="0.012000">0.150000            0.200000            0.300000</kPoint>
+         <kPoint weight="0.006000">0.150000            0.200000            0.200000</kPoint>
+         <kPoint weight="0.002000">0.050000            0.050000            0.050000</kPoint>
+         <kPoint weight="0.006000">0.050000            0.100000            0.100000</kPoint>
+      </kPointList>
+   </numericalParameters>
+   <scfLoop>
+      <spinDependentCharge spin="1" total="28.0000000" interstitial="3.9698381" mtSpheres="24.0301619"/>
+      <totalCharge value="28.0000000000"/>
+      <iteration numberForCurrentRun="    1" overallNumber="   11">
+         <energyParameters units="Htr">
+            <atomicEP atomType="1" spin="1" branch="3s" branchLowest="-4.72" branchHighest="1.18" value="-0.1460471942"/>
+            <atomicEP atomType="1" spin="1" branch="3p" branchLowest="-3.11" branchHighest="1.66" value="0.0341969777"/>
+            <atomicEP atomType="1" spin="1" branch="3d" branchLowest="-9.99" branchHighest="2.04" value="0.2254475866"/>
+            <atomicEP atomType="1" spin="1" branch="4f" branchLowest="-9.99" branchHighest="4.29" value="0.3925276961"/>
+         </energyParameters>
+         <eigenvalues>
+         </eigenvalues>
+         <bandgap value="0.7742264607" units="eV"/>
+         <sumValenceSingleParticleEnergies value="0.1785554621" units="Htr"/>
+         <FermiEnergy value="0.2042406485" units="Htr"/>
+         <valenceDensity>
+            <mtCharges spin="1">
+               <mtCharge atomType="1" total="2.0172788" s="0.8467101" p="1.0911027" d="0.0732181" f="0.0049896"/>
+            </mtCharges>
+            <spinDependentCharge spin="1" total="8.0000000" interstitial="3.9654424" mtSpheres="4.0345576"/>
+            <totalCharge value="8.0000000000"/>
+         </valenceDensity>
+         <coreStates atomType="     1" atomicNumber=" 14" spin="1" kinEnergy="    285.3755433184" eigValSum="   -158.3983749275" lostElectrons=" 0.002230">
+            <state n="1" l="0" j="0.5" energy="-65.2036034431" weight="2.0000000000"/>
+            <state n="2" l="0" j="0.5" energy="-4.7106027581" weight="2.0000000000"/>
+            <state n="2" l="1" j="0.5" energy="-3.1108233671" weight="2.0000000000"/>
+            <state n="2" l="1" j="1.5" energy="-3.0870789477" weight="4.0000000000"/>
+         </coreStates>
+         <allElectronCharges>
+            <spinDependentCharge spin="1" total="28.0000000" interstitial="3.9698381" mtSpheres="24.0301619"/>
+            <totalCharge value="27.9999999865"/>
+         </allElectronCharges>
+         <totalEnergy                                    value="     -580.0717943040" units="Htr">
+            <sumOfEigenvalues                            value="     -316.6181943930">
+               <coreElectrons value="-316.7967498551"/>
+               <valenceElectrons value="0.1785554621"/>
+            </sumOfEigenvalues>
+            <densityCoulombPotentialIntegral value="-844.3964321914"/>
+            <densityEffectivePotentialIntegral value="-898.3063436689"/>
+            <chargeDenXCDenIntegral value="-41.7443456005"/>
+            <FockExchangeEnergyValence value="0.0000000000"/>
+            <FockExchangeEnergyCore value="0.0000000000"/>
+            <atomTypeDependentContributions atomType="1">
+               <electronNucleiInteractionDifferentMTs value="683.6535997886"/>
+               <MadelungTerm value="-14.1637820951"/>
+            </atomTypeDependentContributions>
+            <tkbTimesEntropy value="0.0000000000"/>
+            <freeEnergy value="-580.0717943040"/>
+            <extrapolationTo0K value="-580.0717943040"/>
+         </totalEnergy>
+         <densityConvergence units="me/bohr^3">
+            <chargeDensity spin="1" distance="0.0000063409"/>
+         </densityConvergence>
+      </iteration>
+   </scfLoop>
+   <endDateAndTime date="2020/03/18" time="12:44:24" zone="+0100"/>
+</fleurOutput>

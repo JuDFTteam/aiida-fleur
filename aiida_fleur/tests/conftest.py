@@ -10,8 +10,8 @@ import collections
 import pytest
 import six
 
-# aiida_pytest_mock_codes might be moved to aiida-core, not yet a stable dependency..
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
+# aiida_testing.mock_codes in development, not yet a stable dependency..
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache'] # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
@@ -146,7 +146,7 @@ def generate_structure():
         from aiida.orm import StructureData
 
         param = 5.43
-        cell = [[param / 2., param / 2., 0], [param / 2., 0, param / 2.], [0, param / 2., param / 2.]]
+        cell = [[0, param / 2., param / 2.], [param / 2., 0, param / 2.], [param / 2., param / 2., 0]]
         structure = StructureData(cell=cell)
         structure.append_atom(position=(0., 0., 0.), symbols='Si', name='Si')
         structure.append_atom(position=(param / 4., param / 4., param / 4.),
@@ -156,59 +156,6 @@ def generate_structure():
 
     return _generate_structure
 
-
-@pytest.fixture
-def generate_structure2():
-    """Return a `StructureData` representing bulk silicon."""
-
-    def _generate_structure2():
-        """Return a `StructureData` representing bulk silicon."""
-        from aiida.orm import StructureData
-
-        def rel_to_abs(vector, cell):
-            """
-            converts interal coordinates to absolut coordinates in Angstroem.
-            """
-            if len(vector) == 3:
-                postionR = vector
-                row1 = cell[0]
-                row2 = cell[1]
-                row3 = cell[2]
-                new_abs_pos = [postionR[0]*row1[0] + postionR[1]*row2[0] + postionR[2]*row3[0],
-                               postionR[0]*row1[1] + postionR[1]*row2[1] + postionR[2]*row3[1],
-                               postionR[0]*row1[2] + postionR[1]*row2[2] + postionR[2]*row3[2]]
-                return new_abs_pos
-
-        bohr_a_0 = 0.52917721092  # A
-        a = 5.167355275190*bohr_a_0
-        cell = [[0.0, a, a], [a, 0.0, a], [a, a, 0.0]]
-        structure = StructureData(cell=cell)
-        pos1 = rel_to_abs((1./8., 1./8., 1./8.), cell)
-        pos2 = rel_to_abs((-1./8., -1./8., -1./8.), cell)
-        structure.append_atom(position=pos1, symbols='Si')
-        structure.append_atom(position=pos2, symbols='Si')
-
-        return structure
-
-    return _generate_structure2
-
-
-@pytest.fixture
-def generate_structure_W():
-    """Return a `StructureData` representing bulk tungsten."""
-
-    def _generate_structureW():
-        """Return a `StructureData` representing bulk tungsten."""
-        from aiida.orm import StructureData
-
-        param = 3.18968 # 1.58950065353588 * 0.5291772109
-        cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
-        structure = StructureData(cell=cell)
-        structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
-
-        return structure
-
-    return _generate_structureW
 
 
 @pytest.fixture
@@ -335,8 +282,6 @@ def generate_work_chain_node():
                 input_node.store()
                 node.add_incoming(input_node, link_type=LinkType.INPUT_WORK, link_label=link_label)
 
-        node.store()
-
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
@@ -383,11 +328,12 @@ def generate_film_structure():
 
 
 @pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(aiida_profile):  # pylint: disable=redefined-outer-name
+def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
     """Clear the database before each test.
     """
-    aiida_profile.reset_db()
-
+    #aiida_profile.reset_db()
+    #yield
+    #aiida_profile.reset_db()
 
 @pytest.fixture
 def read_dict_from_file():
@@ -404,3 +350,158 @@ def read_dict_from_file():
         return node_dict
 
     return _read_dict_from_file
+
+
+@pytest.fixture
+def generate_structure2():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_structure2():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+
+        def rel_to_abs(vector, cell):
+            """
+            converts interal coordinates to absolut coordinates in Angstroem.
+            """
+            if len(vector) == 3:
+                postionR = vector
+                row1 = cell[0]
+                row2 = cell[1]
+                row3 = cell[2]
+                new_abs_pos = [postionR[0]*row1[0] + postionR[1]*row2[0] + postionR[2]*row3[0],
+                               postionR[0]*row1[1] + postionR[1]*row2[1] + postionR[2]*row3[1],
+                               postionR[0]*row1[2] + postionR[1]*row2[2] + postionR[2]*row3[2]]
+                return new_abs_pos
+
+        bohr_a_0 = 0.52917721092  # A
+        a = 5.167355275190*bohr_a_0
+        cell = [[0.0, a, a], [a, 0.0, a], [a, a, 0.0]]
+        structure = StructureData(cell=cell)
+        pos1 = rel_to_abs((1./8., 1./8., 1./8.), cell)
+        pos2 = rel_to_abs((-1./8., -1./8., -1./8.), cell)
+        structure.append_atom(position=pos1, symbols='Si')
+        structure.append_atom(position=pos2, symbols='Si')
+
+        return structure
+
+    return _generate_structure2
+
+
+
+@pytest.fixture
+def generate_structure_W():
+    """Return a `StructureData` representing bulk tungsten."""
+
+    def _generate_structure_W():
+        """Return a `StructureData` representing bulk tungsten."""
+        from aiida.orm import StructureData
+
+
+        # W bcc structure
+        bohr_a_0= 0.52917721092 # A
+        a = 3.013812049196*bohr_a_0
+        cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0.,0.,0.), symbols='W', name='W')
+
+        #param = 3.18968 # 1.58950065353588 * 0.5291772109
+        #cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
+        #structure = StructureData(cell=cell)
+        #structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
+
+        return structure
+
+    return _generate_structure_W
+
+@pytest.fixture
+def generate_structure_cif():
+    """Return a `StructureData` from a cif file path."""
+
+    def _generate_structure_cif(cifilepath):
+        """Return a `StructureData` from a cif file."""
+        import os
+        from aiida.orm import CifData
+
+        structure = CifData.get_or_create(ciffilepath)[0].get_structure()
+        return structure
+
+    return _generate_structure_cif
+
+
+@pytest.fixture(scope='function')
+def create_or_fake_local_code(aiida_local_code_factory):
+
+    def _get_code(executable, exec_relpath, entrypoint):
+        import os, pathlib
+        from aiida.tools.importexport import import_data, export
+        from aiida.orm import ProcessNode, QueryBuilder, Code, load_node
+
+        _exe_path = os.path.abspath(exec_relpath)
+
+        # if path is non existent, we create a dummy executable
+        # if all caches are there, it should run, like on a CI server
+        if not os.path.exists(_exe_path):
+            open(_exe_path, 'a').close()
+
+        # make sure code is found in PATH
+        os.environ['PATH']+=':'+_exe_path
+
+        # get code using aiida_local_code_factory fixture
+        code = aiida_local_code_factory(entrypoint, executable)
+
+        return code
+
+    return _get_code
+
+@pytest.fixture(scope='function')
+def inpgen_local_code(create_or_fake_local_code):
+    """
+    Create, inpgen code
+    """
+    import os
+    executable = 'inpgen'           # name of the inpgen executable
+    exec_rel_path = 'local_exe/'   # location where it is found
+    entrypoint = 'fleur.inpgen'    # entrypoint
+    # prepend text to be added before execution
+    inpgen_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
+    return inpgen_code
+
+
+@pytest.fixture(scope='function')
+def fleur_local_code(create_or_fake_local_code):
+    """
+    Create or load Fleur code
+    """
+    executable = 'fleur'            # name of the KKRhost executable
+    exec_rel_path = 'local_exe/'   # location where it is found
+    entrypoint = 'fleur.fleur'      # entrypoint
+    fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
+
+    return fleur_code
+
+@pytest.fixture(scope='function')
+def clear_spec():
+    """Ficture to delete the spec of workchains"""
+    from aiida_fleur.workflows.scf import FleurScfWorkChain
+    from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+    from aiida_fleur.workflows.eos import FleurEosWorkChain
+
+    def clear_sp():
+        # I do not fully comprehend why do we require this for a clean environment
+        if hasattr(FleurScfWorkChain, '_spec'):
+            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
+            # otherwise we will run into DbNode matching query does not exist
+            del FleurScfWorkChain._spec
+        if hasattr(FleurBaseWorkChain, '_spec'):
+            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
+            # otherwise we will run into DbNode matching query does not exist
+            del FleurBaseWorkChain._spec
+        if hasattr(FleurEosWorkChain, '_spec'):
+            del FleurEosWorkChain._spec
+
+    clear_sp()
+    yield   # test runs
+    clear_sp()
+
+

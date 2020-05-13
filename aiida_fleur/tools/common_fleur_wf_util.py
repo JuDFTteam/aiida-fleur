@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In here we put all things (methods) that are common to workflows AND DO NOT
 depend on AiiDA classes, therefore can be used without loading the dbenv.
@@ -24,6 +23,7 @@ from six.moves import range
 from six.moves import zip
 
 from sympy import Symbol
+
 
 def convert_formula_to_formula_unit(formula):
     """
@@ -43,7 +43,7 @@ def convert_formula_to_formula_unit(formula):
 
     formula_unit_string = ''
     for key, val in six.iteritems(element_count_dict):
-        new_val = int(val/g)
+        new_val = int(val / g)
         if new_val == 1:
             new_val = ''
         formula_unit_string = formula_unit_string + '{}{}'.format(key, new_val)
@@ -69,12 +69,13 @@ def get_natoms_element(formula):
         else:
             elem_count_dict[elem_count[0]] = float(elem_count[1])
 
-
     return elem_count_dict
+
 
 # test
 #get_natoms_element('BeW')
 #get_natoms_element('Be2W')
+
 
 def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
     """
@@ -98,14 +99,14 @@ def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
         res = get_natoms_element(formula)
         n_atoms_formula.append(res.get(element, 0))
 
-    atompro = np.array(ratio)*np.array(n_atoms_formula)
+    atompro = np.array(ratio) * np.array(n_atoms_formula)
     total = sum(atompro)
-    atompro = atompro/total
+    atompro = atompro / total
 
     if len(error_ratio):
-        atompro_err_t = np.array(error_ratio)*np.array(n_atoms_formula)
+        atompro_err_t = np.array(error_ratio) * np.array(n_atoms_formula)
         e_sum = np.sqrt(sum(atompro_err_t**2))
-        atompro_err = 1/total*(np.sqrt(atompro_err_t**2 + (atompro*e_sum)**2))
+        atompro_err = 1 / total * (np.sqrt(atompro_err_t**2 + (atompro * e_sum)**2))
 
     return atompro, atompro_err
 
@@ -134,10 +135,10 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
         res = get_natoms_element(formula)
         for element, val in six.iteritems(res):
             stoi_elm = stoi.get(element, 0)
-            stoi[element] = stoi_elm + val*unitcellratios[i]
+            stoi[element] = stoi_elm + val * unitcellratios[i]
             if len(error_ratio):
                 errors = errors_stoi.get(element, 0)
-                errors_stoi[element] = errors + val*val*error_ratio[i]*error_ratio[i]
+                errors_stoi[element] = errors + val * val * error_ratio[i] * error_ratio[i]
 
     # make smallest number always one.
     vals = list(stoi.values())
@@ -145,9 +146,11 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
     keymin = list(stoi.keys())[vals.index(minv)]
     norm_stoi = {}
     for key, val in six.iteritems(stoi):
-        norm_stoi[key] = stoi[key]/minv
+        norm_stoi[key] = stoi[key] / minv
         if len(error_ratio):
-            errors_stoi[key] = 1/stoi[keymin]*np.sqrt((errors_stoi[key]**2 + (stoi[key]/stoi[keymin]*errors_stoi[keymin])**2))
+            errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(
+                (errors_stoi[key]**2 + (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2)
+            )
     return norm_stoi, errors_stoi
 
 
@@ -164,12 +167,12 @@ def get_atomprocent(formula):
     form_dict = get_natoms_element(formula)
     ntotal = sum(form_dict.values())
     for key, val in six.iteritems(form_dict):
-        val_new = float(val)/ntotal
+        val_new = float(val) / ntotal
         form_dict_new[key] = val_new
     return form_dict_new
 
-# test
 
+# test
 '''
 def get_weight_procent(formula):
     """
@@ -187,6 +190,7 @@ def get_weight_procent(formula):
 #def norm_total_energy_peratom(totalenergy, formula)
 #def norm_total_energy_perunitcell(totalenergy, )
 
+
 def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     """
     This method determines the formation energy.
@@ -200,7 +204,7 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     #eform_list = []
     eform_dict = {}
     #ref_el = ref_struc_te_dict.keys()
-    ref_struc_te_dict_norm = ref_struc_te_dict#{}
+    ref_struc_te_dict_norm = ref_struc_te_dict  #{}
     # assume reference to be normalized
 
     # normalize reference
@@ -213,20 +217,26 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
         print(ntotal)
-        eform = tE#abs(tE)
+        eform = tE  #abs(tE)
         for elem, count in six.iteritems(elements_count):
             if elem in ref_el_norm:
-                eform = eform - count * ref_struc_te_dict_norm.get(elem)#abs(ref_struc_te_dict.get(elem))
+                eform = eform - count * ref_struc_te_dict_norm.get(
+                    elem
+                )  #abs(ref_struc_te_dict.get(elem))
             else:
-                print(('Reference energy missing for element {}. '
-                       'You need to provide reference energies for all elements in you compound.'
-                       ''.format(elem)))
-        eform_dict[formula] = eform/ntotal
+                print((
+                    'Reference energy missing for element {}. '
+                    'You need to provide reference energies for all elements in you compound.'
+                    ''.format(elem)
+                ))
+        eform_dict[formula] = eform / ntotal
         #eform_list.append(eform/ntotal)
     return list(eform_dict.values()), eform_dict
 
+
 # test
 #determine_formation_energy({'BeW' : 2, 'Be2W' : 2.5}, {'Be' : 1, 'W' : 1})
+
 
 def determine_convex_hull(formation_en_grid):
     """
@@ -241,7 +251,6 @@ def determine_convex_hull(formation_en_grid):
     import numpy as np
     #from scipy.spatial import ConvexHull # Buggy in python 3... some ugly segfault
     from pyhull.convex_hull import ConvexHull
-
 
     # TODO multi d
     # check if endpoints are in
@@ -277,8 +286,10 @@ def inpgen_dict_set_mesh(inpgendict, mesh):
 
     return inpgendict_new
 
+
 # test
 #inpgen_dict_set_mesh(Be_para.get_dict(), mesh)
+
 
 def powerset(L):
     """
@@ -293,10 +304,12 @@ def powerset(L):
             pset.append(sset)
     return pset
 
+
 #a = powerset([1, 2, 3, 4])
 #a = powerset(['Be', 'Be2W', 'Be12W', 'Be22W', 'W'])
 #print(a)
 #print(len(a))
+
 
 def determine_reactions(formula, available_data):
     """
@@ -313,7 +326,7 @@ def determine_reactions(formula, available_data):
     # 3. for each compound with each two other compounds ... till other compounds
     reactions = []
     constructed_products = []
-    pset_available_data = powerset(available_data) # if len available_data to large cut off?
+    pset_available_data = powerset(available_data)  # if len available_data to large cut off?
     for i, dataset in enumerate(pset_available_data):
         productstring = ''
         if len(dataset) < 1:
@@ -324,7 +337,9 @@ def determine_reactions(formula, available_data):
         productstring = productstring[:-1]
         constructed_products.append(productstring)
         pos_reaction = '{}->{}'.format(formula, productstring)
-        bal_reaction = balance_equation(pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True)
+        bal_reaction = balance_equation(
+            pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True
+        )
         # We do not allow zero coefficients of products, because the resulting equation should already be in our list.
         if bal_reaction:
             # TODO post process (i.e are remove 0 compounds)
@@ -332,6 +347,7 @@ def determine_reactions(formula, available_data):
         else:
             continue
     return reactions
+
 
 # test
 # reac = determine_reactions('Be12W', ['Be12W', 'Be2W', 'Be', 'W', 'Be22W'])
@@ -348,7 +364,7 @@ def convert_eq_to_dict(equationstring):
     convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') ->
     {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
     """
-    eq_dict = {'products': {}, 'educts' : {}}
+    eq_dict = {'products': {}, 'educts': {}}
     product_dict = {}
     educt_dict = {}
 
@@ -367,8 +383,9 @@ def convert_eq_to_dict(equationstring):
     eq_dict['educts'] = educt_dict
     return eq_dict
 
+
 # test convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be')
- # {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
+# {'products': {'Be': 15, 'Be2Ti': 1}, 'educts': {'Be12Ti': 1}}
 
 
 def get_enhalpy_of_equation(reaction, formenergydict):
@@ -389,24 +406,28 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print(('Formation energy of compound {} not given in {}.'
-                   'I abort...'.format(compound, formenergydict)))
+            print((
+                'Formation energy of compound {} not given in {}.'
+                'I abort...'.format(compound, formenergydict)
+            ))
             compound_e = 0
             return None
-        educt_energy = educt_energy + factor*compound_e
+        educt_energy = educt_energy + factor * compound_e
 
     for compound, factor in six.iteritems(reac_dict.get('products', {})):
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print(('Formation energy of compound {} not given in {}.'
-                   'I abort...'.format(compound, formenergydict)))
+            print((
+                'Formation energy of compound {} not given in {}.'
+                'I abort...'.format(compound, formenergydict)
+            ))
             compound_e = 0
             return None
-        product_energy = product_energy + factor*compound_e
-
+        product_energy = product_energy + factor * compound_e
 
     return educt_energy - product_energy
+
 
 def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eval_linear=True):
     """
@@ -445,40 +466,41 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
             for e, m in re.findall('([A-Z][a-z]?)([0-9]*)', k):
                 m = 1 if m == '' else int(m)
                 a *= m
-                d = [c[0], c[1]*m*i]
+                d = [c[0], c[1] * m * i]
                 Ss[e][:0], Es[:0] = [d], [[e, d]]
         i = -1
-    Ys = dict((s, eval('Symbol("'+s+'")')) for s in Os if s not in Ls)
-    Qs = [eval('+'.join('%d*%s'%(c[1], c[0]) for c in Ss[s]), {}, Ys) for s in Ss]+[Ys['a']-a]
+    Ys = dict((s, eval('Symbol("' + s + '")')) for s in Os if s not in Ls)
+    Qs = [eval('+'.join('%d*%s' % (c[1], c[0]) for c in Ss[s]), {}, Ys) for s in Ss] + [Ys['a'] - a]
     k = solve(Qs, *Ys)
-    if k:# if a solution is found multiply by gcd
+    if k:  # if a solution is found multiply by gcd
         # TODO? check if solution has linear dependence: and evaluate
         #for c in k.values():
         #    for char in list(letters):
         #        if char in str(c):
         #             pass
-        N = []#[k[Ys[s]]for s in sorted(Ys)]
+        N = []  #[k[Ys[s]]for s in sorted(Ys)]
         for s in sorted(Ys):
             n = k[Ys[s]]
             # idea: check if char in n, then linear depended, then
-            try: # since solver gives also a linear depended solution if correct, but code fails then
-                if n < 0 and not allow_negativ: # We allow for 0 but might be an other case to think about
+            try:  # since solver gives also a linear depended solution if correct, but code fails then
+                if n < 0 and not allow_negativ:  # We allow for 0 but might be an other case to think about
                     return None
             except TypeError:
-                return None # TODO Maybe other return value... maybe list of some values for
+                return None  # TODO Maybe other return value... maybe list of some values for
                 # linear dependencies, d,e,....? also choose them that the value is positive...?
             if n == 0 and not allow_zero:
                 return None
             N.append(n)
         g = N[0]
         for a1, a2 in zip(N[0::2], N[0::2]):
-            g=gcd(g, a2)
-        N = [i/g for i in N]
-        pM = lambda c: str(c)+'*'# if c!=1 else ''
-        return '->'.join('+'.join(pM(N.pop(0))+str(t) for t in p.split('+')) for p in eq.split('->'))
+            g = gcd(g, a2)
+        N = [i / g for i in N]
+        pM = lambda c: str(c) + '*'  # if c!=1 else ''
+        return '->'.join(
+            '+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->')
+        )
     else:
         return None
-
 
 
 def check_eos_energies(energylist):
@@ -503,6 +525,7 @@ def check_eos_energies(energylist):
             print('annormly detected')
 
     return abnormality, abnormalityindexlist
+
 
 #total_energy = [ -1, -2, -3 ,-2,-4,-3,-2,-1]
 #check_eos_energies(total_energy)

@@ -33,6 +33,7 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
+from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 from aiida_fleur.data.fleurinp import FleurinpData
@@ -60,7 +61,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = "0.4.0"
+    _workflowversion = "0.4.1"
     _wf_default = {'fleur_runmax': 4,
                    'density_converged': 0.00002,
                    'energy_converged': 0.002,
@@ -143,7 +144,7 @@ class FleurScfWorkChain(WorkChain):
         ####### init    #######
 
         # internal para /control para
-        self.ctx.last_calc = None
+        self.ctx.last_base_wc = None
         self.ctx.loop_count = 0
         self.ctx.relax_generated = False
         self.ctx.calcs = []
@@ -416,7 +417,14 @@ class FleurScfWorkChain(WorkChain):
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
                 else:  # apply change
-                    method(**para)
+                    try:
+                        method(**para)
+                    except ValueError as vale:
+                        error= ("ERROR: Changing the inp.xml file failed. Tried to apply {}"
+                                ", which failed with {}. I abort, good luck next time!"
+                                "".format(change, vale))
+                        self.control_end_wc(error)
+                        return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # validate?
         try:
@@ -448,10 +456,10 @@ class FleurScfWorkChain(WorkChain):
         else:
             settings = None
 
-        if self.ctx['last_calc']:
+        if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
-            remote = self.ctx['last_calc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs: # and not self.ctx.wf_dict['use_relax_xml']: # do not take cdn if relaxation
+            remote = self.ctx['last_base_wc'].outputs.remote_folder
+        elif 'remote_data' in self.inputs: # and not self.ctx.wf_dict['use_relax_xml']:
             remote = self.inputs.remote_data
         else:
             remote = None
@@ -477,7 +485,7 @@ class FleurScfWorkChain(WorkChain):
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
         self.ctx.calcs.append(future)
 
-        return ToContext(last_calc=future)
+        return ToContext(last_base_wc=future)
 
     def inspect_fleur(self):
         """
@@ -489,15 +497,15 @@ class FleurScfWorkChain(WorkChain):
 
         self.report('INFO: inspect FLEUR')
         try:
-            calculation = self.ctx.last_calc
+            base_wc = self.ctx.last_base_wc
         except AttributeError:
             self.ctx.parse_last = False
             error = 'ERROR: Something went wrong I do not have a last calculation'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
 
-        exit_status = calculation.exit_status
-        if not calculation.is_finished_ok:
+        exit_status = base_wc.exit_status
+        if not base_wc.is_finished_ok:
             error = ('ERROR: Last Fleur calculation failed '
                      'with exit status {}'.format(exit_status))
             self.control_end_wc(error)
@@ -523,16 +531,12 @@ class FleurScfWorkChain(WorkChain):
 
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
-            last_calc = self.ctx.last_calc
-
-            # TODO: dangerous, can fail, error catching
-            # TODO: is there a way to use a standard parser?
-            out_para = last_calc.outputs.output_parameters
-            fleur_calcjob = load_node(out_para.get_dict()['CalcJob_uuid'])
-            outxmlfile_opened = last_calc.outputs.retrieved.open(
+            last_base_wc = self.ctx.last_base_wc
+            fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
+            outxmlfile_opened = fleur_calcjob.outputs.retrieved.open(
                 fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r')
 
-            walltime = last_calc.outputs.output_parameters.dict.walltime
+            walltime = last_base_wc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
 
@@ -607,7 +611,7 @@ class FleurScfWorkChain(WorkChain):
                 return False
         elif mode == 'force':
             try:
-                _ = self.ctx.last_calc.outputs.relax_parameters
+                _ = self.ctx.last_base_wc.outputs.relax_parameters
             except NotExistent:
                 pass
             else:
@@ -625,18 +629,17 @@ class FleurScfWorkChain(WorkChain):
         This should run through and produce output nodes even if everything failed,
         therefore it only uses results from context.
         """
-        from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
-        if self.ctx.last_calc:
+        if self.ctx.last_base_wc:
             try:
-                last_calc_uuid = find_last_in_restart(self.ctx.last_calc)
+                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_base_wc)
             except NotExistent:
                 last_calc_uuid = None
         else:
             last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.outputs.output_parameters
-            retrieved = self.ctx.last_calc.outputs.retrieved
+            last_calc_out = self.ctx.last_base_wc.outputs.output_parameters
+            retrieved = self.ctx.last_base_wc.outputs.retrieved
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None

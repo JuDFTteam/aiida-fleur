@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 contains verdi commands for the scf workchain
 in general these should become options of verdi aiida-fleur workchains 
@@ -23,6 +22,7 @@ import click
 def scf_wc():
     pass
 
+
 @scf_wc.command()
 def res():
     """
@@ -30,12 +30,14 @@ def res():
     """
     click.echo('verdi aiida-fleur scf res')
 
+
 @scf_wc.command()
 def show():
     """
     plots the results of a 
     """
     click.echo('verdi aiida-fleur scf show')
+
 
 @scf_wc.command()
 def list():

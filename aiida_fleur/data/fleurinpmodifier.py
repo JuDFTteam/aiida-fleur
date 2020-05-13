@@ -40,65 +40,6 @@ class FleurinpModifier(object):
         self._original = original
         self._tasks = []
 
-    @staticmethod
-    @cf
-    def modify_fleurinpdata(original, modifications):
-        """
-        A CalcFunction that performs the modification of the given FleurinpData and stores
-        the result in a database.
-
-        :param original: a FleurinpData to be modified
-        :param modifications: a python dictionary of modifications in the form of {'task': ...}
-
-        :returns new_fleurinp: a modified FleurinpData that is stored in a database
-        """
-
-        # copy
-        # get schema
-        # read in inp.xml
-        # add modifications
-        # validate
-        # save inp.xml
-        # store new fleurinp (copy)
-        from aiida_fleur.tools.xml_util import clear_xml
-
-        new_fleurinp = original.clone()
-        # TODO test if file is there!
-        inpxmlfile = new_fleurinp.open(key='inp.xml')
-        modification_tasks = modifications.get_dict()['tasks']
-
-        xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-
-        tree = etree.parse(inpxmlfile, parser)
-
-        try:
-            xmlschema.assertValid(clear_xml(tree))
-        except etree.DocumentInvalid:
-            print("Input file is not validated against the schema")
-            raise
-
-        new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
-                                                             modification_tasks=modification_tasks)
-
-        # To include object store storage this prob has to be done differently
-
-        inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
-        inpxmlfile.close()
-
-        new_fleurtree.write(inpxmlfile_new, pretty_print=True)
-
-        new_fleurinp.del_file('inp.xml')
-        new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
-        os.remove(inpxmlfile_new)
-
-        # default label and description
-        new_fleurinp.label = 'mod_fleurinp'
-        new_fleurinp.description = ('Fleurinpdata with modifications'
-                                    ' (see inputs of modify_fleurinpdata)')
-
-        return new_fleurinp
 
     @staticmethod
     def apply_modifications(fleurinp_tree_copy, modification_tasks, schema_tree=None):
@@ -599,7 +540,7 @@ class FleurinpModifier(object):
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        out = self.modify_fleurinpdata(
+        out = modify_fleurinpdata(
             original=self._original,
             modifications=modifications,
             metadata={'label': 'fleurinp modifier',
@@ -619,3 +560,64 @@ class FleurinpModifier(object):
                 self._tasks.pop()
                 #del self._tasks[-1]
         return self._tasks
+
+
+@cf
+def modify_fleurinpdata(original, modifications):
+    """
+    A CalcFunction that performs the modification of the given FleurinpData and stores
+    the result in a database.
+
+    :param original: a FleurinpData to be modified
+    :param modifications: a python dictionary of modifications in the form of {'task': ...}
+
+    :returns new_fleurinp: a modified FleurinpData that is stored in a database
+    """
+
+    # copy
+    # get schema
+    # read in inp.xml
+    # add modifications
+    # validate
+    # save inp.xml
+    # store new fleurinp (copy)
+    from aiida_fleur.tools.xml_util import clear_xml
+
+    new_fleurinp = original.clone()
+    # TODO test if file is there!
+    inpxmlfile = new_fleurinp.open(key='inp.xml')
+    modification_tasks = modifications.get_dict()['tasks']
+
+    xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
+    xmlschema = etree.XMLSchema(xmlschema_doc)
+    parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
+
+    tree = etree.parse(inpxmlfile, parser)
+
+    try:
+        xmlschema.assertValid(clear_xml(tree))
+    except etree.DocumentInvalid:
+        print("Input file is not validated against the schema")
+        raise
+
+    new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
+                                                             modification_tasks=modification_tasks)
+
+    # To include object store storage this prob has to be done differently
+
+    inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
+    inpxmlfile.close()
+
+    new_fleurtree.write(inpxmlfile_new, pretty_print=True)
+
+    new_fleurinp.del_file('inp.xml')
+    new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
+    os.remove(inpxmlfile_new)
+
+    # default label and description
+    new_fleurinp.label = 'mod_fleurinp'
+    new_fleurinp.description = ('Fleurinpdata with modifications'
+                                    ' (see inputs of modify_fleurinpdata)')
+
+    return new_fleurinp
+

@@ -4,7 +4,7 @@ from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
     load_dbenv()
-import sys,os 
+import sys, os
 from aiida.plugins import Code, DataFactory
 from aiida.orm import Computer
 from aiida.orm import load_node
@@ -35,11 +35,12 @@ code2 = Code.get_from_string(codename2)
 #JobCalc = FleurinputgenCalculation.process()
 computer = Computer.objects.get(computer_name)
 
-s = load_node(14204)#13586)#137)# Be13586, W 137
+s = load_node(14204)  #13586)#137)# Be13586, W 137
 print(s.sites)
 #print s.cell
-parameters = load_node(13496)# Be 13496, W 13161
-wf_para = Dict(dict={'relax_runmax' : 5, 'density_criterion' : 0.0000001, 'max_force_cycle' : 9})
+parameters = load_node(13496)  # Be 13496, W 13161
+wf_para = Dict(dict={'relax_runmax': 5, 'density_criterion': 0.0000001, 'max_force_cycle': 9})
 
-
-res = fleur_relax_wc.run(wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen = code, fleur=code2)#, computer=computer)
+res = fleur_relax_wc.run(
+    wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen=code, fleur=code2
+)  #, computer=computer)
