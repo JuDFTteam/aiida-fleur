@@ -1147,8 +1147,6 @@ def request_average_bond_length(symbols, user_api_key):
     from aiida.orm import Dict
     from pymatgen.ext.matproj import MPRester
 
-    with MPRester(user_api_key) as mat_project:
-        mp_entries = mat_project.get_entries_in_chemsys(symbols)
 
     bond_data = {}
     for sym1 in symbols:
@@ -1156,32 +1154,11 @@ def request_average_bond_length(symbols, user_api_key):
         for sym2 in symbols:
             bond_data[sym1][sym2] = 0.0
 
-    for sym1, sym2 in combinations(symbols, 2):
-        distance = 0
-        partition_function = 0
-        for entry in mp_entries:
-            name = ''.join([i for i in entry.name if not i.isdigit()])
-            if name not in (sym1 + sym2, sym2 + sym1):
-                continue
-            with MPRester(user_api_key) as mat_project:
-                structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
-                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
-                    0]['energy_per_atom']
-                structure_analyse.make_supercell([2, 2, 2])
-            factor = exp(-(en_per_atom/0.0259))
-            partition_function = partition_function + factor
-            indices1 = structure_analyse.indices_from_symbol(sym1)
-            indices2 = structure_analyse.indices_from_symbol(sym2)
-            distances = (structure_analyse.get_distance(x, y)
-                         for x, y in product(indices1, indices2))
-            distance = distance + min(distances) * factor
-        distance = distance / partition_function
-        bond_data[sym1][sym2] = distance
-        bond_data[sym2][sym1] = distance
-
     for sym in symbols:
         distance = 0
         partition_function = 0
+        with MPRester(user_api_key) as mat_project:
+            mp_entries = mat_project.get_entries_in_chemsys([sym])
         for entry in mp_entries:
             if sym != entry.name:
                 continue
@@ -1198,6 +1175,36 @@ def request_average_bond_length(symbols, user_api_key):
             distance = distance + min(distances) * factor
         distance = distance / partition_function
         bond_data[sym][sym] = distance
+        print('Request completed for {} {} pair'.format(sym, sym))
+
+    for sym1, sym2 in combinations(symbols, 2):
+        distance = 0
+        partition_function = 0
+        with MPRester(user_api_key) as mat_project:
+            mp_entries = mat_project.get_entries_in_chemsys([sym1, sym2])
+        for entry in mp_entries:
+            name = ''.join([i for i in entry.name if not i.isdigit()])
+            if name not in (sym1 + sym2, sym2 + sym1):
+                continue
+            with MPRester(user_api_key) as mat_project:
+                structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
+                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
+                    0]['energy_per_atom']
+                structure_analyse.make_supercell([2, 2, 2])
+            factor = exp(-(en_per_atom/0.0259))
+            partition_function = partition_function + factor
+            indices1 = structure_analyse.indices_from_symbol(sym1)
+            indices2 = structure_analyse.indices_from_symbol(sym2)
+            distances = (structure_analyse.get_distance(x, y)
+                         for x, y in product(indices1, indices2))
+            distance = distance + min(distances) * factor
+        if partition_function == 0:
+            distance = (bond_data[sym1][sym1] + bond_data[sym2][sym2]) / 2
+        else:
+            distance = distance / partition_function
+        bond_data[sym1][sym2] = distance
+        bond_data[sym2][sym1] = distance
+        print('Request completed for {} {} pair'.format(sym1, sym2))
 
     return Dict(dict=bond_data)
 
