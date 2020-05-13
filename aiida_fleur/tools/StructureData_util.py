@@ -1021,7 +1021,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     :param structure: ase film structure which will be adjusted
     :param suggestion: dictionary containing average bond length between different elements,
                        is is basically the result of
-                       :py:func:`~aiida_fleur.tools.StructureData.request_average_bond_length()`
+                       :py:func:`~aiida_fleur.tools.StructureData_util.request_average_bond_length()`
     :param scale_as: an element name, for which the El-El bond length will be enforced. It is
                      can be helpful to enforce the same interlayer distance in the substrate,
                      i.e. adjust deposited film interlayer distances only.
