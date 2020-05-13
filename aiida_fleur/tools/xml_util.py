@@ -323,9 +323,7 @@ def xml_set_all_attribv(xmltree, xpathn, attributename, attribv, create=False):
     nodes = eval_xpath3(root, xpathn, create=create)
     if is_sequence(attribv):
         for i, node in enumerate(nodes):
-            if not isinstance(attribv[i], str):  # type(attribv) != type(''):
-                attribv[i] = str(attribv[i])
-            node.set(attributename, attribv[i])
+            node.set(attributename, str(attribv[i]))
     else:
         if not isinstance(attribv, str):  # type(attribv) != type(''):
             attribv = str(attribv)
@@ -936,7 +934,9 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_given, mode='abs'):
     """
     Shifts value of a specie by label
+    if at_label contains 'all' then applies to all species
     """
+    import numpy as np
     specie = ''
     at_label = "{: >20}".format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
@@ -951,6 +951,9 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
                 specie = get_xml_attribute(group, 'species')
 
     xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
+    if 'all' in at_label:
+        xpath_species = '/fleurInput/atomSpecies/species'
+
     xpath_mt = '{}/mtSphere'.format(xpath_species)
     xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
     xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
@@ -963,12 +966,12 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     elif attr_name in ['s', 'p', 'd', 'f']:
         xpath_final = xpath_energy_parameters
 
-    old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name]))
+    old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name])))
 
-    if not old_val:
+    if old_val.size == 0:
         print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
     else:
-        old_val = float(old_val[0])
+        old_val = old_val.astype('float')
 
     if mode == 'rel':
         value = value_given * old_val
@@ -980,11 +983,11 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     if attr_name in ['radius', 'logIncrement']:
         value_to_write = value
     else:
-        if not value.is_integer():
+        if not np.all(value == value.astype('int')):
             raise ValueError('You are trying to write a float to an integer attribute')
-        value_to_write = int(value)
+        value_to_write = value.astype('int')
 
-    xml_set_first_attribv(fleurinp_tree_copy, xpath_final, attr_name,value_to_write)
+    xml_set_all_attribv(fleurinp_tree_copy, xpath_final, attr_name, value_to_write)
 
     return fleurinp_tree_copy
 

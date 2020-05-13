@@ -578,7 +578,7 @@ def test_inpxml_to_dict(inpxml_etree):
             'element': 'Pt',
             'atomicNumber': 78,
             'coreStates': 19,
-            'mtSphere': {'radius': 2.2, 'gridPoints': 787,
+            'mtSphere': {'radius': 2.3, 'gridPoints': 787,
                          'logIncrement': 0.017},
             'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
             'energyParameters': {
@@ -704,6 +704,10 @@ class TestShiftValue:
 
             assert float(result) - float(result_before) == 333
 
+            shift_value(etree, {attr_name: 333})
+            result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
+            assert float(result) - float(result_before) == 666
+
     attr_to_test_float = list(xml_structure[4])
     @pytest.mark.parametrize('attr_name', attr_to_test_float)
     def test_shift_value_rel(self, inpxml_etree, attr_name):
@@ -779,13 +783,42 @@ class TestShiftSpeciesLabel:
         import math
         etree = inpxml_etree(TEST_INP_XML_PATH)
         path = '/fleurInput/atomSpecies/species[@name = "Fe-1"]/' + tag + '/@' + att_name
+        untouched = '/fleurInput/atomSpecies/species[@name = "Pt-1"]/' + tag + '/@' + att_name
         old_result = eval_xpath2(etree, path)[0]
+        untouched_result = eval_xpath2(etree, untouched)[0]
 
         shift_value_species_label(etree, '                 222', att_name, 3.2, mode='rel')
         result = eval_xpath2(etree, path)[0]
+        untouched_result_new = eval_xpath2(etree, untouched)[0]
 
-        assert math.isclose(float(result)/float(old_result), 3.2)
+        assert math.isclose(float(result) / float(old_result), 3.2)
+        assert math.isclose(float(untouched_result_new) / float(untouched_result), 1.0)
 
+    @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))
+    def test_shift_species_label_all(self, inpxml_etree, att_name, tag):
+        from aiida_fleur.tools.xml_util import shift_value_species_label, eval_xpath2
+        import numpy as np
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        path = '/fleurInput/atomSpecies/species/' + tag + '/@' + att_name
+        old_result = np.array(eval_xpath2(etree, path)).astype('float')
+
+        shift_value_species_label(etree, 'all', att_name, 3, mode='abs')
+        result = np.array(eval_xpath2(etree, path)).astype('float')
+
+        assert np.all(np.isclose(old_result + 3, result))
+
+    @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))
+    def test_shift_species_label_all_rel(self, inpxml_etree, att_name, tag):
+        from aiida_fleur.tools.xml_util import shift_value_species_label, eval_xpath2
+        import numpy as np
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        path = '/fleurInput/atomSpecies/species/' + tag + '/@' + att_name
+        old_result = np.array(eval_xpath2(etree, path)).astype('float')
+
+        shift_value_species_label(etree, 'all', att_name, 2, mode='rel')
+        result = np.array(eval_xpath2(etree, path)).astype('float')
+
+        assert np.all(np.isclose(old_result*2, result))
 class TestAddNumToAtt:
     from aiida_fleur.tools.xml_util import get_inpxml_file_structure
     xml_structure = get_inpxml_file_structure()
