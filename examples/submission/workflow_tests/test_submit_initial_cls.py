@@ -31,7 +31,7 @@ from pprint import pprint
 ParameterData = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
-    
+
 parser = argparse.ArgumentParser(description=('Calculate initial core-level shifts with FLEUR. all arguments are pks, or uuids, codes can be names'))
 parser.add_argument('--wf_para', type=int, dest='wf_parameters',
                         help='Some workflow parameters', required=False)
@@ -65,11 +65,11 @@ print(args)
 
 ### Defaults ###
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
+options = Dict(dict={'resources' : {"num_machines": 1, "num_mpiprocs_per_machine": 1},
+                              'queue_name' : '',#23_node',
                               'max_wallclock_seconds':  60*60})
 
-# W bcc structure 
+# W bcc structure
 bohr_a_0= 0.52917721092 # A
 a = 3.013812049196*bohr_a_0
 cell = [[-a,a,a],[a,-a,a],[a,a,-a]]

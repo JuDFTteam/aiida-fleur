@@ -63,10 +63,8 @@ def register_error_handler(cls, priority):
     :param priority: an integer that defines the order in which registered handlers will be called
         during the handling of a failed calculation. Higher priorities will be handled first
     """
-
     def error_handler_decorator(handler):
         """Decorator to dynamically register an error handler to a `WorkChain` class."""
-
         @wraps(handler)
         def error_handler(self, calculation):
             """Wrapped error handler to add a log to the report if the handler is called and verbosity is turned on."""

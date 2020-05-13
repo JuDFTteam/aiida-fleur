@@ -64,7 +64,7 @@ _______________
       the changes in the given list are validated.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.freeze()`: Applies all the
       changes in the list, calls
-      :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.modify_fleurinpdata()` and
+      :py:func:`~aiida_fleur.data.fleurinpmodifier.modify_fleurinpdata()` and
       returns a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.changes()`: Displays the
       current list of changes.

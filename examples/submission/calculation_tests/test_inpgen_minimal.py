@@ -3,8 +3,10 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__copyright__ = (
+    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+    "IAS-1/PGI-1, Germany. All rights reserved."
+)
 __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
@@ -19,10 +21,7 @@ import os
 from aiida.common.example_helpers import test_and_get_code
 from aiida.plugins import DataFactory
 
-
-
 ################################################################
-
 
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
@@ -35,8 +34,7 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either "
-                          "--send or --dont-send"), file=sys.stderr)
+    print(("The first parameter can only be either " "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -51,14 +49,14 @@ settings = None
 
 code = test_and_get_code(codename, expected_code_type='fleur_inp.fleurinputgen')
 
-# W bcc structure 
-bohr_a_0= 0.52917721092 # A
-a = 3.013812049196*bohr_a_0
-cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
+# W bcc structure
+bohr_a_0 = 0.52917721092  # A
+a = 3.013812049196 * bohr_a_0
+cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
 s = StructureData(cell=cell)
-s.append_atom(position=(0.,0.,0.), symbols='W')
-    
-#elements = list(s.get_symbols_set())    
+s.append_atom(position=(0., 0., 0.), symbols='W')
+
+#elements = list(s.get_symbols_set())
 
 ## For remote codes, it is not necessary to manually set the computer,
 ## since it is set automatically by new_calc
@@ -86,20 +84,24 @@ calc.use_structure(s)
 if settings is not None:
     calc.use_settings(settings)
 
-
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print("Test_submit for calculation (uuid='{}')".format(
-        calc.uuid))
-    print("Submit file in {}".format(os.path.join(
-        os.path.relpath(subfolder.abspath),
-        script_filename
-    )))
+    print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
+    print(
+        "Submit file in {}".format(
+            os.path.join(os.path.relpath(subfolder.abspath), script_filename)
+        )
+    )
 else:
     calc.store_all()
-    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk))
+    print(
+        "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+            calc.uuid, calc.dbnode.pk
+        )
+    )
     calc.submit()
-    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk))
-
+    print(
+        "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+            calc.uuid, calc.dbnode.pk
+        )
+    )

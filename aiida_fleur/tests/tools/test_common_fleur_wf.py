@@ -255,9 +255,9 @@ def test_optimize_calc_options(input, result_correct):
     assert result == result_correct
 
 
-def test_find_last_in_restart(fixture_localhost,
-                              generate_calc_job_node, generate_work_chain_node):
-    from aiida_fleur.tools.common_fleur_wf import find_last_in_restart
+def test_find_last_submitted_calcjob(fixture_localhost,
+                                     generate_calc_job_node, generate_work_chain_node):
+    from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
     from aiida.common.links import LinkType
     from aiida.common.exceptions import NotExistent
 
@@ -266,9 +266,10 @@ def test_find_last_in_restart(fixture_localhost,
     node3 = generate_calc_job_node('fleur.fleur', fixture_localhost)
 
     node_main = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+    node_main.store()
 
     with pytest.raises(NotExistent):
-        result = find_last_in_restart(node_main)
+        result = find_last_submitted_calcjob(node_main)
 
     node1.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')
     node2.add_incoming(node_main, link_type=LinkType.CALL_CALC, link_label='CALL')
@@ -278,6 +279,31 @@ def test_find_last_in_restart(fixture_localhost,
     node2.store()
     node3.store()
 
-    result = find_last_in_restart(node_main)
+    result = find_last_submitted_calcjob(node_main)
+
+    assert result == node3.uuid
+
+
+def test_find_last_submitted_workchain(fixture_localhost, generate_work_chain_node):
+    from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
+    from aiida.common.links import LinkType
+    from aiida.common.exceptions import NotExistent
+
+    node1 = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+    node2 = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+    node3 = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+
+    node_main = generate_work_chain_node('fleur.base_relax', fixture_localhost)
+
+    node1.add_incoming(node_main, link_type=LinkType.CALL_WORK, link_label='CALL')
+    node2.add_incoming(node_main, link_type=LinkType.CALL_WORK, link_label='CALL')
+    node3.add_incoming(node_main, link_type=LinkType.CALL_WORK, link_label='CALL')
+
+    node_main.store()
+    node1.store()
+    node2.store()
+    node3.store()
+
+    result = find_last_submitted_workchain(node_main)
 
     assert result == node3.uuid

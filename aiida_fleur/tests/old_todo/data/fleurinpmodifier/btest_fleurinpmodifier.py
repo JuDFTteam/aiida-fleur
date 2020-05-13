@@ -19,9 +19,7 @@ if not is_dbenv_loaded():
 
 start_time = time.time()
 
-
 # schemanameQq
-
 
 path = os.getcwd()  # path.realpath(__file__)
 print(path)
@@ -36,7 +34,6 @@ new_fleurinpData = FleurinpData(files=[filepath])
 
 fleurmode = FleurinpModifier(new_fleurinpData)
 
-
 #fleurmode.set_switch({'dos': True})
 
 fleurmode.set_inpchanges({})
@@ -44,8 +41,7 @@ fleurmode.set_inpchanges({'dos': True})
 tria = True
 nkpts = 800
 
-change_dict = {'dos': True, 'ndir': -1, 'minEnergy': -0.8,
-               'maxEnergy': 0.8, 'sigma': 0.005}
+change_dict = {'dos': True, 'ndir': -1, 'minEnergy': -0.8, 'maxEnergy': 0.8, 'sigma': 0.005}
 
 fleurmode.set_inpchanges(change_dict)
 if tria:
@@ -53,7 +49,6 @@ if tria:
     fleurmode.set_inpchanges(change_dict)
 if nkpts:
     fleurmode.set_nkpts(count=nkpts)
-
 '''
 fleurmode.set_species('W-1', {'radius' : 3.5})
 fleurmode.change_atom('forces', True, position=(0.0, 0.0, 0.0))

@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import os
 import pytest
 
+
 # parse_xmlout_file
 def test_parse_xmlout_file():
     """
@@ -17,50 +18,66 @@ def test_parse_xmlout_file():
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
 
-    expected_simple_out_dict = {'bandgap': 0.0052350388,
-                                 'bandgap_units': 'eV',
-                                 'charge_den_xc_den_integral': -45.0947551412,
-                                 'charge_density': 8.7984e-06,
-                                 'creator_name': 'fleur 27',
-                                 'creator_target_architecture': 'GEN',
-                                 'creator_target_structure': ' ',
-                                 'density_convergence_units': 'me/bohr^3',
-                                 'energy': -23635.691764717936,
-                                 'energy_core_electrons': -496.172547773,
-                                 'energy_hartree': -868.5956587197,
-                                 'energy_hartree_units': 'Htr',
-                                 'energy_units': 'eV',
-                                 'energy_valence_electrons': -7.1055909396,
-                                 'fermi_energy': 0.3451127139,
-                                 'fermi_energy_units': 'Htr',
-                                 'force_largest': -0.0,
-                                 'kmax': 4.5,
-                                 'number_of_atom_types': 2,
-                                 'number_of_atoms': 2,
-                                 'number_of_iterations': 19,
-                                 'number_of_iterations_total': 19,
-                                 'number_of_kpoints': 56,
-                                 'number_of_species': 1,
-                                 'number_of_spin_components': 1,
-                                 'number_of_symmetries': 48,
-                                 'output_file_version': '0.27',
-                                 'start_date': {'date': '2017/09/10', 'time': '07:58:10'},
-                                 'end_date': {'date': '2017/09/10', 'time': '07:58:34'},
-                                 'sum_of_eigenvalues': -503.2781387127,
-                                 'title': 'Be-Ti, bulk compounds',
-                                 'walltime': 24,
-                                 'walltime_units': 'seconds',
-                                 'warnings': {'debug': {}, 'error': {}, 'info': {}, 'warning': {}}}
+    expected_simple_out_dict = {
+        'bandgap': 0.0052350388,
+        'bandgap_units': 'eV',
+        'charge_den_xc_den_integral': -45.0947551412,
+        'charge_density': 8.7984e-06,
+        'creator_name': 'fleur 27',
+        'creator_target_architecture': 'GEN',
+        'creator_target_structure': ' ',
+        'density_convergence_units': 'me/bohr^3',
+        'energy': -23635.691764717936,
+        'energy_core_electrons': -496.172547773,
+        'energy_hartree': -868.5956587197,
+        'energy_hartree_units': 'Htr',
+        'energy_units': 'eV',
+        'energy_valence_electrons': -7.1055909396,
+        'fermi_energy': 0.3451127139,
+        'fermi_energy_units': 'Htr',
+        'force_largest': -0.0,
+        'kmax': 4.5,
+        'number_of_atom_types': 2,
+        'number_of_atoms': 2,
+        'number_of_iterations': 19,
+        'number_of_iterations_total': 19,
+        'number_of_kpoints': 56,
+        'number_of_species': 1,
+        'number_of_spin_components': 1,
+        'number_of_symmetries': 48,
+        'output_file_version': '0.27',
+        'start_date': {
+            'date': '2017/09/10',
+            'time': '07:58:10'
+        },
+        'end_date': {
+            'date': '2017/09/10',
+            'time': '07:58:34'
+        },
+        'sum_of_eigenvalues': -503.2781387127,
+        'title': 'Be-Ti, bulk compounds',
+        'walltime': 24,
+        'walltime_units': 'seconds',
+        'warnings': {
+            'debug': {},
+            'error': {},
+            'info': {},
+            'warning': {}
+        }
+    }
 
-    expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.2beta',
-                                'parser_warnings': [],
-                                'unparsed': []}
-    simple_out.pop('outputfile_path', None) # otherwise test will fail on different installations
+    expected_parser_info_out = {
+        'parser_info': 'AiiDA Fleur Parser v0.3.0',
+        'parser_warnings': [],
+        'unparsed': []
+    }
+    simple_out.pop('outputfile_path', None)  # otherwise test will fail on different installations
     # also this should go away any way...
 
     assert successful == True
     assert expected_simple_out_dict == simple_out
     assert expected_parser_info_out == parser_info_out
+
 
 # test special cases parser behavior
 def test_parse_xmlout_file_broken_xmlout_file():
@@ -77,11 +94,16 @@ def test_parse_xmlout_file_broken_xmlout_file():
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
 
     expected_parser_info_out = {
-        'last_iteration_parsed': 15,
-        'parser_info': 'AiiDA Fleur Parser v0.2beta',
-        'parser_warnings': ['The out.xml file is broken I try to repair it.',
-                           'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
-         'unparsed': []}
+        'last_iteration_parsed':
+        15,
+        'parser_info':
+        'AiiDA Fleur Parser v0.3.0',
+        'parser_warnings': [
+            'The out.xml file is broken I try to repair it.',
+            'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'
+        ],
+        'unparsed': []
+    }
 
     assert successful == True
     assert 15 == parser_info_out['last_iteration_parsed']
@@ -103,41 +125,65 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
 
     expected_parser_info_out = {
-         'last_iteration_parsed': 1,
-         'parser_info': 'AiiDA Fleur Parser v0.2beta',
-         'parser_warnings': ['The out.xml file is broken I try to repair it.',
-                             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Could not convert: "None" to float, TypeError',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
-                             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
-                             'Can not get attributename: "distance" from node "[]", because node is not an element of etree.',
-                             'Could not convert: "None" to float, TypeError',
-                             'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'],
-         'unparsed': [{'energy_hartree': None, 'iteration': '    1'},
-                      {'energy': None, 'iteration': '    1'},
-                      {'iteration': '    1', 'sum_of_eigenvalues': None},
-                      {'energy_core_electrons': None, 'iteration': '    1'},
-                      {'energy_valence_electrons': None, 'iteration': '    1'},
-                      {'charge_den_xc_den_integral': None, 'iteration': '    1'},
-                      {'bandgap': None, 'iteration': '    1'},
-                      {'fermi_energy': None, 'iteration': '    1'},
-                      {'charge_density': None, 'iteration': '    1'}]}
+        'last_iteration_parsed':
+        1,
+        'parser_info':
+        'AiiDA Fleur Parser v0.3.0',
+        'parser_warnings': [
+            'The out.xml file is broken I try to repair it.',
+            'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Could not convert: "None" to float, TypeError',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
+            'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
+            'Can not get attributename: "distance" from node "[]", because node is not an element of etree.',
+            'Could not convert: "None" to float, TypeError',
+            'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'
+        ],
+        'unparsed': [{
+            'energy_hartree': None,
+            'iteration': '    1'
+        }, {
+            'energy': None,
+            'iteration': '    1'
+        }, {
+            'iteration': '    1',
+            'sum_of_eigenvalues': None
+        }, {
+            'energy_core_electrons': None,
+            'iteration': '    1'
+        }, {
+            'energy_valence_electrons': None,
+            'iteration': '    1'
+        }, {
+            'charge_den_xc_den_integral': None,
+            'iteration': '    1'
+        }, {
+            'bandgap': None,
+            'iteration': '    1'
+        }, {
+            'fermi_energy': None,
+            'iteration': '    1'
+        }, {
+            'charge_density': None,
+            'iteration': '    1'
+        }]
+    }
 
     assert successful == True
     assert 1 == parser_info_out['last_iteration_parsed']
@@ -161,16 +207,31 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     exp_partial_simple_out_dict = {
         'bandgap_units': 'eV',
         'energy': float('Inf'),
-        'energy_hartree':  float('Inf'),
+        'energy_hartree': float('Inf'),
         'fermi_energy': float('NaN'),
-        'warnings': {'debug': {}, 'error': {}, 'info': {}, 'warning': {}}}
+        'warnings': {
+            'debug': {},
+            'error': {},
+            'info': {},
+            'warning': {}
+        }
+    }
 
     expected_parser_info_out = {
-         'parser_info': 'AiiDA Fleur Parser v0.2beta',
-         'parser_warnings': ['Could not convert: "**" to float, ValueError',
-                             'Could not convert: "        !#@)!(U$*(Y" to float, ValueError'],
-         'unparsed': [{'bandgap': '**', 'iteration': '   19'},
-                      {'charge_density': '        !#@)!(U$*(Y', 'iteration': '   19'}]}
+        'parser_info':
+        'AiiDA Fleur Parser v0.3.0',
+        'parser_warnings': [
+            'Could not convert: "**" to float, ValueError',
+            'Could not convert: "        !#@)!(U$*(Y" to float, ValueError'
+        ],
+        'unparsed': [{
+            'bandgap': '**',
+            'iteration': '   19'
+        }, {
+            'charge_density': '        !#@)!(U$*(Y',
+            'iteration': '   19'
+        }]
+    }
 
     #TODO maybe in the case on unpared, things should be initialized, here they are missing...
     def isNaN(num):
@@ -198,10 +259,14 @@ def test_parse_xmlout_file_empty_file():
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(filename)
 
     expected_parser_info_out = {
-         'parser_info': 'AiiDA Fleur Parser v0.2beta',
-         'parser_warnings': ['The out.xml file is broken I try to repair it.',
-                             'Skipping the parsing of the xml file. Repairing was not possible.'],
-         'unparsed': []}
+        'parser_info':
+        'AiiDA Fleur Parser v0.3.0',
+        'parser_warnings': [
+            'The out.xml file is broken I try to repair it.',
+            'Skipping the parsing of the xml file. Repairing was not possible.'
+        ],
+        'unparsed': []
+    }
 
     assert successful == False
     assert expected_parser_info_out == parser_info_out
@@ -210,7 +275,7 @@ def test_parse_xmlout_file_empty_file():
 # test parser success for all out files in folder
 file_path1 = '../files/outxml/all_test/'
 outxmlfilefolder = os.path.dirname(os.path.abspath(__file__))
-outxmlfilefolder_valid =  os.path.abspath(os.path.join(outxmlfilefolder, file_path1))
+outxmlfilefolder_valid = os.path.abspath(os.path.join(outxmlfilefolder, file_path1))
 
 outxmlfilelist = []
 for subdir, dirs, files in os.walk(outxmlfilefolder_valid):
@@ -254,12 +319,8 @@ def test_parse_bands_file():
     # test if a bandsdata object is produced
 
 
-
-
 # test the full parser itself. on all kinds of different output files.
 
 # test if the right aiida datastructures are produced for different output
 # also check if errors are working...
 # if an empty and broken file works, broken before and after first iteration
-
-

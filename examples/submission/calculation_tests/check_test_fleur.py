@@ -17,18 +17,18 @@ except (KeyError, IndexError):
 
 calc = load_node(pk)
 if calc.get_state() == calc_states.SUBMISSIONFAILED:
-    raise ValueError("The calculation could not be submitted (failed)") 
+    raise ValueError("The calculation could not be submitted (failed)")
 elif calc.get_state() == calc_states.FAILED:
     raise ValueError("The calculation did fail")
 elif calc.get_state() != calc_states.FINISHED:
-    raise ValueError("The calculation did not complete")   
+    raise ValueError("The calculation did not complete")
 res = calc.res
 print("Test: {}".format(calc.label))
 print("Description: {}".format(calc.description))
 print("Code name in db: {}".format(calc.get_code()))
 #print "Input structure (chemical formula): {}".format(calc.inp.structure.get_formula())
 print("Code name/version: {}".format(res.creator_name))
-print("The following files were retrieved: {}".format(calc.out.retrieved.get_folder_list()))   
+print("The following files were retrieved: {}".format(calc.out.retrieved.get_folder_list()))
 
 #print "Wall time: {} s".format(calc.res.wall_time_seconds)
 #print "Input wavefunction cutoff: {} Ry".format(calc.inp.parameters.dict.SYSTEM['ecutwfc'])
@@ -43,14 +43,10 @@ else:
     print("Charge distance spin 1 of the system is: {} me/bohr^3".format(res.charge_density1))
     print("Charge distance spin 2 of the system is: {} me/bohr^3".format(res.charge_density2))
     print("Spin density distance of the system is: {} me/bohr^3".format(res.spin_density))
-    
+
 #if calc.res.warnings:
 #    print "List of warnings:"
 #    for warning in calc.res.warnings:
 #        print "- {}".format(warning)
 #if 'res
-print("Log messages: {}".format(get_log_messages(calc)))        
-  
-
-
-
+print("Log messages: {}".format(get_log_messages(calc)))

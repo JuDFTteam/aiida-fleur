@@ -110,6 +110,9 @@ class FleurinpData(Data):
             else:
                 self.set_files(files)
 
+    # ignore machine dependent attributes in hash
+    _hash_ignored_attributes = ['_schema_file_path', '_search_paths']
+
     @property
     def _has_schema(self):
         """
@@ -365,25 +368,29 @@ class FleurinpData(Data):
             schemafile_paths, found = self.find_schema(inp_version_number)
 
             if (not self._has_schema) and (self._schema_file_path is None):
-                err_msg = ("No XML schema file (.xsd) with matching version number {} "
-                           "to the inp.xml file was found. I have looked here: {} "
-                           "and have found only these schema files for Fleur: {}. "
-                           "I need this file to validate your input and to know the structure "
-                           "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                                        self._search_paths,
-                                                                        schemafile_paths))
+                err_msg = (
+                    "No XML schema file (.xsd) with matching version number {} "
+                    "to the inp.xml file was found. I have looked here: {} "
+                    "and have found only these schema files for Fleur: {}. "
+                    "I need this file to validate your input and to know the structure "
+                    "of the current inp.xml file, sorry.".format(
+                        inp_version_number, self._search_paths, schemafile_paths
+                    )
+                )
                 raise InputValidationError(err_msg)
             # or ('fleurInputVersion' in self.inp_userchanges): #(not)
             if self._schema_file_path is None:
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
-                    err_msg = ("No XML schema file (.xsd) with matching version number {} "
-                               "to the inp.xml file was found. I have looked here: {} "
-                               "and have found only these schema files for Fleur: {}. "
-                               "I need this file to validate your input and to know the structure "
-                               "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                                            self._search_paths,
-                                                                            schemafile_paths))
+                    err_msg = (
+                        "No XML schema file (.xsd) with matching version number {} "
+                        "to the inp.xml file was found. I have looked here: {} "
+                        "and have found only these schema files for Fleur: {}. "
+                        "I need this file to validate your input and to know the structure "
+                        "of the current inp.xml file, sorry.".format(
+                            inp_version_number, self._search_paths, schemafile_paths
+                        )
+                    )
                 raise InputValidationError(err_msg)
             # set inp dict of Fleurinpdata
             self._set_inp_dict()
@@ -402,6 +409,7 @@ class FleurinpData(Data):
         inpxmlstructure = get_inpxml_file_structure()
 
         # read xmlinp file into an etree with autocomplition from schema
+        # we do not validate here because we want this to always succeed
         inpxmlfile = self.open(key='inp.xml', mode='r')
 
         xmlschema_doc = etree.parse(self._schema_file_path)
@@ -468,8 +476,15 @@ class FleurinpData(Data):
         #    'dos': '/fleurInput/output',
         #    'band': '/fleurInput/output',
         #    'jspins': '/fleurInput/calculationSetup/magnetism',
-        fleur_modes = {'jspins': '', 'dos': '', 'band': '', 'ldau': '', 'forces': '',
-                       'force_theorem': '', 'gw': ''}
+        fleur_modes = {
+            'jspins': '',
+            'dos': '',
+            'band': '',
+            'ldau': '',
+            'forces': '',
+            'force_theorem': '',
+            'gw': ''
+        }
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins']
             fleur_modes['dos'] = self.inp_dict['output']['dos']  # 'fleurInput']
@@ -564,11 +579,11 @@ class FleurinpData(Data):
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
 
             cell = [row1, row2, row3]
             # create new structure Node
@@ -581,20 +596,22 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
             # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
 
         if cell is None:
-            print('Could not extract Bravias matrix out of inp.xml. Is the '
-                  'Bravias matrix explicitly given? i.e Latnam definition '
-                  'not supported.')
+            print(
+                'Could not extract Bravias matrix out of inp.xml. Is the '
+                'Bravias matrix explicitly given? i.e Latnam definition '
+                'not supported.'
+            )
             return None
 
         # get species for atom kinds
@@ -628,17 +645,18 @@ class FleurinpData(Data):
                     for i, pos in enumerate(postion_a):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_a[i] = float(temppos[0])/float(temppos[1])
+                            postion_a[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in pos:
                             temppos = pos.split('*')
-                            postion_a[i] = float(temppos[0])*float(temppos[1])
+                            postion_a[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_a[i] = float(pos)
-                        postion_a[i] = postion_a[i]*BOHR_A
+                        postion_a[i] = postion_a[i] * BOHR_A
                     # append atom to StructureData
                     struc.append_atom(
                         position=postion_a,
-                        symbols=species_dict[current_species][species_attrib_element])
+                        symbols=species_dict[current_species][species_attrib_element]
+                    )
 
             elif group_atom_positions_rel:  # we have relative positions
                 # TODO: check if film or 1D calc, because this is not allowed! I guess
@@ -648,10 +666,10 @@ class FleurinpData(Data):
                     for i, pos in enumerate(postion_r):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_r[i] = float(temppos[0])/float(temppos[1])
+                            postion_r[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in pos:
                             temppos = pos.split('*')
-                            postion_r[i] = float(temppos[0])*float(temppos[1])
+                            postion_r[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_r[i] = float(pos)
 
@@ -661,7 +679,8 @@ class FleurinpData(Data):
                     # append atom to StructureData
                     struc.append_atom(
                         position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element])
+                        symbols=species_dict[current_species][species_attrib_element]
+                    )
 
             elif group_atom_positions_film:  # Do we support mixture always, or only in film case?
                 # either support or throw error
@@ -672,20 +691,22 @@ class FleurinpData(Data):
                     for i, pos in enumerate(postion_f):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_f[i] = float(temppos[0])/float(temppos[1])
+                            postion_f[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in postion_f[i]:
                             temppos = pos.split('*')
-                            postion_f[i] = float(temppos[0])*float(temppos[1])
+                            postion_f[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_f[i] = float(pos)
                     # now transform to absolute Positions
-                    postion_f[2] = postion_f[2]*BOHR_A
+                    postion_f[2] = postion_f[2] * BOHR_A
                     new_abs_pos = rel_to_abs_f(postion_f, cell)
                     # append atom to StructureData
                     struc.append_atom(
                         position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element])
+                        symbols=species_dict[current_species][species_attrib_element]
+                    )
             else:
+                # TODO throw error
                 print('I should never get here, 1D not supported yet, '
                       'I only know relPos, absPos, filmPos')
                 # TODO throw error
@@ -787,11 +808,11 @@ class FleurinpData(Data):
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
 
             cell = [row1, row2, row3]
             # set boundary conditions
@@ -803,19 +824,21 @@ class FleurinpData(Data):
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
             # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
 
         if cell is None:
-            print('Could not extract Bravias matrix out of inp.xml. Is the '
-                  'Bravias matrix explicitly given? i.e Latnam definition '
-                  'not supported.')
+            print(
+                'Could not extract Bravias matrix out of inp.xml. Is the '
+                'Bravias matrix explicitly given? i.e Latnam definition '
+                'not supported.'
+            )
             return None
         # get kpoints only works if kpointlist in inp.xml
         kpoints = root.xpath(kpointlist_xpath + kpoint_tag)
@@ -831,8 +854,8 @@ class FleurinpData(Data):
             for kpoint in kpoints:
                 kpoint_pos = kpoint.text.split()
                 for i, kval in enumerate(kpoint_pos):
-                    kpoint_pos[i] = float(kval)/float(posscale[0])
-                    kpoint_weight = float(kpoint.get(kpoint_attrib_weight))/float(weightscale[0])
+                    kpoint_pos[i] = float(kval) / float(posscale[0])
+                    kpoint_weight = float(kpoint.get(kpoint_attrib_weight)) / float(weightscale[0])
                 kpoints_pos.append(kpoint_pos)
                 kpoints_weight.append(kpoint_weight)
             totalw = 0
@@ -935,8 +958,7 @@ class FleurinpData(Data):
         # add new inp.xml to fleurinpdata
 
         if not isinstance(KpointsDataNode, KpointsData):
-            raise InputValidationError(
-                "The node given is not a valid KpointsData node.")
+            raise InputValidationError("The node given is not a valid KpointsData node.")
 
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
@@ -944,8 +966,9 @@ class FleurinpData(Data):
             if fleurinp._schema_file_path:  # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True,
-                                         remove_blank_text=True)
+                parser = etree.XMLParser(
+                    schema=xmlschema, attribute_defaults=True, remove_blank_text=True
+                )
                 tree = etree.parse(inpxmlfile, parser)
             else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
@@ -954,8 +977,7 @@ class FleurinpData(Data):
             inpxmlfile.close()
             #root = tree.getroot()
         else:
-            raise InputValidationError(
-                "No inp.xml file yet specified, to add kpoints to.")
+            raise InputValidationError("No inp.xml file yet specified, to add kpoints to.")
 
         #cell_k = KpointsDataNode.cell
 
@@ -969,8 +991,9 @@ class FleurinpData(Data):
             totalw = totalw + weight
         #weightscale = totalw
 
-        new_kpo = etree.Element('kPointList', posScale="1.000",
-                                weightScale="1.0", count="{}".format(nkpts))
+        new_kpo = etree.Element(
+            'kPointList', posScale="1.000", weightScale="1.0", count="{}".format(nkpts)
+        )
         for i, kpos in enumerate(kpoint_list[0]):
             new_k = etree.Element('kPoint', weight="{}".format(kpoint_list[1][i]))
             new_k.text = "{} {} {}".format(kpos[0], kpos[1], kpos[2])
@@ -981,8 +1004,7 @@ class FleurinpData(Data):
 
         # TODO this should be sourced out to other methods.
         # somehow directly writing inp.xml does not work, create new one
-        inpxmlfile = os.path.join(
-            fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
+        inpxmlfile = os.path.join(fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
 
         # write new inp.xml, schema evaluation will be done when the file gets added
         new_tree.write(inpxmlfile, pretty_print=True)
@@ -1023,8 +1045,7 @@ class FleurinpData(Data):
             inpxmlfile.close()
             root = tree.getroot()
         else:
-            raise InputValidationError(
-                "No inp.xml file yet specified, to get a tag from")
+            raise InputValidationError("No inp.xml file yet specified, to get a tag from")
 
         try:
             return_value = root.xpath(xpath)
@@ -1032,7 +1053,8 @@ class FleurinpData(Data):
             raise InputValidationError(
                 'There was a XpathEvalError on the xpath: {} \n Either it does '
                 'not exist, or something is wrong with the expression.'
-                ''.format(xpath))
+                ''.format(xpath)
+            )
             return []
         if len(return_value) == 1:
             return return_value
