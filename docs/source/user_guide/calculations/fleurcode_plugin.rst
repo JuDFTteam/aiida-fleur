@@ -152,6 +152,10 @@ Each exit code has it's own reason:
 +-----------+--------------------------------------------------------------+
 | 312       | FLEUR calculation failed due to MT overlap                   |
 +-----------+--------------------------------------------------------------+
+| 313       | FLEUR calculation failed due to MT overlap during relaxation |
++-----------+--------------------------------------------------------------+
+| 314       | Failed Dirac equation (probably during relaxation)           |
++-----------+--------------------------------------------------------------+
 
 
 .. _Fleur_settings:

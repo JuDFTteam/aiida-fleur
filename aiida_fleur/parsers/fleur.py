@@ -166,6 +166,8 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
+                    elif 'problems with solving dirac equation' in error_file_lines and 'parent_folder' in calc.inputs:
+                        return self.exit_codes.ERROR_DIRAC_CHARGE
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+',
                                                   error_file_lines)[0].split()

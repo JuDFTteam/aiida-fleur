@@ -262,6 +262,8 @@ class FleurCalculation(CalcJob):
                        message='FLEUR calculation failed due to MT overlap.')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
                        message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(314, 'ERROR_DIRAC_CHARGE',
+                       message='Problem with solving Dirac equation. Consider removing input cdn')
 
     @classproperty
     def _get_outut_folder(self):

@@ -197,6 +197,37 @@ def _handle_general_error(self, calculation):
                          'corresponding exit code in this error handler')
 
 
+@register_error_handler(FleurBaseWorkChain, 48)
+def _handle_dirac_equation(self, calculation):
+    """
+    Calculation failed due to lack of memory.
+    Probably works for JURECA only, has to be tested for other systems.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DIRAC_CHARGE']):
+
+        # try to drop remote folder and see if it helps
+        is_fleurinp_from_relax = False
+        if 'fleurinpdata' in self.ctx.inputs:
+            if 'relax.xml' in self.ctx.inputs.fleurinpdata.files:
+                is_fleurinp_from_relax = True
+
+        if 'parent_folder' in self.ctx.inputs and is_fleurinp_from_relax:
+            del self.ctx.inputs.parent_folder
+            self.ctx.restart_calc = None
+            self.ctx.is_finished = False
+            self.report('Calculation seems to fail due to corrupted charge density (can happen'
+                        'during relaxation). I drop cdn from previous step')
+            return ErrorHandlerReport(True, True)
+
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('Can not resolve Dirac equation problem. It seems you faced it not in'
+                    ' relaxation wc')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
+
+
 @register_error_handler(FleurBaseWorkChain, 52)
 def _handle_vacuum_spill_error(self, calculation):
     """
@@ -253,7 +284,7 @@ def _handle_not_enough_memory(self, calculation):
         else:
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
-            self.report('FLEUR calculation failed due to MT overlap.'
-                        ' Can be fixed via RelaxBaseWorkChain')
+            self.report('I am not allowed to optimize your settings. Consider providing at least'
+                        'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)

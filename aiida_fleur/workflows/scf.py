@@ -451,7 +451,7 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx['last_calc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_calc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs and not self.ctx.wf_dict['use_relax_xml']:
+        elif 'remote_data' in self.inputs: # and not self.ctx.wf_dict['use_relax_xml']: # do not take cdn if relaxation
             remote = self.inputs.remote_data
         else:
             remote = None
