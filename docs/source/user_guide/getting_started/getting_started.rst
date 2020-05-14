@@ -8,13 +8,11 @@ Installation of AiiDA-FLEUR
 .. _tutorial: https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/installation.html#aiida-profile-setup
 .. _needed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/prerequisites.html
 .. _iffwiki: https://iffwiki.fz-juelich.de/Using_AiiDA_at_PGI#Circumventing_SSH_open_and_close_limits_of_firewalls_by_ssh_tunnels
-.. _official guide: https://www.flapw.de/site/Install/
+.. _official guide: https://www.flapw.de/MaX-4.0/documentation/installation/
 
 To use AiiDA, it has to be installed on your local machine and configured properly. The detailed
 description of all required steps can be found in the `AiiDA`_ documentation.
-However, a small guide presented
-below (which basically duplicates more detailed instructions given in `AiiDA`_) shows an example of
-installation of AiiDA-FLEUR.
+However, a small guide presented below shows an example of installation of AiiDA-FLEUR.
 
 Installation of python packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -25,16 +23,16 @@ First of all, make sure that you have all required libraries that are `needed`_ 
     If you use a cooperative machine, you might need to contact to your IT department to help you
     with setting up some libraries such as postgres and RabbitMQ.
 
-In order to safely install AiiDA, you need to set up a virtual environment which protects you local
+In order to safely install AiiDA, you need to set up a virtual environment to protect your local
 settings and packages.
-To set up a python 3 environment, run a command:
+To set up a python3 environment, run:
 
 .. code-block:: bash
 
     python3 -m venv ~/.virtualenvs/aiidapy
 
 This will create a directory in your home directory named ``.virtualenvs/aiidapy`` where all the
-required packages will be installed. First, the virtual environment has to be activated via:
+required packages will be installed. Next, the virtual environment has to be activated:
 
 .. code-block:: bash
 
@@ -220,7 +218,7 @@ and fill all the required forms. An example:
 
 after that, a vim editor pops out and you need to specify prepend and append text where you can
 add required imports and commands for you system. Particularly in my case, I need to
-set proper library paths for inpgen to run. Hence my prepend text looks like:
+set proper library paths. Hence my prepend text looks like:
 
 .. code-block:: bash
 
@@ -235,8 +233,8 @@ FLEUR code can be set up the same way as the input generator. However, there is 
 that has to be mentioned.
 
 .. note::
-        If you use an HDF version of the FLEUR code then AiiDA-FLEUR plugin should know this. That
-        is because names of generated output files vary between HDF and standard FLEUR versions.
+        If you use an HDF version of the FLEUR code then AiiDA-FLEUR plugin should know this. The
+        main reason for this is that names of output files vary between HDF and standard FLEUR versions.
         To properly set up an HDF version of the code, you *must* mention HDF5 (or hdf5) in the code
         description and not change it in the future. An example of setting up an HDF version:
 
@@ -323,7 +321,7 @@ the output should look something like this
 No worries about skipped tests - they appear due to technical implementation of tests and contain
 some information for developers. For a user it is important to make sure that the others
 do not fail: if anything (especially a lot of tests) fails it is very likely that your
-installation is messed up. Maybe some packages are missing (reinstall them by hand and report
-please). The other problem could be that the AiiDA-FLEUR version you have
+installation is messed up. Some packages might be missing (reinstall them by hand and report
+to development team). The other problem could be that the AiiDA-FLEUR version you have
 installed is not compatible with the AiiDA version you are running, since not all
 AiiDA versions are back-compatible.
