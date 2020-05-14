@@ -424,7 +424,19 @@ class FleurinpData(Data):
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
-            raise InputValidationError("Input file is not validated against the schema.")
+            # get a more information on what does not validate
+            message = ''
+            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema)
+            inpxmlfile = etree.tostring(tree_x)
+            try:
+                tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
+            except etree.XMLSyntaxError as msg:
+                message = msg
+                raise InputValidationError(
+                    "Input file does not validate against the schema: {}".format(message))
+
+            raise InputValidationError("Input file is not validated against the schema."
+                                       "Reason is unknown")
 
         # convert etree into python dictionary
         root = tree_x.getroot()
