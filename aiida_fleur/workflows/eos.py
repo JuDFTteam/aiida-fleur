@@ -60,7 +60,8 @@ class FleurEosWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurEosWorkChain, cls).define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf', exclude=('structure', ))
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf',
+                           exclude=('structure', 'remote_data', 'fleurinp', ))
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
 
