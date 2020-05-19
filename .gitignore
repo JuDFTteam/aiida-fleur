@@ -53,7 +53,7 @@ coverage.xml
 *,cover
 .hypothesis/
 aiida_fleur/tests/coverage
-aiida_fleur/tests/fleur_code/
+aiida_fleur/tests/local_exe/
 # Translations
 *.mo
 *.pot
