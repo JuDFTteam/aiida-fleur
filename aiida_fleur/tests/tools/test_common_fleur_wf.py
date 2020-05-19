@@ -239,7 +239,7 @@ inputs_optimize = [(4, 8, 3, True, 0.5, None, 720),
                    (4, 8, 3, False, 0.5, None, 720)]
 
 results_optimize = [
-    (4, 3, 8, 'Computational setup is perfect! Nodes: 4, MPIs per node 3, OMP per MPI 8. Number of k-points is 720'),
+    (4, 4, 6, 'Computational setup is perfect! Nodes: 4, MPIs per node 4, OMP per MPI 6. Number of k-points is 720'),
     (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
     (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
     (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
@@ -251,7 +251,6 @@ def test_optimize_calc_options(input, result_correct):
     from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 
     result = optimize_calc_options(*input)
-
     assert result == result_correct
 
 
