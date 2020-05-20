@@ -363,8 +363,8 @@ def create_substrate_bulk(wf_dict_node):
         )
 
     miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    host_symbol = wf_dict['host_symbol']
-    latticeconstant = wf_dict['latticeconstant']
+    host_symbol = str(wf_dict['host_symbol'])
+    latticeconstant = float(wf_dict['latticeconstant'])
     size = (1, 1, 1)
     structure = structure_factory(
         miller=miller,
