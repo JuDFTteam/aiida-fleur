@@ -54,6 +54,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
             while_(cls.should_run_calculation)(
                 cls.run_calculation,
                 cls.inspect_calculation,
+                cls.pop_non_stacking_inpxml_changes,
             ),
             cls.results,
         )
@@ -81,6 +82,23 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         else:
             self.ctx.inputs.metadata.label = ''
 
+    def pop_non_stacking_inpxml_changes(self):
+        """
+        pops some inpxml_changes that do not stack, for example shift_value.
+        """
+        wf_param = self.ctx.inputs.scf.wf_parameters.get_dict()
+        if 'inpxml_changes' not in wf_param:
+            return
+
+        self.report('Removing shift_value methods from subsequent Relax submissions')
+
+        old_changes = wf_param['inpxml_changes']
+        new_changes = []
+        for change in old_changes:
+            if 'shift_value' not in change[0]:
+                new_changes.append(change)
+        wf_param['inpxml_changes'] = new_changes
+        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
 
 @register_error_handler(FleurBaseRelaxWorkChain, 50)
 def _handle_not_conv_error(self, calculation):
