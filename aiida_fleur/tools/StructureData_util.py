@@ -841,7 +841,8 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
     if replacements is not None:
         keys = six.viewkeys(replacements)
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
-            raise ValueError('"replacements" has to contain numbers less than number of layers')
+            raise ValueError('"replacements" has to contain numbers less than number of layers:'
+                             ' {}'.format(len(layer_occupancies)))
     else:
         replacements = {}
 

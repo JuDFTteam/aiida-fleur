@@ -204,7 +204,7 @@ def _handle_dirac_equation(self, calculation):
     Probably works for JURECA only, has to be tested for other systems.
     """
 
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DIRAC_CHARGE']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DROP_CDN']):
 
         # try to drop remote folder and see if it helps
         is_fleurinp_from_relax = False
@@ -222,8 +222,8 @@ def _handle_dirac_equation(self, calculation):
 
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Can not resolve Dirac equation problem. It seems you faced it not in'
-                    ' relaxation wc')
+        self.report('Can not drop charge density. If I drop the remote folder, there will be'
+                    'no inp.xml')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 

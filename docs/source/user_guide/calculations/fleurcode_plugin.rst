@@ -154,7 +154,7 @@ Each exit code has it's own reason:
 +-----------+--------------------------------------------------------------+
 | 313       | FLEUR calculation failed due to MT overlap during relaxation |
 +-----------+--------------------------------------------------------------+
-| 314       | Failed Dirac equation (probably during relaxation)           |
+| 314       | Problem with cdn is suspected                                |
 +-----------+--------------------------------------------------------------+
 
 
