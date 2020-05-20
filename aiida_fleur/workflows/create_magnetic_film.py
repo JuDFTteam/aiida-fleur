@@ -95,8 +95,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         inputs.metadata.label = 'EOS_substrate'
         inputs.metadata.description = 'The EOS workchain finding equilibrium substrate'
         # Here wf_dict nodes appears out of nowwhere.
-        inputs.structure = create_substrate_bulk(
-            Dict(dict=self.ctx.wf_dict), self.inputs.distance_suggestion)
+        inputs.structure = create_substrate_bulk(Dict(dict=self.ctx.wf_dict))
 
         if not isinstance(inputs.structure, StructureData):
             return inputs, inputs.structure  # exit code thrown in create_substrate_bulk
@@ -201,6 +200,20 @@ class FleurCreateMagneticWorkChain(WorkChain):
         if self.ctx.wf_dict['latticeconstant'] == 0 and "distance_suggestion" not in inputs:
             self.report('ERROR: latticeconstant equals to 0 but distance_suggestion was not given.')
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+
+        if not self.ctx.wf_dict['latticeconstant']:
+            from numpy import sqrt
+            if self.ctx.wf_dict['lattice'] == 'fcc':
+                suggestion_factor = sqrt(2)
+            elif self.ctx.wf_dict['lattice'] == 'bcc':
+                suggestion_factor = 2 / sqrt(3)
+            else:
+                return self.exit_codes.ERROR_NOT_SUPPORTED_LATTICE
+
+            host_symbol = self.ctx.wf_dict['host_symbol']
+            dict_suggestion = self.inputs.distance_suggestion.get_dict()
+            self.ctx.wf_dict['latticeconstant'] = suggestion_factor * \
+                dict_suggestion[host_symbol][host_symbol]
 
     def relax_needed(self):
         """
@@ -323,7 +336,7 @@ def magnetic_slab_from_relaxed_cf(optimized_structure, substrate, para_dict):
 
 
 @cf
-def create_substrate_bulk(wf_dict_node, distance_suggestion):
+def create_substrate_bulk(wf_dict_node):
     """
     Calcfunction to create a bulk structure of a substrate.
 
@@ -335,7 +348,6 @@ def create_substrate_bulk(wf_dict_node, distance_suggestion):
     """
 
     from aiida.engine import ExitCode
-    from numpy import sqrt
     from ase.lattice.cubic import FaceCenteredCubic
     from ase.lattice.cubic import BodyCenteredCubic
 
@@ -343,10 +355,8 @@ def create_substrate_bulk(wf_dict_node, distance_suggestion):
     lattice = wf_dict['lattice']
     if lattice == 'fcc':
         structure_factory = FaceCenteredCubic
-        suggestion_factor = sqrt(2)
     elif lattice == 'bcc':
         structure_factory = BodyCenteredCubic
-        suggestion_factor = 2 / sqrt(3)
     else:
         return ExitCode(
             380, 'ERROR_NOT_SUPPORTED_LATTICE', message="Specified substrate has to be bcc or fcc."
@@ -355,10 +365,6 @@ def create_substrate_bulk(wf_dict_node, distance_suggestion):
     miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     host_symbol = wf_dict['host_symbol']
     latticeconstant = wf_dict['latticeconstant']
-    if not latticeconstant:
-        # suggest using distance_suggestion
-        dict_suggestion = distance_suggestion.get_dict()
-        latticeconstant = suggestion_factor * dict_suggestion[host_symbol][host_symbol]
     size = (1, 1, 1)
     structure = structure_factory(
         miller=miller,
