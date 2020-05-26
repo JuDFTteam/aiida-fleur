@@ -1045,7 +1045,10 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     if scale_as:
         norm = suggestion[scale_as][scale_as]
         for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
-            suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
+            try:
+                suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
+            except KeyError:
+                pass # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
     def suggest_distance_to_previous(num_layer):
         z_distances = []
@@ -1129,38 +1132,40 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     return rebuilt_structure
 
 
-def request_average_bond_length_store(symbols, user_api_key):
-    result = request_average_bond_length(symbols, user_api_key)
+def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
+    result = request_average_bond_length(main_elements, sub_elements, user_api_key)
     result.store()
     return result
 
 
-def request_average_bond_length(symbols, user_api_key):
+def request_average_bond_length(main_elements, sub_elements, user_api_key):
     """
     Requests MaterialsProject to estimate thermal average bond length between given elements.
+    Also requests information about lattice constants of fcc and bcc structures.
 
-    :param symbols: element list to calculate average bond length between
-    :return bond_data: a list of 3-element tuples where first two are element names and the third
-                       is an averaged bond length.
+    :param main_elements, sub_elements: two element lists to calculate the average bond length
+                                        only combinations of AB, AA and BB are calculated, where
+                                        A belongs to main_elements, B belongs to sub_elements.
+    :return bond_data: a dict containing obtained lattice constants.
 
     """
     from itertools import product, combinations
     from math import exp
     from aiida.orm import Dict
     from pymatgen.ext.matproj import MPRester
+    from collections import defaultdict
+    from copy import deepcopy
 
-
-    bond_data = {}
-    for sym1 in symbols:
-        bond_data[sym1] = {}
-        for sym2 in symbols:
-            bond_data[sym1][sym2] = 0.0
+    bond_data = defaultdict(lambda: defaultdict(lambda: 0.0))
+    symbols = main_elements + sub_elements
 
     for sym in symbols:
         distance = 0
         partition_function = 0
         with MPRester(user_api_key) as mat_project:
             mp_entries = mat_project.get_entries_in_chemsys([sym])
+        fcc_structure = None
+        bcc_structure = None
         for entry in mp_entries:
             if sym != entry.name:
                 continue
@@ -1174,12 +1179,19 @@ def request_average_bond_length(symbols, user_api_key):
             indices1 = structure_analyse.indices_from_symbol(sym)
             distances = (structure_analyse.get_distance(x, y)
                          for x, y in combinations(indices1, 2))
-            distance = distance + min(distances) * factor
+            min_distance = min(distances)
+            distance = distance + min_distance * factor
+            # save distance for particular cases of fcc and bcc
+            if structure_analyse.get_space_group_info()[1] == 225:  # fcc
+                bond_data['fcc'][sym] = min_distance
+            elif structure_analyse.get_space_group_info()[1] == 229:  # bcc
+                bond_data['bcc'][sym] = min_distance
+
         distance = distance / partition_function
         bond_data[sym][sym] = distance
         print('Request completed for {} {} pair'.format(sym, sym))
 
-    for sym1, sym2 in combinations(symbols, 2):
+    for sym1, sym2 in product(main_elements, sub_elements):
         distance = 0
         partition_function = 0
         with MPRester(user_api_key) as mat_project:

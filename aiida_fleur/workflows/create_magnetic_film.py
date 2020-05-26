@@ -203,17 +203,21 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         if not self.ctx.wf_dict['latticeconstant']:
             from numpy import sqrt
-            if self.ctx.wf_dict['lattice'] == 'fcc':
+            host_symbol = self.ctx.wf_dict['host_symbol']
+            dict_suggestion = self.inputs.distance_suggestion.get_dict()
+            lattice = self.ctx.wf_dict['lattice']
+
+            if lattice == 'fcc':
                 suggestion_factor = sqrt(2)
-            elif self.ctx.wf_dict['lattice'] == 'bcc':
+            elif lattice == 'bcc':
                 suggestion_factor = 2 / sqrt(3)
             else:
                 return self.exit_codes.ERROR_NOT_SUPPORTED_LATTICE
 
-            host_symbol = self.ctx.wf_dict['host_symbol']
-            dict_suggestion = self.inputs.distance_suggestion.get_dict()
-            self.ctx.wf_dict['latticeconstant'] = suggestion_factor * \
-                dict_suggestion[host_symbol][host_symbol]
+            suggestion = dict_suggestion.get(
+                lattice, dict_suggestion[host_symbol]).get(host_symbol, 4.0)
+
+            self.ctx.wf_dict['latticeconstant'] = suggestion_factor * suggestion
 
     def relax_needed(self):
         """
