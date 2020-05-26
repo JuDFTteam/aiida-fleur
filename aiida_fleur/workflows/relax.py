@@ -203,6 +203,13 @@ class FleurRelaxWorkChain(WorkChain):
             scf_wf_dict = {}
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
+            if 'inpxml_changes' in scf_wf_dict:
+                old_changes = scf_wf_dict['inpxml_changes']
+                new_changes = []
+                for change in old_changes:
+                    if 'shift_value' not in change[0]:
+                        new_changes.append(change)
+                scf_wf_dict['inpxml_changes'] = new_changes
 
         scf_wf_dict['mode'] = 'force'
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
