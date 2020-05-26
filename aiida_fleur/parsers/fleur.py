@@ -1015,7 +1015,7 @@ def parse_xmlout_file(outxmlfile):
 
                 all_atoms = eval_xpath2(root, atomstypes_xpath)
                 for a_type in all_atoms:
-                    element = get_xml_attribute(a_type, 'species')[:2]
+                    element = get_xml_attribute(a_type, 'species').split('-')[0]
                     type_positions = eval_xpath2(a_type, pos_attr)
                     for pos in type_positions:
                         pos = [convert_frac(x) for x in pos.text.split()]
