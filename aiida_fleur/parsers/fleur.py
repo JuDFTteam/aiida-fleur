@@ -165,8 +165,6 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
                     elif 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
-                    elif 'problems with solving dirac equation' in error_file_lines and 'parent_folder' in calc.inputs:
-                        return self.exit_codes.ERROR_DIRAC_CHARGE
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+',
                                                   error_file_lines)[0].split()
@@ -183,6 +181,10 @@ class FleurParser(Parser):
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
+                    elif 'parent_folder' in calc.inputs:
+                        if 'fleurinpdata' in calc.inputs:
+                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                                return self.exit_codes.ERROR_DROP_CDN
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
@@ -1013,7 +1015,7 @@ def parse_xmlout_file(outxmlfile):
 
                 all_atoms = eval_xpath2(root, atomstypes_xpath)
                 for a_type in all_atoms:
-                    element = get_xml_attribute(a_type, 'species')[:2]
+                    element = get_xml_attribute(a_type, 'species').split('-')[0]
                     type_positions = eval_xpath2(a_type, pos_attr)
                     for pos in type_positions:
                         pos = [convert_frac(x) for x in pos.text.split()]

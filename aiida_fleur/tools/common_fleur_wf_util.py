@@ -62,7 +62,7 @@ def get_natoms_element(formula):
     #re.split('(\D+)', formula)
 
     for i, elm in enumerate(elements):
-        elem_count = re.findall(r'\d+|\D+', elm)
+        elem_count = re.findall(r'\D+|\d+\.\d+|\d+', elm)
         #print(elem_count)
         if len(elem_count) == 1:
             elem_count_dict[elem_count[0]] = 1
@@ -71,11 +71,31 @@ def get_natoms_element(formula):
 
     return elem_count_dict
 
-
 # test
 #get_natoms_element('BeW')
 #get_natoms_element('Be2W')
 
+def convert_frac_formula(formula, max_digits=3):
+    """
+    Converts a formula with fractions to a formula with integer factors only
+
+    Be0.5W0.5 -> BeW
+   
+    :param formula: str, crystal formula i.e. Be2W, Be0.2W0.7
+    :param max_digits: int default=3, number of digits after which fractions will be cut off
+    :returns string
+    """
+    form_dict= get_natoms_element(formula)
+    formula_int = ''
+    for key, val in form_dict.items():
+        formula_int = formula_int + key + str(int(val*10**max_digits))
+    
+    return convert_formula_to_formula_unit(formula_int)
+
+#test
+#convert_frac_formula('Be0.3W0.7') -> Be3W7
+#convert_frac_formula('Be0.5W0.5') -> BeW
+#convert_frac_formula('Be3W7') -> Be3W7
 
 def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
     """
@@ -404,14 +424,16 @@ def get_enhalpy_of_equation(reaction, formenergydict):
     for compound, factor in six.iteritems(reac_dict.get('educts', {})):
         compound_e = 0
         try:
-            compound_e = formenergydict.get(compound)
+            compound_e = formenergydict.get(compound, 0)
         except KeyError:
             print((
                 'Formation energy of compound {} not given in {}.'
                 'I abort...'.format(compound, formenergydict)
             ))
             compound_e = 0
-            return None
+            # can be that educt side is not a real 'compound' but just a stoichiometry
+            # so we give it 0
+            #return None
         educt_energy = educt_energy + factor * compound_e
 
     for compound, factor in six.iteritems(reac_dict.get('products', {})):
@@ -429,6 +451,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
     return educt_energy - product_energy
 
 
+
 def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eval_linear=True):
     """
     Method that balances a chemical equation.
@@ -441,6 +464,8 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     balance_equation("C7H16+O2 -> CO2+H2O"))
     balance_equation("Be12W->Be22W+Be12W")
     balance_equation("Be12W->Be12W")
+    
+    have to be intergers everywhere in the equation, factors and formulas
 
     1*C7H16+11*O2 ->7* CO2+8*H2O
     None
@@ -452,9 +477,9 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     code adapted from stack exchange (the messy part):
     https://codegolf.stackexchange.com/questions/8728/balance-chemical-equations
     """
-
     import sys, re
     from sympy.solvers import solve
+    from sympy.core.numbers import Rational, Integer
     from collections import defaultdict
     letters = 'abcdefghijklmnopqrstuvwxyz'
     Ls = list(letters)
@@ -479,6 +504,8 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         #        if char in str(c):
         #             pass
         N = []  #[k[Ys[s]]for s in sorted(Ys)]
+        rescale_N = False
+        denom_list = []
         for s in sorted(Ys):
             n = k[Ys[s]]
             # idea: check if char in n, then linear depended, then
@@ -491,14 +518,25 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
             if n == 0 and not allow_zero:
                 return None
             N.append(n)
+
+            # Rationals are a problem in gcd, so we have to get rid of them
+            if isinstance(n, Rational):
+                rescale_N = True
+                denom_list.append(n.as_numer_denom()[1])
+        if rescale_N:
+            multiplier = 1
+            for denom in denom_list:
+                multiplier = multiplier*int(denom)
+            N = [int(n*multiplier) for n in N]
         g = N[0]
         for a1, a2 in zip(N[0::2], N[0::2]):
             g = gcd(g, a2)
-        N = [i / g for i in N]
+        N = [int(i / g) for i in N]
         pM = lambda c: str(c) + '*'  # if c!=1 else ''
-        return '->'.join(
+        res = '->'.join(
             '+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->')
         )
+        return res
     else:
         return None
 

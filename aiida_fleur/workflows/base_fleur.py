@@ -166,13 +166,13 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
         if self.ctx.use_omp:
             self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if self.ctx.inputs.metadata.options['environment_variables']:
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
-                    adv_omp_per_mpi)
-            else:
-                self.ctx.inputs.metadata.options['environment_variables'] = {}
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
-                    adv_omp_per_mpi)
+            # if self.ctx.inputs.metadata.options['environment_variables']:
+            #     self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+            #         adv_omp_per_mpi)
+            # else:
+            #     self.ctx.inputs.metadata.options['environment_variables'] = {}
+            #     self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+            #         adv_omp_per_mpi)
 
 
 @register_error_handler(FleurBaseWorkChain, 1)
@@ -204,7 +204,7 @@ def _handle_dirac_equation(self, calculation):
     Probably works for JURECA only, has to be tested for other systems.
     """
 
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DIRAC_CHARGE']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DROP_CDN']):
 
         # try to drop remote folder and see if it helps
         is_fleurinp_from_relax = False
@@ -222,8 +222,8 @@ def _handle_dirac_equation(self, calculation):
 
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Can not resolve Dirac equation problem. It seems you faced it not in'
-                    ' relaxation wc')
+        self.report('Can not drop charge density. If I drop the remote folder, there will be'
+                    'no inp.xml')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
