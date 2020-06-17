@@ -159,7 +159,7 @@ class FleurParser(Parser):
                                 except IndexError:
                                     self.logger.info('Did not manage to find memory usage info.')
 
-                    if kb_used * mpiprocs / mem_kb_avail > 0.93:
+                    if kb_used * mpiprocs / mem_kb_avail > 0.93 or 'cgroup out-of-memory handler' in error_file_lines:
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
                     elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX

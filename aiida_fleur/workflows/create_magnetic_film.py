@@ -217,7 +217,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             suggestion = dict_suggestion.get(
                 lattice, dict_suggestion[host_symbol]).get(host_symbol, 4.0)
 
-            self.ctx.wf_dict['latticeconstant'] = suggestion_factor * suggestion
+            self.ctx.wf_dict['latticeconstant'] = float(suggestion_factor * suggestion)
 
     def relax_needed(self):
         """
@@ -394,7 +394,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     miller = wf_dict['miller']
     host_symbol = wf_dict['host_symbol']
-    latticeconstant = wf_dict['latticeconstant'] * scaling_parameter ** (1/3.0)
+    latticeconstant = float(wf_dict['latticeconstant'] * scaling_parameter ** (1/3.0))
     size = wf_dict['size']
     replacements = wf_dict['replacements']
     pop_last_layers = wf_dict['pop_last_layers']
