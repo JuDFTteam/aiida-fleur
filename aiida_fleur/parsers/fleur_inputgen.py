@@ -17,7 +17,7 @@ parsing different files produced by inpgen.
 from __future__ import absolute_import
 
 from aiida.parsers import Parser
-from aiida.common.exceptions import NotExistent
+from aiida.common.exceptions import NotExistent, InputValidationError, ValidationError
 
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
@@ -91,5 +91,14 @@ class Fleur_inputgenParser(Parser):
                     "not created by inpgen".format(file1))
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
+        try:
+            fleurinp = FleurinpData(files=[inpxml_file], node=output_folder)
+        except InputValidationError as ex:
+            self.logger.error('FleurinpData initialization failed: {}'.format(str(ex)))
+            return self.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID
+        except ValidationError as ex:
+            self.logger.error('FleurinpData validation failed: {}'.format(str(ex)))
+            return self.exit_codes.ERROR_FLEURINPDATA_NOT_VALID
+
         self.logger.info('FleurinpData initialized')
-        self.out('fleurinpData', FleurinpData(files=[inpxml_file], node=output_folder))
+        self.out('fleurinpData', fleurinp)

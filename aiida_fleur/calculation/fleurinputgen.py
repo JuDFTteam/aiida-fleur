@@ -37,6 +37,8 @@ class FleurinputgenCalculation(CalcJob):
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
 
+    __version__ = "1.2.0"
+
     # Default input and output files
     _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
     _OUTPUT_FILE = 'out'  # 'shell.out' #will be shown with outputcat
@@ -138,6 +140,12 @@ class FleurinputgenCalculation(CalcJob):
                        message='XML input file was not found.')
         spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES',
                        message='Some required files were not retrieved.')
+        spec.exit_code(308, 'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
+                       message=('During parsing: FleurinpData could not be initialized, see log. '
+                                'Maybe no Schemafile was found or the Fleurinput is not valid.'))
+        spec.exit_code(309, 'ERROR_FLEURINPDATE_NOT_VALID',
+                       message='During parsing: FleurinpData failed validation.')
+
 
     def prepare_for_submission(self, folder):
         """
@@ -487,7 +495,7 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        cmdline_params = ["-explicit"]
+        cmdline_params = ["-explicit", "-inc", "+all", "-f", "{}".format(self._INPUT_FILE_NAME)]
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -495,7 +503,7 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
+        #codeinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUT_FILE_NAME  # shell output will be piped in file
         codeinfo.stderr_name = self._ERROR_FILE_NAME  # std error too
 
