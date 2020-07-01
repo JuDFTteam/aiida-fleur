@@ -279,7 +279,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
             self.report(
-                'Structure is converged to the largest force'
+                'Structure is converged to the largest force '
                 '{}'.format(self.ctx.forces[-1])
             )
             return False
@@ -362,9 +362,13 @@ class FleurRelaxWorkChain(WorkChain):
             cell = relax_out['relax_brav_vectors']
             atom_positions = relax_out['relax_atom_positions']
             film = relax_out['film']
+            total_energy = relax_out['energy']
+            total_energy_units = relax_out['energy_units']
         except KeyError:
             return self.exit_codes.ERROR_NO_RELAX_OUTPUT
 
+        self.ctx.total_energy_last = total_energy
+        self.ctx.total_energy_units = total_energy_units
         self.ctx.final_cell = cell
         self.ctx.final_atom_positions = atom_positions
 
@@ -382,13 +386,28 @@ class FleurRelaxWorkChain(WorkChain):
         out = {
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
+            'energy': self.ctx.total_energy_last,
+            'energy_units': self.ctx.total_energy_units,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
             'errors': self.ctx.errors,
             'force': self.ctx.forces,
             'force_iter_done': self.ctx.loop_count,
+             # uuids in the output are bad for caching should be avoided, 
+             # instead better return the node.
             'last_scf_wc_uuid': self.ctx.scf_res.uuid
         }
+        outnode = Dict(dict=out)
+
+        con_nodes = {}
+        try:
+            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+        except NotExistent:
+            relax_out = None
+        if relax_out is not None:
+            con_nodes['last_fleur_calc_output'] = relax_out
+        # TODO: for a trajectory output node all corresponding nodes have to go into
+        # con_nodes
 
         if self.ctx.final_cell:
             bohr_a = 0.52917721092
@@ -408,11 +427,16 @@ class FleurRelaxWorkChain(WorkChain):
                     )
 
             structure.pbc = self.ctx.pbc
-            structure = save_structure(structure)
-            self.out('optimized_structure', structure)
+            outdict = create_relax_result_node(out=outnode,
+                                               optimized_structure=structure,
+                                               **con_nodes)
+        else:
+            outdict = create_relax_result_node(out=outnode, **con_nodes)
 
-        out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        # return output nodes
+        for link_name, node in six.iteritems(outdict):
+            self.out(link_name, node)
+
         if not self.ctx.reached_relax:
             return self.exit_codes.ERROR_DID_NOT_RELAX
         if self.ctx.switch_bfgs:
@@ -427,20 +451,29 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
-
 @cf
-def save_structure(structure):
+def create_relax_result_node(**kwargs):
     """
-    Save a structure data node to provide correct provenance.
+    This calcfunction assures the right provenance (additional links)
+    for ALL result nodes it takes any nodes as input
+    and return a special set of nodes.
+    All other inputs will be connected in the DB to these ourput nodes
     """
-    structure_return = structure.clone()
-    return structure_return
+    outdict = {}
+    for key, val in six.iteritems(kwargs):
+        if key == 'out': # should always be present
+            outnode = val.clone() # dublicate node instead of circle (keep DAG)
+            outnode.label = 'out_relax_wc_para'
+            outnode.description = ('Contains results and '
+                              'information of an FleurRelaxWorkChain run.')
+            outdict['out'] = outnode
 
+        if key == 'optimized_structure':
+            structure = val.clone() # dublicate node instead of circle (keep DAG)
+            structure.label = 'optimized_structure'
+            structure.description = ('Relaxed structure result '
+                              'of an FleurRelaxWorkChain run.')
+            outdict['optimized_structure'] = structure
 
-@cf
-def save_output_node(out):
-    """
-    Save the out dict in the db to provide correct provenance.
-    """
-    out_wc = out.clone()
-    return out_wc
+    return outdict
+
