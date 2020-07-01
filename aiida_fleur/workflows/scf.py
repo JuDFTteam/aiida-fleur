@@ -578,9 +578,14 @@ class FleurScfWorkChain(WorkChain):
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
 
         if not self.ctx.distance:
-            errormsg = 'ERROR: did not manage to extract charge density from the calculation'
-            self.control_end_wc(errormsg)
-            return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
+            # if fleur relaxes an already converged crystal it stops directly
+            if mode == 'force':
+                self.report('INFO: System already force converged, could not extract distancie.')
+                self.ctx.last_charge_density = None
+            else:
+                errormsg = 'ERROR: did not manage to extract charge density from the calculation'
+                self.control_end_wc(errormsg)
+                return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
         else:
             self.ctx.last_charge_density = self.ctx.distance[-1]
 
