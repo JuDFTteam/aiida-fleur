@@ -16,10 +16,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 import copy
 import numpy as np
-
 import six
 
-from aiida.engine import WorkChain, ToContext, while_
+from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import load_node
 from aiida.orm import StructureData, Dict
@@ -28,6 +27,9 @@ from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
+from aiida_fleur.common.constants import bohr_a
+from aiida_fleur.tools.StructureData_util import break_symmetry_wf
+
 
 
 class FleurRelaxWorkChain(WorkChain):
@@ -35,12 +37,14 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = "0.1.3"
+    _workflowversion = "0.2.0"
 
     _wf_default = {
         'relax_iter': 5,
         'film_distance_relaxation': False,
         'force_criterion': 0.001,
+        'run_final_scf': False,
+        'break_symmetry': False,
         'change_mixing_criterion': 0.025,
         'atoms_off': []  # '49' is reserved
     }
@@ -60,7 +64,10 @@ class FleurRelaxWorkChain(WorkChain):
                 cls.converge_scf,
                 cls.check_failure,
             ),
-            cls.get_results,
+            cls.get_results_relax,
+            if_(cls.should_run_final_scf)(
+                cls.run_final_scf,
+                cls.get_results_final_scf),
             cls.return_results,
         )
 
@@ -107,6 +114,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.reached_relax = True
         self.ctx.switch_bfgs = False
         self.ctx.scf_res = None
+        self.ctx.final_structure = None
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._wf_default)
@@ -155,6 +163,15 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         input_scf.metadata.label = 'SCF_forces'
         input_scf.metadata.description = 'The SCF workchain converging forces, part of the Relax'
+
+        if self.ctx.wf_dict['break_symmetry']:
+            calc_para = None
+            if 'calc_parameters' in input_scf:
+                 calc_para = input_scf.calc_parameters
+            # currently we always break the full symmetry
+            broken_sys = break_symmetry_wf(input_scf.structure, parameterdata=calc_para)
+            input_scf.structure = broken_sys['new_structure']
+            input_scf.calc_parameters = broken_sys['new_parameters']
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
@@ -345,7 +362,50 @@ class FleurRelaxWorkChain(WorkChain):
 
         return None
 
-    def get_results(self):
+    def should_run_final_scf(self):
+        """
+        Check if a final scf should be run on the optimized structure
+        """
+        return self.ctx.wf_dict.get('run_final_scf', False)
+
+    def get_inputs_final_scf(self):
+        """
+        Initializes inputs for final scf on converged structure.
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        if 'structure' in input_scf:
+            del input_scf.structure
+
+        if 'wf_parameters' not in input_scf:
+            scf_wf_dict = {}
+        else:
+            scf_wf_dict = input_scf.wf_parameters.get_dict()
+            if 'inpxml_changes' in scf_wf_dict:
+                old_changes = scf_wf_dict['inpxml_changes']
+                new_changes = []
+                for change in old_changes:
+                    if 'shift_value' not in change[0]:
+                        new_changes.append(change)
+                scf_wf_dict['inpxml_changes'] = new_changes
+
+        scf_wf_dict['mode'] = 'density'
+        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.structure = self.ctx.final_structure
+
+        return input_scf
+
+    def run_final_scf(self):
+        """
+        Run a final scf for charge convergence on the optimized structure
+        """
+        inputs = {}
+
+        inputs = self.get_inputs_final_scf()
+        res = self.submit(FleurScfWorkChain, **inputs)
+
+        return ToContext(scf_final_res=res)
+
+    def get_results_relax(self):
         """
         Generates results of the workchain.
         Creates a new structure data node which is an
@@ -377,40 +437,8 @@ class FleurRelaxWorkChain(WorkChain):
         else:
             self.ctx.pbc = (True, True, True)
 
-    def return_results(self):
-        """
-        This function stores results of the workchain into the output nodes.
-        """
-        #TODO maybe we want to have a more detailed array output node with the force and
-        # position history of all atoms?
-        out = {
-            'workflow_name': self.__class__.__name__,
-            'workflow_version': self._workflowversion,
-            'energy': self.ctx.total_energy_last,
-            'energy_units': self.ctx.total_energy_units,
-            'info': self.ctx.info,
-            'warnings': self.ctx.warnings,
-            'errors': self.ctx.errors,
-            'force': self.ctx.forces,
-            'force_iter_done': self.ctx.loop_count,
-             # uuids in the output are bad for caching should be avoided, 
-             # instead better return the node.
-            'last_scf_wc_uuid': self.ctx.scf_res.uuid
-        }
-        outnode = Dict(dict=out)
-
-        con_nodes = {}
-        try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-        except NotExistent:
-            relax_out = None
-        if relax_out is not None:
-            con_nodes['last_fleur_calc_output'] = relax_out
-        # TODO: for a trajectory output node all corresponding nodes have to go into
-        # con_nodes
-
+        # we build the structure here, that way we can run an scf afterwards
         if self.ctx.final_cell:
-            bohr_a = 0.52917721092
             np_cell = np.array(self.ctx.final_cell) * bohr_a
             structure = StructureData(cell=np_cell.tolist())
 
@@ -427,8 +455,74 @@ class FleurRelaxWorkChain(WorkChain):
                     )
 
             structure.pbc = self.ctx.pbc
+            self.ctx.final_structure = structure
+
+    def get_results_final_scf(self):
+        """
+        Parser some results of final scf
+        """
+
+        try:
+            scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+        except NotExistent:
+            return self.exit_codes.ERROR_NO_SCF_OUTPUT
+
+        scf_out_d = scf_out.get_dict()
+        try:
+            total_energy = scf_out_d['energy']
+            total_energy_units = scf_out_d['energy_units']
+        except KeyError:
+            self.report('ERROR: Could not parse total energy of final scf run')
+            #return self.exit_codes.ERROR_NO_RELAX_OUTPUT
+
+        self.ctx.total_energy_last = total_energy
+        self.ctx.total_energy_units = total_energy_units
+
+    def return_results(self):
+        """
+        This function stores results of the workchain into the output nodes.
+        """
+        #TODO maybe we want to have a more detailed array output node with the force and
+        # position history of all atoms?
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            'energy': self.ctx.total_energy_last,
+            'energy_units': self.ctx.total_energy_units,
+            'info': self.ctx.info,
+            'warnings': self.ctx.warnings,
+            'errors': self.ctx.errors,
+            'force': self.ctx.forces,
+            'force_iter_done': self.ctx.loop_count,
+             # uuids in the output are bad for caching should be avoided,
+             # instead better return the node.
+            'last_scf_wc_uuid': self.ctx.scf_res.uuid
+        }
+        outnode = Dict(dict=out)
+
+        con_nodes = {}
+        try:
+            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+        except NotExistent:
+            relax_out = None
+        if relax_out is not None:
+            con_nodes['last_fleur_calc_output'] = relax_out
+
+        if self.ctx.wf_dict.get('run_final_scf', False):
+            try:
+                scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+            except NotExistent:
+                scf_out = None
+            if relax_out is not None:
+                con_nodes['last_scf__output'] = scf_out
+
+
+        # TODO: for a trajectory output node all corresponding nodes have to go into
+        # con_nodes
+
+        if self.ctx.final_structure is not None:
             outdict = create_relax_result_node(out=outnode,
-                                               optimized_structure=structure,
+                                               optimized_structure=self.ctx.final_structure,
                                                **con_nodes)
         else:
             outdict = create_relax_result_node(out=outnode, **con_nodes)
