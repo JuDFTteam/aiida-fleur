@@ -571,7 +571,7 @@ class FleurCalculation(CalcJob):
             cmdline_params.append("-no_send")
 
         if walltime_sec:
-            walltime_min = max(1, walltime_sec/60)
+            walltime_min = int(max(1, walltime_sec/60))
             cmdline_params.append("-wtime")
             cmdline_params.append("{}".format(walltime_min))
 
