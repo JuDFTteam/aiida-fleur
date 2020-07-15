@@ -370,12 +370,13 @@ class FleurRelaxWorkChain(WorkChain):
 
     def get_inputs_final_scf(self):
         """
-        Initializes inputs for final scf on converged structure.
+        Initializes inputs for final scf on relaxed structure.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         if 'structure' in input_scf:
             del input_scf.structure
-
+        if 'remote_data' in input_scf:
+            del input_scf.remote_data
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
         else:
