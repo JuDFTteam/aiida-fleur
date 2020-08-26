@@ -65,7 +65,7 @@ class FleurScfWorkChain(WorkChain):
                    'density_converged': 0.00002,
                    'energy_converged': 0.002,
                    'force_converged': 0.002,
-                   'mode': 'density',  # 'density', 'energy' or 'force'
+                   'mode': 'density',  # 'density', 'energy', 'force' or 'gw'
                    'serial': False,
                    'itmax_per_run': 30,
                    'force_dict': {'qfix': 2,
@@ -277,7 +277,7 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
-        if mode not in ['force', 'density', 'energy']:
+        if mode not in ['force', 'density', 'energy', 'gw']:
             error = ("ERROR: Wrong mode of convergence"
                      ": one of 'force', 'density' or 'energy' was expected.")
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -398,6 +398,11 @@ class FleurScfWorkChain(WorkChain):
             dist = 0.0
             fleurmode.set_inpchanges(
                 {'itmax': self.ctx.default_itmax, 'minDistance': dist})
+
+        elif converge_mode =='gw':
+            dist = 0.0
+            fleurmode.set_inpchanges(
+                {'itmax': self.ctx.default_itmax, 'minDistance': dist, 'gw':1})
 
         avail_ac_dict = fleurmode.get_avail_actions()
 
