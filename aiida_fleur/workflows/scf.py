@@ -403,6 +403,12 @@ class FleurScfWorkChain(WorkChain):
             dist = 0.0
             fleurmode.set_inpchanges(
                 {'itmax': self.ctx.default_itmax, 'minDistance': dist, 'gw':1})
+            if 'settings' in self.inputs:
+                self.inputs.settings.append({'additional_retrieve_list':['basis.hdf','pot.hdf','ecore']})
+                self.inputs.settings.append({'additional_remotecopy_list':['basis.hdf','pot.hdf','ecore']})
+            else:
+                self.inputs.settings = {'additional_retrieve_list':['basis.hdf','pot.hdf','ecore'],
+                                        'additional_remotecopy_list':['basis.hdf','pot.hdf','ecore']}                
 
         avail_ac_dict = fleurmode.get_avail_actions()
 
@@ -607,7 +613,7 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'density':
             if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
                 return False
-        elif mode == 'energy':
+        elif mode == 'energy' or 'gw':
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 return False
         elif mode == 'force':
