@@ -514,6 +514,9 @@ def delete_tag(xmltree, xpath):
     :param xpathn: a path to the tag to be deleted
     """
     root = xmltree.getroot()
+    if root is None: # eval will fail in this case
+        return xmltree
+
     nodes = eval_xpath3(root, xpath)
     if nodes:
         for node in nodes:

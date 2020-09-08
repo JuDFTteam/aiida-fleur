@@ -144,7 +144,7 @@ def compress_fleuroutxml(
 
     xpath_eig = '/fleurOutput/scfLoop/iteration/eigenvalues'
     xpath_iter = '/fleurOutput/scfLoop/iteration'
-
+    tree = None
     parser = etree.XMLParser(recover=False)
     outfile_broken = False
     try:
@@ -157,10 +157,16 @@ def compress_fleuroutxml(
         # repair xmlfile and try to parse what is possible.
         parser = etree.XMLParser(recover=True)
         try:
-            tree = etree.parse(outxmlfile, parser)
+            tree = etree.parse(outxmlfilepath, parser)
         except etree.XMLSyntaxError:
             parse_xml = False
             successful = False
+            print('failed to parse broken file, I abort.')
+            return
+
+    if tree is None:
+        print('xml tree is None, should not happen, ...')
+        return
 
     # delete eigenvalues (all)
     if delete_eig:
@@ -190,8 +196,10 @@ def compress_fleuroutxml(
 
     if dest_file_path is None:
         dest_file_path = outxmlfilepath  # overwrite file
-    new_etree.write(dest_file_path)
-
+    if new_etree.getroot() is not None: #otherwise write fails
+        new_etree.write(dest_file_path)
+    else:
+        print('new_etree has no root..., I cannot write to proper xml, skipping this now')
     return
 
 
