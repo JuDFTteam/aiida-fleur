@@ -276,6 +276,26 @@ class TestSetSpecies:
         else:
             assert correct_result == result
 
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_set_species_all_string(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species(etree, 'all-Fe', attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
+
+        if isinstance(correct_result, str):
+            if 'coreConfig' in path:
+                assert result[0].text == correct_result
+            else:
+                assert result[0] == correct_result
+        elif isinstance(correct_result, (float, int)):
+            assert result[0] == correct_result
+        else:
+            assert correct_result == result
+
     results_all = [[x, x] if not isinstance(x, list) else [x[0], x[1], x[0], x[1]] for x in results]
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))

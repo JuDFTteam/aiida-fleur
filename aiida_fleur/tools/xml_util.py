@@ -789,6 +789,9 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # number, other parameters
     if species_name == 'all':
         xpath_species = '/fleurInput/atomSpecies/species'
+    elif 'all' in species_name: #format all-<string>
+        searchstr = species_name.split('-',maxsplit=1)[1]
+        xpath_species = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(searchstr)
     else:
         xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
 
