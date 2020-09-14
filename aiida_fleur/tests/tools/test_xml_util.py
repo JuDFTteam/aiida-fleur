@@ -215,6 +215,7 @@ class TestSetSpecies:
              'electronConfig/stateOccupation/@state',
              'special/@socscale',
              'ldaU/@test_att',
+             'ldaU/@test_att',
              'lo/@test_att',
              'lo/@test_att'
              ]
@@ -228,13 +229,14 @@ class TestSetSpecies:
                                                         {'state': 'state2'}]}},
                 {'special': {'socscale': 1.0}},
                 {'ldaU': {'test_att': 2.0}},
+                {'ldaU': [{'test_att': 2.0}, {'test_att': 23.0}]},
                 {'lo': {'test_att': 2.0}},
                 {'lo': [{'test_att': 2.0}, {'test_att': 33.0}]}
                 #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
                 ]
 
     results = ['3.333', '7.0', '3.0', 'test', 'state', [
-        'state', 'state2'], '1.0', '2.0', '2.0', ['2.0', '33.0']]
+        'state', 'state2'], '1.0', '2.0', ['2.0', '23.0'], '2.0', ['2.0', '33.0']]
 
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
