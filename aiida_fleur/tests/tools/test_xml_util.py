@@ -215,6 +215,7 @@ class TestSetSpecies:
              'electronConfig/stateOccupation/@state',
              'special/@socscale',
              'ldaU/@test_att',
+             'ldaU/@test_att',
              'lo/@test_att',
              'lo/@test_att'
              ]
@@ -228,13 +229,14 @@ class TestSetSpecies:
                                                         {'state': 'state2'}]}},
                 {'special': {'socscale': 1.0}},
                 {'ldaU': {'test_att': 2.0}},
+                {'ldaU': [{'test_att': 2.0}, {'test_att': 23.0}]},
                 {'lo': {'test_att': 2.0}},
                 {'lo': [{'test_att': 2.0}, {'test_att': 33.0}]}
                 #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
                 ]
 
     results = ['3.333', '7.0', '3.0', 'test', 'state', [
-        'state', 'state2'], '1.0', '2.0', '2.0', ['2.0', '33.0']]
+        'state', 'state2'], '1.0', '2.0', ['2.0', '23.0'], '2.0', ['2.0', '33.0']]
 
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
@@ -263,6 +265,26 @@ class TestSetSpecies:
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
         set_species_label(etree, "                 222", attributedict=attr_dict)
+
+        result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
+
+        if isinstance(correct_result, str):
+            if 'coreConfig' in path:
+                assert result[0].text == correct_result
+            else:
+                assert result[0] == correct_result
+        elif isinstance(correct_result, (float, int)):
+            assert result[0] == correct_result
+        else:
+            assert correct_result == result
+
+    @staticmethod
+    @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
+    def test_set_species_all_string(inpxml_etree, attr_dict, correct_result, path):
+        from aiida_fleur.tools.xml_util import set_species, eval_xpath2
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+
+        set_species(etree, 'all-Fe', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
 

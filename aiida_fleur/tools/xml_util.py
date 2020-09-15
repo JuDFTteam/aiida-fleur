@@ -789,6 +789,8 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # number, other parameters
     if species_name == 'all':
         xpath_species = '/fleurInput/atomSpecies/species'
+    elif 'all-' == species_name[:4]: #format all-<string>
+        xpath_species = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
     else:
         xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
 
@@ -910,8 +912,38 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                             create=create,
                             tag_order=['coreConfig', 'valenceConfig', 'stateOccupation'])
         elif key == 'ldaU':
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
+            #Same policy as los: delete existing ldaU and add the ldaU specified
+            existingldaus = eval_xpath3(fleurinp_tree_copy, xpath_lda_u)
+            for ldau in existingldaus:
+                parent = ldau.getparent()
+                parent.remove(ldau)
+
+            if isinstance(val,dict):
+                create_tag(
+                    fleurinp_tree_copy,
+                    xpath_species,
+                    'ldaU',
+                    place_index=species_seq.index('ldaU'),
+                    tag_order=species_seq)
+                for attrib, value in six.iteritems(val):
+                    xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
+            else: #list of dicts
+
+                ldaus_needed = len(val)
+                for j in range(0, ldaus_needed):
+                    create_tag(
+                        fleurinp_tree_copy,
+                        xpath_species,
+                        'ldaU',
+                        place_index=species_seq.index('ldaU'),
+                        tag_order=species_seq)
+                for i, ldaudict in enumerate(val):
+                    for attrib, value in six.iteritems(ldaudict):
+                        sets = []
+                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/ldaU'))//ldaus_needed):
+                            sets.append(k * ldaus_needed + i)
+                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lda_u, attrib, value, occ=sets)
+
         elif key == 'special':
             eval_xpath3(fleurinp_tree_copy,
                         xpath_soc_scale,
