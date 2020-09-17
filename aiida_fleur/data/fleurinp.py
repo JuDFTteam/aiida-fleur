@@ -429,7 +429,10 @@ class FleurinpData(Data):
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
         fo = tempfile.NamedTemporaryFile(mode='w')
-        relax_content = self.open('relax.xml', mode='r').read()
+        try:
+            relax_content = self.open('relax.xml', mode='r').read()
+        except FileNotFoundError:
+            relax_content = ''
         fo.write(relax_content)
 
         # replace relax.xml by the temp file path
