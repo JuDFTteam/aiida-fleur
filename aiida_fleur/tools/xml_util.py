@@ -1974,6 +1974,12 @@ def clear_xml(tree):
     # replace XInclude parts to validate against schema
     cleared_tree.xinclude()
 
+    # get rid of xml:base attribute in the relaxation part
+    relax = eval_xpath(cleared_tree, '/fleurInput/relaxation')
+    for attribute in relax.keys():
+        if 'base' in attribute:
+            cleared_tree = delete_att(cleared_tree, '/fleurInput/relaxation', attribute)
+
     # remove comments from inp.xml
     comments = cleared_tree.xpath('//comment()')
     for comment in comments:

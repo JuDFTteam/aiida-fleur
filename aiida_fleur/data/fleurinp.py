@@ -79,6 +79,11 @@ class FleurinpData(Data):
         Initialize a FleurinpData object set the files given
         """
         files = kwargs.pop('files', None)
+        try:
+            files.pop(files.index('inp.xml'))
+            files.append('inp.xml')
+        except ValueError:
+            pass
         node = kwargs.pop('node', None)
         super(FleurinpData, self).__init__(**kwargs)
 
@@ -405,6 +410,7 @@ class FleurinpData(Data):
         4. set inputxml_dict
         """
         from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict, clear_xml
+        import tempfile
         # get inpxml structure
         inpxmlstructure = get_inpxml_file_structure()
 
@@ -419,8 +425,21 @@ class FleurinpData(Data):
 
         tree_x = etree.parse(inpxmlfile, parser)
         inpxmlfile.close()
+
+        # relax.xml should be available to be used in xinclude
+        # hence copy relax.xml from the retrieved node into the temp file
+        fo = tempfile.NamedTemporaryFile(mode='w')
+        relax_content = self.open('relax.xml', mode='r').read()
+        fo.write(relax_content)
+
+        # replace relax.xml by the temp file path
+        tree_x_string = etree.tostring(tree_x)
+        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(fo.name, 'utf-8'))
+        tree_x = etree.fromstring(tree_x_string).getroottree()
+
         # replace XInclude parts to validate against schema
         tree_x = clear_xml(tree_x)
+        fo.close()
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
