@@ -43,20 +43,12 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         super(FleurBaseRelaxWorkChain, cls).define(spec)
         spec.expose_inputs(RelaxProcess)
-        spec.input(
-            'description',
-            valid_type=six.string_types,
-            required=False,
-            non_db=True,
-            help='Calculation description.'
-        )
-        spec.input(
-            'label',
-            valid_type=six.string_types,
-            required=False,
-            non_db=True,
-            help='Calculation label.'
-        )
+        spec.input('description',
+                   valid_type=six.string_types,
+                   required=False,
+                   non_db=True,
+                   help='Calculation description.')
+        spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
 
         spec.outline(
             cls.setup,
@@ -71,12 +63,10 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         spec.expose_outputs(RelaxProcess)
 
-        spec.exit_code(
-            399,
-            'ERROR_SOMETHING_WENT_WRONG',
-            message='FleurRelaxWorkChain failed and FleurBaseRelaxWorkChain has no'
-            ' strategy to resolve this'
-        )
+        spec.exit_code(399,
+                       'ERROR_SOMETHING_WENT_WRONG',
+                       message='FleurRelaxWorkChain failed and FleurBaseRelaxWorkChain has no'
+                       ' strategy to resolve this')
 
     def validate_inputs(self):
         """
@@ -173,20 +163,16 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for a reason that can not be fixed automatically.
     """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses([
-        'ERROR_INVALID_INPUT_PARAM', 'ERROR_SCF_FAILED', 'ERROR_NO_RELAX_OUTPUT',
-        'ERROR_NO_SCF_OUTPUT'
-    ]):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses(
+        ['ERROR_INVALID_INPUT_PARAM', 'ERROR_SCF_FAILED', 'ERROR_NO_RELAX_OUTPUT', 'ERROR_NO_SCF_OUTPUT']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be fixed automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
     else:
-        raise ValueError(
-            'Calculation failed for unknown reason, please register the '
-            'corresponding exit code in this error handler'
-        )
+        raise ValueError('Calculation failed for unknown reason, please register the '
+                         'corresponding exit code in this error handler')
 
 
 @register_error_handler(FleurBaseRelaxWorkChain, 100)
@@ -207,10 +193,7 @@ def _handle_vacuum_spill(self, calculation):
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
 
         self.ctx.is_finished = False
-        self.report(
-            'Relax WC failed because atom was spilled to the vacuum, I change the vacuum '
-            'parameter'
-        )
+        self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum ' 'parameter')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
         inpxml_changes = wf_para_dict.get('inpxml_changes', [])
         inpxml_changes.append(('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}}))
@@ -249,39 +232,32 @@ def _handle_mt_overlap(self, calculation):
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
         if value < -0.2 and error_params['iteration_number'] >= 3:
-            wf_para_dict['force_dict']['forcealpha'
-                                       ] = wf_para_dict['force_dict']['forcealpha'] * 1.5
+            wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
             wf_para_dict['force_dict']['forcemix'] = 'straight'
 
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
             self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.25
             self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
-            self.report(
-                'Seems it is too early for BFGS. I switch back to straight mixing'
-                ' and reduce change_mixing_criterion by a factor of 1.25'
-            )
+            self.report('Seems it is too early for BFGS. I switch back to straight mixing'
+                        ' and reduce change_mixing_criterion by a factor of 1.25')
         elif value < -0.1 and error_params['iteration_number'] == 2:
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
             self.report('forcealpha might be too large.')
         else:  # reduce MT radii
             self.report('MT radii might be too large.')
             inpxml_changes = wf_para_dict.get('inpxml_changes', [])
-            inpxml_changes.append((
-                'shift_value_species_label', {
-                    'label': '{: >20}'.format(label1),
-                    'att_name': 'radius',
-                    'value': value,
-                    'mode': 'abs'
-                }
-            ))
-            inpxml_changes.append((
-                'shift_value_species_label', {
-                    'label': '{: >20}'.format(label2),
-                    'att_name': 'radius',
-                    'value': value,
-                    'mode': 'abs'
-                }
-            ))
+            inpxml_changes.append(('shift_value_species_label', {
+                'label': '{: >20}'.format(label1),
+                'att_name': 'radius',
+                'value': value,
+                'mode': 'abs'
+            }))
+            inpxml_changes.append(('shift_value_species_label', {
+                'label': '{: >20}'.format(label2),
+                'att_name': 'radius',
+                'value': value,
+                'mode': 'abs'
+            }))
             wf_para_dict['inpxml_changes'] = inpxml_changes
 
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)

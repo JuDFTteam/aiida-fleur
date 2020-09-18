@@ -46,15 +46,7 @@ inpgen_code = Code.get_from_string(inpgen_label)
 ### Create wf_parameters (optional) and options
 wf_para = Dict(dict={'fleur_runmax': 4, 'density_criterion': 0.000001, 'serial': False})
 
-options = Dict(
-    dict={
-        'resources': {
-            'num_machines': 1
-        },
-        'queue_name': '',
-        'max_wallclock_seconds': 60 * 60
-    }
-)
+options = Dict(dict={'resources': {'num_machines': 1}, 'queue_name': '', 'max_wallclock_seconds': 60 * 60})
 
 # Create W bcc crystal structure
 bohr_a_0 = 0.52917721092  # A
@@ -81,8 +73,7 @@ parameters = Dict(
         'kpt': {
             'nkpt': 100,
         }
-    }
-)
+    })
 
 ################################
 # 3. submit the workchain with its inputs.

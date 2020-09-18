@@ -32,59 +32,31 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(
-    description=(
-        'SCF with FLEUR. workflow to converge the '
-        'chargedensity, total energy or forces. all arguments'
-        'are pks, or uuids, codes can be names'
-    )
-)
-parser.add_argument(
-    '--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False
-)
-parser.add_argument(
-    '--structure', type=int, dest='structure', help='The crystal structure node', required=False
-)
-parser.add_argument(
-    '--calc_para',
-    type=int,
-    dest='calc_parameters',
-    help='Parameters for the FLEUR calculation',
-    required=False
-)
-parser.add_argument(
-    '--fleurinp',
-    type=int,
-    dest='fleurinp',
-    help='FleurinpData from which to run the FLEUR calculation',
-    required=False
-)
-parser.add_argument(
-    '--remote',
-    type=int,
-    dest='remote_data',
-    help=(
-        'Remote Data of older FLEUR calculation, '
-        'from which files will be copied (mixing_history ...)'
-    ),
-    required=False
-)
-parser.add_argument(
-    '--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False
-)
-parser.add_argument(
-    '--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True
-)
-parser.add_argument(
-    '--submit',
-    type=bool,
-    dest='submit',
-    help='should the workflow be submited or run',
-    required=False
-)
-parser.add_argument(
-    '--options', type=int, dest='options', help='options of the workflow', required=False
-)
+parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to converge the '
+                                              'chargedensity, total energy or forces. all arguments'
+                                              'are pks, or uuids, codes can be names'))
+parser.add_argument('--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False)
+parser.add_argument('--structure', type=int, dest='structure', help='The crystal structure node', required=False)
+parser.add_argument('--calc_para',
+                    type=int,
+                    dest='calc_parameters',
+                    help='Parameters for the FLEUR calculation',
+                    required=False)
+parser.add_argument('--fleurinp',
+                    type=int,
+                    dest='fleurinp',
+                    help='FleurinpData from which to run the FLEUR calculation',
+                    required=False)
+parser.add_argument('--remote',
+                    type=int,
+                    dest='remote_data',
+                    help=('Remote Data of older FLEUR calculation, '
+                          'from which files will be copied (mixing_history ...)'),
+                    required=False)
+parser.add_argument('--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False)
+parser.add_argument('--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True)
+parser.add_argument('--submit', type=bool, dest='submit', help='should the workflow be submited or run', required=False)
+parser.add_argument('--options', type=int, dest='options', help='options of the workflow', required=False)
 args = parser.parse_args()
 
 print(args)
@@ -105,8 +77,7 @@ wf_para = Dict(
             'forcemix': 'BFGS'
         },
         'serial': True
-    }
-)
+    })
 
 options = Dict(
     dict={
@@ -117,8 +88,7 @@ options = Dict(
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
         'max_wallclock_seconds': 60 * 60
-    }
-)
+    })
 
 bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0
@@ -157,8 +127,7 @@ parameters = Dict(
             'div2': 10,
             'div3': 1
         }
-    }
-)
+    })
 '''
 
 # Fe fcc structure
@@ -186,12 +155,7 @@ parameters = Dict(dict={
         'div3' : 1
         }})
 '''
-default = {
-    'structure': structure,
-    'wf_parameters': wf_para,
-    'options': options,
-    'calc_parameters': parameters
-}
+default = {'structure': structure, 'wf_parameters': wf_para, 'options': options, 'calc_parameters': parameters}
 
 ####
 

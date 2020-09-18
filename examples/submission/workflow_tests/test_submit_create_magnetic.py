@@ -27,42 +27,24 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(
-    description=(
-        'Create Magnetic WorkChain.'
-        ' All arguments are pks, or uuids, '
-        'codes can be names'
-    )
-)
-parser.add_argument(
-    '--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False
-)
-parser.add_argument(
-    '--structure', type=int, dest='structure', help='The crystal structure node', required=False
-)
-parser.add_argument(
-    '--calc_para',
-    type=int,
-    dest='calc_parameters',
-    help='Parameters for the FLEUR calculation',
-    required=False
-)
-parser.add_argument(
-    '--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False
-)
-parser.add_argument(
-    '--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True
-)
-parser.add_argument(
-    '--submit',
-    type=bool,
-    dest='submit',
-    help='should the workflow be submitted or run',
-    required=False
-)
-parser.add_argument(
-    '--options', type=int, dest='options', help='options of the workflow', required=False
-)
+parser = argparse.ArgumentParser(description=('Create Magnetic WorkChain.'
+                                              ' All arguments are pks, or uuids, '
+                                              'codes can be names'))
+parser.add_argument('--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False)
+parser.add_argument('--structure', type=int, dest='structure', help='The crystal structure node', required=False)
+parser.add_argument('--calc_para',
+                    type=int,
+                    dest='calc_parameters',
+                    help='Parameters for the FLEUR calculation',
+                    required=False)
+parser.add_argument('--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False)
+parser.add_argument('--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True)
+parser.add_argument('--submit',
+                    type=bool,
+                    dest='submit',
+                    help='should the workflow be submitted or run',
+                    required=False)
+parser.add_argument('--options', type=int, dest='options', help='options of the workflow', required=False)
 args = parser.parse_args()
 
 print(args)

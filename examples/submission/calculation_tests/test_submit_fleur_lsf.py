@@ -3,10 +3,7 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (
-    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
-    'IAS-1/PGI-1, Germany. All rights reserved.'
-)
+__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, ' 'IAS-1/PGI-1, Germany. All rights reserved.')
 __license__ = 'MIT license, see LICENSE.txt file'
 __version__ = '0.27'
 __contributors__ = 'Jens Broeder'
@@ -81,8 +78,7 @@ calc.set_resources({'tot_num_mpiprocs': 4})
 #calc.set_resources({"tot_num_mpiprocs" : 1})
 
 calc.set_custom_scheduler_commands(
-    '#BSUB -P jara0043 \n#BSUB -M 1024  \n#BSUB -a intelmpi'
-)  # \n#BSUB -R "span[ptile=4]"')
+    '#BSUB -P jara0043 \n#BSUB -M 1024  \n#BSUB -a intelmpi')  # \n#BSUB -R "span[ptile=4]"')
 
 if queue is not None:
     calc.set_queue_name(queue)
@@ -96,21 +92,9 @@ if settings is not None:
 if submit_test:
     subfolder, script_filename = calc.submit_test()
     print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
-    print(
-        'Submit file in {}'.format(
-            os.path.join(os.path.relpath(subfolder.abspath), script_filename)
-        )
-    )
+    print('Submit file in {}'.format(os.path.join(os.path.relpath(subfolder.abspath), script_filename)))
 else:
     calc.store_all()
-    print(
-        "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-            calc.uuid, calc.dbnode.pk
-        )
-    )
+    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))
     calc.submit()
-    print(
-        "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-            calc.uuid, calc.dbnode.pk
-        )
-    )
+    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))

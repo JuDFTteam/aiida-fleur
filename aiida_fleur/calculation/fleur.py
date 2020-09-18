@@ -146,8 +146,8 @@ class FleurCalculation(CalcJob):
 
     # all possible files first chargedensity
     _copy_filelist1 = [
-        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME,
-        _STARS_FILE_NAME, _WKF2_FILE_NAME
+        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME, _STARS_FILE_NAME,
+        _WKF2_FILE_NAME
     ]
 
     # after inpgen, before first chargedensity
@@ -160,14 +160,13 @@ class FleurCalculation(CalcJob):
 
     _copy_scf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
-    _copy_scf_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME],
-                     [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
+    _copy_scf_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
     _copy_filelist_scf_remote = [_MIX_HISTORY_FILE_NAME]
 
     _copy_filelist3 = [
-        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME,
-        _STARS_FILE_NAME, _WKF2_FILE_NAME, _MIX_HISTORY_FILE_NAME, _OUT_FILE_NAME, _POT_FILE_NAME
+        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME, _STARS_FILE_NAME,
+        _WKF2_FILE_NAME, _MIX_HISTORY_FILE_NAME, _OUT_FILE_NAME, _POT_FILE_NAME
     ]
 
     # files need for rerun
@@ -192,48 +191,34 @@ class FleurCalculation(CalcJob):
 
         # spec.input('metadata.options.input_filename', valid_type=six.string_types,
         #            default=cls._INPXML_FILE_NAME)
-        spec.input(
-            'metadata.options.output_filename',
-            valid_type=six.string_types,
-            default=cls._OUTXML_FILE_NAME
-        )
+        spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._OUTXML_FILE_NAME)
         spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._use_kpoints)
 
         # inputs
-        spec.input(
-            'fleurinpdata',
-            valid_type=FleurinpData,
-            required=False,
-            help='Use a FleruinpData node that specifies the input parameters'
-            'usually copy from the parent calculation, basically makes'
-            'the inp.xml file visible in the db and makes sure it has '
-            'the files needed.'
-        )
-        spec.input(
-            'parent_folder',
-            valid_type=RemoteData,
-            required=False,
-            help='Use a remote or local repository folder as parent folder '
-            '(also for restarts and similar). It should contain all the '
-            'needed files for a Fleur calc, only edited files should be '
-            'uploaded from the repository.'
-        )
-        spec.input(
-            'settings',
-            valid_type=Dict,
-            required=False,
-            help='This parameter data node is used to specify for some '
-            'advanced features how the plugin behaves. You can add files'
-            'the retrieve list, or add command line switches, '
-            'for all available features here check the documentation.'
-        )
+        spec.input('fleurinpdata',
+                   valid_type=FleurinpData,
+                   required=False,
+                   help='Use a FleruinpData node that specifies the input parameters'
+                   'usually copy from the parent calculation, basically makes'
+                   'the inp.xml file visible in the db and makes sure it has '
+                   'the files needed.')
+        spec.input('parent_folder',
+                   valid_type=RemoteData,
+                   required=False,
+                   help='Use a remote or local repository folder as parent folder '
+                   '(also for restarts and similar). It should contain all the '
+                   'needed files for a Fleur calc, only edited files should be '
+                   'uploaded from the repository.')
+        spec.input('settings',
+                   valid_type=Dict,
+                   required=False,
+                   help='This parameter data node is used to specify for some '
+                   'advanced features how the plugin behaves. You can add files'
+                   'the retrieve list, or add command line switches, '
+                   'for all available features here check the documentation.')
 
         # parser
-        spec.input(
-            'metadata.options.parser_name',
-            valid_type=six.string_types,
-            default='fleur.fleurparser'
-        )
+        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
 
         # declare outputs of the calculation
         spec.output('output_parameters', valid_type=Dict, required=False)
@@ -244,37 +229,19 @@ class FleurCalculation(CalcJob):
 
         # exit codes
         spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
-        spec.exit_code(
-            301, 'ERROR_OPENING_OUTPUTS', message='One of the output files can not be opened.'
-        )
-        spec.exit_code(
-            302, 'ERROR_FLEUR_CALC_FAILED', message='FLEUR calculation failed for unknown reason.'
-        )
+        spec.exit_code(301, 'ERROR_OPENING_OUTPUTS', message='One of the output files can not be opened.')
+        spec.exit_code(302, 'ERROR_FLEUR_CALC_FAILED', message='FLEUR calculation failed for unknown reason.')
         spec.exit_code(303, 'ERROR_NO_OUTXML', message='XML output file was not found.')
-        spec.exit_code(
-            304, 'ERROR_XMLOUT_PARSING_FAILED', message='Parsing of XML output file failed.'
-        )
-        spec.exit_code(
-            305, 'ERROR_RELAX_PARSING_FAILED', message='Parsing of relax XML output file failed.'
-        )
-        spec.exit_code(
-            310,
-            'ERROR_NOT_ENOUGH_MEMORY',
-            message='FLEUR calculation failed due to lack of memory.'
-        )
-        spec.exit_code(
-            311,
-            'ERROR_VACUUM_SPILL_RELAX',
-            message='FLEUR calculation failed because an atom spilled to the'
-            'vacuum during relaxation'
-        )
+        spec.exit_code(304, 'ERROR_XMLOUT_PARSING_FAILED', message='Parsing of XML output file failed.')
+        spec.exit_code(305, 'ERROR_RELAX_PARSING_FAILED', message='Parsing of relax XML output file failed.')
+        spec.exit_code(310, 'ERROR_NOT_ENOUGH_MEMORY', message='FLEUR calculation failed due to lack of memory.')
+        spec.exit_code(311,
+                       'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                       'vacuum during relaxation')
         spec.exit_code(312, 'ERROR_MT_RADII', message='FLEUR calculation failed due to MT overlap.')
-        spec.exit_code(
-            313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.'
-        )
-        spec.exit_code(
-            314, 'ERROR_DROP_CDN', message='Problem with cdn is suspected. Consider removing cdn'
-        )
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(314, 'ERROR_DROP_CDN', message='Problem with cdn is suspected. Consider removing cdn')
 
     @classproperty
     def _get_outut_folder(self):
@@ -345,21 +312,17 @@ class FleurCalculation(CalcJob):
         if parent_calc_folder is None:
             has_parent = False
             if not has_fleurinp:
-                raise InputValidationError(
-                    'No parent calculation found and no fleurinp data '
-                    'given, need either one or both for a '
-                    "'fleurcalculation'."
-                )
+                raise InputValidationError('No parent calculation found and no fleurinp data '
+                                           'given, need either one or both for a '
+                                           "'fleurcalculation'.")
         else:
             # extract parent calculation
             parent_calcs = parent_calc_folder.get_incoming(node_class=CalcJob).all()
             n_parents = len(parent_calcs)
             if n_parents != 1:
-                raise UniquenessError(
-                    'Input RemoteData is child of {} '
-                    'calculation{}, while it should have a single parent'
-                    ''.format(n_parents, '' if n_parents == 0 else 's')
-                )
+                raise UniquenessError('Input RemoteData is child of {} '
+                                      'calculation{}, while it should have a single parent'
+                                      ''.format(n_parents, '' if n_parents == 0 else 's'))
             parent_calc = parent_calcs[0].node
             parent_calc_class = parent_calc.process_class
             has_parent = True
@@ -385,10 +348,8 @@ class FleurCalculation(CalcJob):
                     # don't copy files, copy files locally
                     copy_remotely = False
             else:
-                raise InputValidationError(
-                    "parent_calc, must be either an 'inpgen calculation' or"
-                    " a 'fleur calculation'."
-                )
+                raise InputValidationError("parent_calc, must be either an 'inpgen calculation' or"
+                                           " a 'fleur calculation'.")
 
         # check existence of settings (optional)
         if 'settings' in self.inputs:
@@ -404,11 +365,9 @@ class FleurCalculation(CalcJob):
         # check for for allowed keys, ignore unknown keys but warn.
         for key in settings_dict.keys():
             if key not in self._settings_keys:
-                self.logger.warning(
-                    'settings dict key {} for Fleur calculation'
-                    'not recognized, only {} are allowed.'
-                    ''.format(key, self._settings_keys)
-                )
+                self.logger.warning('settings dict key {} for Fleur calculation'
+                                    'not recognized, only {} are allowed.'
+                                    ''.format(key, self._settings_keys))
 
         # TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData
@@ -453,9 +412,7 @@ class FleurCalculation(CalcJob):
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
-                    local_copy_list.append(
-                        (outfolder_uuid, os.path.join(file1), os.path.join(file1))
-                    )
+                    local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
             elif not fleurinpgen and (not has_fleurinp):  # fleurCalc
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
@@ -498,11 +455,9 @@ class FleurCalculation(CalcJob):
                         filelist_tocopy_remote.remove(file1)
 
                 for file1 in filelist_tocopy_remote:
-                    remote_copy_list.append((
-                        parent_calc_folder.computer.uuid,
-                        os.path.join(parent_calc_folder.get_remote_path(),
-                                     file1), self._get_outut_folder
-                    ))
+                    remote_copy_list.append(
+                        (parent_calc_folder.computer.uuid, os.path.join(parent_calc_folder.get_remote_path(),
+                                                                        file1), self._get_outut_folder))
 
                 self.logger.info('remote copy file list {}'.format(remote_copy_list))
 

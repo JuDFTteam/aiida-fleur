@@ -29,11 +29,10 @@ class Test_fleur_initial_cls_wc():
     """
     Regression tests for the fleur_initial_cls_wc
     """
+
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_initial_cls_W(
-        self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
-        export_cache, load_cache, clear_spec
-    ):
+    def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+                                 export_cache, load_cache, clear_spec):
         """
         full example using fleur_initial_cls_wc with just elemental W as input
         (W, onw atoms per unit cell)
@@ -115,8 +114,7 @@ class Test_fleur_initial_cls_wc():
         assert outd.get('successful')
         assert outd.get('warnings') == []
         assert outd.get('corelevelshifts') == {
-            'W':
-            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            'W': [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
         }
 
         assert outd.get('formation_energy') == [0.0]

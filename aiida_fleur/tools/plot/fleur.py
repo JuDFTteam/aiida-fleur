@@ -126,11 +126,9 @@ def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh')
                             node = out_link.node  # we only visualize last output node
                             found = True
             if not found:
-                print(
-                    'Sorry, I do not know how to visualize this WorkChainNode {}, which contains'
-                    ' the following outgoing links {}. Maybe it is not (yet) finished successful.'
-                    ''.format(node, [link.link_label for link in output_list])
-                )
+                print('Sorry, I do not know how to visualize this WorkChainNode {}, which contains'
+                      ' the following outgoing links {}. Maybe it is not (yet) finished successful.'
+                      ''.format(node, [link.link_label for link in output_list]))
                 return
         if isinstance(node, ParameterData):
             p_dict = node.get_dict()
@@ -138,10 +136,8 @@ def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh')
             try:
                 plotf = FUNCTIONS_DICT[workflow_name]
             except KeyError:
-                print((
-                    'Sorry, I do not know how to visualize this workflow: {}, node {}.'
-                    'Please implement me in plot_fleur_aiida!'.format(workflow_name, node)
-                ))
+                print(('Sorry, I do not know how to visualize this workflow: {}, node {}.'
+                       'Please implement me in plot_fleur_aiida!'.format(workflow_name, node)))
                 if show_dict:
                     pprint(p_dict)
                 return
@@ -177,10 +173,7 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
     ParameterData = DataFactory('dict')
 
     if not isinstance(nodelist, list):
-        print((
-            'The nodelist provided: {}, type {} is not a list. '
-            'I abort'.format(nodelist, type(nodelist))
-        ))
+        print(('The nodelist provided: {}, type {} is not a list. ' 'I abort'.format(nodelist, type(nodelist))))
         return None
 
     node_labels = []
@@ -208,15 +201,11 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
                 cur_list.append(node)
                 all_nodes[workflow_name] = cur_list
             else:
-                print((
-                    'I do not know how to visualize this node: {}, '
-                    'type {} from the nodelist length {}'.format(node, type(node), len(nodelist))
-                ))
+                print(('I do not know how to visualize this node: {}, '
+                       'type {} from the nodelist length {}'.format(node, type(node), len(nodelist))))
         else:
-            print((
-                'The node provided: {} of type {} in the nodelist length {}'
-                ' is not an AiiDA object'.format(node, type(node), len(nodelist))
-            ))
+            print(('The node provided: {} of type {} in the nodelist length {}'
+                   ' is not an AiiDA object'.format(node, type(node), len(nodelist))))
 
     #print(all_nodes)
     all_plot_res = []
@@ -224,10 +213,8 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
         try:
             plotf = FUNCTIONS_DICT[node_key]
         except KeyError:
-            print((
-                'Sorry, I do not know how to visualize'
-                ' these nodes (multiplot): {} {}'.format(node_key, nodelist)
-            ))
+            print(('Sorry, I do not know how to visualize'
+                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist)))
             continue
         plot_res = plotf(nodelist, labels=node_labels, save=save, show=show, backend=backend)
         all_plot_res.append(plot_res)
@@ -300,19 +287,20 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
 
     #plot_convergence_results(distance_all, total_energy, iteration)
     if labels:
-        plt = plot_convergence_results_m(
-            distance_all_n,
-            total_energy_n,
-            iterations,
-            plot_labels=labels,
-            nodes=nodes_pk,
-            modes=modes,
-            show=show
-        )
+        plt = plot_convergence_results_m(distance_all_n,
+                                         total_energy_n,
+                                         iterations,
+                                         plot_labels=labels,
+                                         nodes=nodes_pk,
+                                         modes=modes,
+                                         show=show)
     else:
-        plt = plot_convergence_results_m(
-            distance_all_n, total_energy_n, iterations, nodes=nodes_pk, modes=modes, show=show
-        )
+        plt = plot_convergence_results_m(distance_all_n,
+                                         total_energy_n,
+                                         iterations,
+                                         nodes=nodes_pk,
+                                         modes=modes,
+                                         show=show)
 
     return plt
 
@@ -368,14 +356,9 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
                 total_e_norm = np.array(total_e) - total_e[0]
                 Total_energy.append(total_e_norm)
                 scaling.append(outpara.get('scaling'))
-                plotlables.append((
-                    r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}'
-                    ''.format(volume_gs, scale_gs, i)
-                ))
+                plotlables.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
                 plotlables.append(r'fit results {}'.format(i))
-            plot_lattice_constant(
-                Total_energy, scaling, multi=True, plotlables=plotlables, show=show
-            )
+            plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables, show=show)
             return  # TODO
         else:
             node = node[0]

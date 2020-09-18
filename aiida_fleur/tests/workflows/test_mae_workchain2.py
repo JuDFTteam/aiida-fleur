@@ -28,11 +28,10 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_mae_FePt_film(
-    clear_database,
-    with_export_cache,  #run_with_cache,
-    fleur_local_code,
-    inpgen_local_code
-):
+        clear_database,
+        with_export_cache,  #run_with_cache,
+        fleur_local_code,
+        inpgen_local_code):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -48,8 +47,7 @@ def test_fleur_mae_FePt_film(
             'max_wallclock_seconds': 60 * 60,
             'queue_name': '',
             'custom_scheduler_commands': ''
-        }
-    )
+        })
 
     wf_para_scf = {
         'fleur_runmax': 2,
@@ -70,8 +68,7 @@ def test_fleur_mae_FePt_film(
             'serial': False,
             'soc_off': [],
             'inpxml_changes': [],
-        }
-    )
+        })
 
     bohr_a_0 = 0.52917721092  # A
     a = 7.497 * bohr_a_0
@@ -100,8 +97,7 @@ def test_fleur_mae_FePt_film(
                 'div2': 12,  #24,
                 'div3': 1
             }
-        }
-    )
+        })
 
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code

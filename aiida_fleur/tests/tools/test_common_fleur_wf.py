@@ -173,19 +173,15 @@ def test_test_and_get_codenode_inpgen(fixture_code):
     assert isinstance(test_and_get_codenode(code, expected), Code)
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, nonexpected, use_exceptions=True)
-    assert str(msg.value) == (
-        'Given Code node is not of expected code type.\n'
-        'Valid labels for a fleur.fleur executable are:\n'
-        '* fleur_test@localhost-test'
-    )
+    assert str(msg.value) == ('Given Code node is not of expected code type.\n'
+                              'Valid labels for a fleur.fleur executable are:\n'
+                              '* fleur_test@localhost-test')
 
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, not_existing, use_exceptions=True)
-    assert str(msg.value) == (
-        'Code not valid, and no valid codes for fleur.not_existing.\n'
-        'Configure at least one first using\n'
-        '    verdi code setup'
-    )
+    assert str(msg.value) == ('Code not valid, and no valid codes for fleur.not_existing.\n'
+                              'Configure at least one first using\n'
+                              '    verdi code setup')
 
 
 def test_get_kpoints_mesh_from_kdensity(generate_structure):
@@ -271,8 +267,7 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
             'orbital_magnetic_moment_units': 'muBohr',
             'orbital_magnetic_spin_up_charges': [],
             'orbital_magnetic_spin_down_charges': []
-        }
-    )
+        })
     out.store()
 
     node = generate_calc_job_node('fleur.fleur', fixture_localhost)
@@ -313,27 +308,17 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
     }
 
 
-inputs_optimize = [(4, 8, 3, True, 0.5, None, 720), (4, 8, 3, True, 2, None, 720),
-                   (4, 8, 3, True, 100, None, 720), (4, 8, 3, True, 100, None, 720, 0.5),
-                   (4, 8, 3, False, 0.5, None, 720)]
+inputs_optimize = [(4, 8, 3, True, 0.5, None, 720), (4, 8, 3, True, 2, None, 720), (4, 8, 3, True, 100, None, 720),
+                   (4, 8, 3, True, 100, None, 720, 0.5), (4, 8, 3, False, 0.5, None, 720)]
 
 results_optimize = [
-    (
-        4, 4, 6,
-        'Computational setup is perfect! Nodes: 4, MPIs per node 4, OMP per MPI 6. Number of k-points is 720'
-    ),
-    (
-        4, 6, 4,
-        'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'
-    ),
-    (
-        4, 12, 2,
-        'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'
-    ), (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
-    (
-        4, 20, 1,
-        'WARNING: Changed the number of MPIs per node from 8 to 20 and OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.'
-    )
+    (4, 4, 6, 'Computational setup is perfect! Nodes: 4, MPIs per node 4, OMP per MPI 6. Number of k-points is 720'),
+    (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
+    (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
+    (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
+    (4, 20, 1,
+     'WARNING: Changed the number of MPIs per node from 8 to 20 and OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.'
+     )
 ]
 
 
@@ -345,9 +330,7 @@ def test_optimize_calc_options(input, result_correct):
     assert result == result_correct
 
 
-def test_find_last_submitted_calcjob(
-    fixture_localhost, generate_calc_job_node, generate_work_chain_node
-):
+def test_find_last_submitted_calcjob(fixture_localhost, generate_calc_job_node, generate_work_chain_node):
     from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
     from aiida.common.links import LinkType
     from aiida.common.exceptions import NotExistent

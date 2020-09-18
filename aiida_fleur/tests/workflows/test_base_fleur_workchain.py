@@ -29,6 +29,7 @@ class Test_FleurBaseWorkChain():
     """
     Regression tests for the FleurBaseWorkChain
     """
+
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_base_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
@@ -53,11 +54,7 @@ class Test_FleurBaseWorkChain():
             label='fleur',
             data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=[
-                '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
-                'cdn??'
-            ]
-        )
+            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
         # create process builder to set parameters
         builder = FleurBaseWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'

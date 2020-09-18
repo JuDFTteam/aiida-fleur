@@ -67,11 +67,7 @@ def test_parse_xmlout_file():
         }
     }
 
-    expected_parser_info_out = {
-        'parser_info': 'AiiDA Fleur Parser v0.3.0',
-        'parser_warnings': [],
-        'unparsed': []
-    }
+    expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.3.0', 'parser_warnings': [], 'unparsed': []}
     simple_out.pop('outputfile_path', None)  # otherwise test will fail on different installations
     # also this should go away any way...
 
@@ -134,8 +130,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
             'The out.xml file is broken I try to repair it.',
             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
-            'Could not convert: "None" to float, TypeError',
-            'Could not convert: "None" to float, TypeError',
+            'Could not convert: "None" to float, TypeError', 'Could not convert: "None" to float, TypeError',
             'Could not convert: "None" to float, TypeError',
             'Can not get attributename: "value" from node "[]", because node is not an element of etree.',
             'Could not convert: "None" to float, TypeError',

@@ -53,8 +53,7 @@ wf_para = Dict(
         'walltime_sec': 10 * 60,
         'serial': False,
         'references': references
-    }
-)
+    })
 
 res = fleur_initial_cls_wc.run(structure=s, wf_parameters=wf_para, inpgen=code, fleur=code2)  #
 #wf_parameters=wf_para,

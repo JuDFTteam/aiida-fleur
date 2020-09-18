@@ -7,9 +7,8 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_CIF = os.path.join(aiida_path, 'tests/files/cif/AlB.cif')
 
 
-def test_extract_structure_info(
-    clear_database_aiida_fleur, generate_structure, generate_work_chain_node, fixture_localhost
-):
+def test_extract_structure_info(clear_database_aiida_fleur, generate_structure, generate_work_chain_node,
+                                fixture_localhost):
     """
     I do not test 'extras' here due to some kind of bug
     """
@@ -38,31 +37,24 @@ def test_extract_structure_info(
     # create CalcFunction having StructureData input
     calc_function = CalcFunctionNode()
     calc_function.set_attribute('process_label', 'test_label')
-    calc_function.add_incoming(
-        structure_bulk, link_type=LinkType.INPUT_CALC, link_label='test_calcfundtion'
-    )
+    calc_function.add_incoming(structure_bulk, link_type=LinkType.INPUT_CALC, link_label='test_calcfundtion')
     calc_function.store()
 
     # create WorkChainNode scf having StructureData input
-    scf_wc = generate_work_chain_node(
-        computer=fixture_localhost,
-        entry_point_name='aiida_fleur.scf',
-        inputs={'structure': load_node(pks[1])}
-    )
+    scf_wc = generate_work_chain_node(computer=fixture_localhost,
+                                      entry_point_name='aiida_fleur.scf',
+                                      inputs={'structure': load_node(pks[1])})
     scf_wc.store()
     scf_wc.set_attribute('process_label', 'fleur_scf_wc')
 
     # create a group
     group = create_group(name='test_group', nodes=pks[:2], description='test_description')
 
-    result = extract_structure_info(
-        keys=[
-            'uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy', 'child_nodes',
-            'natoms', 'group', 'label', 'description', 'cif_file', 'cif_number', 'cif_uuid',
-            'cif_ref', 'calcfunctions', 'band', 'dos', 'eos', 'init_cls', 'corehole', 'primitive',
-            'cell', 'scf'
-        ]
-    )
+    result = extract_structure_info(keys=[
+        'uuid', 'formula', 'pk', 'symmetry', 'pbc', 'volume', 'total_energy', 'child_nodes', 'natoms', 'group', 'label',
+        'description', 'cif_file', 'cif_number', 'cif_uuid', 'cif_ref', 'calcfunctions', 'band', 'dos', 'eos',
+        'init_cls', 'corehole', 'primitive', 'cell', 'scf'
+    ])
 
     # print(result)
     # assert 0

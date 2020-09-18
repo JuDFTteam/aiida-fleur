@@ -77,8 +77,7 @@ parameters = Dict(
             'div3': 17,
             'tkb': 0.0005
         }
-    }
-)
+    })
 
 # now run an inputgen calculation:
 

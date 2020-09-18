@@ -128,15 +128,11 @@ def delete_nodes(pks_to_delete):
     all_pks_to_delete = set(pks_to_delete)
     for pk in pks_to_delete:
         all_pks_to_delete.update(
-            models.DbNode.objects.filter(input_links__in=pks_to_delete
-                                         ).values_list('pk', flat=True)
-        )
+            models.DbNode.objects.filter(input_links__in=pks_to_delete).values_list('pk', flat=True))
 
-    print((
-        'I am going to delete {} nodes, including ALL THE CHILDREN'
-        'of the nodes you specified. Do you want to continue? [y/N]'
-        ''.format(len(all_pks_to_delete))
-    ))
+    print(('I am going to delete {} nodes, including ALL THE CHILDREN'
+           'of the nodes you specified. Do you want to continue? [y/N]'
+           ''.format(len(all_pks_to_delete))))
     answer = input()
 
     if answer.strip().lower() == 'y':
@@ -150,9 +146,7 @@ def delete_nodes(pks_to_delete):
 
         with transaction.atomic():
             # Delete all links pointing to or from a given node
-            models.DbLink.objects.filter(
-                Q(input__in=all_pks_to_delete) | Q(output__in=all_pks_to_delete)
-            ).delete()
+            models.DbLink.objects.filter(Q(input__in=all_pks_to_delete) | Q(output__in=all_pks_to_delete)).delete()
             # now delete nodes
             models.DbNode.objects.filter(pk__in=all_pks_to_delete).delete()
 

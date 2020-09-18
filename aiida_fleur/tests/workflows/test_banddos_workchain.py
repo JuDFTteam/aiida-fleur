@@ -29,6 +29,7 @@ class Test_BandDosWorkChain():
     """
     Regression tests for the FleurBandDosWorkChain
     """
+
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_converged_Si(self, run_with_cache, mock_code_factory, create_remote_fleur):
@@ -51,15 +52,9 @@ class Test_BandDosWorkChain():
 
         FleurCode = mock_code = mock_code_factory(
             label='fleur',
-            data_dir_abspath=os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'data_dir_calcs/'
-            ),
+            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir_calcs/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=[
-                '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
-                'cdn??'
-            ]
-        )
+            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
         # create process builder to set parameters
         builder = FleurBandDosWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur Band Dos calculation ontop converged fleur calc'

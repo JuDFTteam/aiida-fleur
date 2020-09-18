@@ -31,42 +31,20 @@ Dict = DataFactory('dict')
 FleurinpData = DataFactory('fleur.fleurinp')
 StructureData = DataFactory('structure')
 
-parser = argparse.ArgumentParser(
-    description=(
-        'Relax with FLEUR. workflow to optimize '
-        'the structure. All arguments are pks, or uuids, '
-        'codes can be names'
-    )
-)
-parser.add_argument(
-    '--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False
-)
-parser.add_argument(
-    '--structure', type=int, dest='structure', help='The crystal structure node', required=False
-)
-parser.add_argument(
-    '--calc_para',
-    type=int,
-    dest='calc_parameters',
-    help='Parameters for the FLEUR calculation',
-    required=False
-)
-parser.add_argument(
-    '--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False
-)
-parser.add_argument(
-    '--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True
-)
-parser.add_argument(
-    '--submit',
-    type=bool,
-    dest='submit',
-    help='should the workflow be submited or run',
-    required=False
-)
-parser.add_argument(
-    '--options', type=int, dest='options', help='options of the workflow', required=False
-)
+parser = argparse.ArgumentParser(description=('Relax with FLEUR. workflow to optimize '
+                                              'the structure. All arguments are pks, or uuids, '
+                                              'codes can be names'))
+parser.add_argument('--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False)
+parser.add_argument('--structure', type=int, dest='structure', help='The crystal structure node', required=False)
+parser.add_argument('--calc_para',
+                    type=int,
+                    dest='calc_parameters',
+                    help='Parameters for the FLEUR calculation',
+                    required=False)
+parser.add_argument('--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False)
+parser.add_argument('--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True)
+parser.add_argument('--submit', type=bool, dest='submit', help='should the workflow be submited or run', required=False)
+parser.add_argument('--options', type=int, dest='options', help='options of the workflow', required=False)
 parser.add_argument('--remote', type=int, dest='remote', help='remote', required=False)
 parser.add_argument('--fleurinp', type=int, dest='fleurinp', help='fleurinp', required=False)
 args = parser.parse_args()
@@ -83,8 +61,7 @@ wf_para = Dict(
         'serial': False,
         'soc_off': [],
         'inpxml_changes': [],
-    }
-)
+    })
 
 options = Dict(
     dict={
@@ -95,8 +72,7 @@ options = Dict(
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
         'max_wallclock_seconds': 60 * 60
-    }
-)
+    })
 
 bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0
@@ -125,16 +101,9 @@ parameters = Dict(
             'div2': 24,
             'div3': 1
         }
-    }
-)
+    })
 
-wf_para_scf = {
-    'fleur_runmax': 2,
-    'itmax_per_run': 120,
-    'density_converged': 0.2,
-    'serial': False,
-    'mode': 'density'
-}
+wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.2, 'serial': False, 'mode': 'density'}
 
 wf_para_scf = Dict(dict=wf_para_scf)
 
@@ -147,8 +116,7 @@ options_scf = Dict(
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
         'max_wallclock_seconds': 60 * 60
-    }
-)
+    })
 
 ####
 

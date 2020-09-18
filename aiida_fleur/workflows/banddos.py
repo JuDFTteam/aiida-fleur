@@ -89,16 +89,13 @@ class FleurBandDosWorkChain(WorkChain):
             ).else_(
                 cls.create_new_fleurinp,
                 cls.run_fleur,
-            ), cls.return_results
-        )
+            ), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
 
-        spec.exit_code(
-            233,
-            'ERROR_INVALID_CODE_PROVIDED',
-            message='Invalid code node specified, check inpgen and fleur code nodes.'
-        )
+        spec.exit_code(233,
+                       'ERROR_INVALID_CODE_PROVIDED',
+                       message='Invalid code node specified, check inpgen and fleur code nodes.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
 
     def start(self):
@@ -182,9 +179,7 @@ class FleurBandDosWorkChain(WorkChain):
         if 'fleurinp' not in self.inputs:
             for i in self.inputs.remote.get_incoming():
                 if isinstance(i.node, CalcJobNode):
-                    self.ctx.fleurinp_scf = load_node(
-                        i.node.pk
-                    ).get_incoming().get_node_by_label('fleurinpdata')
+                    self.ctx.fleurinp_scf = load_node(i.node.pk).get_incoming().get_node_by_label('fleurinpdata')
         else:
             self.ctx.fleurinp_scf = self.inputs.fleurinp
 
@@ -197,21 +192,9 @@ class FleurBandDosWorkChain(WorkChain):
         emax = wf_dict.get('emax', 0.80)
 
         if wf_dict.get('mode') == 'dos':
-            change_dict = {
-                'dos': True,
-                'ndir': -1,
-                'minEnergy': emin,
-                'maxEnergy': emax,
-                'sigma': sigma
-            }
+            change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         else:
-            change_dict = {
-                'band': True,
-                'ndir': 0,
-                'minEnergy': emin,
-                'maxEnergy': emax,
-                'sigma': sigma
-            }
+            change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
 
         fleurmode.set_inpchanges(change_dict)
 
@@ -252,9 +235,7 @@ class FleurBandDosWorkChain(WorkChain):
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
 
-        inputs = get_inputs_fleur(
-            code, remote, fleurin, options, label, description, serial=self.ctx.serial
-        )
+        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         future = self.submit(FleurBaseWorkChain, **inputs)
         self.ctx.calcs.append(future)
 
@@ -276,12 +257,8 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         # TODO more here
         self.report('Band workflow Done')
-        self.report(
-            'A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-            'calculation {}'.format(
-                self.ctx.fleurinp_scf, self.ctx.last_calc.pk, self.ctx.last_calc
-            )
-        )
+        self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+                    'calculation {}'.format(self.ctx.fleurinp_scf, self.ctx.last_calc.pk, self.ctx.last_calc))
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.last_calc:
@@ -349,9 +326,9 @@ class FleurBandDosWorkChain(WorkChain):
 
         outputnode_t = Dict(dict=outputnode_dict)
         if last_calc_out:
-            outdict = create_band_result_node(
-                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved
-            )
+            outdict = create_band_result_node(outpara=outputnode_t,
+                                              last_calc_out=last_calc_out,
+                                              last_calc_retrieved=retrieved)
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 

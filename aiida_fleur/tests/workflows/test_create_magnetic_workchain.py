@@ -34,10 +34,9 @@ class Test_FleurCreateMagneticWorkChain:
     """
     Regression tests for the FleurCreateMagneticWorkChain
     """
+
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_FePt(
-        self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec
-    ):
+    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence
@@ -108,10 +107,7 @@ class Test_FleurCreateMagneticWorkChain:
 
         options_eos = Dict(dict=options_eos)
 
-        wf_relax = {
-            'film_distance_relaxation': False,
-            'force_criterion': 0.049
-        }  #, 'use_relax_xml': True}
+        wf_relax = {'film_distance_relaxation': False, 'force_criterion': 0.049}  #, 'use_relax_xml': True}
 
         wf_relax_scf = {
             'fleur_runmax': 5,
@@ -224,9 +220,7 @@ class Test_FleurCreateMagneticWorkChain:
 
     @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_eos_validation_wrong_inputs(
-        self, run_with_cache, mock_code_factory, generate_structure2
-    ):
+    def test_fleur_eos_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """
         Test the validation behavior of FleurEosWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
@@ -247,20 +241,14 @@ class Test_FleurCreateMagneticWorkChain:
 
         FleurCode = mock_code_factory(
             label='fleur',
-            data_dir_abspath=os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-            ),
+            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
-        )
-        InpgenCode = mock_code_factory(
-            label='inpgen',
-            data_dir_abspath=os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-            ),
-            entry_point=CALC2_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd']
-        )
+            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+        InpgenCode = mock_code_factory(label='inpgen',
+                                       data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                     'calc_data_dir/'),
+                                       entry_point=CALC2_ENTRY_POINT,
+                                       ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
         wf_parameters = Dict(dict={'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
         wf_parameters.store()

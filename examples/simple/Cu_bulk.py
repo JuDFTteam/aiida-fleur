@@ -55,8 +55,7 @@ parameters = Dict(
             'div3': 25,
             'tkb': 0.0005
         }
-    }
-)
+    })
 
 # now run the inputgenerator:
 code = Code.get_from_string(codename)

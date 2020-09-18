@@ -80,8 +80,7 @@ parameters = Dict(
             'div3': 17,
             'tkb': 0.0005
         }
-    }
-)
+    })
 
 # now run an inputgen calculation:
 
@@ -107,14 +106,7 @@ fleurinpd = load_node(fleurinp.pk)
 code = Code.get_from_string(codename2)
 JobCalc = FleurCalculation.process()
 
-attrs = {
-    'max_wallclock_seconds': 180,
-    'resources': {
-        'num_machines': 1
-    },
-    'queue_name': 'th123_node',
-    'withmpi': False
-}
+attrs = {'max_wallclock_seconds': 180, 'resources': {'num_machines': 1}, 'queue_name': 'th123_node', 'withmpi': False}
 inp1 = {'_options': attrs, 'code': code, 'fleurinpdata': fleurinpd}  #'parent' : parent_calc,
 #f1 = run(JobCalc, _options=attrs, **inp1)
 f1 = run(JobCalc, **inp1)

@@ -73,37 +73,22 @@ class FleurRelaxWorkChain(WorkChain):
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(
-            350,
-            'ERROR_DID_NOT_RELAX',
-            message='Optimization cycle did not lead to convergence of forces.'
-        )
+        spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence of forces.')
         spec.exit_code(351, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
-        spec.exit_code(
-            352,
-            'ERROR_NO_RELAX_OUTPUT',
-            message='Found no relaxed structure info in the output of SCF'
-        )
+        spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT', message='Found no relaxed structure info in the output of SCF')
         spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message='Found no SCF output')
         spec.exit_code(354, 'ERROR_SWITCH_BFGS', message='Force is small, switch to BFGS')
-        spec.exit_code(
-            311,
-            'ERROR_VACUUM_SPILL_RELAX',
-            message='FLEUR calculation failed because an atom spilled to the'
-            'vacuum during relaxation'
-        )
-        spec.exit_code(
-            313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.'
-        )
+        spec.exit_code(311,
+                       'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                       'vacuum during relaxation')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
 
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report(
-            'INFO: started structure relaxation workflow version {}\n'
-            ''.format(self._workflowversion)
-        )
+        self.report('INFO: started structure relaxation workflow version {}\n' ''.format(self._workflowversion))
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -132,9 +117,7 @@ class FleurRelaxWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(
-                extra_keys
-            )
+            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -188,33 +171,27 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wf_dict['mode'] = 'force'
 
         if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append((
-                'set_atomgr_att', {
-                    'attributedict': {
-                        'force': [('relaxXYZ', 'FFT')]
-                    },
-                    'species': 'all'
-                }
-            ))
+            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att', {
+                'attributedict': {
+                    'force': [('relaxXYZ', 'FFT')]
+                },
+                'species': 'all'
+            }))
 
         for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append((
-                'set_atomgr_att_label', {
-                    'attributedict': {
-                        'force': [('relaxXYZ', 'FFF')]
-                    },
-                    'atom_label': specie_off
-                }
-            ))
-
-        scf_wf_dict['inpxml_changes'].append((
-            'set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
                     'force': [('relaxXYZ', 'FFF')]
                 },
-                'atom_label': '49'
-            }
-        ))
+                'atom_label': specie_off
+            }))
+
+        scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            'attributedict': {
+                'force': [('relaxXYZ', 'FFF')]
+            },
+            'atom_label': '49'
+        }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -268,16 +245,11 @@ class FleurRelaxWorkChain(WorkChain):
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
-                fleur_calc = load_node(
-                    scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
-                )
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses([
-                    'ERROR_VACUUM_SPILL_RELAX'
-                ])[0]:
+                fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX']
-                                                                           )[0]:
+                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -309,38 +281,25 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report(
-                'Structure is converged to the largest force '
-                '{}'.format(self.ctx.forces[-1])
-            )
+            self.report('Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
             return False
-        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'
-                                            ] and self.inputs.scf.wf_parameters['force_dict'][
-                                                'forcemix'] == 'straight':
-            self.report(
-                'Seems it is safe to switch to BFGS. Current largest force: '
-                '{}'.format(self.ctx.forces[-1])
-            )
+        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
+                'forcemix'] == 'straight':
+            self.report('Seems it is safe to switch to BFGS. Current largest force: ' '{}'.format(self.ctx.forces[-1]))
             self.ctx.switch_bfgs = True
             return False
 
         self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
             self.ctx.reached_relax = False
-            self.report(
-                'INFO: Reached optimization iteration number {}. Largest force is {}, '
-                'force criterion is {}'.format(
-                    self.ctx.loop_count + 1, largest_now, self.ctx.wf_dict['force_criterion']
-                )
-            )
+            self.report('INFO: Reached optimization iteration number {}. Largest force is {}, '
+                        'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
+                                                       self.ctx.wf_dict['force_criterion']))
             return False
 
-        self.report(
-            'INFO: submit optimization iteration number {}. Largest force is {}, '
-            'force criterion is {}'.format(
-                self.ctx.loop_count + 1, largest_now, self.ctx.wf_dict['force_criterion']
-            )
-        )
+        self.report('INFO: submit optimization iteration number {}. Largest force is {}, '
+                    'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
+                                                   self.ctx.wf_dict['force_criterion']))
 
         return True
 
@@ -464,13 +423,9 @@ class FleurRelaxWorkChain(WorkChain):
                 np_pos = np.array(atom[1:])
                 pos_abs = np_pos @ np_cell
                 if self.ctx.pbc == (True, True, True):
-                    structure.append_atom(
-                        position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=atom[0]
-                    )
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=atom[0])
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(
-                        position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a), symbols=atom[0]
-                    )
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a), symbols=atom[0])
 
             structure.pbc = self.ctx.pbc
             self.ctx.final_structure = structure
@@ -538,9 +493,7 @@ class FleurRelaxWorkChain(WorkChain):
         # con_nodes
 
         if self.ctx.final_structure is not None:
-            outdict = create_relax_result_node(
-                out=outnode, optimized_structure=self.ctx.final_structure, **con_nodes
-            )
+            outdict = create_relax_result_node(out=outnode, optimized_structure=self.ctx.final_structure, **con_nodes)
         else:
             outdict = create_relax_result_node(out=outnode, **con_nodes)
 
@@ -576,10 +529,7 @@ def create_relax_result_node(**kwargs):
         if key == 'out':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'out_relax_wc_para'
-            outnode.description = (
-                'Contains results and '
-                'information of an FleurRelaxWorkChain run.'
-            )
+            outnode.description = ('Contains results and ' 'information of an FleurRelaxWorkChain run.')
             outdict['out'] = outnode
 
         if key == 'optimized_structure':

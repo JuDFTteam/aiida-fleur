@@ -26,10 +26,10 @@ repos:
 - repo: local
   hooks:
 
-  - id: prospector
-    name: prospector
-    entry: prospector
-    types: [file, python]
+  - id: pylint
+    name: pylint
+    entry: pylint
+    types: [python]
     language: system
     exclude: '^(docs/)|(examples/)'
 

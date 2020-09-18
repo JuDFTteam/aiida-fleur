@@ -56,8 +56,8 @@ parser_info = {'parser_warnings': [], 'unparsed': []}
 
 # call
 test_outxmlfiles = [
-    './test_outxml/outBeCr.xml', './test_outxml/out.xml', './test_outxml/outCuF.xml',
-    './test_outxml/outFe.xml', './test_outxml/outHg.xml', './test_outxml/outO.xml'
+    './test_outxml/outBeCr.xml', './test_outxml/out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml',
+    './test_outxml/outHg.xml', './test_outxml/outO.xml'
 ]
 outxmlfile = test_outxmlfiles[0]
 

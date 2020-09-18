@@ -12,9 +12,8 @@ from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 
 
-def test_fleurinpgen_default_calcinfo(
-    aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, generate_structure
-):  # file_regression
+def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+                                      generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
 
@@ -68,9 +67,8 @@ def test_fleurinpgen_default_calcinfo(
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_fleurinpgen_with_parameters(
-    aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, generate_structure
-):  # file_regression
+def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+                                     generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
 
     # Todo add (more) tests with full parameter possibilities, i.e econfig, los, ....
@@ -171,12 +169,11 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         }
     }
 
-    mock_code = mock_code_factory(
-        label='inpgen',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=['_aiidasubmit.sh']
-    )
+    mock_code = mock_code_factory(label='inpgen',
+                                  data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                'data_dir/'),
+                                  entry_point=CALC_ENTRY_POINT,
+                                  ignore_files=['_aiidasubmit.sh'])
     print(mock_code)
     inputs = {
         'structure': generate_structure_W(),

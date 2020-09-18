@@ -74,9 +74,7 @@ class fleur_optimize_parameters_wc(WorkChain):
                     'walltime_sec': 60 * 60,
                     'queue_name': '',
                     'custom_scheduler_commands': ''
-                }
-            )
-        )
+                }))
         spec.input('structure', valid_type=StructureData, required=True)
         spec.input('inpgen', valid_type=Code, required=True)
         spec.input('fleur', valid_type=Code, required=False)
@@ -88,12 +86,8 @@ class fleur_optimize_parameters_wc(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report(
-            'started fleur_optimize_parameter workflow version {}'.format(self._workflowversion)
-        )
-        self.report(
-            'Workchain node identifiers: '
-        )  #{}".format(ProcessRegistry().current_calc_node))
+        self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
+        self.report('Workchain node identifiers: ')  #{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
 
@@ -111,9 +105,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get(
-            '_description', ''
-        ) + '|fleur_optimize_parameters_wc|'
+        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|'
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60 * 60)
         self.ctx.resources = wf_dict.get('resources', {'num_machines': 1})
         self.ctx.queue = wf_dict.get('queue_name', '')
@@ -123,10 +115,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = (
-                    'The code you provided for inpgen of FLEUR does not '
-                    'use the plugin fleur.inpgen'
-                )
+                error = ('The code you provided for inpgen of FLEUR does not ' 'use the plugin fleur.inpgen')
                 self.control_end_wc(error)
                 self.abort(error)
 
@@ -160,9 +149,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             'queue_name': self.ctx.queue
         }
 
-        inputs = get_inputs_inpgen(
-            structure, inpgencode, options, label, description, params=params
-        )
+        inputs = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
         self.report('INFO: run inpgen')
         future = submit(FleurinputgenCalculation, **inputs)
 

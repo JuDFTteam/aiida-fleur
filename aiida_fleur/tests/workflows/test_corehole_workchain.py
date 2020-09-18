@@ -29,14 +29,14 @@ class Test_fleur_corehole_wc():
     """
     Regression tests for the fleur_corehole_wc
     """
+
     @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
     @pytest.mark.timeout(5000, method='thread')
     def test_fleur_corehole_W(
-        self,  #run_with_cache,
-        inpgen_local_code,
-        fleur_local_code,
-        generate_structure_W
-    ):  #, clear_spec):
+            self,  #run_with_cache,
+            inpgen_local_code,
+            fleur_local_code,
+            generate_structure_W):  #, clear_spec):
         """
         full example using fleur_corehole_wc on W.
         Several fleur runs needed, calculation of all only certain coreholes
@@ -50,8 +50,7 @@ class Test_fleur_corehole_wc():
                 },
                 'max_wallclock_seconds': 60 * 60,
                 'queue_name': ''
-            }
-        )
+            })
         #'withmpi': False, 'custom_scheduler_commands': ''}
         options.store()
 
@@ -72,8 +71,7 @@ class Test_fleur_corehole_wc():
                 'kpt': {
                     'nkpt': 100,
                 }
-            }
-        )
+            })
         parameters.store()
 
         #structure = generate_structure_W()
@@ -93,8 +91,7 @@ class Test_fleur_corehole_wc():
                 'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
                 'supercell_size': [2, 1, 1],
                 'magnetic': True
-            }
-        )
+            })
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -132,9 +129,7 @@ class Test_fleur_corehole_wc():
             470.54883993999, 402.52235778002, 32.112260220107, 29.829247920075
         ]
 
-        assert outd.get('binding_energy') == [
-            235.27441997, 201.26117889001, 16.056130110053, 14.914623960038
-        ]
+        assert outd.get('binding_energy') == [235.27441997, 201.26117889001, 16.056130110053, 14.914623960038]
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')

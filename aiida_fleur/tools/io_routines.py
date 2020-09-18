@@ -19,9 +19,7 @@ from __future__ import print_function
 import six
 
 
-def write_results_to_file(
-    headerstring, data, destination='./outputfile', seperator='  ', transpose=True
-):
+def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
     """
     Writes data to a file
 
@@ -49,21 +47,19 @@ def write_results_to_file(
     thefile.close()
 
 
-def write_xps_spectra_datafile(
-    nodes,
-    factors,
-    natomtypes_dict,
-    bindingenergies,
-    bindingenergies_ref,
-    xdata_spec,
-    ydata_spec,
-    ydata_single_all,
-    xdata_all,
-    ydata_all,
-    compound_info,
-    xdatalabel,
-    destination='./outputfile'
-):
+def write_xps_spectra_datafile(nodes,
+                               factors,
+                               natomtypes_dict,
+                               bindingenergies,
+                               bindingenergies_ref,
+                               xdata_spec,
+                               ydata_spec,
+                               ydata_single_all,
+                               xdata_all,
+                               ydata_all,
+                               compound_info,
+                               xdatalabel,
+                               destination='./outputfile'):
     '''
     special file write routine. Writes theoretical spectra data from plot spectra to file
 
@@ -83,21 +79,15 @@ def write_xps_spectra_datafile(
     headstring = (
         '# Theoretical Data provided as is without warranty. Copyright 2017-2018 Forschungszentrum Juelich GmbH\n'
         '# produced at PGI-1 with the FLEUR code within the AiiDA framework (with aiida-fleur), MIT License, please cite: \n'
-        '################# Data meta information #############\n'
-    )
+        '################# Data meta information #############\n')
     tempst = (
         '# System: {}\n# Nodes: {}\n# Elements and natomtypes: {}\n# Bindingenergies [eV], pos: {}\n# Reference Energies [eV] pos: {}\n'
-        ''.format(
-            formulastring, nodesinvolvedstring, atomtypesstring, be_string, reference_be_string
-        )
-    )
+        ''.format(formulastring, nodesinvolvedstring, atomtypesstring, be_string, reference_be_string))
     tempst1 = ''
     for label in xdatalabel:
         tempst1 = tempst1 + ' | ' + label
     tempst2 = (
-        '#####################  Data  ######################\n# Energy [eV] | Total intensity {}\n'.
-        format(tempst1)
-    )
+        '#####################  Data  ######################\n# Energy [eV] | Total intensity {}\n'.format(tempst1))
 
     headstring = headstring + tempst + tempst2
 
@@ -114,9 +104,7 @@ def write_xps_spectra_datafile(
 #write_xps_spectra_datafile(all_wc_BeTi_uuid, factors, *returnvalues, destination='./out.txt')
 
 
-def compress_fleuroutxml(
-    outxmlfilepath, dest_file_path=None, delete_eig=True, iterations_to_keep=None
-):
+def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, iterations_to_keep=None):
     """
     Compresses a fleur out.xml file by deleting certain things
     like eigenvalues tags and/or iterations from it
@@ -186,10 +174,8 @@ def compress_fleuroutxml(
             delete_xpath = xpath_iter + '[position()>{}]'.format(int(iterations_to_keep))
 
         if abs(iterations_to_keep) > n_iters:
-            print(
-                'Warning: iterations_to_keep is larger then the number of iterations'
-                ' in the given out.xml file, I keep all.'
-            )
+            print('Warning: iterations_to_keep is larger then the number of iterations'
+                  ' in the given out.xml file, I keep all.')
         else:
             print(delete_xpath)
             new_etree = delete_tag(new_etree, delete_xpath)

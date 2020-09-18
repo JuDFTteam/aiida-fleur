@@ -22,10 +22,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.tools.common_fleur_wf import is_code, get_inputs_fleur, get_inputs_inpgen
 
-__copyright__ = (
-    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
-    'IAS-1/PGI-1, Germany. All rights reserved.'
-)
+__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, ' 'IAS-1/PGI-1, Germany. All rights reserved.')
 __license__ = 'MIT license, see LICENSE.txt file'
 __version__ = '0.27'
 __contributors__ = 'Jens Broeder'

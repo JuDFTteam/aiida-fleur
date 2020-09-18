@@ -52,13 +52,7 @@ codename2 = 'fleur_mac_v0_27'
 points = 3  #9
 step = 0.002
 guess = 1.01
-wf_dict = {
-    'fleur_runmax': 2,
-    'density_criterion': 0.0000001,
-    'points': points,
-    'step': step,
-    'guess': guess
-}
+wf_dict = {'fleur_runmax': 2, 'density_criterion': 0.0000001, 'points': points, 'step': step, 'guess': guess}
 ###############################
 
 code = Code.get_from_string(codename)

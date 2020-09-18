@@ -36,12 +36,9 @@ wf_para = Dict(
         'energy_criterion': 0.0005,
         'converge_energy': True,
         'converge_density': True
-    }
-)
+    })
 fleurinp = load_node(1339)
 remote = load_node(1353)
 wf_para = load_node(1333)
 
-res = FleurScfWorkChain.run(
-    wf_parameters=wf_para, fleurinp=fleurinp, remote_data=remote, fleur=code2
-)
+res = FleurScfWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp, remote_data=remote, fleur=code2)

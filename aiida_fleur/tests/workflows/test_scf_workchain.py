@@ -33,13 +33,12 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si(
-    #run_with_cache,
-    with_export_cache,
-    fleur_local_code,
-    create_fleurinp,
-    clear_database,
-    clear_spec
-):
+        #run_with_cache,
+        with_export_cache,
+        fleur_local_code,
+        create_fleurinp,
+        clear_database,
+        clear_spec):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -85,10 +84,8 @@ def test_fleur_scf_fleurinp_Si(
 
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_Si(
-    run_with_cache, clear_database, fleur_local_code, inpgen_local_code, generate_structure2,
-    clear_spec
-):
+def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
+                                generate_structure2, clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
@@ -161,10 +158,8 @@ def test_fleur_scf_structure_Si(
 
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_non_convergence(
-    run_with_cache, clear_database, fleur_local_code, inpgen_local_code, generate_structure2,
-    clear_spec
-):
+def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
+                                   generate_structure2, clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
@@ -226,15 +221,14 @@ def test_fleur_scf_non_convergence(
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si_modifications(
-    #run_with_cache,
-    with_export_cache,
-    #mock_code_factory,
-    #aiida_local_code_factory,
-    fleur_local_code,
-    create_fleurinp,
-    clear_database,
-    clear_spec
-):
+        #run_with_cache,
+        with_export_cache,
+        #mock_code_factory,
+        #aiida_local_code_factory,
+        fleur_local_code,
+        create_fleurinp,
+        clear_database,
+        clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
     but adjusting the Fleur input file before the fleur run.
@@ -284,9 +278,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
 
     # now run calculation
     #run_with_cache(builder)
-    data_dir_path = os.path.join(
-        aiida_path, 'tests/workflows/caches/fleur_scf_fleurinp_Si_mod.tar.gz'
-    )
+    data_dir_path = os.path.join(aiida_path, 'tests/workflows/caches/fleur_scf_fleurinp_Si_mod.tar.gz')
 
     with with_export_cache(data_dir_abspath=data_dir_path):
         out, node = run_get_node(builder)
@@ -320,10 +312,8 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
 
 
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_validation_wrong_inputs(
-    run_with_cache, mock_code_factory, create_fleurinp, generate_structure2, clear_spec,
-    clear_database
-):
+def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
+                                           clear_spec, clear_database):
     """
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
@@ -348,14 +338,12 @@ def test_fleur_scf_validation_wrong_inputs(
         label='fleur',
         data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
         entry_point=CALC_ENTRY_POINT,
-        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
-    )
-    InpgenCode = mock_code_factory(
-        label='inpgen',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-        entry_point=CALC2_ENTRY_POINT,
-        ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd']
-    )
+        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+    InpgenCode = mock_code_factory(label='inpgen',
+                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                 'calc_data_dir/'),
+                                   entry_point=CALC2_ENTRY_POINT,
+                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
     calc_parameters = Dict(dict={})
     calc_parameters.store()

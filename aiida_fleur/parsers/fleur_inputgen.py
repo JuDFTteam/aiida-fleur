@@ -41,9 +41,7 @@ class Fleur_inputgenParser(Parser):
         super(Fleur_inputgenParser, self).__init__(node)
 
         # these files should be at least present after success of inpgen
-        self._default_files = {
-            FleurinputgenCalculation._OUTPUT_FILE_NAME, FleurinputgenCalculation._INPXML_FILE_NAME
-        }
+        self._default_files = {FleurinputgenCalculation._OUTPUT_FILE_NAME, FleurinputgenCalculation._INPXML_FILE_NAME}
         self._other_files = {FleurinputgenCalculation._SHELLOUT_FILE_NAME}
 
     def parse(self, **kwargs):
@@ -73,10 +71,8 @@ class Fleur_inputgenParser(Parser):
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
-                self.logger.error(
-                    "The following was written to the error file {} : \n '{}'"
-                    ''.format(errorfile, error_file_lines)
-                )
+                self.logger.error("The following was written to the error file {} : \n '{}'"
+                                  ''.format(errorfile, error_file_lines))
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
@@ -85,10 +81,8 @@ class Fleur_inputgenParser(Parser):
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                self.logger.error(
-                    "'{}' file not found in retrived folder, it was probably "
-                    'not created by inpgen'.format(file1)
-                )
+                self.logger.error("'{}' file not found in retrived folder, it was probably "
+                                  'not created by inpgen'.format(file1))
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:

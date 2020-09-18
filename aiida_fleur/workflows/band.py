@@ -88,16 +88,13 @@ class FleurBandWorkChain(WorkChain):
             ).else_(
                 cls.create_new_fleurinp,
                 cls.run_fleur,
-            ), cls.return_results
-        )
+            ), cls.return_results)
 
         spec.output('output_band_wc_para', valid_type=Dict)
 
-        spec.exit_code(
-            233,
-            'ERROR_INVALID_CODE_PROVIDED',
-            message='Invalid code node specified, check inpgen and fleur code nodes.'
-        )
+        spec.exit_code(233,
+                       'ERROR_INVALID_CODE_PROVIDED',
+                       message='Invalid code node specified, check inpgen and fleur code nodes.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
 
     def start(self):
@@ -183,13 +180,7 @@ class FleurBandWorkChain(WorkChain):
 
         fleurmode = FleurinpModifier(self.inputs.fleurinp)
 
-        change_dict = {
-            'band': True,
-            'ndir': 0,
-            'minEnergy': emin,
-            'maxEnergy': emax,
-            'sigma': sigma
-        }  #'ndir' : 1,
+        change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}  #'ndir' : 1,
 
         fleurmode.set_inpchanges(change_dict)
 
@@ -226,9 +217,7 @@ class FleurBandWorkChain(WorkChain):
         label = 'bansdtructure_calculation'
         description = 'Bandstructure is calculated for the given structure'
 
-        inputs = get_inputs_fleur(
-            code, remote, fleurin, options, label, description, serial=self.ctx.serial
-        )
+        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
         future = self.submit(FleurBaseWorkChain, **inputs)
         self.ctx.calcs.append(future)
 
@@ -250,12 +239,8 @@ class FleurBandWorkChain(WorkChain):
         '''
         # TODO more here
         self.report('Band workflow Done')
-        self.report(
-            'A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-            'calculation {}'.format(
-                self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc
-            )
-        )
+        self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
+                    'calculation {}'.format(self.inputs.fleurinp, self.ctx.last_calc.pk, self.ctx.last_calc))
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.last_calc:
@@ -320,9 +305,9 @@ class FleurBandWorkChain(WorkChain):
 
         outputnode_t = Dict(dict=outputnode_dict)
         if last_calc_out:
-            outdict = create_band_result_node(
-                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved
-            )
+            outdict = create_band_result_node(outpara=outputnode_t,
+                                              last_calc_out=last_calc_out,
+                                              last_calc_retrieved=retrieved)
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 

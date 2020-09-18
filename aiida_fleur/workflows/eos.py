@@ -60,13 +60,11 @@ class FleurEosWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurEosWorkChain, cls).define(spec)
-        spec.expose_inputs(
-            FleurScfWorkChain, namespace='scf', exclude=(
-                'structure',
-                'remote_data',
-                'fleurinp',
-            )
-        )
+        spec.expose_inputs(FleurScfWorkChain, namespace='scf', exclude=(
+            'structure',
+            'remote_data',
+            'fleurinp',
+        ))
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=True)
 
@@ -208,10 +206,7 @@ class FleurEosWorkChain(WorkChain):
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = (
-                    'One SCF workflow failed, no scf output node: {}.'
-                    ' I skip this one.'.format(label)
-                )
+                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
@@ -237,10 +232,7 @@ class FleurEosWorkChain(WorkChain):
         not_ok, an_index = check_eos_energies(t_energylist_peratom)
 
         if not_ok:
-            message = (
-                'Abnormality in Total energy list detected. Check '
-                'entr(ies) {}.'.format(an_index)
-            )
+            message = ('Abnormality in Total energy list detected. Check ' 'entr(ies) {}.'.format(an_index))
             hint = ('Consider refining your basis set.')
             self.ctx.info.append(hint)
             self.ctx.warnings.append(message)
@@ -316,10 +308,8 @@ class FleurEosWorkChain(WorkChain):
         if self.ctx.successful:
             self.report('Done, Equation of states calculation complete')
         else:
-            self.report(
-                'Done, but something went wrong.... Probably some individual calculation failed or'
-                ' a scf-cycle did not reach the desired distance.'
-            )
+            self.report('Done, but something went wrong.... Probably some individual calculation failed or'
+                        ' a scf-cycle did not reach the desired distance.')
 
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -328,10 +318,7 @@ class FleurEosWorkChain(WorkChain):
         outputnode_dict = create_eos_result_node(**outnodedict)
         outputnode = outputnode_dict.get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
-        outputnode.description = (
-            'Contains equation of states results and information of an '
-            'FleurEosWorkChain run.'
-        )
+        outputnode.description = ('Contains equation of states results and information of an ' 'FleurEosWorkChain run.')
 
         returndict = {}
         returndict['output_eos_wc_para'] = outputnode
@@ -339,10 +326,8 @@ class FleurEosWorkChain(WorkChain):
         outputstructure = outputnode_dict.get('gs_structure', None)
         if outputstructure:
             outputstructure.label = 'output_eos_wc_structure'
-            outputstructure.description = (
-                'Structure with the scaling/volume of the lowest total '
-                'energy extracted from FleurEosWorkChain'
-            )
+            outputstructure.description = ('Structure with the scaling/volume of the lowest total '
+                                           'energy extracted from FleurEosWorkChain')
 
             returndict['output_eos_wc_structure'] = outputstructure
 
@@ -499,8 +484,7 @@ def birch_murnaghan(volumes, volume0, bulk_modulus0, bulk_deriv0):
         pv_val = 3 * bm / 2. * ((v0 / vol)**(7 / 3.) - (v0 / vol)**(5 / 3.)) * \
             (1 + 3 / 4. * (dbm - 4) * ((v0 / vol)**(2 / 3.) - 1))
         PV.append(pv_val)
-        ev_val = 9 * bm * v0 / 16. * ((dbm * (v0 / vol)**(2 / 3.) - 1)**(3) *
-                                      ((v0 / vol)**(2 / 3.) - 1)**2 *
+        ev_val = 9 * bm * v0 / 16. * ((dbm * (v0 / vol)**(2 / 3.) - 1)**(3) * ((v0 / vol)**(2 / 3.) - 1)**2 *
                                       (6 - 4 * (v0 / vol)**(2 / 3.)))
         EV.append(ev_val)
     return EV, PV

@@ -7,14 +7,12 @@ if not is_dbenv_loaded():
     load_dbenv()
 from aiida_fleur.tools.read_cif_folder import read_cif_folder
 
-read_cif_folder(
-    log=True,
-    store=True,
-    recursive=True,
-    extras={
-        'type': 'bulk',
-        'project': 'Fusion',
-        'specification': 'aiida_work',
-        'comment': 'Materials for Fusion'
-    }
-)
+read_cif_folder(log=True,
+                store=True,
+                recursive=True,
+                extras={
+                    'type': 'bulk',
+                    'project': 'Fusion',
+                    'specification': 'aiida_work',
+                    'comment': 'Materials for Fusion'
+                })

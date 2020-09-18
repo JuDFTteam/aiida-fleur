@@ -18,9 +18,7 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')  #
 CALC_ENTRY_POINT = 'fleur.fleur'
 
 
-def test_fleur_default_calcinfo(
-    aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, create_fleurinp
-):
+def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code, create_fleurinp):
     """Test a default `FleurCalculation`."""
 
     parameters = {}
@@ -62,9 +60,8 @@ def test_fleur_default_calcinfo(
 
 
 @pytest.mark.skip(reason='mock code buggy, todo: check, ggf own fixture')
-def test_FleurJobCalc_full_mock(
-    aiida_profile, mock_code_factory, create_fleurinp, clear_database, hash_code_by_entrypoint
-):  # pylint: disable=redefined-outer-name
+def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurinp, clear_database,
+                                hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
@@ -94,8 +91,7 @@ def test_FleurJobCalc_full_mock(
             'cdn09',
             'cdn10',
             'cdn11'
-        ]
-    )
+        ])
     #mock_code.append_text = 'rm cdn?? broyd* wkf2 inf cdnc stars pot* FleurInputSchema* cdn.hdf'
 
     inputs = {

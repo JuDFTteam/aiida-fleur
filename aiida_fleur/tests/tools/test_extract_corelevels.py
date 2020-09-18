@@ -54,27 +54,8 @@ def test_clsshifts_to_be_interface():
     """
     from aiida_fleur.tools.extract_corelevels import clshifts_to_be
 
-    reference = {
-        'W': {
-            '4f7/2': [124],
-            '4f5/2': [],
-            '3p3/2': [],
-            '3p5/2': [10]
-        },
-        'Be': {
-            '1s': [117]
-        }
-    }
-    corelevels = {
-        'W': {
-            '4f7/2': [-0.4, 0.3],
-            '4f5/2': [0, 0.1]
-        },
-        'Be': {
-            '1s': [0, 0.3]
-        },
-        'C': [0.0]
-    }
+    reference = {'W': {'4f7/2': [124], '4f5/2': [], '3p3/2': [], '3p5/2': [10]}, 'Be': {'1s': [117]}}
+    corelevels = {'W': {'4f7/2': [-0.4, 0.3], '4f5/2': [0, 0.1]}, 'Be': {'1s': [0, 0.3]}, 'C': [0.0]}
 
     res = clshifts_to_be(corelevels, reference)
 
@@ -94,6 +75,4 @@ def get_example_outxml_files():
     from os.path import join
     # from top test folder
     folder_path = './files/outxml/'
-    return [
-        join(folder_path, outfile) for outfile in listdir(folder_path) if outfile.endswith('.xml')
-    ]
+    return [join(folder_path, outfile) for outfile in listdir(folder_path) if outfile.endswith('.xml')]

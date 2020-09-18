@@ -65,14 +65,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     else:
         if id:
             if species_name:
-                new_parameterd = {
-                    'atom': {
-                        'element': symbol,
-                        'econfig': econfig,
-                        'id': id,
-                        'name': species_name
-                    }
-                }
+                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': id, 'name': species_name}}
             else:
                 new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': id}}
         else:
@@ -87,9 +80,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
 
 # Move to fleurinpmod? fleurinp->self
 # This method is fully implemented yet since it turned out to better go over inpgen
-def create_corehole_fleurinp(
-    fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'
-):
+def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
     given econfig as in inp.xml::

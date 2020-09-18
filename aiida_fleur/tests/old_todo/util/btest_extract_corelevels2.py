@@ -93,9 +93,7 @@ def extrac_corelevels(outxml):
             tree = etree.parse(outxmlfile, parser)
         except etree.XMLSyntaxError:
             print('here')
-            parser_info['parser_warnings'].append(
-                'Skipping the parsing of the xml file. Repairing was not possible.'
-            )
+            parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False
 
     #if parse_xml:
@@ -257,8 +255,7 @@ def eval_xpath(node, xpath):
     except XPathEvalError:
         parser_info['parser_warnings'].append(
             'There was a XpathEvalError on the xpath: {} \n'
-            'Either it does not exist, or something is wrong with the expression.'.format(xpath)
-        )
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
         # TODO maybe raise an error again to catch in upper routine, to know where exactly
         return []
     if len(return_value) == 1:
@@ -279,14 +276,10 @@ def convert_to_float(value_string):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info['parser_warnings'].append(
-            'Could not convert: "{}" to float, TypeError'.format(value_string)
-        )
+        parser_info['parser_warnings'].append('Could not convert: "{}" to float, TypeError'.format(value_string))
         return value_string, False
     except ValueError:
-        parser_info['parser_warnings'].append(
-            'Could not convert: "{}" to float, ValueError'.format(value_string)
-        )
+        parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
         return value_string, False
     return value, True
 
@@ -304,18 +297,14 @@ def get_xml_attribute(node, attributename):
         if attrib_value:
             return attrib_value
         else:
-            parser_info['parser_warnings'].append(
-                'Tried to get attribute: "{}" from element {}.\n '
-                'I recieved "{}", maybe the attribute does not exist'.format(
-                    attributename, node, attrib_value
-                )
-            )
+            parser_info['parser_warnings'].append('Tried to get attribute: "{}" from element {}.\n '
+                                                  'I recieved "{}", maybe the attribute does not exist'.format(
+                                                      attributename, node, attrib_value))
             return None
     else:  # something doesn't work here some nodes get through here
         parser_info['parser_warnings'].append(
-            'Can not get attributename: "{}" from node "{}", because node is not an element of etree.'
-            .format(attributename, node)
-        )
+            'Can not get attributename: "{}" from node "{}", because node is not an element of etree.'.format(
+                attributename, node))
         return None
 
 

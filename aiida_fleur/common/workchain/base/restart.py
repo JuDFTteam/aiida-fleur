@@ -58,12 +58,8 @@ class BaseRestartWorkChain(WorkChain):
     def __init__(self, *args, **kwargs):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
 
-        if self._calculation_class is None or not issubclass(
-            self._calculation_class, (CalcJob, WorkChain)
-        ):
-            raise ValueError(
-                'no valid CalcJob or WorkChain class defined for `_calculation_class` attribute'
-            )
+        if self._calculation_class is None or not issubclass(self._calculation_class, (CalcJob, WorkChain)):
+            raise ValueError('no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
 
         self._load_error_handlers()
 
@@ -78,15 +74,11 @@ class BaseRestartWorkChain(WorkChain):
             for entry_point_name in get_entry_point_names(self._error_handler_entry_point):
                 try:
                     load_entry_point(self._error_handler_entry_point, entry_point_name)
-                    self.logger.info(
-                        "loaded the '%s' entry point for the '%s' error handlers category",
-                        entry_point_name, self._error_handler_entry_point
-                    )
+                    self.logger.info("loaded the '%s' entry point for the '%s' error handlers category",
+                                     entry_point_name, self._error_handler_entry_point)
                 except exceptions.EntryPointError as exception:
-                    self.logger.warning(
-                        "failed to load the '%s' entry point for the '%s' error handlers: %s",
-                        entry_point_name, self._error_handler_entry_point, exception
-                    )
+                    self.logger.warning("failed to load the '%s' entry point for the '%s' error handlers: %s",
+                                        entry_point_name, self._error_handler_entry_point, exception)
 
     @classmethod
     def define(cls, spec):

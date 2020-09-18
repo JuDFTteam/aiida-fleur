@@ -68,26 +68,21 @@ class fleur_delta_wc(WorkChain):
                     'part': [1, 2, 3, 4],
                     'points': 7,
                     'step': 0.02
-                }
-            )
-        )
-        spec.input(
-            'options',
-            valid_type=Dict,
-            required=False,
-            default=Dict(
-                dict={
-                    'resources': {
-                        'num_machines': 1
-                    },
-                    'walltime_sec': 60 * 60,
-                    'queue_name': '',
-                    'custom_scheduler_commands': '',
-                    'import_sys_environment': False,
-                    'environment_variables': {}
-                }
-            )
-        )
+                }))
+        spec.input('options',
+                   valid_type=Dict,
+                   required=False,
+                   default=Dict(
+                       dict={
+                           'resources': {
+                               'num_machines': 1
+                           },
+                           'walltime_sec': 60 * 60,
+                           'queue_name': '',
+                           'custom_scheduler_commands': '',
+                           'import_sys_environment': False,
+                           'environment_variables': {}
+                       }))
         spec.input('inpgen', valid_type=Code, required=True)
         spec.input('fleur', valid_type=Code, required=True)
         spec.outline(
@@ -111,10 +106,8 @@ class fleur_delta_wc(WorkChain):
         #self.ctx.own_uuid = identifier.uuid
         #self.ctx.own_pk = identifier.pk
 
-        self.report(
-            'started delta workflow version {} with identifier: '  #{}'
-            ''.format(self._workflowversion)
-        )  #, identifier))
+        self.report('started delta workflow version {} with identifier: '  #{}'
+                    ''.format(self._workflowversion))  #, identifier))
 
         # init
         self.ctx.calcs_to_run = []
@@ -122,15 +115,13 @@ class fleur_delta_wc(WorkChain):
 
         # check if right codes
         wf_dict = self.inputs.wf_parameters.get_dict()
-        options_dict = self.inputs.get(
-            'options',
-            Dict(dict={
-                'resources': {
-                    'num_machines': 1
-                },
-                'walltime_sec': int(5.5 * 3600)
-            })
-        )
+        options_dict = self.inputs.get('options',
+                                       Dict(dict={
+                                           'resources': {
+                                               'num_machines': 1
+                                           },
+                                           'walltime_sec': int(5.5 * 3600)
+                                       }))
         self.ctx.inputs_eos = {
             'fleur': self.inputs.fleur,
             'inpgen': self.inputs.inpgen,
@@ -166,10 +157,8 @@ class fleur_delta_wc(WorkChain):
             self.ctx.maxindex = 0  # will be set later self.ctx.eos_max_perstep
 
         self.report('{} {}'.format(self.ctx.ncalc, self.ctx.eos_max_perstep))
-        self.report(
-            'Estimated fleur scfs to run {}, running in {} steps.'
-            ''.format(estimated_jobs, self.ctx.eos_run_steps)
-        )
+        self.report('Estimated fleur scfs to run {}, running in {} steps.'
+                    ''.format(estimated_jobs, self.ctx.eos_run_steps))
 
     def get_calcs_from_groups(self):
         """
@@ -191,12 +180,10 @@ class fleur_delta_wc(WorkChain):
                 str_group = Group(label=group_pk)
             except NotExistent:
                 str_group = None
-                message = (
-                    'You have to provide a valid pk for a Group of'
-                    'structures or a Group name. Wf_para key: "struc_group".'
-                    'given pk= {} is not a valid group'
-                    '(or is your group name integer?)'.format(group_pk)
-                )
+                message = ('You have to provide a valid pk for a Group of'
+                           'structures or a Group name. Wf_para key: "struc_group".'
+                           'given pk= {} is not a valid group'
+                           '(or is your group name integer?)'.format(group_pk))
                 #print(message)
                 self.report(message)
                 self.abort_nowait('I abort, because I have no structures to calculate ...')
@@ -205,12 +192,10 @@ class fleur_delta_wc(WorkChain):
                 str_group = Group.get_from_string(group_name)
             except NotExistent:
                 str_group = None
-                message = (
-                    'You have to provide a valid pk for a Group of'
-                    'structures or a Group name. Wf_para key: "struc_group".'
-                    'given group name= {} is not a valid group'
-                    '(or is your group name integer?)'.format(group_name)
-                )
+                message = ('You have to provide a valid pk for a Group of'
+                           'structures or a Group name. Wf_para key: "struc_group".'
+                           'given group name= {} is not a valid group'
+                           '(or is your group name integer?)'.format(group_name))
                 #print(message)
                 self.report(message)
                 self.abort_nowait('I abort, because I have no structures to calculate ...')
@@ -234,35 +219,27 @@ class fleur_delta_wc(WorkChain):
                 para_group = Group(label=group_pk)
             except NotExistent:
                 para_group = None
-                message = (
-                    'ERROR: You have to provide a valid pk for a Group of'
-                    'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "para_group".'
-                    'given pk= {} is not a valid group'
-                    '(or is your group name integer?)'.format(group_pk)
-                )
+                message = ('ERROR: You have to provide a valid pk for a Group of'
+                           'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "para_group".'
+                           'given pk= {} is not a valid group'
+                           '(or is your group name integer?)'.format(group_pk))
                 #print(message)
                 self.report(message)
-                self.abort_nowait(
-                    'ERROR: I abort, because I have no paremeters to calculate and '
-                    'I guess you did not want to use the inpgen default...'
-                )
+                self.abort_nowait('ERROR: I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')
         else:
             try:
                 para_group = Group.get_from_string(group_name)
             except NotExistent:
                 para_group = None
-                message = (
-                    'ERROR: You have to provide a valid pk for a Group of'
-                    'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "struc_group".'
-                    'given group name= {} is not a valid group'
-                    '(or is your group name integer?)'.format(group_name)
-                )
+                message = ('ERROR: You have to provide a valid pk for a Group of'
+                           'parameters or a Group name (or use None for inpgen defaults). Wf_para key: "struc_group".'
+                           'given group name= {} is not a valid group'
+                           '(or is your group name integer?)'.format(group_name))
                 #print(message)
                 self.report(message)
-                self.abort_nowait(
-                    'ERROR: I abort, because I have no paremeters to calculate and '
-                    'I guess you did not want to use the inpgen default...'
-                )
+                self.abort_nowait('ERROR: I abort, because I have no paremeters to calculate and '
+                                  'I guess you did not want to use the inpgen default...')
 
         # creating calculation pairs (structure, parameters)
 
@@ -276,12 +253,8 @@ class fleur_delta_wc(WorkChain):
         stru_nodes = str_group.nodes
         n_stru = len(stru_nodes)
         if n_para != n_stru:
-            message = (
-                'COMMENT: You did not provide the same number of parameter'
-                'nodes as structure nodes. Is this wanted? npara={} nstru={}'.format(
-                    n_para, n_stru
-                )
-            )
+            message = ('COMMENT: You did not provide the same number of parameter'
+                       'nodes as structure nodes. Is this wanted? npara={} nstru={}'.format(n_para, n_stru))
             self.report(message)
         calcs = []
         for struc in stru_nodes:
@@ -334,32 +307,26 @@ class fleur_delta_wc(WorkChain):
             label = '|delta_wc|eos|{}'.format(formula)
             description = '|delta| fleur_eos_wc on {}'.format(formula)
             if para:
-                eos_future = submit(
-                    FleurEosWorkChain,
-                    wf_parameters=inputs['wc_eos_para'],
-                    structure=struc,
-                    options=inputs['options'],
-                    calc_parameters=para,
-                    inpgen=inputs['inpgen'],
-                    fleur=inputs['fleur'],
-                    label=label,
-                    description=description
-                )
+                eos_future = submit(FleurEosWorkChain,
+                                    wf_parameters=inputs['wc_eos_para'],
+                                    structure=struc,
+                                    options=inputs['options'],
+                                    calc_parameters=para,
+                                    inpgen=inputs['inpgen'],
+                                    fleur=inputs['fleur'],
+                                    label=label,
+                                    description=description)
             else:  # TODO: run eos_wc_simple
-                eos_future = submit(
-                    FleurEosWorkChain,
-                    wf_parameters=inputs['wc_eos_para'],
-                    structure=struc,
-                    options=inputs['options'],
-                    inpgen=inputs['inpgen'],
-                    fleur=inputs['fleur'],
-                    label=label,
-                    description=description
-                )
-            self.report(
-                'launching fleur_eos_wc<{}> on structure {} with parameter {}'
-                ''.format(eos_future.pid, struc.pk, para.pk)
-            )
+                eos_future = submit(FleurEosWorkChain,
+                                    wf_parameters=inputs['wc_eos_para'],
+                                    structure=struc,
+                                    options=inputs['options'],
+                                    inpgen=inputs['inpgen'],
+                                    fleur=inputs['fleur'],
+                                    label=label,
+                                    description=description)
+            self.report('launching fleur_eos_wc<{}> on structure {} with parameter {}'
+                        ''.format(eos_future.pid, struc.pk, para.pk))
             label = formula
             self.ctx.labels.append(label)
             eos_results[label] = eos_future
@@ -422,13 +389,11 @@ class fleur_delta_wc(WorkChain):
         self.ctx.all_results = {}
         self.ctx.all_succ = {}
         self.ctx.eos_uuids = {}
-        outstr = (
-            '''\
+        outstr = ('''\
              Delta calculation FLEUR {} (AiiDA wc).
 
              Crystal \t V0 \t \t  B0 \t \t  BP [A^3/at] \t [GPa] \t \t [--] \n
-             '''.format(self.ctx.inputs_eos.get('fleur'))
-        )
+             '''.format(self.ctx.inputs_eos.get('fleur')))
         filename = 'delta_wc_{}.out'.format(self.ctx.own_pk)
         outfile = open(filename, 'w')
         outfile.write(outstr)
@@ -442,10 +407,8 @@ class fleur_delta_wc(WorkChain):
             try:
                 outpara = outpara1['output_eos_wc_para'].get_dict()
             except KeyError:
-                self.report(
-                    'ERROR: Eos wc for element: {} failed. I retrieved {} '
-                    'I skip the results retrieval for that element.'.format(label, eos_res)
-                )
+                self.report('ERROR: Eos wc for element: {} failed. I retrieved {} '
+                            'I skip the results retrieval for that element.'.format(label, eos_res))
                 continue
             eos_succ = outpara.get('successful', False)
             if not eos_succ:
@@ -467,9 +430,7 @@ class fleur_delta_wc(WorkChain):
             self.ctx.all_succ[element] = eos_succ
             self.ctx.eos_uuids[element] = eos_res.get_inputs()[0].uuid
 
-            outstr = outstr + '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(
-                element, gs_vol_pera, bm, dbm
-            )
+            outstr = outstr + '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
             #write inside the loop to have at least partially results...
             #outfile = open('delta_wc.out', 'a')
             #outstr = '{} \t {:.5f} \t {:.5f} \t {:.5f} \n'.format(element, gs_vol_pera, bm, dbm)
@@ -536,10 +497,8 @@ class fleur_delta_wc(WorkChain):
             self.report('INFO: Done, delta worklfow complete')
             #print 'Done, delta worklfow complete'
         else:
-            self.report(
-                'INFO: Done, but something went wrong.... Properly some '
-                'individual eos workchain failed. Check the log.'
-            )
+            self.report('INFO: Done, but something went wrong.... Properly some '
+                        'individual eos workchain failed. Check the log.')
             #print('Done, but something went wrong.... Properly some '
             #            'individual eos workchain failed. Check the log.')
 

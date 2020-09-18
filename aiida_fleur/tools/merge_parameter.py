@@ -146,18 +146,12 @@ if __name__ == '__main__':
     Dict = DataFactory('dict')
 
     parser = argparse.ArgumentParser(description='Merge a Dict node.')
-    parser.add_argument(
-        '--para1', type=Dict, dest='para1', help='The first Dict node', required=True
-    )
-    parser.add_argument(
-        '--para2', type=Dict, dest='para2', help='The second Dict node', required=True
-    )
-    parser.add_argument(
-        '--overwrite',
-        type=bool,
-        dest='overwrite',
-        help='Shall values given in Dict2 overwrite the values from the first Dict?',
-        required=False
-    )
+    parser.add_argument('--para1', type=Dict, dest='para1', help='The first Dict node', required=True)
+    parser.add_argument('--para2', type=Dict, dest='para2', help='The second Dict node', required=True)
+    parser.add_argument('--overwrite',
+                        type=bool,
+                        dest='overwrite',
+                        help='Shall values given in Dict2 overwrite the values from the first Dict?',
+                        required=False)
     args = parser.parse_args()
     merge_parameter(Dict1=args.para1, Dict2=args.para1, overwrite=args.overwrite)

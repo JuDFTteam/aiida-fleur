@@ -95,68 +95,47 @@ def test_create_tag(inpxml_etree):
     create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG', create=False)
     assert eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0][3].tag == 'TEST_TAG'
 
-    create_tag(
-        etree,
-        '/fleurInput/cell/filmLattice/bravaisMatrix',
-        'TEST_TAG2',
-        create=False,
-        place_index=1
-    )
+    create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG2', create=False, place_index=1)
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
     assert tag_names == ['row-1', 'TEST_TAG2', 'row-2', 'row-3', 'TEST_TAG']
 
-    create_tag(
-        etree,
-        '/fleurInput/cell/filmLattice/bravaisMatrix',
-        'TEST_TAG3',
-        create=False,
-        place_index=True,
-        tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'row-3', 'TEST_TAG']
-    )
+    create_tag(etree,
+               '/fleurInput/cell/filmLattice/bravaisMatrix',
+               'TEST_TAG3',
+               create=False,
+               place_index=True,
+               tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'row-3', 'TEST_TAG'])
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
     assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'row-3', 'TEST_TAG']
 
-    create_tag(
-        etree,
-        '/fleurInput/cell/filmLattice/bravaisMatrix',
-        'TEST_TAG4',
-        create=False,
-        place_index=True,
-        tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
-    )
+    create_tag(etree,
+               '/fleurInput/cell/filmLattice/bravaisMatrix',
+               'TEST_TAG4',
+               create=False,
+               place_index=True,
+               tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
-    assert tag_names == [
-        'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'
-    ]
+    assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
 
-    create_tag(
-        etree,
-        '/fleurInput/cell/filmLattice/bravaisMatrix',
-        'TEST_TAG0',
-        create=False,
-        place_index=True,
-        tag_order=[
-            'TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3',
-            'TEST_TAG'
-        ]
-    )
+    create_tag(etree,
+               '/fleurInput/cell/filmLattice/bravaisMatrix',
+               'TEST_TAG0',
+               create=False,
+               place_index=True,
+               tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
-    assert tag_names == [
-        'TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'
-    ]
+    assert tag_names == ['TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
 
     with pytest.raises(ValueError) as excinfo:
-        create_tag(
-            etree,
-            '/fleurInput/cell/filmLattice/bravaisMatrix',
-            'TEST_TAG5',
-            create=False,
-            place_index=True,
-            tag_order=[
-                'TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'TEST_TAG5', 'row-2', 'TEST_TAG4',
-                'row-3', 'TEST_TAG'
-            ]
-        )
+        create_tag(etree,
+                   '/fleurInput/cell/filmLattice/bravaisMatrix',
+                   'TEST_TAG5',
+                   create=False,
+                   place_index=True,
+                   tag_order=[
+                       'TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'TEST_TAG5', 'row-2', 'TEST_TAG4', 'row-3',
+                       'TEST_TAG'
+                   ])
     assert str(excinfo.value) == 'Existing order does not correspond to tag_order list'
 
     with pytest.raises(ValueError) as excinfo:
@@ -166,11 +145,7 @@ def test_create_tag(inpxml_etree):
             'TEST_TAG5',
             create=False,
             place_index=True,
-            tag_order=[
-                'TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'row-2', 'TEST_TAG4', 'row-3',
-                'TEST_TAG'
-            ]
-        )
+            tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
     assert str(excinfo.value) == 'Did not find element name in the tag_order list'
 
 
@@ -178,8 +153,7 @@ def test_delete_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import delete_att, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
-    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label'
-                       )[0] == '                 222'
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label')[0] == '                 222'
 
     delete_att(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'label')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label') == []
@@ -260,10 +234,9 @@ class TestSetSpecies:
     """Tests for set_species"""
 
     paths = [
-        'mtSphere/@radius', 'atomicCutoffs/@lmax', 'energyParameters/@s',
-        'electronConfig/coreConfig', 'electronConfig/stateOccupation/@state',
-        'electronConfig/stateOccupation/@state', 'special/@socscale', 'ldaU/@test_att',
-        'ldaU/@test_att', 'lo/@test_att', 'lo/@test_att'
+        'mtSphere/@radius', 'atomicCutoffs/@lmax', 'energyParameters/@s', 'electronConfig/coreConfig',
+        'electronConfig/stateOccupation/@state', 'electronConfig/stateOccupation/@state', 'special/@socscale',
+        'ldaU/@test_att', 'ldaU/@test_att', 'lo/@test_att', 'lo/@test_att'
     ]
 
     attdicts = [{
@@ -325,8 +298,8 @@ class TestSetSpecies:
                 ]
 
     results = [
-        '3.333', '7.0', '3.0', 'test', 'state', ['state', 'state2'], '1.0', '2.0', ['2.0', '23.0'],
-        '2.0', ['2.0', '33.0']
+        '3.333', '7.0', '3.0', 'test', 'state', ['state', 'state2'], '1.0', '2.0', ['2.0', '23.0'], '2.0',
+        ['2.0', '33.0']
     ]
 
     @staticmethod
@@ -502,9 +475,7 @@ class TestChangeAtomgrAtt:
 
         change_atomgr_att(etree, attributedict=self.attdicts[0])
 
-        result = eval_xpath2(
-            etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0]
-        )
+        result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0])
 
         assert result[0] == 'TTT'
 
@@ -521,10 +492,7 @@ class TestSetInpchanges:
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        skip_paths = [
-            'atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice',
-            'bravaisMatrix', 'a1'
-        ]
+        skip_paths = ['atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice', 'bravaisMatrix', 'a1']
 
         if any(x in path for x in skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
@@ -549,10 +517,8 @@ class TestSetInpchanges:
                 result = eval_xpath2(etree, path + '/@{}'.format(name))
             assert result[0] == 'test'
         else:
-            raise BaseException(
-                'A switch that you want to set is not one of the supported types.'
-                'Or you made a mistake during new switch registration'
-            )
+            raise BaseException('A switch that you want to set is not one of the supported types.'
+                                'Or you made a mistake during new switch registration')
 
     def test_set_inpchanges_fail(self, inpxml_etree):
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
@@ -956,8 +922,8 @@ class TestShiftValue:
 class TestShiftSpeciesLabel:
     attr_names = ['radius', 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f']
     tags = [
-        'mtSphere', 'mtSphere', 'mtSphere', 'atomicCutoffs', 'atomicCutoffs', 'energyParameters',
-        'energyParameters', 'energyParameters', 'energyParameters'
+        'mtSphere', 'mtSphere', 'mtSphere', 'atomicCutoffs', 'atomicCutoffs', 'energyParameters', 'energyParameters',
+        'energyParameters', 'energyParameters'
     ]
 
     @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))

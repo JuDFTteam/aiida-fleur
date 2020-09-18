@@ -60,17 +60,10 @@ class fleur_dos_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
-        spec.input(
-            'wf_parameters',
-            valid_type=Dict,
-            required=False,
-            default=Dict(dict=cls._default_wf_para)
-        )
+        spec.input('wf_parameters', valid_type=Dict, required=False, default=Dict(dict=cls._default_wf_para))
         spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
-        spec.input(
-            'options', valid_type=Dict, required=False, default=Dict(dict=cls._default_options)
-        )
+        spec.input('options', valid_type=Dict, required=False, default=Dict(dict=cls._default_options))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         # TODO ggf run convergence first
         spec.input('remote_data', valid_type=RemoteData, required=False)
@@ -86,11 +79,9 @@ class fleur_dos_wc(WorkChain):
         '''
         # input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        self.report(
-            'Started dos workflow version {}'
-            # "Workchain node identifiers: ")#{}"
-            ''.format(self._workflowversion)
-        )  # ProcessRegistry().current_calc_node))
+        self.report('Started dos workflow version {}'
+                    # "Workchain node identifiers: ")#{}"
+                    ''.format(self._workflowversion))  # ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ''
         self.ctx.last_calc = None
@@ -139,13 +130,7 @@ class fleur_dos_wc(WorkChain):
         # change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
         # 'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
         # 'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
-        change_dict = {
-            'dos': True,
-            'ndir': -1,
-            'minEnergy': emin,
-            'maxEnergy': emax,
-            'sigma': sigma
-        }
+        change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
 
         fleurmode.set_inpchanges(change_dict)
         if tria:
@@ -188,8 +173,8 @@ class fleur_dos_wc(WorkChain):
         # TODO be careful with general DOS.X
         dosfilename = 'DOS.1'  # ['DOS.1', 'DOS.2', ...]
         # TODO this should be easier...
-        dosfilepath = self.ctx.last_calc.get_outputs_dict(
-        )['retrieved'].folder.get_subfolder('path').get_abs_path(dosfilename)
+        dosfilepath = self.ctx.last_calc.get_outputs_dict()['retrieved'].folder.get_subfolder('path').get_abs_path(
+            dosfilename)
         print(dosfilepath)
         # dosfilepath = "path to dosfile" # Array?
         if os.path.isfile(dosfilepath):

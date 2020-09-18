@@ -3,10 +3,7 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (
-    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
-    'IAS-1/PGI-1, Germany. All rights reserved.'
-)
+__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, ' 'IAS-1/PGI-1, Germany. All rights reserved.')
 __license__ = 'MIT license, see LICENSE.txt file'
 __version__ = '0.27'
 __contributors__ = 'Jens Broeder'
@@ -67,8 +64,7 @@ para1 = Dict(
         'kpt': {
             'nkpt': 200,
         }
-    }
-)
+    })
 #para1.store()
 #pprint(para1.get_dict())
 

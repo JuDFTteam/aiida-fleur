@@ -32,6 +32,7 @@ class Test_FleurRelaxWorkChain():
     """
     Regression tests for the FleurRelaxWorkChain
     """
+
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_fleurinp_Si_bulk(self, run_with_cache, mock_code_factory, create_fleurinp):
@@ -55,11 +56,7 @@ class Test_FleurRelaxWorkChain():
             label='fleur',
             data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=[
-                '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
-                'cdn??'
-            ]
-        )
+            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
         # create process builder to set parameters
         builder = FleurRelaxWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur relax test for Si bulk with fleurinp data given'
@@ -98,9 +95,7 @@ class Test_FleurRelaxWorkChain():
         assert False
 
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_relax_validation_wrong_inputs(
-        self, run_with_cache, mock_code_factory, generate_structure2
-    ):
+    def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """
         Test the validation behavior of FleurRelaxWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
@@ -121,29 +116,21 @@ class Test_FleurRelaxWorkChain():
 
         FleurCode = mock_code_factory(
             label='fleur',
-            data_dir_abspath=os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-            ),
+            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
-        )
-        InpgenCode = mock_code_factory(
-            label='inpgen',
-            data_dir_abspath=os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
-            ),
-            entry_point=CALC2_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd']
-        )
+            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+        InpgenCode = mock_code_factory(label='inpgen',
+                                       data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                     'calc_data_dir/'),
+                                       entry_point=CALC2_ENTRY_POINT,
+                                       ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
-        wf_parameters = Dict(
-            dict={
-                'relax_iter': 5,
-                'film_distance_relaxation': False,
-                'force_criterion': 0.001,
-                'wrong_key': None
-            }
-        )
+        wf_parameters = Dict(dict={
+            'relax_iter': 5,
+            'film_distance_relaxation': False,
+            'force_criterion': 0.001,
+            'wrong_key': None
+        })
         wf_parameters.store()
         structure = generate_structure2()
         structure.store()

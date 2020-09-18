@@ -173,8 +173,7 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
         norm_stoi[key] = stoi[key] / minv
         if len(error_ratio):
             errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(
-                (errors_stoi[key]**2 + (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2)
-            )
+                (errors_stoi[key]**2 + (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2))
     return norm_stoi, errors_stoi
 
 
@@ -244,15 +243,11 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
         eform = tE  #abs(tE)
         for elem, count in six.iteritems(elements_count):
             if elem in ref_el_norm:
-                eform = eform - count * ref_struc_te_dict_norm.get(
-                    elem
-                )  #abs(ref_struc_te_dict.get(elem))
+                eform = eform - count * ref_struc_te_dict_norm.get(elem)  #abs(ref_struc_te_dict.get(elem))
             else:
-                print((
-                    'Reference energy missing for element {}. '
-                    'You need to provide reference energies for all elements in you compound.'
-                    ''.format(elem)
-                ))
+                print(('Reference energy missing for element {}. '
+                       'You need to provide reference energies for all elements in you compound.'
+                       ''.format(elem)))
         eform_dict[formula] = eform / ntotal
         #eform_list.append(eform/ntotal)
     return list(eform_dict.values()), eform_dict
@@ -361,9 +356,7 @@ def determine_reactions(formula, available_data):
         productstring = productstring[:-1]
         constructed_products.append(productstring)
         pos_reaction = '{}->{}'.format(formula, productstring)
-        bal_reaction = balance_equation(
-            pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True
-        )
+        bal_reaction = balance_equation(pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True)
         # We do not allow zero coefficients of products, because the resulting equation should already be in our list.
         if bal_reaction:
             # TODO post process (i.e are remove 0 compounds)
@@ -430,10 +423,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         try:
             compound_e = formenergydict.get(compound, 0)
         except KeyError:
-            print((
-                'Formation energy of compound {} not given in {}.'
-                'I abort...'.format(compound, formenergydict)
-            ))
+            print(('Formation energy of compound {} not given in {}.' 'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             # can be that educt side is not a real 'compound' but just a stoichiometry
             # so we give it 0
@@ -444,10 +434,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print((
-                'Formation energy of compound {} not given in {}.'
-                'I abort...'.format(compound, formenergydict)
-            ))
+            print(('Formation energy of compound {} not given in {}.' 'I abort...'.format(compound, formenergydict)))
             compound_e = 0
             return None
         product_energy = product_energy + factor * compound_e
@@ -536,9 +523,7 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
             g = gcd(g, a2)
         N = [int(i / g) for i in N]
         pM = lambda c: str(c) + '*'  # if c!=1 else ''
-        res = '->'.join(
-            '+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->')
-        )
+        res = '->'.join('+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->'))
         return res
     else:
         return None

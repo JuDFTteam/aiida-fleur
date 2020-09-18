@@ -74,52 +74,36 @@ class FleurMaeWorkChain(WorkChain):
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('options', valid_type=Dict, required=False)
 
-        spec.outline(
-            cls.start,
-            if_(cls.scf_needed)(
-                cls.converge_scf,
-                cls.force_after_scf,
-            ).else_(cls.force_wo_scf, ), cls.get_results, cls.return_results
-        )
+        spec.outline(cls.start,
+                     if_(cls.scf_needed)(
+                         cls.converge_scf,
+                         cls.force_after_scf,
+                     ).else_(
+                         cls.force_wo_scf,
+                     ), cls.get_results, cls.return_results)
 
         spec.output('output_mae_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
-        spec.exit_code(
-            233,
-            'ERROR_INVALID_CODE_PROVIDED',
-            message='Invalid code node specified, check inpgen and fleur code nodes.'
-        )
-        spec.exit_code(
-            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.'
-        )
-        spec.exit_code(
-            236,
-            'ERROR_INVALID_INPUT_FILE',
-            message="Input file was corrupted after user's modifications."
-        )
-        spec.exit_code(
-            334, 'ERROR_REFERENCE_CALCULATION_FAILED', message='Reference calculation failed.'
-        )
-        spec.exit_code(
-            335,
-            'ERROR_REFERENCE_CALCULATION_NOREMOTE',
-            message='Found no reference calculation remote repository.'
-        )
-        spec.exit_code(
-            336, 'ERROR_FORCE_THEOREM_FAILED', message='Force theorem calculation failed.'
-        )
+        spec.exit_code(233,
+                       'ERROR_INVALID_CODE_PROVIDED',
+                       message='Invalid code node specified, check inpgen and fleur code nodes.')
+        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
+        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED', message='Reference calculation failed.')
+        spec.exit_code(335,
+                       'ERROR_REFERENCE_CALCULATION_NOREMOTE',
+                       message='Found no reference calculation remote repository.')
+        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED', message='Force theorem calculation failed.')
 
     def start(self):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report(
-            'INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
-            ''.format(self._workflowversion)
-        )
+        self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
+                    ''.format(self._workflowversion))
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -152,17 +136,15 @@ class FleurMaeWorkChain(WorkChain):
 
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append((
-                'set_species_label', {
-                    'at_label': atom_label,
-                    'attributedict': {
-                        'special': {
-                            'socscale': 0.0
-                        }
-                    },
-                    'create': True
-                }
-            ))
+            self.ctx.wf_dict['inpxml_changes'].append(('set_species_label', {
+                'at_label': atom_label,
+                'attributedict': {
+                    'special': {
+                        'socscale': 0.0
+                    }
+                },
+                'create': True
+            }))
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
@@ -243,13 +225,7 @@ class FleurMaeWorkChain(WorkChain):
 
         soc = self.ctx.wf_dict.get('sqa_ref')
         if not self.ctx.wf_dict.get('use_soc_ref'):
-            scf_wf_dict['inpxml_changes'].append(
-                ('set_inpchanges', {
-                    'change_dict': {
-                        'l_soc': False
-                    }
-                })
-            )
+            scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': {'l_soc': False}}))
         else:  # set soc parameters explicitly
             changes_dict = {'theta': soc[0], 'phi': soc[1], 'l_soc': True}
             scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
@@ -304,20 +280,16 @@ class FleurMaeWorkChain(WorkChain):
                 'xpath': '/fleurInput/forceTheorem',
                 'newelement': 'MAE'
             }),
-            (
-                'xml_set_attribv_occ', {
-                    'xpathn': '/fleurInput/forceTheorem/MAE',
-                    'attributename': 'theta',
-                    'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
-                }
-            ),
-            (
-                'xml_set_attribv_occ', {
-                    'xpathn': '/fleurInput/forceTheorem/MAE',
-                    'attributename': 'phi',
-                    'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
-                }
-            ),
+            ('xml_set_attribv_occ', {
+                'xpathn': '/fleurInput/forceTheorem/MAE',
+                'attributename': 'theta',
+                'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+            }),
+            ('xml_set_attribv_occ', {
+                'xpathn': '/fleurInput/forceTheorem/MAE',
+                'attributename': 'phi',
+                'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+            }),
             ('set_inpchanges', {
                 'change_dict': {
                     'itmax': 1,
@@ -336,12 +308,10 @@ class FleurMaeWorkChain(WorkChain):
                 para = change[1]
                 method = avail_ac_dict.get(function, None)
                 if not method:
-                    error = (
-                        "ERROR: Input 'inpxml_changes', function {} "
-                        'is not known to fleurinpmodifier class, '
-                        'please check/test your input. I abort...'
-                        ''.format(function)
-                    )
+                    error = ("ERROR: Input 'inpxml_changes', function {} "
+                             'is not known to fleurinpmodifier class, '
+                             'please check/test your input. I abort...'
+                             ''.format(function))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -387,10 +357,7 @@ class FleurMaeWorkChain(WorkChain):
 
         t_e = outpara.get('total_energy', 'failed')
         if not isinstance(t_e, float):
-            message = (
-                'Did not manage to extract float total energy from the reference '
-                'SCF calculation.'
-            )
+            message = ('Did not manage to extract float total energy from the reference ' 'SCF calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
@@ -426,16 +393,14 @@ class FleurMaeWorkChain(WorkChain):
         code = self.inputs.fleur
         options = self.ctx.options.copy()
 
-        inputs_builder = get_inputs_fleur(
-            code,
-            remote,
-            fleurin,
-            options,
-            label,
-            description,
-            settings,
-            serial=self.ctx.wf_dict['serial']
-        )
+        inputs_builder = get_inputs_fleur(code,
+                                          remote,
+                                          fleurin,
+                                          options,
+                                          label,
+                                          description,
+                                          settings,
+                                          serial=self.ctx.wf_dict['serial'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -463,16 +428,14 @@ class FleurMaeWorkChain(WorkChain):
         code = self.inputs.fleur
         options = self.ctx.options.copy()
 
-        inputs_builder = get_inputs_fleur(
-            code,
-            remote,
-            fleurin,
-            options,
-            label,
-            description,
-            settings,
-            serial=self.ctx.wf_dict['serial']
-        )
+        inputs_builder = get_inputs_fleur(code,
+                                          remote,
+                                          fleurin,
+                                          options,
+                                          label,
+                                          description,
+                                          settings,
+                                          serial=self.ctx.wf_dict['serial'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -489,10 +452,8 @@ class FleurMaeWorkChain(WorkChain):
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
-                message = (
-                    'ERROR: Force theorem Fleur calculation failed somehow it has '
-                    'exit status {}'.format(calculation.exit_status)
-                )
+                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
+                           'exit status {}'.format(calculation.exit_status))
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:
@@ -517,10 +478,7 @@ class FleurMaeWorkChain(WorkChain):
                 t_energydict = [(x - minenergy) for x in t_energydict]
 
         except AttributeError as e_message:
-            message = (
-                'Did not manage to read evSum or energy units after FT calculation. {}'.
-                format(e_message)
-            )
+            message = ('Did not manage to read evSum or energy units after FT calculation. {}'.format(e_message))
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
@@ -587,10 +545,7 @@ def save_mae_output_node(**kwargs):
     # clone, because we rather produce the same node twice then have a circle in the database for
     outputnode = outpara.clone()
     outputnode.label = 'output_mae_wc_para'
-    outputnode.description = (
-        'Contains magnetic anisotropy results and '
-        'information of an FleurMaeWorkChain run.'
-    )
+    outputnode.description = ('Contains magnetic anisotropy results and ' 'information of an FleurMaeWorkChain run.')
 
     outdict['output_mae_wc_para'] = outputnode
 

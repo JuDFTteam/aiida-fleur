@@ -45,8 +45,7 @@ wf_para = Dict(
         },
         'walltime_sec': 60 * 60,
         'queue_name': 'th123_node'
-    }
-)
+    })
 
 print(('structure = {}'.format(f)))
 print('wf-para =')  #.format(wf_para.get_dict()))
@@ -54,6 +53,5 @@ pprint(wf_para.get_dict())
 print('parameterdata = ')  #{}".format(parameters.get_dict()))
 pprint(parameters.get_dict())
 
-res = FleurEosWorkChain.run(
-    wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen=code, fleur=code2
-)  #, settings=settings)#
+res = FleurEosWorkChain.run(wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen=code,
+                            fleur=code2)  #, settings=settings)#

@@ -3,10 +3,7 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (
-    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
-    'IAS-1/PGI-1, Germany. All rights reserved.'
-)
+__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, ' 'IAS-1/PGI-1, Germany. All rights reserved.')
 __license__ = 'MIT license, see LICENSE.txt file'
 __version__ = '0.27'
 __contributors__ = 'Jens Broeder'
@@ -69,11 +66,9 @@ print(fleurinp.files)
 
 calc = code.new_calc()
 calc.label = 'Fe_1l_SOC Fleur test'
-calc.description = (
-    'Simple test of Fleur with two steps:'
-    '1.Generate a starting density and run 1 iteration and '
-    'compare convergence, fermi-energy & total energy'
-)
+calc.description = ('Simple test of Fleur with two steps:'
+                    '1.Generate a starting density and run 1 iteration and '
+                    'compare convergence, fermi-energy & total energy')
 calc.set_max_wallclock_seconds(5 * 60)  # 5 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
@@ -97,21 +92,9 @@ if settings is not None:
 if submit_test:
     subfolder, script_filename = calc.submit_test()
     print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
-    print(
-        'Submit file in {}'.format(
-            os.path.join(os.path.relpath(subfolder.abspath), script_filename)
-        )
-    )
+    print('Submit file in {}'.format(os.path.join(os.path.relpath(subfolder.abspath), script_filename)))
 else:
     calc.store_all()
-    print(
-        "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-            calc.uuid, calc.dbnode.pk
-        )
-    )
+    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))
     calc.submit()
-    print(
-        "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-            calc.uuid, calc.dbnode.pk
-        )
-    )
+    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))

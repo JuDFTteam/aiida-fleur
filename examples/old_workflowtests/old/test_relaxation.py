@@ -42,6 +42,5 @@ print(s.sites)
 parameters = load_node(13496)  # Be 13496, W 13161
 wf_para = Dict(dict={'relax_runmax': 5, 'density_criterion': 0.0000001, 'max_force_cycle': 9})
 
-res = fleur_relax_wc.run(
-    wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen=code, fleur=code2
-)  #, computer=computer)
+res = fleur_relax_wc.run(wf_parameters=wf_para, structure=s, calc_parameters=parameters, inpgen=code,
+                         fleur=code2)  #, computer=computer)

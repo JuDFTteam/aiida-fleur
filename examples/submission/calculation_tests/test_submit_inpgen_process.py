@@ -50,11 +50,7 @@ try:
     if code.get_input_plugin_name() != expected_code_type:
         raise ValueError
 except (NotExistent, ValueError):
-    print(
-        'codename {} does not exist or is not of the expected type : {}'.format(
-            codename, expected_code_type
-        )
-    )
+    print('codename {} does not exist or is not of the expected type : {}'.format(codename, expected_code_type))
 
 # W bcc structure
 bohr_a_0 = 0.52917721092  # A
@@ -80,8 +76,7 @@ parameters = Dict(
         'kpt': {
             'nkpt': 200,
         }
-    }
-)
+    })
 JobCalc = FleurinputgenCalculation
 label = 'Test inpgen run'
 description = 'Test inpgen run on W'

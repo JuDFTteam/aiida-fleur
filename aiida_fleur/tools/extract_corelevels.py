@@ -152,9 +152,7 @@ def extract_corelevels(outxmlfile, options=None):
         try:
             tree = etree.parse(outxmlfile, parser)
         except etree.XMLSyntaxError:
-            parser_info['parser_warnings'].append(
-                'Skipping the parsing of the xml file. Repairing was not possible.'
-            )
+            parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
             parse_xml = False
 
     #if parse_xml:
@@ -212,9 +210,9 @@ def extract_corelevels(outxmlfile, options=None):
             coreconf = species_atts[group_species]['coreconfig']
             valenceconf = species_atts[group_species]['valenceconfig']
             stateocc = species_atts[group_species]['stateOccupation']
-            a = eval_xpath2(atomgroup, relpos_xpath, parser_info) + eval_xpath2(
-                atomgroup, abspos_xpath, parser_info
-            ) + eval_xpath2(atomgroup, filmpos_xpath, parser_info)  # always list
+            a = eval_xpath2(atomgroup, relpos_xpath,
+                            parser_info) + eval_xpath2(atomgroup, abspos_xpath, parser_info) + eval_xpath2(
+                                atomgroup, filmpos_xpath, parser_info)  # always list
             natoms = len(a)
             types_dict = {
                 'species': group_species,
@@ -247,8 +245,7 @@ def extract_corelevels(outxmlfile, options=None):
 
         for corestatescard in corestatescards:
             corelv = parse_state_card(corestatescard, iteration_to_parse, parser_info)
-            corelevels[int(corelv['atomtype']) -
-                       1].append(corelv)  # is corelv['atomtype'] always an integer?
+            corelevels[int(corelv['atomtype']) - 1].append(corelv)  # is corelv['atomtype'] always an integer?
 
     #print parser_info
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
@@ -321,12 +318,8 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
         n_state = get_xml_attribute(corestate, n_name, parser_info)
         l_state = get_xml_attribute(corestate, l_name, parser_info)
         j_state = get_xml_attribute(corestate, j_name, parser_info)
-        energy, suc = convert_to_float(
-            get_xml_attribute(corestate, energy_name, parser_info), parser_info
-        )
-        weight, suc = convert_to_float(
-            get_xml_attribute(corestate, weight_name, parser_info), parser_info
-        )
+        energy, suc = convert_to_float(get_xml_attribute(corestate, energy_name, parser_info), parser_info)
+        weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name, parser_info), parser_info)
         state_dict = {'n': n_state, 'l': l_state, 'j': j_state, 'energy': energy, 'weight': weight}
         states.append(state_dict)
 
@@ -353,14 +346,10 @@ def convert_to_float(value_string, parser_info={'parser_warnings': []}):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info['parser_warnings'].append(
-            'Could not convert: "{}" to float, TypeError'.format(value_string)
-        )
+        parser_info['parser_warnings'].append('Could not convert: "{}" to float, TypeError'.format(value_string))
         return value_string, False
     except ValueError:
-        parser_info['parser_warnings'].append(
-            'Could not convert: "{}" to float, ValueError'.format(value_string)
-        )
+        parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
         return value_string, False
     return value, True
 
@@ -422,10 +411,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
 
         if not ref_el:  # no refernce for that element given
             if warn:
-                print((
-                    "WARNING: Reference for element: '{}' not given. "
-                    'I ignore these.'.format(elem)
-                ))
+                print(("WARNING: Reference for element: '{}' not given. " 'I ignore these.'.format(elem)))
             continue
 
         return_corelevel_dict[elem] = {}
@@ -433,10 +419,8 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl:  # no reference corelevel given for that element
                 if warn:
-                    print((
-                        "WARNING: Reference corelevel '{}' for element: '{}' "
-                        'not given. I ignore these.'.format(corelevel_name, elem)
-                    ))
+                    print(("WARNING: Reference corelevel '{}' for element: '{}' "
+                           'not given. I ignore these.'.format(corelevel_name, elem)))
                 continue
             be_all = []
             nref = len(ref_cl)

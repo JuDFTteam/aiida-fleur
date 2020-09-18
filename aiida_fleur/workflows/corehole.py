@@ -185,68 +185,40 @@ class fleur_corehole_wc(WorkChain):
         spec.outline(
             cls.check_input,  # first check if input is consistent
             if_(cls.relaxation_needed)(  # ggf relax the given cell
-                cls.relax
-            ),
-            if_(cls.supercell_needed
-                )(  # create a supercell from the given/relaxed cell
-                    cls.create_supercell
-                ),
+                cls.relax),
+            if_(cls.supercell_needed)(  # create a supercell from the given/relaxed cell
+                cls.create_supercell),
             cls.create_coreholes,
             cls.run_ref_scf,  # calculate the reference supercell first
             cls.check_scf,
             cls.run_scfs,  # calculate all other corehole calculations
             cls.check_scf,
-            cls.return_results
-        )
+            cls.return_results)
         spec.output('output_corehole_wc_para', valid_type=Dict)
 
-        spec.exit_code(
-            1, 'ERROR_INVALID_INPUT_RESOURCES', message='The input resources are invalid.'
-        )
-        spec.exit_code(
-            2,
-            'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-            message='Input resources are missing.'
-        )
-        spec.exit_code(
-            3,
-            'ERROR_INVALID_CODE_PROVIDED',
-            message='The code provided is invalid, or not of the right kind.'
-        )
-        spec.exit_code(
-            4, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation FAILED, check output'
-        )
-        spec.exit_code(
-            5,
-            'ERROR_CHANGING_FLEURINPUT_FAILED',
-            message='Changing of the FLEURINP data went wrong, check log.'
-        )
-        spec.exit_code(
-            6,
-            'ERROR_CALCULATION_INVALID_INPUT_FILE',
-            message='The FLEUR input file for the calculation did not validate.'
-        )
-        spec.exit_code(
-            7,
-            'ERROR_FLEUR_CALCULATION_FAiLED',
-            message='At least one FLEUR calculation FAILED, check the output and log.'
-        )
-        spec.exit_code(
-            8,
-            'ERROR_CONVERGENCE_NOT_ARCHIVED',
-            message=(
-                'At least one FLEUR calculation did not/could not reach the'
-                'desired convergece Criteria, with the current parameters.'
-            )
-        )
-        spec.exit_code(
-            9,
-            'ERROR_IN_REFERENCE_CREATION',
-            message=(
-                'Something went wrong in the determiation what coreholes to '
-                'calculate, probably the input format was not correct. Check log.'
-            )
-        )
+        spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES', message='The input resources are invalid.')
+        spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message='Input resources are missing.')
+        spec.exit_code(3,
+                       'ERROR_INVALID_CODE_PROVIDED',
+                       message='The code provided is invalid, or not of the right kind.')
+        spec.exit_code(4, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation FAILED, check output')
+        spec.exit_code(5,
+                       'ERROR_CHANGING_FLEURINPUT_FAILED',
+                       message='Changing of the FLEURINP data went wrong, check log.')
+        spec.exit_code(6,
+                       'ERROR_CALCULATION_INVALID_INPUT_FILE',
+                       message='The FLEUR input file for the calculation did not validate.')
+        spec.exit_code(7,
+                       'ERROR_FLEUR_CALCULATION_FAiLED',
+                       message='At least one FLEUR calculation FAILED, check the output and log.')
+        spec.exit_code(8,
+                       'ERROR_CONVERGENCE_NOT_ARCHIVED',
+                       message=('At least one FLEUR calculation did not/could not reach the'
+                                'desired convergece Criteria, with the current parameters.'))
+        spec.exit_code(9,
+                       'ERROR_IN_REFERENCE_CREATION',
+                       message=('Something went wrong in the determiation what coreholes to '
+                                'calculate, probably the input format was not correct. Check log.'))
 
     def check_input(self):
         """
@@ -254,11 +226,9 @@ class fleur_corehole_wc(WorkChain):
         Do some input checks. Further input checks are done in further workflow steps
         """
         # TODO: document parameters
-        self.report(
-            'started fleur_corehole_wc version {} '
-            'Workchain node identifiers: '  #{}"
-            ''.format(self._workflowversion)
-        )  #, ProcessRegistry().current_calc_node))
+        self.report('started fleur_corehole_wc version {} '
+                    'Workchain node identifiers: '  #{}"
+                    ''.format(self._workflowversion))  #, ProcessRegistry().current_calc_node))
 
         ### init ctx ###
 
@@ -355,27 +325,21 @@ class fleur_corehole_wc(WorkChain):
         """
 
         supercell_base = self.ctx.supercell_size
-        description = (
-            u'WF, Creates a supercell of a crystal structure x({},{},{}).'
-            ''.format(supercell_base[0], supercell_base[0], supercell_base[2])
-        )
+        description = (u'WF, Creates a supercell of a crystal structure x({},{},{}).'
+                       ''.format(supercell_base[0], supercell_base[0], supercell_base[2]))
 
-        supercell_s = supercell(
-            self.ctx.base_structure_relax,
-            Int(supercell_base[0]),
-            Int(supercell_base[1]),
-            Int(supercell_base[2]),
-            metadata={
-                'label': u'supercell_wf',
-                'description': description
-            }
-        )
+        supercell_s = supercell(self.ctx.base_structure_relax,
+                                Int(supercell_base[0]),
+                                Int(supercell_base[1]),
+                                Int(supercell_base[2]),
+                                metadata={
+                                    'label': u'supercell_wf',
+                                    'description': description
+                                })
 
         # overwrite label and description of new structure
-        supercell_s.label = '{}x{}x{} of {}'.format(
-            supercell_base[0], supercell_base[1], supercell_base[2],
-            self.ctx.base_structure_relax.uuid
-        )
+        supercell_s.label = '{}x{}x{} of {}'.format(supercell_base[0], supercell_base[1], supercell_base[2],
+                                                    self.ctx.base_structure_relax.uuid)
         supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
@@ -405,10 +369,7 @@ class fleur_corehole_wc(WorkChain):
 
         # TODO if this becomes to long split
         """
-        self.report(
-            'INFO: In create_coreholes of fleur_corehole_wc. '
-            'Preparing everything for calculation launches.'
-        )
+        self.report('INFO: In create_coreholes of fleur_corehole_wc. ' 'Preparing everything for calculation launches.')
 
         ########### init variables ##############
 
@@ -499,11 +460,9 @@ class fleur_corehole_wc(WorkChain):
                 try:
                     to_append = base_atoms_sites[atom_info]
                 except IndexError:
-                    error = (
-                        "ERROR: The index/integer: {} specified in 'atoms' key is not valid."
-                        'There are only {} atom sites in your provided structure.'
-                        ''.format(atom_info, len(base_atoms_sites))
-                    )
+                    error = ("ERROR: The index/integer: {} specified in 'atoms' key is not valid."
+                             'There are only {} atom sites in your provided structure.'
+                             ''.format(atom_info, len(base_atoms_sites)))
                     to_append = None
                     self.report(error)
                 if to_append:
@@ -529,11 +488,9 @@ class fleur_corehole_wc(WorkChain):
                     pass
                     # something went wrong, wrong input
                     # TODO log, error and hint
-                    error = (
-                        'ERROR: corelevel was given in the wrong format: {},'
-                        'should have len 2. Hint hast to be the format '
-                        "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl)
-                    )
+                    error = ('ERROR: corelevel was given in the wrong format: {},'
+                             'should have len 2. Hint hast to be the format '
+                             "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl))
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_IN_REFERENCE_CREATION
                 else:
@@ -541,9 +498,7 @@ class fleur_corehole_wc(WorkChain):
                     econfigs = []
                     all_corestates = []
                     all_changed_valence = []
-                    elm_cl = [
-                        str(elm_cl[0]), str(elm_cl[1])
-                    ]  #otherwise stuff fails because of basestrings
+                    elm_cl = [str(elm_cl[0]), str(elm_cl[1])]  #otherwise stuff fails because of basestrings
                     if elm_cl[0] in valid_elements:
                         # get corelevel econfig of element
                         dict_corelevel_elm = {}
@@ -553,9 +508,7 @@ class fleur_corehole_wc(WorkChain):
                             para_dict = para.get_dict()
                             self.report('INFO para is here: {}'.format(para_dict))
                             element_para = extract_elementpara(para_dict, elm_cl[0])
-                            valid_coreconfig = element_para.get(
-                                'econfig', get_coreconfig(elm_cl[0], full=True)
-                            )
+                            valid_coreconfig = element_para.get('econfig', get_coreconfig(elm_cl[0], full=True))
                         else:
                             valid_coreconfig = get_coreconfig(elm_cl[0], full=True)
                         oriegconfig = get_econfig(elm_cl[0], full=True)
@@ -564,31 +517,23 @@ class fleur_corehole_wc(WorkChain):
                             # add all corelevels to calculate
                             corestates = valid_coreconfig.split()
                             for state in corestates:
-                                holeconfig = econfigstr_hole(
-                                    oriegconfig, state, highest_unocc, htype=htype
-                                )
+                                holeconfig = econfigstr_hole(oriegconfig, state, highest_unocc, htype=htype)
                                 rel_states = states_spin.get(state[1], [])
                                 for rel in rel_states:
                                     econfigs.append(holeconfig)
                                     all_corestates.append(state + ' ' + rel)
                                     all_changed_valence.append(highest_unocc[:2])
-                        elif elm_cl[1
-                                    ] in valid_coreconfig:  # check if corelevel in valid coreconfig
+                        elif elm_cl[1] in valid_coreconfig:  # check if corelevel in valid coreconfig
                             #add corelevel to calculate.
                             state_index = oriegconfig.find(elm_cl[1])
-                            state = oriegconfig[state_index:state_index +
-                                                4].rstrip(' ')  # +4: icii, or ici
-                            holeconfig = econfigstr_hole(
-                                oriegconfig, state, highest_unocc, htype=htype
-                            )
+                            state = oriegconfig[state_index:state_index + 4].rstrip(' ')  # +4: icii, or ici
+                            holeconfig = econfigstr_hole(oriegconfig, state, highest_unocc, htype=htype)
                             rel_states = states_spin.get(state[1], [])
                             # get rel core level (for 4f 5/2, 7/2)
                             for rel in rel_states:
                                 econfigs.append(holeconfig)
                                 all_corestates.append(state + ' ' + rel)
-                                all_changed_valence.append(
-                                    highest_unocc[:2]
-                                )  # the methods below need them without occ
+                                all_changed_valence.append(highest_unocc[:2])  # the methods below need them without occ
                         elif '/' in elm_cl[1]:
                             pass  # TODO FUll state information given...[4f 7/2]
                         else:
@@ -631,21 +576,17 @@ class fleur_corehole_wc(WorkChain):
                     #print(cl_dict.get('corelevel')[i])
                     #print(cl_dict.get('valence')[i])
                     #print(econfig)
-                    state_tag_list = get_state_occ(
-                        econfig,
-                        corehole=cl_dict.get('corelevel')[i],
-                        valence=cl_dict.get('valence')[i],
-                        ch_occ=hole_charge
-                    )
+                    state_tag_list = get_state_occ(econfig,
+                                                   corehole=cl_dict.get('corelevel')[i],
+                                                   valence=cl_dict.get('valence')[i],
+                                                   ch_occ=hole_charge)
                     attributedict = {'electronConfig': {'stateOccupation': state_tag_list}}
                     #pprint(state_tag_list)
-                    change = (
-                        'set_species', {
-                            'species_name': change_kind,
-                            'attributedict': attributedict,
-                            'create': False
-                        }
-                    )
+                    change = ('set_species', {
+                        'species_name': change_kind,
+                        'attributedict': attributedict,
+                        'create': False
+                    })
                     fleurinp_change.append(change)
                     if correct_val_charge:  # only needed in certain methods
                         charge_change = (
@@ -653,12 +594,10 @@ class fleur_corehole_wc(WorkChain):
                             {
                                 'xpathn': '/fleurInput/calculationSetup/bzIntegration',
                                 'attributename': 'valenceElectrons',
-                                'set_val':
-                                -1.0000,  #-hole_charge,  #one electron was added by ingen, we remove it
+                                'set_val': -1.0000,  #-hole_charge,  #one electron was added by ingen, we remove it
                                 'mode': 'abs',
                                 'occ': [0],
-                            }
-                        )
+                            })
                         fleurinp_change.append(charge_change)
                     elif hole_charge != 1.0:  # fractional valence hole
                         charge_change = (
@@ -666,12 +605,10 @@ class fleur_corehole_wc(WorkChain):
                             {
                                 'xpathn': '/fleurInput/calculationSetup/bzIntegration',
                                 'attributename': 'valenceElectrons',
-                                'set_val':
-                                -1.0000 + hole_charge,  # one electron was already added by inpgen
+                                'set_val': -1.0000 + hole_charge,  # one electron was already added by inpgen
                                 'mode': 'abs',
                                 'occ': [0],
-                            }
-                        )
+                            })
                         fleurinp_change.append(charge_change)
                     if self.ctx.magnetic:  # Do a collinear magentic calculation
                         charge_change = ('set_inpchanges', {'change_dict': {'jspins': 2}})
@@ -714,8 +651,7 @@ class fleur_corehole_wc(WorkChain):
             #pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
             # create_wf para or write in last line what should be in 'fleur_change'
             #  for scf, which with the changes in the inp.xml needed
-            para = self.ctx.scf_para.copy(
-            )  # Otherwise inline edit... What about Provenance? TODO check
+            para = self.ctx.scf_para.copy()  # Otherwise inline edit... What about Provenance? TODO check
             if para == 'default':
                 wf_parameter = {}
             else:
@@ -813,54 +749,44 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i + 1
             if isinstance(node, StructureData):
-                res = self.submit(
-                    FleurScfWorkChain,
-                    wf_parameters=wf_parameters,
-                    structure=node,
-                    inpgen=self.inputs.inpgen,
-                    fleur=self.inputs.fleur,
-                    options=options,
-                    metadata={
-                        'label': scf_label,
-                        'description': scf_desc
-                    }
-                )  #
+                res = self.submit(FleurScfWorkChain,
+                                  wf_parameters=wf_parameters,
+                                  structure=node,
+                                  inpgen=self.inputs.inpgen,
+                                  fleur=self.inputs.fleur,
+                                  options=options,
+                                  metadata={
+                                      'label': scf_label,
+                                      'description': scf_desc
+                                  })  #
             elif isinstance(node, FleurinpData):
-                res = self.submit(
-                    FleurScfWorkChain,
-                    wf_parameters=wf_parameters,
-                    structure=node,
-                    inpgen=self.inputs.inpgen,
-                    fleur=self.inputs.fleur,
-                    options=options,
-                    metadata={
-                        'label': scf_label,
-                        'description': scf_desc
-                    }
-                )  #
+                res = self.submit(FleurScfWorkChain,
+                                  wf_parameters=wf_parameters,
+                                  structure=node,
+                                  inpgen=self.inputs.inpgen,
+                                  fleur=self.inputs.fleur,
+                                  options=options,
+                                  metadata={
+                                      'label': scf_label,
+                                      'description': scf_desc
+                                  })  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
-                    res = self.submit(
-                        FleurScfWorkChain,
-                        wf_parameters=wf_parameters,
-                        options=options,
-                        calc_parameters=node[1],
-                        structure=node[0],
-                        inpgen=self.inputs.inpgen,
-                        fleur=self.inputs.fleur,
-                        metadata={
-                            'label': scf_label,
-                            'description': scf_desc
-                        }
-                    )  #
+                    res = self.submit(FleurScfWorkChain,
+                                      wf_parameters=wf_parameters,
+                                      options=options,
+                                      calc_parameters=node[1],
+                                      structure=node[0],
+                                      inpgen=self.inputs.inpgen,
+                                      fleur=self.inputs.fleur,
+                                      metadata={
+                                          'label': scf_label,
+                                          'description': scf_desc
+                                      })  #
                 else:
-                    self.report(
-                        'WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node)
-                    )
+                    self.report('WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
             else:
-                self.report(
-                    'WARNING: something in run_ref_scf which I do not reconise: {}'.format(node)
-                )
+                self.report('WARNING: something in run_ref_scf which I do not reconise: {}'.format(node))
                 continue
 
             #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
@@ -942,51 +868,43 @@ class fleur_corehole_wc(WorkChain):
             #print node
             i = i + 1
             if isinstance(node, StructureData):
-                res = self.submit(
-                    FleurScfWorkChain,
-                    wf_parameters=wf_parameters,
-                    structure=node,
-                    inpgen=self.inputs.inpgen,
-                    fleur=self.inputs.fleur,
-                    options=options,
-                    metadata={
-                        'label': scf_label,
-                        'description': scf_desc
-                    }
-                )  #
+                res = self.submit(FleurScfWorkChain,
+                                  wf_parameters=wf_parameters,
+                                  structure=node,
+                                  inpgen=self.inputs.inpgen,
+                                  fleur=self.inputs.fleur,
+                                  options=options,
+                                  metadata={
+                                      'label': scf_label,
+                                      'description': scf_desc
+                                  })  #
             elif isinstance(node, FleurinpData):
-                res = self.submit(
-                    FleurScfWorkChain,
-                    wf_parameters=wf_parameters,
-                    structure=node,
-                    inpgen=self.inputs.inpgen,
-                    fleur=self.inputs.fleur,
-                    options=options,
-                    metadata={
-                        'label': scf_label,
-                        'description': scf_desc
-                    }
-                )  #
+                res = self.submit(FleurScfWorkChain,
+                                  wf_parameters=wf_parameters,
+                                  structure=node,
+                                  inpgen=self.inputs.inpgen,
+                                  fleur=self.inputs.fleur,
+                                  options=options,
+                                  metadata={
+                                      'label': scf_label,
+                                      'description': scf_desc
+                                  })  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
                     if isinstance(node[2], Dict):
-                        res = self.submit(
-                            FleurScfWorkChain,
-                            wf_parameters=node[2],
-                            calc_parameters=node[1],
-                            structure=node[0],
-                            options=options,
-                            inpgen=self.inputs.inpgen,
-                            fleur=self.inputs.fleur,
-                            metadata={
-                                'label': scf_label,
-                                'description': scf_desc
-                            }
-                        )  #
+                        res = self.submit(FleurScfWorkChain,
+                                          wf_parameters=node[2],
+                                          calc_parameters=node[1],
+                                          structure=node[0],
+                                          options=options,
+                                          inpgen=self.inputs.inpgen,
+                                          fleur=self.inputs.fleur,
+                                          metadata={
+                                              'label': scf_label,
+                                              'description': scf_desc
+                                          })  #
             else:
-                self.report(
-                    'ERROR: Something in run_scfs which I do not recognize: {}'.format(node)
-                )
+                self.report('ERROR: Something in run_scfs which I do not recognize: {}'.format(node))
                 continue
             label = str('calc{}'.format(i))
             #print(label)
@@ -1034,12 +952,9 @@ class fleur_corehole_wc(WorkChain):
             else:
                 calcs.append(calc)
 
-        fermi_energies, bandgaps, atomtypes, all_corelevel, total_energies = extract_results_corehole(
-            calcs
-        )
+        fermi_energies, bandgaps, atomtypes, all_corelevel, total_energies = extract_results_corehole(calcs)
         ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, ref_total_energies = extract_results_corehole(
-            ref_calcs
-        )
+            ref_calcs)
 
         # now calculate binding energies of the coreholes.
         # Differences of total energies
@@ -1101,13 +1016,11 @@ class fleur_corehole_wc(WorkChain):
         outputnode_dict['total_energy_all_units'] = 'eV'
         outputnode_dict['binding_energy'] = self.ctx.bindingenergies
         outputnode_dict['binding_energy_units'] = 'eV'
-        outputnode_dict['weighted_binding_energy'
-                        ] = self.ctx.wbindingenergies  # BE for scaled hole charge 1.0
+        outputnode_dict['weighted_binding_energy'] = self.ctx.wbindingenergies  # BE for scaled hole charge 1.0
         outputnode_dict['weighted_binding_energy_units'] = 'eV'
         outputnode_dict['binding_energy_convention'] = 'negativ'
         outputnode_dict['corehole_type'] = self.ctx.method
-        outputnode_dict['coreholes_calculated'
-                        ] = ''  # on what atom what level basicly description of the other lists
+        outputnode_dict['coreholes_calculated'] = ''  # on what atom what level basicly description of the other lists
         outputnode_dict['coreholes_calculated_details'] = ''  # the dict internally used
         #outputnode_dict['corelevel_energies'] = cl
         #outputnode_dict['reference_corelevel_energies'] = ref_cl
@@ -1139,8 +1052,7 @@ class fleur_corehole_wc(WorkChain):
             #print(calc.get_outgoing().all())
             try:
                 calc_dict = calc.get_outgoing().get_node_by_label(
-                    'output_scf_wc_para'
-                )  #calc.outputs.output_scf_wc_para
+                    'output_scf_wc_para')  #calc.outputs.output_scf_wc_para
             except:
                 print('continue 2')
             outnodedict[label] = calc_dict
@@ -1215,14 +1127,12 @@ def prepare_struc_corehole_wf(
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    new_struc, new_para = break_symmetry(
-        base_supercell,
-        atoms=[],
-        site=[],
-        pos=[(pos[0], pos[1], pos[2])],
-        new_kinds_names=new_kinds_names,
-        parameterdata=para
-    )
+    new_struc, new_para = break_symmetry(base_supercell,
+                                         atoms=[],
+                                         site=[],
+                                         pos=[(pos[0], pos[1], pos[2])],
+                                         new_kinds_names=new_kinds_names,
+                                         parameterdata=para)
     #kinds = new_struc.kinds
     #for kind in kinds:
     #    if kind.name == broke_kn:
@@ -1236,8 +1146,7 @@ def prepare_struc_corehole_wf(
         species_name,  #wf_para_dict['kindname'],
         wf_para_dict['econfig'],
         parameterdata=new_para,
-        species_name=species_name
-    )
+        species_name=species_name)
 
     # return of a wf has to be dictionary of nodes...
     return {'moved_struc': moved_struc, 'hole_para': para}

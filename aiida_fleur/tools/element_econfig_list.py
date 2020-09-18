@@ -1330,8 +1330,8 @@ econfiguration = {
 }
 
 all_econfig = [
-    '1s2', '2s2', '2p6', '3s2', '3p6', '4s2', '3d10', '4p6', '5s2', '4d10', '5p6', '6s2', '4f14',
-    '5d10', '6p6', '7s2', '5f14', '6d10', '7p6', '8s2', '6f14'
+    '1s2', '2s2', '2p6', '3s2', '3p6', '4s2', '3d10', '4p6', '5s2', '4d10', '5p6', '6s2', '4f14', '5d10', '6p6', '7s2',
+    '5f14', '6d10', '7p6', '8s2', '6f14'
 ]
 states_spin = {'s': ['1/2'], 'p': ['1/2', '3/2'], 'd': ['3/2', '5/2'], 'f': ['5/2', '7/2']}
 max_state_occ = {'s': 2., 'p': 6., 'd': 10., 'f': 14.}
@@ -1443,9 +1443,7 @@ def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
                     econfstring_new = '{}{}{} '.format(econfstring_new, base, int(occ))
                 else:
                     max_occ = max_state_occ.get(base[1])
-                    econfstring_new = econfstring_new.split(base)[0] + '{}{} '.format(
-                        base, int(max_occ)
-                    )
+                    econfstring_new = econfstring_new.split(base)[0] + '{}{} '.format(base, int(max_occ))
                     # we assume here that the two states come behind each other, ... rather bad
                     #econfstring_new.replace('{}'.format(base)
             else:

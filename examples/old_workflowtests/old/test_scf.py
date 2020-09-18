@@ -42,8 +42,7 @@ settings = Dict(
         'files_not_copy_remotely': [],
         'commandline_options': ['-wtime', '30'],
         'blaha': ['bla']
-    }
-)
+    })
 
 wf_para = Dict(
     dict={
@@ -55,16 +54,14 @@ wf_para = Dict(
             'num_mpiprocs_per_machine': 12
         },
         'walltime_sec': 10 * 60
-    }
-)
+    })
 
 res = FleurScfWorkChain.run(
     wf_parameters=wf_para,
     structure=s,
     #calc_parameters=parameters,
     inpgen=code,
-    fleur=code2
-)  #, settings=settings)#
+    fleur=code2)  #, settings=settings)#
 '''
 code = Code.get_from_string('inpgen_mac_25_10_2016')
 code2 = Code.get_from_string('fleur_mac_v0_27')

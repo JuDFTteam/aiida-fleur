@@ -44,15 +44,7 @@ fleur_code = Code.get_from_string(fleur_label)
 ### Create wf_parameters (optional) and options
 wf_para = Dict(dict={'fleur_runmax': 4, 'density_criterion': 0.000001, 'serial': False})
 
-options = Dict(
-    dict={
-        'resources': {
-            'num_machines': 1
-        },
-        'queue_name': '',
-        'max_wallclock_seconds': 60 * 60
-    }
-)
+options = Dict(dict={'resources': {'num_machines': 1}, 'queue_name': '', 'max_wallclock_seconds': 60 * 60})
 
 # load a fleurino data object from a scf_wc before
 ################################

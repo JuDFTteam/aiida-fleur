@@ -364,40 +364,32 @@ class FleurinpData(Data):
                     break
             inpfile.close()
             if inp_version_number is None:  # we raise after file closure
-                raise InputValidationError(
-                    'No fleurInputVersion number found '
-                    'in given input file: {}. '
-                    'Please check if this is a valid fleur input file. '
-                    'It can not be validated and I can not use it. '
-                    ''.format(file1)
-                )
+                raise InputValidationError('No fleurInputVersion number found '
+                                           'in given input file: {}. '
+                                           'Please check if this is a valid fleur input file. '
+                                           'It can not be validated and I can not use it. '
+                                           ''.format(file1))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
             if (not self._has_schema) and (self._schema_file_path is None):
-                err_msg = (
-                    'No XML schema file (.xsd) with matching version number {} '
-                    'to the inp.xml file was found. I have looked here: {} '
-                    'and have found only these schema files for Fleur: {}. '
-                    'I need this file to validate your input and to know the structure '
-                    'of the current inp.xml file, sorry.'.format(
-                        inp_version_number, self._search_paths, schemafile_paths
-                    )
-                )
+                err_msg = ('No XML schema file (.xsd) with matching version number {} '
+                           'to the inp.xml file was found. I have looked here: {} '
+                           'and have found only these schema files for Fleur: {}. '
+                           'I need this file to validate your input and to know the structure '
+                           'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
+                                                                        schemafile_paths))
                 raise InputValidationError(err_msg)
             # or ('fleurInputVersion' in self.inp_userchanges): #(not)
             if self._schema_file_path is None:
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
-                    err_msg = (
-                        'No XML schema file (.xsd) with matching version number {} '
-                        'to the inp.xml file was found. I have looked here: {} '
-                        'and have found only these schema files for Fleur: {}. '
-                        'I need this file to validate your input and to know the structure '
-                        'of the current inp.xml file, sorry.'.format(
-                            inp_version_number, self._search_paths, schemafile_paths
-                        )
-                    )
+                    err_msg = ('No XML schema file (.xsd) with matching version number {} '
+                               'to the inp.xml file was found. I have looked here: {} '
+                               'and have found only these schema files for Fleur: {}. '
+                               'I need this file to validate your input and to know the structure '
+                               'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
+                                                                            schemafile_paths))
                 raise InputValidationError(err_msg)
             # set inp dict of Fleurinpdata
             self._set_inp_dict()
@@ -442,8 +434,7 @@ class FleurinpData(Data):
 
         # replace relax.xml by the temp file path
         tree_x_string = etree.tostring(tree_x)
-        tree_x_string = tree_x_string.replace(
-            bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
+        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
         tree_x = etree.fromstring(tree_x_string).getroottree()
 
         # replace XInclude parts to validate against schema
@@ -460,14 +451,9 @@ class FleurinpData(Data):
                 tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
             except etree.XMLSyntaxError as msg:
                 message = msg
-                raise InputValidationError(
-                    'Input file does not validate against the schema: {}'.format(message)
-                )
+                raise InputValidationError('Input file does not validate against the schema: {}'.format(message))
 
-            raise InputValidationError(
-                'Input file is not validated against the schema.'
-                'Reason is unknown'
-            )
+            raise InputValidationError('Input file is not validated against the schema.' 'Reason is unknown')
 
         # convert etree into python dictionary
         root = tree_x.getroot()
@@ -498,10 +484,8 @@ class FleurinpData(Data):
             # has_inpxml = True # does nothing so far
             pass
         else:
-            raise ValidationError(
-                'inp.xml file not in attribute "files". '
-                'FleurinpData needs to have and inp.xml file!'
-            )
+            raise ValidationError('inp.xml file not in attribute "files". '
+                                  'FleurinpData needs to have and inp.xml file!')
 
     def get_fleur_modes(self):
         '''
@@ -521,15 +505,7 @@ class FleurinpData(Data):
         #    'dos': '/fleurInput/output',
         #    'band': '/fleurInput/output',
         #    'jspins': '/fleurInput/calculationSetup/magnetism',
-        fleur_modes = {
-            'jspins': '',
-            'dos': '',
-            'band': '',
-            'ldau': '',
-            'forces': '',
-            'force_theorem': '',
-            'gw': ''
-        }
+        fleur_modes = {'jspins': '', 'dos': '', 'band': '', 'ldau': '', 'forces': '', 'force_theorem': '', 'gw': ''}
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins']
             fleur_modes['dos'] = self.inp_dict['output']['dos']  # 'fleurInput']
@@ -652,11 +628,9 @@ class FleurinpData(Data):
             struc.pbc = [True, True, False]
 
         if cell is None:
-            print(
-                'Could not extract Bravias matrix out of inp.xml. Is the '
-                'Bravias matrix explicitly given? i.e Latnam definition '
-                'not supported.'
-            )
+            print('Could not extract Bravias matrix out of inp.xml. Is the '
+                  'Bravias matrix explicitly given? i.e Latnam definition '
+                  'not supported.')
             return None
 
         # get species for atom kinds
@@ -698,10 +672,7 @@ class FleurinpData(Data):
                             postion_a[i] = float(pos)
                         postion_a[i] = postion_a[i] * BOHR_A
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=postion_a,
-                        symbols=species_dict[current_species][species_attrib_element]
-                    )
+                    struc.append_atom(position=postion_a, symbols=species_dict[current_species][species_attrib_element])
 
             elif group_atom_positions_rel:  # we have relative positions
                 # TODO: check if film or 1D calc, because this is not allowed! I guess
@@ -722,10 +693,8 @@ class FleurinpData(Data):
                     new_abs_pos = rel_to_abs(postion_r, cell)
 
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element]
-                    )
+                    struc.append_atom(position=new_abs_pos,
+                                      symbols=species_dict[current_species][species_attrib_element])
 
             elif group_atom_positions_film:  # Do we support mixture always, or only in film case?
                 # either support or throw error
@@ -746,16 +715,11 @@ class FleurinpData(Data):
                     postion_f[2] = postion_f[2] * BOHR_A
                     new_abs_pos = rel_to_abs_f(postion_f, cell)
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element]
-                    )
+                    struc.append_atom(position=new_abs_pos,
+                                      symbols=species_dict[current_species][species_attrib_element])
             else:
                 # TODO throw error
-                print(
-                    'I should never get here, 1D not supported yet, '
-                    'I only know relPos, absPos, filmPos'
-                )
+                print('I should never get here, 1D not supported yet, ' 'I only know relPos, absPos, filmPos')
                 # TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(self, label='self.structure', link_type=LinkType.CREATE)
@@ -881,11 +845,9 @@ class FleurinpData(Data):
             pbc1 = [True, True, False]
 
         if cell is None:
-            print(
-                'Could not extract Bravias matrix out of inp.xml. Is the '
-                'Bravias matrix explicitly given? i.e Latnam definition '
-                'not supported.'
-            )
+            print('Could not extract Bravias matrix out of inp.xml. Is the '
+                  'Bravias matrix explicitly given? i.e Latnam definition '
+                  'not supported.')
             return None
         # get kpoints only works if kpointlist in inp.xml
         kpoints = root.xpath(kpointlist_xpath + kpoint_tag)
@@ -1013,9 +975,7 @@ class FleurinpData(Data):
             if fleurinp._schema_file_path:  # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(
-                    schema=xmlschema, attribute_defaults=True, remove_blank_text=True
-                )
+                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True, remove_blank_text=True)
                 tree = etree.parse(inpxmlfile, parser)
             else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
@@ -1038,9 +998,7 @@ class FleurinpData(Data):
             totalw = totalw + weight
         #weightscale = totalw
 
-        new_kpo = etree.Element(
-            'kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts)
-        )
+        new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
         for i, kpos in enumerate(kpoint_list[0]):
             new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
             new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
@@ -1097,11 +1055,9 @@ class FleurinpData(Data):
         try:
             return_value = root.xpath(xpath)
         except etree.XPathEvalError:
-            raise InputValidationError(
-                'There was a XpathEvalError on the xpath: {} \n Either it does '
-                'not exist, or something is wrong with the expression.'
-                ''.format(xpath)
-            )
+            raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
+                                       'not exist, or something is wrong with the expression.'
+                                       ''.format(xpath))
             return []
         if len(return_value) == 1:
             return return_value
