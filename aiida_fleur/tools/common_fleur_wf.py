@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
@@ -61,8 +60,9 @@ def is_code(code):
         return None
 
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None,
-                     serial=False):
+def get_inputs_fleur(
+    code, remote, fleurinp, options, label='', description='', settings=None, serial=False
+):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -125,8 +125,9 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, label='', description='',
-                      params=None, **kwargs):
+def get_inputs_inpgen(
+    structure, inpgencode, options, label='', description='', params=None, **kwargs
+):
     '''
     Assembles the input dictionary for Fleur Calculation.
 
@@ -195,13 +196,18 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
 
     # TODO memory has to be done better...
     mem_per_node = 120000  # max recommend 126000 MB on claix jara-clx nodes
-    mem_per_process = mem_per_node/24
+    mem_per_process = mem_per_node / 24
     if not extras:
         # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {'lsf': ('#BSUB -P {} \n#BSUB -M {}  \n'
-                          '#BSUB -a intelmpi'.format(project, mem_per_process)),
-                  'torque': '',
-                  'direct': ''}
+        extras = {
+            'lsf':
+            ('#BSUB -P {} \n#BSUB -M {}  \n'
+             '#BSUB -a intelmpi'.format(project, mem_per_process)),
+            'torque':
+            '',
+            'direct':
+            ''
+        }
 
     # get the scheduler type from the computer the code is run on.
     com = code.computer
@@ -211,7 +217,7 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
     default_per_machine = com.get_default_mpiprocs_per_machine()
     if not default_per_machine:
         default_per_machine = 24  # claix, lsf does can not have default mpiprocs... #TODO this better
-    tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine*nnodes)
+    tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine * nnodes)
 
     if scheduler_type == 'lsf':
         new_resources = {'tot_num_mpiprocs': tot_num_mpiprocs}  # only this needs to be given
@@ -241,6 +247,7 @@ def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
 # print(get_scheduler_extras(code2, {'num_machines' : 2}))
 # print(get_scheduler_extras(code4, {'num_machines' : 1}))
 
+
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     """
     Pass a code node and an expected code (plugin) type. Check that the
@@ -267,17 +274,19 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     except ValueError:
         from aiida.orm.querybuilder import QueryBuilder
         qb = QueryBuilder()
-        qb.append(Code,
-                  filters={'attributes.input_plugin':
-                           {'==': expected_code_type}},
-                  project='*')
+        qb.append(
+            Code, filters={'attributes.input_plugin': {
+                '==': expected_code_type
+            }}, project='*'
+        )
 
-        valid_code_labels = ["{}@{}".format(c.label, c.computer.name)
-                             for [c] in qb.all()]
+        valid_code_labels = ["{}@{}".format(c.label, c.computer.name) for [c] in qb.all()]
 
         if valid_code_labels:
-            msg = ("Given Code node is not of expected code type.\n"
-                   "Valid labels for a {} executable are:\n".format(expected_code_type))
+            msg = (
+                "Given Code node is not of expected code type.\n"
+                "Valid labels for a {} executable are:\n".format(expected_code_type)
+            )
             msg += "\n".join("* {}".format(l) for l in valid_code_labels)
 
             if use_exceptions:
@@ -286,9 +295,11 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                 print(msg)  # , file=sys.stderr)
                 sys.exit(1)
         else:
-            msg = ("Code not valid, and no valid codes for {}.\n"
-                   "Configure at least one first using\n"
-                   "    verdi code setup".format(expected_code_type))
+            msg = (
+                "Code not valid, and no valid codes for {}.\n"
+                "Configure at least one first using\n"
+                "    verdi code setup".format(expected_code_type)
+            )
             if use_exceptions:
                 raise ValueError(msg)
             else:
@@ -313,6 +324,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     kp.set_kpoints_mesh_from_density(density)
     mesh = kp.get_kpoints_mesh()
     return mesh, kp
+
 
 # test
 # print(get_kpoints_mesh_from_kdensity(load_node(structure(120)), 0.1))
@@ -421,19 +433,32 @@ def performance_extract_calcs(calcs):
 
     Note: Is not the fastest for many calculations > 1000.
     """
-    data_dict = {u'n_symmetries': [], u'n_spin_components': [],
-                 u'n_kpoints': [], u'n_iterations': [],
-                 u'walltime_sec': [], u'walltime_sec_per_it': [],
-                 u'n_iterations_total': [],
-                 u'density_distance': [], u'computer': [],
-                 u'n_atoms': [], u'kmax': [],
-                 u'cost': [], u'costkonstant': [],
-                 u'walltime_sec_cor': [], u'total_cost': [],
-                 u'fermi_energy': [], u'bandgap': [],
-                 u'energy': [], u'force_largest': [],
-                 u'ncores': [], u'pk': [],
-                 u'uuid': [], u'serial': [],
-                 u'resources': []}
+    data_dict = {
+        u'n_symmetries': [],
+        u'n_spin_components': [],
+        u'n_kpoints': [],
+        u'n_iterations': [],
+        u'walltime_sec': [],
+        u'walltime_sec_per_it': [],
+        u'n_iterations_total': [],
+        u'density_distance': [],
+        u'computer': [],
+        u'n_atoms': [],
+        u'kmax': [],
+        u'cost': [],
+        u'costkonstant': [],
+        u'walltime_sec_cor': [],
+        u'total_cost': [],
+        u'fermi_energy': [],
+        u'bandgap': [],
+        u'energy': [],
+        u'force_largest': [],
+        u'ncores': [],
+        u'pk': [],
+        u'uuid': [],
+        u'serial': [],
+        u'resources': []
+    }
     count = 0
     for calc in calcs:
         if not isinstance(calc, Node):
@@ -491,7 +516,7 @@ def performance_extract_calcs(calcs):
         else:
             walltime_new = walltime
 
-        walltime_periteration = walltime_new/niter
+        walltime_periteration = walltime_new / niter
 
         data_dict['walltime_sec'].append(walltime)
         data_dict['walltime_sec_cor'].append(walltime_new)
@@ -537,7 +562,7 @@ def get_mpi_proc(resources):
     total_proc = resources.get('tot_num_mpiprocs', 0)
     if not total_proc:
         if nmachines:
-            total_proc = nmachines*resources.get('default_mpiprocs_per_machine', 12)
+            total_proc = nmachines * resources.get('default_mpiprocs_per_machine', 12)
         else:
             total_proc = resources.get('tot_num_mpiprocs', 24)
 
@@ -555,12 +580,20 @@ def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
 
 
 def cost_ratio(total_costs, walltime_sec, ncores):
-    ratio = total_costs/(walltime_sec*ncores)
+    ratio = total_costs / (walltime_sec * ncores)
     return ratio
 
 
-def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
-                          mpi_omp_ratio, fleurinpData=None, kpts=None, sacrifice_level=0.9):
+def optimize_calc_options(
+    nodes,
+    mpi_per_node,
+    omp_per_mpi,
+    use_omp,
+    mpi_omp_ratio,
+    fleurinpData=None,
+    kpts=None,
+    sacrifice_level=0.9
+):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -606,7 +639,7 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
     possible_nodes = [x for x in divisors_kpts if x <= nodes]
     suggestions = []
     for n_n in possible_nodes:
-        advise_cpus = [x for x in divisors(kpts//n_n) if x <= cpus_per_node]
+        advise_cpus = [x for x in divisors(kpts // n_n) if x <= cpus_per_node]
         for advised_cpu_per_node in advise_cpus:
             suggestions.append((n_n, advised_cpu_per_node))
 
@@ -635,34 +668,47 @@ def optimize_calc_options(nodes, mpi_per_node, omp_per_mpi, use_omp,
         '''
         if use_omp:
             return (abs(suggestion[1] % 2 - 1), -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio))
-        return (suggestion[0]*suggestion[1], abs(suggestion[1] % 2 - 1), -suggestion[0])
+        return (suggestion[0] * suggestion[1], abs(suggestion[1] % 2 - 1), -suggestion[0])
 
     best_suggestion = max(top_suggestions, key=best_criterion)
 
     message = ''
 
-    if float(best_suggestion[1] * best_suggestion[2])/cpus_per_node < 0.6:
-        message = ('WARNING: Changed the number of MPIs per node from {} to {} and OMP per MPI '
-                   'from {} to {}.'
-                   'Changed the number of nodes from {} to {}. '
-                   'Computational setup, needed for a given number k-points ({})'
-                   ' provides less then 60% of node load.'
-                   ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
-                             nodes, best_suggestion[0], kpts))
+    if float(best_suggestion[1] * best_suggestion[2]) / cpus_per_node < 0.6:
+        message = (
+            'WARNING: Changed the number of MPIs per node from {} to {} and OMP per MPI '
+            'from {} to {}.'
+            'Changed the number of nodes from {} to {}. '
+            'Computational setup, needed for a given number k-points ({})'
+            ' provides less then 60% of node load.'
+            ''.format(
+                mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2], nodes,
+                best_suggestion[0], kpts
+            )
+        )
         raise ValueError(message)
     elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
-            message = ('WARNING: Changed the number of nodes from {} to {}'
-                       ''.format(nodes, best_suggestion[0]))
+            message = (
+                'WARNING: Changed the number of nodes from {} to {}'
+                ''.format(nodes, best_suggestion[0])
+            )
         else:
-            message = ('Computational setup is perfect! Nodes: {}, MPIs per node {}, OMP per MPI '
-                       '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1],
-                                                             best_suggestion[2], kpts))
+            message = (
+                'Computational setup is perfect! Nodes: {}, MPIs per node {}, OMP per MPI '
+                '{}. Number of k-points is {}'.format(
+                    best_suggestion[0], best_suggestion[1], best_suggestion[2], kpts
+                )
+            )
     else:
-        message = ('WARNING: Changed the number of MPIs per node from {} to {} and OMP from {} to {}'
-                   '. Changed the number of nodes from {} to {}. Number of k-points is {}.'
-                   ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2],
-                             nodes, best_suggestion[0], kpts))
+        message = (
+            'WARNING: Changed the number of MPIs per node from {} to {} and OMP from {} to {}'
+            '. Changed the number of nodes from {} to {}. Number of k-points is {}.'
+            ''.format(
+                mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2], nodes,
+                best_suggestion[0], kpts
+            )
+        )
 
     return int(best_suggestion[0]), int(best_suggestion[1]), int(best_suggestion[2]), message
 

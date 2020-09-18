@@ -60,16 +60,17 @@ class FleurEosWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurEosWorkChain, cls).define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf',
-                           exclude=('structure', 'remote_data', 'fleurinp', ))
+        spec.expose_inputs(
+            FleurScfWorkChain, namespace='scf', exclude=(
+                'structure',
+                'remote_data',
+                'fleurinp',
+            )
+        )
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("structure", valid_type=StructureData, required=True)
 
-        spec.outline(
-            cls.start,
-            cls.structures,
-            cls.converge_scf,
-            cls.return_results)
+        spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
 
         spec.output('output_eos_wc_para', valid_type=Dict)
         spec.output('output_eos_wc_structure', valid_type=StructureData)

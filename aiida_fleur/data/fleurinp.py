@@ -364,11 +364,13 @@ class FleurinpData(Data):
                     break
             inpfile.close()
             if inp_version_number is None:  # we raise after file closure
-                raise InputValidationError("No fleurInputVersion number found "
-                                           "in given input file: {}. "
-                                           "Please check if this is a valid fleur input file. "
-                                           "It can not be validated and I can not use it. "
-                                           "".format(file1))
+                raise InputValidationError(
+                    "No fleurInputVersion number found "
+                    "in given input file: {}. "
+                    "Please check if this is a valid fleur input file. "
+                    "It can not be validated and I can not use it. "
+                    "".format(file1)
+                )
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
@@ -455,10 +457,13 @@ class FleurinpData(Data):
             except etree.XMLSyntaxError as msg:
                 message = msg
                 raise InputValidationError(
-                    "Input file does not validate against the schema: {}".format(message))
+                    "Input file does not validate against the schema: {}".format(message)
+                )
 
-            raise InputValidationError("Input file is not validated against the schema."
-                                       "Reason is unknown")
+            raise InputValidationError(
+                "Input file is not validated against the schema."
+                "Reason is unknown"
+            )
 
         # convert etree into python dictionary
         root = tree_x.getroot()
@@ -489,8 +494,10 @@ class FleurinpData(Data):
             # has_inpxml = True # does nothing so far
             pass
         else:
-            raise ValidationError('inp.xml file not in attribute "files". '
-                                  'FleurinpData needs to have and inp.xml file!')
+            raise ValidationError(
+                'inp.xml file not in attribute "files". '
+                'FleurinpData needs to have and inp.xml file!'
+            )
 
     def get_fleur_modes(self):
         '''
@@ -741,8 +748,10 @@ class FleurinpData(Data):
                     )
             else:
                 # TODO throw error
-                print('I should never get here, 1D not supported yet, '
-                      'I only know relPos, absPos, filmPos')
+                print(
+                    'I should never get here, 1D not supported yet, '
+                    'I only know relPos, absPos, filmPos'
+                )
                 # TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(self, label='self.structure', link_type=LinkType.CREATE)

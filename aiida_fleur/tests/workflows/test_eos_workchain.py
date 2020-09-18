@@ -34,8 +34,9 @@ class Test_FleurEosWorkChain:
     Regression tests for the FleurEosWorkChain
     """
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_eos_structure_Si(self, run_with_cache, fleur_local_code, inpgen_local_code,
-generate_structure2, clear_spec):
+    def test_fleur_eos_structure_Si(
+        self, run_with_cache, fleur_local_code, inpgen_local_code, generate_structure2, clear_spec
+    ):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence
@@ -82,21 +83,20 @@ generate_structure2, clear_spec):
         structure.append_atom(position=(0.5 * a, 0.0 * a, 0.5 * a), symbols='Fe', name='Fe31')
         structure.append_atom(position=(0.0 * a, 0.5 * a, 0.5 * a), symbols='Fe', name='Fe43')
         calc_parameters = {
-                'comp': {
-                    'kmax': 3.4,
-                },
-                'atom': {
-                    'element': 'Fe',
-                    'bmu': 2.5,
-                    'rmt': 2.15
-                },
-                'kpt': {
-                    'div1': 4,
-                    'div2': 4,
-                    'div3': 4
-                }
+            'comp': {
+                'kmax': 3.4,
+            },
+            'atom': {
+                'element': 'Fe',
+                'bmu': 2.5,
+                'rmt': 2.15
+            },
+            'kpt': {
+                'div1': 4,
+                'div2': 4,
+                'div3': 4
             }
-
+        }
 
         wf_para_scf = {
             'fleur_runmax': 2,
@@ -106,7 +106,6 @@ generate_structure2, clear_spec):
             'mode': 'density'
         }
 
-
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
 
@@ -114,12 +113,15 @@ generate_structure2, clear_spec):
         builder = FleurEosWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur FleurEosWorkChain test for Si bulk'
         builder.metadata.label = 'FleurEosWorkChain_test_Si_bulk'
-        builder.structure = structure.store()#generate_structure2().store()
+        builder.structure = structure.store()  #generate_structure2().store()
         builder.wf_parameters = Dict(dict=wf_param).store()
-        builder.scf = {'fleur' : FleurCode, 'inpgen': InpgenCode,
-                      'options' : Dict(dict=options).store(),
-                      'wf_parameters' : Dict(dict=wf_para_scf).store(),
-                      'calc_parameters' : Dict(dict=calc_parameters).store()}
+        builder.scf = {
+            'fleur': FleurCode,
+            'inpgen': InpgenCode,
+            'options': Dict(dict=options).store(),
+            'wf_parameters': Dict(dict=wf_para_scf).store(),
+            'calc_parameters': Dict(dict=calc_parameters).store()
+        }
         print(builder)
         # now run calculation
         out, node = run_with_cache(builder)
@@ -142,7 +144,6 @@ generate_structure2, clear_spec):
         assert abs(outpara.get('scaling_gs') - 0.99268546558578) < 10**14
         assert outpara.get('warnings') == ['Groundstate volume was not in the scaling range.']
         assert outpara.get('info') == ['Consider rerunning around point 0.9926854655857787']
-
 
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_eos_validation_wrong_inputs(

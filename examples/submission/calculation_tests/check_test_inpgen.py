@@ -17,11 +17,11 @@ except (KeyError, IndexError):
 
 calc = load_node(pk)
 if calc.get_state() == calc_states.SUBMISSIONFAILED:
-    raise ValueError("The calculation could not be submitted (failed)") 
+    raise ValueError("The calculation could not be submitted (failed)")
 elif calc.get_state() == calc_states.FAILED:
     raise ValueError("The calculation did fail")
 elif calc.get_state() != calc_states.FINISHED:
-    raise ValueError("The calculation did not complete")   
+    raise ValueError("The calculation did not complete")
 
 print("Test: {}".format(calc.label))
 print("Description: {}".format(calc.description))
@@ -42,8 +42,4 @@ print("Output nodes produced: {}".format(calc.get_outputs()))
 #    for warning in calc.res.warnings:
 #        print "- {}".format(warning)
 #if 'res
-print("Log messages: {}".format(get_log_messages(calc)))        
-  
-
-
-
+print("Log messages: {}".format(get_log_messages(calc)))

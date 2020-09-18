@@ -5,7 +5,7 @@ from aiida import load_dbenv, is_dbenv_loaded
 from six.moves import range
 if not is_dbenv_loaded():
     load_dbenv()
-import sys,os
+import sys, os
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError, XPathEvalError
 from pprint import pprint
@@ -40,7 +40,6 @@ if not calcs_pks:
         pass
 #####
 
-
 # check if calculation pks belong to successful fleur calculations
 for pk in calcs_pks:
     calc = load_node(pk)
@@ -49,8 +48,7 @@ for pk in calcs_pks:
     if calc.get_state() != 'FINISHED':
         raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
-
-parser_info = {'parser_warnings': [], 'unparsed' : []}
+parser_info = {'parser_warnings': [], 'unparsed': []}
 
 
 def extrac_corelevels(outxml):
@@ -78,32 +76,33 @@ def extrac_corelevels(outxml):
     parsed_data = {}
     outfile_broken = False
     parse_xml = True
-    parser = etree.XMLParser(recover=False)#, remove_blank_text=True)
+    parser = etree.XMLParser(recover=False)  #, remove_blank_text=True)
 
     try:
         tree = etree.parse(outxmlfile, parser)
     except etree.XMLSyntaxError:
         outfile_broken = True
-    #print 'broken xml'
+        #print 'broken xml'
         parser_info['parser_warnings'].append('The out.xml file is broken I try to repair it.')
 
     if outfile_broken:
         #repair xmlfile and try to parse what is possible.
-        parser = etree.XMLParser(recover=True)#, remove_blank_text=True)
+        parser = etree.XMLParser(recover=True)  #, remove_blank_text=True)
         try:
             tree = etree.parse(outxmlfile, parser)
         except etree.XMLSyntaxError:
             print('here')
-            parser_info['parser_warnings'].append('Skipping the parsing of the xml file. Repairing was not possible.')
+            parser_info['parser_warnings'].append(
+                'Skipping the parsing of the xml file. Repairing was not possible.'
+            )
             parse_xml = False
 
     #if parse_xml:
     root = tree.getroot()
 
-
     # 2. get all species
     # get element, name, coreStates
-    species_nodes = eval_xpath(root, '/fleurOutput/atomSpecies')#/fleurinp/
+    species_nodes = eval_xpath(root, '/fleurOutput/atomSpecies')  #/fleurinp/
     species_atts = {}
     species_names = []
     for species in species_nodes:
@@ -113,20 +112,27 @@ def extrac_corelevels(outxml):
         species_element = species.get('element')
         species_atomicnumber = species.get('atomicNumber')
         species_magMom = species.get('magMom')
-        species_atts[species_name] = { 'name' : species_name, 'corestates' : species_corestates, 'element': species_element, 'atomgroups' : [], 'mag_mom' : species_magMom, 'atomic_number' : species_atomicnumber}
+        species_atts[species_name] = {
+            'name': species_name,
+            'corestates': species_corestates,
+            'element': species_element,
+            'atomgroups': [],
+            'mag_mom': species_magMom,
+            'atomic_number': species_atomicnumber
+        }
         species_names.append(species_name)
         #species_atts.append(species_att)
     nspecies = len(species_nodes)
 
     #3. get number of atom types and their species
     atomtypes = []
-    atomgroup_nodes = eval_xpath(root, '/fleurOutput/atomGroups')#/fleurinp/
+    atomgroup_nodes = eval_xpath(root, '/fleurOutput/atomGroups')  #/fleurinp/
     for atomgroup in atomgroup_nodes:
         types_dict = {}
         group_species = atomgroup.get('species')
         if group_species in species_names:
             species_atts[group_species]['atomgroups'].append(atomgroup)
-        types_dict = {'species' : group_species, 'coresetup': '', 'corelevels' : []}
+        types_dict = {'species': group_species, 'coresetup': '', 'corelevels': []}
         atomtypes.append(types_dict)
 
     natomgroup = len(atomgroup_nodes)
@@ -159,13 +165,14 @@ def extrac_corelevels(outxml):
             #print 'here'
             #print corestatescard
             corelv = parse_state_card(corestatescard, iteration_to_parse)
-            corelevels[int(corelv['atomtype'])-1].append(corelv)
+            corelevels[int(corelv['atomtype']) - 1].append(corelv)
             #corelevels.append(corelv)
     print(parser_info)
     #pprint(corelevels)
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
     #corelevels[atomtypeNumber][spin]['corestates'][corestate number][attribute]
     return corelevels
+
 
 def parse_state_card(corestateNode, iteration_node):
     """
@@ -221,14 +228,21 @@ def parse_state_card(corestateNode, iteration_node):
         j_state = get_xml_attribute(corestate, j_name)
         energy, suc = convert_to_float(get_xml_attribute(corestate, energy_name))
         weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name))
-        state_dict = {'n' : n_state, 'l' : l_state, 'j' : j_state, 'energy' : energy, 'weight' : weight}
+        state_dict = {'n': n_state, 'l': l_state, 'j': j_state, 'energy': energy, 'weight': weight}
         states.append(state_dict)
 
     #pprint(states)
 
-    core_states = {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
+    core_states = {
+        'eigenvalue_sum': eigenvalueSum,
+        'corestates': states,
+        'spin': spin,
+        'kin_energy': kinEnergy,
+        'atomtype': atomtype
+    }
     #pprint(core_states)
     return core_states
+
 
 def eval_xpath(node, xpath):
     """
@@ -240,14 +254,17 @@ def eval_xpath(node, xpath):
     try:
         return_value = node.xpath(xpath)
     except XPathEvalError:
-        parser_info['parser_warnings'].append('There was a XpathEvalError on the xpath: {} \n'
-            'Either it does not exist, or something is wrong with the expression.'.format(xpath))
+        parser_info['parser_warnings'].append(
+            'There was a XpathEvalError on the xpath: {} \n'
+            'Either it does not exist, or something is wrong with the expression.'.format(xpath)
+        )
         # TODO maybe raise an error again to catch in upper routine, to know where exactly
         return []
     if len(return_value) == 1:
         return return_value[0]
     else:
         return return_value
+
 
 def convert_to_float(value_string):
     """
@@ -261,12 +278,17 @@ def convert_to_float(value_string):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, TypeError'.format(value_string))
+        parser_info['parser_warnings'].append(
+            'Could not convert: "{}" to float, TypeError'.format(value_string)
+        )
         return value_string, False
     except ValueError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
+        parser_info['parser_warnings'].append(
+            'Could not convert: "{}" to float, ValueError'.format(value_string)
+        )
         return value_string, False
     return value, True
+
 
 def get_xml_attribute(node, attributename):
     """
@@ -281,29 +303,36 @@ def get_xml_attribute(node, attributename):
         if attrib_value:
             return attrib_value
         else:
-            parser_info['parser_warnings'].append('Tried to get attribute: "{}" from element {}.\n '
-                   'I recieved "{}", maybe the attribute does not exist'.format(attributename, node, attrib_value))
+            parser_info['parser_warnings'].append(
+                'Tried to get attribute: "{}" from element {}.\n '
+                'I recieved "{}", maybe the attribute does not exist'.format(
+                    attributename, node, attrib_value
+                )
+            )
             return None
-    else: # something doesn't work here some nodes get through here
-        parser_info['parser_warnings'].append('Can not get attributename: "{}" from node "{}", because node is not an element of etree.'.format(attributename,node))
+    else:  # something doesn't work here some nodes get through here
+        parser_info['parser_warnings'].append(
+            'Can not get attributename: "{}" from node "{}", because node is not an element of etree.'
+            .format(attributename, node)
+        )
         return None
 
 
-
 ### call
-test_outxmlfiles = ['./out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml', './test_outxml/outHg.xml',  './test_outxml/outO.xml']
+test_outxmlfiles = [
+    './out.xml', './test_outxml/outCuF.xml', './test_outxml/outFe.xml', './test_outxml/outHg.xml',
+    './test_outxml/outO.xml'
+]
 outxmlfile = test_outxmlfiles[2]
 
 corelevels = extrac_corelevels(outxmlfile)
-for i in range(0,len(corelevels[0][1]['corestates'])):
+for i in range(0, len(corelevels[0][1]['corestates'])):
     print(corelevels[0][1]['corestates'][i]['energy'])
-
 
 for calc in calcs_pks:
     pass
     # get out.xml file of calculation
     outxml = load_node(pk).out.retrieved.folder.get_abs_path('out.xml')
     extrac_corelevels(outxml)
-
 
 print(("--- %s seconds ---" % (time.time() - start_time)))

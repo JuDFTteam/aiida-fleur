@@ -25,7 +25,7 @@ from aiida.workflows2.run import async, run
 
 ParameterData = DataFactory('parameter')
 
-W_bcc_id = 24513#24423
+W_bcc_id = 24513  #24423
 W_bcc_id2 = 24422
 W_fcc_id = 24
 
@@ -35,7 +35,7 @@ print('cell: {}\n'.format(W_bcc.cell))
 print('sites: {}\n'.format(W_bcc.sites))
 
 # create a Parameternode or load one from the DB
-W_para_id = 24507#without soc soc:24424
+W_para_id = 24507  #without soc soc:24424
 W_para = load_node(W_para_id)
 
 print('ParamterNode used:')
@@ -49,10 +49,16 @@ computer_name = 'local_mac'
 codename2 = 'fleur_mac_v0_27'
 #codename2 = 'fleur_iff003_v0_27@iff003'
 #codename2 = 'fleur_MPI_iff003_v0_27@iff003'
-points = 3#9
+points = 3  #9
 step = 0.002
 guess = 1.01
-wf_dict = {'fleur_runmax' : 2, 'density_criterion' : 0.0000001, 'points' : points, 'step' : step, 'guess' : guess}
+wf_dict = {
+    'fleur_runmax': 2,
+    'density_criterion': 0.0000001,
+    'points': points,
+    'step': step,
+    'guess': guess
+}
 ###############################
 
 code = Code.get_from_string(codename)

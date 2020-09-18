@@ -3,8 +3,10 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__copyright__ = (
+    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
+    "IAS-1/PGI-1, Germany. All rights reserved."
+)
 __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
@@ -25,7 +27,6 @@ run_in_serial_mode = False
 
 ################################################################
 
-
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 FleurinpData = DataFactory('fleur.fleurinp')
@@ -38,8 +39,7 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either "
-                          "--send or --dont-send"), file=sys.stderr)
+    print(("The first parameter can only be either " "--send or --dont-send"), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -59,7 +59,7 @@ code = test_and_get_code(codename, expected_code_type='fleur.fleur')
 # get where tests folder is, then relative path
 #inpxmlfile = '/usr/users/iff_th1/broeder/aiida/github/aiida-fleur/tests/inp_xml_files/W/inp.xml'
 inpxmlfile = '/Users/broeder/aiida/github/aiida-fleur/examples/inp_xml_files/W/inp.xml'
-fleurinp = FleurinpData(files = [inpxmlfile])
+fleurinp = FleurinpData(files=[inpxmlfile])
 
 ## For remote codes, it is not necessary to manually set the computer,
 ## since it is set automatically by new_calc
@@ -69,7 +69,7 @@ fleurinp = FleurinpData(files = [inpxmlfile])
 calc = code.new_calc()
 calc.label = "Test Fleur fleur_MPI"
 calc.description = "Test calculation of the Fleur code"
-calc.set_max_wallclock_seconds(10*60)  # 5 min
+calc.set_max_wallclock_seconds(10 * 60)  # 5 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
 #calc.set_resources({"num_machines": 1})
@@ -91,20 +91,24 @@ calc.use_fleurinpdata(fleurinp)
 if settings is not None:
     calc.use_settings(settings)
 
-
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print("Test_submit for calculation (uuid='{}')".format(
-        calc.uuid))
-    print("Submit file in {}".format(os.path.join(
-        os.path.relpath(subfolder.abspath),
-        script_filename
-    )))
+    print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
+    print(
+        "Submit file in {}".format(
+            os.path.join(os.path.relpath(subfolder.abspath), script_filename)
+        )
+    )
 else:
     calc.store_all()
-    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk))
+    print(
+        "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
+            calc.uuid, calc.dbnode.pk
+        )
+    )
     calc.submit()
-    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid, calc.dbnode.pk))
-
+    print(
+        "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
+            calc.uuid, calc.dbnode.pk
+        )
+    )

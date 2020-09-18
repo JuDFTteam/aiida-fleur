@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Input plug-in for the FLEUR input generator 'inpgen'.
 The input generator for the Fleur code is a preprocessor
@@ -52,8 +51,7 @@ class FleurinputgenCalculation(CalcJob):
     _ERROR_FILE_NAME = 'out.error'
     _STRUCT_FILE_NAME = 'struct.xsf'
 
-    _settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list',
-                      'cmdline']
+    _settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline']
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -63,26 +61,26 @@ class FleurinputgenCalculation(CalcJob):
     _automatic_namelists = {}
 
     # Specify here what namelist and parameters the inpgen takes
-    _possible_namelists = ['title', 'input', 'lattice', 'gen', 'shift', 'factor', 'qss',
-                           'soc', 'atom', 'comp', 'exco', 'film', 'kpt', 'end']
+    _possible_namelists = [
+        'title', 'input', 'lattice', 'gen', 'shift', 'factor', 'qss', 'soc', 'atom', 'comp', 'exco',
+        'film', 'kpt', 'end'
+    ]
     # this order is important!
-    _possible_params = {'input': ['film', 'cartesian', 'cal_symm', 'checkinp',
-                                  'symor', 'oldfleur'],
-                        'lattice': ['latsys', 'a0', 'a', 'b', 'c', 'alpha',
-                                    'beta', 'gamma'],
-                        'atom': ['id', 'z', 'rmt', 'dx', 'jri', 'lmax',
-                                 'lnonsph', 'ncst', 'econfig', 'bmu', 'lo',
-                                 'element', 'name'],
-                        'comp': ['jspins', 'frcor', 'ctail', 'kcrel', 'gmax',
-                                 'gmaxxc', 'kmax'],
-                        'exco': ['xctyp', 'relxc'],
-                        'film': ['dvac', 'dtild'],
-                        'soc': ['theta', 'phi'],
-                        'qss': ['x', 'y', 'z'],
-                        'kpt': ['nkpt', 'kpts', 'div1', 'div2', 'div3',
-                                'tkb', 'tria'],
-                        'title': {}
-                        }
+    _possible_params = {
+        'input': ['film', 'cartesian', 'cal_symm', 'checkinp', 'symor', 'oldfleur'],
+        'lattice': ['latsys', 'a0', 'a', 'b', 'c', 'alpha', 'beta', 'gamma'],
+        'atom': [
+            'id', 'z', 'rmt', 'dx', 'jri', 'lmax', 'lnonsph', 'ncst', 'econfig', 'bmu', 'lo',
+            'element', 'name'
+        ],
+        'comp': ['jspins', 'frcor', 'ctail', 'kcrel', 'gmax', 'gmaxxc', 'kmax'],
+        'exco': ['xctyp', 'relxc'],
+        'film': ['dvac', 'dtild'],
+        'soc': ['theta', 'phi'],
+        'qss': ['x', 'y', 'z'],
+        'kpt': ['nkpt', 'kpts', 'div1', 'div2', 'div3', 'tkb', 'tria'],
+        'title': {}
+    }
 
     # Keywords that cannot be set
     # TODO: To specify what combinations are not allowed together,
@@ -104,24 +102,38 @@ class FleurinputgenCalculation(CalcJob):
     def define(cls, spec):
         super(FleurinputgenCalculation, cls).define(spec)
 
-        spec.input('metadata.options.input_filename', valid_type=six.string_types,
-                   default=cls._INPUT_FILE)
-        spec.input('metadata.options.output_filename', valid_type=six.string_types,
-                   default=cls._INPXML_FILE_NAME)
-        spec.input('structure', valid_type=StructureData,
-                   help="Choose the input structure to use")
-        spec.input('parameters', valid_type=Dict, required=False,
-                   help="Use a node that specifies the input parameters "
-                        "for the namelists")
-        spec.input('settings', valid_type=Dict, required=False,
-                   help="This parameter data node is used to specify for some "
-                        "advanced features how the plugin behaves. You can add files"
-                        "the retrieve list, or add command line switches, "
-                        "for all available features here check the documentation.")
+        spec.input(
+            'metadata.options.input_filename', valid_type=six.string_types, default=cls._INPUT_FILE
+        )
+        spec.input(
+            'metadata.options.output_filename',
+            valid_type=six.string_types,
+            default=cls._INPXML_FILE_NAME
+        )
+        spec.input('structure', valid_type=StructureData, help="Choose the input structure to use")
+        spec.input(
+            'parameters',
+            valid_type=Dict,
+            required=False,
+            help="Use a node that specifies the input parameters "
+            "for the namelists"
+        )
+        spec.input(
+            'settings',
+            valid_type=Dict,
+            required=False,
+            help="This parameter data node is used to specify for some "
+            "advanced features how the plugin behaves. You can add files"
+            "the retrieve list, or add command line switches, "
+            "for all available features here check the documentation."
+        )
 
         # parser
-        spec.input('metadata.options.parser_name', valid_type=six.string_types,
-                   default='fleur.fleurinpgenparser')
+        spec.input(
+            'metadata.options.parser_name',
+            valid_type=six.string_types,
+            default='fleur.fleurinpgenparser'
+        )
 
         # declaration of outputs of the calclation
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
@@ -133,20 +145,27 @@ class FleurinputgenCalculation(CalcJob):
         #                message='Fleur lattice needs atom positions as input.')
         # spec.exit_code(254, 'ERROR_INPUT_PARAMS_LEFTOVER',
         #                message='Excessive input parameters were specified.')
-        spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER',
-                       message='No retrieved folder found.')
-        spec.exit_code(301, 'ERROR_OPENING_OUTPUTS',
-                       message='One of the output files can not be opened.')
-        spec.exit_code(306, 'ERROR_NO_INPXML',
-                       message='XML input file was not found.')
-        spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES',
-                       message='Some required files were not retrieved.')
-        spec.exit_code(308, 'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
-                       message=('During parsing: FleurinpData could not be initialized, see log. '
-                                'Maybe no Schemafile was found or the Fleurinput is not valid.'))
-        spec.exit_code(309, 'ERROR_FLEURINPDATE_NOT_VALID',
-                       message='During parsing: FleurinpData failed validation.')
-
+        spec.exit_code(300, 'ERROR_NO_RETRIEVED_FOLDER', message='No retrieved folder found.')
+        spec.exit_code(
+            301, 'ERROR_OPENING_OUTPUTS', message='One of the output files can not be opened.'
+        )
+        spec.exit_code(306, 'ERROR_NO_INPXML', message='XML input file was not found.')
+        spec.exit_code(
+            307, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.'
+        )
+        spec.exit_code(
+            308,
+            'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
+            message=(
+                'During parsing: FleurinpData could not be initialized, see log. '
+                'Maybe no Schemafile was found or the Fleurinput is not valid.'
+            )
+        )
+        spec.exit_code(
+            309,
+            'ERROR_FLEURINPDATE_NOT_VALID',
+            message='During parsing: FleurinpData failed validation.'
+        )
 
     def prepare_for_submission(self, folder):
         """
@@ -158,8 +177,10 @@ class FleurinputgenCalculation(CalcJob):
         """
 
         # Get the connection between coordination number and element symbol
-        _atomic_numbers = {data['symbol']: num for num,
-                           data in six.iteritems(PeriodicTableElements)}
+        _atomic_numbers = {
+            data['symbol']: num
+            for num, data in six.iteritems(PeriodicTableElements)
+        }
 
         possible_namelists = self._possible_namelists
         possible_params = self._possible_params
@@ -170,8 +191,7 @@ class FleurinputgenCalculation(CalcJob):
         film = False
 
         # convert these 'booleans' to the inpgen format.
-        replacer_values_bool = [True, False, 'True', 'False', 't', 'T',
-                                'F', 'f']
+        replacer_values_bool = [True, False, 'True', 'False', 't', 'T', 'F', 'f']
         # some keywords require a string " around them in the input file.
         string_replace = ['econfig', 'lo', 'element', 'name']
 
@@ -182,7 +202,7 @@ class FleurinputgenCalculation(CalcJob):
         # but we have to convert from Angstrom to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0]
         scaling_lat = 1.  # /bohr_to_ang = 0.52917720859
-        scaling_pos = 1. / bohr_a # Angstrom to atomic
+        scaling_pos = 1. / bohr_a  # Angstrom to atomic
         own_lattice = False  # not self._use_aiida_structure
 
         ##########################################
@@ -207,8 +227,7 @@ class FleurinputgenCalculation(CalcJob):
             # use default
             parameters_dict = {}
         else:
-            parameters_dict = _lowercase_dict(parameters.get_dict(),
-                                              dict_name='parameters')
+            parameters_dict = _lowercase_dict(parameters.get_dict(), dict_name='parameters')
 
         # we write always out rel coordinates, because thats the way FLEUR uses
         # them best. we have to convert them from abs, because thats how they
@@ -243,14 +262,16 @@ class FleurinputgenCalculation(CalcJob):
                 raise InputValidationError(
                     "The namelist '{0}' is not supported by the fleur"
                     " inputgenerator. Check on the fleur website or add '{0}'"
-                    "to _possible_namelists.".format(namelist))
+                    "to _possible_namelists.".format(namelist)
+                )
             for para in paramdic.keys():
                 if para not in possible_params[namelist]:
                     raise InputValidationError(
                         "The property '{}' is not supported by the "
                         "namelist '{}'. "
                         "Check the fleur website, or if it really is,"
-                        " update _possible_params. ".format(para, namelist))
+                        " update _possible_params. ".format(para, namelist)
+                    )
                 if para in string_replace:
                     # TODO check if its in the parameter dict
                     paramdic[para] = convert_to_fortran_string(paramdic[para])
@@ -273,7 +294,6 @@ class FleurinputgenCalculation(CalcJob):
                     if self._use_aiida_structure:
                         input_params.pop('lattice', {})
                         own_lattice = False
-
 
         # TODO allow only usual kpt meshes and use therefore Aiida kpointData
         # if self._use_kpoints:
@@ -302,9 +322,11 @@ class FleurinputgenCalculation(CalcJob):
         for key in settings_dict.keys():
             if key not in self._settings_keys:
                 # TODO warning
-                self.logger.info("settings dict key {} for Fleur calculation"
-                                 "not recognized, only {} are allowed."
-                                 "".format(key, self._settings_keys))
+                self.logger.info(
+                    "settings dict key {} for Fleur calculation"
+                    "not recognized, only {} are allowed."
+                    "".format(key, self._settings_keys)
+                )
 
         ##############################
         # END OF INITIAL INPUT CHECK #
@@ -323,12 +345,14 @@ class FleurinputgenCalculation(CalcJob):
             cell = structure.cell
             for vector in cell:
                 scaled = [a * scaling_pos for a in vector]  # scaling_pos=1./bohr_to_ang
-                cell_parameters_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
-                                         "\n".format(scaled[0], scaled[1], scaled[2]))
-            scaling_factor_card += ("{0:18.10f} {1:18.10f} {2:18.10f}"
-                                    "\n".format(scaling_factors[0],
-                                                scaling_factors[1],
-                                                scaling_factors[2]))
+                cell_parameters_card += (
+                    "{0:18.10f} {1:18.10f} {2:18.10f}"
+                    "\n".format(scaled[0], scaled[1], scaled[2])
+                )
+            scaling_factor_card += (
+                "{0:18.10f} {1:18.10f} {2:18.10f}"
+                "\n".format(scaling_factors[0], scaling_factors[1], scaling_factors[2])
+            )
 
         #### ATOMIC_POSITIONS ####
 
@@ -380,14 +404,18 @@ class FleurinputgenCalculation(CalcJob):
                     # append a label to the detached atom
                     atomic_positions_card_listtmp.append(
                         "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}"
-                        "\n".format(atomic_number_name,
-                                    vector_rel[0], vector_rel[1], vector_rel[2],
-                                    kind_namet))
+                        "\n".format(
+                            atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2],
+                            kind_namet
+                        )
+                    )
                 else:
                     atomic_positions_card_listtmp.append(
                         "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f}"
-                        "\n".format(atomic_number_name,
-                                    vector_rel[0], vector_rel[1], vector_rel[2]))
+                        "\n".format(
+                            atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2]
+                        )
+                    )
             # TODO check format
             # we write it later, since we do not know what natoms is before the loop...
             atomic_positions_card_list.append("    {0:3}\n".format(natoms))
@@ -396,9 +424,11 @@ class FleurinputgenCalculation(CalcJob):
         else:
             # TODO with own lattice atomic positions have to come from somewhere
             # else.... User input?
-            raise InputValidationError("fleur lattice needs also the atom "
-                                       " position as input,"
-                                       " not implemented yet, sorry!")
+            raise InputValidationError(
+                "fleur lattice needs also the atom "
+                " position as input,"
+                " not implemented yet, sorry!"
+            )
         atomic_positions_card = "".join(atomic_positions_card_list)
         del atomic_positions_card_list  # Free memory
 
@@ -461,7 +491,8 @@ class FleurinputgenCalculation(CalcJob):
                 "input_params leftover: The following namelists are specified"
                 " in input_params, but are "
                 "not valid namelists for the current type of calculation: "
-                "{}".format(",".join(list(input_params.keys()))))
+                "{}".format(",".join(list(input_params.keys())))
+            )
 
         calcinfo = CalcInfo()
 
@@ -537,8 +568,10 @@ def conv_to_fortran(val, quote_strings=True):
         else:
             val_str = "{!s}".format(val)
     else:
-        raise ValueError("Invalid value '{}' of type '{}' passed, accepts only booleans, ints, "
-                         "floats and strings".format(val, type(val)))
+        raise ValueError(
+            "Invalid value '{}' of type '{}' passed, accepts only booleans, ints, "
+            "floats and strings".format(val, type(val))
+        )
 
     return val_str
 
@@ -568,8 +601,10 @@ def get_input_data_text(key, val, value_only, mapping=None):
     # hasattr(__iter__)
     if isinstance(val, dict):
         if mapping is None:
-            raise ValueError("If 'val' is a dictionary, you must provide also "
-                             "the 'mapping' parameter")
+            raise ValueError(
+                "If 'val' is a dictionary, you must provide also "
+                "the 'mapping' parameter"
+            )
 
         # At difference with the case of a list, at the beginning
         # list_of_strings
@@ -581,11 +616,14 @@ def get_input_data_text(key, val, value_only, mapping=None):
             try:
                 idx = mapping[elemk]
             except KeyError:
-                raise ValueError("Unable to find the key '{}' in the mapping "
-                                 "dictionary".format(elemk))
+                raise ValueError(
+                    "Unable to find the key '{}' in the mapping "
+                    "dictionary".format(elemk)
+                )
 
-            list_of_strings.append((
-                idx, "  {0}({2})={1} ".format(key, conv_to_fortran(itemval), idx)))
+            list_of_strings.append(
+                (idx, "  {0}({2})={1} ".format(key, conv_to_fortran(itemval), idx))
+            )
             # changed {0}({2}) = {1}\n".format
 
         # I first have to resort, then to remove the index from the first
@@ -596,13 +634,14 @@ def get_input_data_text(key, val, value_only, mapping=None):
         if value_only:
             list_of_strings = [
                 "  ({1}){0} ".format(conv_to_fortran(itemval), idx + 1)
-                for idx, itemval in enumerate(val)]
+                for idx, itemval in enumerate(val)
+            ]
         else:
             # a list/array/tuple of values
             list_of_strings = [
-                "  {0}({2})={1} ".format(key, conv_to_fortran(itemval),
-                                         idx + 1)
-                for idx, itemval in enumerate(val)]
+                "  {0}({2})={1} ".format(key, conv_to_fortran(itemval), idx + 1)
+                for idx, itemval in enumerate(val)
+            ]
         return "".join(list_of_strings)
     else:
         # single value
@@ -611,6 +650,7 @@ def get_input_data_text(key, val, value_only, mapping=None):
             return " {0} ".format(val)
         else:
             return "  {0}={1} ".format(key, val)
+
 
 def _lowercase_dict(dic, dict_name):
     """
@@ -629,7 +669,8 @@ def _lowercase_dict(dic, dict_name):
             raise InputValidationError(
                 "Inside the dictionary '{}' there are the following keys that "
                 "are repeated more than once when compared case-insensitively:"
-                "{}.This is not allowed.".format(dict_name, double_keys))
+                "{}.This is not allowed.".format(dict_name, double_keys)
+            )
         return new_dict
     else:
         raise TypeError("_lowercase_dict accepts only dictionaries as argument")

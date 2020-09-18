@@ -171,12 +171,15 @@ class FleurParser(Parser):
                         with output_folder.open('relax.xml', 'r') as rlx:
                             relax_dict = parse_relax_file(rlx)
                             it_number = len(relax_dict['energies']) + 1  # relax.xml was not updated
-                        error_params = {'error_name': 'MT_OVERLAP_RELAX',
-                                        'description': ('This output node contains information'
-                                                        'about FLEUR error'),
-                                        'overlapped_indices': overlap_line[:2],
-                                        'overlaping_value': overlap_line[3],
-                                        'iteration_number': it_number}
+                        error_params = {
+                            'error_name': 'MT_OVERLAP_RELAX',
+                            'description':
+                            ('This output node contains information'
+                             'about FLEUR error'),
+                            'overlapped_indices': overlap_line[:2],
+                            'overlaping_value': overlap_line[3],
+                            'iteration_number': it_number
+                        }
                         link_name = self.get_linkname_outparams()
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
@@ -1093,7 +1096,8 @@ def parse_xmlout_file(outxmlfile):
         root = tree.getroot()
         if root is None:
             parser_info_out['parser_warnings'].append(
-                'Somehow the root from the xmltree is None, which it should not be, I skip the parsing.')
+                'Somehow the root from the xmltree is None, which it should not be, I skip the parsing.'
+            )
             successful = False
             return {}, {}, parser_info_out, successful
         else:

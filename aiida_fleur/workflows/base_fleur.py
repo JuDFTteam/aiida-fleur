@@ -42,20 +42,44 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         super(FleurBaseWorkChain, cls).define(spec)
         spec.input('code', valid_type=orm.Code, help='The FLEUR code.')
-        spec.input('parent_folder', valid_type=orm.RemoteData, required=False,
-                   help='An optional working directory of a previously completed calculation to '
-                   'restart from.')
-        spec.input('settings', valid_type=orm.Dict, required=False,
-                   help='Optional parameters to affect the way the calculation job and the parsing'
-                   ' are performed.')
-        spec.input('options', valid_type=orm.Dict,
-                   help='Optional parameters to set up computational details.')
-        spec.input('fleurinpdata', valid_type=FleurinpData,
-                   help='Optional parameter set up a ready-to-use fleurinp.')
-        spec.input('description', valid_type=six.string_types, required=False, non_db=True,
-                   help='Calculation description.')
-        spec.input('label', valid_type=six.string_types, required=False, non_db=True,
-                   help='Calculation label.')
+        spec.input(
+            'parent_folder',
+            valid_type=orm.RemoteData,
+            required=False,
+            help='An optional working directory of a previously completed calculation to '
+            'restart from.'
+        )
+        spec.input(
+            'settings',
+            valid_type=orm.Dict,
+            required=False,
+            help='Optional parameters to affect the way the calculation job and the parsing'
+            ' are performed.'
+        )
+        spec.input(
+            'options',
+            valid_type=orm.Dict,
+            help='Optional parameters to set up computational details.'
+        )
+        spec.input(
+            'fleurinpdata',
+            valid_type=FleurinpData,
+            help='Optional parameter set up a ready-to-use fleurinp.'
+        )
+        spec.input(
+            'description',
+            valid_type=six.string_types,
+            required=False,
+            non_db=True,
+            help='Calculation description.'
+        )
+        spec.input(
+            'label',
+            valid_type=six.string_types,
+            required=False,
+            non_db=True,
+            help='Calculation label.'
+        )
 
         spec.outline(
             cls.setup,
@@ -74,18 +98,29 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.output('remote_folder', valid_type=orm.RemoteData, required=False)
         spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
-        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
-                       message='FLEUR calculation failed because an atom spilled to the'
-                               'vacuum during relaxation')
-        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
-                       message='Overlapping MT-spheres during relaxation.')
-        spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION',
-                       message="Computational resources are not optimal.")
-        spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES',
-                       message="Computational resources are not optimal.")
-        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
-                       message='FleurCalculation failed and FleurBaseWorkChain has no strategy '
-                               'to resolve this')
+        spec.exit_code(
+            311,
+            'ERROR_VACUUM_SPILL_RELAX',
+            message='FLEUR calculation failed because an atom spilled to the'
+            'vacuum during relaxation'
+        )
+        spec.exit_code(
+            313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.'
+        )
+        spec.exit_code(
+            389,
+            'ERROR_MEMORY_ISSUE_NO_SOLUTION',
+            message="Computational resources are not optimal."
+        )
+        spec.exit_code(
+            390, 'ERROR_NOT_OPTIMAL_RESOURCES', message="Computational resources are not optimal."
+        )
+        spec.exit_code(
+            399,
+            'ERROR_SOMETHING_WENT_WRONG',
+            message='FleurCalculation failed and FleurBaseWorkChain has no strategy '
+            'to resolve this'
+        )
 
     def validate_inputs(self):
         """
@@ -156,7 +191,9 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         omp_per_mpi = self.ctx.num_cores_per_mpiproc
         try:
             adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(
-                machines, mpi_proc, omp_per_mpi, self.ctx.use_omp, self.ctx.suggest_mpi_omp_ratio, fleurinp)
+                machines, mpi_proc, omp_per_mpi, self.ctx.use_omp, self.ctx.suggest_mpi_omp_ratio,
+                fleurinp
+            )
         except ValueError:
             raise Warning('Not optimal computational resources, load less than 60%')
 
@@ -180,21 +217,21 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED',
-                                                                  'ERROR_MT_RADII',
-                                                                  'ERROR_NO_RETRIEVED_FOLDER',
-                                                                  'ERROR_OPENING_OUTPUTS',
-                                                                  'ERROR_NO_OUTXML',
-                                                                  'ERROR_XMLOUT_PARSING_FAILED',
-                                                                  'ERROR_RELAX_PARSING_FAILED']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses([
+        'ERROR_FLEUR_CALC_FAILED', 'ERROR_MT_RADII', 'ERROR_NO_RETRIEVED_FOLDER',
+        'ERROR_OPENING_OUTPUTS', 'ERROR_NO_OUTXML', 'ERROR_XMLOUT_PARSING_FAILED',
+        'ERROR_RELAX_PARSING_FAILED'
+    ]):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be resolved automatically')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
     else:
-        raise ValueError('Calculation failed for unknown reason, please register the '
-                         'corresponding exit code in this error handler')
+        raise ValueError(
+            'Calculation failed for unknown reason, please register the '
+            'corresponding exit code in this error handler'
+        )
 
 
 @register_error_handler(FleurBaseWorkChain, 48)
@@ -216,14 +253,18 @@ def _handle_dirac_equation(self, calculation):
             del self.ctx.inputs.parent_folder
             self.ctx.restart_calc = None
             self.ctx.is_finished = False
-            self.report('Calculation seems to fail due to corrupted charge density (can happen'
-                        'during relaxation). I drop cdn from previous step')
+            self.report(
+                'Calculation seems to fail due to corrupted charge density (can happen'
+                'during relaxation). I drop cdn from previous step'
+            )
             return ErrorHandlerReport(True, True)
 
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Can not drop charge density. If I drop the remote folder, there will be'
-                    'no inp.xml')
+        self.report(
+            'Can not drop charge density. If I drop the remote folder, there will be'
+            'no inp.xml'
+        )
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
@@ -236,8 +277,10 @@ def _handle_vacuum_spill_error(self, calculation):
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('FLEUR calculation failed because an atom spilled to the vacuum during'
-                    'relaxation. Can be fixed via RelaxBaseWorkChain.')
+        self.report(
+            'FLEUR calculation failed because an atom spilled to the vacuum during'
+            'relaxation. Can be fixed via RelaxBaseWorkChain.'
+        )
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_VACUUM_SPILL_RELAX)
 
@@ -250,8 +293,10 @@ def _handle_mt_relax_error(self, calculation):
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('FLEUR calculation failed due to MT overlap.'
-                    ' Can be fixed via RelaxBaseWorkChain')
+        self.report(
+            'FLEUR calculation failed due to MT overlap.'
+            ' Can be fixed via RelaxBaseWorkChain'
+        )
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
 
@@ -267,8 +312,10 @@ def _handle_not_enough_memory(self, calculation):
         if self.ctx.can_be_optimised:
             self.ctx.restart_calc = None
             self.ctx.is_finished = False
-            self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
-                        ' amount of computational nodes and smaller MPI/OMP ratio')
+            self.report(
+                'Calculation failed due to lack of memory, I resubmit it with twice larger'
+                ' amount of computational nodes and smaller MPI/OMP ratio'
+            )
             self.ctx.num_machines = self.ctx.num_machines * 2
             self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
             self.check_kpts()
@@ -277,14 +324,16 @@ def _handle_not_enough_memory(self, calculation):
                 self.ctx.inputs.settings = {}
             else:
                 self.ctx.inputs.settings = self.inputs.settings.get_dict()
-            self.ctx.inputs.settings.setdefault(
-                'remove_from_remotecopy_list', []).append('mixing_history*')
+            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list',
+                                                []).append('mixing_history*')
 
             return ErrorHandlerReport(True, True)
         else:
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
-            self.report('I am not allowed to optimize your settings. Consider providing at least'
-                        'num_machines and num_mpiprocs_per_machine')
+            self.report(
+                'I am not allowed to optimize your settings. Consider providing at least'
+                'num_machines and num_mpiprocs_per_machine'
+            )
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)

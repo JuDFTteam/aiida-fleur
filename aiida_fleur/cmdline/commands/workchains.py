@@ -9,11 +9,9 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 contains verdi commands that are useful for fleur workchains
 """
-
 
 from __future__ import absolute_import
 import click
@@ -23,6 +21,7 @@ import click
 def workchains():
     pass
 
+
 @workchains.command()
 def res():
     """
@@ -30,12 +29,14 @@ def res():
     """
     click.echo('verdi aiida-fleur workchains res pk/uuid/list')
 
+
 @workchains.command()
 def show():
     """
     plots the results of a workchain
     """
     click.echo('verdi aiida-fleur workchains show pk/uuid/list')
+
 
 @workchains.command()
 def list():

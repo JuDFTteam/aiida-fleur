@@ -64,6 +64,7 @@ def test_fleurinp_non_valid_inpxml(create_fleurinp, inpxmlfilepath):
 
 # test kpoints and structure and parameter data extraction
 
+
 @pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
 def test_fleurinp_kpointsdata_extraction(create_fleurinp, inpxmlfilepath):
     """

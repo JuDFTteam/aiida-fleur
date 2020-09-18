@@ -11,7 +11,9 @@ import pytest
 import six
 
 # aiida_testing.mock_codes in development, not yet a stable dependency..
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache'] # pylint: disable=invalid-name
+pytest_plugins = [
+    'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache'
+]  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
@@ -33,10 +35,11 @@ def fixture_localhost(aiida_localhost):
 @pytest.fixture
 def fixture_code(fixture_localhost):
     """Return a `Code` instance configured to run calculations of given entry point on localhost `Computer`."""
-
     def _fixture_code(entry_point_name):
         from aiida.orm import Code
-        return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls'])
+        return Code(
+            input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls']
+        )
 
     return _fixture_code
 
@@ -48,7 +51,6 @@ def generate_calc_job():
     The fixture will return the `CalcInfo` returned by `prepare_for_submission` and the temporary folder that was passed
     to it, into which the raw input files will have been written.
     """
-
     def _generate_calc_job(folder, entry_point_name, inputs=None):
         """Fixture to generate a mock `CalcInfo` for testing calculation jobs."""
         from aiida.engine.utils import instantiate_process
@@ -71,7 +73,6 @@ def generate_calc_job():
 @pytest.fixture
 def generate_calc_job_node():
     """Fixture to generate a mock `CalcJobNode` for testing parsers."""
-
     def flatten_inputs(inputs, prefix=''):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
@@ -82,7 +83,9 @@ def generate_calc_job_node():
                 flat_inputs.append((prefix + key, value))
         return flat_inputs
 
-    def _generate_calc_job_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
+    def _generate_calc_job_node(
+        entry_point_name, computer, test_name=None, inputs=None, attributes=None
+    ):
         """Fixture to generate a mock `CalcJobNode` for testing parsers.
 
         :param entry_point_name: entry point name of the calculation class
@@ -119,8 +122,8 @@ def generate_calc_job_node():
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
-                basepath, 'parsers', 'fixtures', entry_point_name[len(
-                    'quantumespresso.'):], test_name
+                basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):],
+                test_name
             )
 
             retrieved = orm.FolderData()
@@ -140,28 +143,27 @@ def generate_calc_job_node():
 @pytest.fixture
 def generate_structure():
     """Return a `StructureData` representing bulk silicon."""
-
     def _generate_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
 
         param = 5.43
-        cell = [[0, param / 2., param / 2.], [param / 2., 0, param / 2.], [param / 2., param / 2., 0]]
+        cell = [[0, param / 2., param / 2.], [param / 2., 0, param / 2.],
+                [param / 2., param / 2., 0]]
         structure = StructureData(cell=cell)
         structure.append_atom(position=(0., 0., 0.), symbols='Si', name='Si')
-        structure.append_atom(position=(param / 4., param / 4., param / 4.),
-                              symbols='Si', name='Si')
+        structure.append_atom(
+            position=(param / 4., param / 4., param / 4.), symbols='Si', name='Si'
+        )
 
         return structure
 
     return _generate_structure
 
 
-
 @pytest.fixture
 def generate_kpoints_mesh():
     """Return a `KpointsData` node."""
-
     def _generate_kpoints_mesh(npoints):
         """Return a `KpointsData` with a mesh of npoints in each direction."""
         from aiida.orm import KpointsData
@@ -177,7 +179,6 @@ def generate_kpoints_mesh():
 @pytest.fixture(scope='session')
 def generate_parser():
     """Fixture to load a parser class for testing parsers."""
-
     def _generate_parser(entry_point_name):
         """Fixture to load a parser class for testing parsers.
 
@@ -193,7 +194,6 @@ def generate_parser():
 @pytest.fixture
 def generate_remote_data():
     """Return a `RemoteData` node."""
-
     def _generate_remote_data(computer, remote_path, entry_point_name=None):
         """Return a `KpointsData` with a mesh of npoints in each direction."""
         from aiida.common.links import LinkType
@@ -214,6 +214,7 @@ def generate_remote_data():
         return remote
 
     return _generate_remote_data
+
 
 ############### Here AiiDA-Fleur fixtures begin ##################
 
@@ -239,13 +240,13 @@ def inpxml_etree():
         with open(path, 'r') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
         return tree
+
     return _get_etree
 
 
 @pytest.fixture
 def generate_work_chain_node():
     """Fixture to generate a mock `WorkChainNode` for testing parsers."""
-
     def flatten_inputs(inputs, prefix=''):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
@@ -256,7 +257,9 @@ def generate_work_chain_node():
                 flat_inputs.append((prefix + key, value))
         return flat_inputs
 
-    def _generate_work_chain_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
+    def _generate_work_chain_node(
+        entry_point_name, computer, test_name=None, inputs=None, attributes=None
+    ):
         """Fixture to generate a mock `WorkChainNode` for testing parsers.
 
         :param entry_point_name: entry point name of the calculation class
@@ -285,8 +288,8 @@ def generate_work_chain_node():
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
-                basepath, 'parsers', 'fixtures', entry_point_name[len(
-                    'quantumespresso.'):], test_name
+                basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):],
+                test_name
             )
 
             retrieved = orm.FolderData()
@@ -306,20 +309,17 @@ def generate_work_chain_node():
 @pytest.fixture
 def generate_film_structure():
     """Return a `StructureData` representing bulk silicon."""
-
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
 
         bohr_a_0 = 0.52917721092  # A
         a = 7.497 * bohr_a_0
-        cell = [[0.7071068*a, 0.0, 0.0],
-                [0.0, 1.0*a, 0.0],
-                [0.0, 0.0, 0.7071068*a]]
+        cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
-        structure.append_atom(position=(0., 0., -1.99285*bohr_a_0), symbols='Fe')
-        structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
-        structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+        structure.append_atom(position=(0., 0., -1.99285 * bohr_a_0), symbols='Fe')
+        structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+        structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
         structure.pbc = (True, True, False)
 
         return structure
@@ -335,10 +335,10 @@ def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-out
     #yield
     #aiida_profile.reset_db()
 
+
 @pytest.fixture
 def read_dict_from_file():
     """returns a dict read from a json file to construct and Outputnode of a JobCalc or Workchain"""
-
     def _read_dict_from_file(jsonfilepath):
         """Return dict from json"""
         import json
@@ -355,7 +355,6 @@ def read_dict_from_file():
 @pytest.fixture
 def generate_structure2():
     """Return a `StructureData` representing bulk silicon."""
-
     def _generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
@@ -369,17 +368,19 @@ def generate_structure2():
                 row1 = cell[0]
                 row2 = cell[1]
                 row3 = cell[2]
-                new_abs_pos = [postionR[0]*row1[0] + postionR[1]*row2[0] + postionR[2]*row3[0],
-                               postionR[0]*row1[1] + postionR[1]*row2[1] + postionR[2]*row3[1],
-                               postionR[0]*row1[2] + postionR[1]*row2[2] + postionR[2]*row3[2]]
+                new_abs_pos = [
+                    postionR[0] * row1[0] + postionR[1] * row2[0] + postionR[2] * row3[0],
+                    postionR[0] * row1[1] + postionR[1] * row2[1] + postionR[2] * row3[1],
+                    postionR[0] * row1[2] + postionR[1] * row2[2] + postionR[2] * row3[2]
+                ]
                 return new_abs_pos
 
         bohr_a_0 = 0.52917721092  # A
-        a = 5.167355275190*bohr_a_0
+        a = 5.167355275190 * bohr_a_0
         cell = [[0.0, a, a], [a, 0.0, a], [a, a, 0.0]]
         structure = StructureData(cell=cell)
-        pos1 = rel_to_abs((1./8., 1./8., 1./8.), cell)
-        pos2 = rel_to_abs((-1./8., -1./8., -1./8.), cell)
+        pos1 = rel_to_abs((1. / 8., 1. / 8., 1. / 8.), cell)
+        pos2 = rel_to_abs((-1. / 8., -1. / 8., -1. / 8.), cell)
         structure.append_atom(position=pos1, symbols='Si')
         structure.append_atom(position=pos2, symbols='Si')
 
@@ -388,22 +389,19 @@ def generate_structure2():
     return _generate_structure2
 
 
-
 @pytest.fixture
 def generate_structure_W():
     """Return a `StructureData` representing bulk tungsten."""
-
     def _generate_structure_W():
         """Return a `StructureData` representing bulk tungsten."""
         from aiida.orm import StructureData
 
-
         # W bcc structure
-        bohr_a_0= 0.52917721092 # A
-        a = 3.013812049196*bohr_a_0
-        cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
+        bohr_a_0 = 0.52917721092  # A
+        a = 3.013812049196 * bohr_a_0
+        cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
         structure = StructureData(cell=cell)
-        structure.append_atom(position=(0.,0.,0.), symbols='W', name='W')
+        structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')
 
         #param = 3.18968 # 1.58950065353588 * 0.5291772109
         #cell = [[-param, param, param], [param, -param, param], [param, param, -param]]
@@ -414,10 +412,10 @@ def generate_structure_W():
 
     return _generate_structure_W
 
+
 @pytest.fixture
 def generate_structure_cif():
     """Return a `StructureData` from a cif file path."""
-
     def _generate_structure_cif(cifilepath):
         """Return a `StructureData` from a cif file."""
         import os
@@ -431,7 +429,6 @@ def generate_structure_cif():
 
 @pytest.fixture(scope='function')
 def create_or_fake_local_code(aiida_local_code_factory):
-
     def _get_code(executable, exec_relpath, entrypoint):
         import os, pathlib
         from aiida.tools.importexport import import_data, export
@@ -445,7 +442,7 @@ def create_or_fake_local_code(aiida_local_code_factory):
             open(_exe_path, 'a').close()
 
         # make sure code is found in PATH
-        os.environ['PATH']+=':'+_exe_path
+        os.environ['PATH'] += ':' + _exe_path
 
         # get code using aiida_local_code_factory fixture
         code = aiida_local_code_factory(entrypoint, executable)
@@ -454,15 +451,16 @@ def create_or_fake_local_code(aiida_local_code_factory):
 
     return _get_code
 
+
 @pytest.fixture(scope='function')
 def inpgen_local_code(create_or_fake_local_code):
     """
     Create, inpgen code
     """
     import os
-    executable = 'inpgen'           # name of the inpgen executable
-    exec_rel_path = 'local_exe/'   # location where it is found
-    entrypoint = 'fleur.inpgen'    # entrypoint
+    executable = 'inpgen'  # name of the inpgen executable
+    exec_rel_path = 'local_exe/'  # location where it is found
+    entrypoint = 'fleur.inpgen'  # entrypoint
     # prepend text to be added before execution
     inpgen_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
     return inpgen_code
@@ -473,12 +471,13 @@ def fleur_local_code(create_or_fake_local_code):
     """
     Create or load Fleur code
     """
-    executable = 'fleur'            # name of the KKRhost executable
-    exec_rel_path = 'local_exe/'   # location where it is found
-    entrypoint = 'fleur.fleur'      # entrypoint
+    executable = 'fleur'  # name of the KKRhost executable
+    exec_rel_path = 'local_exe/'  # location where it is found
+    entrypoint = 'fleur.fleur'  # entrypoint
     fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
 
     return fleur_code
+
 
 @pytest.fixture(scope='function')
 def clear_spec():
@@ -501,7 +500,5 @@ def clear_spec():
             del FleurEosWorkChain._spec
 
     clear_sp()
-    yield   # test runs
+    yield  # test runs
     clear_sp()
-
-

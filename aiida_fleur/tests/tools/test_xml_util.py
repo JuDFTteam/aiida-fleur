@@ -94,41 +94,82 @@ def test_create_tag(inpxml_etree):
     create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG', create=False)
     assert eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0][3].tag == 'TEST_TAG'
 
-    create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG2', create=False,
-               place_index=1)
+    create_tag(
+        etree,
+        '/fleurInput/cell/filmLattice/bravaisMatrix',
+        'TEST_TAG2',
+        create=False,
+        place_index=1
+    )
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
     assert tag_names == ['row-1', 'TEST_TAG2', 'row-2', 'row-3', 'TEST_TAG']
 
-    create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG3', create=False,
-               place_index=True, tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2',
-                                            'row-3', 'TEST_TAG'])
+    create_tag(
+        etree,
+        '/fleurInput/cell/filmLattice/bravaisMatrix',
+        'TEST_TAG3',
+        create=False,
+        place_index=True,
+        tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'row-3', 'TEST_TAG']
+    )
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
     assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'row-3', 'TEST_TAG']
 
-    create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG4', create=False,
-               place_index=True, tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2',
-                                            'TEST_TAG4', 'row-3', 'TEST_TAG'])
+    create_tag(
+        etree,
+        '/fleurInput/cell/filmLattice/bravaisMatrix',
+        'TEST_TAG4',
+        create=False,
+        place_index=True,
+        tag_order=['row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
+    )
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
-    assert tag_names == ['row-1', 'TEST_TAG2', 'TEST_TAG3',
-                         'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
+    assert tag_names == [
+        'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'
+    ]
 
-    create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG0', create=False,
-               place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2',
-                                            'TEST_TAG4', 'row-3', 'TEST_TAG'])
+    create_tag(
+        etree,
+        '/fleurInput/cell/filmLattice/bravaisMatrix',
+        'TEST_TAG0',
+        create=False,
+        place_index=True,
+        tag_order=[
+            'TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3',
+            'TEST_TAG'
+        ]
+    )
     tag_names = [x.tag for x in eval_xpath3(etree, '/fleurInput/cell/filmLattice/bravaisMatrix')[0]]
-    assert tag_names == ['TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3',
-                         'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG']
+    assert tag_names == [
+        'TEST_TAG0', 'row-1', 'TEST_TAG2', 'TEST_TAG3', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'
+    ]
 
     with pytest.raises(ValueError) as excinfo:
-        create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG5', create=False,
-                   place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
-                                                'TEST_TAG5', 'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
+        create_tag(
+            etree,
+            '/fleurInput/cell/filmLattice/bravaisMatrix',
+            'TEST_TAG5',
+            create=False,
+            place_index=True,
+            tag_order=[
+                'TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'TEST_TAG5', 'row-2', 'TEST_TAG4',
+                'row-3', 'TEST_TAG'
+            ]
+        )
     assert str(excinfo.value) == "Existing order does not correspond to tag_order list"
 
     with pytest.raises(ValueError) as excinfo:
-        create_tag(etree, '/fleurInput/cell/filmLattice/bravaisMatrix', 'TEST_TAG5', create=False,
-                   place_index=True, tag_order=['TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2',
-                                                'row-2', 'TEST_TAG4', 'row-3', 'TEST_TAG'])
+        create_tag(
+            etree,
+            '/fleurInput/cell/filmLattice/bravaisMatrix',
+            'TEST_TAG5',
+            create=False,
+            place_index=True,
+            tag_order=[
+                'TEST_TAG0', 'row-1', 'TEST_TAG3', 'TEST_TAG2', 'row-2', 'TEST_TAG4', 'row-3',
+                'TEST_TAG'
+            ]
+        )
     assert str(excinfo.value) == "Did not find element name in the tag_order list"
 
 
@@ -136,8 +177,8 @@ def test_delete_att(inpxml_etree):
     from aiida_fleur.tools.xml_util import delete_att, eval_xpath2
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
-    assert eval_xpath2(
-        etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label')[0] == "                 222"
+    assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label'
+                       )[0] == "                 222"
 
     delete_att(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'label')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label') == []
@@ -172,33 +213,43 @@ def test_get_inpgen_para_from_xml(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_inpgen_para_from_xml
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
-    result = {'comp': {'jspins': 2.0,
-                       'frcor': False,
-                       'ctail': True,
-                       'kcrel': '0',
-                       'gmax': 10.0,
-                       'gmaxxc': 8.7,
-                       'kmax': 4.0},
-              'atom0': {'z': 26,
-                        'rmt': 2.2,
-                        'dx': 0.016,
-                        'jri': 787,
-                        'lmax': 10,
-                        'lnonsph': 6,
-                        # 'econfig': <Element electronConfig at 0x1105d66e0>,
-                        'lo': '',
-                        'element': 'Fe'},
-              'atom1': {'z': 78,
-                        'rmt': 2.2,
-                        'dx': 0.017,
-                        'jri': 787,
-                        'lmax': 10,
-                        'lnonsph': 6,
-                        # 'econfig': <Element electronConfig at 0x110516d20>,
-                        'lo': '',
-                        'element': 'Pt'},
-              'title': 'A Fleur input generator calculation with aiida',
-              'exco': {'xctyp': 'vwn'}}
+    result = {
+        'comp': {
+            'jspins': 2.0,
+            'frcor': False,
+            'ctail': True,
+            'kcrel': '0',
+            'gmax': 10.0,
+            'gmaxxc': 8.7,
+            'kmax': 4.0
+        },
+        'atom0': {
+            'z': 26,
+            'rmt': 2.2,
+            'dx': 0.016,
+            'jri': 787,
+            'lmax': 10,
+            'lnonsph': 6,
+            # 'econfig': <Element electronConfig at 0x1105d66e0>,
+            'lo': '',
+            'element': 'Fe'
+        },
+        'atom1': {
+            'z': 78,
+            'rmt': 2.2,
+            'dx': 0.017,
+            'jri': 787,
+            'lmax': 10,
+            'lnonsph': 6,
+            # 'econfig': <Element electronConfig at 0x110516d20>,
+            'lo': '',
+            'element': 'Pt'
+        },
+        'title': 'A Fleur input generator calculation with aiida',
+        'exco': {
+            'xctyp': 'vwn'
+        }
+    }
 
     dict_result = get_inpgen_para_from_xml(etree)
     assert dict_result == result
@@ -207,36 +258,75 @@ def test_get_inpgen_para_from_xml(inpxml_etree):
 class TestSetSpecies:
     """Tests for set_species"""
 
-    paths = ['mtSphere/@radius',
-             'atomicCutoffs/@lmax',
-             'energyParameters/@s',
-             'electronConfig/coreConfig',
-             'electronConfig/stateOccupation/@state',
-             'electronConfig/stateOccupation/@state',
-             'special/@socscale',
-             'ldaU/@test_att',
-             'ldaU/@test_att',
-             'lo/@test_att',
-             'lo/@test_att'
-             ]
+    paths = [
+        'mtSphere/@radius', 'atomicCutoffs/@lmax', 'energyParameters/@s',
+        'electronConfig/coreConfig', 'electronConfig/stateOccupation/@state',
+        'electronConfig/stateOccupation/@state', 'special/@socscale', 'ldaU/@test_att',
+        'ldaU/@test_att', 'lo/@test_att', 'lo/@test_att'
+    ]
 
-    attdicts = [{'mtSphere': {'radius': 3.333}},
-                {'atomicCutoffs': {'lmax': 7.0}},
-                {'energyParameters': {'s': 3.0}},
-                {'electronConfig': {'coreConfig': 'test'}},
-                {'electronConfig': {'stateOccupation': {'state': 'state'}}},
-                {'electronConfig': {'stateOccupation': [{'state': 'state'},
-                                                        {'state': 'state2'}]}},
-                {'special': {'socscale': 1.0}},
-                {'ldaU': {'test_att': 2.0}},
-                {'ldaU': [{'test_att': 2.0}, {'test_att': 23.0}]},
-                {'lo': {'test_att': 2.0}},
-                {'lo': [{'test_att': 2.0}, {'test_att': 33.0}]}
+    attdicts = [{
+        'mtSphere': {
+            'radius': 3.333
+        }
+    }, {
+        'atomicCutoffs': {
+            'lmax': 7.0
+        }
+    }, {
+        'energyParameters': {
+            's': 3.0
+        }
+    }, {
+        'electronConfig': {
+            'coreConfig': 'test'
+        }
+    }, {
+        'electronConfig': {
+            'stateOccupation': {
+                'state': 'state'
+            }
+        }
+    }, {
+        'electronConfig': {
+            'stateOccupation': [{
+                'state': 'state'
+            }, {
+                'state': 'state2'
+            }]
+        }
+    }, {
+        'special': {
+            'socscale': 1.0
+        }
+    }, {
+        'ldaU': {
+            'test_att': 2.0
+        }
+    }, {
+        'ldaU': [{
+            'test_att': 2.0
+        }, {
+            'test_att': 23.0
+        }]
+    }, {
+        'lo': {
+            'test_att': 2.0
+        }
+    }, {
+        'lo': [{
+            'test_att': 2.0
+        }, {
+            'test_att': 33.0
+        }]
+    }
                 #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
                 ]
 
-    results = ['3.333', '7.0', '3.0', 'test', 'state', [
-        'state', 'state2'], '1.0', '2.0', ['2.0', '23.0'], '2.0', ['2.0', '33.0']]
+    results = [
+        '3.333', '7.0', '3.0', 'test', 'state', ['state', 'state2'], '1.0', '2.0', ['2.0', '23.0'],
+        '2.0', ['2.0', '33.0']
+    ]
 
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
@@ -299,6 +389,7 @@ class TestSetSpecies:
             assert correct_result == result
 
     results_all = [[x, x] if not isinstance(x, list) else [x[0], x[1], x[0], x[1]] for x in results]
+
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_set_species_all(inpxml_etree, attr_dict, correct_result, path):
@@ -336,13 +427,9 @@ class TestSetSpecies:
 class TestChangeAtomgrAtt:
     """Tests for change_atomgr_att"""
 
-    paths = ['force/@relaxXYZ',
-             'nocoParams/@beta'
-             ]
+    paths = ['force/@relaxXYZ', 'nocoParams/@beta']
 
-    attdicts = [{'force': [('relaxXYZ', 'FFF')]},
-                {'nocoParams': [('beta', 7.0)]}
-                ]
+    attdicts = [{'force': [('relaxXYZ', 'FFF')]}, {'nocoParams': [('beta', 7.0)]}]
 
     results = ['FFF', '7.0']
 
@@ -383,6 +470,7 @@ class TestChangeAtomgrAtt:
         assert result[0] == correct_result
 
     results_all = [[x, x] for x in results]
+
     @staticmethod
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_change_atomgr_att_all(inpxml_etree, attr_dict, correct_result, path):
@@ -414,7 +502,8 @@ class TestChangeAtomgrAtt:
         change_atomgr_att(etree, attributedict=self.attdicts[0])
 
         result = eval_xpath2(
-            etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0])
+            etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0]
+        )
 
         assert result[0] == 'TTT'
 
@@ -431,8 +520,10 @@ class TestSetInpchanges:
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        skip_paths = ['atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice',
-                      'bravaisMatrix', 'a1']
+        skip_paths = [
+            'atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice',
+            'bravaisMatrix', 'a1'
+        ]
 
         if any(x in path for x in skip_paths):
             pytest.skip("This attribute is not tested for FePt/inp.xml")
@@ -457,8 +548,10 @@ class TestSetInpchanges:
                 result = eval_xpath2(etree, path + '/@{}'.format(name))
             assert result[0] == 'test'
         else:
-            raise BaseException('A switch that you want to set is not one of the supported types.'
-                                'Or you made a mistake during new switch registration')
+            raise BaseException(
+                'A switch that you want to set is not one of the supported types.'
+                'Or you made a mistake during new switch registration'
+            )
 
     def test_set_inpchanges_fail(self, inpxml_etree):
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
@@ -523,12 +616,14 @@ def test_inpxml_to_dict(inpxml_etree):
                 'mix_b': '.00000000',
                 'qss': '0.0 0.0 0.0',
             },
-            'expertModes': {'eig66': False,
-                            'gw': 0,
-                            'isec1': 99,
-                            'lpr': 0,
-                            'pot8': False,
-                            'secvar': False},
+            'expertModes': {
+                'eig66': False,
+                'gw': 0,
+                'isec1': 99,
+                'lpr': 0,
+                'pot8': False,
+                'secvar': False
+            },
             'geometryOptimization': {
                 'l_f': False,
                 'forcealpha': 1.0,
@@ -538,121 +633,191 @@ def test_inpxml_to_dict(inpxml_etree):
                 'epsdisp': 1e-05,
                 'epsforce': 1e-05,
             },
-            'ldaU': {'l_linMix': 'F', 'mixParam': '.050000', 'spinf': 1.0},
+            'ldaU': {
+                'l_linMix': 'F',
+                'mixParam': '.050000',
+                'spinf': 1.0
+            },
             'bzIntegration': {
-                'altKPointSet': {'kPointCount': {'count': 240,
-                                                 'gamma': False},
-                                 'purpose': 'bands'},
+                'altKPointSet': {
+                    'kPointCount': {
+                        'count': 240,
+                        'gamma': False
+                    },
+                    'purpose': 'bands'
+                },
                 'valenceElectrons': 18.0,
                 'mode': 'hist',
                 'fermiSmearingEnergy': 0.001,
-                'kPointList': {'posScale': '1.00000000', 'weightScale': '1.00000000', 'count': 1,
-                               'kPoint': ['0.000000     0.000000     0.000000']},
+                'kPointList': {
+                    'posScale': '1.00000000',
+                    'weightScale': '1.00000000',
+                    'count': 1,
+                    'kPoint': ['0.000000     0.000000     0.000000']
+                },
             },
-            'energyParameterLimits': {'ellow': -0.8, 'elup': 0.5},
+            'energyParameterLimits': {
+                'ellow': -0.8,
+                'elup': 0.5
+            },
         },
         'cell': {
-            'symmetryOperations': {'symOp': {'row-1': '1 0 0 .0000000000',
-                                             'row-2': '0 -1 0 .0000000000',
-                                             'row-3': '0 0 1 .0000000000'}},
+            'symmetryOperations': {
+                'symOp': {
+                    'row-1': '1 0 0 .0000000000',
+                    'row-2': '0 -1 0 .0000000000',
+                    'row-3': '0 0 1 .0000000000'
+                }
+            },
             'filmLattice': {
                 'scale': 1.0,
                 'dVac': 7.35,
                 'latnam': 'any',
                 'dTilda': 10.91,
-                'bravaisMatrix': {'row-1': '5.301179702900000 .000000000000000 .000000000000000',
-                                  'row-2': '.000000000000000 7.497000033000000 .000000000000000',
-                                  'row-3': '.000000000000000 .000000000000000 7.992850008800000'},
-                'vacuumEnergyParameters': {'vacuum': '2',
-                                           'spinUp': '-.25000000',
-                                           'spinDown': '-.25000000'},
-            }},
-        'xcFunctional': {'name': 'vwn', 'relativisticCorrections': False},
-        'atomSpecies': {'species': [{
-            'name': 'Fe-1',
-            'element': 'Fe',
-            'atomicNumber': 26,
-            'coreStates': 7,
-            'mtSphere': {'radius': 2.2, 'gridPoints': 787,
-                         'logIncrement': 0.016},
-            'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
-            'energyParameters': {
-                's': 4,
-                'p': 4,
-                'd': 3,
-                'f': 4,
-            },
-            'flipSpin': True,
-            'magMom': 2.2,
-            'prodBasis': {'lcutm': '4',
-                          'lcutwf': '9',
-                          'select': '4 0 4 2'},
-            'electronConfig': {'coreConfig': '[Ar]',
-                               'valenceConfig': '(4s1/2) (3d3/2) (3d5/2)',
-                               'stateOccupation': [{'state': '(3d3/2)',
-                                                    'spinUp': '2.00000000',
-                                                    'spinDown': '1.00000000'},
-                                                   {'state': '(3d5/2)',
-                                                    'spinUp': '3.00000000',
-                                                    'spinDown': '.00000000'}]},
-        }, {
-            'name': 'Pt-1',
-            'element': 'Pt',
-            'atomicNumber': 78,
-            'coreStates': 19,
-            'mtSphere': {'radius': 2.3, 'gridPoints': 787,
-                         'logIncrement': 0.017},
-            'atomicCutoffs': {'lmax': 10, 'lnonsphr': 6},
-            'energyParameters': {
-                's': 6,
-                'p': 6,
-                'd': 5,
-                'f': 5,
-            },
-            'flipSpin': True,
-            'magMom': 0.0,
-            'prodBasis': {'lcutm': '4',
-                          'lcutwf': '9',
-                          'select': '4 0 4 2'},
-            'electronConfig': {'coreConfig': '[Xe] (4f5/2) (4f7/2)',
-                               'valenceConfig': '(6s1/2) (5d3/2) (5d5/2)',
-                               'stateOccupation': [{'state': '(6s1/2)',
-                                                    'spinUp': '.50000000',
-                                                    'spinDown': '.50000000'},
-                                                   {'state': '(5d5/2)',
-                                                    'spinUp': '3.00000000',
-                                                    'spinDown': '2.00000000'}]},
-        }]},
-        'atomGroups': {'atomGroup': [{
-            'species': 'Fe-1',
-            'filmPos': ['.0000000000 .0000000000 -.9964250044'],
-            'force': {'calculate': True, 'relaxXYZ': 'TTT'},
-            'nocoParams': {
-                'l_relax': 'F',
-                'alpha': 0.0,
-                'beta': '1.570796326',
-                'b_cons_x': '.00000000',
-                'b_cons_y': '.00000000',
-            },
-        }, {
-            'species': 'Pt-1',
-            'filmPos': ['1.000/2.000 1.000/2.000 .9964250044'],
-            'force': {'calculate': True, 'relaxXYZ': 'TTT'},
-            'nocoParams': {
-                'l_relax': 'F',
-                'alpha': 0.0,
-                'beta': '1.570796326',
-                'b_cons_x': '.00000000',
-                'b_cons_y': '.00000000',
-            },
-        }]},
+                'bravaisMatrix': {
+                    'row-1': '5.301179702900000 .000000000000000 .000000000000000',
+                    'row-2': '.000000000000000 7.497000033000000 .000000000000000',
+                    'row-3': '.000000000000000 .000000000000000 7.992850008800000'
+                },
+                'vacuumEnergyParameters': {
+                    'vacuum': '2',
+                    'spinUp': '-.25000000',
+                    'spinDown': '-.25000000'
+                },
+            }
+        },
+        'xcFunctional': {
+            'name': 'vwn',
+            'relativisticCorrections': False
+        },
+        'atomSpecies': {
+            'species': [{
+                'name': 'Fe-1',
+                'element': 'Fe',
+                'atomicNumber': 26,
+                'coreStates': 7,
+                'mtSphere': {
+                    'radius': 2.2,
+                    'gridPoints': 787,
+                    'logIncrement': 0.016
+                },
+                'atomicCutoffs': {
+                    'lmax': 10,
+                    'lnonsphr': 6
+                },
+                'energyParameters': {
+                    's': 4,
+                    'p': 4,
+                    'd': 3,
+                    'f': 4,
+                },
+                'flipSpin': True,
+                'magMom': 2.2,
+                'prodBasis': {
+                    'lcutm': '4',
+                    'lcutwf': '9',
+                    'select': '4 0 4 2'
+                },
+                'electronConfig': {
+                    'coreConfig':
+                    '[Ar]',
+                    'valenceConfig':
+                    '(4s1/2) (3d3/2) (3d5/2)',
+                    'stateOccupation': [{
+                        'state': '(3d3/2)',
+                        'spinUp': '2.00000000',
+                        'spinDown': '1.00000000'
+                    }, {
+                        'state': '(3d5/2)',
+                        'spinUp': '3.00000000',
+                        'spinDown': '.00000000'
+                    }]
+                },
+            }, {
+                'name': 'Pt-1',
+                'element': 'Pt',
+                'atomicNumber': 78,
+                'coreStates': 19,
+                'mtSphere': {
+                    'radius': 2.3,
+                    'gridPoints': 787,
+                    'logIncrement': 0.017
+                },
+                'atomicCutoffs': {
+                    'lmax': 10,
+                    'lnonsphr': 6
+                },
+                'energyParameters': {
+                    's': 6,
+                    'p': 6,
+                    'd': 5,
+                    'f': 5,
+                },
+                'flipSpin': True,
+                'magMom': 0.0,
+                'prodBasis': {
+                    'lcutm': '4',
+                    'lcutwf': '9',
+                    'select': '4 0 4 2'
+                },
+                'electronConfig': {
+                    'coreConfig':
+                    '[Xe] (4f5/2) (4f7/2)',
+                    'valenceConfig':
+                    '(6s1/2) (5d3/2) (5d5/2)',
+                    'stateOccupation': [{
+                        'state': '(6s1/2)',
+                        'spinUp': '.50000000',
+                        'spinDown': '.50000000'
+                    }, {
+                        'state': '(5d5/2)',
+                        'spinUp': '3.00000000',
+                        'spinDown': '2.00000000'
+                    }]
+                },
+            }]
+        },
+        'atomGroups': {
+            'atomGroup': [{
+                'species': 'Fe-1',
+                'filmPos': ['.0000000000 .0000000000 -.9964250044'],
+                'force': {
+                    'calculate': True,
+                    'relaxXYZ': 'TTT'
+                },
+                'nocoParams': {
+                    'l_relax': 'F',
+                    'alpha': 0.0,
+                    'beta': '1.570796326',
+                    'b_cons_x': '.00000000',
+                    'b_cons_y': '.00000000',
+                },
+            }, {
+                'species': 'Pt-1',
+                'filmPos': ['1.000/2.000 1.000/2.000 .9964250044'],
+                'force': {
+                    'calculate': True,
+                    'relaxXYZ': 'TTT'
+                },
+                'nocoParams': {
+                    'l_relax': 'F',
+                    'alpha': 0.0,
+                    'beta': '1.570796326',
+                    'b_cons_x': '.00000000',
+                    'b_cons_y': '.00000000',
+                },
+            }]
+        },
         'output': {
             'dos': False,
             'band': False,
             'vacdos': False,
             'slice': False,
             'mcd': 'F',
-            'checks': {'vchk': False, 'cdinf': False},
+            'checks': {
+                'vchk': False,
+                'cdinf': False
+            },
             'densityOfStates': {
                 'ndir': 0,
                 'minEnergy': -0.5,
@@ -677,9 +842,11 @@ def test_inpxml_to_dict(inpxml_etree):
                 'supercellY': '1',
                 'supercellZ': '1',
             },
-            'plotting':  {'iplot': 0,
-                          'plplot': False,
-                          'score': False},
+            'plotting': {
+                'iplot': 0,
+                'plplot': False,
+                'score': False
+            },
             'chargeDensitySlicing': {
                 'numkpt': 0,
                 'minEigenval': 0.0,
@@ -687,9 +854,14 @@ def test_inpxml_to_dict(inpxml_etree):
                 'nnne': 0,
                 'pallst': False,
             },
-            'specialOutput': {'eonly': False, 'bmt': False},
-            'magneticCircularDichroism': {'energyLo': '-10.00000000',
-                                          'energyUp': '.00000000'},
+            'specialOutput': {
+                'eonly': False,
+                'bmt': False
+            },
+            'magneticCircularDichroism': {
+                'energyLo': '-10.00000000',
+                'energyUp': '.00000000'
+            },
         },
     }
 
@@ -731,6 +903,7 @@ class TestShiftValue:
             assert float(result) - float(result_before) == 666
 
     attr_to_test_float = list(xml_structure[4])
+
     @pytest.mark.parametrize('attr_name', attr_to_test_float)
     def test_shift_value_rel(self, inpxml_etree, attr_name):
         import math
@@ -778,10 +951,13 @@ class TestShiftValue:
         captured = capsys.readouterr()
         assert captured.out == 'Can not find nz attribute in the inp.xml, skip it\n'
 
+
 class TestShiftSpeciesLabel:
     attr_names = ['radius', 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f']
-    tags = ['mtSphere', 'mtSphere', 'mtSphere', 'atomicCutoffs', 'atomicCutoffs',
-            'energyParameters','energyParameters', 'energyParameters', 'energyParameters']
+    tags = [
+        'mtSphere', 'mtSphere', 'mtSphere', 'atomicCutoffs', 'atomicCutoffs', 'energyParameters',
+        'energyParameters', 'energyParameters', 'energyParameters'
+    ]
 
     @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))
     def test_shift_species_label(self, inpxml_etree, att_name, tag):
@@ -840,7 +1016,9 @@ class TestShiftSpeciesLabel:
         shift_value_species_label(etree, 'all', att_name, 2, mode='rel')
         result = np.array(eval_xpath2(etree, path)).astype('float')
 
-        assert np.all(np.isclose(old_result*2, result))
+        assert np.all(np.isclose(old_result * 2, result))
+
+
 class TestAddNumToAtt:
     from aiida_fleur.tools.xml_util import get_inpxml_file_structure
     xml_structure = get_inpxml_file_structure()
@@ -868,6 +1046,7 @@ class TestAddNumToAtt:
             assert float(result) - float(result_before) == 333
 
     attr_to_test_float = list(xml_structure[4])
+
     @pytest.mark.parametrize('attr_name', attr_to_test_float)
     def test_ad_num_to_att_rel(self, inpxml_etree, attr_name):
         import math
@@ -886,7 +1065,6 @@ class TestAddNumToAtt:
             add_num_to_att(etree, path, attr_name, 1.2442, mode='rel')
             result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
 
-
             if float(result_before) != 0:
                 assert math.isclose(float(result) / float(result_before), 1.2442, rel_tol=1e-6)
             else:
@@ -897,6 +1075,7 @@ class TestAddNumToAtt:
 def test_get_xml_attribute(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_xml_attribute
     pass
+
 
 # get_inpxml_file_structure
 # IMPORTANT: Here we need thats that tell us when the plugin has to be maintained, i.e Know thing in the inp schema where changed

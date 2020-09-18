@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 from six.moves import range
 
+
 def gcd(x, y):
     """
     greatest common divisor
@@ -21,12 +22,13 @@ def gcd(x, y):
         (x, y) = (y, x % y)
     return x
 
+
 def decide_ncore(nkpoints, ncore):
     """
     For kpoint para the number of cores used must be devidebale
     """
     ncore_new = gcd(nkpoints, ncore)
-    ncore_list = list(range(ncore_new, ncore+1))
+    ncore_list = list(range(ncore_new, ncore + 1))
     #print ncore_list
     for noc in ncore_list:
         remain = nkpoints % noc

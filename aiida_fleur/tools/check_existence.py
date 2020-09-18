@@ -10,7 +10,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 DO NOT USE, this is crab so far. The development was stoped because this is done 
 with AiiDA 'caching' now.
@@ -26,8 +25,6 @@ from aiida.plugins import DataFactory
 from aiida.orm import QueryBuilder
 from aiida.engine.calculation.job import CalcJob
 from aiida.orm import Node
-
-
 '''
 def check_existence_calc(input_nodes, successful=True):
     """

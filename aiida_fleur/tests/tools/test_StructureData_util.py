@@ -32,8 +32,7 @@ def test_is_primitive(generate_structure):
     structure.clear_sites()
     param = 5.43
     structure.append_atom(position=(0., 0., 0.), symbols='Si', name='Si')
-    structure.append_atom(position=(param / 2., param / 2., param / 2.),
-                          symbols='Si', name='Si')
+    structure.append_atom(position=(param / 2., param / 2., param / 2.), symbols='Si', name='Si')
     structure.store()
 
     assert not is_primitive(structure)
@@ -47,12 +46,12 @@ def test_rescale_nowf(generate_structure):
     rescaled = rescale_nowf(structure, 1.05)
     rescaled_cell = np.array(rescaled.cell)
 
-    assert (rescaled_cell == 1.05 ** (1 / 3.) * old_cell).all()
+    assert (rescaled_cell == 1.05**(1 / 3.) * old_cell).all()
 
     positions_old = [x.position for x in structure.sites]
     positions_rescaled = [x.position for x in rescaled.sites]
     for position in positions_old:
-        assert tuple(pos * 1.05 ** (1 / 3.) for pos in position) in positions_rescaled
+        assert tuple(pos * 1.05**(1 / 3.) for pos in position) in positions_rescaled
 
 
 def test_supercell(generate_structure):
@@ -73,8 +72,10 @@ def test_supercell(generate_structure):
     positions_rescaled = [x.position for x in supercell.sites]
     for position in positions_old:
         for x, y, z in product(range(2), range(3), range(4)):
-            test_pos = tuple(np.array(position) + x * np.array(structure.cell[0]) +
-                             y * np.array(structure.cell[1]) + z * np.array(structure.cell[2]))
+            test_pos = tuple(
+                np.array(position) + x * np.array(structure.cell[0]) +
+                y * np.array(structure.cell[1]) + z * np.array(structure.cell[2])
+            )
             assert test_pos in positions_rescaled
 
 
@@ -96,8 +97,8 @@ def test_abs_to_rel_f(generate_film_structure):
     cell = structure.cell
 
     vector = [1.4026317387183, 1.9836207751336, 0.25]
-    assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc),
-                      np.array([0.5, 0.5, 0.25])).all()
+    assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5,
+                                                                               0.25])).all()
     assert abs_to_rel_f([1], cell, pbc=structure.pbc) == False
 
 
@@ -119,8 +120,9 @@ def test_rel_to_abs_f(generate_film_structure):
     cell = structure.cell
 
     vector = [0.5, 0.5, 0.25]
-    assert np.isclose(rel_to_abs_f(vector, cell),
-                      np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
+    assert np.isclose(
+        rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])
+    ).all()
     assert rel_to_abs_f([1], cell) == False
 
 
@@ -134,11 +136,16 @@ def test_break_symmetry_wf(generate_film_structure):
     structure = generate_film_structure()
     structure = supercell_ncf(structure, 2, 2, 1)
 
-    out = break_symmetry_wf(structure, wf_para=Dict(dict={}), )
+    out = break_symmetry_wf(
+        structure,
+        wf_para=Dict(dict={}),
+    )
     structure_broken = out['new_structure']
     kind_names = [x.kind_name for x in structure_broken.sites]
 
-    for kind_name in ['Fe1', 'Fe1', 'Fe1', 'Fe1', 'Pt1', 'Pt2', 'Pt3', 'Pt4', 'Pt5', 'Pt6', 'Pt7', 'Pt8']:
+    for kind_name in [
+        'Fe1', 'Fe1', 'Fe1', 'Fe1', 'Pt1', 'Pt2', 'Pt3', 'Pt4', 'Pt5', 'Pt6', 'Pt7', 'Pt8'
+    ]:
         assert kind_name in kind_names
 
 
@@ -204,10 +211,10 @@ def test_center_film_wf(generate_film_structure, generate_structure):
     structure_film = move_atoms_incell(structure_film, [0.0, 0.0, 1.1242])
 
     centered_film = center_film_wf(structure_film)
-    assert [x.position for x in centered_film.sites] == [
-        (0.0, 0.0, -1.2286013142),
-        (1.4026317387, 1.9836207751, -0.1740305093),
-        (0.0, 0.0, 1.2286013141)]
+    assert [x.position
+            for x in centered_film.sites] == [(0.0, 0.0, -1.2286013142),
+                                              (1.4026317387, 1.9836207751, -0.1740305093),
+                                              (0.0, 0.0, 1.2286013141)]
 
     with pytest.raises(TypeError):
         center_film(structure_bulk)
@@ -221,8 +228,7 @@ def test_get_layers(generate_film_structure):
     assert get_layers(structure) == ([[([0.0, 0.0, -1.054570804781922], 'Fe')],
                                       [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
                                       [([0.0, 0.0, 1.4026318234924429], 'Pt')]],
-                                     [-1.0545708048, 0.0, 1.4026318235],
-                                     [1, 1, 1])
+                                     [-1.0545708048, 0.0, 1.4026318235], [1, 1, 1])
 
     bohr_a_0 = 0.52917721092
     structure.append_atom(position=(1.0, 0., -1.99285 * bohr_a_0), symbols='Fe')
@@ -230,56 +236,63 @@ def test_get_layers(generate_film_structure):
                                        ([1.0, 0.0, -1.054570804781922], 'Fe')],
                                       [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
                                       [([0.0, 0.0, 1.4026318234924429], 'Pt')]],
-                                     [-1.0545708048, 0.0, 1.4026318235],
-                                     [2, 1, 1])
+                                     [-1.0545708048, 0.0, 1.4026318235], [2, 1, 1])
 
 
-create_slab_inputs = [{'lattice': 'fcc', 'miller': None, 'host_symbol': 'Fe',
-                       'latticeconstant': 4.0, 'size': (1, 1, 3),
-                       'replacements': {-1: 'Pt', 1: 'U'},
-                       'decimals': 10, 'pop_last_layers': 0},
-
-                      {'lattice': 'fcc', 'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
-                       'host_symbol': 'Fe',
-                       'latticeconstant':4.0, 'size':(1, 1, 3),
-                       'replacements':{0: 'Pt'},
-                       'decimals': 10, 'pop_last_layers': 1},
-
-                      {'lattice': 'bcc', 'miller': None, 'host_symbol': 'Fe',
-                       'latticeconstant': 4.0, 'size': (1, 1, 3),
-                       'replacements': {-3: 'Pt'},
-                       'decimals': 10, 'pop_last_layers': 0}]
+create_slab_inputs = [{
+    'lattice': 'fcc',
+    'miller': None,
+    'host_symbol': 'Fe',
+    'latticeconstant': 4.0,
+    'size': (1, 1, 3),
+    'replacements': {
+        -1: 'Pt',
+        1: 'U'
+    },
+    'decimals': 10,
+    'pop_last_layers': 0
+}, {
+    'lattice': 'fcc',
+    'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+    'host_symbol': 'Fe',
+    'latticeconstant': 4.0,
+    'size': (1, 1, 3),
+    'replacements': {
+        0: 'Pt'
+    },
+    'decimals': 10,
+    'pop_last_layers': 1
+}, {
+    'lattice': 'bcc',
+    'miller': None,
+    'host_symbol': 'Fe',
+    'latticeconstant': 4.0,
+    'size': (1, 1, 3),
+    'replacements': {
+        -3: 'Pt'
+    },
+    'decimals': 10,
+    'pop_last_layers': 0
+}]
 
 create_slab_chem_elements = [['Fe', 'Fe', 'U', 'U', 'Fe', 'Fe', 'Fe', 'Fe', 'Fe', 'Fe', 'Pt', 'Pt'],
-                             ['Pt', 'Fe', 'Fe', 'Fe', 'Fe'],
-                             ['Fe', 'Fe', 'Fe', 'Pt', 'Fe', 'Fe']]
+                             ['Pt', 'Fe', 'Fe', 'Fe', 'Fe'], ['Fe', 'Fe', 'Fe', 'Pt', 'Fe', 'Fe']]
 
-create_slab_positions = [np.array([[0., 0., 0.],
-                                   [2., 2., 0.],
-                                   [2., 0., 2.],
-                                   [0., 2., 2.],
-                                   [0., 0., 4.],
-                                   [2., 2., 4.],
-                                   [2., 0., 6.],
-                                   [0., 2., 6.],
-                                   [0., 0., 8.],
-                                   [2., 2., 8.],
-                                   [2., 0., 10.],
-                                   [0., 2., 10.]]),
-                         np.array([[0.00000000, 0., 0.00000000],
-                                   [1.41421356, 2., 1.41421356],
-                                   [-0.0000000, 0., 2.82842712],
-                                   [1.41421356, 2., 4.24264069],
-                                   [-0.0000000, 0., 5.65685425]]),
-                         np.array([[0., 0., 0.],
-                                   [2., 2., 2.],
-                                   [0., 0., 4.],
-                                   [2., 2., 6.],
-                                   [0., 0., 8.],
-                                   [2., 2., 10.]])]
+create_slab_positions = [
+    np.array([[0., 0., 0.], [2., 2., 0.], [2., 0., 2.], [0., 2., 2.], [0., 0., 4.], [2., 2., 4.],
+              [2., 0., 6.], [0., 2., 6.], [0., 0., 8.], [2., 2., 8.], [2., 0., 10.], [0., 2.,
+                                                                                      10.]]),
+    np.array([[0.00000000, 0., 0.00000000], [1.41421356, 2., 1.41421356],
+              [-0.0000000, 0., 2.82842712], [1.41421356, 2., 4.24264069],
+              [-0.0000000, 0., 5.65685425]]),
+    np.array([[0., 0., 0.], [2., 2., 2.], [0., 0., 4.], [2., 2., 6.], [0., 0., 8.], [2., 2., 10.]])
+]
 
 
-@pytest.mark.parametrize('inputs,symbols,positions', zip(create_slab_inputs, create_slab_chem_elements, create_slab_positions))
+@pytest.mark.parametrize(
+    'inputs,symbols,positions',
+    zip(create_slab_inputs, create_slab_chem_elements, create_slab_positions)
+)
 def test_create_manual_slab_ase(inputs, symbols, positions):
     from aiida_fleur.tools.StructureData_util import create_manual_slab_ase
 
@@ -295,10 +308,15 @@ def test_magnetic_slab_from_relaxed(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import create_manual_slab_ase
     import math
 
-    inp = {'lattice': 'fcc', 'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
-           'host_symbol': 'Pt',
-           'latticeconstant': 4.0, 'size': (1, 1, 1),
-           'decimals': 10, 'pop_last_layers': 0}
+    inp = {
+        'lattice': 'fcc',
+        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+        'host_symbol': 'Pt',
+        'latticeconstant': 4.0,
+        'size': (1, 1, 1),
+        'decimals': 10,
+        'pop_last_layers': 0
+    }
 
     structure2 = create_manual_slab_ase(**inp)
 
@@ -307,8 +325,10 @@ def test_magnetic_slab_from_relaxed(generate_film_structure):
     result = magnetic_slab_from_relaxed(relaxed_structure, structure2, 5, 2)
 
     names = ['Fe', 'Pt', 'Pt', 'Pt', 'Pt']
-    z_positions = [-2.648605745990961, -1.5940349412090389, -0.1798213788090388,
-                   1.2343921835909613, 2.648605745990961]
+    z_positions = [
+        -2.648605745990961, -1.5940349412090389, -0.1798213788090388, 1.2343921835909613,
+        2.648605745990961
+    ]
     for site, correct_name, correct_position in zip(result.sites, names, z_positions):
         assert site.kind_name == correct_name
         assert math.isclose(site.position[2], correct_position)
@@ -324,8 +344,16 @@ def test_request_average_bond_length(generate_film_structure):
 
     structure = generate_film_structure()
     result = request_average_bond_length(['Fe', 'Pt'], user_api_key).get_dict()
-    assert result == {'Fe': {'Fe': 2.4651768430600254, 'Pt': 2.633878591723135},
-                      'Pt': {'Fe': 2.633878591723135, 'Pt': 2.8120017054377606}}
+    assert result == {
+        'Fe': {
+            'Fe': 2.4651768430600254,
+            'Pt': 2.633878591723135
+        },
+        'Pt': {
+            'Fe': 2.633878591723135,
+            'Pt': 2.8120017054377606
+        }
+    }
 
 
 def test_adjust_film_relaxation(generate_film_structure):
@@ -336,8 +364,16 @@ def test_adjust_film_relaxation(generate_film_structure):
     if not user_api_key:
         pytest.skip('No USER_API_KEY given, skip the test')
 
-    suggestion = {'Fe': {'Fe': 2.4651768430600254, 'Pt': 2.633878591723135},
-                  'Pt': {'Fe': 2.633878591723135, 'Pt': 2.8120017054377606}}
+    suggestion = {
+        'Fe': {
+            'Fe': 2.4651768430600254,
+            'Pt': 2.633878591723135
+        },
+        'Pt': {
+            'Fe': 2.633878591723135,
+            'Pt': 2.8120017054377606
+        }
+    }
 
     structure = generate_film_structure()
     result = adjust_film_relaxation(structure, suggestion, hold_layers=0)

@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find the workchain 'FleurScfWorkChain' for the self-consistency
 cycle management of a FLEUR calculation with AiiDA.
@@ -62,27 +61,34 @@ class FleurScfWorkChain(WorkChain):
     """
 
     _workflowversion = "0.4.1"
-    _wf_default = {'fleur_runmax': 4,
-                   'density_converged': 0.00002,
-                   'energy_converged': 0.002,
-                   'force_converged': 0.002,
-                   'mode': 'density',  # 'density', 'energy' or 'force'
-                   'serial': False,
-                   'itmax_per_run': 30,
-                   'force_dict': {'qfix': 2,
-                                  'forcealpha': 1.0,
-                                  'forcemix': 'straight'},
-                   'use_relax_xml': False,
-                   'inpxml_changes': [],
-                   }
+    _wf_default = {
+        'fleur_runmax': 4,
+        'density_converged': 0.00002,
+        'energy_converged': 0.002,
+        'force_converged': 0.002,
+        'mode': 'density',  # 'density', 'energy' or 'force'
+        'serial': False,
+        'itmax_per_run': 30,
+        'force_dict': {
+            'qfix': 2,
+            'forcealpha': 1.0,
+            'forcemix': 'straight'
+        },
+        'use_relax_xml': False,
+        'inpxml_changes': [],
+    }
 
     _default_options = {
-        'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-        'max_wallclock_seconds': 6*60*60,
+        'resources': {
+            "num_machines": 1,
+            "num_mpiprocs_per_machine": 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
         'custom_scheduler_commands': '',
         'import_sys_environment': False,
-        'environment_variables': {}}
+        'environment_variables': {}
+    }
 
     @classmethod
     def define(cls, spec):
@@ -98,18 +104,10 @@ class FleurScfWorkChain(WorkChain):
         spec.input("settings", valid_type=Dict, required=False)
 
         spec.outline(
-            cls.start,
-            cls.validate_input,
-            if_(cls.fleurinpgen_needed)(
-                cls.run_fleurinpgen),
-            cls.run_fleur,
-            cls.inspect_fleur,
+            cls.start, cls.validate_input,
+            if_(cls.fleurinpgen_needed)(cls.run_fleurinpgen), cls.run_fleur, cls.inspect_fleur,
             cls.get_res,
-            while_(cls.condition)(
-                cls.run_fleur,
-                cls.inspect_fleur,
-                cls.get_res),
-            cls.return_results
+            while_(cls.condition)(cls.run_fleur, cls.inspect_fleur, cls.get_res), cls.return_results
         )
 
         spec.output('fleurinp', valid_type=FleurinpData)
@@ -117,29 +115,35 @@ class FleurScfWorkChain(WorkChain):
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
-                       message="Invalid workchain parameters.")
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG',
-                       message="Invalid input configuration.")
-        spec.exit_code(233, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Input codes do not correspond to fleur or inpgen respectively.")
-        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED',
-                       message="Input file modification failed.")
-        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE',
-                       message="Input file was corrupted after user's modifications.")
-        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED',
-                       message="Inpgen calculation failed.")
-        spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED',
-                       message="Fleur calculation failed.")
-        spec.exit_code(362, 'ERROR_DID_NOT_CONVERGE',
-                       message="SCF cycle did not lead to convergence.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(
+            233,
+            'ERROR_INVALID_CODE_PROVIDED',
+            message="Input codes do not correspond to fleur or inpgen respectively."
+        )
+        spec.exit_code(
+            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed."
+        )
+        spec.exit_code(
+            236,
+            'ERROR_INVALID_INPUT_FILE',
+            message="Input file was corrupted after user's modifications."
+        )
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
+        spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED', message="Fleur calculation failed.")
+        spec.exit_code(
+            362, 'ERROR_DID_NOT_CONVERGE', message="SCF cycle did not lead to convergence."
+        )
 
     def start(self):
         """
         init context and some parameters
         """
-        self.report('INFO: started convergence workflow version {}'
-                    ''.format(self._workflowversion))
+        self.report(
+            'INFO: started convergence workflow version {}'
+            ''.format(self._workflowversion)
+        )
 
         ####### init    #######
 
@@ -231,8 +235,10 @@ class FleurScfWorkChain(WorkChain):
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'remote_data' in inputs:
-                warning = ('WARNING: Only initial charge density will be copied from the'
-                           'given remote folder because fleurinp is given.')
+                warning = (
+                    'WARNING: Only initial charge density will be copied from the'
+                    'given remote folder because fleurinp is given.'
+                )
                 self.report(warning)
         elif 'remote_data' in inputs:
             self.ctx.run_inpgen = False
@@ -260,27 +266,28 @@ class FleurScfWorkChain(WorkChain):
 
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(
-                    inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
+                error = (
+                    "The code you provided for inpgen of FLEUR does not "
+                    "use the plugin fleur.inpgen"
+                )
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(
-                    inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
+                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy']:
-            error = ("ERROR: Wrong mode of convergence"
-                     ": one of 'force', 'density' or 'energy' was expected.")
+            error = (
+                "ERROR: Wrong mode of convergence"
+                ": one of 'force', 'density' or 'energy' was expected."
+            )
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
@@ -294,8 +301,10 @@ class FleurScfWorkChain(WorkChain):
             for change in fchanges:
                 # somehow the tuple type gets destroyed on the way and becomes a list
                 if (not isinstance(change, tuple)) and (not isinstance(change, list)):
-                    error = ('ERROR: Wrong Input inpxml_changes wrong format of'
-                             ': {} should be tuple of 2. I abort'.format(change))
+                    error = (
+                        'ERROR: Wrong Input inpxml_changes wrong format of'
+                        ': {} should be tuple of 2. I abort'.format(change)
+                    )
                     return self.exit_codes.ERROR_INVALID_INPUT_PARAM
         return
 
@@ -313,8 +322,7 @@ class FleurScfWorkChain(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(
-            self.ctx.description_wf, self.ctx.formula)
+        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
 
         inpgencode = self.inputs.inpgen
         if 'calc_parameters' in self.inputs:
@@ -322,14 +330,17 @@ class FleurScfWorkChain(WorkChain):
         else:
             params = {}
 
-        options = {"max_wallclock_seconds": int(self.ctx.options.get('max_wallclock_seconds')),
-                   "resources": self.ctx.options.get('resources'),
-                   "queue_name": self.ctx.options.get('queue_name', '')}
+        options = {
+            "max_wallclock_seconds": int(self.ctx.options.get('max_wallclock_seconds')),
+            "resources": self.ctx.options.get('resources'),
+            "queue_name": self.ctx.options.get('queue_name', '')
+        }
         # TODO do not use the same option for inpgen as for FLEUR; so far we ignore the other
         # clean Idea might be to provide second inpgen options
 
         inputs_build = get_inputs_inpgen(
-            structure, inpgencode, options, label, description, params=params)
+            structure, inpgencode, options, label, description, params=params
+        )
         self.report('INFO: run inpgen')
         future = self.submit(inputs_build)
 
@@ -385,20 +396,22 @@ class FleurScfWorkChain(WorkChain):
         # set proper convergence parameters in inp.xml
         if converge_mode == 'density':
             dist = wf_dict.get('density_converged')
-            fleurmode.set_inpchanges(
-                {'itmax': self.ctx.default_itmax, 'minDistance': dist})
+            fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist})
         elif converge_mode == 'force':
             force_converged = wf_dict.get('force_converged')
             dist = wf_dict.get('density_converged')
-            fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist,
-                                      'force_converged': force_converged, 'l_f': True,
-                                      'qfix': force_dict.get('qfix'),
-                                      'forcealpha': force_dict.get('forcealpha'),
-                                      'forcemix': force_dict.get('forcemix')})
+            fleurmode.set_inpchanges({
+                'itmax': self.ctx.default_itmax,
+                'minDistance': dist,
+                'force_converged': force_converged,
+                'l_f': True,
+                'qfix': force_dict.get('qfix'),
+                'forcealpha': force_dict.get('forcealpha'),
+                'forcemix': force_dict.get('forcemix')
+            })
         elif converge_mode == 'energy':
             dist = 0.0
-            fleurmode.set_inpchanges(
-                {'itmax': self.ctx.default_itmax, 'minDistance': dist})
+            fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist})
 
         avail_ac_dict = fleurmode.get_avail_actions()
 
@@ -409,10 +422,12 @@ class FleurScfWorkChain(WorkChain):
                 para = change[1]
                 method = avail_ac_dict.get(function, None)
                 if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             "is not known to fleurinpmodifier class, "
-                             "please check/test your input. I abort..."
-                             "".format(function))
+                    error = (
+                        "ERROR: Input 'inpxml_changes', function {} "
+                        "is not known to fleurinpmodifier class, "
+                        "please check/test your input. I abort..."
+                        "".format(function)
+                    )
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -420,9 +435,11 @@ class FleurScfWorkChain(WorkChain):
                     try:
                         method(**para)
                     except ValueError as vale:
-                        error= ("ERROR: Changing the inp.xml file failed. Tried to apply {}"
-                                ", which failed with {}. I abort, good luck next time!"
-                                "".format(change, vale))
+                        error = (
+                            "ERROR: Changing the inp.xml file failed. Tried to apply {}"
+                            ", which failed with {}. I abort, good luck next time!"
+                            "".format(change, vale)
+                        )
                         self.control_end_wc(error)
                         return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -459,7 +476,7 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_base_wc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs: # and not self.ctx.wf_dict['use_relax_xml']:
+        elif 'remote_data' in self.inputs:  # and not self.ctx.wf_dict['use_relax_xml']:
             remote = self.inputs.remote_data
         else:
             remote = None
@@ -467,19 +484,22 @@ class FleurScfWorkChain(WorkChain):
         label = ' '
         description = ' '
         if self.ctx.formula:
-            label = 'scf: fleur run {}'.format(self.ctx.loop_count+1)
+            label = 'scf: fleur run {}'.format(self.ctx.loop_count + 1)
             description = '{} fleur run {} on {}'.format(
-                self.ctx.description_wf, self.ctx.loop_count+1, self.ctx.formula)
+                self.ctx.description_wf, self.ctx.loop_count + 1, self.ctx.formula
+            )
         else:
-            label = 'scf: fleur run {}'.format(self.ctx.loop_count+1)
+            label = 'scf: fleur run {}'.format(self.ctx.loop_count + 1)
             description = '{} fleur run {}, fleurinp given'.format(
-                self.ctx.description_wf, self.ctx.loop_count+1)
+                self.ctx.description_wf, self.ctx.loop_count + 1
+            )
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
 
         inputs_builder = get_inputs_fleur(
-            code, remote, fleurin, options, label, description, settings, serial=self.ctx.serial)
+            code, remote, fleurin, options, label, description, settings, serial=self.ctx.serial
+        )
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
@@ -506,8 +526,10 @@ class FleurScfWorkChain(WorkChain):
 
         exit_status = base_wc.exit_status
         if not base_wc.is_finished_ok:
-            error = ('ERROR: Last Fleur calculation failed '
-                     'with exit status {}'.format(exit_status))
+            error = (
+                'ERROR: Last Fleur calculation failed '
+                'with exit status {}'.format(exit_status)
+            )
             self.control_end_wc(error)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
         else:
@@ -526,15 +548,18 @@ class FleurScfWorkChain(WorkChain):
 
         # be aware of magnetism
         xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance'
-        overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence/'
-                                      'overallChargeDensity/@distance')
+        overallchargedensity_xpath = (
+            '/fleurOutput/scfLoop/iteration/densityConvergence/'
+            'overallChargeDensity/@distance'
+        )
 
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
             fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
             outxmlfile_opened = fleur_calcjob.outputs.retrieved.open(
-                fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r')
+                fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r'
+            )
 
             walltime = last_base_wc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
@@ -598,13 +623,14 @@ class FleurScfWorkChain(WorkChain):
 
         energy = self.ctx.total_energy
         if len(energy) >= 2:
-            self.ctx.energydiff = abs(energy[-1]-energy[-2])
+            self.ctx.energydiff = abs(energy[-1] - energy[-2])
 
         if mode == 'force':
             forces = self.ctx.all_forces
             if len(forces) >= 2:
-                self.ctx.forcediff = max(
-                    [abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+                self.ctx.forcediff = max([
+                    abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))
+                ])
         else:
             self.ctx.forcediff = 'can not be determined'
 
@@ -658,7 +684,8 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['conv_mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get(
-            'number_of_iterations_total', None)
+            'number_of_iterations_total', None
+        )
         outputnode_dict['distance_charge'] = self.ctx.last_charge_density
         outputnode_dict['distance_charge_all'] = self.ctx.distance
         outputnode_dict['total_energy'] = last_calc_out_dict.get('energy_hartree', None)
@@ -676,68 +703,79 @@ class FleurScfWorkChain(WorkChain):
 
         if self.ctx.successful and self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
-                self.report('STATUS: Done, the convergence criteria are reached.\n'
-                            'INFO: The charge density of the FLEUR calculation '
-                            'converged after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime to {} "me/bohr^3" \n'
-                            'INFO: Did not manage to get energy and largest force difference '
-                            'between two last iterations, probably converged in a single iteration'
-                            ''.format(self.ctx.loop_count,
-                                      last_calc_out_dict.get('number_of_iterations_total', None),
-                                      self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge']))
+                self.report(
+                    'STATUS: Done, the convergence criteria are reached.\n'
+                    'INFO: The charge density of the FLEUR calculation '
+                    'converged after {} FLEUR runs, {} iterations and {} sec '
+                    'walltime to {} "me/bohr^3" \n'
+                    'INFO: Did not manage to get energy and largest force difference '
+                    'between two last iterations, probably converged in a single iteration'
+                    ''.format(
+                        self.ctx.loop_count,
+                        last_calc_out_dict.get('number_of_iterations_total', None),
+                        self.ctx.total_wall_time, outputnode_dict['distance_charge']
+                    )
+                )
             else:
-                self.report('STATUS: Done, the convergence criteria are reached.\n'
-                            'INFO: The charge density of the FLEUR calculation '
-                            'converged after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime to {} "me/bohr^3" \n'
-                            'INFO: The total energy difference of the last two iterations '
-                            'is {} Htr and largest force difference is {} Htr/bohr'
-                            ''.format(self.ctx.loop_count,
-                                      last_calc_out_dict.get('number_of_iterations_total', None),
-                                      self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge'],
-                                      self.ctx.energydiff,
-                                      self.ctx.forcediff))
+                self.report(
+                    'STATUS: Done, the convergence criteria are reached.\n'
+                    'INFO: The charge density of the FLEUR calculation '
+                    'converged after {} FLEUR runs, {} iterations and {} sec '
+                    'walltime to {} "me/bohr^3" \n'
+                    'INFO: The total energy difference of the last two iterations '
+                    'is {} Htr and largest force difference is {} Htr/bohr'
+                    ''.format(
+                        self.ctx.loop_count,
+                        last_calc_out_dict.get('number_of_iterations_total',
+                                               None), self.ctx.total_wall_time,
+                        outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff
+                    )
+                )
         elif self.ctx.successful and not self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
-                self.report('STATUS/WARNING: Done, the maximum number of runs '
-                            'was reached.\n INFO: The '
-                            'charge density of the FLEUR calculation, '
-                            'after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime is {} "me/bohr^3"\n'
-                            'INFO: can not extract energy and largest force difference between'
-                            ' two last iterations, probably converged in a single iteration'
-                            ''.format(self.ctx.loop_count,
-                                      last_calc_out_dict.get(
-                                          'number_of_iterations_total', None),
-                                      self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge']))
+                self.report(
+                    'STATUS/WARNING: Done, the maximum number of runs '
+                    'was reached.\n INFO: The '
+                    'charge density of the FLEUR calculation, '
+                    'after {} FLEUR runs, {} iterations and {} sec '
+                    'walltime is {} "me/bohr^3"\n'
+                    'INFO: can not extract energy and largest force difference between'
+                    ' two last iterations, probably converged in a single iteration'
+                    ''.format(
+                        self.ctx.loop_count,
+                        last_calc_out_dict.get('number_of_iterations_total', None),
+                        self.ctx.total_wall_time, outputnode_dict['distance_charge']
+                    )
+                )
             else:
-                self.report('STATUS/WARNING: Done, the maximum number of runs '
-                            'was reached.\n INFO: The '
-                            'charge density of the FLEUR calculation, '
-                            'after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime is {} "me/bohr^3"\n'
-                            'INFO: The total energy difference of the last two iterations '
-                            'is {} Htr and largest force difference is {} Htr/bohr\n'
-                            ''.format(self.ctx.loop_count,
-                                      last_calc_out_dict.get(
-                                          'number_of_iterations_total', None),
-                                      self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge'],
-                                      self.ctx.energydiff,
-                                      self.ctx.forcediff))
+                self.report(
+                    'STATUS/WARNING: Done, the maximum number of runs '
+                    'was reached.\n INFO: The '
+                    'charge density of the FLEUR calculation, '
+                    'after {} FLEUR runs, {} iterations and {} sec '
+                    'walltime is {} "me/bohr^3"\n'
+                    'INFO: The total energy difference of the last two iterations '
+                    'is {} Htr and largest force difference is {} Htr/bohr\n'
+                    ''.format(
+                        self.ctx.loop_count,
+                        last_calc_out_dict.get('number_of_iterations_total',
+                                               None), self.ctx.total_wall_time,
+                        outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff
+                    )
+                )
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
-                self.report('STATUS/ERROR: I abort, see logs and '
-                            'errors/warning/hints in output_scf_wc_para')
+                self.report(
+                    'STATUS/ERROR: I abort, see logs and '
+                    'errors/warning/hints in output_scf_wc_para'
+                )
 
         outputnode_t = Dict(dict=outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
             outdict = create_scf_result_node(
-                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved)
+                outpara=outputnode_t, last_calc_out=last_calc_out, last_calc_retrieved=retrieved
+            )
         else:
             outdict = create_scf_result_node(outpara=outputnode_t)
 
@@ -782,8 +820,10 @@ def create_scf_result_node(**kwargs):
     outdict = {}
     outputnode = outpara.clone()
     outputnode.label = 'output_scf_wc_para'
-    outputnode.description = ('Contains self-consistency results and '
-                              'information of an fleur_scf_wc run.')
+    outputnode.description = (
+        'Contains self-consistency results and '
+        'information of an fleur_scf_wc run.'
+    )
 
     outdict['output_scf_wc_para'] = outputnode
     # copy, because we rather produce the same node twice then have a circle in the database for now

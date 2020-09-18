@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Collection of utility routines dealing with StructureData objects
 """
@@ -111,14 +110,14 @@ def rescale_nowf(inp_structure, scale):
 
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
-    new_ase.set_cell(the_ase.get_cell() *
-                     np.power(float(scale), 1.0/3), scale_atoms=True)
+    new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = '{}  rescaled'.format(scale)#, structure.uuid)
+    rescaled_structure.label = '{}  rescaled'.format(scale)  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
 
     return rescaled_structure
+
 
 # @cf
 
@@ -176,9 +175,9 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     na3 = int(n_a3)
 
     # new cell
-    new_a1 = [i*na1 for i in old_a1]
-    new_a2 = [i*na2 for i in old_a2]
-    new_a3 = [i*na3 for i in old_a3]
+    new_a1 = [i * na1 for i in old_a1]
+    new_a2 = [i * na2 for i in old_a2]
+    new_a3 = [i * na3 for i in old_a3]
     new_cell = [new_a1, new_a2, new_a3]
     new_structure = DataFactory('structure')(cell=new_cell, pbc=old_pbc)
 
@@ -219,8 +218,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 
     formula = inp_structure.get_formula()
     new_structure.label = 'supercell of {}'.format(formula)
-    new_structure.description = '{}x{}x{} supercell of {}'.format(
-        n_a1, n_a2, n_a3, formula)
+    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
     return new_structure
 
 
@@ -344,15 +342,21 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     pos = wf_dict.get('pos', [])
     new_kinds_names = wf_dict.get('new_kinds_names', {})
     new_structure, para_new = break_symmetry(
-        structure, atoms=atoms, site=sites, pos=pos,
-        new_kinds_names=new_kinds_names, parameterdata=parameterdata)
+        structure,
+        atoms=atoms,
+        site=sites,
+        pos=pos,
+        new_kinds_names=new_kinds_names,
+        parameterdata=parameterdata
+    )
 
     return {'new_structure': new_structure, 'new_parameters': para_new}
 
 
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
-def break_symmetry(structure, atoms=None, site=None, pos=None,
-                   new_kinds_names=None, parameterdata=None):
+def break_symmetry(
+    structure, atoms=None, site=None, pos=None, new_kinds_names=None, parameterdata=None
+):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -385,8 +389,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
     from aiida.common.constants import elements as PeriodicTableElements
     from aiida.orm import Dict
 
-    _atomic_numbers = {data['symbol']: num for num,
-                       data in six.iteritems(PeriodicTableElements)}
+    _atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTableElements)}
 
     # get all atoms, get the symbol of the atom
     # if wanted make individual kind for that atom
@@ -441,15 +444,17 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
                 symbol_count[symbol] = symbol_count[symbol] + 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
                 # print(symbol_new_kinds_names)
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                    newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))
+                                               == symbol_count[symbol]):
+                    newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
                 else:
                     newkindname = '{}{}'.format(symbol, symbol_count[symbol])
             else:
                 symbol_count[symbol] = 1
                 symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                    newkindname = symbol_new_kinds_names[symbol_count[symbol]-1]
+                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))
+                                               == symbol_count[symbol]):
+                    newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
                 else:
                     newkindname = '{}{}'.format(symbol, symbol_count[symbol])
             new_kind = Kind(name=newkindname, symbols=symbol)
@@ -468,24 +473,22 @@ def break_symmetry(structure, atoms=None, site=None, pos=None,
                             elif id_a:  # != 1: # copy parameter of symbol and add id
                                 val_new = dict(val)
                                 # getting the charge over element might be risky
-                                charge = _atomic_numbers.get(
-                                    (val.get('element')))
-                                idp = '{}.{}'.format(
-                                    charge, symbol_count[symbol])
+                                charge = _atomic_numbers.get((val.get('element')))
+                                idp = '{}.{}'.format(charge, symbol_count[symbol])
                                 idp = float("{0:.2f}".format(float(idp)))
                                 # dot cannot be stored in AiiDA dict...
                                 val_new.update({u'id': idp})
                                 atomlistname = 'atom{}'.format(id_a)
                                 i = 0
                                 while new_parameterd.get(atomlistname, {}):
-                                    i = i+1
-                                    atomlistname = 'atom{}'.format(id_a+i)
+                                    i = i + 1
+                                    atomlistname = 'atom{}'.format(id_a + i)
 
-                                symbol_new_kinds_names = new_kinds_names.get(
-                                    symbol, [])
+                                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
                                 # print(symbol_new_kinds_names)
-                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                                    species_name = symbol_new_kinds_names[symbol_count[symbol]-1]
+                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names))
+                                                               == symbol_count[symbol]):
+                                    species_name = symbol_new_kinds_names[symbol_count[symbol] - 1]
                                 val_new.update({u'name': species_name})
 
                                 new_parameterd[atomlistname] = val_new
@@ -626,10 +629,8 @@ def find_primitive_cell(structure):
     symprec = 1e-7
     # print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
-    lattice, scaled_positions, numbers = find_primitive(
-        ase_structure, symprec=symprec)
-    new_structure_ase = Atoms(
-        numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
+    lattice, scaled_positions, numbers = find_primitive(ase_structure, symprec=symprec)
+    new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
     # print('new {}'.format(len(new_structure.sites)))
 
@@ -670,13 +671,25 @@ def get_all_miller_indices(structure, highestindex):
     """
     wraps the pymatgen function get_symmetrically_distinct_miller_indices for an AiiDa structure
     """
-    return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
+    return get_symmetrically_distinct_miller_indices(
+        structure.get_pymatgen_structure(), highestindex
+    )
 
 
-def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0,
-                           bonds=None, tol=1e-3, max_broken_bonds=0,
-                           lll_reduce=False, center_slab=False, primitive=False,
-                           max_normal_search=None, symmetrize=False):  # , reorient_lattice=True):
+def create_all_slabs_buggy(
+    initial_structure,
+    miller_index,
+    min_slab_size_ang,
+    min_vacuum_size=0,
+    bonds=None,
+    tol=1e-3,
+    max_broken_bonds=0,
+    lll_reduce=False,
+    center_slab=False,
+    primitive=False,
+    max_normal_search=None,
+    symmetrize=False
+):  # , reorient_lattice=True):
     """
     wraps the pymatgen function generate_all_slabs with some useful extras
     returns a dictionary of structures
@@ -685,10 +698,20 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
     aiida_strucs = {}
     pymat_struc = initial_structure.get_pymatgen_structure()
     # currently the pymatgen method is buggy... no coordinates in x,y....
-    all_slabs = generate_all_slabs(pymat_struc, miller_index, min_slab_size_ang, min_vacuum_size,
-                                   bonds=bonds, tol=tol, max_broken_bonds=max_broken_bonds,
-                                   lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
-                                   max_normal_search=max_normal_search, symmetrize=symmetrize)  # , reorient_lattice=reorient_lattice)
+    all_slabs = generate_all_slabs(
+        pymat_struc,
+        miller_index,
+        min_slab_size_ang,
+        min_vacuum_size,
+        bonds=bonds,
+        tol=tol,
+        max_broken_bonds=max_broken_bonds,
+        lll_reduce=lll_reduce,
+        center_slab=center_slab,
+        primitive=primitive,
+        max_normal_search=max_normal_search,
+        symmetrize=symmetrize
+    )  # , reorient_lattice=reorient_lattice)
     for slab in all_slabs:
         # print(slab)
         # slab2 = #slab.get_orthogonal_c_slab()
@@ -698,10 +721,20 @@ def create_all_slabs_buggy(initial_structure, miller_index, min_slab_size_ang, m
     return aiida_strucs
 
 
-def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vacuum_size=0,
-                     bonds=None, tol=1e-3, max_broken_bonds=0,
-                     lll_reduce=False, center_slab=False, primitive=False,
-                     max_normal_search=1, symmetrize=False):  # , reorient_lattice=True):
+def create_all_slabs(
+    initial_structure,
+    miller_index,
+    min_slab_size_ang,
+    min_vacuum_size=0,
+    bonds=None,
+    tol=1e-3,
+    max_broken_bonds=0,
+    lll_reduce=False,
+    center_slab=False,
+    primitive=False,
+    max_normal_search=1,
+    symmetrize=False
+):  # , reorient_lattice=True):
     """
     returns a dictionary of structures
     """
@@ -710,8 +743,9 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     # pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
-        slab = create_slap(initial_structure, index,
-                           min_slab_size_ang, min_vacuum_size, min_slab_size_ang)
+        slab = create_slap(
+            initial_structure, index, min_slab_size_ang, min_vacuum_size, min_slab_size_ang
+        )
         film_struc = StructureData(pymatgen_structure=slab)
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
@@ -719,17 +753,33 @@ def create_all_slabs(initial_structure, miller_index, min_slab_size_ang, min_vac
     return aiida_strucs
 
 
-def create_slap(initial_structure, miller_index, min_slab_size, min_vacuum_size=0, lll_reduce=False,
-                center_slab=False, primitive=False, max_normal_search=1, reorient_lattice=True):
+def create_slap(
+    initial_structure,
+    miller_index,
+    min_slab_size,
+    min_vacuum_size=0,
+    lll_reduce=False,
+    center_slab=False,
+    primitive=False,
+    max_normal_search=1,
+    reorient_lattice=True
+):
     """
     wraps the pymatgen slab generator
     """
     # minimum slab size is in Angstrom!!!
     StructureData = DataFactory('structure')
     pymat_struc = initial_structure.get_pymatgen_structure()
-    slabg = SlabGenerator(pymat_struc, miller_index, min_slab_size, min_vacuum_size,
-                          lll_reduce=lll_reduce, center_slab=center_slab, primitive=primitive,
-                          max_normal_search=max_normal_search)
+    slabg = SlabGenerator(
+        pymat_struc,
+        miller_index,
+        min_slab_size,
+        min_vacuum_size,
+        lll_reduce=lll_reduce,
+        center_slab=center_slab,
+        primitive=primitive,
+        max_normal_search=max_normal_search
+    )
     slab = slabg.get_slab()
     # slab2 = slab.get_orthogonal_c_slab()
     film_struc = StructureData(pymatgen_structure=slab)
@@ -768,7 +818,7 @@ def center_film(structure):
         raise TypeError('Only film structures having surface normal to z are supported')
     sorted_struc = sort_atoms_z_value(structure)
     sites = sorted_struc.sites
-    shift = [0, 0, -(sites[0].position[2]+sites[-1].position[2])/2.0]
+    shift = [0, 0, -(sites[0].position[2] + sites[-1].position[2]) / 2.0]
 
     return move_atoms_incell(sorted_struc, shift)
 
@@ -799,9 +849,17 @@ def sort_atoms_z_value(structure):
     return new_structure
 
 
-def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
-                           latticeconstant=4.0, size=(1, 1, 5), replacements=None, decimals=10,
-                           pop_last_layers=0, inverse=False):
+def create_manual_slab_ase(
+    lattice='fcc',
+    miller=None,
+    host_symbol='Fe',
+    latticeconstant=4.0,
+    size=(1, 1, 5),
+    replacements=None,
+    decimals=10,
+    pop_last_layers=0,
+    inverse=False
+):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
@@ -819,9 +877,7 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
 
     """
     if miller is None:
-        miller = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
+        miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
     if lattice == 'fcc':
         from ase.lattice.cubic import FaceCenteredCubic
@@ -830,19 +886,25 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
         from ase.lattice.cubic import BodyCenteredCubic
         structure_factory = BodyCenteredCubic
     else:
-        raise ValueError(
-            'The given lattice {} is not supported'.format(lattice))
+        raise ValueError('The given lattice {} is not supported'.format(lattice))
 
-    structure = structure_factory(miller=miller, symbol=host_symbol, pbc=(1, 1, 0),
-                                  latticeconstant=latticeconstant, size=size)
+    structure = structure_factory(
+        miller=miller,
+        symbol=host_symbol,
+        pbc=(1, 1, 0),
+        latticeconstant=latticeconstant,
+        size=size
+    )
 
     *_, layer_occupancies = get_layers(structure)
 
     if replacements is not None:
         keys = six.viewkeys(replacements)
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
-            raise ValueError('"replacements" has to contain numbers less than number of layers:'
-                             ' {}'.format(len(layer_occupancies)))
+            raise ValueError(
+                '"replacements" has to contain numbers less than number of layers:'
+                ' {}'.format(len(layer_occupancies))
+            )
     else:
         replacements = {}
 
@@ -852,7 +914,7 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
         structure.pop()
 
     current_symbols = structure.get_chemical_symbols()
-    * _, layer_occupancies = get_layers(structure)
+    *_, layer_occupancies = get_layers(structure)
     layer_occupancies.insert(0, 0)
     for i, at_type in six.iteritems(replacements):
         if isinstance(i, str):
@@ -861,7 +923,7 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
             i = i - 1
         atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
         for k in range(layer_occupancies[i + 1]):
-            current_symbols[k+atoms_to_skip] = at_type
+            current_symbols[k + atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
 
     if inverse:
@@ -873,8 +935,13 @@ def create_manual_slab_ase(lattice='fcc', miller=None, host_symbol='Fe',
     return structure
 
 
-def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_layers,
-                               num_relaxed_layers, tolerance_decimals=10):
+def magnetic_slab_from_relaxed(
+    relaxed_structure,
+    orig_structure,
+    total_number_layers,
+    num_relaxed_layers,
+    tolerance_decimals=10
+):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -917,18 +984,21 @@ def magnetic_slab_from_relaxed(relaxed_structure, orig_structure, total_number_l
     else:
         positions = orig_structure.positions
 
-    num_layers_org = len({np.around(x[2], decimals=tolerance_decimals)
-                          for x in positions})
+    num_layers_org = len({np.around(x[2], decimals=tolerance_decimals) for x in positions})
 
     if num_layers_org > num_layers:
-        raise ValueError('Your original structure contains more layers than given in relaxed '
-                         'structure.\nCould you reduce the number of layers in the'
-                         'original structure?\nIf not, I will not be able to guess '
-                         'x-y displacements of some atoms')
+        raise ValueError(
+            'Your original structure contains more layers than given in relaxed '
+            'structure.\nCould you reduce the number of layers in the'
+            'original structure?\nIf not, I will not be able to guess '
+            'x-y displacements of some atoms'
+        )
 
     if num_relaxed_layers > max_layers_to_extract:
-        print('You want to extract more layers than available, I am setting num_relaxed_layers to'
-              ' {}'.format(max_layers_to_extract))
+        print(
+            'You want to extract more layers than available, I am setting num_relaxed_layers to'
+            ' {}'.format(max_layers_to_extract)
+        )
         num_relaxed_layers = max_layers_to_extract
 
     # take relaxed interlayers
@@ -985,8 +1055,7 @@ def get_layers(structure, decimals=10):
         reformat = [(list(x.position), x.kind_name)
                     for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
-        reformat = list(
-            zip(structure.positions, structure.get_chemical_symbols()))
+        reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:
         raise ValueError('Structure has to be ase lattice or StructureData')
 
@@ -1048,7 +1117,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             try:
                 suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
             except KeyError:
-                pass # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
+                pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
     def suggest_distance_to_previous(num_layer):
         z_distances = []
@@ -1056,7 +1125,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             pos_prev = np.array(atom_prev[0])[0:2]
             for atom_this in layers[num_layer]:
                 pos_this = np.array(atom_this[0])[0:2]
-                xy_dist_sq = np.linalg.norm(pos_prev - pos_this) ** 2
+                xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
                 if scale_as:
                     bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
                 else:
@@ -1073,7 +1142,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
                 pos_prev = np.array(atom_prev[0])[0:2]
                 for atom_this in layers[num_layer]:
                     pos_this = np.array(atom_this[0])[0:2]
-                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this) ** 2
+                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
                     if scale_as:
                         bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
                     else:
@@ -1101,11 +1170,15 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
         # a = Site(kind_name=atom[1], position=atom[0])
         # minus because I build from bottom (inversed structure)
         if hold_layers < 1:
-            rebuilt_structure.append_atom(symbols=atom[1], position=(
-                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1])
+            rebuilt_structure.append_atom(
+                symbols=atom[1], position=(atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]
+            )
         else:
-            rebuilt_structure.append_atom(symbols=atom[1], position=(
-                atom[0][0], atom[0][1], -atom[0][2]), name=atom[1]+'49')
+            rebuilt_structure.append_atom(
+                symbols=atom[1],
+                position=(atom[0][0], atom[0][1], -atom[0][2]),
+                name=atom[1] + '49'
+            )
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):
@@ -1123,8 +1196,10 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             atom[0][2] = prev_layer_z - prev_distance  # minus because I build from bottom (inverse)
             # a = Site(kind_name=atom[1], position=atom[0])
             # rebuilt_structure.append_site(a)
-            if i < hold_layers-1:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1]+'49')
+            if i < hold_layers - 1:
+                rebuilt_structure.append_atom(
+                    position=atom[0], symbols=atom[1], name=atom[1] + '49'
+                )
             else:
                 rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
 
@@ -1171,14 +1246,13 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
                 continue
             with MPRester(user_api_key) as mat_project:
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
-                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
-                    0]['energy_per_atom']
+                en_per_atom = mat_project.query(entry.entry_id,
+                                                ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
-            factor = exp(-(en_per_atom/0.0259))
+            factor = exp(-(en_per_atom / 0.0259))
             partition_function = partition_function + factor
             indices1 = structure_analyse.indices_from_symbol(sym)
-            distances = (structure_analyse.get_distance(x, y)
-                         for x, y in combinations(indices1, 2))
+            distances = (structure_analyse.get_distance(x, y) for x, y in combinations(indices1, 2))
             min_distance = min(distances)
             distance = distance + min_distance * factor
             # save distance for particular cases of fcc and bcc
@@ -1202,15 +1276,16 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
                 continue
             with MPRester(user_api_key) as mat_project:
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
-                en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[
-                    0]['energy_per_atom']
+                en_per_atom = mat_project.query(entry.entry_id,
+                                                ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
-            factor = exp(-(en_per_atom/0.0259))
+            factor = exp(-(en_per_atom / 0.0259))
             partition_function = partition_function + factor
             indices1 = structure_analyse.indices_from_symbol(sym1)
             indices2 = structure_analyse.indices_from_symbol(sym2)
-            distances = (structure_analyse.get_distance(x, y)
-                         for x, y in product(indices1, indices2))
+            distances = (
+                structure_analyse.get_distance(x, y) for x, y in product(indices1, indices2)
+            )
             distance = distance + min(distances) * factor
         if partition_function == 0:
             distance = (bond_data[sym1][sym1] + bond_data[sym2][sym2]) / 2

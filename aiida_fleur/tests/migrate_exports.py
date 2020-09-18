@@ -2,7 +2,6 @@
 # prob works only under linux
 # data_dir, workflows/caches
 
-
 import os
 import shutil
 #import subprocess
@@ -15,9 +14,7 @@ for dirs in data_dirs:
     for infile in listing:
         print("migrating aiida export file: " + dirs + infile)
         infile_old = 'old_' + infile
-        shutil.move(dirs + infile, dirs+infile_old)
+        shutil.move(dirs + infile, dirs + infile_old)
         #subprocess.run(["", "])
-        os.system("verdi export migrate {} {}".format(dirs+infile_old, dirs+infile))
-        #os.system("ls {} {}".format(dirs+infile_old, dirs+infile)) 
-
-
+        os.system("verdi export migrate {} {}".format(dirs + infile_old, dirs + infile))
+        #os.system("ls {} {}".format(dirs+infile_old, dirs+infile))

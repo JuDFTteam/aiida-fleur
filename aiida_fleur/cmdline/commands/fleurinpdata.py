@@ -9,18 +9,19 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Contains verdi commands for fleurinpdata
 """
 from __future__ import absolute_import
 import click
 
+
 # this will get replaced by data_plug.group
 #@data_plug.group('fleur.fleurinp')
 @click.group()
 def fleurinp():
     pass
+
 
 @fleurinp.command()
 def list_fleurinp():
@@ -30,6 +31,7 @@ def list_fleurinp():
     click.echo('verdi data fleurinp list')
     #do a query and list all reuse AiiDA code
 
+
 @fleurinp.command()
 def show():
     """
@@ -38,6 +40,7 @@ def show():
     """
     click.echo('verdi data fleurinp list')
 
+
 @fleurinp.command()
 def open_inp():
     """
@@ -45,6 +48,7 @@ def open_inp():
     inp.xml
     """
     click.echo('verdi data fleurinp list')
+
 
 # this is a maybe
 @fleurinp.command()
@@ -61,7 +65,8 @@ def get_kpoints():
     Prints some basic information about the kpoints data and returns a kpoints uuid/pk
     """
     click.echo('verdi data fleurinp kpoints')
-    
+
+
 @fleurinp.command()
 def get_parameters():
     """

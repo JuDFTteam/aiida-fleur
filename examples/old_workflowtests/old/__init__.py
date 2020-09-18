@@ -9,4 +9,3 @@ __version__ = "0.1.0"
 __contributors__ = "Jens Broeder"
 __paper__ = ""
 __paper_short__ = ""
-

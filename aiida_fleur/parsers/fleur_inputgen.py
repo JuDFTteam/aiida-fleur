@@ -34,7 +34,6 @@ class Fleur_inputgenParser(Parser):
 
     _setting_key = 'parser_options'
 
-
     def __init__(self, node):
         """
         Initialize the instance of Fleur_inputgenParser
@@ -42,8 +41,9 @@ class Fleur_inputgenParser(Parser):
         super(Fleur_inputgenParser, self).__init__(node)
 
         # these files should be at least present after success of inpgen
-        self._default_files = {FleurinputgenCalculation._OUTPUT_FILE_NAME,
-                               FleurinputgenCalculation._INPXML_FILE_NAME}
+        self._default_files = {
+            FleurinputgenCalculation._OUTPUT_FILE_NAME, FleurinputgenCalculation._INPXML_FILE_NAME
+        }
         self._other_files = {FleurinputgenCalculation._SHELLOUT_FILE_NAME}
 
     def parse(self, **kwargs):
@@ -69,26 +69,26 @@ class Fleur_inputgenParser(Parser):
                 with output_folder.open(errorfile, 'r') as error_file:
                     error_file_lines = error_file.read()
             except IOError:
-                self.logger.error(
-                    "Failed to open error file: {}.".format(errorfile))
+                self.logger.error("Failed to open error file: {}.".format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
                 self.logger.error(
                     "The following was written to the error file {} : \n '{}'"
-                    "".format(errorfile, error_file_lines))
+                    "".format(errorfile, error_file_lines)
+                )
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
-            self.logger.error(
-                "XML inp not found '{}'".format(inpxml_file))
+            self.logger.error("XML inp not found '{}'".format(inpxml_file))
             return self.exit_codes.ERROR_NO_INPXML
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
                 self.logger.error(
                     "'{}' file not found in retrived folder, it was probably "
-                    "not created by inpgen".format(file1))
+                    "not created by inpgen".format(file1)
+                )
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:

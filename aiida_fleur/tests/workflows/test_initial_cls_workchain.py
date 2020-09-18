@@ -30,8 +30,10 @@ class Test_fleur_initial_cls_wc():
     Regression tests for the fleur_initial_cls_wc
     """
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code,
-                                 generate_structure_W, export_cache, load_cache, clear_spec):
+    def test_fleur_initial_cls_W(
+        self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+        export_cache, load_cache, clear_spec
+    ):
         """
         full example using fleur_initial_cls_wc with just elemental W as input
         (W, onw atoms per unit cell)
@@ -39,14 +41,18 @@ class Test_fleur_initial_cls_wc():
         """
         from aiida.orm import Code, load_node, Dict, StructureData
 
-        options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-                   'max_wallclock_seconds': 5 * 60,
-                   'withmpi': False, 'custom_scheduler_commands': ''}
-
+        options = {
+            'resources': {
+                "num_machines": 1,
+                "num_mpiprocs_per_machine": 1
+            },
+            'max_wallclock_seconds': 5 * 60,
+            'withmpi': False,
+            'custom_scheduler_commands': ''
+        }
 
         # Since we parse uuid in input caching does not work if we recreate the nodes so we have to
         # import them
-
         '''
         parameters = Dict(dict={
                   'atom':{
@@ -75,27 +81,27 @@ class Test_fleur_initial_cls_wc():
         structure = load_node('6c7addb7-f688-4afd-8492-7c64861efd70')
         parameters = load_node('b5275b1a-bff7-4cdc-8efc-36c5ddd67f28')
 
-        wf_para = Dict(dict={'references' : {'W' : [structure.uuid, parameters.uuid]}})
+        wf_para = Dict(dict={'references': {'W': [structure.uuid, parameters.uuid]}})
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
 
         # create process builder to set parameters
         inputs = {
-            'metadata' : {
-                'description' : 'Simple fleur_initial_cls_wc test with W bulk',
-                'label' : 'fleur_initial_cls_wc_test_W_bulk'},
-        'options' :  Dict(dict=options),
-        'fleur' : FleurCode,
-        'inpgen' : InpgenCode,
-        'wf_parameters' : wf_para,
-        'calc_parameters' : parameters,
-        'structure' : structure
+            'metadata': {
+                'description': 'Simple fleur_initial_cls_wc test with W bulk',
+                'label': 'fleur_initial_cls_wc_test_W_bulk'
+            },
+            'options': Dict(dict=options),
+            'fleur': FleurCode,
+            'inpgen': InpgenCode,
+            'wf_parameters': wf_para,
+            'calc_parameters': parameters,
+            'structure': structure
         }
 
         # now run calculation
         out, node = run_with_cache(inputs, process_class=fleur_initial_cls_wc)
-
 
         # check general run
         assert node.is_finished_ok
@@ -108,11 +114,12 @@ class Test_fleur_initial_cls_wc():
 
         assert outd.get('successful')
         assert outd.get('warnings') == []
-        assert outd.get('corelevelshifts') == {"W":
-               [[0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]}
+        assert outd.get('corelevelshifts') == {
+            "W":
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+        }
 
         assert outd.get('formation_energy') == [0.0]
-
 
     @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')

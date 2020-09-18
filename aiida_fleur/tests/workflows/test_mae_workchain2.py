@@ -27,30 +27,36 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 #@pytest.mark.usefixtures("aiida_profile", "clear_database")
 @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_mae_FePt_film(clear_database, with_export_cache, #run_with_cache,
-        fleur_local_code, inpgen_local_code):
+def test_fleur_mae_FePt_film(
+    clear_database,
+    with_export_cache,  #run_with_cache,
+    fleur_local_code,
+    inpgen_local_code
+):
     """
     full example using mae workflow with FePt film structure as input.
     """
     from aiida.orm import Code, load_node, Dict, StructureData
     from aiida.manage.caching import enable_caching
 
-    options = Dict(dict={
-        'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
-        },
-        'max_wallclock_seconds': 60 * 60,
-        'queue_name' : '',
-        'custom_scheduler_commands': ''
-    })
+    options = Dict(
+        dict={
+            'resources': {
+                "num_machines": 1,
+                "num_mpiprocs_per_machine": 1
+            },
+            'max_wallclock_seconds': 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': ''
+        }
+    )
 
     wf_para_scf = {
-            'fleur_runmax': 2,
-            'itmax_per_run': 120,
-            'density_converged': 0.3,
-            'serial': False,
-            'mode': 'density'
+        'fleur_runmax': 2,
+        'itmax_per_run': 120,
+        'density_converged': 0.3,
+        'serial': False,
+        'mode': 'density'
     }
 
     wf_para_scf = Dict(dict=wf_para_scf)
@@ -64,9 +70,8 @@ def test_fleur_mae_FePt_film(clear_database, with_export_cache, #run_with_cache,
             'serial': False,
             'soc_off': [],
             'inpxml_changes': [],
-         }
+        }
     )
-
 
     bohr_a_0 = 0.52917721092  # A
     a = 7.497 * bohr_a_0
@@ -91,18 +96,15 @@ def test_fleur_mae_FePt_film(clear_database, with_export_cache, #run_with_cache,
                 'kmax': 3.2,
             },
             'kpt': {
-                'div1': 8,#20,
-                'div2': 12,#24,
+                'div1': 8,  #20,
+                'div2': 12,  #24,
                 'div3': 1
             }
         }
     )
 
-
-
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
-
 
     inputs = {
         'scf': {
@@ -119,9 +121,7 @@ def test_fleur_mae_FePt_film(clear_database, with_export_cache, #run_with_cache,
     }
 
     # now run calculation
-    data_dir_path = os.path.join(
-        aiida_path, 'tests/workflows/caches/fleur_mae_FePt.tar.gz'
-    )
+    data_dir_path = os.path.join(aiida_path, 'tests/workflows/caches/fleur_mae_FePt.tar.gz')
 
     #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
     #with enable_caching():
@@ -168,11 +168,9 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_oce
 
-
     ################
     # Create builders
     # interface of exposed scf is tested elsewhere
-
 
     #spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
     #               message="Invalid workchain parameters.")

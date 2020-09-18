@@ -25,6 +25,7 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
+
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_FleurRelaxWorkChain():
@@ -41,16 +42,23 @@ class Test_FleurRelaxWorkChain():
         from aiida.orm import Code, load_node, Dict, StructureData
         from numpy import array
 
-        options = {'resources': {"num_machines": 1},
-                   'max_wallclock_seconds': 5 * 60,
-                   'withmpi': False, 'custom_scheduler_commands': ''}
+        options = {
+            'resources': {
+                "num_machines": 1
+            },
+            'max_wallclock_seconds': 5 * 60,
+            'withmpi': False,
+            'custom_scheduler_commands': ''
+        }
 
         FleurCode = mock_code = mock_code_factory(
             label='fleur',
             data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out',
-                          'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
+            ignore_files=[
+                '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json',
+                'cdn??'
+            ]
         )
         # create process builder to set parameters
         builder = FleurRelaxWorkChain.get_builder()
@@ -90,7 +98,9 @@ class Test_FleurRelaxWorkChain():
         assert False
 
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
+    def test_fleur_relax_validation_wrong_inputs(
+        self, run_with_cache, mock_code_factory, generate_structure2
+    ):
         """
         Test the validation behavior of FleurRelaxWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
@@ -98,26 +108,42 @@ class Test_FleurRelaxWorkChain():
         from aiida.orm import Dict
 
         # prepare input nodes and dicts
-        options = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-                   'max_wallclock_seconds': 5 * 60,
-                   'withmpi': False, 'custom_scheduler_commands': ''}
+        options = {
+            'resources': {
+                "num_machines": 1,
+                "num_mpiprocs_per_machine": 1
+            },
+            'max_wallclock_seconds': 5 * 60,
+            'withmpi': False,
+            'custom_scheduler_commands': ''
+        }
         options = Dict(dict=options).store()
 
         FleurCode = mock_code_factory(
             label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
+            data_dir_abspath=os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
+            ),
             entry_point=CALC_ENTRY_POINT,
-            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??']
+        )
         InpgenCode = mock_code_factory(
             label='inpgen',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
+            data_dir_abspath=os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'
+            ),
             entry_point=CALC2_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+            ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd']
+        )
 
-        wf_parameters = Dict(dict={'relax_iter': 5,
-                                   'film_distance_relaxation': False,
-                                   'force_criterion': 0.001,
-                                   'wrong_key' : None})
+        wf_parameters = Dict(
+            dict={
+                'relax_iter': 5,
+                'film_distance_relaxation': False,
+                'force_criterion': 0.001,
+                'wrong_key': None
+            }
+        )
         wf_parameters.store()
         structure = generate_structure2()
         structure.store()
@@ -133,7 +159,6 @@ class Test_FleurRelaxWorkChain():
         builder_additionalkeys.scf.fleur = FleurCode
         builder_additionalkeys.scf.inpgen = InpgenCode
 
-
         ###################
         # now run the builders all should fail early with exit codes
 
@@ -143,6 +168,7 @@ class Test_FleurRelaxWorkChain():
         assert node.is_finished == True
         assert node.is_finished_ok == False
         assert node.exit_status == 230
+
 
 # maybe validate common interface of code acknostic worklfows and builders, to make sure it can take
 # the protocol.

@@ -12,30 +12,37 @@ def test_create_group(capsys):
 
     para = Dict(dict={})
     para.store()
-    group = create_group(name='test_group', nodes=[para.pk, 'not-existent-uuid'],
-                         description='test_description')
+    group = create_group(
+        name='test_group', nodes=[para.pk, 'not-existent-uuid'], description='test_description'
+    )
 
     captured = capsys.readouterr()
 
-    assert captured.out == ('Group created with PK=1 and name test_group\n'
-                            'Skipping not-existent-uuid, it does not exist in the DB\n'
-                            'added nodes: [{}] to group test_group 1\n'.format(para.pk))
+    assert captured.out == (
+        'Group created with PK=1 and name test_group\n'
+        'Skipping not-existent-uuid, it does not exist in the DB\n'
+        'added nodes: [{}] to group test_group 1\n'.format(para.pk)
+    )
 
     para2 = para.clone()
     para2.store()
     group = create_group(name='test_group', nodes=[para2], add_if_exist=False)
 
     captured = capsys.readouterr()
-    assert captured.out == ('Group with name test_group and pk 1 already exists.\n'
-                            'Nodes were not added to the existing group test_group\n')
+    assert captured.out == (
+        'Group with name test_group and pk 1 already exists.\n'
+        'Nodes were not added to the existing group test_group\n'
+    )
 
     group = create_group(name='test_group', nodes=[para2], add_if_exist=True)
 
     captured = capsys.readouterr()
 
-    assert captured.out == ('Group with name test_group and pk 1 already exists.\n'
-                            'Adding nodes to the existing group test_group\n'
-                            'added nodes: [{}] to group test_group 1\n'.format(para2.pk))
+    assert captured.out == (
+        'Group with name test_group and pk 1 already exists.\n'
+        'Adding nodes to the existing group test_group\n'
+        'added nodes: [{}] to group test_group 1\n'.format(para2.pk)
+    )
 
     assert isinstance(group, Group)
 
@@ -103,8 +110,10 @@ def test_import_extras(temp_dir, capsys):
     import_extras(empty_file)
 
     captured = capsys.readouterr()
-    assert captured.out == ('The file has to be loadable by json. i.e json format'
-                            ' (which it is not).\n')
+    assert captured.out == (
+        'The file has to be loadable by json. i.e json format'
+        ' (which it is not).\n'
+    )
 
 
 def test_delete_trash(monkeypatch):

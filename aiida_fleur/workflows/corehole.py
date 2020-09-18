@@ -118,7 +118,8 @@ class fleur_corehole_wc(WorkChain):
     _workflowversion = "0.4.0"
     _default_options = {
         'resources': {
-            "num_machines": 1, "num_mpiprocs_per_machine": 1,
+            "num_machines": 1,
+            "num_mpiprocs_per_machine": 1,
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
@@ -167,7 +168,7 @@ class fleur_corehole_wc(WorkChain):
         spec.input(
             "options",
             valid_type=Dict,
-            required=False#,
+            required=False  #,
             #default=Dict(
             #    dict={
             #        'resources': {
@@ -333,6 +334,7 @@ class fleur_corehole_wc(WorkChain):
             self.abort_nowait(errormsg)
 
         '''
+
     def supercell_needed(self):
         """
         check if a supercell is needed and what size it should be
@@ -363,8 +365,10 @@ class fleur_corehole_wc(WorkChain):
             Int(supercell_base[0]),
             Int(supercell_base[1]),
             Int(supercell_base[2]),
-            metadata = {'label' : u'supercell_wf',
-                        'description' : description}
+            metadata={
+                'label': u'supercell_wf',
+                'description': description
+            }
         )
 
         # overwrite label and description of new structure
@@ -750,6 +754,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.calcs_ref_torun = []
         return ToContext(**calcs)#  this is a blocking return
     '''
+
     def run_ref_scf(self):
         """
         Run a scf for the reference super cell
@@ -815,8 +820,10 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    metadata={'label' : scf_label,
-                              'description' : scf_desc}
+                    metadata={
+                        'label': scf_label,
+                        'description': scf_desc
+                    }
                 )  #
             elif isinstance(node, FleurinpData):
                 res = self.submit(
@@ -826,8 +833,10 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    metadata={'label' : scf_label,
-                              'description' : scf_desc}
+                    metadata={
+                        'label': scf_label,
+                        'description': scf_desc
+                    }
                 )  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
@@ -839,8 +848,10 @@ class fleur_corehole_wc(WorkChain):
                         structure=node[0],
                         inpgen=self.inputs.inpgen,
                         fleur=self.inputs.fleur,
-                        metadata={'label' : scf_label,
-                                  'description' : scf_desc}
+                        metadata={
+                            'label': scf_label,
+                            'description': scf_desc
+                        }
                     )  #
                 else:
                     self.report(
@@ -938,8 +949,10 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    metadata={'label' : scf_label,
-                              'description' : scf_desc}
+                    metadata={
+                        'label': scf_label,
+                        'description': scf_desc
+                    }
                 )  #
             elif isinstance(node, FleurinpData):
                 res = self.submit(
@@ -949,8 +962,10 @@ class fleur_corehole_wc(WorkChain):
                     inpgen=self.inputs.inpgen,
                     fleur=self.inputs.fleur,
                     options=options,
-                    metadata={'label' : scf_label,
-                              'description' : scf_desc}
+                    metadata={
+                        'label': scf_label,
+                        'description': scf_desc
+                    }
                 )  #
             elif isinstance(node, list):
                 if isinstance(node[0], StructureData) and isinstance(node[1], Dict):
@@ -963,8 +978,10 @@ class fleur_corehole_wc(WorkChain):
                             options=options,
                             inpgen=self.inputs.inpgen,
                             fleur=self.inputs.fleur,
-                            metadata={'label' : scf_label,
-                                      'description' : scf_desc}
+                            metadata={
+                                'label': scf_label,
+                                'description': scf_desc
+                            }
                         )  #
             else:
                 self.report(
@@ -981,7 +998,7 @@ class fleur_corehole_wc(WorkChain):
             #self.ctx.calcs_res.append(res)
             #self.ctx.calcs_torun.remove(node)
             #print res
-            self.to_context(**{label : res})
+            self.to_context(**{label: res})
         self.ctx.calcs_torun = []
         #return ToContext(**calcs)
 
@@ -1121,9 +1138,11 @@ class fleur_corehole_wc(WorkChain):
             #print(calc)
             #print(calc.get_outgoing().all())
             try:
-                calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')#calc.outputs.output_scf_wc_para
+                calc_dict = calc.get_outgoing().get_node_by_label(
+                    'output_scf_wc_para'
+                )  #calc.outputs.output_scf_wc_para
             except:
-               print('continue 2')
+                print('continue 2')
             outnodedict[label] = calc_dict
 
         outdict = create_corehole_result_node(**outnodedict)
@@ -1303,11 +1322,11 @@ def extract_results_corehole(calcs):
             #all_total_energies[number] = total_energy
         else:
             # log and continue
-            total_energy = 2e308#float('nan'))
-            bandgap = 2e308#float('nan')
-            efermi = 2e308#float('nan')
-            corelevels = [2e308]#[float('nan')]
-            atomtypes = [2e308]#[float('nan')]
+            total_energy = 2e308  #float('nan'))
+            bandgap = 2e308  #float('nan')
+            efermi = 2e308  #float('nan')
+            corelevels = [2e308]  #[float('nan')]
+            atomtypes = [2e308]  #[float('nan')]
             #continue
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
         fermi_energies.append(efermi)

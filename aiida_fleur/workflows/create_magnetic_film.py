@@ -40,7 +40,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,  # if equals to 0, use distance_suggestion
         'size': (1, 1, 5),
-        'replacements': {0: 'Fe', -1: 'Fe'},
+        'replacements': {
+            0: 'Fe',
+            -1: 'Fe'
+        },
         'hold_n_first_layers': 3,
         'decimals': 10,
         'pop_last_layers': 1,
@@ -51,10 +54,24 @@ class FleurCreateMagneticWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurCreateMagneticWorkChain, cls).define(spec)
-        spec.expose_inputs(FleurEosWorkChain, namespace_options={
-                           'required': False, 'populate_defaults': False}, namespace='eos', exclude=('structure', ))
-        spec.expose_inputs(FleurBaseRelaxWorkChain, namespace_options={
-                           'required': False, 'populate_defaults': False}, namespace='relax', exclude=('structure', ))
+        spec.expose_inputs(
+            FleurEosWorkChain,
+            namespace_options={
+                'required': False,
+                'populate_defaults': False
+            },
+            namespace='eos',
+            exclude=('structure', )
+        )
+        spec.expose_inputs(
+            FleurBaseRelaxWorkChain,
+            namespace_options={
+                'required': False,
+                'populate_defaults': False
+            },
+            namespace='relax',
+            exclude=('structure', )
+        )
         spec.input("wf_parameters", valid_type=Dict, required=False)
         spec.input("eos_output", valid_type=Dict, required=False)
         spec.input("optimized_structure", valid_type=StructureData, required=False)
@@ -62,11 +79,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            if_(cls.eos_needed)(
-                cls.run_eos, ),
-            if_(cls.relax_needed)(
-                cls.run_relax,),
-            cls.make_magnetic
+            if_(cls.eos_needed)(cls.run_eos, ),
+            if_(cls.relax_needed)(cls.run_relax, ), cls.make_magnetic
         )
 
         spec.output('magnetic_structure', valid_type=StructureData)
@@ -214,8 +228,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
             else:
                 return self.exit_codes.ERROR_NOT_SUPPORTED_LATTICE
 
-            suggestion = dict_suggestion.get(
-                lattice, dict_suggestion[host_symbol]).get(host_symbol, 4.0)
+            suggestion = dict_suggestion.get(lattice,
+                                             dict_suggestion[host_symbol]).get(host_symbol, 4.0)
 
             self.ctx.wf_dict['latticeconstant'] = float(suggestion_factor * suggestion)
 
@@ -268,8 +282,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
             scaling_param = eos_output.get_dict()['scaling_gs']
 
             out_create_structure = create_film_to_relax(
-                wf_dict_node=Dict(dict=self.ctx.wf_dict), scaling_parameter=Float(scaling_param),
-                suggestion_node=self.inputs.distance_suggestion)
+                wf_dict_node=Dict(dict=self.ctx.wf_dict),
+                scaling_parameter=Float(scaling_param),
+                suggestion_node=self.inputs.distance_suggestion
+            )
             inputs.scf.structure = out_create_structure['structure']
             substrate = out_create_structure['substrate']
             # TODO: error handling might be needed
@@ -302,8 +318,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         if not self.ctx.substrate:  # workchain was stated from remote->Relax or optimized_structure
             if 'optimized_structure' in self.inputs:
-                self.ctx.substrate = find_substrate(
-                    structure=self.inputs['optimized_structure'])
+                self.ctx.substrate = find_substrate(structure=self.inputs['optimized_structure'])
             else:
                 self.ctx.substrate = find_substrate(remote=self.inputs.relax.scf.remote_data)
 
@@ -329,6 +344,8 @@ def save_structure(structure):
     structure_return = structure.clone()
     return structure_return
 '''
+
+
 @cf
 def magnetic_slab_from_relaxed_cf(optimized_structure, substrate, para_dict):
     """ calcfunction which wraps magnetic_slab_from_relaxed to keep provenance """
@@ -394,7 +411,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     miller = wf_dict['miller']
     host_symbol = wf_dict['host_symbol']
-    latticeconstant = float(wf_dict['latticeconstant'] * scaling_parameter ** (1/3.0))
+    latticeconstant = float(wf_dict['latticeconstant'] * scaling_parameter**(1 / 3.0))
     size = wf_dict['size']
     replacements = wf_dict['replacements']
     pop_last_layers = wf_dict['pop_last_layers']
@@ -402,21 +419,40 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     lattice = wf_dict['lattice']
     hold_layers = wf_dict['hold_n_first_layers']
 
-    structure = create_manual_slab_ase(lattice=lattice, miller=miller, host_symbol=host_symbol,
-                                       latticeconstant=latticeconstant, size=size,
-                                       replacements=replacements, decimals=decimals,
-                                       pop_last_layers=pop_last_layers)
+    structure = create_manual_slab_ase(
+        lattice=lattice,
+        miller=miller,
+        host_symbol=host_symbol,
+        latticeconstant=latticeconstant,
+        size=size,
+        replacements=replacements,
+        decimals=decimals,
+        pop_last_layers=pop_last_layers
+    )
 
     structure = StructureData(ase=structure)
 
     # substrate needs to be reversed
-    substrate = create_manual_slab_ase(lattice=lattice, miller=miller, host_symbol=host_symbol,
-                                       latticeconstant=latticeconstant, size=(1, 1, 1),
-                                       replacements=None, decimals=decimals, inverse=True)
+    substrate = create_manual_slab_ase(
+        lattice=lattice,
+        miller=miller,
+        host_symbol=host_symbol,
+        latticeconstant=latticeconstant,
+        size=(1, 1, 1),
+        replacements=None,
+        decimals=decimals,
+        inverse=True
+    )
 
-    tmp_substrate = create_manual_slab_ase(lattice=lattice, miller=miller, host_symbol=host_symbol,
-                                           latticeconstant=latticeconstant, size=(2, 2, 2),
-                                           replacements=None, decimals=decimals)
+    tmp_substrate = create_manual_slab_ase(
+        lattice=lattice,
+        miller=miller,
+        host_symbol=host_symbol,
+        latticeconstant=latticeconstant,
+        size=(2, 2, 2),
+        replacements=None,
+        decimals=decimals
+    )
 
     bond_length = find_min_distance_unary_struct(tmp_substrate)
 
@@ -470,10 +506,12 @@ def find_substrate(remote=None, structure=None):
         if 'scf__remote_data' in relax_wc.inputs:
             inputs = find_inputs_relax(relax_wc.inputs.scf__remote_data)
         else:
-            return relax_wc.inputs.scf__structure.get_incoming().all()[0].node.get_outgoing().get_node_by_label('substrate').uuid
+            return relax_wc.inputs.scf__structure.get_incoming().all()[0].node.get_outgoing(
+            ).get_node_by_label('substrate').uuid
 
     if isinstance(inputs, FleurinpData):
         raise ValueError("Did not expect to find Relax WC started from FleurinpData")
     else:
         orig_structure = inputs[0]
-        return orig_structure.get_incoming().all()[0].node.get_outgoing().get_node_by_label('substrate').uuid
+        return orig_structure.get_incoming().all()[0].node.get_outgoing(
+        ).get_node_by_label('substrate').uuid

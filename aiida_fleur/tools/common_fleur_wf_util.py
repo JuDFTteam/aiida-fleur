@@ -71,9 +71,11 @@ def get_natoms_element(formula):
 
     return elem_count_dict
 
+
 # test
 #get_natoms_element('BeW')
 #get_natoms_element('Be2W')
+
 
 def convert_frac_formula(formula, max_digits=3):
     """
@@ -85,17 +87,19 @@ def convert_frac_formula(formula, max_digits=3):
     :param max_digits: int default=3, number of digits after which fractions will be cut off
     :returns: string
     """
-    form_dict= get_natoms_element(formula)
+    form_dict = get_natoms_element(formula)
     formula_int = ''
     for key, val in form_dict.items():
-        formula_int = formula_int + key + str(int(val*10**max_digits))
+        formula_int = formula_int + key + str(int(val * 10**max_digits))
 
     return convert_formula_to_formula_unit(formula_int)
+
 
 #test
 #convert_frac_formula('Be0.3W0.7') -> Be3W7
 #convert_frac_formula('Be0.5W0.5') -> BeW
 #convert_frac_formula('Be3W7') -> Be3W7
+
 
 def ucell_to_atompr(ratio, formulas, element, error_ratio=None):
     """
@@ -451,7 +455,6 @@ def get_enhalpy_of_equation(reaction, formenergydict):
     return educt_energy - product_energy
 
 
-
 def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eval_linear=True):
     """
     Method that balances a chemical equation.
@@ -526,8 +529,8 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         if rescale_N:
             multiplier = 1
             for denom in denom_list:
-                multiplier = multiplier*int(denom)
-            N = [int(n*multiplier) for n in N]
+                multiplier = multiplier * int(denom)
+            N = [int(n * multiplier) for n in N]
         g = N[0]
         for a1, a2 in zip(N[0::2], N[0::2]):
             g = gcd(g, a2)

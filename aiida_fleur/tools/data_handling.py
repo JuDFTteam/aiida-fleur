@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This module contains useful function to extract data from nodes,
 specific to aiida-fleur. Any useful code snipets for handling large number of
@@ -235,6 +234,8 @@ def get_cif_file(node):
                         break
 
     return [cif_filename, cif_uuid]
+
+
 # wf_struc_from_cif process_label
 # cif.filename
 # cif.uuid

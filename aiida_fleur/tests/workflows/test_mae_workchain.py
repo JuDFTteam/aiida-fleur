@@ -21,7 +21,6 @@ from aiida.engine import run_get_node
 from aiida_fleur.workflows.mae import FleurMaeWorkChain
 
 
-
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_FleurMaeWorkChain:
@@ -36,22 +35,24 @@ class Test_FleurMaeWorkChain:
         """
         from aiida.orm import Code, load_node, Dict, StructureData
 
-        options = Dict(dict={
-            'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
-            },
-            'max_wallclock_seconds': 60 * 60,
-            'queue_name' : '',
-            'custom_scheduler_commands': ''
-        })
+        options = Dict(
+            dict={
+                'resources': {
+                    "num_machines": 1,
+                    "num_mpiprocs_per_machine": 1
+                },
+                'max_wallclock_seconds': 60 * 60,
+                'queue_name': '',
+                'custom_scheduler_commands': ''
+            }
+        )
 
         wf_para_scf = {
-                'fleur_runmax': 2,
-                'itmax_per_run': 120,
-                'density_converged': 0.4,
-                'serial': False,
-                'mode': 'density'
+            'fleur_runmax': 2,
+            'itmax_per_run': 120,
+            'density_converged': 0.4,
+            'serial': False,
+            'mode': 'density'
         }
 
         wf_para_scf = Dict(dict=wf_para_scf)
@@ -65,9 +66,8 @@ class Test_FleurMaeWorkChain:
                 'serial': False,
                 'soc_off': [],
                 'inpxml_changes': [],
-             }
+            }
         )
-
 
         bohr_a_0 = 0.52917721092  # A
         a = 7.497 * bohr_a_0
@@ -92,18 +92,15 @@ class Test_FleurMaeWorkChain:
                     'kmax': 3.2,
                 },
                 'kpt': {
-                    'div1': 8,#20,
-                    'div2': 12,#24,
+                    'div1': 8,  #20,
+                    'div2': 12,  #24,
                     'div3': 1
                 }
             }
         )
 
-
-
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
-
 
         inputs = {
             'scf': {
@@ -139,7 +136,6 @@ class Test_FleurMaeWorkChain:
         assert outpara.get('is_it_force_theorem')
         assert outpara.get('maes') == [0.0039456509729923, 0.0026014085035566, 0.0]
 
-
     @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_mae_validation_wrong_inputs(self, fleur_local_code, inpgen_local_code):
@@ -163,11 +159,9 @@ class Test_FleurMaeWorkChain:
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_oce
 
-
         ################
         # Create builders
         # interface of exposed scf is tested elsewhere
-
 
         #spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
         #               message="Invalid workchain parameters.")

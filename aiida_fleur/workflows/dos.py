@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
@@ -45,39 +44,39 @@ class fleur_dos_wc(WorkChain):
 
     _workflowversion = "0.3.3"
 
-    _default_options = {'resources': {"num_machines": 1},
-                        'max_wallclock_seconds': 60*60,
-                        'queue_name': '',
-                        'custom_scheduler_commands': '',
-                        # 'max_memory_kb' : None,
-                        'import_sys_environment': False,
-                        'environment_variables': {}}
-    _default_wf_para = {'tria': True,
-                        'nkpts': 800,
-                        'sigma': 0.005,
-                        'emin': -0.30,
-                        'emax':  0.80}
+    _default_options = {
+        'resources': {
+            "num_machines": 1
+        },
+        'max_wallclock_seconds': 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        # 'max_memory_kb' : None,
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
+    _default_wf_para = {'tria': True, 'nkpts': 800, 'sigma': 0.005, 'emin': -0.30, 'emax': 0.80}
 
     @classmethod
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
+        spec.input(
+            "wf_parameters",
+            valid_type=Dict,
+            required=False,
+            default=Dict(dict=cls._default_wf_para)
+        )
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input("settings", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_options))
+        spec.input(
+            "options", valid_type=Dict, required=False, default=Dict(dict=cls._default_options)
+        )
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         # TODO ggf run convergence first
         spec.input("remote_data", valid_type=RemoteData, required=False)
         #spec.input("inpgen", valid_type=Code, required=False)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.outline(
-            cls.start,
-            cls.create_new_fleurinp,
-            cls.run_fleur,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.create_new_fleurinp, cls.run_fleur, cls.return_results)
         # spec.dynamic_output()
 
     def start(self):
@@ -87,9 +86,11 @@ class fleur_dos_wc(WorkChain):
         '''
         # input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        self.report("Started dos workflow version {}"
-                    # "Workchain node identifiers: ")#{}"
-                    "".format(self._workflowversion))  # ProcessRegistry().current_calc_node))
+        self.report(
+            "Started dos workflow version {}"
+            # "Workchain node identifiers: ")#{}"
+            "".format(self._workflowversion)
+        )  # ProcessRegistry().current_calc_node))
 
         self.ctx.fleurinp1 = ""
         self.ctx.last_calc = None
@@ -115,8 +116,7 @@ class fleur_dos_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
+                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
                 # self.control_end_wc(error)
                 self.report(error)
                 return 1
@@ -139,8 +139,13 @@ class fleur_dos_wc(WorkChain):
         # change_dict = {'dos': True, 'ndir' : -1, 'minEnergy' : self.inputs.wf_parameters.get_dict().get('minEnergy', -0.30000000),
         # 'maxEnergy' :  self.inputs.wf_parameters.get_dict().get('manEnergy','0.80000000'),
         # 'sigma' :  self.inputs.wf_parameters.get_dict().get('sigma', '0.00500000')}
-        change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin,
-                       'maxEnergy': emax, 'sigma': sigma}
+        change_dict = {
+            'dos': True,
+            'ndir': -1,
+            'minEnergy': emin,
+            'maxEnergy': emax,
+            'sigma': sigma
+        }
 
         fleurmode.set_inpchanges(change_dict)
         if tria:

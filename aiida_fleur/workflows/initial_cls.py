@@ -119,7 +119,8 @@ class fleur_initial_cls_wc(WorkChain):
         spec.input("structure", valid_type=StructureData, required=False)
         spec.input("calc_parameters", valid_type=Dict, required=False)
         spec.input(
-            "options", valid_type=Dict, required=False)#, default=Dict(dict=cls._default_options#)
+            "options", valid_type=Dict, required=False
+        )  #, default=Dict(dict=cls._default_options#)
         #)
 
         spec.outline(
@@ -443,14 +444,14 @@ class fleur_initial_cls_wc(WorkChain):
             scf_description = 'cls|scf of the main structure'
             if isinstance(node, StructureData):
                 inputs = {
-                    'wf_parameters' : wf_parameters,
-                    'structure' : node,
-                    'options' : options,
-                    'inpgen' : self.inputs.inpgen,
-                    'fleur' :self.inputs.fleur,
+                    'wf_parameters': wf_parameters,
+                    'structure': node,
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
                     #'metadata' : {'label' : scf_label,
                     #             'description' : scf_description}
-                    }
+                }
                 res = self.submit(FleurScfWorkChain, **inputs)
             #elif isinstance(node, FleurinpData):
             #    res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
@@ -458,15 +459,17 @@ class fleur_initial_cls_wc(WorkChain):
             elif isinstance(node, list):  #(StructureData, Dict)):
                 if len(node) == 2:
                     inputs = {
-                        'wf_parameters' : wf_parameters,
-                        'structure' : node[0],
-                        'calc_parameters' : node[1],
-                        'options' : options,
-                        'inpgen' : self.inputs.inpgen,
-                        'fleur' :self.inputs.fleur,
-                        'metadata' : {'label' : scf_label,
-                                      'description' : scf_description}
+                        'wf_parameters': wf_parameters,
+                        'structure': node[0],
+                        'calc_parameters': node[1],
+                        'options': options,
+                        'inpgen': self.inputs.inpgen,
+                        'fleur': self.inputs.fleur,
+                        'metadata': {
+                            'label': scf_label,
+                            'description': scf_description
                         }
+                    }
                     res = self.submit(FleurScfWorkChain, **inputs)
                 else:
                     self.report(
@@ -481,7 +484,7 @@ class fleur_initial_cls_wc(WorkChain):
                 #self.report('{}{}'.format(type(node[0], node[1])))
                 res = None
                 continue
-            resall[calclabel] = res#append(res)
+            resall[calclabel] = res  #append(res)
             #print res
             #calc_node = res['output_scf_wc_para'].get_inputs()[0]
             # if run is used, otherwise use labels
@@ -500,7 +503,7 @@ class fleur_initial_cls_wc(WorkChain):
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
         self.ctx.calcs.append(future)
         '''
-        return ToContext(**resall)#calcs_res=res)  #calcs.append(future
+        return ToContext(**resall)  #calcs_res=res)  #calcs.append(future
 
     def relaxation_needed(self):
         """
@@ -582,14 +585,16 @@ class fleur_initial_cls_wc(WorkChain):
             #print node
             if isinstance(node, StructureData):
                 inputs = {
-                    'wf_parameters' : wf_parameters,
-                    'structure' : node,
-                    'options' : options,
-                    'inpgen' : self.inputs.inpgen,
-                    'fleur' :self.inputs.fleur,
-                    'metadata' : {'label' : scf_label,
-                                  'description' : scf_description}
+                    'wf_parameters': wf_parameters,
+                    'structure': node,
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
+                    'metadata': {
+                        'label': scf_label,
+                        'description': scf_description
                     }
+                }
                 res = self.submit(FleurScfWorkChain, **inputs)  #
 
             #elif isinstance(node, FleurinpData):
@@ -597,15 +602,17 @@ class fleur_initial_cls_wc(WorkChain):
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
             elif isinstance(node, list):  #(StructureData, Dict)):
                 inputs = {
-                    'wf_parameters' : wf_parameters,
-                    'structure' : node[0],
-                    'calc_parameters' : node[1],
-                    'options' : options,
-                    'inpgen' : self.inputs.inpgen,
-                    'fleur' :self.inputs.fleur,
-                    'metadata' : {'label' : scf_label,
-                                  'description' : scf_description}
+                    'wf_parameters': wf_parameters,
+                    'structure': node[0],
+                    'calc_parameters': node[1],
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
+                    'metadata': {
+                        'label': scf_label,
+                        'description': scf_description
                     }
+                }
                 res = self.submit(FleurScfWorkChain, **inputs)  #
             else:
                 self.report(
@@ -690,7 +697,7 @@ class fleur_initial_cls_wc(WorkChain):
         #self.ctx.ref_cl_energies
         all_CLS = {}
         # get results from calc
-        calcs = []#self.ctx.calcs_res
+        calcs = []  #self.ctx.calcs_res
         ref_calcs = []  #self.ctx.ref_calcs_res
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
@@ -798,7 +805,6 @@ class fleur_initial_cls_wc(WorkChain):
         #TODO ? also get total energies?
         return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy, total_en, ref_total_en
         #return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy[0], total_en, ref_total_en
-
 
     def return_results(self):
         """
@@ -970,7 +976,8 @@ def extract_results(calcs):
         #print(calc)
         try:
             calc_uuids.append(
-                calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid']
+                calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()
+                ['last_calc_uuid']
             )
         except:  #TODO what error
             logmsg = (

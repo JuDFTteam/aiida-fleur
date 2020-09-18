@@ -35,7 +35,9 @@ class Test_FleurCreateMagneticWorkChain:
     Regression tests for the FleurCreateMagneticWorkChain
     """
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec):
+    def test_fleur_create_mag_FePt(
+        self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec
+    ):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence
@@ -46,7 +48,6 @@ class Test_FleurCreateMagneticWorkChain:
 
         fleur_inp = fleur_local_code
         inpgen_inp = inpgen_local_code
-
 
         ###
         wf_para = {
@@ -107,7 +108,10 @@ class Test_FleurCreateMagneticWorkChain:
 
         options_eos = Dict(dict=options_eos)
 
-        wf_relax = {'film_distance_relaxation': False, 'force_criterion': 0.049}#, 'use_relax_xml': True}
+        wf_relax = {
+            'film_distance_relaxation': False,
+            'force_criterion': 0.049
+        }  #, 'use_relax_xml': True}
 
         wf_relax_scf = {
             'fleur_runmax': 5,
@@ -169,8 +173,6 @@ class Test_FleurCreateMagneticWorkChain:
 
         settings = Dict(dict={})
 
-
-
         inputs = {
             'eos': {
                 'scf': {
@@ -197,7 +199,6 @@ class Test_FleurCreateMagneticWorkChain:
             },
             'wf_parameters': wf_para
         }
-
 
         # now run calculation
         out, node = run_with_cache(inputs, process_class=FleurCreateMagneticWorkChain)

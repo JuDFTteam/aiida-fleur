@@ -196,7 +196,7 @@ def compress_fleuroutxml(
 
     if dest_file_path is None:
         dest_file_path = outxmlfilepath  # overwrite file
-    if new_etree.getroot() is not None: #otherwise write fails
+    if new_etree.getroot() is not None:  #otherwise write fails
         new_etree.write(dest_file_path)
     else:
         print('new_etree has no root..., I cannot write to proper xml, skipping this now')

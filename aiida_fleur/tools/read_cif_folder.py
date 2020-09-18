@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find a method (read_cif_folder) to read in all .cif files
 from a folder and store the structures in the database.
@@ -29,9 +28,15 @@ from aiida.plugins import DataFactory
 from aiida.engine import calcfunction as cf
 
 
-def read_cif_folder(path=os.getcwd(), recursive=True,
-                    store=False, log=False,
-                    comments='', extras='', logfile_name='read_cif_folder_logfile'):
+def read_cif_folder(
+    path=os.getcwd(),
+    recursive=True,
+    store=False,
+    log=False,
+    comments='',
+    extras='',
+    logfile_name='read_cif_folder_logfile'
+):
     """
     Method to read in cif files from a folder and its subfolders.
     It can convert them into AiiDA structures and store them.
@@ -50,18 +55,20 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
     cifdata = DataFactory('cif')
     ############ parameters for the user to set ########
 
-    parent_cif_folder = path    # folder path
-    store_db = store            # True # store stuff in database?
-    write_log = log             # write a logfiles on what was saved
-    comment = comments          # comments and extras to add to the structure nodes.
-    extra = extras              # helpfull for finding them again in the db
-    rek = recursive             # search also in subfolders or only given folder
+    parent_cif_folder = path  # folder path
+    store_db = store  # True # store stuff in database?
+    write_log = log  # write a logfiles on what was saved
+    comment = comments  # comments and extras to add to the structure nodes.
+    extra = extras  # helpfull for finding them again in the db
+    rek = recursive  # search also in subfolders or only given folder
 
     #####################
     filenames = []
     filepaths = []
-    infofilestring = ('Structure Formula, Structuredata pk, Structure Data uuid,'
-                      ' cif-file-path, comment, extras \n')
+    infofilestring = (
+        'Structure Formula, Structuredata pk, Structure Data uuid,'
+        ' cif-file-path, comment, extras \n'
+    )
 
     #1. get all the files
     if rek:
@@ -93,7 +100,9 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
         except Exception as emessage:
-            print(('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage)))
+            print(
+                ('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage))
+            )
             continue
         #print new_cif
         if new_cif[1]:
@@ -115,7 +124,7 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
 
             # add comment or extras, only possible after storing
             if comment:
-                user = struc.user # we are the creator
+                user = struc.user  # we are the creator
                 struc.add_comment(comment, user)
             if extra:
                 if isinstance(extra, type(dict())):
@@ -135,19 +144,25 @@ def read_cif_folder(path=os.getcwd(), recursive=True,
             # TODO? if not stored write not stored
             if store_db:
                 infofilestring = infofilestring + '{} {} {} {} {} {} \n'.format(
-                    formula, struc.pk, struc.uuid,
-                    filepaths[i], struc.get_comments(), struc.extras)
+                    formula, struc.pk, struc.uuid, filepaths[i], struc.get_comments(), struc.extras
+                )
             else:
-                infofilestring = (infofilestring + '{} notstored notstored {}'
-                                  'notstored notstored \n'
-                                  ''.format(formula, filepaths[i]))
+                infofilestring = (
+                    infofilestring + '{} notstored notstored {}'
+                    'notstored notstored \n'
+                    ''.format(formula, filepaths[i])
+                )
 
     # write a logfile
     if write_log:
-        file1 = os.open(logfile_name, os.O_RDWR|os.O_CREAT)
+        file1 = os.open(logfile_name, os.O_RDWR | os.O_CREAT)
         os.write(file1, bytes(infofilestring, 'UTF8'))
         os.close(file1)
-    print('{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count))
+    print(
+        '{} cif-files and {} structures were saved in the database'.format(
+            saved_count_cif, saved_count
+        )
+    )
 
     return structuredatas2, filenames2
 
@@ -158,50 +173,74 @@ def wf_struc_from_cif(cif):
     struc = DataFactory('structure')(ase=asecell)
     return struc
 
+
 def struc_from_cif(cif):
     asecell = cif.get_ase()
     struc = DataFactory('structure')(ase=asecell)
     return struc
 
+
 if __name__ == "__main__":
     import argparse
     import json
     #  maybe change names?
-    parser = argparse.ArgumentParser(description="Read '.cif' files from the current"
-                                     " folder and store in AiiDA database. If no"
-                                     " arguements are given, read_cif_folder is"
-                                     " using default arguments")
+    parser = argparse.ArgumentParser(
+        description="Read '.cif' files from the current"
+        " folder and store in AiiDA database. If no"
+        " arguements are given, read_cif_folder is"
+        " using default arguments"
+    )
 
-    parser.add_argument('-p', metavar='path', type=str, required=False,
-                        action='store',
-                        help='specify path as string, if not current folder')
+    parser.add_argument(
+        '-p',
+        metavar='path',
+        type=str,
+        required=False,
+        action='store',
+        help='specify path as string, if not current folder'
+    )
 
-    parser.add_argument('-r', required=False,
-                        action='store_true',
-                        help='if given, search also in subfolders for .cif files. (os.walk subfolders')
+    parser.add_argument(
+        '-r',
+        required=False,
+        action='store_true',
+        help='if given, search also in subfolders for .cif files. (os.walk subfolders'
+    )
 
-    parser.add_argument('-s', required=False,
-                        action='store_true',
-                        help='if given, store all structures in database.')
+    parser.add_argument(
+        '-s',
+        required=False,
+        action='store_true',
+        help='if given, store all structures in database.'
+    )
 
-    parser.add_argument('-l', required=False,
-                        action='store_true',
-                        help='if given, write a logfile')
+    parser.add_argument('-l', required=False, action='store_true', help='if given, write a logfile')
 
-    parser.add_argument('-c', metavar='comments', type=str, required=False, default='',
-                        action='store',
-                        help='string, add a comment to the node(s) if stored. '
-                             'exp: -c crystal data for my project')
+    parser.add_argument(
+        '-c',
+        metavar='comments',
+        type=str,
+        required=False,
+        default='',
+        action='store',
+        help='string, add a comment to the node(s) if stored. '
+        'exp: -c crystal data for my project'
+    )
 
-    parser.add_argument('-e', metavar='extras', required=False, type=json.loads,
-                        action='store',
-                        help='string, or dictionary to add to the node(s) extras'
-                             ' if stored. exp: -e {"project" : "myproject", "type" : "simple metal"}')
+    parser.add_argument(
+        '-e',
+        metavar='extras',
+        required=False,
+        type=json.loads,
+        action='store',
+        help='string, or dictionary to add to the node(s) extras'
+        ' if stored. exp: -e {"project" : "myproject", "type" : "simple metal"}'
+    )
 
     args = parser.parse_args()
     if args.p:
-        read_cif_folder(path=args.p, recursive=args.r, store=args.s, log=args.l,
-                        comments=args.c, extras=args.e)
+        read_cif_folder(
+            path=args.p, recursive=args.r, store=args.s, log=args.l, comments=args.c, extras=args.e
+        )
     else:
-        read_cif_folder(recursive=args.r, store=args.s, log=args.l,
-                        comments=args.c, extras=args.e)
+        read_cif_folder(recursive=args.r, store=args.s, log=args.l, comments=args.c, extras=args.e)
