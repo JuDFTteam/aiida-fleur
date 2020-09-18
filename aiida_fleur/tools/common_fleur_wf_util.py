@@ -80,16 +80,16 @@ def convert_frac_formula(formula, max_digits=3):
     Converts a formula with fractions to a formula with integer factors only
 
     Be0.5W0.5 -> BeW
-   
+
     :param formula: str, crystal formula i.e. Be2W, Be0.2W0.7
     :param max_digits: int default=3, number of digits after which fractions will be cut off
-    :returns string
+    :returns: string
     """
     form_dict= get_natoms_element(formula)
     formula_int = ''
     for key, val in form_dict.items():
         formula_int = formula_int + key + str(int(val*10**max_digits))
-    
+
     return convert_formula_to_formula_unit(formula_int)
 
 #test
@@ -464,7 +464,7 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     balance_equation("C7H16+O2 -> CO2+H2O"))
     balance_equation("Be12W->Be22W+Be12W")
     balance_equation("Be12W->Be12W")
-    
+
     have to be intergers everywhere in the equation, factors and formulas
 
     1*C7H16+11*O2 ->7* CO2+8*H2O
