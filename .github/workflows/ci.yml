@@ -59,6 +59,11 @@ jobs:
     - name: Install python dependencies
       run:
         pip install .[pre-commit]
+        pip freeze
+
+    - name: Run pre-commit
+      run: 
+        pre-commit run --all-files || (git status --short; git diff ; exit 1)
 
   tests:
 
@@ -66,7 +71,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7', '3.6']
+        python-version: ['3.8', '3.7', '3.6']
 
     steps:
     - uses: actions/checkout@v1
