@@ -79,11 +79,11 @@ class FleurinpData(Data):
         Initialize a FleurinpData object set the files given
         """
         files = kwargs.pop('files', None)
-        try:
-            files.pop(files.index('inp.xml'))
-            files.append('inp.xml')
-        except ValueError:
-            pass
+        for filename in files:
+            if 'inp.xml' in filename:
+                files.pop(files.index(filename))
+                files.append(filename)
+                break
         node = kwargs.pop('node', None)
         super(FleurinpData, self).__init__(**kwargs)
 
@@ -430,21 +430,25 @@ class FleurinpData(Data):
 
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
-        fo = tempfile.NamedTemporaryFile(mode='w')
+        fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
         try:
-            relax_content = self.open('relax.xml', mode='r').read()
+            with self.open('relax.xml', mode='r') as relax_file:
+                relax_content = relax_file.read()
         except FileNotFoundError:
             relax_content = ''
         fo.write(relax_content)
+        tempfile_name = fo.name
+        fo.close()
 
         # replace relax.xml by the temp file path
         tree_x_string = etree.tostring(tree_x)
-        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(fo.name, 'utf-8'))
+        tree_x_string = tree_x_string.replace(
+            bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
         tree_x = etree.fromstring(tree_x_string).getroottree()
 
         # replace XInclude parts to validate against schema
         tree_x = clear_xml(tree_x)
-        fo.close()
+        os.remove(tempfile_name)
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
