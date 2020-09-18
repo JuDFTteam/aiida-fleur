@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find the workflow 'fleur_optimize_parameter_wc', which finds
 working/(in the future, optiomal) flapw parameters for a given Structure
@@ -22,7 +21,7 @@ from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict
 #from aiida.orm.data.base import Float
 #from aiida.work.process_registry import ProcessRegistry
-from aiida.engine import WorkChain, ToContext#,Outputs
+from aiida.engine import WorkChain, ToContext  #,Outputs
 #from aiida.work import calcfunction as cf
 from aiida.engine import submit
 #from aiida_fleur.tools.StructureData_util import rescale, is_structure
@@ -63,31 +62,38 @@ class fleur_optimize_parameters_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_optimize_parameters_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict={
-                       'resources' : {"num_machines": 1},#, "num_mpiprocs_per_machine" : 12},
-                       'walltime_sec':  60*60,
-                       'queue_name' : '',
-                       'custom_scheduler_commands' : ''}))
+        spec.input(
+            "wf_parameters",
+            valid_type=Dict,
+            required=False,
+            default=Dict(
+                dict={
+                    'resources': {
+                        "num_machines": 1
+                    },  #, "num_mpiprocs_per_machine" : 12},
+                    'walltime_sec': 60 * 60,
+                    'queue_name': '',
+                    'custom_scheduler_commands': ''
+                }
+            )
+        )
         spec.input("structure", valid_type=StructureData, required=True)
         spec.input("inpgen", valid_type=Code, required=True)
         spec.input("fleur", valid_type=Code, required=False)
-        spec.outline(
-            cls.start,
-            cls.run_inpgen,
-            cls.determine_parameters,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.run_inpgen, cls.determine_parameters, cls.return_results)
         #spec.dynamic_output()
-
 
     def start(self):
         """
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
-        self.report("Workchain node identifiers: ")#{}".format(ProcessRegistry().current_calc_node))
+        self.report(
+            'started fleur_optimize_parameter workflow version {}'.format(self._workflowversion)
+        )
+        self.report(
+            "Workchain node identifiers: "
+        )  #{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
 
@@ -105,32 +111,32 @@ class fleur_optimize_parameters_wc(WorkChain):
         self.ctx.serial = wf_dict.get('serial', False)
         self.ctx.custom_scheduler_commands = wf_dict.get('custom_scheduler_commands', '')
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
-        self.ctx.description_wf = self.inputs.get('_description', '') + '|fleur_optimize_parameters_wc|'
-        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60*60)
-        self.ctx.resources = wf_dict.get('resources' , {"num_machines": 1})
-        self.ctx.queue = wf_dict.get('queue_name' , '')
+        self.ctx.description_wf = self.inputs.get(
+            '_description', ''
+        ) + '|fleur_optimize_parameters_wc|'
+        self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60 * 60)
+        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        self.ctx.queue = wf_dict.get('queue_name', '')
 
         # codes
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen',
-                                      use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
+                error = (
+                    "The code you provided for inpgen of FLEUR does not "
+                    "use the plugin fleur.inpgen"
+                )
                 self.control_end_wc(error)
                 self.abort(error)
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur',
-                                      use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
+                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
                 self.control_end_wc(error)
                 self.abort(error)
-
 
     def run_inpgen(self):
         """
@@ -140,8 +146,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(self.ctx.description_wf,
-                                               self.ctx.formula)
+        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
 
         inpgencode = self.inputs.inpgen
         if 'calc_parameters' in self.inputs:
@@ -149,17 +154,19 @@ class fleur_optimize_parameters_wc(WorkChain):
         else:
             params = None
 
-        options = {"max_wallclock_seconds": self.ctx.walltime_sec,
-                   "resources": self.ctx.resources,
-                   "queue_name" : self.ctx.queue}
+        options = {
+            "max_wallclock_seconds": self.ctx.walltime_sec,
+            "resources": self.ctx.resources,
+            "queue_name": self.ctx.queue
+        }
 
-        inputs = get_inputs_inpgen(structure, inpgencode, options, label,
-                                   description, params=params)
+        inputs = get_inputs_inpgen(
+            structure, inpgencode, options, label, description, params=params
+        )
         self.report('INFO: run inpgen')
         future = submit(FleurinputgenCalculation, **inputs)
 
         return ToContext(inpgen=future, last_calc=future)
-
 
     def determine_parameters(self):
         """
@@ -174,7 +181,6 @@ class fleur_optimize_parameters_wc(WorkChain):
 
         # TODO this has to be implemented
         self.ctx.optimal_parameters = fleurin.get_parameterdata(fleurin)
-
 
     # TODO determine optimasation
     # look at number of atoms
@@ -193,11 +199,13 @@ class fleur_optimize_parameters_wc(WorkChain):
         else:
             optimal_parameters_uuid = None
 
-        out = {'workflow_name' : self.__class__.__name__,
-               'workflow_version' : self._workflowversion,
-               'structure': self.inputs.structure.uuid,
-               'optimal_para' : optimal_parameters_uuid,
-               'successful' : self.ctx.successful}
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            'structure': self.inputs.structure.uuid,
+            'optimal_para': optimal_parameters_uuid,
+            'successful': self.ctx.successful
+        }
 
         outnode = Dict(dict=out)
 
@@ -212,7 +220,6 @@ class fleur_optimize_parameters_wc(WorkChain):
         else:
             self.report('Done, but something failed in fleur_optimize_parameter_wc.')
 
-
         # create link to workchain node
         for link_name, node in six.iteritems(returndict):
             self.out(link_name, node)
@@ -224,7 +231,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         """
         self.ctx.successful = False
         self.ctx.abort = True
-        self.report(errormsg) # because return_results still fails somewhen
+        self.report(errormsg)  # because return_results still fails somewhen
         self.return_results()
         #self.abort_nowait(errormsg)
         self.abort(errormsg)

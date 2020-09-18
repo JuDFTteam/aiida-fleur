@@ -22,6 +22,7 @@ from aiida_fleur.workflows.corehole import fleur_corehole_wc
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
+
 # tests
 @pytest.mark.usefixtures("aiida_profile", "clear_database")
 class Test_fleur_corehole_wc():
@@ -30,36 +31,49 @@ class Test_fleur_corehole_wc():
     """
     @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
     @pytest.mark.timeout(5000, method='thread')
-    def test_fleur_corehole_W(self, #run_with_cache, 
-inpgen_local_code, fleur_local_code,
-generate_structure_W):#, clear_spec):
+    def test_fleur_corehole_W(
+        self,  #run_with_cache, 
+        inpgen_local_code,
+        fleur_local_code,
+        generate_structure_W
+    ):  #, clear_spec):
         """
         full example using fleur_corehole_wc on W.
         Several fleur runs needed, calculation of all only certain coreholes
         """
         from aiida.engine import run_get_node
-        options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-                   'max_wallclock_seconds': 60 * 60, 'queue_name' : ''})
-                   #'withmpi': False, 'custom_scheduler_commands': ''}
+        options = Dict(
+            dict={
+                'resources': {
+                    "num_machines": 1,
+                    "num_mpiprocs_per_machine": 1
+                },
+                'max_wallclock_seconds': 60 * 60,
+                'queue_name': ''
+            }
+        )
+        #'withmpi': False, 'custom_scheduler_commands': ''}
         options.store()
 
-
-        parameters = Dict(dict={
-                  'atom':{
-                        'element' : 'W',
-                        'jri' : 833,
-                        'rmt' : 2.3,
-                        'dx' : 0.015,
-                        'lmax' : 8,
-                        'lo' : '5p',
-                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                        },
-                  'comp': {
-                        'kmax': 3.0,
-                        },
-                  'kpt': {
-                        'nkpt': 100,
-                        }})
+        parameters = Dict(
+            dict={
+                'atom': {
+                    'element': 'W',
+                    'jri': 833,
+                    'rmt': 2.3,
+                    'dx': 0.015,
+                    'lmax': 8,
+                    'lo': '5p',
+                    'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+                },
+                'comp': {
+                    'kmax': 3.0,
+                },
+                'kpt': {
+                    'nkpt': 100,
+                }
+            }
+        )
         parameters.store()
 
         #structure = generate_structure_W()
@@ -71,14 +85,16 @@ generate_structure_W):#, clear_spec):
         structure.append_atom(position=(0., 0., 0.), symbols='W')
 
         structure.store()
-        wf_para = Dict(dict={
-                    'method': 'valence',
-                    'hole_charge': 0.5,
-                    'atoms': ['all'],
-                    'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
-                    'supercell_size': [2, 1, 1],
-                    'magnetic': True})
-
+        wf_para = Dict(
+            dict={
+                'method': 'valence',
+                'hole_charge': 0.5,
+                'atoms': ['all'],
+                'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
+                'supercell_size': [2, 1, 1],
+                'magnetic': True
+            }
+        )
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -88,12 +104,12 @@ generate_structure_W):#, clear_spec):
             #'metadata' : {
             #    'description' : 'Simple fleur_corehole_wc test with W bulk',
             #    'label' : 'fleur_corehole_wc_test_W_bulk'},
-        'options' : options,
-        'fleur' : FleurCode,
-        'inpgen' : InpgenCode,
-        'wf_parameters' : wf_para,
-        'calc_parameters' : parameters,
-        'structure' : structure
+            'options': options,
+            'fleur': FleurCode,
+            'inpgen': InpgenCode,
+            'wf_parameters': wf_para,
+            'calc_parameters': parameters,
+            'structure': structure
         }
 
         # now run calculation
@@ -113,17 +129,12 @@ generate_structure_W):#, clear_spec):
         assert outd.get('warnings') == []
 
         assert outd.get("weighted_binding_energy") == [
-                            470.54883993999,
-                            402.52235778002, 32.112260220107, 29.829247920075]
-
+            470.54883993999, 402.52235778002, 32.112260220107, 29.829247920075
+        ]
 
         assert outd.get("binding_energy") == [
-        235.27441997,
-        201.26117889001,
-        16.056130110053,
-        14.914623960038]
-
-
+            235.27441997, 201.26117889001, 16.056130110053, 14.914623960038
+        ]
 
     @pytest.mark.skip(reason="Test is not implemented")
     @pytest.mark.timeout(500, method='thread')

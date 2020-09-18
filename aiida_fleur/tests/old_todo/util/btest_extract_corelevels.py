@@ -23,7 +23,6 @@ KpointsData = DataFactory('array.kpoints')
 
 FleurInpCalc = CalculationFactory('fleur.inpgen')
 
-
 start_time = time.time()
 
 ##
@@ -52,13 +51,13 @@ for pk in calcs_pks:
     if calc.get_state() != 'FINISHED':
         raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
-
 parser_info = {'parser_warnings': [], 'unparsed': []}
 
-
 # call
-test_outxmlfiles = ['./test_outxml/outBeCr.xml', './test_outxml/out.xml', './test_outxml/outCuF.xml',
-                    './test_outxml/outFe.xml', './test_outxml/outHg.xml',  './test_outxml/outO.xml']
+test_outxmlfiles = [
+    './test_outxml/outBeCr.xml', './test_outxml/out.xml', './test_outxml/outCuF.xml',
+    './test_outxml/outFe.xml', './test_outxml/outHg.xml', './test_outxml/outO.xml'
+]
 outxmlfile = test_outxmlfiles[0]
 
 corelevels, atomtypes = extract_corelevels(outxmlfile)

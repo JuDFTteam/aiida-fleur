@@ -3,9 +3,10 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (u"Copyright (c), 2018, Forschungszentrum Jülich GmbH, "
-from aiida_fleur.data.fleurinp import FleurinpData
-                 "IAS-1/PGI-1, Germany. All rights reserved.")
+__copyright__ = (
+    u"Copyright (c), 2018, Forschungszentrum Jülich GmbH, "
+    "IAS-1/PGI-1, Germany. All rights reserved."
+)
 __license__ = "MIT license, see LICENSE.txt file"
 __version__ = "0.27"
 __contributors__ = "Jens Broeder"
@@ -23,18 +24,16 @@ from aiida.plugins import DataFactory
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida.engine.run import submit
 from aiida.engine.calculation.job import CalcJob
-
+from aiida_fleur_data.fleurinp import FleurinpData
 ParameterData = DataFactory('parameter')
 # get code
 # look in benchmark.jason
 # if no benchmark: print('No benchmarks definded in benchmark.jason for computer {}.)
 # run the benchmarks, ggf think about input selection
 
-
 code = 'fleur_mpi_v0.28@claix'
 
 code_node = test_and_get_code(code, 'fleur.fleur')
-
 
 
 def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list):
@@ -52,7 +51,9 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
     all_res = []
 
     if len(inp_files_folder_path_list) != len(wf_para_base_dict_list):
-        print('Input error: for every input folder path given you have to specify a scf workchian paranode! I abort.')
+        print(
+            'Input error: for every input folder path given you have to specify a scf workchian paranode! I abort.'
+        )
         return None
 
     code_node = test_and_get_code(code, 'fleur.fleur')
@@ -69,7 +70,7 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
             inpfiles.append(os.path.join(path, name))
         if inpfiles:
             fleurinp = FleurinpData(files=inpfiles)
-            structure = fleurinp.get_structuredata_nwf()#fleurinp)
+            structure = fleurinp.get_structuredata_nwf()  #fleurinp)
             formula = structure.get_formula()
         else:
             print(("No files found in {}".format(path)))
@@ -77,22 +78,30 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
         scf_para = wf_para_base_dict_list[i]
         print(scf_para)
         label = 'fleur_scf_benchmark_run_{}'.format(formula)
-        description = 'Fleur benchmark run on system {} with resources {}'.format(formula, scf_para['resources'])
+        description = 'Fleur benchmark run on system {} with resources {}'.format(
+            formula, scf_para['resources']
+        )
         print(('submitting {}'.format(label)))
-        res = submit(FleurScfWorkChain, wf_parameters=Dict(dict=scf_para), fleurinp=fleurinp, fleur=code_node, _label=label, _description=description)
+        res = submit(
+            FleurScfWorkChain,
+            wf_parameters=Dict(dict=scf_para),
+            fleurinp=fleurinp,
+            fleur=code_node,
+            _label=label,
+            _description=description
+        )
         all_res.append(res)
     return all_res
+
 
 # TODO: set path, or use some scheme for finding the files
 
 basepath = '../inp_xml_files/benchmarks/'
 basepath = os.path.abspath(basepath)
-benchmark_system = ['fleur_big_TiO',
-                    'fleur_big_TiO2',
-                    'fleur_mid_CuAg',
-                    'fleur_mid_GaAs',
-                    'fleur_small_AuAg',
-                    'fleur_tiny_NaCl']
+benchmark_system = [
+    'fleur_big_TiO', 'fleur_big_TiO2', 'fleur_mid_CuAg', 'fleur_mid_GaAs', 'fleur_small_AuAg',
+    'fleur_tiny_NaCl'
+]
 
 bench_res_file = './fleur_benchmark_resources.json'
 rf = open(bench_res_file, 'r')
@@ -100,21 +109,23 @@ benchmark_system_resources = json.load(rf)
 rf.close()
 
 # scf parameter node, change fleur_runmax and itmax_per_run to run several iterations and converge the calculation.
-wf_para_base_benchmark = {'fleur_runmax' : 1,
-                          'density_criterion' : 0.00001,
-                          'itmax_per_run' : 1,
-                          'serial' : False}
-                          #   'options' : {
-                          #                         'resources': {"num_machines": 1},
-                          ##                         'walltime_sec': 60*60,
-                          #                        'queue_name': '',
-                          #                         'custom_scheduler_commands' : '',
-                          #                         'max_memory_kb' : None,
-                          #                         'import_sys_environment' : False,
-                          #                         'environment_variables' : {}},
-                          #                     'serial' : False,
-                          # 'itmax_per_run' : 30,
-                          # 'inpxml_changes' : [],
+wf_para_base_benchmark = {
+    'fleur_runmax': 1,
+    'density_criterion': 0.00001,
+    'itmax_per_run': 1,
+    'serial': False
+}
+#   'options' : {
+#                         'resources': {"num_machines": 1},
+##                         'walltime_sec': 60*60,
+#                        'queue_name': '',
+#                         'custom_scheduler_commands' : '',
+#                         'max_memory_kb' : None,
+#                         'import_sys_environment' : False,
+#                         'environment_variables' : {}},
+#                     'serial' : False,
+# 'itmax_per_run' : 30,
+# 'inpxml_changes' : [],
 
 # select the systems to run # TODO maybe from input
 systems_to_run = benchmark_system[-2:-1]
@@ -131,11 +142,15 @@ benchmark_system_folders = []
 for system in systems_to_run:
     sys_res = benchmark_system_resources.get(system, {}).get(clabel, {})
     if not sys_res:
-        print(('INPUT VALIDATION WARNING: No benchmark to run on computer "{}" for system "{}"'.format(clabel, system)))
+        print((
+            'INPUT VALIDATION WARNING: No benchmark to run on computer "{}" for system "{}"'.format(
+                clabel, system
+            )
+        ))
         continue
-    benchmark_system_folder = os.path.join(basepath, system +'/input_files/')
+    benchmark_system_folder = os.path.join(basepath, system + '/input_files/')
 
-    hpc_res =  sys_res.get('resources')
+    hpc_res = sys_res.get('resources')
     benchmark_system_folders_list, wf_para_benchmark_list = [], []
 
     # so far we assume that the lists for resources, walltime and scheduler commands have the same length

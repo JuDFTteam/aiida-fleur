@@ -36,7 +36,7 @@ def test_fleurinpgen_default_calcinfo(
 
     calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
     codes_info = calc_info.codes_info
-    cmdline_params = ['-explicit'] # for inpgen2 ['+all', '-explicit', 'aiida.in']
+    cmdline_params = ['-explicit']  # for inpgen2 ['+all', '-explicit', 'aiida.in']
     local_copy_list = []
     retrieve_list = ['inp.xml', 'out', 'shell.out', 'out.error', 'struct.xsf', 'aiida.in']
     retrieve_temporary_list = []
@@ -136,6 +136,7 @@ def test_fleurinpgen_with_parameters(
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
+
 
 @pytest.mark.skip(reason='mock code buggy, todo has to be checked')
 def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name

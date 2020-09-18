@@ -31,7 +31,6 @@ from aiida_fleur.common.constants import bohr_a
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
-
 class FleurRelaxWorkChain(WorkChain):
     """
     This workflow performs structure optimization.
@@ -65,9 +64,7 @@ class FleurRelaxWorkChain(WorkChain):
                 cls.check_failure,
             ),
             cls.get_results_relax,
-            if_(cls.should_run_final_scf)(
-                cls.run_final_scf,
-                cls.get_results_final_scf),
+            if_(cls.should_run_final_scf)(cls.run_final_scf, cls.get_results_final_scf),
             cls.return_results,
         )
 
@@ -75,22 +72,29 @@ class FleurRelaxWorkChain(WorkChain):
         spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
-                       message="Invalid workchain parameters.")
-        spec.exit_code(350, 'ERROR_DID_NOT_RELAX',
-                       message="Optimization cycle did not lead to convergence of forces.")
-        spec.exit_code(351, 'ERROR_SCF_FAILED',
-                       message="SCF Workchains failed for some reason.")
-        spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT',
-                       message="Found no relaxed structure info in the output of SCF")
-        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT',
-                       message="Found no SCF output")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(
+            350,
+            'ERROR_DID_NOT_RELAX',
+            message="Optimization cycle did not lead to convergence of forces."
+        )
+        spec.exit_code(351, 'ERROR_SCF_FAILED', message="SCF Workchains failed for some reason.")
+        spec.exit_code(
+            352,
+            'ERROR_NO_RELAX_OUTPUT',
+            message="Found no relaxed structure info in the output of SCF"
+        )
+        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message="Found no SCF output")
         spec.exit_code(354, 'ERROR_SWITCH_BFGS', message='Force is small, switch to BFGS')
-        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
-                       message='FLEUR calculation failed because an atom spilled to the'
-                               'vacuum during relaxation')
-        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
-                       message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(
+            311,
+            'ERROR_VACUUM_SPILL_RELAX',
+            message='FLEUR calculation failed because an atom spilled to the'
+            'vacuum during relaxation'
+        )
+        spec.exit_code(
+            313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.'
+        )
 
     def start(self):
         """
@@ -167,7 +171,7 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.wf_dict['break_symmetry']:
             calc_para = None
             if 'calc_parameters' in input_scf:
-                 calc_para = input_scf.calc_parameters
+                calc_para = input_scf.calc_parameters
             # currently we always break the full symmetry
             broken_sys = break_symmetry_wf(input_scf.structure, parameterdata=calc_para)
             input_scf.structure = broken_sys['new_structure']
@@ -194,13 +198,23 @@ class FleurRelaxWorkChain(WorkChain):
             ))
 
         for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append(
-                ('set_atomgr_att_label', {'attributedict': {'force': [('relaxXYZ', 'FFF')]},
-                                          'atom_label': specie_off}))
+            scf_wf_dict['inpxml_changes'].append((
+                'set_atomgr_att_label', {
+                    'attributedict': {
+                        'force': [('relaxXYZ', 'FFF')]
+                    },
+                    'atom_label': specie_off
+                }
+            ))
 
-        scf_wf_dict['inpxml_changes'].append(
-            ('set_atomgr_att_label', {'attributedict': {'force': [('relaxXYZ', 'FFF')]},
-                                      'atom_label': '49'}))
+        scf_wf_dict['inpxml_changes'].append((
+            'set_atomgr_att_label', {
+                'attributedict': {
+                    'force': [('relaxXYZ', 'FFF')]
+                },
+                'atom_label': '49'
+            }
+        ))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -300,12 +314,15 @@ class FleurRelaxWorkChain(WorkChain):
                 '{}'.format(self.ctx.forces[-1])
             )
             return False
-        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict']['forcemix'] == 'straight':
-            self.report('Seems it is safe to switch to BFGS. Current largest force: '
-                        '{}'.format(self.ctx.forces[-1]))
+        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'
+                                            ] and self.inputs.scf.wf_parameters['force_dict'][
+                                                'forcemix'] == 'straight':
+            self.report(
+                'Seems it is safe to switch to BFGS. Current largest force: '
+                '{}'.format(self.ctx.forces[-1])
+            )
             self.ctx.switch_bfgs = True
             return False
-
 
         self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
@@ -495,8 +512,8 @@ class FleurRelaxWorkChain(WorkChain):
             'errors': self.ctx.errors,
             'force': self.ctx.forces,
             'force_iter_done': self.ctx.loop_count,
-             # uuids in the output are bad for caching should be avoided,
-             # instead better return the node.
+            # uuids in the output are bad for caching should be avoided,
+            # instead better return the node.
             'last_scf_wc_uuid': self.ctx.scf_res.uuid
         }
         outnode = Dict(dict=out)
@@ -517,14 +534,13 @@ class FleurRelaxWorkChain(WorkChain):
             if relax_out is not None:
                 con_nodes['last_scf__output'] = scf_out
 
-
         # TODO: for a trajectory output node all corresponding nodes have to go into
         # con_nodes
 
         if self.ctx.final_structure is not None:
-            outdict = create_relax_result_node(out=outnode,
-                                               optimized_structure=self.ctx.final_structure,
-                                               **con_nodes)
+            outdict = create_relax_result_node(
+                out=outnode, optimized_structure=self.ctx.final_structure, **con_nodes
+            )
         else:
             outdict = create_relax_result_node(out=outnode, **con_nodes)
 
@@ -546,6 +562,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
+
 @cf
 def create_relax_result_node(**kwargs):
     """
@@ -556,19 +573,19 @@ def create_relax_result_node(**kwargs):
     """
     outdict = {}
     for key, val in six.iteritems(kwargs):
-        if key == 'out': # should always be present
-            outnode = val.clone() # dublicate node instead of circle (keep DAG)
+        if key == 'out':  # should always be present
+            outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'out_relax_wc_para'
-            outnode.description = ('Contains results and '
-                              'information of an FleurRelaxWorkChain run.')
+            outnode.description = (
+                'Contains results and '
+                'information of an FleurRelaxWorkChain run.'
+            )
             outdict['out'] = outnode
 
         if key == 'optimized_structure':
-            structure = val.clone() # dublicate node instead of circle (keep DAG)
+            structure = val.clone()  # dublicate node instead of circle (keep DAG)
             structure.label = 'optimized_structure'
-            structure.description = ('Relaxed structure result '
-                              'of an FleurRelaxWorkChain run.')
+            structure.description = ('Relaxed structure result ' 'of an FleurRelaxWorkChain run.')
             outdict['optimized_structure'] = structure
 
     return outdict
-
