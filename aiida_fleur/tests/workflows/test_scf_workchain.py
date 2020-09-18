@@ -46,8 +46,8 @@ def test_fleur_scf_fleurinp_Si(
     """
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 5 * 60,
         'withmpi': False,
@@ -96,8 +96,8 @@ def test_fleur_scf_structure_Si(
     # prepare input nodes and dicts
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 5 * 60,
         'withmpi': False,
@@ -110,7 +110,7 @@ def test_fleur_scf_structure_Si(
 
     calc_parameters = {
         'atom': {
-            'element': "Si",
+            'element': 'Si',
             'rmt': 2.1,
             'jri': 981,
             'lmax': 8,
@@ -172,8 +172,8 @@ def test_fleur_scf_non_convergence(
     # prepare input nodes and dicts
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 5 * 60,
         'withmpi': False,
@@ -186,7 +186,7 @@ def test_fleur_scf_non_convergence(
 
     calc_parameters = {
         'atom': {
-            'element': "Si",
+            'element': 'Si',
             'rmt': 2.1,
             'jri': 981,
             'lmax': 8,
@@ -262,8 +262,8 @@ def test_fleur_scf_fleurinp_Si_modifications(
 
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 5 * 60,
         'withmpi': False,
@@ -309,7 +309,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
     assert lasto['kmax'] == 3.8
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
     """
@@ -335,8 +335,8 @@ def test_fleur_scf_validation_wrong_inputs(
     # prepare input nodes and dicts
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 5 * 60,
         'withmpi': False,

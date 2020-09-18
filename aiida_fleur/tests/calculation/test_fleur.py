@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Tests for the `FleurCalculation` class."""
 
 from __future__ import absolute_import

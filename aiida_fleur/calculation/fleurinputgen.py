@@ -37,7 +37,7 @@ class FleurinputgenCalculation(CalcJob):
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
 
-    __version__ = "1.2.0"
+    __version__ = '1.2.0'
 
     # Default input and output files
     _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
@@ -110,22 +110,22 @@ class FleurinputgenCalculation(CalcJob):
             valid_type=six.string_types,
             default=cls._INPXML_FILE_NAME
         )
-        spec.input('structure', valid_type=StructureData, help="Choose the input structure to use")
+        spec.input('structure', valid_type=StructureData, help='Choose the input structure to use')
         spec.input(
             'parameters',
             valid_type=Dict,
             required=False,
-            help="Use a node that specifies the input parameters "
-            "for the namelists"
+            help='Use a node that specifies the input parameters '
+            'for the namelists'
         )
         spec.input(
             'settings',
             valid_type=Dict,
             required=False,
-            help="This parameter data node is used to specify for some "
-            "advanced features how the plugin behaves. You can add files"
-            "the retrieve list, or add command line switches, "
-            "for all available features here check the documentation."
+            help='This parameter data node is used to specify for some '
+            'advanced features how the plugin behaves. You can add files'
+            'the retrieve list, or add command line switches, '
+            'for all available features here check the documentation.'
         )
 
         # parser
@@ -262,15 +262,15 @@ class FleurinputgenCalculation(CalcJob):
                 raise InputValidationError(
                     "The namelist '{0}' is not supported by the fleur"
                     " inputgenerator. Check on the fleur website or add '{0}'"
-                    "to _possible_namelists.".format(namelist)
+                    'to _possible_namelists.'.format(namelist)
                 )
             for para in paramdic.keys():
                 if para not in possible_params[namelist]:
                     raise InputValidationError(
                         "The property '{}' is not supported by the "
                         "namelist '{}'. "
-                        "Check the fleur website, or if it really is,"
-                        " update _possible_params. ".format(para, namelist)
+                        'Check the fleur website, or if it really is,'
+                        ' update _possible_params. '.format(para, namelist)
                     )
                 if para in string_replace:
                     # TODO check if its in the parameter dict
@@ -323,9 +323,9 @@ class FleurinputgenCalculation(CalcJob):
             if key not in self._settings_keys:
                 # TODO warning
                 self.logger.info(
-                    "settings dict key {} for Fleur calculation"
-                    "not recognized, only {} are allowed."
-                    "".format(key, self._settings_keys)
+                    'settings dict key {} for Fleur calculation'
+                    'not recognized, only {} are allowed.'
+                    ''.format(key, self._settings_keys)
                 )
 
         ##############################
@@ -338,27 +338,27 @@ class FleurinputgenCalculation(CalcJob):
 
         #### STRUCTURE_PARAMETERS ####
 
-        scaling_factor_card = ""
-        cell_parameters_card = ""
+        scaling_factor_card = ''
+        cell_parameters_card = ''
 
         if not own_lattice:
             cell = structure.cell
             for vector in cell:
                 scaled = [a * scaling_pos for a in vector]  # scaling_pos=1./bohr_to_ang
                 cell_parameters_card += (
-                    "{0:18.10f} {1:18.10f} {2:18.10f}"
-                    "\n".format(scaled[0], scaled[1], scaled[2])
+                    '{0:18.10f} {1:18.10f} {2:18.10f}'
+                    '\n'.format(scaled[0], scaled[1], scaled[2])
                 )
             scaling_factor_card += (
-                "{0:18.10f} {1:18.10f} {2:18.10f}"
-                "\n".format(scaling_factors[0], scaling_factors[1], scaling_factors[2])
+                '{0:18.10f} {1:18.10f} {2:18.10f}'
+                '\n'.format(scaling_factors[0], scaling_factors[1], scaling_factors[2])
             )
 
         #### ATOMIC_POSITIONS ####
 
         # TODO: be careful with units
-        atomic_positions_card_list = [""]
-        atomic_positions_card_listtmp = [""]
+        atomic_positions_card_list = ['']
+        atomic_positions_card_listtmp = ['']
 
         if not own_lattice:
             natoms = len(structure.sites)
@@ -403,33 +403,33 @@ class FleurinputgenCalculation(CalcJob):
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
                     # append a label to the detached atom
                     atomic_positions_card_listtmp.append(
-                        "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}"
-                        "\n".format(
+                        '    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}'
+                        '\n'.format(
                             atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2],
                             kind_namet
                         )
                     )
                 else:
                     atomic_positions_card_listtmp.append(
-                        "    {0:7} {1:18.10f} {2:18.10f} {3:18.10f}"
-                        "\n".format(
+                        '    {0:7} {1:18.10f} {2:18.10f} {3:18.10f}'
+                        '\n'.format(
                             atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2]
                         )
                     )
             # TODO check format
             # we write it later, since we do not know what natoms is before the loop...
-            atomic_positions_card_list.append("    {0:3}\n".format(natoms))
+            atomic_positions_card_list.append('    {0:3}\n'.format(natoms))
             for card in atomic_positions_card_listtmp:
                 atomic_positions_card_list.append(card)
         else:
             # TODO with own lattice atomic positions have to come from somewhere
             # else.... User input?
             raise InputValidationError(
-                "fleur lattice needs also the atom "
-                " position as input,"
-                " not implemented yet, sorry!"
+                'fleur lattice needs also the atom '
+                ' position as input,'
+                ' not implemented yet, sorry!'
             )
-        atomic_positions_card = "".join(atomic_positions_card_list)
+        atomic_positions_card = ''.join(atomic_positions_card_list)
         del atomic_positions_card_list  # Free memory
 
         #### Kpts ####
@@ -446,23 +446,23 @@ class FleurinputgenCalculation(CalcJob):
         with open(input_filename, 'w') as infile:
 
             # first write title
-            infile.write("{0}\n".format(self._inp_title))
+            infile.write('{0}\n'.format(self._inp_title))
 
             # then write &input namelist
-            infile.write("&{0}".format('input'))
+            infile.write('&{0}'.format('input'))
 
             # namelist content; set to {} if not present, so that we leave an
             # empty namelist
             namelist = input_params.pop('input', {})
             for k, val in sorted(six.iteritems(namelist)):
                 infile.write(get_input_data_text(k, val, False, mapping=None))
-            infile.write("/\n")
+            infile.write('/\n')
 
             # Write lattice information now
             infile.write(cell_parameters_card)
-            infile.write("{0:18.10f}\n".format(scaling_lat))
+            infile.write('{0:18.10f}\n'.format(scaling_lat))
             infile.write(scaling_factor_card)
-            infile.write("\n")
+            infile.write('\n')
 
             # Write Atomic positons
             infile.write(atomic_positions_card)
@@ -473,7 +473,7 @@ class FleurinputgenCalculation(CalcJob):
                 if namelist:
                     if 'atom' in namels_name:
                         namels_name = 'atom'
-                    infile.write("&{0}\n".format(namels_name))
+                    infile.write('&{0}\n'.format(namels_name))
                     if namels_name in val_only_namelist:
                         make_reversed = False
                         if namels_name == 'soc':
@@ -483,15 +483,15 @@ class FleurinputgenCalculation(CalcJob):
                     else:
                         for k, val in sorted(six.iteritems(namelist)):
                             infile.write(get_input_data_text(k, val, False, mapping=None))
-                    infile.write("/\n")
+                    infile.write('/\n')
             # infile.write(kpoints_card)
 
         if input_params:
             raise InputValidationError(
-                "input_params leftover: The following namelists are specified"
-                " in input_params, but are "
-                "not valid namelists for the current type of calculation: "
-                "{}".format(",".join(list(input_params.keys())))
+                'input_params leftover: The following namelists are specified'
+                ' in input_params, but are '
+                'not valid namelists for the current type of calculation: '
+                '{}'.format(','.join(list(input_params.keys())))
             )
 
         calcinfo = CalcInfo()
@@ -527,7 +527,7 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        cmdline_params = ["-explicit", "-inc", "+all", "-f", "{}".format(self._INPUT_FILE_NAME)]
+        cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -559,18 +559,18 @@ def conv_to_fortran(val, quote_strings=True):
         else:
             val_str = '.false.'
     elif isinstance(val, numbers.Integral):
-        val_str = "{:d}".format(val)
+        val_str = '{:d}'.format(val)
     elif isinstance(val, numbers.Real):
-        val_str = ("{:18.10e}".format(val)).replace('e', 'd')
+        val_str = ('{:18.10e}'.format(val)).replace('e', 'd')
     elif isinstance(val, six.string_types):
         if quote_strings:
             val_str = "'{!s}'".format(val)
         else:
-            val_str = "{!s}".format(val)
+            val_str = '{!s}'.format(val)
     else:
         raise ValueError(
             "Invalid value '{}' of type '{}' passed, accepts only booleans, ints, "
-            "floats and strings".format(val, type(val))
+            'floats and strings'.format(val, type(val))
         )
 
     return val_str
@@ -618,38 +618,38 @@ def get_input_data_text(key, val, value_only, mapping=None):
             except KeyError:
                 raise ValueError(
                     "Unable to find the key '{}' in the mapping "
-                    "dictionary".format(elemk)
+                    'dictionary'.format(elemk)
                 )
 
             list_of_strings.append(
-                (idx, "  {0}({2})={1} ".format(key, conv_to_fortran(itemval), idx))
+                (idx, '  {0}({2})={1} '.format(key, conv_to_fortran(itemval), idx))
             )
             # changed {0}({2}) = {1}\n".format
 
         # I first have to resort, then to remove the index from the first
         # column, finally to join the strings
         list_of_strings = list(zip(*sorted(list_of_strings)))[1]
-        return "".join(list_of_strings)
+        return ''.join(list_of_strings)
     elif not isinstance(val, six.string_types) and hasattr(val, '__iter__'):
         if value_only:
             list_of_strings = [
-                "  ({1}){0} ".format(conv_to_fortran(itemval), idx + 1)
+                '  ({1}){0} '.format(conv_to_fortran(itemval), idx + 1)
                 for idx, itemval in enumerate(val)
             ]
         else:
             # a list/array/tuple of values
             list_of_strings = [
-                "  {0}({2})={1} ".format(key, conv_to_fortran(itemval), idx + 1)
+                '  {0}({2})={1} '.format(key, conv_to_fortran(itemval), idx + 1)
                 for idx, itemval in enumerate(val)
             ]
-        return "".join(list_of_strings)
+        return ''.join(list_of_strings)
     else:
         # single value
         # return "  {0}={1} ".format(key, conv_to_fortran(val))
         if value_only:
-            return " {0} ".format(val)
+            return ' {0} '.format(val)
         else:
-            return "  {0}={1} ".format(key, val)
+            return '  {0}={1} '.format(key, val)
 
 
 def _lowercase_dict(dic, dict_name):
@@ -665,12 +665,12 @@ def _lowercase_dict(dic, dict_name):
         new_dict = dict((str(k).lower(), val) for k, val in six.iteritems(dic))
         if len(new_dict) != len(dic):
             num_items = Counter(str(k).lower() for k in dic.keys())
-            double_keys = ",".join([k for k, val in num_items if val > 1])
+            double_keys = ','.join([k for k, val in num_items if val > 1])
             raise InputValidationError(
                 "Inside the dictionary '{}' there are the following keys that "
-                "are repeated more than once when compared case-insensitively:"
-                "{}.This is not allowed.".format(dict_name, double_keys)
+                'are repeated more than once when compared case-insensitively:'
+                '{}.This is not allowed.'.format(dict_name, double_keys)
             )
         return new_dict
     else:
-        raise TypeError("_lowercase_dict accepts only dictionaries as argument")
+        raise TypeError('_lowercase_dict accepts only dictionaries as argument')

@@ -4,12 +4,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 __copyright__ = (
-    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-    "IAS-1/PGI-1, Germany. All rights reserved."
+    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
+    'IAS-1/PGI-1, Germany. All rights reserved.'
 )
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
+__license__ = 'MIT license, see LICENSE.txt file'
+__version__ = '0.27'
+__contributors__ = 'Jens Broeder'
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -32,14 +32,14 @@ StructureData = DataFactory('structure')
 FleurinpData = DataFactory('fleur.fleurinp')
 try:
     dontsend = sys.argv[1]
-    if dontsend == "--dont-send":
+    if dontsend == '--dont-send':
         submit_test = True
-    elif dontsend == "--send":
+    elif dontsend == '--send':
         submit_test = False
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either " "--send or --dont-send"), file=sys.stderr)
+    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -67,8 +67,8 @@ fleurinp = FleurinpData(files=[inpxmlfile])
 #calc = code.new_calc(computer=computer)
 
 calc = code.new_calc()
-calc.label = "Test Fleur fleur_MPI"
-calc.description = "Test calculation of the Fleur code"
+calc.label = 'Test Fleur fleur_MPI'
+calc.description = 'Test calculation of the Fleur code'
 calc.set_max_wallclock_seconds(10 * 60)  # 5 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
@@ -76,11 +76,11 @@ calc.set_max_wallclock_seconds(10 * 60)  # 5 min
 if run_in_serial_mode:
     calc.set_withmpi(False)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
-calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 24})
+calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 24})
 #calc.set_resources({"tot_num_mpiprocs" : 8})
 #calc.set_custom_scheduler_commands("#BSUB -P jara0043 \n#BSUB -a intelmpi")
 #calc.set_custom_scheduler_commands("#BSUB -P test-clx \n#BSUB -a intelmpi")
-calc.set_custom_scheduler_commands("#SBATCH --partition=batch")
+calc.set_custom_scheduler_commands('#SBATCH --partition=batch')
 
 if queue is not None:
     calc.set_queue_name(queue)
@@ -95,7 +95,7 @@ if submit_test:
     subfolder, script_filename = calc.submit_test()
     print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
     print(
-        "Submit file in {}".format(
+        'Submit file in {}'.format(
             os.path.join(os.path.relpath(subfolder.abspath), script_filename)
         )
     )

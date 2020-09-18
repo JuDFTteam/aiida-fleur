@@ -24,12 +24,12 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 
 
 # tests
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurBaseWorkChain():
     """
     Regression tests for the FleurBaseWorkChain
     """
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_base_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
         """
@@ -42,7 +42,7 @@ class Test_FleurBaseWorkChain():
 
         options = {
             'resources': {
-                "num_machines": 1
+                'num_machines': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,
@@ -73,7 +73,7 @@ class Test_FleurBaseWorkChain():
 
         #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_base_structure_Si(self, run_with_cache, mock_code_factory):
         """
@@ -81,7 +81,7 @@ class Test_FleurBaseWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_base_continue_from_x(self, run_with_cache, mock_code_factory):
         """
@@ -89,7 +89,7 @@ class Test_FleurBaseWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_base_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
         """

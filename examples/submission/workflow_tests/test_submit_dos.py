@@ -106,7 +106,7 @@ wf_para = Dict(
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1
+            'num_machines': 1
         },
         'queue_name': 'th1',  #23_node',
         'max_wallclock_seconds': 60 * 60
@@ -157,14 +157,14 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_dos_wc #####################")
+print('##################### TEST fleur_dos_wc #####################')
 
 if submit_wc:
     res = submit(fleur_dos_wc, **inputs)
-    print("##################### Submited fleur_dos_wc #####################")
-    print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting fleur_dos_wc #####################")
+    print('##################### Submited fleur_dos_wc #####################')
+    print(('Runtime info: {}'.format(res)))
+    print('##################### Finished submiting fleur_dos_wc #####################')
 else:
-    print("##################### Running fleur_dos_wc #####################")
+    print('##################### Running fleur_dos_wc #####################')
     res = run(fleur_dos_wc, **inputs)
-    print("##################### Finished running fleur_dos_wc #####################")
+    print('##################### Finished running fleur_dos_wc #####################')

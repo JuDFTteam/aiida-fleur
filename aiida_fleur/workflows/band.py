@@ -47,7 +47,7 @@ class FleurBandWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.4"
+    _workflowversion = '0.3.4'
 
     _default_options = {
         'resources': {
@@ -73,11 +73,11 @@ class FleurBandWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurBandWorkChain, cls).define(spec)
         # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("remote", valid_type=RemoteData, required=False)
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("options", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('remote', valid_type=RemoteData, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('options', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -96,9 +96,9 @@ class FleurBandWorkChain(WorkChain):
         spec.exit_code(
             233,
             'ERROR_INVALID_CODE_PROVIDED',
-            message="Invalid code node specified, check inpgen and fleur code nodes."
+            message='Invalid code node specified, check inpgen and fleur code nodes.'
         )
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
 
     def start(self):
         '''
@@ -111,7 +111,7 @@ class FleurBandWorkChain(WorkChain):
         #print("Workchain node identifiers: ")#'{}'
         #"".format(ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp_band = ""
+        self.ctx.fleurinp_band = ''
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.info = []
@@ -159,11 +159,11 @@ class FleurBandWorkChain(WorkChain):
         if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
-                error = "ERROR: you gave SCF input + remote for the FT"
+                error = 'ERROR: you gave SCF input + remote for the FT'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
-            error = "ERROR: you gave neither SCF input nor remote for the FT"
+            error = 'ERROR: you gave neither SCF input nor remote for the FT'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:

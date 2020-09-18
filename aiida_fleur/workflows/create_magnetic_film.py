@@ -32,7 +32,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
     """
         This workflow creates relaxed magnetic film on a substrate.
     """
-    _workflowversion = "0.1.2"
+    _workflowversion = '0.1.2'
 
     _wf_default = {
         'lattice': 'fcc',
@@ -72,10 +72,10 @@ class FleurCreateMagneticWorkChain(WorkChain):
             namespace='relax',
             exclude=('structure', )
         )
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("eos_output", valid_type=Dict, required=False)
-        spec.input("optimized_structure", valid_type=StructureData, required=False)
-        spec.input("distance_suggestion", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('eos_output', valid_type=Dict, required=False)
+        spec.input('optimized_structure', valid_type=StructureData, required=False)
+        spec.input('distance_suggestion', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -86,13 +86,13 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.output('magnetic_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
         spec.exit_code(
-            380, 'ERROR_NOT_SUPPORTED_LATTICE', message="Specified substrate has to be bcc or fcc."
+            380, 'ERROR_NOT_SUPPORTED_LATTICE', message='Specified substrate has to be bcc or fcc.'
         )
-        spec.exit_code(382, 'ERROR_RELAX_FAILED', message="Relaxation calculation failed.")
-        spec.exit_code(383, 'ERROR_EOS_FAILED', message="EOS WorkChain failed.")
+        spec.exit_code(382, 'ERROR_RELAX_FAILED', message='Relaxation calculation failed.')
+        spec.exit_code(383, 'ERROR_EOS_FAILED', message='EOS WorkChain failed.')
 
     def eos_needed(self):
         """
@@ -207,11 +207,11 @@ class FleurCreateMagneticWorkChain(WorkChain):
                         self.report('ERROR: relax wc input was not given but relax is needed.')
                         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
-        if "relax" in inputs and "distance_suggestion" not in inputs:
+        if 'relax' in inputs and 'distance_suggestion' not in inputs:
             self.report('ERROR: relax wc input was given but distance_suggestion was not.')
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
-        if self.ctx.wf_dict['latticeconstant'] == 0 and "distance_suggestion" not in inputs:
+        if self.ctx.wf_dict['latticeconstant'] == 0 and 'distance_suggestion' not in inputs:
             self.report('ERROR: latticeconstant equals to 0 but distance_suggestion was not given.')
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
@@ -380,7 +380,7 @@ def create_substrate_bulk(wf_dict_node):
         structure_factory = BodyCenteredCubic
     else:
         return ExitCode(
-            380, 'ERROR_NOT_SUPPORTED_LATTICE', message="Specified substrate has to be bcc or fcc."
+            380, 'ERROR_NOT_SUPPORTED_LATTICE', message='Specified substrate has to be bcc or fcc.'
         )
 
     miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
@@ -463,7 +463,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     centered_structure = center_film(structure)
 
-    return {"structure": centered_structure, "substrate": StructureData(ase=substrate)}
+    return {'structure': centered_structure, 'substrate': StructureData(ase=substrate)}
 
 
 def find_min_distance_unary_struct(tmp_substrate):
@@ -510,7 +510,7 @@ def find_substrate(remote=None, structure=None):
             ).get_node_by_label('substrate').uuid
 
     if isinstance(inputs, FleurinpData):
-        raise ValueError("Did not expect to find Relax WC started from FleurinpData")
+        raise ValueError('Did not expect to find Relax WC started from FleurinpData')
     else:
         orig_structure = inputs[0]
         return orig_structure.get_incoming().all()[0].node.get_outgoing(

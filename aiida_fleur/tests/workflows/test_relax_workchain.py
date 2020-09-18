@@ -27,12 +27,12 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
 # tests
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurRelaxWorkChain():
     """
     Regression tests for the FleurRelaxWorkChain
     """
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_fleurinp_Si_bulk(self, run_with_cache, mock_code_factory, create_fleurinp):
         """
@@ -44,7 +44,7 @@ class Test_FleurRelaxWorkChain():
 
         options = {
             'resources': {
-                "num_machines": 1
+                'num_machines': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,
@@ -73,7 +73,7 @@ class Test_FleurRelaxWorkChain():
 
         # check output
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_structure_Si(self, run_with_cache, mock_code_factory):
         """
@@ -81,7 +81,7 @@ class Test_FleurRelaxWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_structure_Si_film(self, run_with_cache, mock_code_factory):
         """
@@ -89,7 +89,7 @@ class Test_FleurRelaxWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_continue_converged(self, run_with_cache, mock_code_factory):
         """
@@ -110,8 +110,8 @@ class Test_FleurRelaxWorkChain():
         # prepare input nodes and dicts
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,

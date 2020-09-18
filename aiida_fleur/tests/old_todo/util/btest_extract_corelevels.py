@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import print_function
 import os
@@ -47,9 +48,9 @@ if not calcs_pks:
 for pk in calcs_pks:
     calc = load_node(pk)
     if (not isinstance(calc, FleurCalc)):
-        raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
+        raise ValueError('Calculation with pk {} must be a FleurCalculation'.format(pk))
     if calc.get_state() != 'FINISHED':
-        raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
+        raise ValueError('Calculation with pk {} must be in state FINISHED'.format(pk))
 
 parser_info = {'parser_warnings': [], 'unparsed': []}
 
@@ -76,4 +77,4 @@ for calc in calcs_pks:
     for i in range(0, len(corelevels[1][0]['corestates'])):
         # print corelevels[3][1]['corestates'][i]['energy']
         print(corelevels[1][0]['corestates'][i]['energy'])
-print(("--- %s seconds ---" % (time.time() - start_time)))
+print(('--- %s seconds ---' % (time.time() - start_time)))

@@ -111,8 +111,8 @@ wf_para = Dict(
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 24
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 24
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
@@ -236,15 +236,15 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST FleurScfWorkChain #####################")
+print('##################### TEST FleurScfWorkChain #####################')
 
 if submit_wc:
     res = submit(FleurScfWorkChain, **inputs)
-    print("##################### Submited FleurScfWorkChain #####################")
-    print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting FleurScfWorkChain #####################")
+    print('##################### Submited FleurScfWorkChain #####################')
+    print(('Runtime info: {}'.format(res)))
+    print('##################### Finished submiting FleurScfWorkChain #####################')
 else:
-    print("##################### Running FleurScfWorkChain #####################")
+    print('##################### Running FleurScfWorkChain #####################')
     with enable_caching():
         res = run(FleurScfWorkChain, **inputs)
-    print("##################### Finished running FleurScfWorkChain #####################")
+    print('##################### Finished running FleurScfWorkChain #####################')

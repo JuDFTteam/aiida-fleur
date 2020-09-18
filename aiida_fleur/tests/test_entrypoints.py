@@ -14,7 +14,7 @@ from __future__ import absolute_import
 import pytest
 
 
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class TestFleurEntrypoints:
     """
     tests all the entry points of the Fleur plugin. Therefore if the plugin is

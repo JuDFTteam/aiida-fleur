@@ -46,14 +46,14 @@ class fleur_delta_wc(WorkChain):
     group of structures in the database using a group of given parameter nodes in the database
     """
 
-    _workflowversion = "0.3.2"
+    _workflowversion = '0.3.2'
     _wf_default = {}
 
     @classmethod
     def define(cls, spec):
         super(fleur_delta_wc, cls).define(spec)
         spec.input(
-            "wf_parameters",
+            'wf_parameters',
             valid_type=Dict,
             required=False,
             default=Dict(
@@ -72,13 +72,13 @@ class fleur_delta_wc(WorkChain):
             )
         )
         spec.input(
-            "options",
+            'options',
             valid_type=Dict,
             required=False,
             default=Dict(
                 dict={
                     'resources': {
-                        "num_machines": 1
+                        'num_machines': 1
                     },
                     'walltime_sec': 60 * 60,
                     'queue_name': '',
@@ -88,8 +88,8 @@ class fleur_delta_wc(WorkChain):
                 }
             )
         )
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=True)
+        spec.input('fleur', valid_type=Code, required=True)
         spec.outline(
             cls.start_up,
             #while_(cls.calculations_left_torun)(
@@ -126,7 +126,7 @@ class fleur_delta_wc(WorkChain):
             'options',
             Dict(dict={
                 'resources': {
-                    "num_machines": 1
+                    'num_machines': 1
                 },
                 'walltime_sec': int(5.5 * 3600)
             })

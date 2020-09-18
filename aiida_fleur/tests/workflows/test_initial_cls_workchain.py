@@ -24,7 +24,7 @@ from aiida.engine import run_get_node
 
 # tests
 @pytest.mark.skip
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_fleur_initial_cls_wc():
     """
     Regression tests for the fleur_initial_cls_wc
@@ -43,8 +43,8 @@ class Test_fleur_initial_cls_wc():
 
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,
@@ -115,13 +115,13 @@ class Test_fleur_initial_cls_wc():
         assert outd.get('successful')
         assert outd.get('warnings') == []
         assert outd.get('corelevelshifts') == {
-            "W":
+            'W':
             [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
         }
 
         assert outd.get('formation_energy') == [0.0]
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_wc_binary_with_given_ref(self, run_with_cache, mock_code_factory):
         """
@@ -129,7 +129,7 @@ class Test_fleur_initial_cls_wc():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_wc_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
         """

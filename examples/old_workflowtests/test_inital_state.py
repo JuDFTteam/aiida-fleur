@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
-This test runs the initial stae CLS workflow 
+This test runs the initial stae CLS workflow
 """
 #TODO: overall tests, should create the nodes they use in the db.
 from __future__ import absolute_import
@@ -31,7 +32,7 @@ codename2 = 'fleur_MPI_iff003_v0_27@iff003'
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
-resources = {"num_machines": 1, "num_mpiprocs_per_machine": 12}
+resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 12}
 
 s = load_node(5898)  # Be2W
 
@@ -58,7 +59,7 @@ wf_para = Dict(
 res = fleur_initial_cls_wc.run(structure=s, wf_parameters=wf_para, inpgen=code, fleur=code2)  #
 #wf_parameters=wf_para,
 '''
-    _default_wf_para = {'references' : {'calculate' : 'all'}, 
+    _default_wf_para = {'references' : {'calculate' : 'all'},
                         'calculate_doses' : False,
                         'relax' : True,
                         'relax_mode': 'QE Fleur',
@@ -69,13 +70,13 @@ res = fleur_initial_cls_wc.run(structure=s, wf_parameters=wf_para, inpgen=code, 
                         'resources' : {"num_machines": 1},
                         'walltime_sec' : 10*30,
                         'queue' : None,
-                        'serial' : False}    
-    
+                        'serial' : False}
+
            spec.input("wf_parameters", valid_type=ParameterData, required=False,
                    default=ParameterData(dict=self._default_wf_para))#get_defaut_wf_para()))#
         spec.input("fleurinp", valid_type=FleurinpData, required=False)
         spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=False)        
+        spec.input("inpgen", valid_type=Code, required=False)
         spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=ParameterData, required=False) 
+        spec.input("calc_parameters", valid_type=ParameterData, required=False)
 '''

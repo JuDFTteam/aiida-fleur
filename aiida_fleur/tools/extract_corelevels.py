@@ -424,7 +424,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             if warn:
                 print((
                     "WARNING: Reference for element: '{}' not given. "
-                    "I ignore these.".format(elem)
+                    'I ignore these.'.format(elem)
                 ))
             continue
 
@@ -435,7 +435,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
                 if warn:
                     print((
                         "WARNING: Reference corelevel '{}' for element: '{}' "
-                        "not given. I ignore these.".format(corelevel_name, elem)
+                        'not given. I ignore these.'.format(corelevel_name, elem)
                     ))
                 continue
             be_all = []

@@ -33,7 +33,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation as FleurProcess
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-    _workflowversion = "0.1.1"
+    _workflowversion = '0.1.1'
 
     _calculation_class = FleurProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
@@ -110,10 +110,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.exit_code(
             389,
             'ERROR_MEMORY_ISSUE_NO_SOLUTION',
-            message="Computational resources are not optimal."
+            message='Computational resources are not optimal.'
         )
         spec.exit_code(
-            390, 'ERROR_NOT_OPTIMAL_RESOURCES', message="Computational resources are not optimal."
+            390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.'
         )
         spec.exit_code(
             399,

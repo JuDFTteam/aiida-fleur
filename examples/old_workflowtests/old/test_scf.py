@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 This test runs the fleur_convergence workflow for path 1
 """
@@ -39,7 +40,7 @@ settings = Dict(
         'files_not_to_retrieve': [],
         'files_copy_remotely': [],
         'files_not_copy_remotely': [],
-        'commandline_options': ["-wtime", "30"],
+        'commandline_options': ['-wtime', '30'],
         'blaha': ['bla']
     }
 )
@@ -50,8 +51,8 @@ wf_para = Dict(
         'density_criterion': 0.000001,  #})
         'queue_name': 'th123_node',
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 12
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 12
         },
         'walltime_sec': 10 * 60
     }

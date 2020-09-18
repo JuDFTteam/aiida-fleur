@@ -586,4 +586,3 @@ def get_paranode(struc, para_nodes):
 
 def write_delta_file(result_dict):
     pass
-

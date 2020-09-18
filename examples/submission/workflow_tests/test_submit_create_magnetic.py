@@ -122,9 +122,9 @@ calc_eos = Dict(dict=calc_eos)
 
 options_eos = {
     'resources': {
-        "num_machines": 1,
-        "num_mpiprocs_per_machine": 4,
-        "num_cores_per_mpiproc": 6
+        'num_machines': 1,
+        'num_mpiprocs_per_machine': 4,
+        'num_cores_per_mpiproc': 6
     },
     'queue_name': 'devel',
     'custom_scheduler_commands': '',
@@ -182,9 +182,9 @@ calc_relax = Dict(dict=calc_relax)
 
 options_relax = {
     'resources': {
-        "num_machines": 1,
-        "num_mpiprocs_per_machine": 4,
-        "num_cores_per_mpiproc": 6
+        'num_machines': 1,
+        'num_mpiprocs_per_machine': 4,
+        'num_cores_per_mpiproc': 6
     },
     'queue_name': 'devel',
     'custom_scheduler_commands': '',
@@ -233,16 +233,16 @@ submit_wc = False
 if args.submit is not None:
     submit_wc = submit
 
-print("##################### TEST fleur_create_magnetic_wc #####################")
+print('##################### TEST fleur_create_magnetic_wc #####################')
 
 if submit_wc:
     res = submit(FleurCreateMagneticWorkChain, **inputs)
-    print("##################### Submitted fleur_create_magnetic_wc #####################")
-    print(("Runtime info: {}".format(res)))
+    print('##################### Submitted fleur_create_magnetic_wc #####################')
+    print(('Runtime info: {}'.format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_create_magnetic_wc #####################")
+    print('##################### Finished submiting fleur_create_magnetic_wc #####################')
 
 else:
-    print("##################### Running fleur_create_magnetic_wc #####################")
+    print('##################### Running fleur_create_magnetic_wc #####################')
     res = run(FleurCreateMagneticWorkChain, **inputs)
-    print("##################### Finished running fleur_create_magnetic_wc #####################")
+    print('##################### Finished running fleur_create_magnetic_wc #####################')

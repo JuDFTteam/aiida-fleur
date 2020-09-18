@@ -133,9 +133,9 @@ def delete_nodes(pks_to_delete):
         )
 
     print((
-        "I am going to delete {} nodes, including ALL THE CHILDREN"
-        "of the nodes you specified. Do you want to continue? [y/N]"
-        "".format(len(all_pks_to_delete))
+        'I am going to delete {} nodes, including ALL THE CHILDREN'
+        'of the nodes you specified. Do you want to continue? [y/N]'
+        ''.format(len(all_pks_to_delete))
     ))
     answer = input()
 

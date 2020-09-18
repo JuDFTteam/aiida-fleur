@@ -74,14 +74,14 @@ def read_cif_folder(
     if rek:
         for root, dirs, files in os.walk(parent_cif_folder):
             for file1 in files:
-                if file1.endswith(".cif"):
+                if file1.endswith('.cif'):
                     filenames.append(file1)
                     filepath = os.path.join(root, file1)
                     filepaths.append(filepath)
     else:
         dir_list = os.listdir(parent_cif_folder)
         for filename in dir_list:
-            if filename.endswith(".cif"):
+            if filename.endswith('.cif'):
                 filenames.append(filename)
                 filepath = os.path.join(parent_cif_folder, filename)
                 filepaths.append(filepath)
@@ -180,15 +180,15 @@ def struc_from_cif(cif):
     return struc
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
     import json
     #  maybe change names?
     parser = argparse.ArgumentParser(
         description="Read '.cif' files from the current"
-        " folder and store in AiiDA database. If no"
-        " arguements are given, read_cif_folder is"
-        " using default arguments"
+        ' folder and store in AiiDA database. If no'
+        ' arguements are given, read_cif_folder is'
+        ' using default arguments'
     )
 
     parser.add_argument(

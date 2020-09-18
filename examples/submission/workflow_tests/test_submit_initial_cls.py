@@ -90,8 +90,8 @@ print(args)
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'queue_name': '',  #23_node',
         'max_wallclock_seconds': 60 * 60
@@ -169,14 +169,14 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_initial_cls_wc #####################")
+print('##################### TEST fleur_initial_cls_wc #####################')
 
 if submit_wc:
     res = submit(fleur_initial_cls_wc, **inputs)
-    print("##################### Submited fleur_initial_cls_wc #####################")
-    print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting fleur_initial_cls_wc #####################")
+    print('##################### Submited fleur_initial_cls_wc #####################')
+    print(('Runtime info: {}'.format(res)))
+    print('##################### Finished submiting fleur_initial_cls_wc #####################')
 else:
-    print("##################### Running fleur_initial_cls_wc #####################")
+    print('##################### Running fleur_initial_cls_wc #####################')
     res = run(fleur_initial_cls_wc, **inputs)
-    print("##################### Finished running fleur_initial_cls_wc #####################")
+    print('##################### Finished running fleur_initial_cls_wc #####################')

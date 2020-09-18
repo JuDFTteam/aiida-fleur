@@ -89,8 +89,8 @@ wf_para = Dict(
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 24
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 24
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
@@ -141,8 +141,8 @@ wf_para_scf = Dict(dict=wf_para_scf)
 options_scf = Dict(
     dict={
         'resources': {
-            "num_machines": 2,
-            "num_mpiprocs_per_machine": 24
+            'num_machines': 2,
+            'num_mpiprocs_per_machine': 24
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
@@ -177,16 +177,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_spst_wc #####################")
+print('##################### TEST fleur_spst_wc #####################')
 
 if submit_wc:
     res = submit(FleurMaeWorkChain, **inputs)
-    print("##################### Submited fleur_spst_wc #####################")
-    print(("Runtime info: {}".format(res)))
+    print('##################### Submited fleur_spst_wc #####################')
+    print(('Runtime info: {}'.format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_spst_wc #####################")
+    print('##################### Finished submiting fleur_spst_wc #####################')
 
 else:
-    print("##################### Running fleur_spst_wc #####################")
+    print('##################### Running fleur_spst_wc #####################')
     res = run(FleurMaeWorkChain, **inputs)
-    print("##################### Finished running fleur_spst_wc #####################")
+    print('##################### Finished running fleur_spst_wc #####################')

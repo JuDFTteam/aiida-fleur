@@ -31,7 +31,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
     _wf_default = {
         'beta': {
@@ -47,23 +47,23 @@ class FleurSSDispConvWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurSSDispConvWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
 
         spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(
             340,
             'ERROR_ALL_QVECTORS_FAILED',
-            message="Convergence SSDisp calculation failed for all q-vectors."
+            message='Convergence SSDisp calculation failed for all q-vectors.'
         )
         spec.exit_code(
             341,
             'ERROR_SOME_QVECTORS_FAILED',
-            message="Convergence SSDisp calculation failed for some q-vectors."
+            message='Convergence SSDisp calculation failed for some q-vectors.'
         )
 
     def start(self):

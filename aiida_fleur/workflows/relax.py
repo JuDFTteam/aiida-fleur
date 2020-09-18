@@ -36,7 +36,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
     _wf_default = {
         'relax_iter': 5,
@@ -52,7 +52,7 @@ class FleurRelaxWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurRelaxWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -72,19 +72,19 @@ class FleurRelaxWorkChain(WorkChain):
         spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(
             350,
             'ERROR_DID_NOT_RELAX',
-            message="Optimization cycle did not lead to convergence of forces."
+            message='Optimization cycle did not lead to convergence of forces.'
         )
-        spec.exit_code(351, 'ERROR_SCF_FAILED', message="SCF Workchains failed for some reason.")
+        spec.exit_code(351, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
         spec.exit_code(
             352,
             'ERROR_NO_RELAX_OUTPUT',
-            message="Found no relaxed structure info in the output of SCF"
+            message='Found no relaxed structure info in the output of SCF'
         )
-        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message="Found no SCF output")
+        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message='Found no SCF output')
         spec.exit_code(354, 'ERROR_SWITCH_BFGS', message='Force is small, switch to BFGS')
         spec.exit_code(
             311,
@@ -299,7 +299,7 @@ class FleurRelaxWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            forces_data = last_calc.outputs.relax_parameters.get_dict()["posforces"][-1]
+            forces_data = last_calc.outputs.relax_parameters.get_dict()['posforces'][-1]
             all_forces = []
             for force in forces_data:
                 all_forces.extend(force[-3:])

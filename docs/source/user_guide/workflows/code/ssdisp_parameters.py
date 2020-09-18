@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 'beta': {'all': 1.57079},           # see description below
 'prop_dir': [1.0, 0.0, 0.0],        # sets a propagation direction of a q-vector
 'q_vectors': [[0.0, 0.0, 0.0],      # set a set of q-vectors to calculate SSDispersion

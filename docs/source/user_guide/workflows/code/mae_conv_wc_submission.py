@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiida.orm import load_node, Dict
 from aiida.engine import submit
 
@@ -11,7 +12,7 @@ wf_para = Dict(dict={'sqas': {'label': [0.0, 0.0]},
                      'soc_off': []})
 
 
-options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
+options = Dict(dict={'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 24},
                      'queue_name': 'devel',
                      'custom_scheduler_commands': '',
                      'max_wallclock_seconds':  60*60})
@@ -39,7 +40,7 @@ wf_para_scf = {'fleur_runmax': 2,
 
 wf_para_scf = Dict(dict=wf_para_scf)
 
-options_scf = Dict(dict={'resources': {"num_machines": 2, "num_mpiprocs_per_machine": 24},
+options_scf = Dict(dict={'resources': {'num_machines': 2, 'num_mpiprocs_per_machine': 24},
                          'queue_name': 'devel',
                          'custom_scheduler_commands': '',
                          'max_wallclock_seconds':  60*60})

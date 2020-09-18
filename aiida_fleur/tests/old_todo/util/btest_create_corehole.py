@@ -4,12 +4,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 __copyright__ = (
-    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-    "IAS-1/PGI-1, Germany. All rights reserved."
+    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
+    'IAS-1/PGI-1, Germany. All rights reserved.'
 )
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
+__license__ = 'MIT license, see LICENSE.txt file'
+__version__ = '0.27'
+__contributors__ = 'Jens Broeder'
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -39,7 +39,7 @@ ids = []  #13924]#, 13925]#, 13926, 13927, 13928, 13929, 13930, 13931, 13932, 13
 #ids = [479, 480, 481, 482, 537]#	O12W4, O12W4, O6W2, O6W2, O36W3Y18
 
 kind = 'W1'
-econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
+econfig = '[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2'
 para1 = Dict(
     dict={
         'title': 'A test calculation of Tungsten',

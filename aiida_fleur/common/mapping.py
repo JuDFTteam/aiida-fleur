@@ -9,7 +9,7 @@ from aiida.orm.nodes.data.dict import Dict
 
 def update_mapping(original, source):
     """
-    Update a nested dictionary with another optionally nested dictionary. The dictionaries may be 
+    Update a nested dictionary with another optionally nested dictionary. The dictionaries may be
     plain Mapping objects or Dict nodes. If the original dictionary is an instance of Dict
     the returned dictionary will also be wrapped in Dict.
 

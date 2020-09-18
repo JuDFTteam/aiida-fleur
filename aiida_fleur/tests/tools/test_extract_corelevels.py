@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import pytest
 
@@ -94,5 +95,5 @@ def get_example_outxml_files():
     # from top test folder
     folder_path = './files/outxml/'
     return [
-        join(folder_path, outfile) for outfile in listdir(folder_path) if outfile.endswith(".xml")
+        join(folder_path, outfile) for outfile in listdir(folder_path) if outfile.endswith('.xml')
     ]

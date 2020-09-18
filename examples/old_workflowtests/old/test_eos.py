@@ -40,18 +40,18 @@ wf_para = Dict(
         'step': 0.002,
         'guess': 1.00,
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 12
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 12
         },
         'walltime_sec': 60 * 60,
         'queue_name': 'th123_node'
     }
 )
 
-print(("structure = {}".format(f)))
-print("wf-para =")  #.format(wf_para.get_dict()))
+print(('structure = {}'.format(f)))
+print('wf-para =')  #.format(wf_para.get_dict()))
 pprint(wf_para.get_dict())
-print("parameterdata = ")  #{}".format(parameters.get_dict()))
+print('parameterdata = ')  #{}".format(parameters.get_dict()))
 pprint(parameters.get_dict())
 
 res = FleurEosWorkChain.run(

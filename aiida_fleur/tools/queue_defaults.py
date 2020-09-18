@@ -39,15 +39,15 @@ def queue_defaults(queue_name, computer=None):
         'iff003': {
             'th1': {
                 'resources': {
-                    "num_machines": 1,
-                    "num_mpiprocs_per_machine": 12
+                    'num_machines': 1,
+                    'num_mpiprocs_per_machine': 12
                 },
                 'walltime_sec': 30 * 60
             },
             'th1_small': {
                 'resources': {
-                    "num_machines": 1,
-                    "num_mpiprocs_per_machine": 12
+                    'num_machines': 1,
+                    'num_mpiprocs_per_machine': 12
                 },
                 'walltime_sec': 20 * 60
             }

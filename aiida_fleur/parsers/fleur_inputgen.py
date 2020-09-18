@@ -56,12 +56,12 @@ class Fleur_inputgenParser(Parser):
         try:
             output_folder = self.retrieved
         except NotExistent:
-            self.logger.error("No retrieved folder found")
+            self.logger.error('No retrieved folder found')
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info("file list {}".format(list_of_files))
+        self.logger.info('file list {}'.format(list_of_files))
 
         errorfile = FleurinputgenCalculation._ERROR_FILE_NAME
         if errorfile in list_of_files:
@@ -69,13 +69,13 @@ class Fleur_inputgenParser(Parser):
                 with output_folder.open(errorfile, 'r') as error_file:
                     error_file_lines = error_file.read()
             except IOError:
-                self.logger.error("Failed to open error file: {}.".format(errorfile))
+                self.logger.error('Failed to open error file: {}.'.format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, parse error.
             if error_file_lines:
                 self.logger.error(
                     "The following was written to the error file {} : \n '{}'"
-                    "".format(errorfile, error_file_lines)
+                    ''.format(errorfile, error_file_lines)
                 )
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
@@ -87,7 +87,7 @@ class Fleur_inputgenParser(Parser):
             if file1 not in list_of_files:
                 self.logger.error(
                     "'{}' file not found in retrived folder, it was probably "
-                    "not created by inpgen".format(file1)
+                    'not created by inpgen'.format(file1)
                 )
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 

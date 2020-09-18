@@ -115,11 +115,11 @@ class fleur_corehole_wc(WorkChain):
     # Hints:
     # 1. This workflow does not work with local codes!
 
-    _workflowversion = "0.4.0"
+    _workflowversion = '0.4.0'
     _default_options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1,
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1,
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
@@ -132,7 +132,7 @@ class fleur_corehole_wc(WorkChain):
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
         spec.input(
-            "wf_parameters",
+            'wf_parameters',
             valid_type=Dict,
             required=False,
             #default=Dict(
@@ -160,13 +160,13 @@ class fleur_corehole_wc(WorkChain):
             #    }
             #)
         )
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=True)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input(
-            "options",
+            'options',
             valid_type=Dict,
             required=False  #,
             #default=Dict(
@@ -201,50 +201,50 @@ class fleur_corehole_wc(WorkChain):
         spec.output('output_corehole_wc_para', valid_type=Dict)
 
         spec.exit_code(
-            1, 'ERROR_INVALID_INPUT_RESOURCES', message="The input resources are invalid."
+            1, 'ERROR_INVALID_INPUT_RESOURCES', message='The input resources are invalid.'
         )
         spec.exit_code(
             2,
             'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED',
-            message="Input resources are missing."
+            message='Input resources are missing.'
         )
         spec.exit_code(
             3,
             'ERROR_INVALID_CODE_PROVIDED',
-            message="The code provided is invalid, or not of the right kind."
+            message='The code provided is invalid, or not of the right kind.'
         )
         spec.exit_code(
-            4, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation FAILED, check output"
+            4, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation FAILED, check output'
         )
         spec.exit_code(
             5,
             'ERROR_CHANGING_FLEURINPUT_FAILED',
-            message="Changing of the FLEURINP data went wrong, check log."
+            message='Changing of the FLEURINP data went wrong, check log.'
         )
         spec.exit_code(
             6,
             'ERROR_CALCULATION_INVALID_INPUT_FILE',
-            message="The FLEUR input file for the calculation did not validate."
+            message='The FLEUR input file for the calculation did not validate.'
         )
         spec.exit_code(
             7,
             'ERROR_FLEUR_CALCULATION_FAiLED',
-            message="At least one FLEUR calculation FAILED, check the output and log."
+            message='At least one FLEUR calculation FAILED, check the output and log.'
         )
         spec.exit_code(
             8,
             'ERROR_CONVERGENCE_NOT_ARCHIVED',
             message=(
-                "At least one FLEUR calculation did not/could not reach the"
-                "desired convergece Criteria, with the current parameters."
+                'At least one FLEUR calculation did not/could not reach the'
+                'desired convergece Criteria, with the current parameters.'
             )
         )
         spec.exit_code(
             9,
             'ERROR_IN_REFERENCE_CREATION',
             message=(
-                "Something went wrong in the determiation what coreholes to "
-                "calculate, probably the input format was not correct. Check log."
+                'Something went wrong in the determiation what coreholes to '
+                'calculate, probably the input format was not correct. Check log.'
             )
         )
 
@@ -255,9 +255,9 @@ class fleur_corehole_wc(WorkChain):
         """
         # TODO: document parameters
         self.report(
-            "started fleur_corehole_wc version {} "
-            "Workchain node identifiers: "  #{}"
-            "".format(self._workflowversion)
+            'started fleur_corehole_wc version {} '
+            'Workchain node identifiers: '  #{}"
+            ''.format(self._workflowversion)
         )  #, ProcessRegistry().current_calc_node))
 
         ### init ctx ###
@@ -501,8 +501,8 @@ class fleur_corehole_wc(WorkChain):
                 except IndexError:
                     error = (
                         "ERROR: The index/integer: {} specified in 'atoms' key is not valid."
-                        "There are only {} atom sites in your provided structure."
-                        "".format(atom_info, len(base_atoms_sites))
+                        'There are only {} atom sites in your provided structure.'
+                        ''.format(atom_info, len(base_atoms_sites))
                     )
                     to_append = None
                     self.report(error)
@@ -523,15 +523,15 @@ class fleur_corehole_wc(WorkChain):
         for corel in corelevels_toc:
             if isinstance(corel, (str, six.text_type)):  #basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
-                elm_cl = re.split("[, ;:-]", corel)
+                elm_cl = re.split('[, ;:-]', corel)
                 #print(elm_cl)
                 if len(elm_cl) != 2:
                     pass
                     # something went wrong, wrong input
                     # TODO log, error and hint
                     error = (
-                        "ERROR: corelevel was given in the wrong format: {},"
-                        "should have len 2. Hint hast to be the format "
+                        'ERROR: corelevel was given in the wrong format: {},'
+                        'should have len 2. Hint hast to be the format '
                         "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl)
                     )
                     self.control_end_wc(error)
@@ -589,7 +589,7 @@ class fleur_corehole_wc(WorkChain):
                                 all_changed_valence.append(
                                     highest_unocc[:2]
                                 )  # the methods below need them without occ
-                        elif "/" in elm_cl[1]:
+                        elif '/' in elm_cl[1]:
                             pass  # TODO FUll state information given...[4f 7/2]
                         else:
                             pass

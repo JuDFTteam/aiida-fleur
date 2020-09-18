@@ -48,7 +48,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = "0.3.5"
+    _workflowversion = '0.3.5'
 
     _default_options = {
         'resources': {
@@ -74,11 +74,11 @@ class FleurBandDosWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurBandDosWorkChain, cls).define(spec)
         # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("remote", valid_type=RemoteData, required=True)
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("options", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('remote', valid_type=RemoteData, required=True)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('options', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -97,9 +97,9 @@ class FleurBandDosWorkChain(WorkChain):
         spec.exit_code(
             233,
             'ERROR_INVALID_CODE_PROVIDED',
-            message="Invalid code node specified, check inpgen and fleur code nodes."
+            message='Invalid code node specified, check inpgen and fleur code nodes.'
         )
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
 
     def start(self):
         '''

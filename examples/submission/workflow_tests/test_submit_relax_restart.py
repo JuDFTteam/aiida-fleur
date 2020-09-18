@@ -122,8 +122,8 @@ wf_para_scf = Dict(dict=wf_para_scf)
 options_scf = Dict(
     dict={
         'resources': {
-            "num_machines": 2,
-            "num_mpiprocs_per_machine": 24
+            'num_machines': 2,
+            'num_mpiprocs_per_machine': 24
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
@@ -161,16 +161,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST fleur_relax_wc #####################")
+print('##################### TEST fleur_relax_wc #####################')
 
 if submit_wc:
     res = submit(FleurBaseRelaxWorkChain, **inputs)
-    print("##################### Submited fleur_relax_wc #####################")
-    print(("Runtime info: {}".format(res)))
+    print('##################### Submited fleur_relax_wc #####################')
+    print(('Runtime info: {}'.format(res)))
     print((res.pk))
-    print("##################### Finished submiting fleur_relax_wc #####################")
+    print('##################### Finished submiting fleur_relax_wc #####################')
 
 else:
-    print("##################### Running fleur_relax_wc #####################")
+    print('##################### Running fleur_relax_wc #####################')
     res = run(FleurBaseRelaxWorkChain, **inputs)
-    print("##################### Finished running fleur_relax_wc #####################")
+    print('##################### Finished running fleur_relax_wc #####################')

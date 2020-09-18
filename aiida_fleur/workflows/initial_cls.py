@@ -70,7 +70,7 @@ class fleur_initial_cls_wc(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-    _workflowversion = "0.4.0"
+    _workflowversion = '0.4.0'
     _default_wf_para = {
         'references': {},
         'relax': True,
@@ -83,8 +83,8 @@ class fleur_initial_cls_wc(WorkChain):
 
     _default_options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
@@ -108,18 +108,18 @@ class fleur_initial_cls_wc(WorkChain):
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
         spec.input(
-            "wf_parameters",
+            'wf_parameters',
             valid_type=Dict,
             required=False,
             default=Dict(dict=cls._default_wf_para)
         )
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=False)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input(
-            "options", valid_type=Dict, required=False
+            'options', valid_type=Dict, required=False
         )  #, default=Dict(dict=cls._default_options#)
         #)
 
@@ -137,9 +137,9 @@ class fleur_initial_cls_wc(WorkChain):
         ### input check ### ? or done automaticly, how optional?
 
         msg = (
-            "INFO: Started initial_state_CLS workflow version {} "
-            "Workchain node identifiers: "  #{}"
-            "".format(self._workflowversion)
+            'INFO: Started initial_state_CLS workflow version {} '
+            'Workchain node identifiers: '  #{}"
+            ''.format(self._workflowversion)
         )  #, ProcessRegistry().current_calc_node))
         self.report(msg)
 
@@ -332,8 +332,8 @@ class fleur_initial_cls_wc(WorkChain):
                 #    extract TODO
                 else:
                     error = (
-                        "ERROR: I do not know what to do with this given "
-                        "reference {} for element {}".format(ref_el, elem)
+                        'ERROR: I do not know what to do with this given '
+                        'reference {} for element {}'.format(ref_el, elem)
                     )
                     #print(error)
                     self.report(error)
@@ -1044,7 +1044,7 @@ def extract_results(calcs):
             efermi = float('nan')
             corelevels = [float('nan')]
             atomtypes = [float('nan')]
-            logmsg = "ERROR: Fleur Calculation with uuid {} was not in in state FINISHED".format(
+            logmsg = 'ERROR: Fleur Calculation with uuid {} was not in in state FINISHED'.format(
                 uuid
             )
             log.append(logmsg)

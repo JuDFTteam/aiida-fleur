@@ -118,18 +118,18 @@ def compress_fleuroutxml(
     outxmlfilepath, dest_file_path=None, delete_eig=True, iterations_to_keep=None
 ):
     """
-    Compresses a fleur out.xml file by deleting certain things 
+    Compresses a fleur out.xml file by deleting certain things
     like eigenvalues tags and/or iterations from it
-    
+
     :param outxmlfilepath: (absolut) file path
     :type outxmlfilepath: str
     :param dest_file_path: (absolut) for the compressed file to be saved, if no desitination file path is given the file is overriden in place (default)!
     :type dest_file_path: str, optional
     :param delete_eig:  if eigenvalues are deleted from file default is True
-    :type delete_eig: boolean, optional 
-    :param iterations_to_keep: index of 'till' whihc iterations to be keep, i.e '-2' means only last two, '15' default (None) is keep all 
+    :type delete_eig: boolean, optional
+    :param iterations_to_keep: index of 'till' whihc iterations to be keep, i.e '-2' means only last two, '15' default (None) is keep all
     :type iterations_to_keep: int
-    
+
      ###
      usage example:
      outxmldes = '/Users/broeder/test/FePt_out_test.xml'
@@ -137,7 +137,7 @@ def compress_fleuroutxml(
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=14)
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=-1)
 
-    
+
     """
     from aiida_fleur.tools.xml_util import delete_tag, eval_xpath2
     from lxml import etree
@@ -181,9 +181,9 @@ def compress_fleuroutxml(
         if iterations_to_keep < 0:
             # the first element has 1 (not 0) in xpath expresions
             position_keep = n_iters + iterations_to_keep + 1
-            delete_xpath = xpath_iter + "[position()<{}]".format(int(position_keep))
+            delete_xpath = xpath_iter + '[position()<{}]'.format(int(position_keep))
         else:
-            delete_xpath = xpath_iter + "[position()>{}]".format(int(iterations_to_keep))
+            delete_xpath = xpath_iter + '[position()>{}]'.format(int(iterations_to_keep))
 
         if abs(iterations_to_keep) > n_iters:
             print(

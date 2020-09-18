@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import pytest
 import os
@@ -77,8 +78,8 @@ def test_get_inputs_fleur():
         'custom_scheduler_commands': 'test_command',
         'withmpi': False,
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         }
     }
 
@@ -146,7 +147,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     assert get_inputs_inpgen(**inputs) == returns
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 def test_get_scheduler_extras():
     from aiida_fleur.tools.common_fleur_wf import get_scheduler_extras
 
@@ -173,17 +174,17 @@ def test_test_and_get_codenode_inpgen(fixture_code):
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, nonexpected, use_exceptions=True)
     assert str(msg.value) == (
-        "Given Code node is not of expected code type.\n"
-        "Valid labels for a fleur.fleur executable are:\n"
-        "* fleur_test@localhost-test"
+        'Given Code node is not of expected code type.\n'
+        'Valid labels for a fleur.fleur executable are:\n'
+        '* fleur_test@localhost-test'
     )
 
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, not_existing, use_exceptions=True)
     assert str(msg.value) == (
-        "Code not valid, and no valid codes for fleur.not_existing.\n"
-        "Configure at least one first using\n"
-        "    verdi code setup"
+        'Code not valid, and no valid codes for fleur.not_existing.\n'
+        'Configure at least one first using\n'
+        '    verdi code setup'
     )
 
 
@@ -196,7 +197,7 @@ def test_get_kpoints_mesh_from_kdensity(generate_structure):
     assert isinstance(b, KpointsData)
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 def test_determine_favorable_reaction():
     from aiida_fleur.tools.common_fleur_wf import determine_favorable_reaction
 

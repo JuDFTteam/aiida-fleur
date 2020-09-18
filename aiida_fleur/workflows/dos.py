@@ -42,11 +42,11 @@ class fleur_dos_wc(WorkChain):
     defaults : tria = True, nkpts = 800, sigma=0.005, emin= -0.3, emax = 0.8
     """
 
-    _workflowversion = "0.3.3"
+    _workflowversion = '0.3.3'
 
     _default_options = {
         'resources': {
-            "num_machines": 1
+            'num_machines': 1
         },
         'max_wallclock_seconds': 60 * 60,
         'queue_name': '',
@@ -61,21 +61,21 @@ class fleur_dos_wc(WorkChain):
     def define(cls, spec):
         super(fleur_dos_wc, cls).define(spec)
         spec.input(
-            "wf_parameters",
+            'wf_parameters',
             valid_type=Dict,
             required=False,
             default=Dict(dict=cls._default_wf_para)
         )
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
+        spec.input('settings', valid_type=Dict, required=False)
         spec.input(
-            "options", valid_type=Dict, required=False, default=Dict(dict=cls._default_options)
+            'options', valid_type=Dict, required=False, default=Dict(dict=cls._default_options)
         )
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
         # TODO ggf run convergence first
-        spec.input("remote_data", valid_type=RemoteData, required=False)
+        spec.input('remote_data', valid_type=RemoteData, required=False)
         #spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
+        spec.input('fleur', valid_type=Code, required=True)
         spec.outline(cls.start, cls.create_new_fleurinp, cls.run_fleur, cls.return_results)
         # spec.dynamic_output()
 
@@ -87,12 +87,12 @@ class fleur_dos_wc(WorkChain):
         # input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
         self.report(
-            "Started dos workflow version {}"
+            'Started dos workflow version {}'
             # "Workchain node identifiers: ")#{}"
-            "".format(self._workflowversion)
+            ''.format(self._workflowversion)
         )  # ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp1 = ""
+        self.ctx.fleurinp1 = ''
         self.ctx.last_calc = None
         self.ctx.successful = False
         self.ctx.warnings = []
@@ -116,7 +116,7 @@ class fleur_dos_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
+                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
                 # self.control_end_wc(error)
                 self.report(error)
                 return 1

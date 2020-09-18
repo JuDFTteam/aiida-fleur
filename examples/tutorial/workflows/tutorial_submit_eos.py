@@ -51,7 +51,7 @@ wf_para = Dict(dict={'fleur_runmax': 4, 'points': 4, 'guess': 1.0})
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1
+            'num_machines': 1
         },
         'queue_name': '',
         'max_wallclock_seconds': 60 * 60

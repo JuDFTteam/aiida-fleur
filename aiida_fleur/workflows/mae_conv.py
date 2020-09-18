@@ -31,7 +31,7 @@ class FleurMaeConvWorkChain(WorkChain):
     This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
     _wf_default = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
 
@@ -39,23 +39,23 @@ class FleurMaeConvWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurMaeConvWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
 
         spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(
             343,
             'ERROR_ALL_SQAS_FAILED',
-            message="Convergence MAE calculation failed for all SQAs."
+            message='Convergence MAE calculation failed for all SQAs.'
         )
         spec.exit_code(
             344,
             'ERROR_SOME_SQAS_FAILED',
-            message="Convergence MAE calculation failed for some SQAs."
+            message='Convergence MAE calculation failed for some SQAs.'
         )
 
     def start(self):

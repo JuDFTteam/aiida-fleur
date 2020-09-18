@@ -204,28 +204,28 @@ class FleurCalculation(CalcJob):
             'fleurinpdata',
             valid_type=FleurinpData,
             required=False,
-            help="Use a FleruinpData node that specifies the input parameters"
-            "usually copy from the parent calculation, basically makes"
-            "the inp.xml file visible in the db and makes sure it has "
-            "the files needed."
+            help='Use a FleruinpData node that specifies the input parameters'
+            'usually copy from the parent calculation, basically makes'
+            'the inp.xml file visible in the db and makes sure it has '
+            'the files needed.'
         )
         spec.input(
             'parent_folder',
             valid_type=RemoteData,
             required=False,
-            help="Use a remote or local repository folder as parent folder "
-            "(also for restarts and similar). It should contain all the "
-            "needed files for a Fleur calc, only edited files should be "
-            "uploaded from the repository."
+            help='Use a remote or local repository folder as parent folder '
+            '(also for restarts and similar). It should contain all the '
+            'needed files for a Fleur calc, only edited files should be '
+            'uploaded from the repository.'
         )
         spec.input(
             'settings',
             valid_type=Dict,
             required=False,
-            help="This parameter data node is used to specify for some "
-            "advanced features how the plugin behaves. You can add files"
-            "the retrieve list, or add command line switches, "
-            "for all available features here check the documentation."
+            help='This parameter data node is used to specify for some '
+            'advanced features how the plugin behaves. You can add files'
+            'the retrieve list, or add command line switches, '
+            'for all available features here check the documentation.'
         )
 
         # parser
@@ -346,8 +346,8 @@ class FleurCalculation(CalcJob):
             has_parent = False
             if not has_fleurinp:
                 raise InputValidationError(
-                    "No parent calculation found and no fleurinp data "
-                    "given, need either one or both for a "
+                    'No parent calculation found and no fleurinp data '
+                    'given, need either one or both for a '
                     "'fleurcalculation'."
                 )
         else:
@@ -356,9 +356,9 @@ class FleurCalculation(CalcJob):
             n_parents = len(parent_calcs)
             if n_parents != 1:
                 raise UniquenessError(
-                    "Input RemoteData is child of {} "
-                    "calculation{}, while it should have a single parent"
-                    "".format(n_parents, "" if n_parents == 0 else "s")
+                    'Input RemoteData is child of {} '
+                    'calculation{}, while it should have a single parent'
+                    ''.format(n_parents, '' if n_parents == 0 else 's')
                 )
             parent_calc = parent_calcs[0].node
             parent_calc_class = parent_calc.process_class
@@ -405,9 +405,9 @@ class FleurCalculation(CalcJob):
         for key in settings_dict.keys():
             if key not in self._settings_keys:
                 self.logger.warning(
-                    "settings dict key {} for Fleur calculation"
-                    "not recognized, only {} are allowed."
-                    "".format(key, self._settings_keys)
+                    'settings dict key {} for Fleur calculation'
+                    'not recognized, only {} are allowed.'
+                    ''.format(key, self._settings_keys)
                 )
 
         # TODO: Detailed check of FleurinpData
@@ -449,7 +449,7 @@ class FleurCalculation(CalcJob):
             # copy necessary files
             # TODO: check first if file exist and throw a warning if not
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
-            self.logger.info("out folder path {}".format(outfolder_uuid))
+            self.logger.info('out folder path {}'.format(outfolder_uuid))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
@@ -504,7 +504,7 @@ class FleurCalculation(CalcJob):
                                      file1), self._get_outut_folder
                     ))
 
-                self.logger.info("remote copy file list {}".format(remote_copy_list))
+                self.logger.info('remote copy file list {}'.format(remote_copy_list))
 
         # create a JUDFT_WARN_ONLY file in the calculation folder
         with io.StringIO(u'/n') as handle:
@@ -521,7 +521,7 @@ class FleurCalculation(CalcJob):
         # calcinfo.cmdline_params = (list(cmdline_params)
         #                           + ["-in", self._INPUT_FILE_NAME])
 
-        self.logger.info("local copy file list {}".format(local_copy_list))
+        self.logger.info('local copy file list {}'.format(local_copy_list))
 
         calcinfo.local_copy_list = local_copy_list
         calcinfo.remote_copy_list = remote_copy_list
@@ -565,16 +565,16 @@ class FleurCalculation(CalcJob):
         walltime_sec = self.node.get_attribute('max_wallclock_seconds')
         cmdline_params = []  # , "-wtime", "{}".format(walltime_sec)]"-xml"
 
-        cmdline_params.append("-minimalOutput")
+        cmdline_params.append('-minimalOutput')
 
         if with_hdf5:
-            cmdline_params.append("-last_extra")
-            cmdline_params.append("-no_send")
+            cmdline_params.append('-last_extra')
+            cmdline_params.append('-no_send')
 
         if walltime_sec:
             walltime_min = int(max(1, walltime_sec / 60))
-            cmdline_params.append("-wtime")
-            cmdline_params.append("{}".format(int(walltime_min)))
+            cmdline_params.append('-wtime')
+            cmdline_params.append('{}'.format(int(walltime_min)))
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

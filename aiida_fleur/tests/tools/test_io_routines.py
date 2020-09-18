@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # write_results_to_file
 from __future__ import absolute_import
 
@@ -55,7 +56,7 @@ def test_compress_fleuroutxml():
     from aiida_fleur.tools.io_routines import compress_fleuroutxml
 
     testfilepath = abspath('./files/outxml/BeTi_out.xml')
-    dest_path = testfilepath.replace(".xml", "_test.xml")
+    dest_path = testfilepath.replace('.xml', '_test.xml')
     niter_file = 19
     xpath_iter = '/fleurOutput/scfLoop/iteration'
     xpath_eig = '/fleurOutput/scfLoop/iteration/eigenvalues'

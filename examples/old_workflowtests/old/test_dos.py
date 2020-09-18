@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # /usr/bin/env python
 """
 This test runs the Fleur dos workflow

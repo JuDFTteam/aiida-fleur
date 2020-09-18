@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # dict_merger
 from __future__ import absolute_import
 import pytest
@@ -65,7 +66,7 @@ outputs = [{
 }]
 
 
-@pytest.mark.parametrize("test_input,expected", zip(inputs, outputs))
+@pytest.mark.parametrize('test_input,expected', zip(inputs, outputs))
 def test_dict_merger_interface_dicts_lists_str_int(test_input, expected):
     from aiida_fleur.tools.dict_util import dict_merger
     assert dict_merger(*test_input) == expected

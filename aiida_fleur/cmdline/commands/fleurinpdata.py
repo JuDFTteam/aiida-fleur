@@ -70,7 +70,7 @@ def get_kpoints():
 @fleurinp.command()
 def get_parameters():
     """
-    Prints some basic information about the parameter data and returns a 
+    Prints some basic information about the parameter data and returns a
     parameter data uuid/pk
     """
     click.echo('verdi data fleurinp parameter')

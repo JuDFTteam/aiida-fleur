@@ -109,7 +109,7 @@ def get_inputs_fleur(
         # TODO not every machine/scheduler type takes number of machines
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
-        options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
+        options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     else:
         options['withmpi'] = True
 
@@ -170,7 +170,7 @@ def get_inputs_inpgen(
         options = {}
     # inpgen run always serial
     options['withmpi'] = False
-    options['resources'] = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
+    options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
 
     if options:
         inputs.metadata.options = options
@@ -280,14 +280,14 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
             }}, project='*'
         )
 
-        valid_code_labels = ["{}@{}".format(c.label, c.computer.name) for [c] in qb.all()]
+        valid_code_labels = ['{}@{}'.format(c.label, c.computer.name) for [c] in qb.all()]
 
         if valid_code_labels:
             msg = (
-                "Given Code node is not of expected code type.\n"
-                "Valid labels for a {} executable are:\n".format(expected_code_type)
+                'Given Code node is not of expected code type.\n'
+                'Valid labels for a {} executable are:\n'.format(expected_code_type)
             )
-            msg += "\n".join("* {}".format(l) for l in valid_code_labels)
+            msg += '\n'.join('* {}'.format(l) for l in valid_code_labels)
 
             if use_exceptions:
                 raise ValueError(msg)
@@ -296,9 +296,9 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                 sys.exit(1)
         else:
             msg = (
-                "Code not valid, and no valid codes for {}.\n"
-                "Configure at least one first using\n"
-                "    verdi code setup".format(expected_code_type)
+                'Code not valid, and no valid codes for {}.\n'
+                'Configure at least one first using\n'
+                '    verdi code setup'.format(expected_code_type)
             )
             if use_exceptions:
                 raise ValueError(msg)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import os
 import pytest
@@ -156,7 +157,7 @@ def test_create_tag(inpxml_etree):
                 'row-3', 'TEST_TAG'
             ]
         )
-    assert str(excinfo.value) == "Existing order does not correspond to tag_order list"
+    assert str(excinfo.value) == 'Existing order does not correspond to tag_order list'
 
     with pytest.raises(ValueError) as excinfo:
         create_tag(
@@ -170,7 +171,7 @@ def test_create_tag(inpxml_etree):
                 'TEST_TAG'
             ]
         )
-    assert str(excinfo.value) == "Did not find element name in the tag_order list"
+    assert str(excinfo.value) == 'Did not find element name in the tag_order list'
 
 
 def test_delete_att(inpxml_etree):
@@ -178,7 +179,7 @@ def test_delete_att(inpxml_etree):
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label'
-                       )[0] == "                 222"
+                       )[0] == '                 222'
 
     delete_att(etree, '/fleurInput/atomGroups/atomGroup/filmPos', 'label')
     assert eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/filmPos/@label') == []
@@ -354,7 +355,7 @@ class TestSetSpecies:
         from aiida_fleur.tools.xml_util import set_species_label, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        set_species_label(etree, "                 222", attributedict=attr_dict)
+        set_species_label(etree, '                 222', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
 
@@ -463,7 +464,7 @@ class TestChangeAtomgrAtt:
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        change_atomgr_att_label(etree, attributedict=attr_dict, at_label="                 222")
+        change_atomgr_att_label(etree, attributedict=attr_dict, at_label='                 222')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + path)
 
@@ -489,7 +490,7 @@ class TestChangeAtomgrAtt:
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        change_atomgr_att_label(etree, attributedict=attr_dict, at_label="all")
+        change_atomgr_att_label(etree, attributedict=attr_dict, at_label='all')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
 
@@ -526,7 +527,7 @@ class TestSetInpchanges:
         ]
 
         if any(x in path for x in skip_paths):
-            pytest.skip("This attribute is not tested for FePt/inp.xml")
+            pytest.skip('This attribute is not tested for FePt/inp.xml')
         elif name in self.xml_structure[11].keys():
             set_inpchanges(etree, change_dict={name: 'test'})
             if name not in ['relPos', 'absPos']:
@@ -889,7 +890,7 @@ class TestShiftValue:
 
         if not result_before:
             if attr_name in ['nx', 'ny', 'nz', 'scale']:
-                pytest.skip("This attribute is not tested for FePt/inp.xml")
+                pytest.skip('This attribute is not tested for FePt/inp.xml')
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
@@ -915,7 +916,7 @@ class TestShiftValue:
 
         if not result_before:
             if attr_name in ['scale']:
-                pytest.skip("This attribute is not tested for FePt/inp.xml")
+                pytest.skip('This attribute is not tested for FePt/inp.xml')
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
@@ -933,15 +934,15 @@ class TestShiftValue:
 
         with pytest.raises(ValueError) as excinfo:
             shift_value(etree, {'does_not_exist': 1.2442})
-        assert "Given attribute name either does not ex" in str(excinfo.value)
+        assert 'Given attribute name either does not ex' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
             shift_value(etree, {'jspins': 3.3})
-        assert "You are trying to write a float" in str(excinfo.value)
+        assert 'You are trying to write a float' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
             shift_value(etree, {'l_noco': 33})
-        assert "Given attribute name either does not ex" in str(excinfo.value)
+        assert 'Given attribute name either does not ex' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
             shift_value(etree, {'jspins': 33}, mode='not_a_mode')
@@ -1036,7 +1037,7 @@ class TestAddNumToAtt:
 
         if not result_before:
             if attr_name in ['nx', 'ny', 'nz', 'scale']:
-                pytest.skip("This attribute is not tested for FePt/inp.xml")
+                pytest.skip('This attribute is not tested for FePt/inp.xml')
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
@@ -1058,7 +1059,7 @@ class TestAddNumToAtt:
 
         if not result_before:
             if attr_name in ['scale']:
-                pytest.skip("This attribute is not tested for FePt/inp.xml")
+                pytest.skip('This attribute is not tested for FePt/inp.xml')
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]

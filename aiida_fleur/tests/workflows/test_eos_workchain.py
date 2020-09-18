@@ -28,7 +28,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 # tests
 @pytest.mark.skip
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurEosWorkChain:
     """
     Regression tests for the FleurEosWorkChain
@@ -45,8 +45,8 @@ class Test_FleurEosWorkChain:
 
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 10 * 60,
             'withmpi': False,
@@ -56,7 +56,7 @@ class Test_FleurEosWorkChain:
 
         calc_parameters = {
             'atom': {
-                'element': "Si",
+                'element': 'Si',
                 'rmt': 2.1,
                 'jri': 981,
                 'lmax': 8,
@@ -158,8 +158,8 @@ class Test_FleurEosWorkChain:
         # prepare input nodes and dicts
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,

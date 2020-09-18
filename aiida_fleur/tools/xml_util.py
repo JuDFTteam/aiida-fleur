@@ -33,7 +33,7 @@ def is_sequence(arg):
     """
     if isinstance(arg, str):
         return False
-    return (not hasattr(arg, "strip") and hasattr(arg, "__getitem__") or hasattr(arg, "__iter__"))
+    return (not hasattr(arg, 'strip') and hasattr(arg, '__getitem__') or hasattr(arg, '__iter__'))
 
 
 ##### CONVERTERS ############
@@ -166,7 +166,7 @@ def convert_from_fortran_bool(stringbool):
     elif isinstance(stringbool, bool):
         return stringbool  # no convertion needed...
     else:
-        raise TypeError("convert_to_fortran_bool accepts only a string or " "bool as argument")
+        raise TypeError('convert_to_fortran_bool accepts only a string or ' 'bool as argument')
 
 
 def convert_to_fortran_bool(boolean):
@@ -199,8 +199,8 @@ def convert_to_fortran_bool(boolean):
             )
     else:
         raise TypeError(
-            "convert_to_fortran_bool accepts only a string or "
-            "bool as argument, given {} ".format(boolean)
+            'convert_to_fortran_bool accepts only a string or '
+            'bool as argument, given {} '.format(boolean)
         )
 
 
@@ -769,7 +769,7 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
         return fleurinp_tree_copy
 
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
     for group in all_groups:
@@ -1014,7 +1014,7 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     """
     import numpy as np
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
     for group in all_groups:
@@ -1081,7 +1081,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
         return fleurinp_tree_copy
 
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
     for group in all_groups:
@@ -1421,7 +1421,7 @@ def set_nkpts(fleurinp_tree_copy, count, gamma):
     #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
 
     tree = fleurinp_tree_copy
-    new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
+    new_kpo = etree.Element('kPointCount', count='{}'.format(count), gamma='{}'.format(gamma))
     new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
 
     return new_tree
@@ -1444,10 +1444,10 @@ def set_kpath(fleurinp_tree_copy, kpath, count, gamma):
     #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
 
     tree = fleurinp_tree_copy
-    new_kpo = etree.Element('kPointCount', count="{}".format(count), gamma="{}".format(gamma))
+    new_kpo = etree.Element('kPointCount', count='{}'.format(count), gamma='{}'.format(gamma))
     for key in kpath:
-        new_k = etree.Element('specialPoint', name="{}".format(key))
-        new_k.text = "{} {} {}".format(kpath[key][0], kpath[key][1], kpath[key][2])
+        new_k = etree.Element('specialPoint', name='{}'.format(key))
+        new_k.text = '{} {} {}'.format(kpath[key][0], kpath[key][1], kpath[key][2])
         new_kpo.append(new_k)
 
     new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
@@ -1528,7 +1528,7 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
 
     if return_value == []:
         if create:
-            x_pieces = [e for e in xpath.split('/') if e != ""]
+            x_pieces = [e for e in xpath.split('/') if e != '']
             #x_pieces = xpath.split('/')
             xpathn = ''
             for piece in x_pieces[:-1]:
@@ -1650,7 +1650,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
         else:
             raise InputValidationError(
                 "You try to set the key:'{}' to : '{}', but the key is unknown"
-                " to the fleur plug-in".format(key, fleur_change_dic[key])
+                ' to the fleur plug-in'.format(key, fleur_change_dic[key])
             )
     return xmltree_new
 

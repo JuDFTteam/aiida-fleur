@@ -476,7 +476,7 @@ def break_symmetry(
                                 # getting the charge over element might be risky
                                 charge = _atomic_numbers.get((val.get('element')))
                                 idp = '{}.{}'.format(charge, symbol_count[symbol])
-                                idp = float("{0:.2f}".format(float(idp)))
+                                idp = float('{0:.2f}'.format(float(idp)))
                                 # dot cannot be stored in AiiDA dict...
                                 val_new.update({u'id': idp})
                                 atomlistname = 'atom{}'.format(id_a)

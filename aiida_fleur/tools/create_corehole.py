@@ -43,7 +43,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     head = kindo.name.rstrip('01223456789')
     #print(kindo)
     charge = _atomic_numbers[kindo.symbol]
-    id = float("{}.{}".format(charge, kindo.name[len(head):]))
+    id = float('{}.{}'.format(charge, kindo.name[len(head):]))
     #print('id {}'.format(id))
 
     # get kind symbol, get kind name,
@@ -97,7 +97,7 @@ def create_corehole_fleurinp(
         [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2)
 
     if position(pos) is given the electronConfig for the specified position will be set.
-    (or todo? econfig, either:: 
+    (or todo? econfig, either::
 
             [Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2
 

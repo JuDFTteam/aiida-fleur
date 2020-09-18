@@ -21,14 +21,14 @@ Dict = DataFactory('dict')
 StructureData = DataFactory('structure')
 try:
     dontsend = sys.argv[1]
-    if dontsend == "--dont-send":
+    if dontsend == '--dont-send':
         submit_test = True
-    elif dontsend == "--send":
+    elif dontsend == '--send':
         submit_test = False
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either " "--send or --dont-send"), file=sys.stderr)
+    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -88,32 +88,32 @@ description = 'Test inpgen run on W'
 label = 'fleur_scf_wc inpgen on W'
 description = '|fleur_scf_wc| inpgen on W, pbc(True, True, True)'
 
-attrs = {"resources": {"num_machines": 1, "num_mpiprocs_per_machine": 1}, "withmpi": False}  # ,
+attrs = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}, 'withmpi': False}  # ,
 
 inp = {
     'structure': s,
     'parameters': parameters,
     'code': code,
-    "metadata": {
-        "options": {
-            "resources": {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+    'metadata': {
+        'options': {
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
-            "withmpi": False
+            'withmpi': False
         }
     }
 }
 
 inputs = {
-    "structure": s,
-    "parameters": parameters,
-    "metadata": {
-        "options": {
-            "withmpi": False,
-            "resources": {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+    'structure': s,
+    'parameters': parameters,
+    'metadata': {
+        'options': {
+            'withmpi': False,
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             }
         }
     }

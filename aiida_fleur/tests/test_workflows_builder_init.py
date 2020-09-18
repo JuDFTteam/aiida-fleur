@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import pytest
 
 
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class TestFleurWorkchainInterfaces:
     """
     Test all aiida-fleur workflow interfaces

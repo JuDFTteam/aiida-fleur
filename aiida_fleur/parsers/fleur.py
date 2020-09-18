@@ -92,12 +92,12 @@ class FleurParser(Parser):
         try:
             output_folder = self.retrieved
         except NotExistent:
-            self.logger.error("No retrieved folder found")
+            self.logger.error('No retrieved folder found')
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info("file list {}".format(list_of_files))
+        self.logger.info('file list {}'.format(list_of_files))
 
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
@@ -111,7 +111,7 @@ class FleurParser(Parser):
             if file not in list_of_files:
                 self.logger.warning(
                     "'{}' file not found in retrived folder, it"
-                    " was probably not created by fleur".format(file)
+                    ' was probably not created by fleur'.format(file)
                 )
 
         # check if something was written to the error file
@@ -122,7 +122,7 @@ class FleurParser(Parser):
                 with output_folder.open(errorfile, 'r') as efile:
                     error_file_lines = efile.read()  # Note: read(), not readlines()
             except IOError:
-                self.logger.error("Failed to open error file: {}.".format(errorfile))
+                self.logger.error('Failed to open error file: {}.'.format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
             if error_file_lines:
@@ -198,7 +198,7 @@ class FleurParser(Parser):
 
         # if a relax.xml was retrieved
         if FleurCalculation._RELAX_FILE_NAME in list_of_files:
-            self.logger.info("relax.xml file found in retrieved folder")
+            self.logger.info('relax.xml file found in retrieved folder')
             has_relax_file = True
 
         ####### Parse the files ########
@@ -226,7 +226,7 @@ class FleurParser(Parser):
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)
             else:
-                self.logger.error("Something went wrong, neither simpledata nor complexdata found")
+                self.logger.error('Something went wrong, neither simpledata nor complexdata found')
                 parameter_data = dict(list(parser_info.items()))
                 outxml_params = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams()
@@ -255,7 +255,7 @@ class FleurParser(Parser):
                 with output_folder.open(band_file, 'r') as bandf:
                     bands_lines = bandf.read()  # Note: read() and not readlines()
             except IOError:
-                self.logger.error("Failed to open bandstructure file: {}." "".format(band_file))
+                self.logger.error('Failed to open bandstructure file: {}.' ''.format(band_file))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             bands_data = parse_bands_file(bands_lines)
 

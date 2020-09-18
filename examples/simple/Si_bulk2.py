@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -91,7 +92,7 @@ JobCalc = FleurinputgenCalculation.process()
 attrs = {
     'max_wallclock_seconds': 180,
     'resources': {
-        "num_machines": 1
+        'num_machines': 1
     },
     'withmpi': False,
     #'computer': computer
@@ -109,7 +110,7 @@ JobCalc = FleurCalculation.process()
 attrs = {
     'max_wallclock_seconds': 180,
     'resources': {
-        "num_machines": 1
+        'num_machines': 1
     },
     'queue_name': 'th123_node',
     'withmpi': False

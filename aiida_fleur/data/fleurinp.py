@@ -252,7 +252,7 @@ class FleurinpData(Data):
         for path in self._search_paths:  # paths:
             for root, dirs, files in os.walk(path):
                 for file1 in files:
-                    if file1.endswith(".xsd"):
+                    if file1.endswith('.xsd'):
                         if ('Fleur' in file1) or ('fleur' in file1):
                             schemafile_path = os.path.join(root, file1)
                             schemafile_paths.append(schemafile_path)
@@ -305,7 +305,7 @@ class FleurinpData(Data):
             if file1 in node.list_object_names():
                 file1 = node.open(file1, mode='r')
             else:  # throw error? you try to add something that is not there
-                raise ValueError("file1 has to be in the specified node")
+                raise ValueError('file1 has to be in the specified node')
 
         if isinstance(file1, six.string_types):
             is_filelike = False
@@ -315,7 +315,7 @@ class FleurinpData(Data):
                 #raise ValueError("Pass an absolute path for file1: {}".format(file1))
 
             if not os.path.isfile(file1):
-                raise ValueError("file1 must exist and must be a single file: {}".format(file1))
+                raise ValueError('file1 must exist and must be a single file: {}'.format(file1))
 
             if dst_filename is None:
                 final_filename = os.path.split(file1)[1]
@@ -365,22 +365,22 @@ class FleurinpData(Data):
             inpfile.close()
             if inp_version_number is None:  # we raise after file closure
                 raise InputValidationError(
-                    "No fleurInputVersion number found "
-                    "in given input file: {}. "
-                    "Please check if this is a valid fleur input file. "
-                    "It can not be validated and I can not use it. "
-                    "".format(file1)
+                    'No fleurInputVersion number found '
+                    'in given input file: {}. '
+                    'Please check if this is a valid fleur input file. '
+                    'It can not be validated and I can not use it. '
+                    ''.format(file1)
                 )
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
             if (not self._has_schema) and (self._schema_file_path is None):
                 err_msg = (
-                    "No XML schema file (.xsd) with matching version number {} "
-                    "to the inp.xml file was found. I have looked here: {} "
-                    "and have found only these schema files for Fleur: {}. "
-                    "I need this file to validate your input and to know the structure "
-                    "of the current inp.xml file, sorry.".format(
+                    'No XML schema file (.xsd) with matching version number {} '
+                    'to the inp.xml file was found. I have looked here: {} '
+                    'and have found only these schema files for Fleur: {}. '
+                    'I need this file to validate your input and to know the structure '
+                    'of the current inp.xml file, sorry.'.format(
                         inp_version_number, self._search_paths, schemafile_paths
                     )
                 )
@@ -390,11 +390,11 @@ class FleurinpData(Data):
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
                     err_msg = (
-                        "No XML schema file (.xsd) with matching version number {} "
-                        "to the inp.xml file was found. I have looked here: {} "
-                        "and have found only these schema files for Fleur: {}. "
-                        "I need this file to validate your input and to know the structure "
-                        "of the current inp.xml file, sorry.".format(
+                        'No XML schema file (.xsd) with matching version number {} '
+                        'to the inp.xml file was found. I have looked here: {} '
+                        'and have found only these schema files for Fleur: {}. '
+                        'I need this file to validate your input and to know the structure '
+                        'of the current inp.xml file, sorry.'.format(
                             inp_version_number, self._search_paths, schemafile_paths
                         )
                     )
@@ -457,12 +457,12 @@ class FleurinpData(Data):
             except etree.XMLSyntaxError as msg:
                 message = msg
                 raise InputValidationError(
-                    "Input file does not validate against the schema: {}".format(message)
+                    'Input file does not validate against the schema: {}'.format(message)
                 )
 
             raise InputValidationError(
-                "Input file is not validated against the schema."
-                "Reason is unknown"
+                'Input file is not validated against the schema.'
+                'Reason is unknown'
             )
 
         # convert etree into python dictionary
@@ -596,7 +596,7 @@ class FleurinpData(Data):
                 p = c.getparent()
                 p.remove(c)
             if not xmlschema.validate(tree):
-                raise ValueError("Input file is not validated against the schema.")
+                raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
@@ -828,7 +828,7 @@ class FleurinpData(Data):
                 p = c.getparent()
                 p.remove(c)
             if not xmlschema.validate(tree):
-                raise ValueError("Input file is not validated against the schema.")
+                raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
             tree = etree.parse(inpxmlfile)
@@ -1001,7 +1001,7 @@ class FleurinpData(Data):
         # add new inp.xml to fleurinpdata
 
         if not isinstance(KpointsDataNode, KpointsData):
-            raise InputValidationError("The node given is not a valid KpointsData node.")
+            raise InputValidationError('The node given is not a valid KpointsData node.')
 
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
@@ -1020,7 +1020,7 @@ class FleurinpData(Data):
             inpxmlfile.close()
             #root = tree.getroot()
         else:
-            raise InputValidationError("No inp.xml file yet specified, to add kpoints to.")
+            raise InputValidationError('No inp.xml file yet specified, to add kpoints to.')
 
         #cell_k = KpointsDataNode.cell
 
@@ -1035,11 +1035,11 @@ class FleurinpData(Data):
         #weightscale = totalw
 
         new_kpo = etree.Element(
-            'kPointList', posScale="1.000", weightScale="1.0", count="{}".format(nkpts)
+            'kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts)
         )
         for i, kpos in enumerate(kpoint_list[0]):
-            new_k = etree.Element('kPoint', weight="{}".format(kpoint_list[1][i]))
-            new_k.text = "{} {} {}".format(kpos[0], kpos[1], kpos[2])
+            new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
+            new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
             new_kpo.append(new_k)
 
         new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
@@ -1088,7 +1088,7 @@ class FleurinpData(Data):
             inpxmlfile.close()
             root = tree.getroot()
         else:
-            raise InputValidationError("No inp.xml file yet specified, to get a tag from")
+            raise InputValidationError('No inp.xml file yet specified, to get a tag from')
 
         try:
             return_value = root.xpath(xpath)

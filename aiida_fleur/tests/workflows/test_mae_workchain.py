@@ -22,7 +22,7 @@ from aiida_fleur.workflows.mae import FleurMaeWorkChain
 
 
 # tests
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurMaeWorkChain:
     """
     Regression tests for the FleurEosWorkChain
@@ -38,8 +38,8 @@ class Test_FleurMaeWorkChain:
         options = Dict(
             dict={
                 'resources': {
-                    "num_machines": 1,
-                    "num_mpiprocs_per_machine": 1
+                    'num_machines': 1,
+                    'num_mpiprocs_per_machine': 1
                 },
                 'max_wallclock_seconds': 60 * 60,
                 'queue_name': '',
@@ -148,8 +148,8 @@ class Test_FleurMaeWorkChain:
         # prepare input nodes and dicts
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'custom_scheduler_commands': ''

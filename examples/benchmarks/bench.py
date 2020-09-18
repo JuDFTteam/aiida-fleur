@@ -4,12 +4,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 __copyright__ = (
-    u"Copyright (c), 2018, Forschungszentrum Jülich GmbH, "
-    "IAS-1/PGI-1, Germany. All rights reserved."
+    u'Copyright (c), 2018, Forschungszentrum Jülich GmbH, '
+    'IAS-1/PGI-1, Germany. All rights reserved.'
 )
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
+__license__ = 'MIT license, see LICENSE.txt file'
+__version__ = '0.27'
+__contributors__ = 'Jens Broeder'
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -73,7 +73,7 @@ def run_fleur_benchmark(code, inp_files_folder_path_list, wf_para_base_dict_list
             structure = fleurinp.get_structuredata_nwf()  #fleurinp)
             formula = structure.get_formula()
         else:
-            print(("No files found in {}".format(path)))
+            print(('No files found in {}'.format(path)))
             continue
         scf_para = wf_para_base_dict_list[i]
         print(scf_para)

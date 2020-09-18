@@ -49,7 +49,7 @@ wf_para = Dict(dict={'fleur_runmax': 4, 'density_criterion': 0.000001, 'serial':
 options = Dict(
     dict={
         'resources': {
-            "num_machines": 1
+            'num_machines': 1
         },
         'queue_name': '',
         'max_wallclock_seconds': 60 * 60

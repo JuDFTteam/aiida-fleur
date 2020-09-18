@@ -127,7 +127,7 @@ ax.yaxis.get_major_formatter().set_useOffset(False)
 for i in range(0,nfiles):
     p1 = pp.plot(scaleAll[i],eT1_all[i], 's-', label = labela[i], linewidth = 2.0, markersize = 4.0)
     pl.append(p1)
-    
+
 pp.legend(bbox_to_anchor=(0.85, 1), loc=2, borderaxespad=0., fancybox=True)#loc='best', fancybox=True) #, framealpha=0.5) #loc='upper right')
 
 if save:

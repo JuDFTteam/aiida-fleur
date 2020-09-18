@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import pytest
 import numpy as np
@@ -48,7 +49,7 @@ def test_get_atomprocent_Be24W2():
     assert get_atomprocent('Be24W2') == {'Be': 24. / 26., 'W': 2. / 26.}
 
 
-@pytest.mark.skip(reason="The function is not implemented")
+@pytest.mark.skip(reason='The function is not implemented')
 def test_get_weight_procent():
     from aiida_fleur.tools.common_fleur_wf_util import get_weight_procent
     pass
@@ -65,7 +66,7 @@ def test_determine_formation_energy():
     assert form_en_dict == form_en_dict_exp
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 def test_determine_convex_hull():
     from aiida_fleur.tools.common_fleur_wf_util import determine_convex_hull
 
@@ -114,21 +115,21 @@ def test_convert_eq_to_dict():
     assert convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') == res_dict
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 def test_get_enhalpy_of_equation():
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
 
 
 @pytest.mark.parametrize(
-    "test_input,expected", [("C7H16+O2 -> CO2+H2O", '1*C7H16+11*O2 ->7* CO2+8*H2O'),
-                            ("Be12W->Be2W+W+Be", None), ("Be12WO->Be2WO+W+Be+O2", None),
-                            ("Be12W->Be22W+Be12W", None), ("Be12W->Be12W", '1*Be12W->1*Be12W')]
+    'test_input,expected', [('C7H16+O2 -> CO2+H2O', '1*C7H16+11*O2 ->7* CO2+8*H2O'),
+                            ('Be12W->Be2W+W+Be', None), ('Be12WO->Be2WO+W+Be+O2', None),
+                            ('Be12W->Be22W+Be12W', None), ('Be12W->Be12W', '1*Be12W->1*Be12W')]
 )
 def test_balance_equation(test_input, expected):
     from aiida_fleur.tools.common_fleur_wf_util import balance_equation
     assert balance_equation(test_input) == expected
 
 
-@pytest.mark.skip(reason="Test is not implemented")
+@pytest.mark.skip(reason='Test is not implemented')
 def test_check_eos_energies():
     from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies

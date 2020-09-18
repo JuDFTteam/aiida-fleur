@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 import os
@@ -6,7 +7,7 @@ import pytest
 
 
 def test_create_group(capsys):
-    "Test group creation"
+    'Test group creation'
     from aiida_fleur.tools.common_aiida import create_group
     from aiida.orm import Group, Dict
 

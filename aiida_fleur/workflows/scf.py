@@ -60,7 +60,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = "0.4.1"
+    _workflowversion = '0.4.1'
     _wf_default = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -80,8 +80,8 @@ class FleurScfWorkChain(WorkChain):
 
     _default_options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
@@ -93,15 +93,15 @@ class FleurScfWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(FleurScfWorkChain, cls).define(spec)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("remote_data", valid_type=RemoteData, required=False)
-        spec.input("options", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('remote_data', valid_type=RemoteData, required=False)
+        spec.input('options', valid_type=Dict, required=False)
+        spec.input('settings', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start, cls.validate_input,
@@ -115,25 +115,25 @@ class FleurScfWorkChain(WorkChain):
         spec.output('last_fleur_calc_output', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
         spec.exit_code(
             233,
             'ERROR_INVALID_CODE_PROVIDED',
-            message="Input codes do not correspond to fleur or inpgen respectively."
+            message='Input codes do not correspond to fleur or inpgen respectively.'
         )
         spec.exit_code(
-            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed."
+            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.'
         )
         spec.exit_code(
             236,
             'ERROR_INVALID_INPUT_FILE',
             message="Input file was corrupted after user's modifications."
         )
-        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message="Inpgen calculation failed.")
-        spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED', message="Fleur calculation failed.")
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation failed.')
+        spec.exit_code(361, 'ERROR_FLEUR_CALCULATION_FAILED', message='Fleur calculation failed.')
         spec.exit_code(
-            362, 'ERROR_DID_NOT_CONVERGE', message="SCF cycle did not lead to convergence."
+            362, 'ERROR_DID_NOT_CONVERGE', message='SCF cycle did not lead to convergence.'
         )
 
     def start(self):
@@ -269,8 +269,8 @@ class FleurScfWorkChain(WorkChain):
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
                 error = (
-                    "The code you provided for inpgen of FLEUR does not "
-                    "use the plugin fleur.inpgen"
+                    'The code you provided for inpgen of FLEUR does not '
+                    'use the plugin fleur.inpgen'
                 )
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
@@ -278,14 +278,14 @@ class FleurScfWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
+                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy']:
             error = (
-                "ERROR: Wrong mode of convergence"
+                'ERROR: Wrong mode of convergence'
                 ": one of 'force', 'density' or 'energy' was expected."
             )
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -331,9 +331,9 @@ class FleurScfWorkChain(WorkChain):
             params = {}
 
         options = {
-            "max_wallclock_seconds": int(self.ctx.options.get('max_wallclock_seconds')),
-            "resources": self.ctx.options.get('resources'),
-            "queue_name": self.ctx.options.get('queue_name', '')
+            'max_wallclock_seconds': int(self.ctx.options.get('max_wallclock_seconds')),
+            'resources': self.ctx.options.get('resources'),
+            'queue_name': self.ctx.options.get('queue_name', '')
         }
         # TODO do not use the same option for inpgen as for FLEUR; so far we ignore the other
         # clean Idea might be to provide second inpgen options
@@ -424,9 +424,9 @@ class FleurScfWorkChain(WorkChain):
                 if not method:
                     error = (
                         "ERROR: Input 'inpxml_changes', function {} "
-                        "is not known to fleurinpmodifier class, "
-                        "please check/test your input. I abort..."
-                        "".format(function)
+                        'is not known to fleurinpmodifier class, '
+                        'please check/test your input. I abort...'
+                        ''.format(function)
                     )
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
@@ -436,9 +436,9 @@ class FleurScfWorkChain(WorkChain):
                         method(**para)
                     except ValueError as vale:
                         error = (
-                            "ERROR: Changing the inp.xml file failed. Tried to apply {}"
-                            ", which failed with {}. I abort, good luck next time!"
-                            "".format(change, vale)
+                            'ERROR: Changing the inp.xml file failed. Tried to apply {}'
+                            ', which failed with {}. I abort, good luck next time!'
+                            ''.format(change, vale)
                         )
                         self.control_end_wc(error)
                         return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED

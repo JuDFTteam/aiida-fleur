@@ -42,12 +42,12 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
     _default_options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 2 * 60 * 60,
         'queue_name': '',
@@ -71,11 +71,11 @@ class FleurSSDispWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurSSDispWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("remote", valid_type=RemoteData, required=False)
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("options", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('remote', valid_type=RemoteData, required=False)
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('options', valid_type=Dict, required=False)
 
         spec.outline(
             cls.start,
@@ -88,15 +88,15 @@ class FleurSSDispWorkChain(WorkChain):
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message="Invalid input configuration.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
         spec.exit_code(
             233,
             'ERROR_INVALID_CODE_PROVIDED',
-            message="Invalid code node specified, check inpgen and fleur code nodes."
+            message='Invalid code node specified, check inpgen and fleur code nodes.'
         )
         spec.exit_code(
-            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message="Input file modification failed."
+            235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.'
         )
         spec.exit_code(
             236,
@@ -104,15 +104,15 @@ class FleurSSDispWorkChain(WorkChain):
             message="Input file was corrupted after user's modifications."
         )
         spec.exit_code(
-            334, 'ERROR_REFERENCE_CALCULATION_FAILED', message="Reference calculation failed."
+            334, 'ERROR_REFERENCE_CALCULATION_FAILED', message='Reference calculation failed.'
         )
         spec.exit_code(
             335,
             'ERROR_REFERENCE_CALCULATION_NOREMOTE',
-            message="Found no reference calculation remote repository."
+            message='Found no reference calculation remote repository.'
         )
         spec.exit_code(
-            336, 'ERROR_FORCE_THEOREM_FAILED', message="Force theorem calculation failed."
+            336, 'ERROR_FORCE_THEOREM_FAILED', message='Force theorem calculation failed.'
         )
 
     def start(self):
@@ -153,8 +153,8 @@ class FleurSSDispWorkChain(WorkChain):
 
         if wf_dict['ref_qss'] != wf_dict['q_vectors'][0]:
             error = (
-                "The first q_vector of the forceTheorem step has to be equal to"
-                "the q vector of the reference calculation."
+                'The first q_vector of the forceTheorem step has to be equal to'
+                'the q vector of the reference calculation.'
             )
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -177,7 +177,7 @@ class FleurSSDispWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = "The code you provided for FLEUR does not use the plugin fleur.fleur"
+                error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
@@ -185,15 +185,15 @@ class FleurSSDispWorkChain(WorkChain):
         if inputs.scf:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
-                error = "ERROR: you gave SCF input + remote for the FT"
+                error = 'ERROR: you gave SCF input + remote for the FT'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
-                error = "ERROR: you gave SCF input + fleurinp for the FT"
+                error = 'ERROR: you gave SCF input + fleurinp for the FT'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
-            error = "ERROR: you gave neither SCF input nor remote for the FT"
+            error = 'ERROR: you gave neither SCF input nor remote for the FT'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
@@ -355,9 +355,9 @@ class FleurSSDispWorkChain(WorkChain):
                 if not method:
                     error = (
                         "ERROR: Input 'inpxml_changes', function {} "
-                        "is not known to fleurinpmodifier class, "
-                        "please check/test your input. I abort..."
-                        "".format(function)
+                        'is not known to fleurinpmodifier class, '
+                        'please check/test your input. I abort...'
+                        ''.format(function)
                     )
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED

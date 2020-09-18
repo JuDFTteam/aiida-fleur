@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 'lattice': 'fcc',                  # type of the substrate lattice: 'bcc' or 'fcc'
 'miller': [[-1, 1, 0],             # miller indices to orient the lattice
            [0, 0, 1],

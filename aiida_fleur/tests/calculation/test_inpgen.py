@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Tests for the `FleurinputgenCalculation` class."""
 
 from __future__ import absolute_import
@@ -78,7 +79,7 @@ def test_fleurinpgen_with_parameters(
 
     parameters = {
         'atom': {
-            'element': "Si",
+            'element': 'Si',
             'rmt': 2.1,
             'jri': 981,
             'lmax': 12,
@@ -149,7 +150,7 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
 
     parameters = {
         'atom': {
-            'element': "W",
+            'element': 'W',
             'rmt': 2.1,
             'jri': 981,
             'lmax': 12,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # test all routines used by the fleur parser
 
 from __future__ import absolute_import
@@ -284,7 +285,7 @@ for subdir, dirs, files in os.walk(outxmlfilefolder_valid):
             outxmlfilelist.append(os.path.join(subdir, file))
 
 
-@pytest.mark.parametrize("xmloutfile", outxmlfilelist)
+@pytest.mark.parametrize('xmloutfile', outxmlfilelist)
 def test_fleurparse_all_xmlout_file(xmloutfile):
     """
     tests if the routine that parsers the outputfile, succeeds for all out files

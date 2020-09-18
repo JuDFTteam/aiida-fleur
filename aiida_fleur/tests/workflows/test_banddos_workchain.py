@@ -24,12 +24,12 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 
 
 # tests
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_BandDosWorkChain():
     """
     Regression tests for the FleurBandDosWorkChain
     """
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_converged_Si(self, run_with_cache, mock_code_factory, create_remote_fleur):
         """
@@ -42,7 +42,7 @@ class Test_BandDosWorkChain():
 
         options = {
             'resources': {
-                "num_machines": 1
+                'num_machines': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,
@@ -75,7 +75,7 @@ class Test_BandDosWorkChain():
         # check output
         # check if BandDos file was parsed. success and all output nodes there.
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
         """
@@ -85,7 +85,7 @@ class Test_BandDosWorkChain():
 
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_structure_Si(self, run_with_cache, mock_code_factory):
         """
@@ -93,7 +93,7 @@ class Test_BandDosWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
         """
@@ -104,7 +104,7 @@ class Test_BandDosWorkChain():
 
     # needed?
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_seekpath(self, run_with_cache, mock_code_factory):
         """
@@ -112,7 +112,7 @@ class Test_BandDosWorkChain():
         """
         assert False
 
-    @pytest.mark.skip(reason="Test is not implemented")
+    @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_band_no_seekpath(self, run_with_cache, mock_code_factory):
         """

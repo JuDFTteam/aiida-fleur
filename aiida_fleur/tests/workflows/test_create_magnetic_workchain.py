@@ -29,7 +29,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 # tests
 @pytest.mark.skip
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurCreateMagneticWorkChain:
     """
     Regression tests for the FleurCreateMagneticWorkChain
@@ -97,9 +97,9 @@ class Test_FleurCreateMagneticWorkChain:
 
         options_eos = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1,
-                "num_cores_per_mpiproc": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1,
+                'num_cores_per_mpiproc': 1
             },
             'queue_name': '',
             'custom_scheduler_commands': '',
@@ -160,9 +160,9 @@ class Test_FleurCreateMagneticWorkChain:
 
         options_relax = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1,
-                "num_cores_per_mpiproc": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1,
+                'num_cores_per_mpiproc': 1
             },
             'queue_name': '',
             'custom_scheduler_commands': '',
@@ -236,8 +236,8 @@ class Test_FleurCreateMagneticWorkChain:
         # prepare input nodes and dicts
         options = {
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 5 * 60,
             'withmpi': False,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # get_econfig
 from __future__ import absolute_import
 

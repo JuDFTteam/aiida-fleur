@@ -11,7 +11,7 @@
 ###############################################################################
 """
 contains verdi commands for the scf workchain
-in general these should become options of verdi aiida-fleur workchains 
+in general these should become options of verdi aiida-fleur workchains
 """
 
 from __future__ import absolute_import
@@ -34,7 +34,7 @@ def res():
 @scf_wc.command()
 def show():
     """
-    plots the results of a 
+    plots the results of a
     """
     click.echo('verdi aiida-fleur scf show')
 
@@ -42,7 +42,7 @@ def show():
 @scf_wc.command()
 def list():
     """
-    similar to the verdi work list command, but this displays also some 
+    similar to the verdi work list command, but this displays also some
     specific information about the scfs
     """
     click.echo('verdi aiida-fleur scf list')

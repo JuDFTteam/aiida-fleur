@@ -34,7 +34,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = "0.1.0"
+    _workflowversion = '0.1.0'
 
     _calculation_class = RelaxProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
@@ -268,7 +268,7 @@ def _handle_mt_overlap(self, calculation):
             inpxml_changes = wf_para_dict.get('inpxml_changes', [])
             inpxml_changes.append((
                 'shift_value_species_label', {
-                    'label': "{: >20}".format(label1),
+                    'label': '{: >20}'.format(label1),
                     'att_name': 'radius',
                     'value': value,
                     'mode': 'abs'
@@ -276,7 +276,7 @@ def _handle_mt_overlap(self, calculation):
             ))
             inpxml_changes.append((
                 'shift_value_species_label', {
-                    'label': "{: >20}".format(label2),
+                    'label': '{: >20}'.format(label2),
                     'att_name': 'radius',
                     'value': value,
                     'mode': 'abs'

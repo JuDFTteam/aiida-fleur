@@ -53,7 +53,7 @@ class FleurEosWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = "0.4.0"
+    _workflowversion = '0.4.0'
 
     _wf_default = {'points': 9, 'step': 0.002, 'guess': 1.00}
 
@@ -67,8 +67,8 @@ class FleurEosWorkChain(WorkChain):
                 'fleurinp',
             )
         )
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=True)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('structure', valid_type=StructureData, required=True)
 
         spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
 
@@ -76,14 +76,14 @@ class FleurEosWorkChain(WorkChain):
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message="Invalid workchain parameters.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
 
     def start(self):
         """
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report("Started eos workflow version {}".format(self._workflowversion))
+        self.report('Started eos workflow version {}'.format(self._workflowversion))
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []

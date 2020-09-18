@@ -54,7 +54,7 @@ class fleur_optimize_parameters_wc(WorkChain):
 
     """
 
-    _workflowversion = "0.1.0"
+    _workflowversion = '0.1.0'
 
     def __init__(self, *args, **kwargs):
         super(fleur_optimize_parameters_wc, self).__init__(*args, **kwargs)
@@ -63,13 +63,13 @@ class fleur_optimize_parameters_wc(WorkChain):
     def define(cls, spec):
         super(fleur_optimize_parameters_wc, cls).define(spec)
         spec.input(
-            "wf_parameters",
+            'wf_parameters',
             valid_type=Dict,
             required=False,
             default=Dict(
                 dict={
                     'resources': {
-                        "num_machines": 1
+                        'num_machines': 1
                     },  #, "num_mpiprocs_per_machine" : 12},
                     'walltime_sec': 60 * 60,
                     'queue_name': '',
@@ -77,9 +77,9 @@ class fleur_optimize_parameters_wc(WorkChain):
                 }
             )
         )
-        spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=False)
+        spec.input('structure', valid_type=StructureData, required=True)
+        spec.input('inpgen', valid_type=Code, required=True)
+        spec.input('fleur', valid_type=Code, required=False)
         spec.outline(cls.start, cls.run_inpgen, cls.determine_parameters, cls.return_results)
         #spec.dynamic_output()
 
@@ -92,7 +92,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             'started fleur_optimize_parameter workflow version {}'.format(self._workflowversion)
         )
         self.report(
-            "Workchain node identifiers: "
+            'Workchain node identifiers: '
         )  #{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
@@ -115,7 +115,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             '_description', ''
         ) + '|fleur_optimize_parameters_wc|'
         self.ctx.walltime_sec = wf_dict.get('walltime_sec', 60 * 60)
-        self.ctx.resources = wf_dict.get('resources', {"num_machines": 1})
+        self.ctx.resources = wf_dict.get('resources', {'num_machines': 1})
         self.ctx.queue = wf_dict.get('queue_name', '')
 
         # codes
@@ -124,8 +124,8 @@ class fleur_optimize_parameters_wc(WorkChain):
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
                 error = (
-                    "The code you provided for inpgen of FLEUR does not "
-                    "use the plugin fleur.inpgen"
+                    'The code you provided for inpgen of FLEUR does not '
+                    'use the plugin fleur.inpgen'
                 )
                 self.control_end_wc(error)
                 self.abort(error)
@@ -134,7 +134,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not " "use the plugin fleur.fleur")
+                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
                 self.control_end_wc(error)
                 self.abort(error)
 
@@ -155,9 +155,9 @@ class fleur_optimize_parameters_wc(WorkChain):
             params = None
 
         options = {
-            "max_wallclock_seconds": self.ctx.walltime_sec,
-            "resources": self.ctx.resources,
-            "queue_name": self.ctx.queue
+            'max_wallclock_seconds': self.ctx.walltime_sec,
+            'resources': self.ctx.resources,
+            'queue_name': self.ctx.queue
         }
 
         inputs = get_inputs_inpgen(

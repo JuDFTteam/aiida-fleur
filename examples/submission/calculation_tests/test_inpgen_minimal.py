@@ -4,12 +4,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 __copyright__ = (
-    u"Copyright (c), 2016, Forschungszentrum Jülich GmbH, "
-    "IAS-1/PGI-1, Germany. All rights reserved."
+    u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
+    'IAS-1/PGI-1, Germany. All rights reserved.'
 )
-__license__ = "MIT license, see LICENSE.txt file"
-__version__ = "0.27"
-__contributors__ = "Jens Broeder"
+__license__ = 'MIT license, see LICENSE.txt file'
+__version__ = '0.27'
+__contributors__ = 'Jens Broeder'
 
 from aiida import load_dbenv, is_dbenv_loaded
 if not is_dbenv_loaded():
@@ -27,14 +27,14 @@ ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 try:
     dontsend = sys.argv[1]
-    if dontsend == "--dont-send":
+    if dontsend == '--dont-send':
         submit_test = True
-    elif dontsend == "--send":
+    elif dontsend == '--send':
         submit_test = False
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either " "--send or --dont-send"), file=sys.stderr)
+    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -64,12 +64,12 @@ s.append_atom(position=(0., 0., 0.), symbols='W')
 #calc = code.new_calc(computer=computer)
 
 calc = code.new_calc()
-calc.label = "Test Fleur inpgen minimal"
-calc.description = "Test calculation of the Fleur input generator minimal"
+calc.label = 'Test Fleur inpgen minimal'
+calc.description = 'Test calculation of the Fleur input generator minimal'
 calc.set_max_wallclock_seconds(5 * 60)  # 5 min
 # Valid only for Slurm and PBS (using default values for the
 # number_cpus_per_machine), change for SGE-like schedulers
-calc.set_resources({"num_machines": 1})
+calc.set_resources({'num_machines': 1})
 calc.set_withmpi(False)
 ## Otherwise, to specify a given # of cpus per machine, uncomment the following:
 # calc.set_resources({"num_machines": 1, "num_mpiprocs_per_machine": 8})
@@ -88,7 +88,7 @@ if submit_test:
     subfolder, script_filename = calc.submit_test()
     print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
     print(
-        "Submit file in {}".format(
+        'Submit file in {}'.format(
             os.path.join(os.path.relpath(subfolder.abspath), script_filename)
         )
     )

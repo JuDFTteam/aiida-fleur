@@ -113,8 +113,8 @@ wf_para_scf = Dict(dict=wf_para_scf)
 options_scf = Dict(
     dict={
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 8
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 8
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',
@@ -152,16 +152,16 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST FleurEosWorkChain #####################")
+print('##################### TEST FleurEosWorkChain #####################')
 
 if submit_wc:
     res = submit(FleurEosWorkChain, **inputs)
-    print("##################### Submited FleurEosWorkChain #####################")
-    print(("Runtime info: {}".format(res)))
+    print('##################### Submited FleurEosWorkChain #####################')
+    print(('Runtime info: {}'.format(res)))
     print((res.pk))
-    print("##################### Finished submiting FleurEosWorkChain #####################")
+    print('##################### Finished submiting FleurEosWorkChain #####################')
 
 else:
-    print("##################### Running FleurEosWorkChain #####################")
+    print('##################### Running FleurEosWorkChain #####################')
     res = run(FleurEosWorkChain, **inputs)
-    print("##################### Finished running FleurEosWorkChain #####################")
+    print('##################### Finished running FleurEosWorkChain #####################')

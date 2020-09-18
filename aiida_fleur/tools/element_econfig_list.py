@@ -1575,9 +1575,9 @@ def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
     # get how are are filled spin up down
     state_occ_dict_list = []
 
-    corehole1 = corehole.replace(" ", "")  # get rid of spaces
+    corehole1 = corehole.replace(' ', '')  # get rid of spaces
     corehole_blank = corehole1[:2] + corehole1[-3:]  # get rid of occupation
-    econ = econfigstr.replace("| ", "")
+    econ = econfigstr.replace('| ', '')
     econ_list = econ.split()
     for state in econ_list[::-1]:
         state_l = state[1]

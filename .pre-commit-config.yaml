@@ -1,4 +1,15 @@
 repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.5.0
+    hooks:
+    - id: double-quote-string-fixer
+      types: [python]
+    - id: end-of-file-fixer
+    - id: fix-encoding-pragma
+    - id: mixed-line-ending
+      types: [python]
+    - id: trailing-whitespace
+      types: [python]
 
 - repo: git://github.com/pre-commit/mirrors-yapf
   rev: v0.30.0
@@ -6,7 +17,7 @@ repos:
   - id: yapf
     name: yapf
     types: [python]
-    exclude: &exclude_files > 
+    exclude: &exclude_files >
         (?x)^(
             docs/.*|
         )$

@@ -19,7 +19,7 @@ with open(os.path.join(ROOT_DIR, 'aiida_fleur/__init__.py')) as f:
 
 # Get the setup.json version number
 with open(os.path.join(ROOT_DIR, 'setup.json')) as f:
-    VERSION_JSON = json.load(f)["version"]
+    VERSION_JSON = json.load(f)['version']
 
 if VERSION_INIT != VERSION_JSON:
     print("Version numbers don't match: init:'{}', json:'{}' ".format(VERSION_INIT, VERSION_JSON))

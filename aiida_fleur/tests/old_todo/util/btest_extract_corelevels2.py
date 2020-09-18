@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import print_function
 from aiida import load_dbenv, is_dbenv_loaded
@@ -44,9 +45,9 @@ if not calcs_pks:
 for pk in calcs_pks:
     calc = load_node(pk)
     if (not isinstance(calc, FleurCalc)):
-        raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
+        raise ValueError('Calculation with pk {} must be a FleurCalculation'.format(pk))
     if calc.get_state() != 'FINISHED':
-        raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
+        raise ValueError('Calculation with pk {} must be in state FINISHED'.format(pk))
 
 parser_info = {'parser_warnings': [], 'unparsed': []}
 
@@ -335,4 +336,4 @@ for calc in calcs_pks:
     outxml = load_node(pk).out.retrieved.folder.get_abs_path('out.xml')
     extrac_corelevels(outxml)
 
-print(("--- %s seconds ---" % (time.time() - start_time)))
+print(('--- %s seconds ---' % (time.time() - start_time)))

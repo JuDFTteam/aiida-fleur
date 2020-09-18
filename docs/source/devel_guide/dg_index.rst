@@ -279,4 +279,3 @@ Always install python packages you are working on with -e, this way the new vers
    %autoreload 2
    
 This will import your classes everytime anew. Otherwise they are not reimportet if they have already importet. This is very useful for development work.
-

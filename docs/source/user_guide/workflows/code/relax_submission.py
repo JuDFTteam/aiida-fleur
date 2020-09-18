@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiida.orm import load_node, Dict
 from aiida.engine import submit
 
@@ -49,7 +50,7 @@ calc_relax = {'comp': {'kmax': 4.0,
 
 calc_relax = Dict(dict=calc_relax)
 
-options_relax = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4, "num_cores_per_mpiproc": 6},
+options_relax = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 4, 'num_cores_per_mpiproc': 6},
                  'queue_name': 'devel',
                  'custom_scheduler_commands': '',
                  'max_wallclock_seconds':  1*60*60}

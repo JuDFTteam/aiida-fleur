@@ -18,7 +18,7 @@ def test_draw_graph_if_produces_file():
     import os
     from aiida_fleur.tools.graph_fleur import draw_graph
     from aiida.orm import Node
-    
+
     # TODO store a real graph and test if it is represented right...
     node = Node()
     outfile_expected = 'None.dot'

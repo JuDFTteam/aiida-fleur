@@ -41,8 +41,8 @@ def show():
 @workchains.command()
 def list():
     """
-    similar to the verdi work list command, but this displays also some 
-    specific information about the fleur workchains, can be filtered for 
+    similar to the verdi work list command, but this displays also some
+    specific information about the fleur workchains, can be filtered for
     certain workchains...
     """
     click.echo('verdi aiida-fleur workchians list -scf -A -p')

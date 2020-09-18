@@ -42,8 +42,8 @@ def test_fleur_mae_FePt_film(
     options = Dict(
         dict={
             'resources': {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
             },
             'max_wallclock_seconds': 60 * 60,
             'queue_name': '',
@@ -157,8 +157,8 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     # prepare input nodes and dicts
     options = {
         'resources': {
-            "num_machines": 1,
-            "num_mpiprocs_per_machine": 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 60 * 60,
         'custom_scheduler_commands': ''

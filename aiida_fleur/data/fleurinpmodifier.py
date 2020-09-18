@@ -34,7 +34,7 @@ class FleurinpModifier(object):
         """
         Initiation of FleurinpModifier.
         """
-        assert isinstance(original, FleurinpData), "Wrong AiiDA data type"
+        assert isinstance(original, FleurinpData), 'Wrong AiiDA data type'
 
         self._original = original
         self._tasks = []
@@ -200,7 +200,7 @@ class FleurinpModifier(object):
             try:
                 action = actions[task[0]]
             except KeyError:
-                raise ValueError("Unknown task {}".format(task[0]))
+                raise ValueError('Unknown task {}'.format(task[0]))
 
             workingtree = action(workingtree, *task[1:])
 
@@ -208,7 +208,7 @@ class FleurinpModifier(object):
             try:
                 xmlschema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid:
-                print("changes were not valid: {}".format(modification_tasks))
+                print('changes were not valid: {}'.format(modification_tasks))
                 raise
 
         return workingtree
@@ -530,7 +530,7 @@ class FleurinpModifier(object):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
-        modifications = DataFactory("dict")(dict={"tasks": self._tasks})
+        modifications = DataFactory('dict')(dict={'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
@@ -594,7 +594,7 @@ def modify_fleurinpdata(original, modifications):
     try:
         xmlschema.assertValid(clear_xml(tree))
     except etree.DocumentInvalid:
-        print("Input file is not validated against the schema")
+        print('Input file is not validated against the schema')
         raise
 
     new_fleurtree = FleurinpModifier.apply_modifications(
