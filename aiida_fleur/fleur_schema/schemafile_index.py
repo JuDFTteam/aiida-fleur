@@ -19,7 +19,8 @@ import os
 # any additional schema file add here, plugin will find them
 SCHEMA_FILE_PATHS = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd',
                      './input/0.29/FleurInputSchema.xsd', './input/0.30/FleurInputSchema.xsd',
-                     './input/0.31/FleurInputSchema.xsd',
+                     './input/0.31/FleurInputSchema.xsd', './input/0.32/FleurInputSchema.xsd',
+                     './input/0.33/FleurInputSchema.xsd',
                      '.']
 
 
