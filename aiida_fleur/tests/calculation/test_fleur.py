@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import
 import os
+import pytest
 from aiida import orm
 from aiida.plugins import CalculationFactory
 from aiida.engine import run_get_node
@@ -56,8 +57,7 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY'])
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
-@pytest.mark.skip(reason='mock code is buggy, need to be checked, todo, ggf make own fixture in
-aiida-fleur')
+@pytest.mark.skip(reason='mock code buggy, todo: check, ggf own fixture')
 def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurinp,
 clear_database, hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
     """
