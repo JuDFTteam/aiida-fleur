@@ -37,8 +37,8 @@ from aiida.engine.processes.functions import calcfunction as cf
 def is_structure(structure):
     """
     Test if the given input is a StructureData node, by object, id, or pk
-    if yes returns a StructureData node in all cases
-    if no returns None
+    :param structure: AiiDA StructureData
+    :return: if yes returns a StructureData node in all cases, if no returns None
     """
     from aiida.common import NotExistent
 
@@ -61,7 +61,8 @@ def is_structure(structure):
 def is_primitive(structure):
     """
     Checks if a structure is primitive or not,
-    returns True if the structure can not be anymore refined.
+    :param structure: AiiDA StructureData
+    :return: True if the structure can not be anymore refined.
     prints False if the structure can be futher refined.
     """
     refined_cell = find_primitive_cell(structure)
@@ -79,10 +80,10 @@ def rescale(inp_structure, scale):
     therefore the absolute postions change.
     Keeps the provenance in the database.
 
-    :param inp_structure, a StructureData node (pk, or uuid)
-    :param scale, float scaling factor for the cell
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param scale: float scaling factor for the cell
 
-    :returns: New StructureData node with rescalled structure, which is linked to input Structure
+    :return: New StructureData node with rescalled structure, which is linked to input Structure
               and None if inp_structure was not a StructureData
     """
 
@@ -95,10 +96,10 @@ def rescale_nowf(inp_structure, scale):
     therefore the absolute postions change.
     DOES NOT keep the provenance in the database.
 
-    :param inp_structure, a StructureData node (pk, or uuid)
-    :param scale, float scaling factor for the cell
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param scale: float scaling factor for the cell
 
-    :returns: New StructureData node with rescalled structure, which is linked to input Structure
+    :return: New StructureData node with rescalled structure, which is linked to input Structure
               and None if inp_structure was not a StructureData
     """
 
@@ -139,7 +140,7 @@ def supercell(inp_structure, n_a1, n_a2, n_a3):
     :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3,
                   or if cart =True in x,y,z
 
-    :returns StructureData, Node with supercell
+    :return: StructureData Node with supercell
     """
     superc = supercell_ncf(inp_structure, n_a1, n_a2, n_a3)
 
@@ -155,7 +156,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     :param StructureData: a StructureData node (pk, or uuid)
     :param scale: tuple of 3 AiiDA integers, number of cells in a1, a2, a3, or if cart=True in x,y,z
 
-    :returns StructureData, Node with supercell
+    :return: StructureData Node with supercell
     """
     # print('in create supercell')
     # test if structure:
@@ -313,8 +314,8 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     and names them that inpgen will make different species/atomgroups out of them.
     If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
 
-    :params: StructureData
-    :params wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
+    :param structure: StructureData
+    :param wf_para: ParameterData which contains the keys atoms, sites, pos (see below)
 
                      'atoms':
                             python list of symbols, exp: ['W', 'Be']. This would make for
@@ -330,7 +331,7 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
                           Be carefull the number given has to match EXACTLY the position
                           in the structure.
 
-    :params parameterdata: AiiDa ParameterData
+    :param parameterdata: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
     Dict = DataFactory('dict')
@@ -362,17 +363,17 @@ def break_symmetry(
     and names them that inpgen will make different species/atomgroups out of them.
     If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
 
-    :params: StructureData
-    :params atoms: python list of symbols, exp: ['W', 'Be']. This would make for
+    :param structure: StructureData
+    :param atoms: python list of symbols, exp: ['W', 'Be']. This would make for
                    all Be and W atoms their own kinds.
-    :params site: python list of integers, exp: [1, 4, 8]. This would create for
+    :param site: python list of integers, exp: [1, 4, 8]. This would create for
                   atom 1, 4 and 8 their own kinds.
-    :params pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
+    :param pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
                  This will create a new kind for the atom at that position.
                  Be carefull the number given has to match EXACTLY the position
                  in the structure.
 
-    return: StructureData, a AiiDA crystal structure with new kind specification.
+    :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
     if atoms is None:
         atoms = ['all']
@@ -517,11 +518,11 @@ def find_equi_atoms(structure):  # , sitenumber=0, position=None):
     This routine uses spglib and ASE to provide informations of all equivivalent
     atoms in the cell.
 
-    params: AiiDA StructureData
+    :param structure: AiiDA StructureData
 
-    returns: equi_info_symbol : list of lists ['element': site_indexlist, ...]
-    len(equi_info_symbol) = number of symmetryatomtypes
-    returns: n_equi_info_symbol: dict {'element': numberequiatomstypes}
+    :return: equi_info_symbol, list of lists ['element': site_indexlist, ...]
+        len(equi_info_symbol) = number of symmetryatomtypes
+        and n_equi_info_symbol, dict {'element': numberequiatomstypes}
     """
     import spglib
 
@@ -555,7 +556,8 @@ def find_equi_atoms(structure):  # , sitenumber=0, position=None):
 
 def get_spacegroup(structure):
     """
-    returns the spacegorup of a given AiiDA structure
+    :param structure: AiiDA StructureData
+    :return: the spacegroup (spglib class) of a given AiiDA structure
     """
     import spglib
     s_ase = structure.get_ase()
@@ -569,12 +571,11 @@ def move_atoms_incell_wf(structure, wf_para):
     """
     moves all atoms in a unit cell by a given vector
 
-    para: AiiDA structure
-    para: vector: tuple of 3, or array
-    (currently 3 AiiDA Floats to make it a wf,
-    In the future maybe a list or vector if AiiDa basetype exists)
-
-    returns: AiiDA stucture
+    :param structure: AiiDA structure
+    :param wf_para: AiiDA Dict node with vector: tuple of 3, or array
+        (currently 3 AiiDA Floats to make it a wf,
+        In the future maybe a list or vector if AiiDa basetype exists)
+    :return: AiiDA stucture
     """
     wf_para_dict = wf_para.get_dict()
     vector = wf_para_dict.get('vector', [0.0, 0.0, 0.0])
@@ -588,10 +589,9 @@ def move_atoms_incell(structure, vector):
     """
     moves all atoms in a unit cell by a given vector
 
-    para: AiiDA structure
-    para: vector: tuple of 3, or array
-
-    returns: AiiDA structure
+    :param structure: AiiDA structure
+    :param vector: tuple of 3, or array
+    :return: AiiDA structure
     """
 
     StructureData = DataFactory('structure')
@@ -616,9 +616,9 @@ def move_atoms_incell(structure, vector):
 def find_primitive_cell(structure):
     """
     uses spglib find_primitive to find the primitive cell
-    params: AiiDa structure data
 
-    returns: list of new AiiDa structure data
+    :param sructure: AiiDA structure data
+    :return: list of new AiiDA structure data
     """
     # TODO: if refinced structure is the same as given structure
     # return the given structure (Is this good practise for prov?)
@@ -643,9 +643,9 @@ def find_primitive_cell(structure):
 def find_primitive_cell_wf(structure):
     """
     uses spglib find_primitive to find the primitive cell
-    params: AiiDa structure data
+    :param structure: AiiDa structure data
 
-    returns: list of new AiiDa structure data
+    :return: list of new AiiDa structure data
     """
 
     return {'primitive_cell': find_primitive_cell(structure)}
@@ -654,9 +654,9 @@ def find_primitive_cell_wf(structure):
 def find_primitive_cells(uuid_list):
     """
     uses spglib find_primitive to find the primitive cell
-    params: list of structureData uuids, or pks
+    :param uuid_list: list of structureData uuids, or pks
 
-    returns: list of new AiiDa structure datas
+    :return: list of new AiiDa structure datas
     """
 
     new_structures = []
@@ -692,7 +692,7 @@ def create_all_slabs_buggy(
 ):  # , reorient_lattice=True):
     """
     wraps the pymatgen function generate_all_slabs with some useful extras
-    returns a dictionary of structures
+    :return: a dictionary of structures
     """
     StructureData = DataFactory('structure')
     aiida_strucs = {}
@@ -736,7 +736,7 @@ def create_all_slabs(
     symmetrize=False
 ):  # , reorient_lattice=True):
     """
-    returns a dictionary of structures
+    :return: a dictionary of structures
     """
     StructureData = DataFactory('structure')
     aiida_strucs = {}
@@ -797,10 +797,9 @@ def center_film_wf(structure):
     """
     Centers a film at z=0, keeps the provenance in the database
 
-    Args:
-       structure: AiiDA structure
+    :param structure: AiiDA structure
 
-       returns: AiiDA structure
+    :return: AiiDA structure
     """
     return center_film(structure)
 
@@ -809,10 +808,9 @@ def center_film(structure):
     """
     Centers a film at z=0
 
-    Args:
-       structure: AiiDA structure
+    :param structure: AiiDA structure
 
-       returns: AiiDA structure
+    :return: AiiDA structure
     """
     if structure.pbc != (True, True, False):
         raise TypeError('Only film structures having surface normal to z are supported')
@@ -827,10 +825,8 @@ def sort_atoms_z_value(structure):
     """
     Resorts the atoms in a structure by there Z-value
 
-    Args:
-       structure: AiiDA structure
-
-       returns: AiiDA structure
+    :param structure: AiiDA structure
+    :return: AiiDA structure
     """
     StructureData = DataFactory('structure')
     new_structure = StructureData(cell=structure.cell)
@@ -1218,11 +1214,11 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
     Requests MaterialsProject to estimate thermal average bond length between given elements.
     Also requests information about lattice constants of fcc and bcc structures.
 
-    :param main_elements, sub_elements: two element lists to calculate the average bond length
-                                        only combinations of AB, AA and BB are calculated, where
-                                        A belongs to main_elements, B belongs to sub_elements.
-    :return bond_data: a dict containing obtained lattice constants.
-
+    :param main_elements: element list to calculate the average bond length
+                          only combinations of AB, AA and BB are calculated, where
+                          A belongs to main_elements, B belongs to sub_elements.
+    :param sub_elements: element list, see main_elements
+    :return: bond_data, a dict containing obtained lattice constants.
     """
     from itertools import product, combinations
     from math import exp
