@@ -25,6 +25,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 # tests
 #@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_mae_FePt_film(clear_database, with_export_cache, #run_with_cache,
         fleur_local_code, inpgen_local_code):

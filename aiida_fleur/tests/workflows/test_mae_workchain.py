@@ -28,6 +28,7 @@ class Test_FleurMaeWorkChain:
     """
     Regression tests for the FleurEosWorkChain
     """
+    @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_mae_FePt_film(self, run_with_cache, fleur_local_code, inpgen_local_code):
         """

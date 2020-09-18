@@ -28,6 +28,7 @@ class Test_fleur_corehole_wc():
     """
     Regression tests for the fleur_corehole_wc
     """
+    @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
     @pytest.mark.timeout(5000, method='thread')
     def test_fleur_corehole_W(self, #run_with_cache, 
 inpgen_local_code, fleur_local_code,
