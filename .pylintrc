@@ -59,13 +59,29 @@ disable=too-few-public-methods,
     wildcard-import,
     locally-enabled,
     too-many-instance-attributes,
-    fixme,
+    fixme, # Since time is rare, it is fine to  leave ideas
     len-as-condition,
     useless-object-inheritance,
     wrong-import-order,
-    import-outside-toplevel,
-    duplicate-code,
-    no-else-raise
+    import-outside-toplevel, # 
+    duplicate-code, # Prob sometimes has to be, maybe ignore for examples and tests
+    no-else-raise, # FIXME ?
+    no-else-return, # FIXME ?
+    unexpected-keyword-arg, # FIXME
+    protected-access, # FIXME
+    no-member, # FIXME
+    invalid-name, # FIXME
+    unused-variable, # FIXME
+    unused-argument, # FIXME
+    unused-import, # FIXME
+    missing-function-docstring, # FIXME
+    too-many-locals, # FIXME
+    too-many-branches, # FIXME
+    inconsitent-return-statements, # FIXME
+    no-self-use, # FIXME
+    c-extension-no-member # FIXME
+    to-many-statements, # FIXME ?
+    to-many-nexted-blocks #FIXME ? 
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

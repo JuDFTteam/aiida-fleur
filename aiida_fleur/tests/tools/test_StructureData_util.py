@@ -329,7 +329,7 @@ def test_request_average_bond_length(generate_film_structure):
         pytest.skip('No USER_API_KEY given, skip the test')
 
     structure = generate_film_structure()
-    result = request_average_bond_length(['Fe', 'Pt'], user_api_key).get_dict()
+    result = request_average_bond_length(['Fe', 'Pt'], ['Fe', 'Pt'], user_api_key=user_api_key).get_dict()
     assert result == {
         'Fe': {
             'Fe': 2.4651768430600254,

@@ -24,7 +24,7 @@ def scf_wc():
 
 
 @scf_wc.command()
-def res():
+def res_scf():
     """
     Prints the result node to screen
     """
@@ -32,7 +32,7 @@ def res():
 
 
 @scf_wc.command()
-def show():
+def show_scf():
     """
     plots the results of a
     """
@@ -40,7 +40,7 @@ def show():
 
 
 @scf_wc.command()
-def list():
+def list_scf():
     """
     similar to the verdi work list command, but this displays also some
     specific information about the scfs

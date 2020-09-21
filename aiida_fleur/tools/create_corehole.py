@@ -43,8 +43,8 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     head = kindo.name.rstrip('01223456789')
     #print(kindo)
     charge = _atomic_numbers[kindo.symbol]
-    id = float('{}.{}'.format(charge, kindo.name[len(head):]))
-    #print('id {}'.format(id))
+    a_id = float('{}.{}'.format(charge, kindo.name[len(head):]))
+    #print('a_id {}'.format(a_id))
 
     # get kind symbol, get kind name,
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /
@@ -54,20 +54,20 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
         for key, val in six.iteritems(new_parameterd):
             if 'atom' in key:
                 if val.get('element', None) == symbol:
-                    # remember id is atomic number.some int
-                    if (id and float(id) == float(val.get('id', -1))):
+                    # remember atomic id is atomic number.some int
+                    if (a_id and float(a_id) == float(val.get('id', -1))):
                         val.update({'econfig': econfig})
                         break
-                    elif not id:
+                    elif not a_id:
                         val.update({'econfig': econfig})
                     else:
                         pass
     else:
-        if id:
+        if a_id:
             if species_name:
-                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': id, 'name': species_name}}
+                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': a_id, 'name': species_name}}
             else:
-                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': id}}
+                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': a_id}}
         else:
             new_parameterd = {'atom': {'element': symbol, 'econfig': econfig}}
 

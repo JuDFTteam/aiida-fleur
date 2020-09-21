@@ -17,7 +17,7 @@ because it does not take many resources.
 """
 from __future__ import absolute_import
 import six
-from six.moves import zip
+from six.moves import zip as zip_six
 
 from aiida.engine import CalcJob
 from aiida.common.exceptions import InputValidationError
@@ -565,7 +565,7 @@ def get_input_data_text(key, val, value_only, mapping=None):
 
         # I first have to resort, then to remove the index from the first
         # column, finally to join the strings
-        list_of_strings = list(zip(*sorted(list_of_strings)))[1]
+        list_of_strings = list(zip_six(*sorted(list_of_strings)))[1]
         return ''.join(list_of_strings)
     elif not isinstance(val, six.string_types) and hasattr(val, '__iter__'):
         if value_only:

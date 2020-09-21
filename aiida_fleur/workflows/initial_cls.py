@@ -30,6 +30,7 @@ from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
 from aiida.orm import Code, load_node, Group, CalcJobNode
 from aiida.orm import StructureData, Dict, RemoteData
+from aiida.orm import load_group
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
@@ -1110,7 +1111,7 @@ def get_para_from_group(element, group):
 
     if group_pk is not None:
         try:
-            para_group = Group(dbgroup=group_pk)
+            para_group = load_group(pk=group_pk)
         except NotExistent:
             para_group = None
             message = ('You have to provide a valid pk for a Group of '
@@ -1120,10 +1121,10 @@ def get_para_from_group(element, group):
             report.append(message)
     else:
         try:
-            para_group = Group.get_from_string(group_name)
+            para_group = load_group(label=group_name)
         except NotExistent:
             para_group = None
-            message = ('You have to provide a valid pk for a Group of '
+            message = ('You have to provide a valid label for a Group of '
                        'parameters or a Group name. Wf_para key: "para_group".'
                        'given group name= {} is not a valid group'
                        '(or is your group name integer?)'.format(group_name))

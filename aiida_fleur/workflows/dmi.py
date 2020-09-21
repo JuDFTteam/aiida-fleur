@@ -19,8 +19,8 @@ import copy
 import numpy as np
 
 import six
-from six.moves import range
-from six.moves import map
+#from six.moves import range
+#from six.moves import map
 from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -297,19 +297,19 @@ class FleurDMIWorkChain(WorkChain):
                          ('xml_set_attribv_occ', {
                              'xpathn': '/fleurInput/forceTheorem/DMI',
                              'attributename': 'theta',
-                             'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_theta')))
                          }),
                          ('xml_set_attribv_occ', {
                              'xpathn': '/fleurInput/forceTheorem/DMI',
                              'attributename': 'phi',
-                             'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_phi')))
                          })])
 
         for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
             fchanges.append(('create_tag', {'xpath': '/fleurInput/forceTheorem/DMI/qVectors', 'newelement': 'q'}))
             fchanges.append(('xml_set_text_occ', {
                 'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
-                'text': ' '.join(map(str, vectors)),
+                'text': ' '.join(six.moves.map(str, vectors)),
                 'create': False,
                 'occ': i
             }))
@@ -520,14 +520,14 @@ class FleurDMIWorkChain(WorkChain):
             q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_q]
             e_u = out_dict.energy_units
 
-            for i in range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
+            for i in six.moves.range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
                 ref_enrg = t_energydict.pop(i)
                 q_vectors.pop(i)
-                for k in range(i, i + num_ang - 1, 1):
+                for k in six.moves.range(i, i + num_ang - 1, 1):
                     t_energydict[k] -= ref_enrg
 
             if e_u == 'Htr' or 'htr':
-                for labels in range(len(t_energydict)):
+                for labels in six.moves.range(len(t_energydict)):
                     t_energydict[labels] = t_energydict[labels] * htr_to_ev
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')

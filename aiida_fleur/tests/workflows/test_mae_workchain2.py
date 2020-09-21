@@ -162,7 +162,7 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     options = Dict(dict=options).store()
 
     FleurCode = fleur_local_code
-    InpgenCode = inpgen_local_oce
+    InpgenCode = inpgen_local_code
 
     ################
     # Create builders
@@ -185,7 +185,7 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     # now run the builders all should fail early with exit codes
 
     # 1. structure and fleurinp given
-    out, node = run_get_node(FleurMaeWorkChain, **inputs)
+    out, node = run_get_node(FleurMaeWorkChain, **inputs1)
     assert out == {}
     assert node.is_finished == True
     assert node.is_finished_ok == False

@@ -48,7 +48,7 @@ def test_convert_fleur_econfig_to_econfig_interface():
 
 
 # highest_unocc_valence
-def test_rek_econ_interface_W():
+def test_highest_unocc_valence_interface_W():
     from aiida_fleur.tools.element_econfig_list import highest_unocc_valence
     assert highest_unocc_valence('[Kr] 4d10 4f14 5p6 | 5s2 6s2 5d4') == '5d4'
     assert highest_unocc_valence('1s2 | 2s2') == '2p0'

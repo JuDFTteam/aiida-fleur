@@ -49,10 +49,10 @@ def test_get_atomprocent_Be24W2():
     assert get_atomprocent('Be24W2') == {'Be': 24. / 26., 'W': 2. / 26.}
 
 
-@pytest.mark.skip(reason='The function is not implemented')
-def test_get_weight_procent():
-    from aiida_fleur.tools.common_fleur_wf_util import get_weight_procent
-    pass
+#@pytest.mark.skip(reason='The function is not implemented')
+#def test_get_weight_procent():
+#    from aiida_fleur.tools.common_fleur_wf_util import get_weight_procent
+#    pass
 
 
 def test_determine_formation_energy():

@@ -524,13 +524,13 @@ class FleurinpModifier(object):
                                   })
         return out
 
-    def undo(self, all=False):
+    def undo(self, revert_all=False):
         """
         Cancels the last change or all of them
 
-        :param all: set True if need to cancel all the changes, False if the last one.
+        :param revert_all: set True if need to cancel all the changes, False if the last one.
         """
-        if all:
+        if revert_all:
             self._tasks = []
         else:
             if self._tasks:

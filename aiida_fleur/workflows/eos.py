@@ -22,7 +22,6 @@ from __future__ import print_function
 import numpy as np
 
 import six
-from six.moves import range
 
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict, List

@@ -23,7 +23,7 @@ leave the code here for now.
 from __future__ import absolute_import
 from aiida.plugins import DataFactory
 from aiida.orm import QueryBuilder
-from aiida.engine.calculation.job import CalcJob
+from aiida.engine import CalcJob
 from aiida.orm import Node
 '''
 def check_existence_calc(input_nodes, successful=True):

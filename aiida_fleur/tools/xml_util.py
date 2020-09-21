@@ -22,7 +22,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from lxml import etree
 import six
-from six.moves import range
 
 from aiida.common.exceptions import InputValidationError
 

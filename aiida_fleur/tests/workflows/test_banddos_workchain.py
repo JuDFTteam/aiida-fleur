@@ -39,7 +39,7 @@ class Test_BandDosWorkChain():
         """
         from aiida.orm import Code, load_node, Dict, StructureData
         from numpy import array
-        from aiida_fleur.workflows.band import FleurBandDosWorkChain
+        from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
 
         options = {
             'resources': {

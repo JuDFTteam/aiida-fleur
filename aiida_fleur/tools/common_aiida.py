@@ -16,8 +16,8 @@ So far it contains:
 
 export_extras
 import_extras
-delete_nodes
-delete_trash
+delete_nodes (FIXME)
+delete_trash (FIXME)
 create_group
 
 """
@@ -26,7 +26,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import json
 import six
-from six.moves import input
+from six.moves import input_six
 
 from aiida.orm import load_node
 from aiida.orm.querybuilder import QueryBuilder
@@ -102,6 +102,9 @@ def import_extras(filename):
     return
 
 
+'''
+# uncommented this, since it is for sure out of date and dangerous to use
+# for current version see aiida-core docs
 def delete_nodes(pks_to_delete):
     """
     Delete a set of nodes. (From AiiDA cockbook)
@@ -133,7 +136,7 @@ def delete_nodes(pks_to_delete):
     print(('I am going to delete {} nodes, including ALL THE CHILDREN'
            'of the nodes you specified. Do you want to continue? [y/N]'
            ''.format(len(all_pks_to_delete))))
-    answer = input()
+    answer = input_six()
 
     if answer.strip().lower() == 'y':
         # Recover the list of folders to delete before actually deleting
@@ -183,6 +186,7 @@ def delete_trash():
     delete_nodes(nodes_to_delete_pks)
 
     return
+'''
 
 
 def create_group(name, nodes, description=None, add_if_exist=False):

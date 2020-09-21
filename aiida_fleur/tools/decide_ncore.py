@@ -11,7 +11,6 @@
 ###############################################################################
 
 from __future__ import absolute_import
-from six.moves import range
 
 
 def gcd(x, y):

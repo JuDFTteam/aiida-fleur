@@ -220,9 +220,9 @@ class Test_FleurCreateMagneticWorkChain:
 
     @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_eos_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
+    def test_fleur_create_mag_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """
-        Test the validation behavior of FleurEosWorkChain if wrong input is provided it should throw
+        Test the validation behavior of FleurCreateMagneticWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
         """
         from aiida.orm import Dict
@@ -260,7 +260,7 @@ class Test_FleurCreateMagneticWorkChain:
         # interface of exposed scf is tested elsewhere
 
         # 1. create builder with wrong wf parameters
-        builder_additionalkeys = FleurEosWorkChain.get_builder()
+        builder_additionalkeys = FleurCreateMagneticWorkChain.get_builder()
         builder_additionalkeys.structure = structure
         builder_additionalkeys.wf_parameters = wf_parameters
         builder_additionalkeys.scf.fleur = FleurCode

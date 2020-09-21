@@ -338,7 +338,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
 
     return dictionary that ranks the reactions after their enthalpy
     """
-    from aiida.orm.calculation.work import WorkCalculation
+    from aiida.engine import WorkChain
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
     # for each reaction get the total energy sum
     # make sure to use the right multipliers...
@@ -357,7 +357,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         except KeyError:
             formenergy = None
         if not formenergy:  # test if 0 case ok
-            if isinstance(n, WorkCalculation):
+            if isinstance(n, WorkChain):  # TODO: untested for aiida > 1.0
                 plabel = n.get_attr('_process_label')
                 if plabel == 'fleur_initial_cls_wc':
                     try:

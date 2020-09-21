@@ -365,9 +365,10 @@ class FleurCalculation(CalcJob):
         # check for for allowed keys, ignore unknown keys but warn.
         for key in settings_dict.keys():
             if key not in self._settings_keys:
-                self.logger.warning('settings dict key {} for Fleur calculation'
-                                    'not recognized, only {} are allowed.'
-                                    ''.format(key, self._settings_keys))
+                self.logger.warning(
+                    'settings dict key %s for Fleur calculation'
+                    'not recognized, only %s are allowed.'
+                    '', key, str(self._settings_keys))
 
         # TODO: Detailed check of FleurinpData
         # if certain files are there in fleurinpData

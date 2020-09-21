@@ -240,7 +240,7 @@ def extract_corelevels(outxmlfile, options=None):
         #print iteration_to_parse
         corestatescards = eval_xpath2(iteration_to_parse, relcoreStates_xpath, parser_info)
         # maybe does not return a list...
-        for type in atomtypes:  # spin=2 is already in there
+        for atype in atomtypes:  # spin=2 is already in there
             corelevels.append([])
 
         for corestatescard in corestatescards:

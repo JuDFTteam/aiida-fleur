@@ -23,7 +23,7 @@ def workchains():
 
 
 @workchains.command()
-def res():
+def res_wc():
     """
     Prints the result node to screen
     """
@@ -31,7 +31,7 @@ def res():
 
 
 @workchains.command()
-def show():
+def show_wc():
     """
     plots the results of a workchain
     """
@@ -39,7 +39,7 @@ def show():
 
 
 @workchains.command()
-def list():
+def list_wc():
     """
     similar to the verdi work list command, but this displays also some
     specific information about the fleur workchains, can be filtered for

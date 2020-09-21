@@ -22,7 +22,6 @@ from a folder and store the structures in the database.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.engine import calcfunction as cf
@@ -94,7 +93,7 @@ def read_cif_folder(path=os.getcwd(),
     for i in range(nfiles):
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
-        except Exception as emessage:
+        except (ValueError, AttributeError, ImportError) as emessage:
             print(('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage)))
             continue
         #print new_cif

@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import copy
 
 import six
-from six.moves import map
+#from six.moves import map
 from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -287,7 +287,7 @@ class FleurSSDispWorkChain(WorkChain):
             }))
             fchanges.append(('xml_set_text_occ', {
                 'xpathn': '/fleurInput/forceTheorem/spinSpiralDispersion/q',
-                'text': ' '.join(map(str, vectors)),
+                'text': ' '.join(six.moves.map(str, vectors)),
                 'create': False,
                 'occ': i
             }))

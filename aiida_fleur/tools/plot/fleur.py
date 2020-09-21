@@ -23,7 +23,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from pprint import pprint
 import six
-from six.moves import range
 import numpy as np
 #import matplotlib.pyplot as pp
 #from masci_tools.vis.plot_methods import *
@@ -325,7 +324,8 @@ def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     path_to_dosfile = output_d.get('dosfile', None)
     print(path_to_dosfile)
     if path_to_dosfile:
-        p1 = plot_dos(path_to_dosfile, only_total=False, show=show)
+        plot_dos(path_to_dosfile, only_total=False, show=show)
+        p1 = None  # FIXME masci-tools should return something
     else:
         print('Could not retrieve dos file path from output node')
 

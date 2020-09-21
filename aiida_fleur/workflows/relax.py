@@ -156,7 +156,8 @@ class FleurRelaxWorkChain(WorkChain):
             if 'calc_parameters' in input_scf:
                 calc_para = input_scf.calc_parameters
             # currently we always break the full symmetry
-            broken_sys = break_symmetry_wf(input_scf.structure, parameterdata=calc_para)
+            break_dict = Dict(dict={'atoms': ['all']})  # for provenance
+            broken_sys = break_symmetry_wf(input_scf.structure, wf_para=break_dict, parameterdata=calc_para)
             input_scf.structure = broken_sys['new_structure']
             input_scf.calc_parameters = broken_sys['new_parameters']
 

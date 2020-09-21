@@ -323,10 +323,10 @@ results_optimize = [
 
 
 @pytest.mark.parametrize('input,result_correct', zip(inputs_optimize, results_optimize))
-def test_optimize_calc_options(input, result_correct):
+def test_optimize_calc_options(inputs, result_correct):
     from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 
-    result = optimize_calc_options(*input)
+    result = optimize_calc_options(*inputs)
     assert result == result_correct
 
 

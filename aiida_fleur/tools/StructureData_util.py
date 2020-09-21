@@ -20,8 +20,6 @@ from __future__ import print_function
 # from ase.lattice.surface import *
 # from ase.io import *
 import six
-from six.moves import range
-from six.moves import zip
 
 from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator

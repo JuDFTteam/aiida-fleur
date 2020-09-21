@@ -20,7 +20,6 @@ cycle management of a FLEUR calculation with AiiDA.
 from __future__ import absolute_import
 from lxml import etree
 import six
-from six.moves import range
 
 from aiida.orm import Code, load_node, CalcJobNode
 from aiida.orm import StructureData, RemoteData, Dict

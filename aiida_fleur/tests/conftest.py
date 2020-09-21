@@ -415,12 +415,12 @@ def generate_structure_W():
 def generate_structure_cif():
     """Return a `StructureData` from a cif file path."""
 
-    def _generate_structure_cif(cifilepath):
+    def _generate_structure_cif(cif_filepath):
         """Return a `StructureData` from a cif file."""
         import os
         from aiida.orm import CifData
 
-        structure = CifData.get_or_create(ciffilepath)[0].get_structure()
+        structure = CifData.get_or_create(cif_filepath)[0].get_structure()
         return structure
 
     return _generate_structure_cif
