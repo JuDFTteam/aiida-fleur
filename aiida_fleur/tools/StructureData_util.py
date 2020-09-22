@@ -118,16 +118,6 @@ def rescale_nowf(inp_structure, scale):
     return rescaled_structure
 
 
-# @cf
-
-
-def rescale_xyz(inp_structure, scalevec):
-    """
-    rescales a structure a certain way...
-    """
-    pass
-
-
 @cf
 def supercell(inp_structure, n_a1, n_a2, n_a3):
     """
@@ -226,6 +216,10 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 def abs_to_rel(vector, cell):
     """
     Converts a position vector in absolute coordinates to relative coordinates.
+
+    :param vector: list or np.array of length 3, vector to be converted
+    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
+    :return: list of legth 3 of scaled vector, or False if vector was not length 3
     """
 
     if len(vector) == 3:
@@ -234,7 +228,7 @@ def abs_to_rel(vector, cell):
         postionR = np.array(vector)
         # np.matmul(inv_cell_np, postionR)#
         new_rel_post = np.matmul(postionR, inv_cell_np)
-        new_rel_pos = [i for i in new_rel_post]
+        new_rel_pos = list(new_rel_post)
         return new_rel_pos
     else:
         return False
@@ -244,6 +238,11 @@ def abs_to_rel_f(vector, cell, pbc):
     """
     Converts a position vector in absolute coordinates to relative coordinates
     for a film system.
+
+    :param vector: list or np.array of length 3, vector to be converted
+    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
+    :param pb: Boundary conditions, List or Tuple of 3 Boolean
+    :return: list of legth 3 of scaled vector, or False if vector was not length 3
     """
     # TODO this currently only works if the z-coordinate is the one with no pbc
     # Therefore if a structure with x non pbc is given this should also work.
@@ -258,7 +257,7 @@ def abs_to_rel_f(vector, cell, pbc):
             cell_np = np.array(cell_np[0:2, 0:2])
             inv_cell_np = np.linalg.inv(cell_np)
             # np.matmul(inv_cell_np, postionR_f)]
-            new_xy = [i for i in np.matmul(postionR_f, inv_cell_np)]
+            new_xy = np.matmul(postionR_f, inv_cell_np)
             new_rel_pos_f = [new_xy[0], new_xy[1], postionR[2]]
             return new_rel_pos_f
         else:
@@ -271,15 +270,17 @@ def rel_to_abs(vector, cell):
     """
     Converts a position vector in internal coordinates to absolute coordinates
     in Angstrom.
+
+    :param vector: list or np.array of length 3, vector to be converted
+    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
+    :return: list of legth 3 of scaled vector, or False if vector was not lenth 3
     """
     if len(vector) == 3:
         cell_np = np.array(cell)
         postionR = np.array(vector)
         new_abs_post = np.matmul(postionR, cell_np)
-        new_abs_pos = [i for i in new_abs_post]
-
+        new_abs_pos = list(new_abs_post)
         return new_abs_pos
-
     else:
         return False
 
@@ -297,7 +298,7 @@ def rel_to_abs_f(vector, cell):
         postionR_f = np.array(postionR[:2])
         cell_np = np.array(cell)
         cell_np = np.array(cell_np[0:2, 0:2])
-        new_xy = [i for i in np.matmul(postionR_f, cell_np)]
+        new_xy = np.matmul(postionR_f, cell_np)
         new_abs_pos_f = [new_xy[0], new_xy[1], postionR[2]]
         return new_abs_pos_f
     else:
@@ -420,9 +421,9 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
     else:
         new_parameterd = {}
 
-    for i, site in enumerate(sites):
-        kind_name = site.kind_name
-        pos = site.position
+    for i, site_c in enumerate(sites):
+        kind_name = site_c.kind_name
+        pos = site_c.position
         kind = struc.get_kind(kind_name)
         symbol = kind.symbol
         replace_kind = False
@@ -463,7 +464,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
                             if id_a and id_a == val.get('id', None):
                                 break  # we assume the user is smart and provides a para node,
                                 # which incorporates the symmetry breaking already
-                            elif id_a:  # != 1: # copy parameter of symbol and add id
+                            if id_a:  # != 1: # copy parameter of symbol and add id
                                 val_new = dict(val)
                                 # getting the charge over element might be risky
                                 charge = _atomic_numbers.get((val.get('element')))
@@ -1162,6 +1163,18 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
 
 
 def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
+    """
+    Requests MaterialsProject to estimate thermal average bond length between given elements.
+    Also requests information about lattice constants of fcc and bcc structures.
+    Stores the result in the Database. Notice that this is not a calcfunction!
+    Therefore, the inputs are not stored and the result node is unconnected.
+
+    :param main_elements: element list to calculate the average bond length
+                          only combinations of AB, AA and BB are calculated, where
+                          A belongs to main_elements, B belongs to sub_elements.
+    :param sub_elements: element list, see main_elements
+    :return: bond_data, a dict containing obtained lattice constants.
+    """
     result = request_average_bond_length(main_elements, sub_elements, user_api_key)
     result.store()
     return result
@@ -1216,7 +1229,7 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
 
         distance = distance / partition_function
         bond_data[sym][sym] = distance
-        print('Request completed for {} {} pair'.format(sym, sym))
+        print('Request completed for {symst} {symst} pair'.format(symst=sym))
 
     for sym1, sym2 in product(main_elements, sub_elements):
         distance = 0
@@ -1265,26 +1278,26 @@ def estimate_mt_radii(structure, stepsize=0.05):
     # check what algo fleur uses here
     # Max radius easy increase all spheres until they touch.
     # How to get the minimal muffin tin radii?
-    pass
+    return None
 
 
 def common_mt(max_muffin_tins):
     """
     # TODO implement
     From a list of dictionary given return smallest common set.
-
+    Could be read from the econfig file within AiiDA fleur.
 
     [[{Be: 1.7, W:2.4}, {Be:1.8, W:2.3}], [{Be : 1.75}], [{W:2.5}]
     should return [{Be:1.7, W:2.4}]
     """
-    pass
+    return None
 
 
 def find_common_mt(structures):
     """
-    # TODO implement
+    # TODO implement (in some phd notebook of Broeder this is implement)
     From a given list of structures, estimate the muffin tin radii and return
     the smallest common set. (therefore a choice for rmt that would work for every structure given)
 
     """
-    pass
+    return None

@@ -9,7 +9,9 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+'''
+Contains extensive tests for the FleurinpData structure of AiiDA-Fleur
+'''
 from __future__ import absolute_import
 import os
 import pytest
@@ -147,4 +149,4 @@ def test_fleurinp_first_species_modification(create_fleurinp, inpxmlfilepath):
     """
     Decrease the rmt of the first species by 10%, check if rmt was set
     """
-    pass
+    return

@@ -9,7 +9,9 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+'''
+Contains helper functions to decide on the paralellization to use for a given system.
+'''
 from __future__ import absolute_import
 
 

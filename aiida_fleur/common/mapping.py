@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+'''
+This module collects helper methods which are commonly used for dictionaries.
+'''
 from __future__ import absolute_import
 from collections.abc import Mapping
 import six
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm.nodes.data.dict import Dict
+# FIXME, there might be overlap with tools/dict_utils or other tools.
 
 
 def update_mapping(original, source):
@@ -27,8 +31,7 @@ def update_mapping(original, source):
         source = source.get_dict()
 
     for key, value in six.iteritems(source):
-        if (key in original and (isinstance(value, Mapping) or isinstance(value, Dict)) and
-            (isinstance(original[key], Mapping) or isinstance(original[key], Dict))):
+        if key in original and isinstance(value, (Dict, Mapping)) and isinstance(original[key], (Dict, Mapping)):
             original[key] = update_mapping(original[key], value)
         else:
             original[key] = value

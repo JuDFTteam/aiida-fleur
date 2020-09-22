@@ -30,7 +30,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     thefile = open(destination, 'w')
     thefile.write(headerstring)
     datastring = ''
-    seperator = seperator  # '\t'
+    #seperator = seperator  # '\t'
     if transpose:
         datat = data.transpose()
     else:
@@ -38,7 +38,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     for item in datat:
         itemstring = ''
         for value in item:
-            if isinstance(value, str) or isinstance(value, six.string_types):
+            if isinstance(value, (six.string_types, str)):
                 itemstring = itemstring + '{}{}'.format(value, seperator)
             else:
                 itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)

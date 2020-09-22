@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+'''Contains tests for workfunction helpers in common_fleur_wf.py'''
 from __future__ import absolute_import
 import pytest
 import os
@@ -322,7 +333,7 @@ results_optimize = [
 ]
 
 
-@pytest.mark.parametrize('input,result_correct', zip(inputs_optimize, results_optimize))
+@pytest.mark.parametrize('inputs,result_correct', zip(inputs_optimize, results_optimize))
 def test_optimize_calc_options(inputs, result_correct):
     from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 

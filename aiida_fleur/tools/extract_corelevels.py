@@ -253,7 +253,7 @@ def extract_corelevels(outxmlfile, options=None):
     return corelevels, atomtypes
 
 
-def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warnings': []}):
+def parse_state_card(corestateNode, iteration_node, parser_info=None):
     """
     Parses the ONE core state card
 
@@ -291,6 +291,8 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     lostElectrons_name = 'lostElectrons'
     atomtype_name = 'atomType'
     #######
+    if parser_info is None:
+        parser_info = {'parser_warnings': []}
 
     atomtype = get_xml_attribute(corestateNode, atomtype_name, parser_info)
 
@@ -334,7 +336,7 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
 
 
 # TODO should be used from somewhere else, probably double
-def convert_to_float(value_string, parser_info={'parser_warnings': []}):
+def convert_to_float(value_string, parser_info=None):
     """
     Tries to make a float out of a string. If it can't it logs a warning
     and returns True or False if convertion worked or not.
@@ -343,6 +345,9 @@ def convert_to_float(value_string, parser_info={'parser_warnings': []}):
     :returns value: the new float or value_string: the string given
     :retruns: True or False
     """
+    if parser_info is None:
+        parser_info = {'parser_warnings': []}
+
     try:
         value = float(value_string)
     except TypeError:

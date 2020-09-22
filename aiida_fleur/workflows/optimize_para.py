@@ -16,22 +16,16 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 
 #import numpy as np
 from __future__ import absolute_import
+import six
+
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict
-#from aiida.orm.data.base import Float
-#from aiida.work.process_registry import ProcessRegistry
 from aiida.engine import WorkChain, ToContext  #,Outputs
-#from aiida.work import calcfunction as cf
 from aiida.engine import submit
-#from aiida_fleur.tools.StructureData_util import rescale, is_structure
-#from aiida_fleur.workflows.scf import fleur_scf_wc
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
-#from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-import six
-
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -115,7 +109,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for inpgen of FLEUR does not ' 'use the plugin fleur.inpgen')
+                error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
                 self.control_end_wc(error)
                 self.abort(error)
 
@@ -123,7 +117,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
+                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 self.control_end_wc(error)
                 self.abort(error)
 

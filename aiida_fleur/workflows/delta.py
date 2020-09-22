@@ -20,6 +20,7 @@ In this module you find the worklfow 'fleur_delta_wc' which is a turnkey solutio
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import six
 from string import digits
 #from pprint import pprint
 
@@ -31,12 +32,8 @@ from aiida.engine import WorkChain, ToContext  #, while_
 from aiida.engine import calcfunction as cf
 from aiida.engine import submit
 from aiida.common.exceptions import NotExistent
+
 from aiida_fleur.workflows.eos import FleurEosWorkChain
-import six
-
-#from aiida_fleur.tools.xml_util import eval_xpath2
-#from lxml import etree
-
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -266,7 +263,6 @@ class fleur_delta_wc(WorkChain):
         #pprint(calcs[:20])
         self.ctx.calcs_to_run = calcs
         self.ctx.ncalc = len(calcs)
-        return
 
     #def calculations_left_torun(self):
     #    """
@@ -333,8 +329,6 @@ class fleur_delta_wc(WorkChain):
 
         #self.ctx.eos_steps_done = self.ctx.eos_steps_done + 1
         #self.ctx.minindex = self.ctx.maxindex
-
-        return ToContext(**eos_results)
         '''
         # with run
         eos_results = {}
@@ -364,6 +358,7 @@ class fleur_delta_wc(WorkChain):
 
         return ToContext(**eos_results)
         '''
+        return ToContext(**eos_results)
 
     # To limit the troughput of 100 jobs, we create several run eos steps
     def get_inputs_eos(self):

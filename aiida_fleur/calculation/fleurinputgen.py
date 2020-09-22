@@ -286,9 +286,8 @@ class FleurinputgenCalculation(CalcJob):
         for key in settings_dict.keys():
             if key not in self._settings_keys:
                 # TODO warning
-                self.logger.info('settings dict key {} for Fleur calculation'
-                                 'not recognized, only {} are allowed.'
-                                 ''.format(key, self._settings_keys))
+                self.logger.info('settings dict key %s for Fleur calculation'
+                                 'not recognized, only %s are allowed.', key, str(self._settings_keys))
 
         ##############################
         # END OF INITIAL INPUT CHECK #

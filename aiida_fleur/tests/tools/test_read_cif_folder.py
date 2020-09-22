@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+'''Contains tests for read and with work cif file routines.'''
+
 from __future__ import absolute_import
 from __future__ import print_function
 import pytest
 
 
 # read-cif_folder
+@pytest.mark.skip(reason='Test not implemented')
 def test_read_cif_folder_interface(temp_dir):
     """
     this test set reads in the cif files in the ../files/cif/ directory and subdirs
@@ -39,7 +42,7 @@ def test_read_cif_folder_interface(temp_dir):
     #test if extras are set right
     #test prov
     #test
-    pass
 
     #read_in again
     # test if cif files are not rewritten.
+    assert False

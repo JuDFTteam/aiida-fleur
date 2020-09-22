@@ -24,6 +24,7 @@ from __future__ import print_function
 from aiida.plugins import DataFactory
 from aiida.orm import Bool
 from aiida.engine import calcfunction as cf
+Dict = DataFactory('dict')
 
 
 def merge_parameter(Dict1, Dict2, overwrite=True):
@@ -43,7 +44,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     """
 
     from aiida.common.exceptions import InputValidationError
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
 
     # layout:
     # check input
@@ -100,7 +101,7 @@ def merge_parameters(DictList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
     paremeter_data_new = Dict(dict={})
 
     for i, parameter in enumerate(DictList):
@@ -143,7 +144,7 @@ def merge_parameters_wf(*Dicts, overwrite=Bool(True)):
 '''
 if __name__ == '__main__':
     import argparse
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
 
     parser = argparse.ArgumentParser(description='Merge a Dict node.')
     parser.add_argument('--para1', type=Dict, dest='para1', help='The first Dict node', required=True)

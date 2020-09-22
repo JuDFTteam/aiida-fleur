@@ -9,8 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
-# Here we test if the interfaces of the workflows are still the same
+'''Contains tests for the Fleur_corehole_wc'''
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -119,7 +118,7 @@ class Test_fleur_corehole_wc():
         # check output
         # corelevel shift should be zero
         outn = out.get('output_corehole_wc_para', None)
-        assert outn != None
+        assert outn is not None
         outd = outn.get_dict()
 
         assert outd.get('successful')

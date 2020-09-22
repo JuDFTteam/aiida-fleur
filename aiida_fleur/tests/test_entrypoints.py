@@ -9,7 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+''' Contains smoke tests for all aiida-fleur entry points '''
 from __future__ import absolute_import
 import pytest
 

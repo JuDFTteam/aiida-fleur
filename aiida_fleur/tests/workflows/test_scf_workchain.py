@@ -9,8 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
-# Here we test if the interfaces of the workflows are still the same
+''' Contains various tests for the scf workchain '''
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -18,9 +17,9 @@ import pytest
 import os
 import aiida_fleur
 from aiida.orm import Code, load_node, Dict, StructureData
+from aiida.engine import run_get_node
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida.engine import run_get_node
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
@@ -318,7 +317,7 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
     """
-    from aiida.engine import run_get_node
+    #from aiida.engine import run_get_node
 
     #clear_spec()
 
@@ -397,15 +396,15 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
     # 1. structure and fleurinp given
     out, node = run_get_node(builder_struc_fleurinp)
     assert out == {}
-    assert node.is_finished == True
-    assert node.is_finished_ok == False
+    assert node.is_finished
+    assert not node.is_finished_ok
     assert node.exit_status == 231
 
     # 2. structure and no inpgen given
     out, node = run_get_node(builder_no_inpgen)
     assert out == {}
-    assert node.is_finished == True
-    assert node.is_finished_ok == False
+    assert node.is_finished
+    assert not node.is_finished_ok
     assert node.exit_status == 231
 
     # 3. no fleur code given, since not optional input,
@@ -416,13 +415,13 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
     # 4. wrong code type given
     out, node = run_get_node(builder_wrong_code)
     assert out == {}
-    assert node.is_finished == True
-    assert node.is_finished_ok == False
+    assert node.is_finished
+    assert not node.is_finished_ok
     assert node.exit_status == 233
 
     # 5. calc_parameter and fleurinp given
     out, node = run_get_node(builder_calc_para_fleurinp)
     assert out == {}
-    assert node.is_finished == True
-    assert node.is_finished_ok == False
+    assert node.is_finished
+    assert not node.is_finished_ok
     assert node.exit_status == 231

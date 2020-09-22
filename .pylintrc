@@ -65,6 +65,7 @@ disable=too-few-public-methods,
     wrong-import-order,
     import-outside-toplevel, # 
     duplicate-code, # Prob sometimes has to be, maybe ignore for examples and tests
+    unnecessary-pass, 
     no-else-raise, # FIXME ?
     no-else-return, # FIXME ?
     unexpected-keyword-arg, # FIXME
@@ -77,11 +78,15 @@ disable=too-few-public-methods,
     missing-function-docstring, # FIXME
     too-many-locals, # FIXME
     too-many-branches, # FIXME
-    inconsitent-return-statements, # FIXME
+    inconsistent-return-statements, # FIXME
     no-self-use, # FIXME
-    c-extension-no-member # FIXME
-    to-many-statements, # FIXME ?
-    to-many-nexted-blocks #FIXME ? 
+    c-extension-no-member, # FIXME
+    too-many-statements, # FIXME ?
+    too-many-nested-blocks, # FIXME ?
+    too-many-lines, # FIXME ?
+    too-many-return-statements, # FIXME ?
+    too-many-arguments, # FIXME
+    pointless-string-statement # Because of multi line comments, or outcommented code
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

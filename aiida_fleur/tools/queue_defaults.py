@@ -59,20 +59,22 @@ def queue_defaults(queue_name, computer=None):
         c_name = computer
         queue = computers.get(c_name, {}).get(queue_name, {})
         res = queue.get('resources', None)
-        wt = queue.get('walltime_sec', None)
+        wtime = queue.get('walltime_sec', None)
     else:
         #print 'no computer'
         c_name = None
         res = None
-        wt = None
-        for comp in computers.keys():
-            queue = computers.get(comp, {}).get(queue_name, {})
-            #print 'queue {}'.format(queue)
+        wtime = None
+        for comp, queues in computers.items():
+            queue = queues.get(queue_name, {})
+            # queues might not be unique to certain computers overall
+            # but this is the users responsibility
+            # print 'queue {}'.format(queue)
             if queue:
                 res = queue.get('resources', None)
-                wt = queue.get('walltime_sec', None)
+                wtime = queue.get('walltime_sec', None)
 
-    queue_resources = {'resources': res, 'walltime_sec': wt}
+    queue_resources = {'resources': res, 'walltime_sec': wtime}
     #print queue_resources
 
     return queue_resources

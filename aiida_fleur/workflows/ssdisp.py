@@ -364,7 +364,7 @@ class FleurSSDispWorkChain(WorkChain):
         outpara = outpara_node.get_dict()
 
         if 'total_energy' not in outpara:
-            message = ('Did not manage to extract float total energy from the' ' reference SCF calculation.')
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 

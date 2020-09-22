@@ -287,9 +287,10 @@ def parse_xmlout_file(outxmlfile):
                             with parsed data
 
     """
-    from lxml import etree
+    #from lxml import etree
 
-    global parser_info_out
+    #global parser_info_out
+    # FIXME: This is global, look for a different way to do this, python logging?
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
     parser_version = '0.3.0'

@@ -9,8 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
-# Here we test if the interfaces of the workflows are still the same
+''' Contains tests for the FleurBandDosWorkChain '''
 from __future__ import absolute_import
 from __future__ import print_function
 

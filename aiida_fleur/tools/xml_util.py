@@ -32,7 +32,12 @@ def is_sequence(arg):
     """
     if isinstance(arg, str):
         return False
-    return (not hasattr(arg, 'strip') and hasattr(arg, '__getitem__') or hasattr(arg, '__iter__'))
+    elif hasattr(arg, '__iter__'):
+        return True
+    elif not hasattr(arg, 'strip') and hasattr(arg, '__getitem__'):
+        return True
+    else:
+        return False
 
 
 ##### CONVERTERS ############
@@ -172,10 +177,10 @@ def convert_to_fortran_bool(boolean):
             new_string = 'F'
             return new_string
     elif isinstance(boolean, str):  # basestring):
-        if boolean == 'True' or boolean == 't' or boolean == 'T':
+        if boolean in ('True', 't', 'T'):
             new_string = 'T'
             return new_string
-        elif boolean == 'False' or boolean == 'f' or boolean == 'F':
+        elif boolean in ('False', 'f', 'F'):
             new_string = 'F'
             return new_string
         else:
@@ -776,7 +781,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # number, other parameters
     if species_name == 'all':
         xpath_species = '/fleurInput/atomSpecies/species'
-    elif 'all-' == species_name[:4]:  #format all-<string>
+    elif species_name[:4] == 'all-':  #format all-<string>
         xpath_species = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
     else:
         xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
@@ -1255,8 +1260,8 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
         if not old_val:
             print('Can not find {} attribute in the inp.xml, skip it'.format(key))
             continue
-        else:
-            old_val = float(old_val[0])
+
+        old_val = float(old_val[0])
 
         if mode == 'rel':
             value = value_given * old_val

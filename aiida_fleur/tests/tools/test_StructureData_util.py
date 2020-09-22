@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+''' Contains tests for StructureData util '''
 from __future__ import absolute_import
 import pytest
 import numpy as np
@@ -87,7 +98,7 @@ def test_abs_to_rel(generate_structure):
 
     vector = [1.3575, 1.3575, 1.3575]
     assert np.isclose(abs_to_rel(vector, cell), np.array([0.25, 0.25, 0.25])).all()
-    assert abs_to_rel([1], cell) == False
+    assert not abs_to_rel([1], cell)
 
 
 def test_abs_to_rel_f(generate_film_structure):
@@ -98,7 +109,7 @@ def test_abs_to_rel_f(generate_film_structure):
 
     vector = [1.4026317387183, 1.9836207751336, 0.25]
     assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5, 0.25])).all()
-    assert abs_to_rel_f([1], cell, pbc=structure.pbc) == False
+    assert not abs_to_rel_f([1], cell, pbc=structure.pbc)
 
 
 def test_rel_to_abs(generate_structure):
@@ -109,7 +120,7 @@ def test_rel_to_abs(generate_structure):
 
     vector = [0.25, 0.25, 0.25]
     assert np.isclose(rel_to_abs(vector, cell), np.array([1.3575, 1.3575, 1.3575])).all()
-    assert rel_to_abs([1], cell) == False
+    assert not rel_to_abs([1], cell)
 
 
 def test_rel_to_abs_f(generate_film_structure):
@@ -120,7 +131,7 @@ def test_rel_to_abs_f(generate_film_structure):
 
     vector = [0.5, 0.5, 0.25]
     assert np.isclose(rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
-    assert rel_to_abs_f([1], cell) == False
+    assert not rel_to_abs_f([1], cell)
 
 
 def test_break_symmetry_wf(generate_film_structure):

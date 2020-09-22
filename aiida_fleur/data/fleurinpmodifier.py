@@ -592,6 +592,6 @@ def modify_fleurinpdata(original, modifications):
 
     # default label and description
     new_fleurinp.label = 'mod_fleurinp'
-    new_fleurinp.description = ('Fleurinpdata with modifications' ' (see inputs of modify_fleurinpdata)')
+    new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
 
     return new_fleurinp

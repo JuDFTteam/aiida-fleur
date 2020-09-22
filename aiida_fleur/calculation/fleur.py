@@ -409,7 +409,7 @@ class FleurCalculation(CalcJob):
             # copy necessary files
             # TODO: check first if file exist and throw a warning if not
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
-            self.logger.info('out folder path {}'.format(outfolder_uuid))
+            self.logger.info('out folder path %s', outfolder_uuid)
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
@@ -460,7 +460,7 @@ class FleurCalculation(CalcJob):
                         (parent_calc_folder.computer.uuid, os.path.join(parent_calc_folder.get_remote_path(),
                                                                         file1), self._get_outut_folder))
 
-                self.logger.info('remote copy file list {}'.format(remote_copy_list))
+                self.logger.info('remote copy file list %s', str(remote_copy_list))
 
         # create a JUDFT_WARN_ONLY file in the calculation folder
         with io.StringIO(u'/n') as handle:
@@ -477,7 +477,7 @@ class FleurCalculation(CalcJob):
         # calcinfo.cmdline_params = (list(cmdline_params)
         #                           + ["-in", self._INPUT_FILE_NAME])
 
-        self.logger.info('local copy file list {}'.format(local_copy_list))
+        self.logger.info('local copy file list %s', str(local_copy_list))
 
         calcinfo.local_copy_list = local_copy_list
         calcinfo.remote_copy_list = remote_copy_list
@@ -499,11 +499,11 @@ class FleurCalculation(CalcJob):
 
         for mode_file in mode_retrieved_filelist:
             retrieve_list.append(mode_file)
-        self.logger.info('retrieve_list: {}'.format(retrieve_list))
+        self.logger.info('retrieve_list: %s', str(retrieve_list))
 
         # user specific retrieve
         add_retrieve = settings_dict.get('additional_retrieve_list', [])
-        self.logger.info('add_retrieve: {}'.format(add_retrieve))
+        self.logger.info('add_retrieve: %s', str(add_retrieve))
         for file1 in add_retrieve:
             retrieve_list.append(file1)
 

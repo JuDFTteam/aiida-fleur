@@ -417,7 +417,6 @@ def generate_structure_cif():
 
     def _generate_structure_cif(cif_filepath):
         """Return a `StructureData` from a cif file."""
-        import os
         from aiida.orm import CifData
 
         structure = CifData.get_or_create(cif_filepath)[0].get_structure()
@@ -430,7 +429,7 @@ def generate_structure_cif():
 def create_or_fake_local_code(aiida_local_code_factory):
 
     def _get_code(executable, exec_relpath, entrypoint):
-        import os, pathlib
+        import pathlib
         from aiida.tools.importexport import import_data, export
         from aiida.orm import ProcessNode, QueryBuilder, Code, load_node
 
@@ -457,7 +456,6 @@ def inpgen_local_code(create_or_fake_local_code):
     """
     Create, inpgen code
     """
-    import os
     executable = 'inpgen'  # name of the inpgen executable
     exec_rel_path = 'local_exe/'  # location where it is found
     entrypoint = 'fleur.inpgen'  # entrypoint

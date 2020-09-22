@@ -9,7 +9,10 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+'''
+Contains helper functions to create core-holes in
+Fleur input files from AiiDA data nodes.
+'''
 from __future__ import absolute_import
 from __future__ import print_function
 from aiida.plugins import DataFactory
@@ -58,7 +61,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
                     if (a_id and float(a_id) == float(val.get('id', -1))):
                         val.update({'econfig': econfig})
                         break
-                    elif not a_id:
+                    if not a_id:
                         val.update({'econfig': econfig})
                     else:
                         pass
@@ -80,7 +83,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
 
 # Move to fleurinpmod? fleurinp->self
 # This method is fully implemented yet since it turned out to better go over inpgen
-def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
+def create_corehole_fleurinp(fleurinp, species, stateocc, pos=None, coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
     given econfig as in inp.xml::
@@ -145,7 +148,8 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
 
     if valenceconfig != 'same':
         new_valence = True
-
+    if pos is None:
+        pos = []
     species_tags = fleurinp.get_tag(species_xpath)
     for speci in species_tags:
         if get_xml_attribute(speci, 'name') == species:

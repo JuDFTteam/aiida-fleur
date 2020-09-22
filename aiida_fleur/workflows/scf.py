@@ -249,20 +249,20 @@ class FleurScfWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for inpgen of FLEUR does not ' 'use the plugin fleur.inpgen')
+                error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
+                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy']:
-            error = ('ERROR: Wrong mode of convergence' ": one of 'force', 'density' or 'energy' was expected.")
+            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density' or 'energy' was expected.")
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
@@ -755,7 +755,7 @@ def create_scf_result_node(**kwargs):
     outdict = {}
     outputnode = outpara.clone()
     outputnode.label = 'output_scf_wc_para'
-    outputnode.description = ('Contains self-consistency results and ' 'information of an fleur_scf_wc run.')
+    outputnode.description = ('Contains self-consistency results and information of an fleur_scf_wc run.')
 
     outdict['output_scf_wc_para'] = outputnode
     # copy, because we rather produce the same node twice then have a circle in the database for now

@@ -465,7 +465,8 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     code adapted from stack exchange (the messy part):
     https://codegolf.stackexchange.com/questions/8728/balance-chemical-equations
     """
-    import sys, re
+    import sys
+    import re
     from sympy.solvers import solve
     from sympy.core.numbers import Rational, Integer
     from collections import defaultdict
@@ -482,8 +483,26 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
                 d = [c[0], c[1] * m * i]
                 Ss[e][:0], Es[:0] = [d], [[e, d]]
         i = -1
-    Ys = dict((s, eval('Symbol("' + s + '")')) for s in Os if s not in Ls)
-    Qs = [eval('+'.join('%d*%s' % (c[1], c[0]) for c in Ss[s]), {}, Ys) for s in Ss] + [Ys['a'] - a]
+    Ys = {}  # dict((s, eval('Symbol("' + s + '")')) for s in Os if s not in Ls)
+    for s in Os:
+        if s not in Ls:
+            Ys[s] = Symbol(str(s))
+    #a = '+'.join('%d*%s' % (c[1], c[0]) for c in Ss[s])
+    #print(a)
+    Qs = [
+        eval(  # pylint: disable=eval-used
+            '+'.join('%d*%s' % (c[1], c[0]) for c in Ss[s]), {}, Ys) for s in Ss
+    ] + [Ys['a'] - a]
+    # FIXME
+    #Qs = []
+    #for s in Ss:
+    #   res1 = ''
+    #   for c in s:
+    #       prod = '%d*%s' % (c[1], c[0])
+    #       res1 = res1 + '+' + prod
+    #   Qs.append(res1)
+    #Qs + [Ys['a'] - a]
+
     k = solve(Qs, *Ys)
     if k:  # if a solution is found multiply by gcd
         # TODO? check if solution has linear dependence: and evaluate

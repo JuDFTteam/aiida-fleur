@@ -26,7 +26,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import json
 import six
-from six.moves import input_six
+from six.moves import input as input_six
 
 from aiida.orm import load_node
 from aiida.orm.querybuilder import QueryBuilder
@@ -99,7 +99,6 @@ def import_extras(filename):
         else:
             print('node is not instance of an AiiDA node')
         #print(extras)
-    return
 
 
 '''
@@ -211,7 +210,7 @@ def create_group(name, nodes, description=None, add_if_exist=False):
                      description='delta structures added by hand. from Gustavs inpgen files')
 
     """
-    from aiida.common import NotExistent
+    #from aiida.common import NotExistent
 
     group, created = Group.objects.get_or_create(label=name)
     if created:

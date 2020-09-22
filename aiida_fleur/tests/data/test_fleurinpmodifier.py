@@ -9,6 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+''' Contains tests for modifing FleurinpData with Fleurinpmodifier '''
 
 from __future__ import absolute_import
 import os

@@ -365,7 +365,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                     except AttributeError:
                         try:
                             ouputnode = n.out.output_inital_cls_wc_para.get_dict()
-                        except:
+                        except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
                             print(('WARNING: ouput node of {} not found. I skip'.format(n)))
@@ -457,15 +457,14 @@ def performance_extract_calcs(calcs):
             efermi = res.fermi_energy
         except AttributeError:
             print(('skipping {}, {}'.format(pk, calc.uuid)))
-            continue  # we skip these entries
             efermi = -10000
-
+            continue  # we skip these entries
         try:
             gap = res.bandgap
         except AttributeError:
             gap = -10000
-            continue
             print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
+            continue
 
         try:
             energy = res.energy

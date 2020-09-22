@@ -16,17 +16,16 @@ All test are executed with show false, if some plot opens, something is not righ
 
 from __future__ import absolute_import
 import pytest
+import os
 from aiida import orm
 from aiida_fleur.tools.plot.fleur import plot_fleur
 import aiida_fleur
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib as plt
+plt.use('Agg')
 
 
 def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a workchain"""
-    import os
-    import matplotlib as plt
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')
@@ -55,9 +54,7 @@ def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
 def test_plot_fleur_multiple_wc_matplotlib(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a multiple workchain output node, Fleur calcjob output nodes """
 
-    import matplotlib as plt
     from matplotlib.axes import Axes
-    import os
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')
@@ -88,7 +85,6 @@ def test_plot_fleur_single_wc_bokeh(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a single workchain with bokeh backend"""
 
     from bokeh.layouts import column  # gridplot
-    import os
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')

@@ -62,7 +62,7 @@ def read_cif_folder(path=os.getcwd(),
     #####################
     filenames = []
     filepaths = []
-    infofilestring = ('Structure Formula, Structuredata pk, Structure Data uuid,' ' cif-file-path, comment, extras \n')
+    infofilestring = ('Structure Formula, Structuredata pk, Structure Data uuid, cif-file-path, comment, extras \n')
 
     #1. get all the files
     if rek:

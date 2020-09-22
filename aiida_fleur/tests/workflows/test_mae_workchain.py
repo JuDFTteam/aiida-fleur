@@ -9,8 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
-# Here we test if the interfaces of the workflows are still the same
+''' Various tests for the FleurMaeWorkChain. '''
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -123,7 +122,7 @@ class Test_FleurMaeWorkChain:
         assert node.is_finished_ok
 
         outpara = out.get('out', None)
-        assert outpara != None
+        assert outpara is not None
         outpara = outpara.get_dict()
         print(outpara)
 
@@ -180,6 +179,6 @@ class Test_FleurMaeWorkChain:
         # 1. structure and fleurinp given
         out, node = run_get_node(FleurMaeWorkChain, **inputs1)
         assert out == {}
-        assert node.is_finished == True
-        assert node.is_finished_ok == False
+        assert node.is_finished
+        assert not node.is_finished_ok
         assert node.exit_status == 230

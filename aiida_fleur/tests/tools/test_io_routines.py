@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-# write_results_to_file
+''' Contains Tests of io routines within aiida-fleur. '''
+
 from __future__ import absolute_import
+import pytest
 
 
 def test_write_results_to_file_interface():
@@ -31,6 +33,7 @@ def test_write_results_to_file_interface():
 
 
 # write_xps_spectra_datafile
+@pytest.mark.skip(reason='Test not implemented')
 def test_write_xps_spectra_datafile_interface():
     """
     is the xps data file writter working, is the file ok?
@@ -39,8 +42,8 @@ def test_write_xps_spectra_datafile_interface():
 
     #TODO how to test this?
     # provide all sample inputs and check contents of outputfile
-    pass
     #assert 1 == 2
+    assert False
 
 
 def test_compress_fleuroutxml():

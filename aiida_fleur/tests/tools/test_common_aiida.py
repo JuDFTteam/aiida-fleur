@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+'''Contains tests for functions in common_aiida'''
+
 from __future__ import absolute_import
 
 import os

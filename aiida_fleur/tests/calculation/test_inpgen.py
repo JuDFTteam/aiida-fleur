@@ -7,9 +7,9 @@ import os
 import pytest
 from aiida import orm
 from aiida.common import datastructures
-from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 
 def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,

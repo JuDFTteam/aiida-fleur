@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# test the fleur specific graph gernation routine
+''' Contains test the fleur specific graph gernation routine. '''
 from __future__ import absolute_import
 import pytest
 

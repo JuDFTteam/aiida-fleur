@@ -32,7 +32,7 @@ from aiida.orm import Code, load_node, Group, CalcJobNode
 from aiida.orm import StructureData, Dict, RemoteData
 from aiida.orm import load_group
 from aiida.orm.querybuilder import QueryBuilder
-from aiida.common.exceptions import NotExistent
+from aiida.common.exceptions import NotExistent, MultipleObjectsError
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
@@ -259,7 +259,7 @@ class fleur_initial_cls_wc(WorkChain):
                     for ref_el_el in ref_el:
                         try:
                             ref_el_nodes = load_node(ref_el_el)
-                        except:
+                        except (NotExistent, MultipleObjectsError, ValueError, TypeError):
                             ref_el_node = None
                             self.report('ERROR: The reference node in the list '
                                         '(id or uuid) provided: {} for element: '
@@ -270,7 +270,8 @@ class fleur_initial_cls_wc(WorkChain):
                 else:
                     try:
                         ref_el_node = load_node(ref_el)
-                    except:  # NotExistent: No node was found
+                    except (NotExistent, MultipleObjectsError, ValueError, TypeError):
+                        # NotExistent: No node was found
                         ref_el_node = None
                         self.report('ERROR: The reference node (id or uuid) '
                                     'provided: {} for element: {} could'
@@ -482,10 +483,7 @@ class fleur_initial_cls_wc(WorkChain):
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
-            if forces_fine:
-                return True
-            else:
-                return False
+            return forces_fine
         else:
             return False
 
@@ -642,8 +640,6 @@ class fleur_initial_cls_wc(WorkChain):
         if failure:
             self.ctx.successful = False
 
-        return
-
     def collect_results(self):
         """
         Collect results from certain calculation, check if everything is fine,
@@ -729,8 +725,8 @@ class fleur_initial_cls_wc(WorkChain):
                 #since certain elemental unit cells could have several atom types (graphene))
                 corelevel_shifts = []
                 #TODO shall we store just one core-level shift per atomtype?
-                for i, corelevel in enumerate(cl_energies[elm][-1]):
-                    corelevel_shifts.append(corelevel - float(ref[i]))
+                for j, corelevel in enumerate(cl_energies[elm][-1]):
+                    corelevel_shifts.append(corelevel - float(ref[j]))
                 all_CLS[elm].append(corelevel_shifts)
 
         # calculate formation energy
@@ -847,8 +843,6 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
-        return
-
 
 @cf
 def create_initcls_result_node(**kwargs):
@@ -933,7 +927,7 @@ def extract_results(calcs):
         #print(calc)
         try:
             calc_uuids.append(calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid'])
-        except:  #TODO what error
+        except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
             logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
                       'key in it for calculation: {}'.format(calc))
             log.append(logmsg)

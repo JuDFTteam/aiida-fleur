@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# get_econfig
+''' Contains tests for reading and modification of econfigurations '''
 from __future__ import absolute_import
 
 

@@ -9,8 +9,10 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
-# Here we test if the interfaces of the workflows are still the same
+'''
+Contains smoke tests for all workchains of aiida-fleur,
+checks if builderis from aiida-core gets the correct class.
+'''
 from __future__ import absolute_import
 import pytest
 

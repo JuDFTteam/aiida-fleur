@@ -24,6 +24,7 @@ energies and corelevel shifts with different methods.
 #import os.path
 from __future__ import absolute_import
 from __future__ import print_function
+import six
 import re
 import numpy as np
 from pprint import pprint
@@ -45,8 +46,6 @@ from aiida_fleur.tools.element_econfig_list import get_econfig, get_coreconfig
 from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
-import six
-
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -293,7 +292,7 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.ref_total_energies = []
         self.ctx.wbindingenergies = []
         ### input check ###
-        '''
+        """
         #ususal fleur stuff check
         if fleurinp.get structure
         self.ctx.inputs.base_structure
@@ -303,7 +302,7 @@ class fleur_corehole_wc(WorkChain):
             errormsg = 'You need to specify unter 'corelevel' in the wf_para node on what corelevel you want to have a corehole calculated. (Default is 'all')'
             self.abort_nowait(errormsg)
 
-        '''
+        """
 
     def supercell_needed(self):
         """
@@ -348,7 +347,6 @@ class fleur_corehole_wc(WorkChain):
         else:
             new_calc = [supercell_s, calc_para]
         self.ctx.calcs_ref_torun.append(new_calc)
-        return
 
     def create_coreholes(self):
         """
@@ -485,7 +483,6 @@ class fleur_corehole_wc(WorkChain):
                 elm_cl = re.split('[, ;:-]', corel)
                 #print(elm_cl)
                 if len(elm_cl) != 2:
-                    pass
                     # something went wrong, wrong input
                     # TODO log, error and hint
                     error = ('ERROR: corelevel was given in the wrong format: {},'
@@ -537,7 +534,6 @@ class fleur_corehole_wc(WorkChain):
                         elif '/' in elm_cl[1]:
                             pass  # TODO FUll state information given...[4f 7/2]
                         else:
-                            pass
                             # corelevel provided wrong, not understood, warning
                             continue
                         # TODO several corelevels of one element... update lists instead of override...
@@ -823,10 +819,7 @@ class fleur_corehole_wc(WorkChain):
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
-            if forces_fine:
-                return True
-            else:
-                return False
+            return bool(forces_fine)
         else:
             return False
 
@@ -1053,7 +1046,7 @@ class fleur_corehole_wc(WorkChain):
             try:
                 calc_dict = calc.get_outgoing().get_node_by_label(
                     'output_scf_wc_para')  #calc.outputs.output_scf_wc_para
-            except:
+            except (KeyError, ValueError):
                 print('continue 2')
             outnodedict[label] = calc_dict
 
@@ -1078,7 +1071,6 @@ class fleur_corehole_wc(WorkChain):
         self.ctx.errors.append(errormsg)
         self.report(errormsg)
         self.return_results()
-        return
 
 
 @cf
@@ -1168,7 +1160,7 @@ def extract_results_corehole(calcs):
         print(calc.get_outgoing().all())
         try:
             calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-        except:
+        except (KeyError, AttributeError):
             print('continue')
             continue
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
@@ -1190,7 +1182,7 @@ def extract_results_corehole(calcs):
     # check if calculation pks belong to successful fleur calculations
     for i, uuid in enumerate(calc_uuids):
         calc = load_node(uuid)
-        if (not isinstance(calc, CalcJobNode)):
+        if not isinstance(calc, CalcJobNode):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue

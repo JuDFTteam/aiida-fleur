@@ -317,7 +317,7 @@ class FleurEosWorkChain(WorkChain):
         outputnode_dict = create_eos_result_node(**outnodedict)
         outputnode = outputnode_dict.get('output_eos_wc_para')
         outputnode.label = 'output_eos_wc_para'
-        outputnode.description = ('Contains equation of states results and information of an ' 'FleurEosWorkChain run.')
+        outputnode.description = ('Contains equation of states results and information of an FleurEosWorkChain run.')
 
         returndict = {}
         returndict['output_eos_wc_para'] = outputnode
@@ -343,8 +343,6 @@ class FleurEosWorkChain(WorkChain):
         self.report(errormsg)
         self.ctx.errors.append(errormsg)
         self.return_results()
-
-        return
 
 
 @cf
@@ -459,7 +457,7 @@ def birch_murnaghan_fit(energies, volumes):
 
     if volume0 == 0:
         print('Error: No minimum could be found')
-        exit()
+        return None, None, None, None  #exit()
 
     derivV2 = 4. / 9. * x**5. * deriv2(x)
     derivV3 = (-20. / 9. * x**(13. / 2.) * deriv2(x) - 8. / 27. * x**(15. / 2.) * deriv3(x))

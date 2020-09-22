@@ -1588,10 +1588,7 @@ def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
             spinupocc = 0
             spindownocc = 0
             occ_spin = occ
-            if statename == valence:
-                is_valence = True
-            else:
-                is_valence = False
+            is_valence = bool(statename == valence)
             for i, spins in enumerate(spinstates):
                 spin_mac_occ = max_state_occ_spin[spins]
                 occ_spin = occ_spin - spin_mac_occ
@@ -1619,7 +1616,7 @@ def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
                     if 0 <= nelec <= max_spin_up_occ:
                         spinupocc = nelec
                         spindownocc = 0.00000
-                    elif 0 <= nelec:
+                    elif nelec >= 0:
                         spinupocc = max_spin_up_occ
                         spindownocc = nelec - max_spin_up_occ
                     else:  # do not append

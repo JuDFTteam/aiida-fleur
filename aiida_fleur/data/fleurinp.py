@@ -13,9 +13,6 @@
 In this module is the :class:`~aiida_fleur.data.fleurinp.FleurinpData` class, and methods for FLEUR
 input manipulation plus methods for extration of AiiDA data structures.
 """
-# TODO: all methods to change now in fleurinpmodifier, do we still want to
-# store the userchanges, or rather delete them? depends how well one can see things
-# from fleurinpmodifier...
 # TODO: maybe add a modify method which returns a fleurinpmodifier class
 # TODO: inpxml to dict: maybe kpts should not be written to the dict? same with symmetry
 # TODO: test for large input files, I believe the recursion is still quite slow..
@@ -267,7 +264,7 @@ class FleurinpData(Data):
                                     imax = i + 10  # maybe make larger or different
                                     imin = i
                                     schema_version_numbers = []
-                                if (i > imin) and (i <= imax):
+                                if imin < i <= imax:
                                     if re.search('enumeration value', line):
                                         schema_version_number = re.findall(r'\d+.\d+', line)[0]
                                     elif re.search('simpleType>', line):
@@ -1058,7 +1055,7 @@ class FleurinpData(Data):
             raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
                                        'not exist, or something is wrong with the expression.'
                                        ''.format(xpath))
-            return []
+
         if len(return_value) == 1:
             return return_value
         else:

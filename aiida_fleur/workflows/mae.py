@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import copy
 
 import six
-from six.moves import map
+#from six.moves import map
 from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
@@ -283,12 +283,12 @@ class FleurMaeWorkChain(WorkChain):
             ('xml_set_attribv_occ', {
                 'xpathn': '/fleurInput/forceTheorem/MAE',
                 'attributename': 'theta',
-                'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_theta')))
+                'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_theta')))
             }),
             ('xml_set_attribv_occ', {
                 'xpathn': '/fleurInput/forceTheorem/MAE',
                 'attributename': 'phi',
-                'attribv': ' '.join(map(str, self.ctx.wf_dict.get('sqas_phi')))
+                'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_phi')))
             }),
             ('set_inpchanges', {
                 'change_dict': {
@@ -357,7 +357,7 @@ class FleurMaeWorkChain(WorkChain):
 
         t_e = outpara.get('total_energy', 'failed')
         if not isinstance(t_e, float):
-            message = ('Did not manage to extract float total energy from the reference ' 'SCF calculation.')
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
@@ -545,7 +545,7 @@ def save_mae_output_node(**kwargs):
     # clone, because we rather produce the same node twice then have a circle in the database for
     outputnode = outpara.clone()
     outputnode.label = 'output_mae_wc_para'
-    outputnode.description = ('Contains magnetic anisotropy results and ' 'information of an FleurMaeWorkChain run.')
+    outputnode.description = ('Contains magnetic anisotropy results and information of an FleurMaeWorkChain run.')
 
     outdict['output_mae_wc_para'] = outputnode
 

@@ -404,7 +404,7 @@ class FleurDMIWorkChain(WorkChain):
         outpara = outpara_node.get_dict()
 
         if 'total_energy' not in outpara:
-            message = ('Did not manage to extract float total energy from the' ' reference SCF calculation.')
+            message = ('Did not manage to extract float total energy from the reference SCF calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
@@ -527,8 +527,8 @@ class FleurDMIWorkChain(WorkChain):
                     t_energydict[k] -= ref_enrg
 
             if e_u == 'Htr' or 'htr':
-                for labels in six.moves.range(len(t_energydict)):
-                    t_energydict[labels] = t_energydict[labels] * htr_to_ev
+                for labels, energies in t_energydict.items():
+                    t_energydict[labels] = energies * htr_to_ev
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)

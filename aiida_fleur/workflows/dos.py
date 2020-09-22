@@ -16,6 +16,7 @@ density of states (DOS).
 from __future__ import absolute_import
 from __future__ import print_function
 import os.path
+import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
@@ -26,8 +27,6 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-import six
-
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -107,7 +106,7 @@ class fleur_dos_wc(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for FLEUR does not ' 'use the plugin fleur.fleur')
+                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 # self.control_end_wc(error)
                 self.report(error)
                 return 1

@@ -9,8 +9,8 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+''' Contains tests for the fleur_initial_cls_wc. '''
 
-# Here we test if the interfaces of the workflows are still the same
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -18,8 +18,8 @@ import pytest
 import aiida_fleur
 import os
 from aiida.orm import load_node
-from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 from aiida.engine import run_get_node
+from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
 
 # tests
@@ -38,7 +38,7 @@ class Test_fleur_initial_cls_wc():
         (W, onw atoms per unit cell)
         uses the same structure as reference.
         """
-        from aiida.orm import Code, load_node, Dict, StructureData
+        from aiida.orm import Code, Dict, StructureData
 
         options = {
             'resources': {
@@ -108,7 +108,7 @@ class Test_fleur_initial_cls_wc():
         # check output
         # corelevel shift should be zero
         outn = out.get('output_initial_cls_wc_para', None)
-        assert outn != None
+        assert outn is not None
         outd = outn.get_dict()
 
         assert outd.get('successful')

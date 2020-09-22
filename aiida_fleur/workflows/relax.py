@@ -334,7 +334,8 @@ class FleurRelaxWorkChain(WorkChain):
         :return new_fleurinp: new FleurinpData object that will be used for next relax iteration
         """
         # TODO: implement this function, now always use relax.xml generated in FLEUR
-        if False:
+        should_relax = False
+        if should_relax:
             return 1
 
         return None
@@ -530,13 +531,13 @@ def create_relax_result_node(**kwargs):
         if key == 'out':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'out_relax_wc_para'
-            outnode.description = ('Contains results and ' 'information of an FleurRelaxWorkChain run.')
+            outnode.description = ('Contains results and information of an FleurRelaxWorkChain run.')
             outdict['out'] = outnode
 
         if key == 'optimized_structure':
             structure = val.clone()  # dublicate node instead of circle (keep DAG)
             structure.label = 'optimized_structure'
-            structure.description = ('Relaxed structure result ' 'of an FleurRelaxWorkChain run.')
+            structure.description = ('Relaxed structure result of an FleurRelaxWorkChain run.')
             outdict['optimized_structure'] = structure
 
     return outdict

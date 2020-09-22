@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os.path
 import copy
+import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
@@ -32,8 +33,6 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, is_code
-import six
-
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -202,7 +201,7 @@ class FleurBandWorkChain(WorkChain):
         """
         Converge charge density.
         """
-        pass
+        return 0
 
     def run_fleur(self):
         """

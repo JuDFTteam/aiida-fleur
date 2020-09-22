@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+'''Contains tests for routines in extract_corelevels.'''
 from __future__ import absolute_import
 import pytest
 
@@ -20,6 +31,7 @@ def test_extract_corelevels_outfile_allfiles():
         assert bool(atomtypes)
 
 
+@pytest.mark.skip(reason='Test not implemented')
 def test_extract_corelevels_outfile_interface():
     """
     Extracts corelevels and atomtype imformation from one example out.xml file
@@ -27,7 +39,6 @@ def test_extract_corelevels_outfile_interface():
     """
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
 
-    pass
     #outfile =
     #corelevel, atomtypes = extract_corelevels(outfile)
     #    assert bool(corelevel)

@@ -208,14 +208,14 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
 
     #print(all_nodes)
     all_plot_res = []
-    for node_key, nodelist in six.iteritems(all_nodes):
+    for node_key, nodelist1 in six.iteritems(all_nodes):
         try:
             plotf = FUNCTIONS_DICT[node_key]
         except KeyError:
             print(('Sorry, I do not know how to visualize'
-                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist)))
+                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist1)))
             continue
-        plot_res = plotf(nodelist, labels=node_labels, save=save, show=show, backend=backend)
+        plot_res = plotf(nodelist1, labels=node_labels, save=save, show=show, backend=backend)
         all_plot_res.append(plot_res)
     return all_plot_res
 
@@ -414,8 +414,7 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, **kwargs):
     if labels is None:
         labels = []
 
-    pass
-
+    # TODO: implement
     #plot_relaxation_results
 
 
@@ -428,7 +427,7 @@ def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
     if labels is None:
         labels = []
 
-    pass
+    # TODO: implement
 
 
 def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwargs):
@@ -440,7 +439,7 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     if labels is None:
         labels = []
 
-    pass
+    # TODO: implement
 
 
 FUNCTIONS_DICT = {

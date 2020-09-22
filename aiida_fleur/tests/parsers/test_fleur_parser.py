@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# test all routines used by the fleur parser
+''' Contains tests for routines used by the fleur parser. '''
 
 from __future__ import absolute_import
 import os
 import pytest
+import math
 
 
 # parse_xmlout_file
@@ -13,7 +14,6 @@ def test_parse_xmlout_file():
     with the right content
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    import os
 
     filename = os.path.abspath('./files/outxml/BeTi_out.xml')
 
@@ -71,7 +71,7 @@ def test_parse_xmlout_file():
     simple_out.pop('outputfile_path', None)  # otherwise test will fail on different installations
     # also this should go away any way...
 
-    assert successful == True
+    assert successful
     assert expected_simple_out_dict == simple_out
     assert expected_parser_info_out == parser_info_out
 
@@ -84,7 +84,6 @@ def test_parse_xmlout_file_broken_xmlout_file():
     (which can happen in the case of some kill, or Non regular termination of FLEUR)
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    import os
 
     filename = os.path.abspath('./files/outxml/special/broken_BeTi_out.xml')
 
@@ -102,8 +101,8 @@ def test_parse_xmlout_file_broken_xmlout_file():
         'unparsed': []
     }
 
-    assert successful == True
-    assert 15 == parser_info_out['last_iteration_parsed']
+    assert successful
+    assert parser_info_out['last_iteration_parsed'] == 15
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
 
@@ -115,7 +114,6 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
     (which can happen in the case of some kill, or Non regular termination of FLEUR)
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    import os
 
     filename = os.path.abspath('./files/outxml/special/broken_first_BeTi_out.xml')
 
@@ -181,8 +179,8 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
         }]
     }
 
-    assert successful == True
-    assert 1 == parser_info_out['last_iteration_parsed']
+    assert successful
+    assert parser_info_out['last_iteration_parsed'] == 1
     assert expected_parser_info_out['unparsed'] == parser_info_out['unparsed']
     assert expected_parser_info_out['parser_warnings'] == parser_info_out['parser_warnings']
 
@@ -194,7 +192,6 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
     (which can happen in the case of some kill, or Non regular termination of FLEUR)
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    import os
 
     filename = os.path.abspath('./files/outxml/special/Fortran_garbage_BeTi_out.xml')
 
@@ -231,9 +228,9 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
 
     #TODO maybe in the case on unpared, things should be initialized, here they are missing...
     def isNaN(num):
-        return num != num
+        return math.isnan(num)  #num != num
 
-    assert successful == True
+    assert successful
     assert exp_partial_simple_out_dict['energy'] == simple_out['energy']
     assert exp_partial_simple_out_dict['energy_hartree'] == simple_out['energy_hartree']
     assert isNaN(exp_partial_simple_out_dict['fermi_energy']) == isNaN(simple_out['fermi_energy'])
@@ -248,7 +245,6 @@ def test_parse_xmlout_file_empty_file():
     tests the behavior of the parse_xmlout_file routine in the case of an empty file
     """
     from aiida_fleur.parsers.fleur import parse_xmlout_file
-    import os
 
     filename = os.path.abspath('./files/outxml/special/empty_out.xml')
 
@@ -264,7 +260,7 @@ def test_parse_xmlout_file_empty_file():
         'unparsed': []
     }
 
-    assert successful == False
+    assert not successful
     assert expected_parser_info_out == parser_info_out
 
 
@@ -289,30 +285,31 @@ def test_fleurparse_all_xmlout_file(xmloutfile):
 
     simple_out, complex_out, parser_info_out, successful = parse_xmlout_file(xmloutfile)
 
-    assert successful == True
+    assert successful
 
 
 # parse_dos_file, test for different dos files with spin and without
-def parse_dos_file():
+@pytest.mark.skip(reason='Test is not implemented')
+def test_parse_dos_file():
     """
     test for the fleur dos file parser. test if right output, datastructures are produced without error
     """
     from aiida_fleur.parsers.fleur import parse_dos_file
-    pass
-
     # test if array data is prodcued without error
+    assert False
 
 
 # parse_bands_file
+@pytest.mark.skip(reason='Test is not implemented')
 def test_parse_bands_file():
     """
     test for band file parse routine.
     """
 
     from aiida_fleur.parsers.fleur import parse_bands_file
-    pass
 
     # test if a bandsdata object is produced
+    assert False
 
 
 # test the full parser itself. on all kinds of different output files.
