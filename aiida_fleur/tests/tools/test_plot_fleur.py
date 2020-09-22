@@ -83,8 +83,10 @@ def test_plot_fleur_multiple_wc_matplotlib(aiida_profile, read_dict_from_file):
 @pytest.mark.skip(reason='does work, but requires current masci-tool develop branch >0.10.3')
 def test_plot_fleur_single_wc_bokeh(aiida_profile, read_dict_from_file):
     """test if plot fleur can visualize a single workchain with bokeh backend"""
-
-    from bokeh.layouts import column  # gridplot
+    try: #bokeh is not a prerequisite of Aiida-Fleur, might become of masci-tools
+        from bokeh.layouts import column  # gridplot
+    except ImportError:
+        return
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_path = os.path.join(aiida_path, 'tests/files/jsons/fleur_outputpara.json')

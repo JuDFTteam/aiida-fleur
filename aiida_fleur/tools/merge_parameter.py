@@ -22,9 +22,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aiida.plugins import DataFactory
-from aiida.orm import Bool
+from aiida.orm import Bool, Dict
 from aiida.engine import calcfunction as cf
-Dict = DataFactory('dict')
+#Dict = DataFactory('dict')
 
 
 def merge_parameter(Dict1, Dict2, overwrite=True):
