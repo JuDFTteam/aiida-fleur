@@ -125,7 +125,7 @@ class FleurParser(Parser):
 
             if error_file_lines:
 
-                if type(error_file_lines) is type(b''):
+                if isinstance(error_file_lines, type(b'')):
                     error_file_lines = error_file_lines.replace(b'\x00', b' ')
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')
