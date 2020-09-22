@@ -125,6 +125,7 @@ class FleurParser(Parser):
 
             if error_file_lines:
 
+                error_file_lines = error_file_lines.replace('\x00', ' ')
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning('The following was written into std error and piped to {}'
                                         ' : \n {}'.format(errorfile, error_file_lines))
