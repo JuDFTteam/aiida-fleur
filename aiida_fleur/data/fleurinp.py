@@ -190,7 +190,7 @@ class FleurinpData(Data):
         """
         self._add_path(filename, dst_filename=dst_filename, node=node)
 
-    def open(self, key='inp.xml', mode='r'):
+    def open(self, path='inp.xml', mode='r', key=None):
         """
         Returns an open file handle to the content of this data node.
 
@@ -198,7 +198,12 @@ class FleurinpData(Data):
         :param mode: the mode with which to open the file handle
         :returns: A file handle in read mode
          """
-        return super(FleurinpData, self).open(key, mode=mode)
+        from aiida.orm.nodes.node import WarnWhenNotEntered  # deep import might change
+
+        if key is not None:
+            path = key
+
+        return WarnWhenNotEntered(self._repository.open(path, mode=mode), repr(self))
 
     def get_content(self, filename='inp.xml'):
         """
@@ -206,7 +211,7 @@ class FleurinpData(Data):
 
         :returns: A string of the file content
         """
-        with self.open(key=filename, mode='r') as handle:
+        with self.open(path=filename, mode='r') as handle:
             return handle.read()
 
     def del_file(self, filename):
