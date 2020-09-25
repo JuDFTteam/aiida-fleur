@@ -79,11 +79,11 @@ def import_extras(filename):
     """
 
     all_extras = {}
-
-    try:
-        all_extras = json.load(open(filename))
-    except json.JSONDecodeError:
-        print('The file has to be loadable by json. i.e json format (which it is not).')
+    with open(filename, mode='r') as file1:
+        try:
+            all_extras = json.load(file1)
+        except json.JSONDecodeError:
+            print('The file has to be loadable by json. i.e json format (which it is not).')
 
     for uuid, extras in six.iteritems(all_extras):
 

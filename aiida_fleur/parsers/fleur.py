@@ -202,9 +202,8 @@ class FleurParser(Parser):
 
         if has_xml_outfile:
             # open output file
-            outxmlfile_opened = output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r')
-            simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
-            outxmlfile_opened.close()
+            with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile_opened:
+                simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
 
             # Call routines for output node creation
             if not success:

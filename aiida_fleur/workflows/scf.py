@@ -521,13 +521,12 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
             fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
-            outxmlfile_opened = fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r')
-
             walltime = last_base_wc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-
-            tree = etree.parse(outxmlfile_opened)
+            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
+                                                      'r') as outxmlfile_opened:
+                tree = etree.parse(outxmlfile_opened)
             root = tree.getroot()
 
             energies = eval_xpath2(root, xpath_energy)
@@ -558,7 +557,6 @@ class FleurScfWorkChain(WorkChain):
                         forces_in_iter.append(force_z)
 
                     self.ctx.all_forces.append(forces_in_iter)
-            outxmlfile_opened.close()
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)

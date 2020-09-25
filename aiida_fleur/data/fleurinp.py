@@ -305,7 +305,7 @@ class FleurinpData(Data):
                 # except
 
             if file1 in node.list_object_names():
-                file1 = node.open(file1, mode='r')
+                file1 = node.open(file1, mode='r')  # Maybe has to use 'with' for aiida >2.0?
             else:  # throw error? you try to add something that is not there
                 raise ValueError('file1 has to be in the specified node')
 
@@ -343,7 +343,8 @@ class FleurinpData(Data):
         if is_filelike:
             self.put_object_from_filelike(file1, key)
             if file1.closed:
-                file1 = self.open(file1.name, file1.mode)
+                pass
+                #file1 = self.open(file1.name, file1.mode)
             else:  # reset reading to 0
                 file1.seek(0)
         else:
@@ -355,16 +356,16 @@ class FleurinpData(Data):
         if final_filename == 'inp.xml':
             # get input file version number
             inp_version_number = None
-            if is_filelike:  # at this point it was read..
-                # TODO this does not work.. reading it now is []..
-                inpfile = file1
-            else:
-                inpfile = open(file1, 'r')
-            for line in inpfile.readlines():
-                if re.search('fleurInputVersion', line):
-                    inp_version_number = re.findall(r'\d+.\d+', line)[0]
-                    break
-            inpfile.close()
+            #if is_filelike:  # at this point it was read..
+            #    # TODO this does not work.. reading it now is []..
+            #    #inpfile = file1
+            #    with open(file1.name, file1.mode) as
+            #else:
+            with open(file1, mode='r') as inpfile:
+                for line in inpfile.readlines():
+                    if re.search('fleurInputVersion', line):
+                        inp_version_number = re.findall(r'\d+.\d+', line)[0]
+                        break
             if inp_version_number is None:  # we raise after file closure
                 raise InputValidationError('No fleurInputVersion number found '
                                            'in given input file: {}. '
@@ -412,21 +413,19 @@ class FleurinpData(Data):
 
         # read xmlinp file into an etree with autocomplition from schema
         # we do not validate here because we want this to always succeed
-        inpxmlfile = self.open(key='inp.xml', mode='r')
 
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
         # dtd_validation=True
-
-        tree_x = etree.parse(inpxmlfile, parser)
-        inpxmlfile.close()
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            tree_x = etree.parse(inpxmlfile, parser)
 
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
         fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
         try:
-            with self.open('relax.xml', mode='r') as relax_file:
+            with self.open(path='relax.xml', mode='r') as relax_file:
                 relax_content = relax_file.read()
         except FileNotFoundError:
             relax_content = ''
@@ -447,7 +446,7 @@ class FleurinpData(Data):
         if not xmlschema.validate(tree_x):
             # get a more information on what does not validate
             message = ''
-            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema)
+            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema, encoding='utf-8')
             inpxmlfile = etree.tostring(tree_x)
             try:
                 tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
@@ -564,13 +563,13 @@ class FleurinpData(Data):
             return None
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
         if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -581,14 +580,14 @@ class FleurinpData(Data):
                 raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -784,13 +783,13 @@ class FleurinpData(Data):
             return False
 
         # else read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
         if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -801,14 +800,14 @@ class FleurinpData(Data):
                 raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -912,9 +911,8 @@ class FleurinpData(Data):
             return False
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml', mode='r')
-        new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
-        inpxmlfile.close()  # I don’t like this
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
         return new_parameters
 
     # Is there a way to give self to calcfunctions?
@@ -973,17 +971,20 @@ class FleurinpData(Data):
 
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
-            inpxmlfile = fleurinp.open(key='inp.xml')
             if fleurinp._schema_file_path:  # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True, remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
+                parser = etree.XMLParser(schema=xmlschema,
+                                         attribute_defaults=True,
+                                         remove_blank_text=True,
+                                         encoding='utf-8')
+                with fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile, parser)
             else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
-                parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
-            inpxmlfile.close()
+                parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True, encoding='utf-8')
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile, parser)
             #root = tree.getroot()
         else:
             raise InputValidationError('No inp.xml file yet specified, to add kpoints to.')
@@ -1040,16 +1041,16 @@ class FleurinpData(Data):
 
         if 'inp.xml' in self.files:
             # read in inpxml
-            inpxmlfile = self.open(key='inp.xml', mode='r')
             if self._schema_file_path:  # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)
                 #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                tree = etree.parse(inpxmlfile)  # , parser)
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)  # , parser)
             else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
-                tree = etree.parse(inpxmlfile)
-            inpxmlfile.close()
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)
             root = tree.getroot()
         else:
             raise InputValidationError('No inp.xml file yet specified, to get a tag from')

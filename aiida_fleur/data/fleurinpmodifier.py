@@ -487,7 +487,7 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            with self._original.open(key='inp.xml') as inpxmlfile:
+            with self._original.open(path='inp.xml') as inpxmlfile:
                 tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
@@ -561,15 +561,13 @@ def modify_fleurinpdata(original, modifications):
     from aiida_fleur.tools.xml_util import clear_xml
 
     new_fleurinp = original.clone()
-    # TODO test if file is there!
-    inpxmlfile = new_fleurinp.open(key='inp.xml')
     modification_tasks = modifications.get_dict()['tasks']
 
     xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
     xmlschema = etree.XMLSchema(xmlschema_doc)
     parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-
-    tree = etree.parse(inpxmlfile, parser)
+    with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
+        tree = etree.parse(inpxmlfile, parser)
 
     try:
         xmlschema.assertValid(clear_xml(tree))
