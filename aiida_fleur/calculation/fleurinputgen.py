@@ -473,7 +473,8 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
+        #cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
+        cmdline_params = ['-explicit']
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -481,7 +482,7 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        #codeinfo.stdin_name = self._INPUT_FILE_NAME
+        codeinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUT_FILE_NAME  # shell output will be piped in file
         codeinfo.stderr_name = self._ERROR_FILE_NAME  # std error too
 
