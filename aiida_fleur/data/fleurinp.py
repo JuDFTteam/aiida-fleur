@@ -24,6 +24,7 @@ input manipulation plus methods for extration of AiiDA data structures.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import io
 import re
 import six
 from lxml import etree
@@ -34,8 +35,7 @@ from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
-
-BOHR_A = 0.52917721092
+from aiida_fleur.common.constants import bohr_a as BOHR_A
 
 
 class FleurinpData(Data):
@@ -288,28 +288,42 @@ class FleurinpData(Data):
 
     def _add_path(self, file1, dst_filename=None, node=None):
         """
-        Add a single file to folder. The destination name can be different.
-        ``inp.xml`` is a special case.
-        file names are stored in the db, files in the repo.
+        Add a single file to the FleurinpData folder.
+        The destination name can be different. ``inp.xml`` is a special case.
+        file names are stored in the db, the whole file in the reporsitory.
 
+        :param file1: the file to be added, either string, absolute path, or filelike object whose contents to copy
+            Hint: Pass io.BytesIO(b"my string") to construct the file directly from a string.
+        :param dst_filename: string, new filename for given file in repo and db
+        :param node: aiida.orm.Node, usually FolderData if node is given get the 'file1' from the node
+
+        :raise: ValueError, InputValidationError
+        :return: None
         """
-        # TODO, only certain files should be allowed to be added
+        # TODO? Maybe only certain files should be allowed to be added
+        # contra: has to be maintained, also these files can be inputed from byte strings...
         #_list_of_allowed_files = ['inp.xml', 'enpara', 'cdn1', 'sym.out', 'kpts']
-
-        #old_file_list = self.get_folder_list()
 
         if node:
             if not isinstance(node, Node):
-                # try:
-                node = load_node(node)
-                # except
-
-            if file1 in node.list_object_names():
-                file1 = node.open(file1, mode='r')  # Maybe has to use 'with' for aiida >2.0?
-            else:  # throw error? you try to add something that is not there
+                node = load_node(node)  # if this fails it will raise
+            if file1 not in node.list_object_names():
+                # throw error, you try to add something that is not there
                 raise ValueError('file1 has to be in the specified node')
 
-        if isinstance(file1, six.string_types):
+            is_filelike = True
+            if dst_filename is None:
+                final_filename = file1
+            else:
+                final_filename = dst_filename
+            # Override file1 with bytestring of file
+            # since we have to use 'with', and node has no method to copy files
+            # we read the whole file and write it again later
+            # this is not so nice, but we assume that input files are rather small...
+            with node.open(file1, mode='rb') as file2:
+                file1 = io.BytesIO(file2.read())
+
+        elif isinstance(file1, six.string_types):
             is_filelike = False
 
             if not os.path.isabs(file1):
@@ -325,13 +339,20 @@ class FleurinpData(Data):
                 final_filename = dst_filename
         else:
             is_filelike = True
-            final_filename = os.path.basename(file1.name)
+            if dst_filename is None:
+                try:
+                    final_filename = os.path.basename(file1.name)  # Not sure if this still works for aiida>2.0
+                except AttributeError:
+                    final_filename = 'inp.xml'  # fall back to default
+            else:
+                final_filename = dst_filename
 
         key = final_filename
 
         old_file_list = self.list_object_names()
         old_files_list = self.get_attribute('files', [])
 
+        # remove file from folder first if it exists
         if final_filename not in old_file_list:
             old_files_list.append(final_filename)
         else:
@@ -341,37 +362,29 @@ class FleurinpData(Data):
                 pass
 
         if is_filelike:
-            self.put_object_from_filelike(file1, key)
-            if file1.closed:
-                pass
-                #file1 = self.open(file1.name, file1.mode)
-            else:  # reset reading to 0
-                file1.seek(0)
+            self.put_object_from_filelike(file1, key, mode='wb')
         else:
             self.put_object_from_file(file1, key)
 
-        self.set_attribute('files', old_files_list)
+        self.set_attribute('files', old_files_list)  # We want to keep the other files
 
+        ### Special case: 'inp.xml' ###
         # here this is hardcoded, might want to change? get filename from elsewhere
+
         if final_filename == 'inp.xml':
             # get input file version number
             inp_version_number = None
-            #if is_filelike:  # at this point it was read..
-            #    # TODO this does not work.. reading it now is []..
-            #    #inpfile = file1
-            #    with open(file1.name, file1.mode) as
-            #else:
-            with open(file1, mode='r') as inpfile:
-                for line in inpfile.readlines():
-                    if re.search('fleurInputVersion', line):
-                        inp_version_number = re.findall(r'\d+.\d+', line)[0]
-                        break
-            if inp_version_number is None:  # we raise after file closure
+            lines = self.get_content(filename=final_filename).split('\n')
+            for line in lines:
+                if re.search('fleurInputVersion', str(line)):
+                    inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
+                    break
+            if inp_version_number is None:
                 raise InputValidationError('No fleurInputVersion number found '
-                                           'in given input file: {}. '
+                                           'in given input file: {}. {}'
                                            'Please check if this is a valid fleur input file. '
                                            'It can not be validated and I can not use it. '
-                                           ''.format(file1))
+                                           ''.format(file1, lines))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
@@ -383,7 +396,6 @@ class FleurinpData(Data):
                            'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                         schemafile_paths))
                 raise InputValidationError(err_msg)
-            # or ('fleurInputVersion' in self.inp_userchanges): #(not)
             if self._schema_file_path is None:
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
@@ -394,7 +406,8 @@ class FleurinpData(Data):
                                'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                             schemafile_paths))
                 raise InputValidationError(err_msg)
-            # set inp dict of Fleurinpdata
+
+            # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
     def _set_inp_dict(self):
