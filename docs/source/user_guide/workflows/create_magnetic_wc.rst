@@ -78,21 +78,26 @@ The FleurCreateMagneticWorkChain employs
 `exposed`_ feature of the AiiDA-core, thus inputs for the
 :ref:`EOS<eos_wc>` and :ref:`relaxation<relax_wc>` workchains should be passed in the namespaces
 ``eos`` and ``relax`` correspondingly (see :ref:`example of usage<example_use_create_magnetic>`).
+Please note that the `structure` input node
+is excluded from the EOS namespace and from the Relax SCF namespace
+since corresponding input structures are created within the CreateMagnetic workchain.
 
-+---------------------+-------------------------------------+-------------------------------------+----------+
-| name                | type                                | description                         | required |
-+=====================+=====================================+=====================================+==========+
-| eos                 | namespace                           | inputs for nested EOS WC            | no       |
-+---------------------+-------------------------------------+-------------------------------------+----------+
-| relax               | namespace                           | inputs for nested Relax WC          | no       |
-+---------------------+-------------------------------------+-------------------------------------+----------+
-| wf_parameters       | :py:class:`~aiida.orm.Dict`         | Settings of the workchain           | no       |
-+---------------------+-------------------------------------+-------------------------------------+----------+
-| eos_output          | :py:class:`~aiida.orm.Dict`         | :ref:`EOS<eos_wc>` output dictionary| no       |
-+---------------------+-------------------------------------+-------------------------------------+----------+
-| optimized_structure | :py:class:`~aiida.orm.StructureData`| relaxed film structure              | no       |
-+---------------------+-------------------------------------+-------------------------------------+----------+
-
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| name                | type                                | description                                                                          | required |
++=====================+=====================================+======================================================================================+==========+
+| eos                 | namespace                           | inputs for nested EOS WC. structure input is excluded.                               | no       |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| relax               | namespace                           | inputs for nested Relax WC. structure input of SCF sub-namespace is excluded         | no       |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| wf_parameters       | :py:class:`~aiida.orm.Dict`         | Settings of the workchain                                                            | no       |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| eos_output          | :py:class:`~aiida.orm.Dict`         | :ref:`EOS<eos_wc>` output dictionary                                                 | no       |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| optimized_structure | :py:class:`~aiida.orm.StructureData`| relaxed film structure                                                               | no       |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
+| distance_suggestion | :py:class:`~aiida.orm.StructureData`| interatomic distance suggestion, output of                                           | no       |
+|                     |                                     | py:method:`~aiida_fleur.tools.StructureData_util.request_average_bond_length_store()`|          |
++---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
 
 Similarly to other workchains,
 FleurCreateMagneticWorkChain behaves
@@ -128,19 +133,21 @@ input combinations that implicitly define the workchain layout. **eos**, **relax
 **optimized_structure** and **eos_output** are analysed. Depending
 on the given setup of the inputs, one of four supported scenarios will happen:
 
-1. **eos** + **relax**:
+1. **eos** + **relax** + **distance_suggestion**:
 
     The EOS will be used to calculate the equilibrium structure
     of the substrate, then Relax WC will be used to relax the interlayer distances. Finally,
     the non-symmetrical magnetic structure will be created. A good choice if there is nothing
-    to begin with.
+    to begin with. **distance_suggestion** will be used to guess a better starting interlayer
+    distances before submitting Relax WC.
 
-2. **eos_output** + **relax**:
+2. **eos_output** + **relax** + **distance_suggestion**:
 
     The equilibrium substrate structure will be extracted from the **eos_output**,
     then Relax WC will be used to relax the interlayer distances. Finally,
     the non-symmetrical magnetic structure will be created. A good choice if EOS was previously done
-    for the substrate.
+    for the substrate. **distance_suggestion** will be used to guess a better starting interlayer
+    distances before submitting Relax WC.
 
 3. **optimized_structure**:
 

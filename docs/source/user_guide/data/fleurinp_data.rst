@@ -116,3 +116,62 @@ User Methods
       of a :py:class:`~aiida.orm.KpointsData` node in the
       inp.xml file returns a new
       :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance. It replaces old kpoints.
+
+.. _setting_labels:
+
+Setting up atom labels
+----------------------
+
+Label is a string that marks a certain atom in the ``inp.xml`` file. Labels are created automatically
+by the inpgen, however, in some cases it is helpful to control atom labeling. This can be done by
+setting up the kind name while initialising the structure:
+
+.. code-block:: python
+
+  structure = StructureData(cell=cell)
+  structure.append_atom(position=(0.0, 0.0, -z), symbols='Fe', name='Fe123')
+  structure.append_atom(position=(x, y, 0.0), symbols='Pt')
+  structure.append_atom(position=(0., 0., z), symbols='Pt')
+
+in this case both of the Pr atoms will get default labels, but 'Fe' atom will the label '123'
+(actually '                 123', but all of the methods in AiiDA-Fleur are implemented in a way
+that user should know only last digit characters).
+
+.. note::
+
+  Kind name, which is used for labeling, must begin from the element name and end up with a number.
+  It is **very important** that the first digit of the number is smaller than 4: ``152``, ``3``, ``21``
+  can be good choices, when ``492``, ``66``, ``91`` are forbidden.
+
+.. warning::
+
+  Except setting up the label, providing a kind name also creates a new specie. This is because
+  the ``123`` will not only appear as a label, but also in the atom number. In our case, the line
+  in the inpgen input corresponding to Fe atom will look like ``26.123 0 0 -z 123``. Hence,
+  if we would have another Fe atom with the default kind name, both of the Fe atom would belong
+  to different atom group, generally resulting in lower symmetry.
+
+Given labels can be used for simplified xml methods. For example,
+when one performs SOC calculations it might be needed to vary ``socscale`` parameter for a certain
+atom. Knowing the correct label of the atom, it is straightforward to make such a change in
+:class:`~aiida_fleur.data.fleurinp.FleurinpData` object
+(:ref:`using <modify_methods>` the :class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier`)
+or pass a corresponding
+line to ``inpxml_changes`` of workchain parameters:
+
+.. code-block:: python
+
+
+  # an example of inpxml_changes list, that sets socscale of the iron atom
+  # from the above structure to zero
+  inpxml_changes = [('set_species_label', {'at_label': '123',
+                                          'attributedict': {
+                                              'special': {'socscale': 0.0}
+                                              },
+                                          'create': True
+                                         })]
+
+  # in this example the atomgroup, to which the atom with label '222' belongs,
+  # will be modified
+  fm = FleurinpModifier(SomeFleurinp)
+  fm.set_atomgr_att_label(attributedict={'force': [('relaxXYZ', 'FFF')]}, atom_label='                 222')
