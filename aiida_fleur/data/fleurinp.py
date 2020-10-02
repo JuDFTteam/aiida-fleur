@@ -13,20 +13,18 @@
 In this module is the :class:`~aiida_fleur.data.fleurinp.FleurinpData` class, and methods for FLEUR
 input manipulation plus methods for extration of AiiDA data structures.
 """
-# TODO: all methods to change now in fleurinpmodifier, do we still want to
-# store the userchanges, or rather delete them? depends how well one can see things
-# from fleurinpmodifier...
 # TODO: maybe add a modify method which returns a fleurinpmodifier class
 # TODO: inpxml to dict: maybe kpts should not be written to the dict? same with symmetry
 # TODO: test for large input files, I believe the recursion is still quite slow..
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
-#TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
+# TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
 # TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import io
 import re
 import six
 from lxml import etree
@@ -37,8 +35,8 @@ from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
+from aiida_fleur.common.constants import bohr_a as BOHR_A
 
-BOHR_A = 0.52917721092
 
 class FleurinpData(Data):
     """
@@ -78,6 +76,11 @@ class FleurinpData(Data):
         Initialize a FleurinpData object set the files given
         """
         files = kwargs.pop('files', None)
+        for filename in files:
+            if 'inp.xml' in filename:
+                files.pop(files.index(filename))
+                files.append(filename)
+                break
         node = kwargs.pop('node', None)
         super(FleurinpData, self).__init__(**kwargs)
 
@@ -91,7 +94,7 @@ class FleurinpData(Data):
         search_paths.append('./')
 
         # Now add also python path maybe will be decaptivated
-        #if pythonpath is non existent catch error
+        # if pythonpath is non existent catch error
         try:
             pythonpath = os.environ['PYTHONPATH'].split(':')
         except KeyError:
@@ -99,7 +102,6 @@ class FleurinpData(Data):
 
         for path in pythonpath[:]:
             search_paths.append(path)
-
 
         self.set_attribute('_has_schema', False)
         self.set_attribute('_schema_file_path', None)
@@ -109,6 +111,9 @@ class FleurinpData(Data):
                 self.set_files(files, node=node)
             else:
                 self.set_files(files)
+
+    # ignore machine dependent attributes in hash
+    _hash_ignored_attributes = ['_schema_file_path', '_search_paths']
 
     @property
     def _has_schema(self):
@@ -185,16 +190,20 @@ class FleurinpData(Data):
         """
         self._add_path(filename, dst_filename=dst_filename, node=node)
 
-
-    def open(self, key='inp.xml', mode='r'):
+    def open(self, path='inp.xml', mode='r', key=None):
         """
         Returns an open file handle to the content of this data node.
 
         :param key: name of the file to be opened
         :param mode: the mode with which to open the file handle
         :returns: A file handle in read mode
-	 """
-        return super(FleurinpData, self).open(key, mode=mode)
+         """
+        from aiida.orm.nodes.node import WarnWhenNotEntered  # deep import might change
+
+        if key is not None:
+            path = key
+
+        return WarnWhenNotEntered(self._repository.open(path, mode=mode), repr(self))
 
     def get_content(self, filename='inp.xml'):
         """
@@ -202,9 +211,8 @@ class FleurinpData(Data):
 
         :returns: A string of the file content
         """
-        with self.open(key=filename, mode='r') as handle:
+        with self.open(path=filename, mode='r') as handle:
             return handle.read()
-
 
     def del_file(self, filename):
         """
@@ -216,12 +224,12 @@ class FleurinpData(Data):
         if filename in self.get_attribute('files'):
             try:
                 self.get_attribute('files').remove(filename)
-                #self._del_attribute(‘filename')
+                # self._del_attribute(‘filename')
             except AttributeError:
-                ## There was no file set
+                # There was no file set
                 pass
         # remove from sandbox folder
-        if filename in self.list_object_names():#get_folder_list():
+        if filename in self.list_object_names():  # get_folder_list():
             self.delete_object(filename)
 
     def find_schema(self, inp_version_number):
@@ -239,14 +247,14 @@ class FleurinpData(Data):
         """
         # user changed version number, or no file yet known.
         # TODO test if this still does the right thing if user adds one
-        #inp.xml and then an inp.xml with different version.
+        # inp.xml and then an inp.xml with different version.
         # or after copying and read
         schemafile_paths = []
 
-        for path in self._search_paths:#paths:
+        for path in self._search_paths:  # paths:
             for root, dirs, files in os.walk(path):
                 for file1 in files:
-                    if file1.endswith(".xsd"):
+                    if file1.endswith('.xsd'):
                         if ('Fleur' in file1) or ('fleur' in file1):
                             schemafile_path = os.path.join(root, file1)
                             schemafile_paths.append(schemafile_path)
@@ -258,20 +266,20 @@ class FleurinpData(Data):
                                 i = i + 1
                                 # This kind of hardcoded
                                 if re.search('name="FleurVersionType"', line):
-                                    imax = i + 10 # maybe make larger or different
+                                    imax = i + 10  # maybe make larger or different
                                     imin = i
                                     schema_version_numbers = []
-                                if (i > imin) and (i <= imax):
+                                if imin < i <= imax:
                                     if re.search('enumeration value', line):
                                         schema_version_number = re.findall(r'\d+.\d+', line)[0]
                                     elif re.search('simpleType>', line):
                                         break
                             schema_version_numbers.append(schema_version_number)
                             schemafile.close()
-                            #test if schemafiles works with multiple fleur versions
+                            # test if schemafiles works with multiple fleur versions
                             for version_number in schema_version_numbers:
                                 if version_number == inp_version_number:
-                                    #we found the right schemafile for the current inp.xml
+                                    # we found the right schemafile for the current inp.xml
                                     self.set_attribute('_schema_file_path', schemafile_path)
                                     self.set_attribute('_has_schema', True)
                                     return schemafile_paths, True
@@ -280,29 +288,42 @@ class FleurinpData(Data):
 
     def _add_path(self, file1, dst_filename=None, node=None):
         """
-        Add a single file to folder. The destination name can be different.
-        ``inp.xml`` is a special case.
-        file names are stored in the db, files in the repo.
+        Add a single file to the FleurinpData folder.
+        The destination name can be different. ``inp.xml`` is a special case.
+        file names are stored in the db, the whole file in the reporsitory.
 
+        :param file1: the file to be added, either string, absolute path, or filelike object whose contents to copy
+            Hint: Pass io.BytesIO(b"my string") to construct the file directly from a string.
+        :param dst_filename: string, new filename for given file in repo and db
+        :param node: aiida.orm.Node, usually FolderData if node is given get the 'file1' from the node
+
+        :raise: ValueError, InputValidationError
+        :return: None
         """
-        #TODO, only certain files should be allowed to be added
+        # TODO? Maybe only certain files should be allowed to be added
+        # contra: has to be maintained, also these files can be inputed from byte strings...
         #_list_of_allowed_files = ['inp.xml', 'enpara', 'cdn1', 'sym.out', 'kpts']
-
-        #old_file_list = self.get_folder_list()
-
 
         if node:
             if not isinstance(node, Node):
-                #try:
-                node = load_node(node)
-                #except
+                node = load_node(node)  # if this fails it will raise
+            if file1 not in node.list_object_names():
+                # throw error, you try to add something that is not there
+                raise ValueError('file1 has to be in the specified node')
 
-            if file1 in node.list_object_names():
-                file1 = node.open(file1, mode='r')
-            else:# throw error? you try to add something that is not there
-                raise ValueError("file1 has to be in the specified node")
+            is_filelike = True
+            if dst_filename is None:
+                final_filename = file1
+            else:
+                final_filename = dst_filename
+            # Override file1 with bytestring of file
+            # since we have to use 'with', and node has no method to copy files
+            # we read the whole file and write it again later
+            # this is not so nice, but we assume that input files are rather small...
+            with node.open(file1, mode='rb') as file2:
+                file1 = io.BytesIO(file2.read())
 
-        if isinstance(file1, six.string_types):
+        elif isinstance(file1, six.string_types):
             is_filelike = False
 
             if not os.path.isabs(file1):
@@ -310,7 +331,7 @@ class FleurinpData(Data):
                 #raise ValueError("Pass an absolute path for file1: {}".format(file1))
 
             if not os.path.isfile(file1):
-                raise ValueError("file1 must exist and must be a single file: {}".format(file1))
+                raise ValueError('file1 must exist and must be a single file: {}'.format(file1))
 
             if dst_filename is None:
                 final_filename = os.path.split(file1)[1]
@@ -318,14 +339,20 @@ class FleurinpData(Data):
                 final_filename = dst_filename
         else:
             is_filelike = True
-            final_filename = os.path.basename(file1.name)
-
+            if dst_filename is None:
+                try:
+                    final_filename = os.path.basename(file1.name)  # Not sure if this still works for aiida>2.0
+                except AttributeError:
+                    final_filename = 'inp.xml'  # fall back to default
+            else:
+                final_filename = dst_filename
 
         key = final_filename
 
         old_file_list = self.list_object_names()
         old_files_list = self.get_attribute('files', [])
 
+        # remove file from folder first if it exists
         if final_filename not in old_file_list:
             old_files_list.append(final_filename)
         else:
@@ -335,61 +362,52 @@ class FleurinpData(Data):
                 pass
 
         if is_filelike:
-            self.put_object_from_filelike(file1, key)
-            if file1.closed:
-                file1 = self.open(file1.name, file1.mode)
-            else: #reset reading to 0
-                file1.seek(0)
+            self.put_object_from_filelike(file1, key, mode='wb')
         else:
             self.put_object_from_file(file1, key)
 
-        self.set_attribute('files', old_files_list)
+        self.set_attribute('files', old_files_list)  # We want to keep the other files
 
+        ### Special case: 'inp.xml' ###
         # here this is hardcoded, might want to change? get filename from elsewhere
+
         if final_filename == 'inp.xml':
-            #get input file version number
+            # get input file version number
             inp_version_number = None
-            if is_filelike: # at this point it was read..
-                # TODO this does not work.. reading it now is []..
-                inpfile = file1
-            else:
-                inpfile = open(file1, 'r')
-            for line in inpfile.readlines():
-                if re.search('fleurInputVersion', line):
-                    inp_version_number = re.findall(r'\d+.\d+', line)[0]
+            lines = self.get_content(filename=final_filename).split('\n')
+            for line in lines:
+                if re.search('fleurInputVersion', str(line)):
+                    inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
                     break
-            inpfile.close()
-            if inp_version_number is None: # we raise after file closure
-                raise InputValidationError("No fleurInputVersion number found "
-                                           "in given input file: {}. "
-                                           "Please check if this is a valid fleur input file. "
-                                           "It can not be validated and I can not use it. "
-                                           "".format(file1))
+            if inp_version_number is None:
+                raise InputValidationError('No fleurInputVersion number found '
+                                           'in given input file: {}. {}'
+                                           'Please check if this is a valid fleur input file. '
+                                           'It can not be validated and I can not use it. '
+                                           ''.format(file1, lines))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
-
             if (not self._has_schema) and (self._schema_file_path is None):
-                err_msg = ("No XML schema file (.xsd) with matching version number {} "
-                           "to the inp.xml file was found. I have looked here: {} "
-                           "and have found only these schema files for Fleur: {}. "
-                           "I need this file to validate your input and to know the structure "
-                           "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                                        self._search_paths,
+                err_msg = ('No XML schema file (.xsd) with matching version number {} '
+                           'to the inp.xml file was found. I have looked here: {} '
+                           'and have found only these schema files for Fleur: {}. '
+                           'I need this file to validate your input and to know the structure '
+                           'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                         schemafile_paths))
                 raise InputValidationError(err_msg)
-            if self._schema_file_path is None:# or ('fleurInputVersion' in self.inp_userchanges): #(not)
+            if self._schema_file_path is None:
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
-                    err_msg = ("No XML schema file (.xsd) with matching version number {} "
-                               "to the inp.xml file was found. I have looked here: {} "
-                               "and have found only these schema files for Fleur: {}. "
-                               "I need this file to validate your input and to know the structure "
-                               "of the current inp.xml file, sorry.".format(inp_version_number,
-                                                                            self._search_paths,
+                    err_msg = ('No XML schema file (.xsd) with matching version number {} '
+                               'to the inp.xml file was found. I have looked here: {} '
+                               'and have found only these schema files for Fleur: {}. '
+                               'I need this file to validate your input and to know the structure '
+                               'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                             schemafile_paths))
                 raise InputValidationError(err_msg)
-            # set inp dict of Fleurinpdata
+
+            # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
     def _set_inp_dict(self):
@@ -402,25 +420,54 @@ class FleurinpData(Data):
         4. set inputxml_dict
         """
         from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict, clear_xml
+        import tempfile
         # get inpxml structure
         inpxmlstructure = get_inpxml_file_structure()
 
         # read xmlinp file into an etree with autocomplition from schema
-        inpxmlfile = self.open(key='inp.xml', mode='r')
+        # we do not validate here because we want this to always succeed
 
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True)
-        #dtd_validation=True
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+        # dtd_validation=True
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            tree_x = etree.parse(inpxmlfile, parser)
 
-        tree_x = etree.parse(inpxmlfile, parser)
-        inpxmlfile.close()
+        # relax.xml should be available to be used in xinclude
+        # hence copy relax.xml from the retrieved node into the temp file
+        fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        try:
+            with self.open(path='relax.xml', mode='r') as relax_file:
+                relax_content = relax_file.read()
+        except FileNotFoundError:
+            relax_content = ''
+        fo.write(relax_content)
+        tempfile_name = fo.name
+        fo.close()
+
+        # replace relax.xml by the temp file path
+        tree_x_string = etree.tostring(tree_x)
+        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
+        tree_x = etree.fromstring(tree_x_string).getroottree()
+
         # replace XInclude parts to validate against schema
         tree_x = clear_xml(tree_x)
+        os.remove(tempfile_name)
 
         # check if it validates against the schema
         if not xmlschema.validate(tree_x):
-            raise InputValidationError("Input file is not validated against the schema.")
+            # get a more information on what does not validate
+            message = ''
+            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema, encoding='utf-8')
+            inpxmlfile = etree.tostring(tree_x)
+            try:
+                tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
+            except etree.XMLSyntaxError as msg:
+                message = msg
+                raise InputValidationError('Input file does not validate against the schema: {}'.format(message))
+
+            raise InputValidationError('Input file is not validated against the schema.' 'Reason is unknown')
 
         # convert etree into python dictionary
         root = tree_x.getroot()
@@ -437,8 +484,8 @@ class FleurinpData(Data):
         """
         return self.get_attribute('inp_dict', {})
 
-
     # TODO better validation? other files, if has a schema
+
     def _validate(self):
         """
         A validation method. Checks if an ``inp.xml`` file is in the FleurinpData.
@@ -448,12 +495,11 @@ class FleurinpData(Data):
         super(FleurinpData, self)._validate()
 
         if 'inp.xml' in self.files:
-            #has_inpxml = True # does nothing so far
+            # has_inpxml = True # does nothing so far
             pass
         else:
             raise ValidationError('inp.xml file not in attribute "files". '
                                   'FleurinpData needs to have and inp.xml file!')
-
 
     def get_fleur_modes(self):
         '''
@@ -473,15 +519,18 @@ class FleurinpData(Data):
         #    'dos': '/fleurInput/output',
         #    'band': '/fleurInput/output',
         #    'jspins': '/fleurInput/calculationSetup/magnetism',
-        fleur_modes = {'jspins' : '', 'dos' : '', 'band' : '', 'ldau' : '', 'forces' : '',
-                       'force_theorem': ''}
+        fleur_modes = {'jspins': '', 'dos': '', 'band': '', 'ldau': '', 'forces': '', 'force_theorem': '', 'gw': ''}
         if 'inp.xml' in self.files:
             fleur_modes['jspins'] = self.inp_dict['calculationSetup']['magnetism']['jspins']
-            fleur_modes['dos'] = self.inp_dict['output']['dos']#'fleurInput']
+            fleur_modes['dos'] = self.inp_dict['output']['dos']  # 'fleurInput']
             fleur_modes['band'] = self.inp_dict['output']['band']
             fleur_modes['forces'] = self.inp_dict['calculationSetup']['geometryOptimization']['l_f']
             fleur_modes['force_theorem'] = 'forceTheorem' in self.inp_dict
-            ldau = False # TODO test if ldau in inp_dict....
+            try:
+                fleur_modes['gw'] = int(self.inp_dict['calculationSetup']['expertModes']['gw']) != 0
+            except KeyError:
+                fleur_modes['gw'] = False
+            ldau = False  # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
         return fleur_modes
 
@@ -496,10 +545,10 @@ class FleurinpData(Data):
         from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
 
-        #StructureData = DataFactory(‘structure’)
-        #Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
-        #therefore maintainance might be needed, if you want to circumvent this, you have
-        #to get all the paths from somewhere.
+        # StructureData = DataFactory(‘structure’)
+        # Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
+        # therefore maintainance might be needed, if you want to circumvent this, you have
+        # to get all the paths from somewhere.
 
         #######
         # all hardcoded xpaths used and attributes names:
@@ -527,13 +576,13 @@ class FleurinpData(Data):
             return None
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
-        if self._schema_file_path: # Schema there, parse with schema
+        if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -541,35 +590,35 @@ class FleurinpData(Data):
                 p = c.getparent()
                 p.remove(c)
             if not xmlschema.validate(tree):
-                raise ValueError("Input file is not validated against the schema.")
-        else: #schema not there, parse without
+                raise ValueError('Input file is not validated against the schema.')
+        else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
         # get cell matrix from inp.xml
-        row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
+        row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)  # [0].text.split()
         cell = None
 
-        if row1: #bulk calculation
+        if row1:  # bulk calculation
             row1 = row1[0].text.split()
             row2 = root.xpath(bravaismatrix_bulk_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
 
             cell = [row1, row2, row3]
             # create new structure Node
@@ -577,17 +626,17 @@ class FleurinpData(Data):
             struc.pbc = [True, True, True]
 
         elif root.xpath(bravaismatrix_film_xpath + row1_tag_name):
-            #film calculation
+            # film calculation
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
-            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+                row3[i] = float(cor) * BOHR_A
+            # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             struc = StructureData(cell=cell)
             struc.pbc = [True, True, False]
@@ -598,13 +647,13 @@ class FleurinpData(Data):
                   'not supported.')
             return None
 
-        #get species for atom kinds
+        # get species for atom kinds
         #species = root.xpath(species_xpath)
         species_name = root.xpath(species_xpath + '/@' + species_attrib_name)
         species_element = root.xpath(species_xpath + '/@' + species_attrib_element)
         # alternativ: loop over species and species.get(species_attrib_name)
 
-        #save species info in a dict
+        # save species info in a dict
         species_dict = {}
         for i, spec in enumerate(species_name):
             species_dict[spec] = {species_attrib_element: species_element[i]}
@@ -622,26 +671,24 @@ class FleurinpData(Data):
             group_atom_positions_rel = atom_group.xpath(atom_group_tag_relpos)
             group_atom_positions_film = atom_group.xpath(atom_group_tag_filmpos)
 
-            if group_atom_positions_abs: #we have absolute positions
+            if group_atom_positions_abs:  # we have absolute positions
                 for atom in group_atom_positions_abs:
                     postion_a = atom.text.split()
                     # allow for math *, /
                     for i, pos in enumerate(postion_a):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_a[i] = float(temppos[0])/float(temppos[1])
+                            postion_a[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in pos:
                             temppos = pos.split('*')
-                            postion_a[i] = float(temppos[0])*float(temppos[1])
+                            postion_a[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_a[i] = float(pos)
-                        postion_a[i] = postion_a[i]*BOHR_A
+                        postion_a[i] = postion_a[i] * BOHR_A
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=postion_a,
-                        symbols=species_dict[current_species][species_attrib_element])
+                    struc.append_atom(position=postion_a, symbols=species_dict[current_species][species_attrib_element])
 
-            elif group_atom_positions_rel: #we have relative positions
+            elif group_atom_positions_rel:  # we have relative positions
                 # TODO: check if film or 1D calc, because this is not allowed! I guess
                 for atom in group_atom_positions_rel:
                     postion_r = atom.text.split()
@@ -649,10 +696,10 @@ class FleurinpData(Data):
                     for i, pos in enumerate(postion_r):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_r[i] = float(temppos[0])/float(temppos[1])
+                            postion_r[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in pos:
                             temppos = pos.split('*')
-                            postion_r[i] = float(temppos[0])*float(temppos[1])
+                            postion_r[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_r[i] = float(pos)
 
@@ -660,12 +707,11 @@ class FleurinpData(Data):
                     new_abs_pos = rel_to_abs(postion_r, cell)
 
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element])
+                    struc.append_atom(position=new_abs_pos,
+                                      symbols=species_dict[current_species][species_attrib_element])
 
-            elif group_atom_positions_film: # Do we support mixture always, or only in film case?
-                #either support or throw error
+            elif group_atom_positions_film:  # Do we support mixture always, or only in film case?
+                # either support or throw error
                 for atom in group_atom_positions_film:
                     # film pos are rel rel abs, therefore only transform first two coordinates
                     postion_f = atom.text.split()
@@ -673,27 +719,26 @@ class FleurinpData(Data):
                     for i, pos in enumerate(postion_f):
                         if '/' in pos:
                             temppos = pos.split('/')
-                            postion_f[i] = float(temppos[0])/float(temppos[1])
+                            postion_f[i] = float(temppos[0]) / float(temppos[1])
                         elif '*' in postion_f[i]:
                             temppos = pos.split('*')
-                            postion_f[i] = float(temppos[0])*float(temppos[1])
+                            postion_f[i] = float(temppos[0]) * float(temppos[1])
                         else:
                             postion_f[i] = float(pos)
                     # now transform to absolute Positions
-                    postion_f[2] = postion_f[2]*BOHR_A
+                    postion_f[2] = postion_f[2] * BOHR_A
                     new_abs_pos = rel_to_abs_f(postion_f, cell)
                     # append atom to StructureData
-                    struc.append_atom(
-                        position=new_abs_pos,
-                        symbols=species_dict[current_species][species_attrib_element])
+                    struc.append_atom(position=new_abs_pos,
+                                      symbols=species_dict[current_species][species_attrib_element])
             else:
-                print('I should never get here, 1D not supported yet, '
-                      'I only know relPos, absPos, filmPos')
-                #TODO throw error
+                # TODO throw error
+                print('I should never get here, 1D not supported yet, ' 'I only know relPos, absPos, filmPos')
+                # TODO throw error
         # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(self, label='self.structure', link_type=LinkType.CREATE)
-        #label='self.structure'
-        #return {label : struc}
+        # label='self.structure'
+        # return {label : struc}
         return struc
 
     @cf
@@ -708,8 +753,6 @@ class FleurinpData(Data):
         """
         return self.get_structuredata_ncf()
 
-
-
     def get_kpointsdata_ncf(self):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
@@ -720,17 +763,16 @@ class FleurinpData(Data):
         """
         from aiida.orm import KpointsData
 
-
-        #HINT, TODO:? in this routine, the 'cell' you might get in an other way
-        #exp: StructureData.cell, but for this you have to make a structureData Node,
+        # HINT, TODO:? in this routine, the 'cell' you might get in an other way
+        # exp: StructureData.cell, but for this you have to make a structureData Node,
         # which might take more time for structures with lots of atoms.
         # then just parsing the cell from the inp.xml
-        #as in the routine get_structureData
+        # as in the routine get_structureData
 
-        #Disclaimer: this routine needs some xpath expressions.
-        #these are hardcoded here, therefore maintainance might be needed,
+        # Disclaimer: this routine needs some xpath expressions.
+        # these are hardcoded here, therefore maintainance might be needed,
         # if you want to circumvent this, you have
-        #to get all the paths from somewhere.
+        # to get all the paths from somewhere.
 
         #######
         # all hardcoded xpaths used and attributes names:
@@ -754,13 +796,13 @@ class FleurinpData(Data):
             return False
 
         # else read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
-        if self._schema_file_path: # Schema there, parse with schema
+        if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -768,51 +810,51 @@ class FleurinpData(Data):
                 p = c.getparent()
                 p.remove(c)
             if not xmlschema.validate(tree):
-                raise ValueError("Input file is not validated against the schema.")
-        else: #schema not there, parse without
+                raise ValueError('Input file is not validated against the schema.')
+        else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # get cell matrix from inp.xml
         cell = None
-        row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)#[0].text.split()
+        row1 = root.xpath(bravaismatrix_bulk_xpath + row1_tag_name)  # [0].text.split()
 
-        if row1: #bulk calculation
+        if row1:  # bulk calculation
             row1 = row1[0].text.split()
             row2 = root.xpath(bravaismatrix_bulk_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_bulk_xpath + row3_tag_name)[0].text.split()
             # TODO? allow math?
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
+                row3[i] = float(cor) * BOHR_A
 
             cell = [row1, row2, row3]
-            #set boundary conditions
+            # set boundary conditions
             pbc1 = [True, True, True]
 
         elif root.xpath(bravaismatrix_film_xpath + row1_tag_name):
-            #film calculation
+            # film calculation
             row1 = root.xpath(bravaismatrix_film_xpath + row1_tag_name)[0].text.split()
             row2 = root.xpath(bravaismatrix_film_xpath + row2_tag_name)[0].text.split()
             row3 = root.xpath(bravaismatrix_film_xpath + row3_tag_name)[0].text.split()
             for i, cor in enumerate(row1):
-                row1[i] = float(cor)*BOHR_A
+                row1[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row2):
-                row2[i] = float(cor)*BOHR_A
+                row2[i] = float(cor) * BOHR_A
             for i, cor in enumerate(row3):
-                row3[i] = float(cor)*BOHR_A
-            #row3 = [0, 0, 0]#? TODO:what has it to be in this case?
+                row3[i] = float(cor) * BOHR_A
+            # row3 = [0, 0, 0]#? TODO:what has it to be in this case?
             cell = [row1, row2, row3]
             pbc1 = [True, True, False]
 
@@ -835,8 +877,8 @@ class FleurinpData(Data):
             for kpoint in kpoints:
                 kpoint_pos = kpoint.text.split()
                 for i, kval in enumerate(kpoint_pos):
-                    kpoint_pos[i] = float(kval)/float(posscale[0])
-                    kpoint_weight = float(kpoint.get(kpoint_attrib_weight))/float(weightscale[0])
+                    kpoint_pos[i] = float(kval) / float(posscale[0])
+                    kpoint_weight = float(kpoint.get(kpoint_attrib_weight)) / float(weightscale[0])
                 kpoints_pos.append(kpoint_pos)
                 kpoints_weight.append(kpoint_weight)
             totalw = 0
@@ -849,12 +891,11 @@ class FleurinpData(Data):
             kps.set_kpoints(kpoints_pos, cartesian=False, weights=kpoints_weight)
             #kps.add_link_from(self, label='fleurinp.kpts', link_type=LinkType.CREATE)
             kps.label = 'fleurinp.kpts'
-            #return {label: kps}
+            # return {label: kps}
             return kps
-        else: # TODO parser other kpoints formats, if they fit in an AiiDA node
+        else:  # TODO parser other kpoints formats, if they fit in an AiiDA node
             print('No kpoint list in inp.xml')
             return None
-
 
     @cf
     def get_kpointsdata(self):
@@ -867,7 +908,6 @@ class FleurinpData(Data):
         """
 
         return self.get_kpointsdata_ncf()
-
 
     def get_parameterdata_ncf(self):
         """
@@ -884,11 +924,9 @@ class FleurinpData(Data):
             return False
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml', mode='r')
-        new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
-        inpxmlfile.close() # I don’t like this
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
         return new_parameters
-
 
     # Is there a way to give self to calcfunctions?
     @staticmethod
@@ -942,27 +980,27 @@ class FleurinpData(Data):
         # add new inp.xml to fleurinpdata
 
         if not isinstance(KpointsDataNode, KpointsData):
-            raise InputValidationError(
-                "The node given is not a valid KpointsData node.")
+            raise InputValidationError('The node given is not a valid KpointsData node.')
 
         if 'inp.xml' in fleurinp.files:
             # read in inpxml
-            inpxmlfile = fleurinp.open(key='inp.xml')
-            if fleurinp._schema_file_path: # Schema there, parse with schema
+            if fleurinp._schema_file_path:  # Schema there, parse with schema
                 xmlschema_doc = etree.parse(fleurinp._schema_file_path)
                 xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True,
-                                         remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
-            else: #schema not there, parse without
+                parser = etree.XMLParser(schema=xmlschema,
+                                         attribute_defaults=True,
+                                         remove_blank_text=True,
+                                         encoding='utf-8')
+                with fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile, parser)
+            else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
-                parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
-            inpxmlfile.close()
+                parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True, encoding='utf-8')
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile, parser)
             #root = tree.getroot()
         else:
-            raise InputValidationError(
-                "No inp.xml file yet specified, to add kpoints to.")
+            raise InputValidationError('No inp.xml file yet specified, to add kpoints to.')
 
         #cell_k = KpointsDataNode.cell
 
@@ -976,26 +1014,25 @@ class FleurinpData(Data):
             totalw = totalw + weight
         #weightscale = totalw
 
-        new_kpo = etree.Element('kPointList', posScale="1.000", weightScale="1.0", count="{}".format(nkpts))
+        new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
         for i, kpos in enumerate(kpoint_list[0]):
-            new_k = etree.Element('kPoint', weight="{}".format(kpoint_list[1][i]))
-            new_k.text = "{} {} {}".format(kpos[0], kpos[1], kpos[2])
+            new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
+            new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
             new_kpo.append(new_k)
 
         new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
-        #use _write_new_fleur_xmlinp_file(fleurinp, inp_file_xmltree, fleur_change_dic):
+        # use _write_new_fleur_xmlinp_file(fleurinp, inp_file_xmltree, fleur_change_dic):
 
-        #TODO this should be sourced out to other methods.
+        # TODO this should be sourced out to other methods.
         # somehow directly writing inp.xml does not work, create new one
-        inpxmlfile = os.path.join(
-            fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
+        inpxmlfile = os.path.join(fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
 
         # write new inp.xml, schema evaluation will be done when the file gets added
         new_tree.write(inpxmlfile, pretty_print=True)
         print(('wrote tree to' + str(inpxmlfile)))
 
         # delete old inp.xml file, not needed anymore
-        #TODO maybe do some checks before
+        # TODO maybe do some checks before
         fleurinp.del_file('inp.xml')
 
         # now the new inp.xml file is added and with that the inpxml_dict will
@@ -1017,29 +1054,27 @@ class FleurinpData(Data):
 
         if 'inp.xml' in self.files:
             # read in inpxml
-            inpxmlfile = self.open(key='inp.xml', mode='r')
-            if self._schema_file_path: # Schema there, parse with schema
+            if self._schema_file_path:  # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)
                 #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                tree = etree.parse(inpxmlfile)#, parser)
-            else: #schema not there, parse without
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)  # , parser)
+            else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
-                tree = etree.parse(inpxmlfile)
-            inpxmlfile.close()
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)
             root = tree.getroot()
         else:
-            raise InputValidationError(
-                "No inp.xml file yet specified, to get a tag from")
+            raise InputValidationError('No inp.xml file yet specified, to get a tag from')
 
         try:
             return_value = root.xpath(xpath)
         except etree.XPathEvalError:
-            raise InputValidationError(
-                'There was a XpathEvalError on the xpath: {} \n Either it does '
-                'not exist, or something is wrong with the expression.'
-                ''.format(xpath))
-            return []
+            raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
+                                       'not exist, or something is wrong with the expression.'
+                                       ''.format(xpath))
+
         if len(return_value) == 1:
             return return_value
         else:

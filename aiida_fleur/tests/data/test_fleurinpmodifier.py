@@ -9,6 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+''' Contains tests for modifing FleurinpData with Fleurinpmodifier '''
 
 from __future__ import absolute_import
 import os
@@ -32,9 +33,12 @@ def test_fleurinp_modifier1(create_fleurinp):
     fm.set_species('all', {'mtSphere': {'radius': 3.333}})
     fm.undo()
     changes = fm.changes()
-    assert changes == [
-        ('set_inpchanges', {'Kmax': 3.9, 'dos': True}), ('shift_value', {'Kmax': 0.1}, 'rel'),
-        ('shift_value_species_label', '                 222', 'radius', 3, 'abs')]
+    assert changes == [('set_inpchanges', {
+        'Kmax': 3.9,
+        'dos': True
+    }), ('shift_value', {
+        'Kmax': 0.1
+    }, 'rel'), ('shift_value_species_label', '                 222', 'radius', 3, 'abs')]
 
     fm.show(validate=True)
     fm.freeze()
@@ -59,8 +63,7 @@ def test_fleurinp_modifier2(create_fleurinp, inpxml_etree):
     fm.xml_set_all_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
     fm.xml_set_first_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
     fm.xml_set_attribv_occ('/fleurInput/calculationSetup/soc', 'theta', 12)
-    fm.set_species_label("                 222", {'mtSphere': {'radius': 3.333}})
-    fm.set_atomgr_att_label(
-        attributedict={'force': [('relaxXYZ', 'FFF')]}, atom_label="                 222")
-    fm.set_atomgr_att(attributedict={'force': [('relaxXYZ', 'TFF')]}, species="Fe-1")
+    fm.set_species_label('                 222', {'mtSphere': {'radius': 3.333}})
+    fm.set_atomgr_att_label(attributedict={'force': [('relaxXYZ', 'FFF')]}, atom_label='                 222')
+    fm.set_atomgr_att(attributedict={'force': [('relaxXYZ', 'TFF')]}, species='Fe-1')
     fm.show()

@@ -1,0 +1,84 @@
+Here are some guidelines/conventions for AiiDA-FLEUR developers.
+
+GENERAL:
+########
+
+Keep in mind that this software will be used by others and build on top on.
+So keep your code clean and be careful with any API changes.
+Coding Style: PeP8
+
+Naming convention:
+------------------
+Classes are named in CamelCase i.e FleurCalculation
+Constants are named in ALLCAPS
+for other variables use lowercase with underscores
+
+WORKCHAINS GENERAL:
+
+1. Every Workflow/Workchain needs a clear documentation of input, output!
+   Think this through and be very careful to change it later on, because you will break the code of others!
+   Therefore, thinking about good names (see below) is not wasted time.
+
+2. Reuse as much of previous workflows as possible, use subworkflows.
+(otherwise your code explodes, is hard to understand again und not reusable)
+
+3. If you think some processing is common or might be useful for something else,
+make it modular, and import the method (goes along with point 2.).
+
+4. Try to keep the workflow context clean!
+   This part will always be saved and visible, there people can track what is going on.
+
+5. Write clear report statements in the workflow report.
+
+6. Exit code conventions:
+   See https://aiida-fleur.readthedocs.io/en/v1.1.1/user_guide/hints/exit_codes.html
+   Everything from 0-200 is used by AiiDA-core.
+   If you implement a new exit code it has to be added to this list.
+
+7. ERROR handling:
+
+Error handling is very important and might take a lot of effort.
+Write at least an outline (named: inspect_xx, handle_xx), which skeleton for all the errors (treated or not). (look at the AiiDA QE workflows as example)
+Now iterative implement every time you encounter a 'crash' because something failed a proper exit code.
+
+Keep in mind, your workflow should never:
+
+7.1 end up in a while true (because of a calculation or subworkflow failure)
+7.2 crash with at a later point, because a calculation, or subworkflow failed, or due to other errors.
+(The user won't understand so easily what happend, also this makes it impossible to build useful error handling of your workflow on top (when using your workflow as a subworkflow))
+....
+
+
+##########################
+
+AiiDA-FLEUR specific:
+
+1. Output nodes of a workflow has the link naming convention 'output_name_description'
+   i.e 'output_scf_wc_para'
+
+2. Every workflow should give back one parameter output node named 'output_wcname_para'
+   which contains all the 'physical results' the workflow is designed to provide,
+   or at least information to access these results directly (if stored in files and so on)
+   further the node should contain valuable information to make sense/judge the quality of the data.
+
+   Try to design this node in a way that if you take a look at it, you understand
+   the following questions:
+
+   which workflow was run, what version?
+   what came out?  What was put in, how can I see what was put in?
+   Is this valuable or garbage?
+
+3. so far name Fleur workflows/workchains name: FleurNameWorkChain
+
+4. Every time the implementation changes the provenance of calculations or workchain classes their
+   respected version numbers have to be increased. Changes in a calculation plugin always change
+   the version of the aiida-fleur package. In general be careful chang
+
+5. AiiDA-Fleur specific Database migration: Try to make them obsolete. Therefore, avoid renameing
+classes which are nodes, link labels, or the provenance of node classes.
+
+Link naming convention:
+
+Node label convention:
+
+Descriptions convention:

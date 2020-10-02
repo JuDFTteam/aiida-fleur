@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 This test runs the fleur_convergence workflow for path 2
 """
@@ -21,21 +22,23 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
-codename = 'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
-codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
+codename = 'inpgen_iff@local_iff'  #'inpgen_mac_30_11_2016@local_mac'
+codename2 = 'fleur_iff@local_iff'  #'fleur_mac_v0_27@local_mac'
 ###############################
 
 code = Code.get_from_string(codename)
 code2 = Code.get_from_string(codename2)
 
-wf_para = Dict(dict={'relax_runmax' : 4, 
-                              'density_criterion' : 0.0000002,
-                              'energy_criterion' : 0.0005,
-                              'converge_energy' : True, 
-                              'converge_density' : True})
+wf_para = Dict(
+    dict={
+        'relax_runmax': 4,
+        'density_criterion': 0.0000002,
+        'energy_criterion': 0.0005,
+        'converge_energy': True,
+        'converge_density': True
+    })
 fleurinp = load_node(1339)
 remote = load_node(1353)
 wf_para = load_node(1333)
 
-res = FleurScfWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp,
-                            remote_data= remote, fleur=code2)
+res = FleurScfWorkChain.run(wf_parameters=wf_para, fleurinp=fleurinp, remote_data=remote, fleur=code2)

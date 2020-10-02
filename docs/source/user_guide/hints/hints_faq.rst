@@ -26,5 +26,3 @@ FAQ
 ---
 
 to come
-
-

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 'beta': {'all': 1.57079},                   # see description below
 'sqas_theta': [0.0, 1.57079, 1.57079],      # a list of theta values for the FT
 'sqas_phi': [0.0, 0.0, 1.57079],            # a list of phi values for the FT

@@ -1,3 +1,14 @@
+## v1.1.1
+### release compatible with AiiDA-core 1.4.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- bugfixes and other general improvements
+- new: BandDos workchain: workchain for Band and DOS calculation using the new Fleur BandDOS file
+- basic workchains are now cachable, by moving cf out of workchains
+- first calcjob and workchain regression tests for outside CI env
+- provenance of the result nodes of magnetic workchains is fixed
+- corehole and initial_cls workchain are fixed and working
+- exit codes for inpgen parser
+
 ## v1.1.0
 ### release compatible with AiiDA-core 1.1.0
 - support of Fleur Max4 version (release branch)
@@ -122,4 +133,3 @@ Version for used at the MAX AiiDA-fleur tutorial in May 2017
 
 ### Workflows
 - Some basic sketches of basic workflows available (working AiiDa workflow system just released)i
-

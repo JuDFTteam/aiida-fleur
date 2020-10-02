@@ -53,7 +53,7 @@ coverage.xml
 *,cover
 .hypothesis/
 aiida_fleur/tests/coverage
-
+aiida_fleur/tests/local_exe/
 # Translations
 *.mo
 *.pot
@@ -143,4 +143,3 @@ Temporary Items
 .vscode
 
 # End of https://www.gitignore.io/api/python,linux,macos
-

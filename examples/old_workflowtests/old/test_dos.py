@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # /usr/bin/env python
 """
 This test runs the Fleur dos workflow
@@ -29,7 +30,6 @@ fleurinp = load_node(1684)
 fleur_calc = load_node(1693)
 remote = fleur_calc.out.remote_folder
 #wf_para = ParameterData(dict={})
-
 
 res = fleur_dos_wc.run(fleurinp=fleurinp, remote=remote, fleur=code2)
 #res = dos.run(wf_parameters=wf_para, fleurinp=fleurinp, fleur_calc=remote, fleur=code2)

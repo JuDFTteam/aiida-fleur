@@ -51,5 +51,3 @@ Fleur tools/utility
 .. automodule:: aiida_fleur.tool.xml_util.py
 
 .. automodule:: aiida_fleur.tools.merge_parameter.py
-
-

@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
     In this module you find the workflow 'FleurSSDispConvWorkChain' for the calculation of
     Spin Spiral energy Dispersion converging all the directions.
@@ -32,37 +31,28 @@ class FleurSSDispConvWorkChain(WorkChain):
         This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
-    _wf_default = {
-        'beta': {'all': 1.57079},
-        'q_vectors': {'label': [0.0, 0.0, 0.0],
-                      'label2': [0.125, 0.0, 0.0]
-                      }
-    }
+    _wf_default = {'beta': {'all': 1.57079}, 'q_vectors': {'label': [0.0, 0.0, 0.0], 'label2': [0.125, 0.0, 0.0]}}
 
     @classmethod
     def define(cls, spec):
         super(FleurSSDispConvWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
 
-        spec.outline(
-            cls.start,
-            cls.converge_scf,
-            cls.get_results,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
-                       message="Invalid workchain parameters.")
-        spec.exit_code(340, 'ERROR_ALL_QVECTORS_FAILED',
-                       message="Convergence SSDisp calculation failed for all q-vectors.")
-        spec.exit_code(341, 'ERROR_SOME_QVECTORS_FAILED',
-                       message="Convergence SSDisp calculation failed for some q-vectors.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(340,
+                       'ERROR_ALL_QVECTORS_FAILED',
+                       message='Convergence SSDisp calculation failed for all q-vectors.')
+        spec.exit_code(341,
+                       'ERROR_SOME_QVECTORS_FAILED',
+                       message='Convergence SSDisp calculation failed for some q-vectors.')
 
     def start(self):
         """
@@ -88,8 +78,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(
-                extra_keys)
+            error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(extra_keys)
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -108,9 +97,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         inputs = {}
         for key, q_vector in six.iteritems(self.ctx.wf_dict['q_vectors']):
             inputs[key] = self.get_inputs_scf()
-            inputs[key].calc_parameters['qss'] = {'x': q_vector[0],
-                                                  'y': q_vector[1],
-                                                  'z': q_vector[2]}
+            inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
             inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
             res = self.submit(FleurScfWorkChain, **inputs[key])
             self.to_context(**{key: res})
@@ -132,9 +119,12 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label',
-                                                  {'attributedict': {'nocoParams': [('beta', val)]},
-                                                   'atom_label': key}))
+            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+                'attributedict': {
+                    'nocoParams': [('beta', val)]
+                },
+                'atom_label': key
+            }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -165,9 +155,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             try:
                 outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = (
-                    'One SCF workflow failed, no scf output node: {}.'
-                    ' I skip this one.'.format(label))
+                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 continue
 
@@ -175,9 +163,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', 'failed')
             if not isinstance(t_e, float):
-                message = (
-                    'Did not manage to extract float total energy from one '
-                    'SCF workflow: {}'.format(label))
+                message = ('Did not manage to extract float total energy from one ' 'SCF workflow: {}'.format(label))
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
@@ -205,16 +191,18 @@ class FleurSSDispConvWorkChain(WorkChain):
             if label not in six.iterkeys(self.ctx.energydict):
                 failed_labels.append(label)
 
-        out = {'workflow_name': self.__class__.__name__,
-               'workflow_version': self._workflowversion,
-               # 'initial_structure': self.inputs.structure.uuid,
-               'energies': self.ctx.energydict,
-               'q_vectors': self.ctx.wf_dict['q_vectors'],
-               'failed_labels': failed_labels,
-               'energy_units': 'eV',
-               'info': self.ctx.info,
-               'warnings': self.ctx.warnings,
-               'errors': self.ctx.errors}
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            # 'initial_structure': self.inputs.structure.uuid,
+            'energies': self.ctx.energydict,
+            'q_vectors': self.ctx.wf_dict['q_vectors'],
+            'failed_labels': failed_labels,
+            'energy_units': 'eV',
+            'info': self.ctx.info,
+            'warnings': self.ctx.warnings,
+            'errors': self.ctx.errors
+        }
 
         # create link to workchain node
         out = save_output_node(Dict(dict=out))

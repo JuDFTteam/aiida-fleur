@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module contains useful methods for handling xml trees and files which are used
 by the Fleur code and the fleur plugin.
@@ -23,7 +22,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from lxml import etree
 import six
-from six.moves import range
 
 from aiida.common.exceptions import InputValidationError
 
@@ -34,11 +32,16 @@ def is_sequence(arg):
     """
     if isinstance(arg, str):
         return False
-    return (not hasattr(arg, "strip") and
-            hasattr(arg, "__getitem__") or
-            hasattr(arg, "__iter__"))
+    elif hasattr(arg, '__iter__'):
+        return True
+    elif not hasattr(arg, 'strip') and hasattr(arg, '__getitem__'):
+        return True
+    else:
+        return False
+
 
 ##### CONVERTERS ############
+
 
 def convert_to_float(value_string, parser_info_out=None, suc_return=True):
     """
@@ -54,16 +57,14 @@ def convert_to_float(value_string, parser_info_out=None, suc_return=True):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info_out['parser_warnings'].append('Could not convert: "{}" to float, TypeError'
-                                                  ''.format(value_string))
+        parser_info_out['parser_warnings'].append('Could not convert: "{}" to float, TypeError' ''.format(value_string))
         if suc_return:
             return value_string, False
         else:
             return value_string
     except ValueError:
-        parser_info_out['parser_warnings'].append(
-            'Could not convert: "{}" to float, ValueError'
-            ''.format(value_string))
+        parser_info_out['parser_warnings'].append('Could not convert: "{}" to float, ValueError'
+                                                  ''.format(value_string))
         if suc_return:
             return value_string, False
         else:
@@ -88,17 +89,13 @@ def convert_to_int(value_string, parser_info_out=None, suc_return=True):
     try:
         value = int(value_string)
     except TypeError:
-        parser_info_out['parser_warnings'].append(
-            'Could not convert: "{}" to int, TypeError'
-            ''.format(value_string))
+        parser_info_out['parser_warnings'].append('Could not convert: "{}" to int, TypeError' ''.format(value_string))
         if suc_return:
             return value_string, False
         else:
             return value_string
     except ValueError:
-        parser_info_out['parser_warnings'].append(
-            'Could not convert: "{}" to int, ValueError'
-            ''.format(value_string))
+        parser_info_out['parser_warnings'].append('Could not convert: "{}" to int, ValueError' ''.format(value_string))
         if suc_return:
             return value_string, False
         else:
@@ -155,14 +152,12 @@ def convert_from_fortran_bool(stringbool):
         if stringbool in true_items:
             return True
         else:
-            raise InputValidationError(
-                "A string: {} for a boolean was given, which is not 'True',"
-                " 'False', 't', 'T', 'F' or 'f'".format(stringbool))
+            raise InputValidationError("A string: {} for a boolean was given, which is not 'True',"
+                                       " 'False', 't', 'T', 'F' or 'f'".format(stringbool))
     elif isinstance(stringbool, bool):
         return stringbool  # no convertion needed...
     else:
-        raise TypeError("convert_to_fortran_bool accepts only a string or "
-                        "bool as argument")
+        raise TypeError('convert_to_fortran_bool accepts only a string or ' 'bool as argument')
 
 
 def convert_to_fortran_bool(boolean):
@@ -182,19 +177,18 @@ def convert_to_fortran_bool(boolean):
             new_string = 'F'
             return new_string
     elif isinstance(boolean, str):  # basestring):
-        if boolean == 'True' or boolean == 't' or boolean == 'T':
+        if boolean in ('True', 't', 'T'):
             new_string = 'T'
             return new_string
-        elif boolean == 'False' or boolean == 'f' or boolean == 'F':
+        elif boolean in ('False', 'f', 'F'):
             new_string = 'F'
             return new_string
         else:
-            raise InputValidationError(
-                "A string: {} for a boolean was given, which is not 'True',"
-                "'False', 't', 'T', 'F' or 'f'".format(boolean))
+            raise InputValidationError("A string: {} for a boolean was given, which is not 'True',"
+                                       "'False', 't', 'T', 'F' or 'f'".format(boolean))
     else:
-        raise TypeError("convert_to_fortran_bool accepts only a string or "
-                        "bool as argument, given {} ".format(boolean))
+        raise TypeError('convert_to_fortran_bool accepts only a string or '
+                        'bool as argument, given {} '.format(boolean))
 
 
 def convert_to_fortran_string(string):
@@ -238,6 +232,7 @@ def set_dict_or_not(para_dict, key, value):
     else:
         para_dict[key] = value
         return para_dict
+
 
 ####### XML SETTERS GENERAL ##############
 
@@ -323,9 +318,7 @@ def xml_set_all_attribv(xmltree, xpathn, attributename, attribv, create=False):
     nodes = eval_xpath3(root, xpathn, create=create)
     if is_sequence(attribv):
         for i, node in enumerate(nodes):
-            if not isinstance(attribv[i], str):  # type(attribv) != type(''):
-                attribv[i] = str(attribv[i])
-            node.set(attributename, attribv[i])
+            node.set(attributename, str(attribv[i]))
     else:
         if not isinstance(attribv, str):  # type(attribv) != type(''):
             attribv = str(attribv)
@@ -420,8 +413,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
         try:
             newelement = etree.Element(newelement)
         except ValueError as v:
-            raise ValueError('{}. If this is a species, are you sure this species exists '
-                             'in your inp.xml?'.format(v))
+            raise ValueError('{}. If this is a species, are you sure this species exists ' 'in your inp.xml?'.format(v))
     nodes = eval_xpath3(xmlnode, xpath, create=create)
     if nodes:
         for node_1 in nodes:
@@ -444,8 +436,7 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                         try:
                             current = tag_order.index(name)
                         except ValueError:
-                            raise ValueError('Did not find existing tag name in the tag_order list'
-                                             ': {}'.format(name))
+                            raise ValueError('Did not find existing tag name in the tag_order list' ': {}'.format(name))
                         if current > prev:
                             prev = current
                         else:
@@ -516,6 +507,9 @@ def delete_tag(xmltree, xpath):
     :param xpathn: a path to the tag to be deleted
     """
     root = xmltree.getroot()
+    if root is None:  # eval will fail in this case
+        return xmltree
+
     nodes = eval_xpath3(root, xpath)
     if nodes:
         for node in nodes:
@@ -636,19 +630,13 @@ def get_inpgen_para_from_xml(inpxmlfile):
     # &comp
     # attrib = get_xml_attribute(
     comp_dict = {}
-    comp_dict = set_dict_or_not(comp_dict, 'jspins',
-                                convert_to_float(eval_xpath(root, jspins_xpath), suc_return=False))
-    comp_dict = set_dict_or_not(comp_dict, 'frcor',
-                                convert_from_fortran_bool(eval_xpath(root, frcor_xpath)))
-    comp_dict = set_dict_or_not(comp_dict, 'ctail',
-                                convert_from_fortran_bool(eval_xpath(root, ctail_xpath)))
+    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_float(eval_xpath(root, jspins_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'frcor', convert_from_fortran_bool(eval_xpath(root, frcor_xpath)))
+    comp_dict = set_dict_or_not(comp_dict, 'ctail', convert_from_fortran_bool(eval_xpath(root, ctail_xpath)))
     comp_dict = set_dict_or_not(comp_dict, 'kcrel', eval_xpath(root, kcrel_xpath))
-    comp_dict = set_dict_or_not(comp_dict, 'gmax',
-                                convert_to_float(eval_xpath(root, gmax_xpath), suc_return=False))
-    comp_dict = set_dict_or_not(comp_dict, 'gmaxxc',
-                                convert_to_float(eval_xpath(root, gmaxxc_xpath), suc_return=False))
-    comp_dict = set_dict_or_not(comp_dict, 'kmax',
-                                convert_to_float(eval_xpath(root, kmax_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'gmax', convert_to_float(eval_xpath(root, gmax_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'gmaxxc', convert_to_float(eval_xpath(root, gmaxxc_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'kmax', convert_to_float(eval_xpath(root, kmax_xpath), suc_return=False))
     new_parameters['comp'] = comp_dict
 
     # &atoms
@@ -722,7 +710,9 @@ def get_inpgen_para_from_xml(inpxmlfile):
 
     return new_parameters
 
+
 ####### XML SETTERS SPECIAL ########
+
 
 def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False):
     """
@@ -730,7 +720,7 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     method for a certain atom specie that corresponds to an atom with a given label
 
     :param fleurinp_tree_copy: xml etree of the inp.xml
-    :param at_label: string, a label of the atom which specie will be changed
+    :param at_label: string, a label of the atom which specie will be changed. 'all' to change all the species
     :param attributedict: a python dict specifying what you want to change.
     :param create: bool, if species does not exist create it and all subtags?
     """
@@ -740,9 +730,12 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
         return fleurinp_tree_copy
 
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
+    species_to_set = []
+
+    # set all species, where given label is present
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
         if not positions:
@@ -750,9 +743,12 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
+    species_to_set = list(set(species_to_set))
+
+    for specie in species_to_set:
+        fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
 
     return fleurinp_tree_copy
 
@@ -791,6 +787,8 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     # number, other parameters
     if species_name == 'all':
         xpath_species = '/fleurInput/atomSpecies/species'
+    elif species_name[:4] == 'all-':  #format all-<string>
+        xpath_species = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
     else:
         xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
 
@@ -805,16 +803,9 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
     # can we get this out of schema file?
     species_seq = [
-        'mtSphere',
-        'atomicCutoffs',
-        'energyParameters',
-        'prodBasis',
-        'special',
-        'force',
-        'electronConfig',
-        'nocoParams',
-        'ldaU',
-        'lo']
+        'mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force', 'electronConfig',
+        'nocoParams', 'ldaU', 'lo'
+    ]
 
     for key, val in six.iteritems(attributedict):
         if key == 'mtSphere':  # always in inp.xml
@@ -835,12 +826,11 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 
             # there can be multible LO tags, so I expect either one or a list
             if isinstance(val, dict):
-                create_tag(
-                    fleurinp_tree_copy,
-                    xpath_species,
-                    'lo',
-                    place_index=species_seq.index('lo'),
-                    tag_order=species_seq)
+                create_tag(fleurinp_tree_copy,
+                           xpath_species,
+                           'lo',
+                           place_index=species_seq.index('lo'),
+                           tag_order=species_seq)
                 for attrib, value in six.iteritems(val):
                     xml_set_all_attribv(fleurinp_tree_copy, xpath_lo, attrib, value, create=True)
             else:  # I expect a list of dicts
@@ -849,27 +839,25 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                 # ggf create more lo tags of needed
                 los_need = len(val)  # - nlonodes
                 for j in range(0, los_need):
-                    create_tag(
-                        fleurinp_tree_copy,
-                        xpath_species,
-                        'lo',
-                        place_index=species_seq.index('lo'),
-                        tag_order=species_seq)
+                    create_tag(fleurinp_tree_copy,
+                               xpath_species,
+                               'lo',
+                               place_index=species_seq.index('lo'),
+                               tag_order=species_seq)
                 for i, lodict in enumerate(val):
                     for attrib, value in six.iteritems(lodict):
                         sets = []
-                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/lo'))//los_need):
+                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/lo')) // los_need):
                             sets.append(k * los_need + i)
                         xml_set_attribv_occ(fleurinp_tree_copy, xpath_lo, attrib, value, occ=sets)
 
         elif key == 'electronConfig':
             # eval electronConfig and ggf create tag at right place.
-            eval_xpath3(
-                fleurinp_tree_copy,
-                xpath_electron_config,
-                create=True,
-                place_index=species_seq.index('electronConfig'),
-                tag_order=species_seq)
+            eval_xpath3(fleurinp_tree_copy,
+                        xpath_electron_config,
+                        create=True,
+                        place_index=species_seq.index('electronConfig'),
+                        tag_order=species_seq)
 
             for tag in ['coreConfig', 'valenceConfig', 'stateOccupation']:
                 for etag, edictlist in six.iteritems(val):
@@ -884,36 +872,57 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                             parent.remove(occ)
                         if isinstance(edictlist, dict):
                             for attrib, value in six.iteritems(edictlist):
-                                xml_set_all_attribv(
-                                    fleurinp_tree_copy, xpath_core_occ, attrib, value, create=True)
+                                xml_set_all_attribv(fleurinp_tree_copy, xpath_core_occ, attrib, value, create=True)
                         else:  # I expect a list of dicts
                             nodes_need = len(edictlist)
                             for j in range(0, nodes_need):
-                                create_tag(
-                                    fleurinp_tree_copy,
-                                    xpath_electron_config,
-                                    'stateOccupation',
-                                    create=True)
+                                create_tag(fleurinp_tree_copy, xpath_electron_config, 'stateOccupation', create=True)
                             for i, occdict in enumerate(edictlist):
                                 # override them one after one
                                 sets = []
-                                for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_core_occ))//nodes_need):
+                                for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_core_occ)) // nodes_need):
                                     sets.append(k * nodes_need + i)
                                 for attrib, value in six.iteritems(occdict):
-                                    xml_set_attribv_occ(
-                                        fleurinp_tree_copy, xpath_core_occ, attrib, value, occ=sets)
+                                    xml_set_attribv_occ(fleurinp_tree_copy, xpath_core_occ, attrib, value, occ=sets)
 
                     else:
                         xpathconfig = xpath_electron_config + '/{}'.format(etag)
-                        xml_set_all_text(
-                            fleurinp_tree_copy,
-                            xpathconfig,
-                            edictlist,
-                            create=create,
-                            tag_order=['coreConfig', 'valenceConfig', 'stateOccupation'])
+                        xml_set_all_text(fleurinp_tree_copy,
+                                         xpathconfig,
+                                         edictlist,
+                                         create=create,
+                                         tag_order=['coreConfig', 'valenceConfig', 'stateOccupation'])
         elif key == 'ldaU':
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
+            #Same policy as los: delete existing ldaU and add the ldaU specified
+            existingldaus = eval_xpath3(fleurinp_tree_copy, xpath_lda_u)
+            for ldau in existingldaus:
+                parent = ldau.getparent()
+                parent.remove(ldau)
+
+            if isinstance(val, dict):
+                create_tag(fleurinp_tree_copy,
+                           xpath_species,
+                           'ldaU',
+                           place_index=species_seq.index('ldaU'),
+                           tag_order=species_seq)
+                for attrib, value in six.iteritems(val):
+                    xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
+            else:  #list of dicts
+
+                ldaus_needed = len(val)
+                for j in range(0, ldaus_needed):
+                    create_tag(fleurinp_tree_copy,
+                               xpath_species,
+                               'ldaU',
+                               place_index=species_seq.index('ldaU'),
+                               tag_order=species_seq)
+                for i, ldaudict in enumerate(val):
+                    for attrib, value in six.iteritems(ldaudict):
+                        sets = []
+                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/ldaU')) // ldaus_needed):
+                            sets.append(k * ldaus_needed + i)
+                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lda_u, attrib, value, occ=sets)
+
         elif key == 'special':
             eval_xpath3(fleurinp_tree_copy,
                         xpath_soc_scale,
@@ -921,12 +930,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                         place_index=species_seq.index('special'),
                         tag_order=species_seq)
             for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(
-                    fleurinp_tree_copy,
-                    xpath_soc_scale,
-                    attrib,
-                    value,
-                    create=create)
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpath_species, attrib, value)
 
@@ -936,10 +940,21 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
 def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_given, mode='abs'):
     """
     Shifts value of a specie by label
+    if at_label contains 'all' then applies to all species
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param at_label: string, a label of the atom which specie will be changed. 'all' if set up all species
+    :param attr_name: name of the attribute to change
+    :param value_given: value to add or to multiply by
+    :param mode: 'rel' for multiplication or 'abs' for addition
     """
+    import numpy as np
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    if at_label != 'all':
+        at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    species_to_set = []
 
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
@@ -947,44 +962,49 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
             positions = eval_xpath2(group, 'relPos')
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
-            if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+            if at_label in ['all', atom_label]:
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
-    xpath_mt = '{}/mtSphere'.format(xpath_species)
-    xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
-    xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
-    xpath_final = 'initialise'
+    species_to_set = list(set(species_to_set))
 
-    if attr_name in ['radius', 'gridPoints', 'logIncrement']:
-        xpath_final = xpath_mt
-    elif attr_name in ['lmax', 'lnonsphr']:
-        xpath_final = xpath_atomic_cutoffs
-    elif attr_name in ['s', 'p', 'd', 'f']:
-        xpath_final = xpath_energy_parameters
+    for specie in species_to_set:
 
-    old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name]))
+        xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
 
-    if not old_val:
-        print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
-    else:
-        old_val = float(old_val[0])
+        xpath_mt = '{}/mtSphere'.format(xpath_species)
+        xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
+        xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
+        xpath_final = 'initialise'
 
-    if mode == 'rel':
-        value = value_given * old_val
-    elif mode == 'abs':
-        value = value_given + old_val
-    else:
-        raise ValueError("Mode should be 'res' or 'abs' only")
+        if attr_name in ['radius', 'gridPoints', 'logIncrement']:
+            xpath_final = xpath_mt
+        elif attr_name in ['lmax', 'lnonsphr']:
+            xpath_final = xpath_atomic_cutoffs
+        elif attr_name in ['s', 'p', 'd', 'f']:
+            xpath_final = xpath_energy_parameters
 
-    if attr_name in ['radius', 'logIncrement']:
-        value_to_write = value
-    else:
-        if not value.is_integer():
-            raise ValueError('You are trying to write a float to an integer attribute')
-        value_to_write = int(value)
+        old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name])))
 
-    xml_set_first_attribv(fleurinp_tree_copy, xpath_final, attr_name,value_to_write)
+        if old_val.size == 0:
+            print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
+        else:
+            old_val = old_val.astype('float')
+
+        if mode == 'rel':
+            value = value_given * old_val
+        elif mode == 'abs':
+            value = value_given + old_val
+        else:
+            raise ValueError("Mode should be 'res' or 'abs' only")
+
+        if attr_name in ['radius', 'logIncrement']:
+            value_to_write = value
+        else:
+            if not np.all(value == value.astype('int')):
+                raise ValueError('You are trying to write a float to an integer attribute')
+            value_to_write = value.astype('int')
+
+        xml_set_all_attribv(fleurinp_tree_copy, xpath_final, attr_name, value_to_write)
 
     return fleurinp_tree_copy
 
@@ -993,16 +1013,32 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`
     method for a certain atom specie that corresponds to an atom with a given label.
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param at_label: string, a label of the atom which specie will be changed. 'all' to change all the species
+    :param attributedict: a python dict specifying what you want to change.
+
+    :return fleurinp_tree_copy: xml etree of the new inp.xml
+
+    **attributedict** is a python dictionary containing dictionaries that specify attributes
+    to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
+    can be done via::
+
+        'attributedict': {'nocoParams': [('beta', val)]}
+
+    ``force`` and ``nocoParams`` keys are supported.
+    To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
 
     if at_label == 'all':
-        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
-                                               species='all')
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species='all')
         return fleurinp_tree_copy
 
     specie = ''
-    at_label = "{: >20}".format(at_label)
+    at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    species_to_set = []
 
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
@@ -1011,12 +1047,15 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None,
-                                           species=specie)
+    species_to_set = list(set(species_to_set))
+
+    for specie in species_to_set:
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=specie)
 
     return fleurinp_tree_copy
+
 
 def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None):
     """
@@ -1068,6 +1107,7 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
             xml_set_all_attribv(fleurinp_tree_copy, xpathatmgroup, attrib, value)
 
     return fleurinp_tree_copy
+
 
 def set_inpchanges(fleurinp_tree_copy, change_dict):
     """
@@ -1224,6 +1264,7 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
 
     return new_tree
 
+
 def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
     """
     Shifts numertical values of some tags directly in the inp.xml file.
@@ -1256,8 +1297,8 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
         if not old_val:
             print('Can not find {} attribute in the inp.xml, skip it'.format(key))
             continue
-        else:
-            old_val = float(old_val[0])
+
+        old_val = float(old_val[0])
 
         if mode == 'rel':
             value = value_given * old_val
@@ -1275,6 +1316,7 @@ def shift_value(fleurinp_tree_copy, change_dict, mode='abs'):
 
     new_tree = set_inpchanges(fleurinp_tree_copy, change_to_write)
     return new_tree
+
 
 def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None):
     """
@@ -1319,6 +1361,7 @@ def add_num_to_att(xmltree, xpathn, attributename, set_val, mode='abs', occ=None
         # something was wrong, ...
     return xmltree
 
+
 def set_nkpts(fleurinp_tree_copy, count, gamma):
     """
     Sets a k-point mesh directly into inp.xml
@@ -1335,10 +1378,35 @@ def set_nkpts(fleurinp_tree_copy, count, gamma):
     #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
 
     tree = fleurinp_tree_copy
-    new_kpo = etree.Element(
-        'kPointCount',
-        count="{}".format(count),
-        gamma="{}".format(gamma))
+    new_kpo = etree.Element('kPointCount', count='{}'.format(count), gamma='{}'.format(gamma))
+    new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
+
+    return new_tree
+
+
+def set_kpath(fleurinp_tree_copy, kpath, count, gamma):
+    """
+    Sets a k-path directly into inp.xml
+
+    :param fleurinp_tree_copy: a lxml tree that represents inp.xml
+    :param kpath: a dictionary with kpoint name as key and k point coordinate as value
+    :param count: number of k-points
+    :param gamma: a fortran-type boolean that controls if the gamma-point should be included
+                    in the k-point mesh
+
+    :returns new_tree: a lxml tree with applied changes
+    """
+
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/altKPointSet/kPointCount'
+    #kpoint_xpath = '/fleurInput/calculationSetup/bzIntegration/kPoint*'
+
+    tree = fleurinp_tree_copy
+    new_kpo = etree.Element('kPointCount', count='{}'.format(count), gamma='{}'.format(gamma))
+    for key in kpath:
+        new_k = etree.Element('specialPoint', name='{}'.format(key))
+        new_k.text = '{} {} {}'.format(kpath[key][0], kpath[key][1], kpath[key][2])
+        new_kpo.append(new_k)
+
     new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
 
     return new_tree
@@ -1404,22 +1472,20 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
     try:
         return_value = node.xpath(xpath)
     except etree.XPathEvalError:
-        message = (
-            'There was a XpathEvalError on the xpath: {} \n Either it does '
-            'not exist, or something is wrong with the expression.'
-            ''.format(xpath))
+        message = ('There was a XpathEvalError on the xpath: {} \n Either it does '
+                   'not exist, or something is wrong with the expression.'
+                   ''.format(xpath))
         raise etree.XPathEvalError(message)
 
     if return_value == []:
         if create:
-            x_pieces = [e for e in xpath.split('/') if e != ""]
+            x_pieces = [e for e in xpath.split('/') if e != '']
             #x_pieces = xpath.split('/')
             xpathn = ''
             for piece in x_pieces[:-1]:
                 xpathn = xpathn + '/' + piece
             # this is REKURSIV! since create tag calls eval_xpath3
-            create_tag(node, xpathn, x_pieces[-1], create=create,
-                       place_index=place_index, tag_order=tag_order)
+            create_tag(node, xpathn, x_pieces[-1], create=create, place_index=place_index, tag_order=tag_order)
             return_value = node.xpath(xpath)
             return return_value
         else:
@@ -1445,22 +1511,19 @@ def get_xml_attribute(node, attributename, parser_info_out=None):
             return attrib_value
         else:
             if parser_info_out:
-                parser_info_out['parser_warnings'].append(
-                    'Tried to get attribute: "{}" from element {}.\n '
-                    'I recieved "{}", maybe the attribute does not exist'
-                    ''.format(attributename, node, attrib_value))
+                parser_info_out['parser_warnings'].append('Tried to get attribute: "{}" from element {}.\n '
+                                                          'I recieved "{}", maybe the attribute does not exist'
+                                                          ''.format(attributename, node, attrib_value))
             else:
-                print((
-                    'Can not get attributename: "{}" from node "{}", '
-                    'because node is not an element of etree.'
-                    ''.format(attributename, node)))
+                print(('Can not get attributename: "{}" from node "{}", '
+                       'because node is not an element of etree.'
+                       ''.format(attributename, node)))
             return None
     else:  # something doesn't work here, some nodes get through here
         if parser_info_out:
-            parser_info_out['parser_warnings'].append(
-                'Can not get attributename: "{}" from node "{}", '
-                'because node is not an element of etree.'
-                ''.format(attributename, node))
+            parser_info_out['parser_warnings'].append('Can not get attributename: "{}" from node "{}", '
+                                                      'because node is not an element of etree.'
+                                                      ''.format(attributename, node))
         else:
             print(('Can not get attributename: "{}" from node "{}", '
                    'because node is not an element of etree.'
@@ -1521,9 +1584,8 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, fleur_change_dic, xmlinpstruct
             xpath_set = pos_xpaths[key]
             xml_set_text(xmltree_new, xpath_set, fleur_change_dic[key])
         else:
-            raise InputValidationError(
-                "You try to set the key:'{}' to : '{}', but the key is unknown"
-                " to the fleur plug-in".format(key, fleur_change_dic[key]))
+            raise InputValidationError("You try to set the key:'{}' to : '{}', but the key is unknown"
+                                       ' to the fleur plug-in'.format(key, fleur_change_dic[key]))
     return xmltree_new
 
 
@@ -1659,60 +1721,56 @@ def get_inpxml_file_structure():
     # All attributes (allowed to change?)
 
     # switches can be 'T' ot 'F' # TODO: alphabetical sorting
-    all_switches_once = (
-        'dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco',
-        'ctail', 'swsp', 'lflip', 'off', 'spav', 'l_soc', 'soc66', 'pot8',
-        'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk', 'cdinf',
-        'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice',
-        'pallst', 'form66', 'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
+    all_switches_once = ('dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco', 'ctail', 'swsp', 'lflip', 'off', 'spav',
+                         'l_soc', 'soc66', 'pot8', 'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk',
+                         'cdinf', 'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice', 'pallst', 'form66',
+                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
 
     all_switches_several = ('calculate', 'flipSpin')
 
-    int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins',
-                           'gw', 'isec1', 'nx', 'ny', 'nz', 'ndir', 'layers',
-                           'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
+    int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins', 'gw', 'isec1', 'nx', 'ny', 'nz',
+                           'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
 
-    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta',
-                             'phi', 'epsdisp', 'epsforce',
-                             'valenceElectrons', 'fermiSmearingEnergy', 'ellow',
-                             'elup', 'scale', 'dTilda', 'dVac', 'minEnergy',
-                             'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2',
-                             'locy2', 'tworkf', 'minEigenval', 'maxEigenval',
-                             'forcealpha', 'force_converged')
+    float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 'phi', 'epsdisp',
+                             'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'ellow', 'elup', 'scale', 'dTilda',
+                             'dVac', 'minEnergy', 'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2', 'locy2', 'tworkf',
+                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
 
-    string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp',
-                              'xcFunctional', 'fleurInputVersion', 'species', 'forcemix')
+    string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp', 'xcFunctional', 'fleurInputVersion',
+                              'species', 'forcemix')
 
     other_attributes_once = tuple(
-        list(int_attributes_once) +
-        list(float_attributes_once) +
-        list(string_attributes_once))
-    other_attributes_once1 = (
-        'isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd',
-        'imix', 'alpha', 'spinf', 'minDistance',
-        'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr',
-        'epsdisp', 'epsforce', 'valenceElectrons', 'mode',
-        'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz', 'ellow', 'elup',
-        'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
-        'sigma', 'layers', 'nstars', 'locx1', 'locy1', 'locx2', 'locy2', 'nstm',
-        'tworkf', 'numkpt', 'minEigenval', 'maxEigenval', 'nnne')
+        list(int_attributes_once) + list(float_attributes_once) + list(string_attributes_once))
+    other_attributes_once1 = ('isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd', 'imix', 'alpha',
+                              'spinf', 'minDistance', 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr', 'epsdisp',
+                              'epsforce', 'valenceElectrons', 'mode', 'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz',
+                              'ellow', 'elup', 'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
+                              'sigma', 'layers', 'nstars', 'locx1', 'locy1', 'locx2', 'locy2', 'nstm', 'tworkf',
+                              'numkpt', 'minEigenval', 'maxEigenval', 'nnne')
 
-    int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr',
-                              's', 'p', 'd', 'f', 'l', 'n', 'eDeriv', 'coreStates')
+    int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'l', 'n', 'eDeriv',
+                              'coreStates')
     float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement')
     string_attributes_several = ('name', 'element', 'coreStates', 'type', 'relaxXYZ')
-    other_attributes_several = (
-        'name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom',
-        'radius', 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p',
-        'd', 'f', 'species', 'type', 'coreStates', 'l', 'n', 'eDeriv', 'relaxXYZ')
+    other_attributes_several = ('name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom', 'radius',
+                                'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'species', 'type',
+                                'coreStates', 'l', 'n', 'eDeriv', 'relaxXYZ')
 
     # when parsing the xml file to a dict, these tags should become
     # list(sets, or tuples) instead of dictionaries.
-    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos',
-                    'species', 'kPoint', 'lo', 'stateOccupation')
+    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint', 'lo', 'stateOccupation')
 
-    all_text = {'comment': 1, 'relPos': 3, 'filmPos': 3, 'absPos': 3,
-                'row-1': 3, 'row-2': 3, 'row-3': 3, 'a1': 1, 'qss': 3}
+    all_text = {
+        'comment': 1,
+        'relPos': 3,
+        'filmPos': 3,
+        'absPos': 3,
+        'row-1': 3,
+        'row-2': 3,
+        'row-3': 3,
+        'a1': 1,
+        'qss': 3
+    }
     # TODO all these (without comment) are floats, or float tuples.
     # Should be converted to this in the databas
     # changing the Bravais matrix should rather not be allowed I guess
@@ -1846,57 +1904,31 @@ def get_inpxml_file_structure():
         'relaxXYZ': '/fleurInput/atomGroups/atomGroup/force'
     }
 
-    all_tag_xpaths = (
-        '/fleurInput/constantDefinitions',
-        '/fleurInput/calculationSetup',
-        '/fleurInput/calculationSetup/cutoffs',
-        '/fleurInput/calculationSetup/scfLoop',
-        '/fleurInput/calculationSetup/coreElectrons',
-        '/fleurInput/calculationSetup/magnetism',
-        '/fleurInput/calculationSetup/soc',
-        '/fleurInput/calculationSetup/expertModes',
-        '/fleurInput/calculationSetup/geometryOptimization',
-        '/fleurInput/calculationSetup/bzIntegration',
-        '/fleurInput/calculationSetup/kPointMesh',
-        '/fleurInput/cell/symmetry',
-        '/fleurInput/cell/bravaisMatrix',
-        '/fleurInput/calculationSetup/nocoParams',
-        '/fleurInput/xcFunctional',
-        '/fleurInput/xcFunctional/xcParams',
-        '/fleurInput/atomSpecies/species',
-        '/fleurInput/atomSpecies/species/mtSphere',
-        '/fleurInput/atomSpecies/species/atomicCutoffs',
-        '/fleurInput/atomSpecies/species/energyParameters',
-        '/fleurInput/atomSpecies/species/coreConfig',
-        '/fleurInput/atomSpecies/species/coreOccupation',
-        '/fleurInput/atomGroups/atomGroup',
-        '/fleurInput/atomGroups/atomGroup/relPos',
-        '/fleurInput/atomGroups/atomGroup/absPos',
-        '/fleurInput/atomGroups/atomGroup/filmPos',
-        '/fleurInput/output/checks',
-        '/fleurInput/output/densityOfStates',
-        '/fleurInput/output/vacuumDOS',
-        '/fleurInput/output/plotting',
-        '/fleurInput/output/chargeDensitySlicing',
-        '/fleurInput/output/specialOutput'
-    )
+    all_tag_xpaths = ('/fleurInput/constantDefinitions', '/fleurInput/calculationSetup',
+                      '/fleurInput/calculationSetup/cutoffs', '/fleurInput/calculationSetup/scfLoop',
+                      '/fleurInput/calculationSetup/coreElectrons', '/fleurInput/calculationSetup/magnetism',
+                      '/fleurInput/calculationSetup/soc', '/fleurInput/calculationSetup/expertModes',
+                      '/fleurInput/calculationSetup/geometryOptimization', '/fleurInput/calculationSetup/bzIntegration',
+                      '/fleurInput/calculationSetup/kPointMesh', '/fleurInput/cell/symmetry',
+                      '/fleurInput/cell/bravaisMatrix', '/fleurInput/calculationSetup/nocoParams',
+                      '/fleurInput/xcFunctional', '/fleurInput/xcFunctional/xcParams',
+                      '/fleurInput/atomSpecies/species', '/fleurInput/atomSpecies/species/mtSphere',
+                      '/fleurInput/atomSpecies/species/atomicCutoffs',
+                      '/fleurInput/atomSpecies/species/energyParameters', '/fleurInput/atomSpecies/species/coreConfig',
+                      '/fleurInput/atomSpecies/species/coreOccupation', '/fleurInput/atomGroups/atomGroup',
+                      '/fleurInput/atomGroups/atomGroup/relPos', '/fleurInput/atomGroups/atomGroup/absPos',
+                      '/fleurInput/atomGroups/atomGroup/filmPos', '/fleurInput/output/checks',
+                      '/fleurInput/output/densityOfStates', '/fleurInput/output/vacuumDOS',
+                      '/fleurInput/output/plotting', '/fleurInput/output/chargeDensitySlicing',
+                      '/fleurInput/output/specialOutput')
 
     expertkey = 'other'
-    returnlist = (all_switches_once,
-                  all_switches_several,
-                  other_attributes_once,
-                  int_attributes_once,
-                  float_attributes_once,
-                  string_attributes_once,
-                  other_attributes_several,
-                  int_attributes_several,
-                  float_attributes_several,
-                  string_attributes_several,
-                  tags_several,
-                  all_text,
-                  all_attrib_xpath,
+    returnlist = (all_switches_once, all_switches_several, other_attributes_once, int_attributes_once,
+                  float_attributes_once, string_attributes_once, other_attributes_several, int_attributes_several,
+                  float_attributes_several, string_attributes_several, tags_several, all_text, all_attrib_xpath,
                   expertkey)
     return returnlist
+
 
 def clear_xml(tree):
     """
@@ -1912,6 +1944,13 @@ def clear_xml(tree):
 
     # replace XInclude parts to validate against schema
     cleared_tree.xinclude()
+
+    # get rid of xml:base attribute in the relaxation part
+    relax = eval_xpath(cleared_tree, '/fleurInput/relaxation')
+    if relax != []:
+        for attribute in relax.keys():
+            if 'base' in attribute:
+                cleared_tree = delete_att(cleared_tree, '/fleurInput/relaxation', attribute)
 
     # remove comments from inp.xml
     comments = cleared_tree.xpath('//comment()')

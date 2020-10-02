@@ -132,7 +132,7 @@ to:
       </species>
 
 As you can see, I was careful about "Ir-2" specie  and it contained a single atom with a
-label 458.
+label 458. Please also refer to :ref:`setting_labels` section to learn how to set labels up.
 
 **sqas_theta** and **sqas_phi** are python lists that set SOC theta and phi values.
 

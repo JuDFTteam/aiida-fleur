@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 'sqa_ref': [0.7, 0.7],                  # sets theta and phi for the reference calc
 'use_soc_ref': False,                   # True if reference calc should use SOC terms
 'sqas_theta': [0.0, 1.57079, 1.57079],  # a list of theta values for the FT

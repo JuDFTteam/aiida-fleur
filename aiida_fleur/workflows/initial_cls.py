@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This is the worklfow 'initial_cls' using the Fleur code calculating
 corelevel shifts with different methods.
@@ -29,17 +28,16 @@ from aiida.engine import submit
 from aiida.engine import ToContext, WorkChain, if_
 from aiida.engine import calcfunction as cf
 from aiida.plugins import DataFactory, CalculationFactory
-from aiida.orm import Code, load_node, Group
+from aiida.orm import Code, load_node, Group, CalcJobNode
 from aiida.orm import StructureData, Dict, RemoteData
+from aiida.orm import load_group
 from aiida.orm.querybuilder import QueryBuilder
-from aiida.common.exceptions import NotExistent
+from aiida.common.exceptions import NotExistent, MultipleObjectsError
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
 from aiida_fleur.data.fleurinp import FleurinpData
 import six
-
-
 
 
 class fleur_initial_cls_wc(WorkChain):
@@ -73,23 +71,29 @@ class fleur_initial_cls_wc(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-    _workflowversion = "0.3.4"
-    _default_wf_para = {'references' : {},
-                       'relax' : True,
-                       'relax_mode': 'Fleur',
-                       'relax_para' : 'default',
-                       'scf_para' : 'default',
-                       'same_para' : True,
-                       'serial' : False}
+    _workflowversion = '0.4.0'
+    _default_wf_para = {
+        'references': {},
+        'relax': True,
+        'relax_mode': 'Fleur',
+        'relax_para': 'default',
+        'scf_para': 'default',
+        'same_para': True,
+        'serial': False
+    }
 
-    _default_options = {'resources' : {"num_machines": 1},
-                        'max_wallclock_seconds' : 6*60*60,
-                        'queue_name' : '',
-                        'custom_scheduler_commands' : '',
-                        #'max_memory_kb' : None,
-                        'import_sys_environment' : False,
-                        'environment_variables' : {}}
-
+    _default_options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        #'max_memory_kb' : None,
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
 
     ERROR_INVALID_INPUT_RESOURCES = 1
     ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
@@ -101,31 +105,21 @@ class fleur_initial_cls_wc(WorkChain):
     ERROR_CONVERGENCE_NOT_ARCHIVED = 8
     ERROR_REFERENCE_MISSING = 9
 
-
     @classmethod
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_wf_para))
-        spec.input("fleurinp", valid_type=FleurinpData, required=False)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("inpgen", valid_type=Code, required=False)
-        spec.input("structure", valid_type=StructureData, required=False)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("options", valid_type=Dict, required=False,
-                   default=Dict(dict=cls._default_options))
+        spec.input('wf_parameters', valid_type=Dict, required=False, default=Dict(dict=cls._default_wf_para))
+        spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=False)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
+        spec.input('options', valid_type=Dict, required=False)  #, default=Dict(dict=cls._default_options#)
+        #)
 
-        spec.outline(
-            cls.check_input,
-            cls.get_references,
-            cls.run_fleur_scfs,
-            if_(cls.relaxation_needed)(
-                cls.relax),
-            cls.find_parameters,
-            cls.run_scfs_ref,
-            cls.return_results
-        )
-
+        spec.outline(cls.check_input, cls.get_references, cls.run_fleur_scfs,
+                     if_(cls.relaxation_needed)(cls.relax), cls.find_parameters, cls.run_scfs_ref, cls.return_results)
+        spec.output('output_initial_cls_wc_para', valid_type=Dict)
 
     def check_input(self):
         """
@@ -133,9 +127,10 @@ class fleur_initial_cls_wc(WorkChain):
         """
         ### input check ### ? or done automaticly, how optional?
 
-        msg = ("INFO: Started initial_state_CLS workflow version {} "
-               "Workchain node identifiers: "#{}"
-               "".format(self._workflowversion))#, ProcessRegistry().current_calc_node))
+        msg = (
+            'INFO: Started initial_state_CLS workflow version {} '
+            'Workchain node identifiers: '  #{}"
+            ''.format(self._workflowversion))  #, ProcessRegistry().current_calc_node))
         self.report(msg)
 
         # init
@@ -160,7 +155,7 @@ class fleur_initial_cls_wc(WorkChain):
         #      'W-1_coreconfig' : ['1s','2s',...],
         #      'W-2' : [...], 'Be-1': [], ...} #all in eV!
         self.ctx.CLS = {}
-        self.ctx.cl_energies = {}# same style as CLS only energy <-> shift
+        self.ctx.cl_energies = {}  # same style as CLS only energy <-> shift
         self.ctx.ref_cl_energies = {}
         #Style: {'Compound' : energy, 'ref_x' : energy , ...}
         #i.e {'Be12W' : 0.0, 'Be' : 0.104*htr_eV , 'W' : 0.12*htr_eV} # all in eV!
@@ -212,8 +207,7 @@ class fleur_initial_cls_wc(WorkChain):
                 self.control_end_wc(error)
                 return self.ERROR_INVALID_INPUT_RESOURCES
             if 'calc_parameters' in inputs:
-                self.ctx.calcs_torun.append(
-                    [inputs.get('structure'), inputs.get('calc_parameters')])
+                self.ctx.calcs_torun.append([inputs.get('structure'), inputs.get('calc_parameters')])
             else:
                 self.ctx.calcs_torun.append(inputs.get('structure'))
         else:
@@ -222,7 +216,6 @@ class fleur_initial_cls_wc(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_INVALID_INPUT_RESOURCES
         self.report('INFO: elements in structure: {}'.format(self.ctx.elements))
-
 
     def get_references(self):
         """
@@ -254,7 +247,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         # get specific element reference if given override
         #print(self.ctx.elements)
-        elements = self.ctx.elements # ggf copy because ctx.elements will be modified
+        elements = self.ctx.elements  # ggf copy because ctx.elements will be modified
         for elem in elements:
             #to_calc[elem] = 'find'
             ref_el = references.get(elem, None)
@@ -266,7 +259,7 @@ class fleur_initial_cls_wc(WorkChain):
                     for ref_el_el in ref_el:
                         try:
                             ref_el_nodes = load_node(ref_el_el)
-                        except:
+                        except (NotExistent, MultipleObjectsError, ValueError, TypeError):
                             ref_el_node = None
                             self.report('ERROR: The reference node in the list '
                                         '(id or uuid) provided: {} for element: '
@@ -277,7 +270,8 @@ class fleur_initial_cls_wc(WorkChain):
                 else:
                     try:
                         ref_el_node = load_node(ref_el)
-                    except:# NotExistent: No node was found
+                    except (NotExistent, MultipleObjectsError, ValueError, TypeError):
+                        # NotExistent: No node was found
                         ref_el_node = None
                         self.report('ERROR: The reference node (id or uuid) '
                                     'provided: {} for element: {} could'
@@ -286,7 +280,7 @@ class fleur_initial_cls_wc(WorkChain):
                         self.ctx.abort = True
 
                 # expecting nodes and filling ref_calcs_torun
-                if isinstance(ref_el_node, list):#(StructureData, Dict)):
+                if isinstance(ref_el_node, list):  #(StructureData, Dict)):
                     #enforced parameters, add directly to run queue
                     # TODO: if a scf with these parameters was already done link to it
                     # and extract the results instead of running the calculation again....
@@ -295,12 +289,12 @@ class fleur_initial_cls_wc(WorkChain):
                             self.ctx.ref_calcs_torun.append(ref_el_node)
                         else:
                             self.report('WARNING: I did not undestand the list with length 2 '
-                                  'you gave me as reference input')
+                                        'you gave me as reference input')
                     else:
                         self.report('WARNING: I did not undestand the list {} with length {} '
-                              'you gave me as reference input'
-                              ''.format(ref_el_node, len(ref_el_node)))
-                elif isinstance(ref_el_node, FleurCalc):
+                                    'you gave me as reference input'
+                                    ''.format(ref_el_node, len(ref_el_node)))
+                elif isinstance(ref_el_node, CalcJobNode):
                     #extract from fleur calc TODO
                     self.ctx.ref_cl_energies[elem] = {}
                 elif isinstance(ref_el_node, Dict):
@@ -317,8 +311,8 @@ class fleur_initial_cls_wc(WorkChain):
                 #elif isinstance(ref_el, initial_state_CLS):
                 #    extract TODO
                 else:
-                    error = ("ERROR: I do not know what to do with this given "
-                             "reference {} for element {}".format(ref_el, elem))
+                    error = ('ERROR: I do not know what to do with this given '
+                             'reference {} for element {}'.format(ref_el, elem))
                     #print(error)
                     self.report(error)
                     self.ctx.errors.append(error)
@@ -337,8 +331,7 @@ class fleur_initial_cls_wc(WorkChain):
                     self.ctx.ref[elem] = structure
                     self.ctx.ref_calcs_torun.append(structure)
                 else:
-                    pass # report not found?
-
+                    pass  # report not found?
 
             #elif query_for_ref: # no ref given, we have to look for it.
             #    structure = querry_for_ref_structure(elem)
@@ -356,7 +349,7 @@ class fleur_initial_cls_wc(WorkChain):
             #        self.ctx.abort = True
             #        self.report(error)
 
-            else: # no reference for element found
+            else:  # no reference for element found
                 # do we not want to calculate it or is this an error?
                 warning = ('WARNING: I did not find a reference for element {}. '
                            'If you do not calculate shifts for this element '
@@ -397,8 +390,6 @@ class fleur_initial_cls_wc(WorkChain):
         #if yes, if a calculation exists use that result
         #else do a calculation on that structure as above
 
-
-
     def run_fleur_scfs(self):
         """
         Run SCF-cycles for all structures, calculations given in certain workflow arrays.
@@ -413,38 +404,56 @@ class fleur_initial_cls_wc(WorkChain):
         wf_parameter['serial'] = self.ctx.serial
         #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
-        res_all = []
+        resall = {}
+        calc_labels = []
         options = Dict(dict=self.ctx.options)
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         res = None
         #print(self.ctx.calcs_torun)
-        for node in self.ctx.calcs_torun:
+        for i, node in enumerate(self.ctx.calcs_torun):
             #print node
+            calclabel = 'ori_calc_{}'.format(i)
+            calc_labels.append(calclabel)
             scf_label = 'cls|scf_wc main'
             scf_description = 'cls|scf of the main structure'
             if isinstance(node, StructureData):
-                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
-                             inpgen=self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                             label=scf_label, description=scf_description)#
+                inputs = {
+                    'wf_parameters': wf_parameters,
+                    'structure': node,
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
+                    #'metadata' : {'label' : scf_label,
+                    #             'description' : scf_description}
+                }
+                res = self.submit(FleurScfWorkChain, **inputs)
             #elif isinstance(node, FleurinpData):
             #    res = fleur_scf_wc.run(wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, list):#(StructureData, Dict)):
+            elif isinstance(node, list):  #(StructureData, Dict)):
                 if len(node) == 2:
-                    res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters,
-                                 structure=node[0], calc_parameters=node[1], options=options,
-                                 inpgen=self.inputs.inpgen, fleur=self.inputs.fleur,
-                                 label=scf_label, description=scf_description)
+                    inputs = {
+                        'wf_parameters': wf_parameters,
+                        'structure': node[0],
+                        'calc_parameters': node[1],
+                        'options': options,
+                        'inpgen': self.inputs.inpgen,
+                        'fleur': self.inputs.fleur,
+                        'metadata': {
+                            'label': scf_label,
+                            'description': scf_description
+                        }
+                    }
+                    res = self.submit(FleurScfWorkChain, **inputs)
                 else:
                     self.report('ERROR: something in calcs_torun which I do not'
                                 'recognize, list has not 2 entries: {}'.format(node))
             else:
-                self.report('ERROR: something in calcs_torun which I do not '
-                            'recognize: {}'.format(node))
+                self.report('ERROR: something in calcs_torun which I do not ' 'recognize: {}'.format(node))
                 #self.report('{}{}'.format(type(node[0], node[1])))
                 res = None
                 continue
-            res_all.append(res)
+            resall[calclabel] = res  #append(res)
             #print res
             #calc_node = res['output_scf_wc_para'].get_inputs()[0]
             # if run is used, otherwise use labels
@@ -452,8 +461,10 @@ class fleur_initial_cls_wc(WorkChain):
             #self.ctx.calcs_torun.remove(node)
             #print res
         self.ctx.calcs_torun = []
-        #return ToContext(last_calc=res)
+        self.ctx.calc_labels = calc_labels
 
+        print('res_all', resall)
+        #return ToContext(last_calc=res)
         '''
         inputs = get_inputs_fleur(code, remote, fleurin, options)
         future = submit(FleurCalc, **inputs)
@@ -461,8 +472,7 @@ class fleur_initial_cls_wc(WorkChain):
         print 'run FLEUR number: {}'.format(self.ctx.loop_count)
         self.ctx.calcs.append(future)
         '''
-        return ToContext(calcs_res=res) #calcs.append(future
-
+        return ToContext(**resall)  #calcs_res=res)  #calcs.append(future
 
     def relaxation_needed(self):
         """
@@ -473,13 +483,9 @@ class fleur_initial_cls_wc(WorkChain):
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
-            if forces_fine:
-                return True
-            else:
-                return False
+            return forces_fine
         else:
             return False
-
 
     def relax(self):
         """
@@ -490,7 +496,6 @@ class fleur_initial_cls_wc(WorkChain):
         for calc in self.ctx.dos_to_calc:
             pass
             # TODO run relax workflow
-
 
     def find_parameters(self):
         """
@@ -512,7 +517,6 @@ class fleur_initial_cls_wc(WorkChain):
             #extract parameter out of previous calculation
             #parameter_dict = fleurinp.extract_para(element)
             # BE CAREFUL WITH LOs! soc and co
-
 
     def run_scfs_ref(self):
         """
@@ -540,21 +544,39 @@ class fleur_initial_cls_wc(WorkChain):
         #print(self.ctx.ref_calcs_torun)
         for i, node in enumerate(self.ctx.ref_calcs_torun):
             scf_label = 'cls|scf_wc on ref {}'.format(self.ctx.elements[i])
-            scf_description = ('cls|scf of the reference structure of element {}'
-                               ''.format(self.ctx.elements[i]))
+            scf_description = ('cls|scf of the reference structure of element {}' ''.format(self.ctx.elements[i]))
             #print node
             if isinstance(node, StructureData):
-                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters, structure=node,
-                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur, options=options,
-                             label=scf_label, description=scf_description)#
+                inputs = {
+                    'wf_parameters': wf_parameters,
+                    'structure': node,
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
+                    'metadata': {
+                        'label': scf_label,
+                        'description': scf_description
+                    }
+                }
+                res = self.submit(FleurScfWorkChain, **inputs)  #
+
             #elif isinstance(node, FleurinpData):
             #    res = submit(fleur_scf_wc, wf_parameters=wf_parameters, structure=node,
             #                inpgen = self.inputs.inpgen, fleur=self.inputs.fleur)#
-            elif isinstance(node, list):#(StructureData, Dict)):
-                res = self.submit(FleurScfWorkChain, wf_parameters=wf_parameters,
-                             structure=node[0], calc_parameters=node[1], options=options,
-                             inpgen = self.inputs.inpgen, fleur=self.inputs.fleur,
-                             label=scf_label, description=scf_description)#
+            elif isinstance(node, list):  #(StructureData, Dict)):
+                inputs = {
+                    'wf_parameters': wf_parameters,
+                    'structure': node[0],
+                    'calc_parameters': node[1],
+                    'options': options,
+                    'inpgen': self.inputs.inpgen,
+                    'fleur': self.inputs.fleur,
+                    'metadata': {
+                        'label': scf_label,
+                        'description': scf_description
+                    }
+                }
+                res = self.submit(FleurScfWorkChain, **inputs)  #
             else:
                 self.report('WARNING: something in calcs_torun which I do not reconise: {}'.format(node))
                 continue
@@ -564,7 +586,6 @@ class fleur_initial_cls_wc(WorkChain):
             self.ctx.ref_labels.append(label)
             calcs[label] = res
             res_all.append(res)
-            #print res
             self.ctx.ref_calcs_res.append(res)
             #self.ctx.calcs_torun.remove(node)
             #print res
@@ -619,9 +640,6 @@ class fleur_initial_cls_wc(WorkChain):
         if failure:
             self.ctx.successful = False
 
-        return
-
-
     def collect_results(self):
         """
         Collect results from certain calculation, check if everything is fine,
@@ -630,7 +648,7 @@ class fleur_initial_cls_wc(WorkChain):
         """
         from aiida_fleur.tools.common_fleur_wf_util import determine_formation_energy
 
-        message=('INFO: Collecting results of initial_state_CLS workflow')
+        message = ('INFO: Collecting results of initial_state_CLS workflow')
         self.report(message)
         # TODO be very careful with core config?
         #from pprint import pprint
@@ -638,16 +656,18 @@ class fleur_initial_cls_wc(WorkChain):
         #self.ctx.ref_cl_energies
         all_CLS = {}
         # get results from calc
-        calcs = self.ctx.calcs_res
-        ref_calcs = []#self.ctx.ref_calcs_res
-        #print (self.ctx.ref_labels)
+        calcs = []  #self.ctx.calcs_res
+        ref_calcs = []  #self.ctx.ref_calcs_res
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
             ref_calcs.append(calc)
-
+        for label in self.ctx.calc_labels:
+            calc = self.ctx[label]
+            calcs.append(calc)
         # extract_results need the scf workchain calculation node
-        total_en, fermi_energies, bandgaps, atomtypes, all_corelevel, log_ref = extract_results([calcs])
-        ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, log = extract_results(ref_calcs)
+        total_en, fermi_energies, bandgaps, atomtypes, all_corelevel, log_ref = extract_results(calcs)
+        ref_total_en, ref_fermi_energies, ref_bandgaps, ref_atomtypes, ref_all_corelevel, log = extract_results(
+            ref_calcs)
 
         if log_ref or log:
             self.ctx.successful = False
@@ -695,18 +715,18 @@ class fleur_initial_cls_wc(WorkChain):
                 cls_atomtype = cls_atomtypes_list[i]
                 corelevels = []
                 for corelevel in cls_atomtype[0]['corestates']:
-                    correct_cl = corelevel['energy']-fermi_energies[compound]
+                    correct_cl = corelevel['energy'] - fermi_energies[compound]
                     corelevels.append(correct_cl)
                 cl_energies[elm].append(corelevels)
 
                 #now calculate CLS
-                ref = ref_cl_energies.get(elm,[0])[-1]# We just use one (last) atomtype
+                ref = ref_cl_energies.get(elm, [0])[-1]  # We just use one (last) atomtype
                 #of elemental reference (in general might be more complex,
                 #since certain elemental unit cells could have several atom types (graphene))
                 corelevel_shifts = []
                 #TODO shall we store just one core-level shift per atomtype?
-                for i, corelevel in enumerate(cl_energies[elm][-1]):
-                    corelevel_shifts.append(corelevel - float(ref[i]))
+                for j, corelevel in enumerate(cl_energies[elm][-1]):
+                    corelevel_shifts.append(corelevel - float(ref[j]))
                 all_CLS[elm].append(corelevel_shifts)
 
         # calculate formation energy
@@ -718,7 +738,7 @@ class fleur_initial_cls_wc(WorkChain):
         # Formation energy calculation is ony possible if all elementals of the structure
         # have been calculated.
         # convert total_en dict to list, why?
-        total_en_list =[]
+        total_en_list = []
         for key, val in six.iteritems(total_en):
             total_en_list.append([key, val])
         if self.ctx.calculate_formation_energy:
@@ -727,18 +747,20 @@ class fleur_initial_cls_wc(WorkChain):
             ref_total_en_norm = {}
             for key, val in six.iteritems(ref_total_en):
                 elm_dict = get_natoms_element(key)
-                ref_total_en_norm[list(elm_dict.keys())[0]] = 1.0* val/list(elm_dict.values())[0]
-            #print ref_total_en_norm
-            #print total_en
+                ref_total_en_norm[list(elm_dict.keys())[0]] = 1.0 * val / list(elm_dict.values())[0]
+            #print(ref_total_en_norm)
+            #print(total_en)
 
             formation_energy, form_dict = determine_formation_energy(total_en, ref_total_en_norm)
+            #print(form_dict)
         else:
             formation_energy = [[]]
 
         # TODO make simpler format of atomtypes for node
         # TODO write corelevel explanation/coresetup in a format like 4f7/2
         #TODO ? also get total energies?
-        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy[0], total_en, ref_total_en
+        return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy, total_en, ref_total_en
+        #return cl_energies, all_CLS, ref_cl_energies, fermi_energies, bandgaps, ref_fermi_energies, ref_bandgaps, atomtypes, ref_atomtypes, formation_energy[0], total_en, ref_total_en
 
     def return_results(self):
         """
@@ -760,9 +782,9 @@ class fleur_initial_cls_wc(WorkChain):
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['material'] = list(efermi.keys())[0]
         outputnode_dict['corelevel_energies'] = cl
-        outputnode_dict['corelevel_energies_units'] = 'htr'#'eV'
+        outputnode_dict['corelevel_energies_units'] = 'htr'  #'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl
-        outputnode_dict['reference_corelevel_energies_units'] = 'htr'#'eV'
+        outputnode_dict['reference_corelevel_energies_units'] = 'htr'  #'eV'
         outputnode_dict['reference_fermi_energy'] = list(ref_efermi.values())
         outputnode_dict['reference_fermi_energy_des'] = list(ref_efermi.keys())
         outputnode_dict['fermi_energy'] = list(efermi.values())[0]
@@ -791,14 +813,14 @@ class fleur_initial_cls_wc(WorkChain):
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, put in calcfunction and make bullet proof.
-        calc = self.ctx.calcs_res
-        calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
-        outnodedict['input_structure']  = calc_dict
+        calc = self.ctx[self.ctx.calc_labels[-1]]
+        calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+        outnodedict['input_structure'] = calc_dict
 
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
-            calc_dict = calc.get_outputs_dict()['output_scf_wc_para']
-            outnodedict[label]  = calc_dict
+            calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+            outnodedict[label] = calc_dict
 
         outdict = create_initcls_result_node(**outnodedict)
 
@@ -817,12 +839,9 @@ class fleur_initial_cls_wc(WorkChain):
         """
         self.ctx.successful = False
         self.ctx.abort = True
-        self.report(errormsg) # because return_results still fails somewhen
+        self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
-
-        return
-
 
 
 @cf
@@ -844,7 +863,6 @@ def create_initcls_result_node(**kwargs):
     return outdict
 
 
-
 def querry_for_ref_structure(element_string):
     """
     This methods finds StructureData nodes with the following extras:
@@ -861,12 +879,21 @@ def querry_for_ref_structure(element_string):
     #query db
     q = QueryBuilder()
     q.append(StructureData,
-             filters = {'extras.type' : {'==' : 'bulk'},
-                        'extras.specification' : {'==' : 'reference'},
-                        'extras.elemental' : {'==' : True},
-                        'extras.element' : {'==' : element_string}
-                        })
-    q.order_by({StructureData : 'ctime'})#always use the most recent
+             filters={
+                 'extras.type': {
+                     '==': 'bulk'
+                 },
+                 'extras.specification': {
+                     '==': 'reference'
+                 },
+                 'extras.elemental': {
+                     '==': True
+                 },
+                 'extras.element': {
+                     '==': element_string
+                 }
+             })
+    q.order_by({StructureData: 'ctime'})  #always use the most recent
     structures = q.all()
 
     if structures:
@@ -884,6 +911,7 @@ def fleur_calc_get_structure(calc_node):
     structure = fleurinp.get_structuredata(fleurinp)
     return structure
 
+
 def extract_results(calcs):
     """
     Collect results from certain calculation, check if everything is fine,
@@ -898,14 +926,13 @@ def extract_results(calcs):
     for calc in calcs:
         #print(calc)
         try:
-            calc_uuids.append(calc.get_outputs_dict()['output_scf_wc_para'].get_dict()['last_calc_uuid'])
-        except: #TODO what error
-            logmsg = ('ERROR: No output_scf_wc_para node found for "last_calc_uuid"'
+            calc_uuids.append(calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid'])
+        except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
+            logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
                       'key in it for calculation: {}'.format(calc))
             log.append(logmsg)
             continue
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
-    #print(calc_uuids)
 
     all_corelevels = {}
     fermi_energies = {}
@@ -918,15 +945,19 @@ def extract_results(calcs):
     # check if calculation pks belong to successful fleur calculations
     for uuid in calc_uuids:
         calc = load_node(uuid)
-        if not isinstance(calc, FleurCalc):
+        if not isinstance(calc, CalcJobNode):
             #raise ValueError("Calculation with pk {} must be a FleurCalculation".format(pk))
             # log and continue
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
+            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
+            outxml = calc.outputs.retrieved.open('out.xml')
             #print outxml
-            corelevels, atomtypes = extract_corelevels(outxml)
+            try:
+                corelevels, atomtypes = extract_corelevels(outxml)
+            finally:
+                outxml.close()
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))
@@ -959,13 +990,13 @@ def extract_results(calcs):
             efermi = float('nan')
             corelevels = [float('nan')]
             atomtypes = [float('nan')]
-            logmsg = "ERROR: Fleur Calculation with uuid {} was not in in state FINISHED".format(uuid)
+            logmsg = 'ERROR: Fleur Calculation with uuid {} was not in in state FINISHED'.format(uuid)
             log.append(logmsg)
             #continue
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
         # TODO: maybe different, because it is prob know from before
-        fleurinp = calc.inp.fleurinpdata
+        fleurinp = calc.inputs.fleurinpdata
         structure = fleurinp.get_structuredata_ncf()
         compound = structure.get_formula()
         #print compound
@@ -1049,12 +1080,11 @@ def get_ref_from_group(element, group):
 
     for struc in stru_nodes:
         formula = struc.get_formula()
-        eformula = formula.translate(None, digits) # remove digits, !python3 differs
+        eformula = formula.translate(None, digits)  # remove digits, !python3 differs
         if eformula == element:
             return struc, report
 
-    report.append('Structure node for element {} not found in group {}'
-                  ''.format(element, group))
+    report.append('Structure node for element {} not found in group {}' ''.format(element, group))
 
     return structure, report
 
@@ -1075,7 +1105,7 @@ def get_para_from_group(element, group):
 
     if group_pk is not None:
         try:
-            para_group = Group(dbgroup=group_pk)
+            para_group = load_group(pk=group_pk)
         except NotExistent:
             para_group = None
             message = ('You have to provide a valid pk for a Group of '
@@ -1085,10 +1115,10 @@ def get_para_from_group(element, group):
             report.append(message)
     else:
         try:
-            para_group = Group.get_from_string(group_name)
+            para_group = load_group(label=group_name)
         except NotExistent:
             para_group = None
-            message = ('You have to provide a valid pk for a Group of '
+            message = ('You have to provide a valid label for a Group of '
                        'parameters or a Group name. Wf_para key: "para_group".'
                        'given group name= {} is not a valid group'
                        '(or is your group name integer?)'.format(group_name))
@@ -1106,11 +1136,9 @@ def get_para_from_group(element, group):
         if formula == element:
             return para, report
 
-    report.append('Parameter node for element {} not found in group {}'
-                  ''.format(element, group))
+    report.append('Parameter node for element {} not found in group {}' ''.format(element, group))
 
     return parameter, report
-
 
 
 def clshifts_to_be(coreleveldict, reference_dict):
@@ -1152,4 +1180,3 @@ def clshifts_to_be(coreleveldict, reference_dict):
             return_corelevel_dict[elem][corelevel_name] = be_all
 
     return return_corelevel_dict
-

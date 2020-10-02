@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This contains code snippets and utility useful for dealing with parameter data nodes
 commonly used by the fleur plugin and workflows
@@ -17,6 +16,7 @@ commonly used by the fleur plugin and workflows
 from __future__ import print_function
 from __future__ import absolute_import
 import six
+
 
 def extract_elementpara(parameter_dict, element):
     """

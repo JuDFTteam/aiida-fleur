@@ -17,7 +17,6 @@ allows to add scenarios to restart a calculation in an
 automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
-from aiida_fleur.data.fleurinp import FleurinpData
 import six
 
 from aiida import orm
@@ -27,13 +26,13 @@ from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
-
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurProcess
+from aiida_fleur.data.fleurinp import FleurinpData
 
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-    _workflowversion = "0.1.1"
+    _workflowversion = '0.1.1'
 
     _calculation_class = FleurProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
@@ -42,20 +41,24 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         super(FleurBaseWorkChain, cls).define(spec)
         spec.input('code', valid_type=orm.Code, help='The FLEUR code.')
-        spec.input('parent_folder', valid_type=orm.RemoteData, required=False,
+        spec.input('parent_folder',
+                   valid_type=orm.RemoteData,
+                   required=False,
                    help='An optional working directory of a previously completed calculation to '
                    'restart from.')
-        spec.input('settings', valid_type=orm.Dict, required=False,
+        spec.input('settings',
+                   valid_type=orm.Dict,
+                   required=False,
                    help='Optional parameters to affect the way the calculation job and the parsing'
                    ' are performed.')
-        spec.input('options', valid_type=orm.Dict,
-                   help='Optional parameters to set up computational details.')
-        spec.input('fleurinpdata', valid_type=FleurinpData,
-                   help='Optional parameter set up a ready-to-use fleurinp.')
-        spec.input('description', valid_type=six.string_types, required=False, non_db=True,
+        spec.input('options', valid_type=orm.Dict, help='Optional parameters to set up computational details.')
+        spec.input('fleurinpdata', valid_type=FleurinpData, help='Optional parameter set up a ready-to-use fleurinp.')
+        spec.input('description',
+                   valid_type=six.string_types,
+                   required=False,
+                   non_db=True,
                    help='Calculation description.')
-        spec.input('label', valid_type=six.string_types, required=False, non_db=True,
-                   help='Calculation label.')
+        spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
 
         spec.outline(
             cls.setup,
@@ -74,18 +77,17 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         spec.output('remote_folder', valid_type=orm.RemoteData, required=False)
         spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
-        spec.exit_code(311, 'ERROR_VACUUM_SPILL_RELAX',
+        spec.exit_code(311,
+                       'ERROR_VACUUM_SPILL_RELAX',
                        message='FLEUR calculation failed because an atom spilled to the'
-                               'vacuum during relaxation')
-        spec.exit_code(313, 'ERROR_MT_RADII_RELAX',
-                       message='Overlapping MT-spheres during relaxation.')
-        spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION',
-                       message="Computational resources are not optimal.")
-        spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES',
-                       message="Computational resources are not optimal.")
-        spec.exit_code(399, 'ERROR_SOMETHING_WENT_WRONG',
+                       'vacuum during relaxation')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
+        spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
+        spec.exit_code(399,
+                       'ERROR_SOMETHING_WENT_WRONG',
                        message='FleurCalculation failed and FleurBaseWorkChain has no strategy '
-                               'to resolve this')
+                       'to resolve this')
 
     def validate_inputs(self):
         """
@@ -166,13 +168,13 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
         if self.ctx.use_omp:
             self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if self.ctx.inputs.metadata.options['environment_variables']:
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
-                    adv_omp_per_mpi)
-            else:
-                self.ctx.inputs.metadata.options['environment_variables'] = {}
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
-                    adv_omp_per_mpi)
+            # if self.ctx.inputs.metadata.options['environment_variables']:
+            #     self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+            #         adv_omp_per_mpi)
+            # else:
+            #     self.ctx.inputs.metadata.options['environment_variables'] = {}
+            #     self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(
+            #         adv_omp_per_mpi)
 
 
 @register_error_handler(FleurBaseWorkChain, 1)
@@ -180,13 +182,10 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for unknown reason.
     """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_FLEUR_CALC_FAILED',
-                                                                  'ERROR_MT_RADII',
-                                                                  'ERROR_NO_RETRIEVED_FOLDER',
-                                                                  'ERROR_OPENING_OUTPUTS',
-                                                                  'ERROR_NO_OUTXML',
-                                                                  'ERROR_XMLOUT_PARSING_FAILED',
-                                                                  'ERROR_RELAX_PARSING_FAILED']):
+    if calculation.exit_status in FleurProcess.get_exit_statuses([
+            'ERROR_FLEUR_CALC_FAILED', 'ERROR_MT_RADII', 'ERROR_NO_RETRIEVED_FOLDER', 'ERROR_OPENING_OUTPUTS',
+            'ERROR_NO_OUTXML', 'ERROR_XMLOUT_PARSING_FAILED', 'ERROR_RELAX_PARSING_FAILED'
+    ]):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be resolved automatically')
@@ -195,6 +194,36 @@ def _handle_general_error(self, calculation):
     else:
         raise ValueError('Calculation failed for unknown reason, please register the '
                          'corresponding exit code in this error handler')
+
+
+@register_error_handler(FleurBaseWorkChain, 48)
+def _handle_dirac_equation(self, calculation):
+    """
+    Calculation failed due to lack of memory.
+    Probably works for JURECA only, has to be tested for other systems.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DROP_CDN']):
+
+        # try to drop remote folder and see if it helps
+        is_fleurinp_from_relax = False
+        if 'fleurinpdata' in self.ctx.inputs:
+            if 'relax.xml' in self.ctx.inputs.fleurinpdata.files:
+                is_fleurinp_from_relax = True
+
+        if 'parent_folder' in self.ctx.inputs and is_fleurinp_from_relax:
+            del self.ctx.inputs.parent_folder
+            self.ctx.restart_calc = None
+            self.ctx.is_finished = False
+            self.report('Calculation seems to fail due to corrupted charge density (can happen'
+                        'during relaxation). I drop cdn from previous step')
+            return ErrorHandlerReport(True, True)
+
+        self.ctx.restart_calc = calculation
+        self.ctx.is_finished = True
+        self.report('Can not drop charge density. If I drop the remote folder, there will be' 'no inp.xml')
+        self.results()
+        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
 
 @register_error_handler(FleurBaseWorkChain, 52)
@@ -219,8 +248,7 @@ def _handle_mt_relax_error(self, calculation):
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('FLEUR calculation failed due to MT overlap.'
-                    ' Can be fixed via RelaxBaseWorkChain')
+        self.report('FLEUR calculation failed due to MT overlap.' ' Can be fixed via RelaxBaseWorkChain')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
 
@@ -246,14 +274,13 @@ def _handle_not_enough_memory(self, calculation):
                 self.ctx.inputs.settings = {}
             else:
                 self.ctx.inputs.settings = self.inputs.settings.get_dict()
-            self.ctx.inputs.settings.setdefault(
-                'remove_from_remotecopy_list', []).append('mixing_history*')
+            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
             return ErrorHandlerReport(True, True)
         else:
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
-            self.report('FLEUR calculation failed due to MT overlap.'
-                        ' Can be fixed via RelaxBaseWorkChain')
+            self.report('I am not allowed to optimize your settings. Consider providing at least'
+                        'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)

@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Here we run the FleurScfWorkChain for Si or some other material
 """
@@ -19,11 +18,13 @@ from __future__ import print_function
 import argparse
 from pprint import pprint
 
+from aiida import load_profile
+load_profile()
 
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.engine import submit, run
-
+from aiida.manage.caching import enable_caching
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import is_code, test_and_get_codenode
 
@@ -34,82 +35,99 @@ StructureData = DataFactory('structure')
 parser = argparse.ArgumentParser(description=('SCF with FLEUR. workflow to converge the '
                                               'chargedensity, total energy or forces. all arguments'
                                               'are pks, or uuids, codes can be names'))
-parser.add_argument('--wf_para', type=int, dest='wf_parameters',
-                    help='Some workflow parameters', required=False)
-parser.add_argument('--structure', type=int, dest='structure',
-                    help='The crystal structure node', required=False)
-parser.add_argument('--calc_para', type=int, dest='calc_parameters',
-                    help='Parameters for the FLEUR calculation', required=False)
-parser.add_argument('--fleurinp', type=int, dest='fleurinp',
-                    help='FleurinpData from which to run the FLEUR calculation', required=False)
-parser.add_argument('--remote', type=int, dest='remote_data',
+parser.add_argument('--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False)
+parser.add_argument('--structure', type=int, dest='structure', help='The crystal structure node', required=False)
+parser.add_argument('--calc_para',
+                    type=int,
+                    dest='calc_parameters',
+                    help='Parameters for the FLEUR calculation',
+                    required=False)
+parser.add_argument('--fleurinp',
+                    type=int,
+                    dest='fleurinp',
+                    help='FleurinpData from which to run the FLEUR calculation',
+                    required=False)
+parser.add_argument('--remote',
+                    type=int,
+                    dest='remote_data',
                     help=('Remote Data of older FLEUR calculation, '
-                          'from which files will be copied (mixing_history ...)'), required=False)
-parser.add_argument('--inpgen', type=int, dest='inpgen',
-                    help='The inpgen code node to use', required=False)
-parser.add_argument('--fleur', type=int, dest='fleur',
-                    help='The FLEUR code node to use', required=True)
-parser.add_argument('--submit', type=bool, dest='submit',
-                    help='should the workflow be submited or run', required=False)
-parser.add_argument('--options', type=int, dest='options',
-                    help='options of the workflow', required=False)
+                          'from which files will be copied (mixing_history ...)'),
+                    required=False)
+parser.add_argument('--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False)
+parser.add_argument('--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True)
+parser.add_argument('--submit', type=bool, dest='submit', help='should the workflow be submited or run', required=False)
+parser.add_argument('--options', type=int, dest='options', help='options of the workflow', required=False)
 args = parser.parse_args()
 
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'fleur_runmax': 2,
-                     'density_converged': 0.001,
-                     'energy_converged': 0.002,
-                     'mode': 'force',  # 'force', 'energy' or 'density'
-                     'force_converged': 0.02,
-                     'itmax_per_run': 10,
-                     'use_relax_xml': False,
-                     'force_dict': {'qfix': 2,
-                                    'forcealpha': 0.5,
-                                    'forcemix': 'BFGS'},
-                     'serial': False})
+wf_para = Dict(
+    dict={
+        'fleur_runmax': 2,
+        'density_converged': 0.001,
+        'energy_converged': 0.002,
+        'mode': 'force',  # 'force', 'energy' or 'density'
+        'force_converged': 0.02,
+        'itmax_per_run': 10,
+        'use_relax_xml': False,
+        'force_dict': {
+            'qfix': 2,
+            'forcealpha': 0.5,
+            'forcemix': 'BFGS'
+        },
+        'serial': True
+    })
 
-options = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 24},
-                     'queue_name': 'devel',
-                     'custom_scheduler_commands': '',
-                     'max_wallclock_seconds':  60*60})
-
+options = Dict(
+    dict={
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 24
+        },
+        'queue_name': 'devel',
+        'custom_scheduler_commands': '',
+        'max_wallclock_seconds': 60 * 60
+    })
 
 bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0
-cell = [[0.7071068*a, 0.0, 0.0],
-        [0.0, 1.0*a, 0.0],
-        [0.0, 0.0, 0.7071068*a]]
+cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0., 0., -1.99285*bohr_a_0), symbols='Fe')
-structure.append_atom(position=(0.5*0.7071068*a, 0.5*a, 0.0), symbols='Pt')
-structure.append_atom(position=(0., 0., 2.65059*bohr_a_0), symbols='Pt')
+structure.append_atom(position=(0., 0., -1.99285 * bohr_a_0), symbols='Fe')
+structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
 structure.pbc = (True, True, False)
 
-parameters = Dict(dict={
-    'atom': {'element': 'Pt',
-             # 'jri' : 833,
-             # 'rmt' : 2.3,
-             # 'dx' : 0.015,
-             'lmax': 8,
-             # 'lo' : '5p',
-             # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-             },
-    'atom2': {'element': 'Fe',
-              # 'jri' : 833,
-              # 'rmt' : 2.3,
-              # 'dx' : 0.015,
-              'lmax': 8,
-              # 'lo' : '5p',
-              # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-              },
-    'comp': {'kmax': 3.8,
-             },
-    'kpt': {'div1': 12,
+parameters = Dict(
+    dict={
+        'atom': {
+            'element': 'Pt',
+            # 'jri' : 833,
+            # 'rmt' : 2.3,
+            # 'dx' : 0.015,
+            'lmax': 8,
+            # 'lo' : '5p',
+            # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+        },
+        'atom2': {
+            'element': 'Fe',
+            # 'jri' : 833,
+            # 'rmt' : 2.3,
+            # 'dx' : 0.015,
+            'lmax': 8,
+            # 'lo' : '5p',
+            # 'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+        },
+        'comp': {
+            'kmax': 3.8,
+        },
+        'kpt': {
+            'div1': 12,
             'div2': 10,
             'div3': 1
-            }})
+        }
+    })
 '''
 
 # Fe fcc structure
@@ -137,11 +155,7 @@ parameters = Dict(dict={
         'div3' : 1
         }})
 '''
-default = {'structure': structure,
-           'wf_parameters': wf_para,
-           'options': options,
-           'calc_parameters': parameters
-           }
+default = {'structure': structure, 'wf_parameters': wf_para, 'options': options, 'calc_parameters': parameters}
 
 ####
 
@@ -186,14 +200,15 @@ if args.submit is not None:
     submit_wc = submit
 pprint(inputs)
 
-print("##################### TEST FleurScfWorkChain #####################")
+print('##################### TEST FleurScfWorkChain #####################')
 
 if submit_wc:
     res = submit(FleurScfWorkChain, **inputs)
-    print("##################### Submited FleurScfWorkChain #####################")
-    print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting FleurScfWorkChain #####################")
+    print('##################### Submited FleurScfWorkChain #####################')
+    print(('Runtime info: {}'.format(res)))
+    print('##################### Finished submiting FleurScfWorkChain #####################')
 else:
-    print("##################### Running FleurScfWorkChain #####################")
-    res = run(FleurScfWorkChain, **inputs)
-    print("##################### Finished running FleurScfWorkChain #####################")
+    print('##################### Running FleurScfWorkChain #####################')
+    with enable_caching():
+        res = run(FleurScfWorkChain, **inputs)
+    print('##################### Finished running FleurScfWorkChain #####################')

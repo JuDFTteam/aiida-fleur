@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Here we run the fleur_dos_wc for a Fleur calculation which has been converged before
 Layout:
@@ -35,21 +34,17 @@ from aiida_fleur.workflows.dos import fleur_dos_wc
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 
-#######################    
+#######################
 # 2. Creation/loding of input nodes
 
 # Load the codes, thwy have to be setup in your database.
 fleur_label = 'fleur@localhost'
-fleur_code =  Code.get_from_string(fleur_label)
+fleur_code = Code.get_from_string(fleur_label)
 
 ### Create wf_parameters (optional) and options
-wf_para = Dict(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,
-                              'serial' : False})
+wf_para = Dict(dict={'fleur_runmax': 4, 'density_criterion': 0.000001, 'serial': False})
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : '',
-                              'max_wallclock_seconds':  60*60})
+options = Dict(dict={'resources': {'num_machines': 1}, 'queue_name': '', 'max_wallclock_seconds': 60 * 60})
 
 # load a fleurino data object from a scf_wc before
 ################################
@@ -64,9 +59,9 @@ inputs['label'] = 'dos test '
 inputs['options'] = options
 
 # submit workchain to the daemon
-# Noice that the nodes we created before are not yet stored in the database, 
-# but AiiDA will do so automaticly when we launch the workchain. 
-# To reuse nodes it might be a good idea, to save them before by hand and then load them 
+# Noice that the nodes we created before are not yet stored in the database,
+# but AiiDA will do so automaticly when we launch the workchain.
+# To reuse nodes it might be a good idea, to save them before by hand and then load them
 res = submit(fleur_dos_wc, **inputs)
 
 # You can also run the workflow in the python interpreter as blocking

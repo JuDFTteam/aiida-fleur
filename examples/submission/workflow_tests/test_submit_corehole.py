@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 Here we run the fleur_corehole_wc for Si or some other material
 """
@@ -32,25 +31,28 @@ StructureData = DataFactory('structure')
 
 parser = argparse.ArgumentParser(description=('Corehole calculation with FLEUR workflow'
                                               '. all arguments are pks, or uuids, codes can be names'))
-parser.add_argument('--wf_para', type=int, dest='wf_parameters',
-                        help='Some workflow parameters', required=False)
-parser.add_argument('--structure', type=int, dest='structure',
-                        help='The crystal structure node', required=False)
-parser.add_argument('--calc_para', type=int, dest='calc_parameters',
-                        help='Parameters for the FLEUR calculation', required=False)
-parser.add_argument('--fleurinp', type=int, dest='fleurinp',
-                        help='FleurinpData from which to run the FLEUR calculation', required=False)
-parser.add_argument('--remote', type=int, dest='remote_data',
-                        help=('Remote Data of older FLEUR calculation, '
-                              'from which files will be copied (mixing_history ...)'), required=False)
-parser.add_argument('--inpgen', type=int, dest='inpgen',
-                        help='The inpgen code node to use', required=False)
-parser.add_argument('--fleur', type=int, dest='fleur',
-                        help='The FLEUR code node to use', required=True)
-parser.add_argument('--submit', type=bool, dest='submit',
-                        help='should the workflow be submited or run', required=False)
-parser.add_argument('--options', type=int, dest='options',
-                        help='options of the workflow', required=False)
+parser.add_argument('--wf_para', type=int, dest='wf_parameters', help='Some workflow parameters', required=False)
+parser.add_argument('--structure', type=int, dest='structure', help='The crystal structure node', required=False)
+parser.add_argument('--calc_para',
+                    type=int,
+                    dest='calc_parameters',
+                    help='Parameters for the FLEUR calculation',
+                    required=False)
+parser.add_argument('--fleurinp',
+                    type=int,
+                    dest='fleurinp',
+                    help='FleurinpData from which to run the FLEUR calculation',
+                    required=False)
+parser.add_argument('--remote',
+                    type=int,
+                    dest='remote_data',
+                    help=('Remote Data of older FLEUR calculation, '
+                          'from which files will be copied (mixing_history ...)'),
+                    required=False)
+parser.add_argument('--inpgen', type=int, dest='inpgen', help='The inpgen code node to use', required=False)
+parser.add_argument('--fleur', type=int, dest='fleur', help='The FLEUR code node to use', required=True)
+parser.add_argument('--submit', type=bool, dest='submit', help='should the workflow be submited or run', required=False)
+parser.add_argument('--options', type=int, dest='options', help='options of the workflow', required=False)
 args = parser.parse_args()
 
 print(args)
@@ -66,45 +68,50 @@ print(args)
 #    nodes_dict[key] = val_new
 
 ### Defaults ###
-wf_para = Dict(dict={'method' : 'valence',
-                              'hole_charge' : 0.5,
-                              'atoms' : ['all'],
-                              'corelevel' : ['W,4f', 'W,4p'],#['W,all'],#
-                              'supercell_size' : [2,1,1],
-                              'magnetic' : True})
+wf_para = Dict(
+    dict={
+        'method': 'valence',
+        'hole_charge': 0.5,
+        'atoms': ['all'],
+        'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
+        'supercell_size': [2, 1, 1],
+        'magnetic': True
+    })
 
-options = Dict(dict={'resources' : {"num_machines": 1},
-                              'queue_name' : 'th1',#23_node',
-                              'max_wallclock_seconds':  60*60})
+options = Dict(dict={
+    'resources': {
+        'num_machines': 1
+    },
+    'queue_name': 'th1',  #23_node',
+    'max_wallclock_seconds': 60 * 60
+})
 
 # W bcc structure
-bohr_a_0= 0.52917721092 # A
-a = 3.013812049196*bohr_a_0
-cell = [[-a,a,a],[a,-a,a],[a,a,-a]]
+bohr_a_0 = 0.52917721092  # A
+a = 3.013812049196 * bohr_a_0
+cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
 structure = StructureData(cell=cell)
-structure.append_atom(position=(0.,0.,0.), symbols='W')
-parameters = Dict(dict={
-                  'atom':{
-                        'element' : 'W',
-                        'jri' : 833,
-                        'rmt' : 2.3,
-                        'dx' : 0.015,
-                        'lmax' : 8,
-                        'lo' : '5p',
-                        'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                        },
-                  'comp': {
-                        'kmax': 3.0,
-                        },
-                  'kpt': {
-                        'nkpt': 100,
-                        }})
+structure.append_atom(position=(0., 0., 0.), symbols='W')
+parameters = Dict(
+    dict={
+        'atom': {
+            'element': 'W',
+            'jri': 833,
+            'rmt': 2.3,
+            'dx': 0.015,
+            'lmax': 8,
+            'lo': '5p',
+            'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+        },
+        'comp': {
+            'kmax': 3.0,
+        },
+        'kpt': {
+            'nkpt': 100,
+        }
+    })
 
-default = {'structure' : structure,
-           'wf_parameters': wf_para,
-           'options' : options,
-           'calc_parameters' : parameters
-           }
+default = {'structure': structure, 'wf_parameters': wf_para, 'options': options, 'calc_parameters': parameters}
 
 ####
 
@@ -148,14 +155,14 @@ pprint(inputs)
 
 #builder = fleur_scf_wc.get_builder()
 
-print("##################### TEST fleur_corehole_wc #####################")
+print('##################### TEST fleur_corehole_wc #####################')
 
 if submit_wc:
     res = submit(fleur_corehole_wc, **inputs)
-    print("##################### Submited fleur_corehole_wc #####################")
-    print(("Runtime info: {}".format(res)))
-    print("##################### Finished submiting fleur_corehole_wc #####################")
+    print('##################### Submited fleur_corehole_wc #####################')
+    print(('Runtime info: {}'.format(res)))
+    print('##################### Finished submiting fleur_corehole_wc #####################')
 else:
-    print("##################### Running fleur_corehole_wc #####################")
+    print('##################### Running fleur_corehole_wc #####################')
     res = run(fleur_corehole_wc, **inputs)
-    print("##################### Finished running fleur_corehole_wc #####################")
+    print('##################### Finished running fleur_corehole_wc #####################')

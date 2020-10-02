@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 This test runs the fleur_convergence workflow for path 1
 """
@@ -19,11 +20,11 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 ###############################
 # Set your values here
-codename = 'inpgen_iff_0.28@local_iff' #'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
+codename = 'inpgen_iff_0.28@local_iff'  #'inpgen_iff@local_iff'#'inpgen_mac_30_11_2016@local_mac'
 #codename2 = 'fleur_iff@local_iff'#'fleur_mac_v0_27@local_mac'
 #codename = 'fleur_inpgen_iff003@iff003'#'inpgen_mac_30_11_2016@local_mac'
 #codename2 = 'fleur_iff003_v0_27@iff003'#fleur_iff@iff003'#'fleur_mac_v0_27@local_mac'
-codename2 = 'fleur_iff_0.28@local_iff'#'fleur_MPI_iff003_v0_27@iff003'
+codename2 = 'fleur_iff_0.28@local_iff'  #'fleur_MPI_iff003_v0_27@iff003'
 ###############################
 
 code = Code.get_from_string(codename)
@@ -33,20 +34,34 @@ s = load_node(138)
 
 parameters = Dict(dict={})
 
-settings = Dict(dict={'files_to_retrieve' : [], 'files_not_to_retrieve': [], 
-                               'files_copy_remotely': [], 'files_not_copy_remotely': [],
-                               'commandline_options': ["-wtime", "30"], 'blaha' : ['bla']})
-    
-wf_para = Dict(dict={'fleur_runmax' : 4, 
-                              'density_criterion' : 0.000001,#})
-                              'queue_name' : 'th123_node',
-                              'resources' : {"num_machines": 1, "num_mpiprocs_per_machine" : 12},
-                              'walltime_sec':  10*60})
+settings = Dict(
+    dict={
+        'files_to_retrieve': [],
+        'files_not_to_retrieve': [],
+        'files_copy_remotely': [],
+        'files_not_copy_remotely': [],
+        'commandline_options': ['-wtime', '30'],
+        'blaha': ['bla']
+    })
 
-res = FleurScfWorkChain.run(wf_parameters=wf_para, structure=s, 
-                            #calc_parameters=parameters, 
-                            inpgen = code, fleur=code2)#, settings=settings)# 
+wf_para = Dict(
+    dict={
+        'fleur_runmax': 4,
+        'density_criterion': 0.000001,  #})
+        'queue_name': 'th123_node',
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 12
+        },
+        'walltime_sec': 10 * 60
+    })
 
+res = FleurScfWorkChain.run(
+    wf_parameters=wf_para,
+    structure=s,
+    #calc_parameters=parameters,
+    inpgen=code,
+    fleur=code2)  #, settings=settings)#
 '''
 code = Code.get_from_string('inpgen_mac_25_10_2016')
 code2 = Code.get_from_string('fleur_mac_v0_27')

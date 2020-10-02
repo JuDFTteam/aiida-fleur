@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 'fleur_runmax': 4,                   # Maximum number of fleur jobs/starts
 'density_converged': 0.00002,        # Charge density convergence criterion
 'energy_converged': 0.002,           # Total energy convergence criterion
@@ -9,4 +10,3 @@
                'forcealpha': 0.5,
                'forcemix': 'BFGS'},
 'inpxml_changes': [],                # Modifications to inp.xml
-

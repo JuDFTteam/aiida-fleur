@@ -69,6 +69,3 @@ verdi run test_submit_scf.py --fleur $FLEUR_CODE3 --inpgen $INPGEN_CODE --struct
 
 #verdi run test_submit_dos.py --fleur $FLEUR_CODE4 --fleurinp $FLEURINP --remote $REMOTE2 --options $OPTIONS5 --submit $SUBMIT
 #verdi run test_submit_band.py --fleur $FLEUR_CODE4 --fleurinp $FLEURINP --remote $REMOTE2 --options $OPTIONS5 --submit $SUBMIT
-
-
-

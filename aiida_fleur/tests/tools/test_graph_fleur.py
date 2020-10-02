@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# test the fleur specific graph gernation routine
+''' Contains test the fleur specific graph gernation routine. '''
 from __future__ import absolute_import
 import pytest
 
@@ -18,7 +17,7 @@ def test_draw_graph_if_produces_file():
     import os
     from aiida_fleur.tools.graph_fleur import draw_graph
     from aiida.orm import Node
-    
+
     # TODO store a real graph and test if it is represented right...
     node = Node()
     outfile_expected = 'None.dot'

@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In here we put all things util (methods, code snipets) that are often useful, but not yet in AiiDA
 itself.
@@ -17,8 +16,8 @@ So far it contains:
 
 export_extras
 import_extras
-delete_nodes
-delete_trash
+delete_nodes (FIXME)
+delete_trash (FIXME)
 create_group
 
 """
@@ -27,7 +26,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import json
 import six
-from six.moves import input
+from six.moves import input as input_six
 
 from aiida.orm import load_node
 from aiida.orm.querybuilder import QueryBuilder
@@ -55,15 +54,14 @@ def export_extras(nodes, filename='node_extras.txt'):
 
     outdict = {}
     for node in nodes:
-        if not isinstance(node, Node): # pk or uuid
+        if not isinstance(node, Node):  # pk or uuid
             node = load_node(node)
 
         uuid = node.uuid
         extras_dict = node.extras
         outdict[uuid] = extras_dict
 
-    json.dump(outdict, open(filename, 'w'), sort_keys=True,
-              indent=4, separators=(',', ': '))
+    json.dump(outdict, open(filename, 'w'), sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def import_extras(filename):
@@ -81,11 +79,11 @@ def import_extras(filename):
     """
 
     all_extras = {}
-
-    try:
-        all_extras = json.load(open(filename))
-    except json.JSONDecodeError:
-        print('The file has to be loadable by json. i.e json format (which it is not).')
+    with open(filename, mode='r') as file1:
+        try:
+            all_extras = json.load(file1)
+        except json.JSONDecodeError:
+            print('The file has to be loadable by json. i.e json format (which it is not).')
 
     for uuid, extras in six.iteritems(all_extras):
 
@@ -101,10 +99,11 @@ def import_extras(filename):
         else:
             print('node is not instance of an AiiDA node')
         #print(extras)
-    return
 
 
-
+'''
+# uncommented this, since it is for sure out of date and dangerous to use
+# for current version see aiida-core docs
 def delete_nodes(pks_to_delete):
     """
     Delete a set of nodes. (From AiiDA cockbook)
@@ -130,13 +129,13 @@ def delete_nodes(pks_to_delete):
     # all children nodes.
     all_pks_to_delete = set(pks_to_delete)
     for pk in pks_to_delete:
-        all_pks_to_delete.update(models.DbNode.objects.filter(
-            input_links__in=pks_to_delete).values_list('pk', flat=True))
+        all_pks_to_delete.update(
+            models.DbNode.objects.filter(input_links__in=pks_to_delete).values_list('pk', flat=True))
 
-    print(("I am going to delete {} nodes, including ALL THE CHILDREN"
-           "of the nodes you specified. Do you want to continue? [y/N]"
-           "".format(len(all_pks_to_delete))))
-    answer = input()
+    print(('I am going to delete {} nodes, including ALL THE CHILDREN'
+           'of the nodes you specified. Do you want to continue? [y/N]'
+           ''.format(len(all_pks_to_delete))))
+    answer = input_six()
 
     if answer.strip().lower() == 'y':
         # Recover the list of folders to delete before actually deleting
@@ -149,9 +148,7 @@ def delete_nodes(pks_to_delete):
 
         with transaction.atomic():
             # Delete all links pointing to or from a given node
-            models.DbLink.objects.filter(
-                Q(input__in=all_pks_to_delete) |
-                Q(output__in=all_pks_to_delete)).delete()
+            models.DbLink.objects.filter(Q(input__in=all_pks_to_delete) | Q(output__in=all_pks_to_delete)).delete()
             # now delete nodes
             models.DbNode.objects.filter(pk__in=all_pks_to_delete).delete()
 
@@ -161,6 +158,7 @@ def delete_nodes(pks_to_delete):
         # There seem to be no folders in AiiDA 1.0
         # for f in folders:
         #     f.erase()
+
 
 def delete_trash():
     """
@@ -174,7 +172,7 @@ def delete_trash():
     q = QueryBuilder()
     nodes_to_delete_pks = []
 
-    q.append(Node, filters = {'extras.trash': {'==' : True}})
+    q.append(Node, filters={'extras.trash': {'==': True}})
 
     res = q.all()
     for node in res:
@@ -187,6 +185,8 @@ def delete_trash():
     delete_nodes(nodes_to_delete_pks)
 
     return
+'''
+
 
 def create_group(name, nodes, description=None, add_if_exist=False):
     """
@@ -210,14 +210,13 @@ def create_group(name, nodes, description=None, add_if_exist=False):
                      description='delta structures added by hand. from Gustavs inpgen files')
 
     """
-    from aiida.common import NotExistent
+    #from aiida.common import NotExistent
 
     group, created = Group.objects.get_or_create(label=name)
     if created:
         print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
     else:
-        print(('Group with name {} and pk {} already exists.'
-               ''.format(group.label, group.pk)))
+        print(('Group with name {} and pk {} already exists.' ''.format(group.label, group.pk)))
 
         if add_if_exist:
             print('Adding nodes to the existing group {}'.format(group.label))
@@ -252,8 +251,8 @@ def get_nodes_from_group(group, return_format='uuid'):
     """
 
     if return_format == 'uuid':
-        return [x.uuid for x in  group.nodes]
+        return [x.uuid for x in group.nodes]
     if return_format == 'pk':
-        return [x.pk for x in  group.nodes]
+        return [x.pk for x in group.nodes]
     else:
         raise ValueError("return_format should be 'uuid' or 'pk'.")

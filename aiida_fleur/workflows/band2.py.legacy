@@ -268,4 +268,3 @@ def seekpath_structure(structure):
     }
 
     return result
-

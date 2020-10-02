@@ -9,12 +9,12 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+''' Contains smoke tests for all aiida-fleur entry points '''
 from __future__ import absolute_import
 import pytest
 
 
-@pytest.mark.usefixtures("aiida_profile", "clear_database")
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class TestFleurEntrypoints:
     """
     tests all the entry points of the Fleur plugin. Therefore if the plugin is
@@ -77,10 +77,17 @@ class TestFleurEntrypoints:
 
     def test_fleur_band_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.band import fleur_band_wc
+        from aiida_fleur.workflows.band import FleurBandWorkChain
 
         workflow = WorkflowFactory('fleur.band')
-        assert workflow == fleur_band_wc
+        assert workflow == FleurBandWorkChain
+
+    def test_fleur_banddos_wc_entry_point(self):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
+
+        workflow = WorkflowFactory('fleur.banddos')
+        assert workflow == FleurBandDosWorkChain
 
     def test_fleur_eos_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory

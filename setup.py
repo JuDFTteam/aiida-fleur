@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
 from setuptools import setup, find_packages
@@ -9,7 +10,4 @@ if __name__ == '__main__':
     # such that it can be discovered automatically
     with open('setup.json', 'r') as info:
         kwargs = json.load(info)
-    setup(
-        packages=find_packages(exclude='aiida'),
-        **kwargs
-    )
+    setup(packages=find_packages(exclude='aiida'), **kwargs)

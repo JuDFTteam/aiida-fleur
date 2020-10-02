@@ -9,7 +9,9 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+'''
+Contains extensive tests for the FleurinpData structure of AiiDA-Fleur
+'''
 from __future__ import absolute_import
 import os
 import pytest
@@ -35,7 +37,7 @@ for subdir, dirs, files in os.walk(inpxmlfilefolder_non_valid):
             inpxmlfilelist2.append(os.path.join(subdir, file))
 
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
     """
     test if valid inp.xml files are recognized by fleur
@@ -48,7 +50,7 @@ def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
     assert fleurinp_tmp._validate() is None  # if fails, _validate throws an error
 
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist2)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist2)
 def test_fleurinp_non_valid_inpxml(create_fleurinp, inpxmlfilepath):
     """
     Test what happens if inp.xml file is not valid
@@ -64,7 +66,8 @@ def test_fleurinp_non_valid_inpxml(create_fleurinp, inpxmlfilepath):
 
 # test kpoints and structure and parameter data extraction
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_kpointsdata_extraction(create_fleurinp, inpxmlfilepath):
     """
     Extract a kpointsData from the fleurinp data, i.e inp.xml and check if
@@ -83,7 +86,7 @@ def test_fleurinp_kpointsdata_extraction(create_fleurinp, inpxmlfilepath):
         # or without a kpoint list. Therefore this test might let two much through
 
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_parameterdata_extraction(create_fleurinp, inpxmlfilepath):
     """
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if
@@ -99,7 +102,7 @@ def test_fleurinp_parameterdata_extraction(create_fleurinp, inpxmlfilepath):
     # ToDo check if it is also right for inpgen...
 
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_structuredata_extraction(create_fleurinp, inpxmlfilepath):
     """
     Extract a ParameterData from the fleurinp data, i.e inp.xml and check if
@@ -121,7 +124,7 @@ def test_fleurinp_structuredata_extraction(create_fleurinp, inpxmlfilepath):
 
 
 # Input Modification tests
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
     """
     set kmax, itmax, minDistance in inp.xml input file of fleurinpdata to
@@ -141,9 +144,9 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
     # TODO check if set right
 
 
-@pytest.mark.parametrize("inpxmlfilepath", inpxmlfilelist)
+@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_first_species_modification(create_fleurinp, inpxmlfilepath):
     """
     Decrease the rmt of the first species by 10%, check if rmt was set
     """
-    pass
+    return

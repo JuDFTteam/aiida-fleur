@@ -35,70 +35,10 @@ class FleurinpModifier(object):
         """
         Initiation of FleurinpModifier.
         """
-        assert isinstance(original, FleurinpData), "Wrong AiiDA data type"
+        assert isinstance(original, FleurinpData), 'Wrong AiiDA data type'
 
         self._original = original
         self._tasks = []
-
-    @staticmethod
-    @cf
-    def modify_fleurinpdata(original, modifications):
-        """
-        A CalcFunction that performs the modification of the given FleurinpData and stores
-        the result in a database.
-
-        :param original: a FleurinpData to be modified
-        :param modifications: a python dictionary of modifications in the form of {'task': ...}
-
-        :returns new_fleurinp: a modified FleurinpData that is stored in a database
-        """
-
-        # copy
-        # get schema
-        # read in inp.xml
-        # add modifications
-        # validate
-        # save inp.xml
-        # store new fleurinp (copy)
-        from aiida_fleur.tools.xml_util import clear_xml
-
-        new_fleurinp = original.clone()
-        # TODO test if file is there!
-        inpxmlfile = new_fleurinp.open(key='inp.xml')
-        modification_tasks = modifications.get_dict()['tasks']
-
-        xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-
-        tree = etree.parse(inpxmlfile, parser)
-
-        try:
-            xmlschema.assertValid(clear_xml(tree))
-        except etree.DocumentInvalid:
-            print("Input file is not validated against the schema")
-            raise
-
-        new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,
-                                                             modification_tasks=modification_tasks)
-
-        # To include object store storage this prob has to be done differently
-
-        inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
-        inpxmlfile.close()
-
-        new_fleurtree.write(inpxmlfile_new, pretty_print=True)
-
-        new_fleurinp.del_file('inp.xml')
-        new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
-        os.remove(inpxmlfile_new)
-
-        # default label and description
-        new_fleurinp.label = 'mod_fleurinp'
-        new_fleurinp.description = ('Fleurinpdata with modifications'
-                                    ' (see inputs of modify_fleurinpdata)')
-
-        return new_fleurinp
 
     @staticmethod
     def apply_modifications(fleurinp_tree_copy, modification_tasks, schema_tree=None):
@@ -119,25 +59,17 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import delete_att, set_species
         from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
-        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, shift_value
+        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
 
-        def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename,
-                                 attribv, occ=None, create=False):
+        def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
                 occ = [0]
-            xml_set_attribv_occ(
-                fleurinp_tree_copy,
-                xpathn,
-                attributename,
-                attribv,
-                occ=occ,
-                create=create)
+            xml_set_attribv_occ(fleurinp_tree_copy, xpathn, attributename, attribv, occ=occ, create=create)
             return fleurinp_tree_copy
 
-        def xml_set_first_attribv1(fleurinp_tree_copy, xpathn,
-                                   attributename, attribv, create=False):
+        def xml_set_first_attribv1(fleurinp_tree_copy, xpathn, attributename, attribv, create=False):
             xml_set_first_attribv(fleurinp_tree_copy, xpathn, attributename, attribv, create=create)
             return fleurinp_tree_copy
 
@@ -174,40 +106,28 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def set_species1(fleurinp_tree_copy, species_name, attributedict, create=False):
-            fleurinp_tree_copy = set_species(
-                fleurinp_tree_copy, species_name, attributedict, create=create)
+            fleurinp_tree_copy = set_species(fleurinp_tree_copy, species_name, attributedict, create=create)
             return fleurinp_tree_copy
 
         def set_species2(fleurinp_tree_copy, at_label, attributedict, create=False):
-            fleurinp_tree_copy = set_species_label(
-                fleurinp_tree_copy, at_label, attributedict, create=create)
+            fleurinp_tree_copy = set_species_label(fleurinp_tree_copy, at_label, attributedict, create=create)
             return fleurinp_tree_copy
 
-        def change_atomgr_att1(fleurinp_tree_copy, attributedict,
-                               position=None, species=None, create=False):
+        def change_atomgr_att1(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
             fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
                                                    attributedict,
                                                    position=position,
                                                    species=species)
             return fleurinp_tree_copy
 
-        def change_atomgr_att2(fleurinp_tree_copy, attributedict,
-                               atom_label, create=False):
-            fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy,
-                                                         attributedict,
-                                                         at_label=atom_label)
+        def change_atomgr_att2(fleurinp_tree_copy, attributedict, atom_label, create=False):
+            fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label=atom_label)
             return fleurinp_tree_copy
 
-        def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename,
-                            set_val, mode='abs', occ=None):
+        def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename, set_val, mode='abs', occ=None):
             if occ is None:
                 occ = [0]
-            fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy,
-                                                xpathn,
-                                                attributename,
-                                                set_val,
-                                                mode=mode,
-                                                occ=occ)
+            fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy, xpathn, attributename, set_val, mode=mode, occ=occ)
             return fleurinp_tree_copy
 
         def set_inpchanges1(fleurinp_tree_copy, change_dict):
@@ -219,12 +139,15 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def shift_value_species_label1(fleurinp_tree_copy, label, att_name, value, mode):
-            fleurinp_tree_copy = shift_value_species_label(
-                fleurinp_tree_copy, label, att_name, value, mode)
+            fleurinp_tree_copy = shift_value_species_label(fleurinp_tree_copy, label, att_name, value, mode)
             return fleurinp_tree_copy
 
         def set_nkpts1(fleurinp_tree_copy, count, gamma):
             fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
+            return fleurinp_tree_copy
+
+        def set_kpath1(fleurinp_tree_copy, kpath, count, gamma):
+            fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
             return fleurinp_tree_copy
 
         actions = {
@@ -246,8 +169,8 @@ class FleurinpModifier(object):
             'shift_value': shift_value1,
             'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
+            'set_kpath': set_kpath1,
             'add_num_to_att': add_num_to_att1
-
         }
 
         workingtree = fleurinp_tree_copy
@@ -259,7 +182,7 @@ class FleurinpModifier(object):
             try:
                 action = actions[task[0]]
             except KeyError:
-                raise ValueError("Unknown task {}".format(task[0]))
+                raise ValueError('Unknown task {}'.format(task[0]))
 
             workingtree = action(workingtree, *task[1:])
 
@@ -267,7 +190,7 @@ class FleurinpModifier(object):
             try:
                 xmlschema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid:
-                print("changes were not valid: {}".format(modification_tasks))
+                print('changes were not valid: {}'.format(modification_tasks))
                 raise
 
         return workingtree
@@ -296,7 +219,6 @@ class FleurinpModifier(object):
             'shift_value_species_label': self.shift_value_species_label,
             'set_nkpts': self.set_nkpts,
             'add_num_to_att': self.add_num_to_att
-
         }
         return outside_actions
 
@@ -506,6 +428,13 @@ class FleurinpModifier(object):
         """
         self._tasks.append(('set_nkpts', count, gamma))
 
+    def set_kpath(self, kpath, count, gamma='F'):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_kpath()` to
+        the list of tasks that will be done on the FleurinpData.
+        """
+        self._tasks.append(('set_kpath', kpath, count, gamma))
+
     def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_util.add_num_to_att()` to
@@ -558,7 +487,7 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            with self._original.open(key='inp.xml') as inpxmlfile:
+            with self._original.open(path='inp.xml') as inpxmlfile:
                 tree = etree.parse(inpxmlfile)
             tree = self.apply_modifications(tree, self._tasks)
 
@@ -583,27 +512,84 @@ class FleurinpModifier(object):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
-        modifications = DataFactory("dict")(dict={"tasks": self._tasks})
+        modifications = DataFactory('dict')(dict={'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        out = self.modify_fleurinpdata(
-            original=self._original,
-            modifications=modifications,
-            metadata={'label': 'fleurinp modifier',
-                      'description': 'This calcfunction modified an Fleurinpdataobject'})
+        out = modify_fleurinpdata(original=self._original,
+                                  modifications=modifications,
+                                  metadata={
+                                      'label': 'fleurinp modifier',
+                                      'description': 'This calcfunction modified an Fleurinpdataobject'
+                                  })
         return out
 
-    def undo(self, all=False):
+    def undo(self, revert_all=False):
         """
         Cancels the last change or all of them
 
-        :param all: set True if need to cancel all the changes, False if the last one.
+        :param revert_all: set True if need to cancel all the changes, False if the last one.
         """
-        if all:
+        if revert_all:
             self._tasks = []
         else:
             if self._tasks:
                 self._tasks.pop()
                 #del self._tasks[-1]
         return self._tasks
+
+
+@cf
+def modify_fleurinpdata(original, modifications):
+    """
+    A CalcFunction that performs the modification of the given FleurinpData and stores
+    the result in a database.
+
+    :param original: a FleurinpData to be modified
+    :param modifications: a python dictionary of modifications in the form of {'task': ...}
+
+    :returns new_fleurinp: a modified FleurinpData that is stored in a database
+    """
+
+    # copy
+    # get schema
+    # read in inp.xml
+    # add modifications
+    # validate
+    # save inp.xml
+    # store new fleurinp (copy)
+    from aiida_fleur.tools.xml_util import clear_xml
+
+    new_fleurinp = original.clone()
+    modification_tasks = modifications.get_dict()['tasks']
+
+    xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
+    xmlschema = etree.XMLSchema(xmlschema_doc)
+    parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
+    with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
+        tree = etree.parse(inpxmlfile, parser)
+
+    try:
+        xmlschema.assertValid(clear_xml(tree))
+    except etree.DocumentInvalid:
+        print('Input file is not validated against the schema')
+        raise
+
+    new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree, modification_tasks=modification_tasks)
+
+    # To include object store storage this prob has to be done differently
+
+    inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
+    inpxmlfile.close()
+
+    new_fleurtree.write(inpxmlfile_new, pretty_print=True)
+
+    new_fleurinp.del_file('inp.xml')
+    new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
+    os.remove(inpxmlfile_new)
+
+    # default label and description
+    new_fleurinp.label = 'mod_fleurinp'
+    new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
+
+    return new_fleurinp

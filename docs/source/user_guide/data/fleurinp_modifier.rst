@@ -64,13 +64,15 @@ _______________
       the changes in the given list are validated.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.freeze()`: Applies all the
       changes in the list, calls
-      :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.modify_fleurinpdata()` and
+      :py:func:`~aiida_fleur.data.fleurinpmodifier.modify_fleurinpdata()` and
       returns a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.changes()`: Displays the
       current list of changes.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.show()`:  Applies
       the modifications and displays/prints the resulting ``inp.xml`` file. Does not generate a new
       :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
+
+.. _modify_methods:
 
 Modification registration methods
 _________________________________
@@ -115,6 +117,8 @@ On the other hand, there are shortcut methods that already know some paths:
       user-friendly method for easy changes of attribute key value type.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.shift_value()`: Specific
       user-friendly method to shift value of an attribute.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.shift_value_species_label()`: Specific
+      user-friendly method to shift value of an attribute of an atom with a certain label.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nkpts()`: Specific
       method to set the number of kpoints.
 

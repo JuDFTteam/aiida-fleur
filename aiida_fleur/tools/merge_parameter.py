@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This module, contains a method to merge Dict nodes used by the FLEUR inpgen.
 This might also be of interest for other all-electron codes
@@ -23,8 +22,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aiida.plugins import DataFactory
-from aiida.orm import Bool
+from aiida.orm import Bool, Dict
 from aiida.engine import calcfunction as cf
+#Dict = DataFactory('dict')
 
 
 def merge_parameter(Dict1, Dict2, overwrite=True):
@@ -44,7 +44,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     """
 
     from aiida.common.exceptions import InputValidationError
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
 
     # layout:
     # check input
@@ -56,11 +56,9 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     atoms_dict = {}
     atomlist = []
     if not isinstance(Dict1, Dict):
-        raise InputValidationError("Dict1, must be of "
-                                   "type Dict")
+        raise InputValidationError('Dict1, must be of ' 'type Dict')
     if not isinstance(Dict2, Dict):
-        raise InputValidationError("Dict2, must be of "
-                                   "type Dict")
+        raise InputValidationError('Dict2, must be of ' 'type Dict')
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 
@@ -73,7 +71,6 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
         if 'atom' in key:
             val = dict2.pop(key)
             atomlist.append(val)
-
 
     # TODO do something on atom list,
     # we do not want doubles, check element and Id? Keep first ones?
@@ -97,7 +94,6 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
 
     # be carefull with atom namelist
 
-
     return Dict(dict=new_dict)
 
 
@@ -105,8 +101,8 @@ def merge_parameters(DictList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
-    Dict = DataFactory('dict')
-    paremeter_data_new = Dict(dict= {})
+    #Dict = DataFactory('dict')
+    paremeter_data_new = Dict(dict={})
 
     for i, parameter in enumerate(DictList):
         if isinstance(parameter, Dict):
@@ -116,6 +112,7 @@ def merge_parameters(DictList, overwrite=True):
             print(('WARNING: Entry : {} {} is not of type Dict, I skip it.'.format(i, parameter)))
 
     return paremeter_data_new
+
 
 @cf
 def merge_parameter_cf(Dict1, Dict2, overwrite=None):
@@ -127,6 +124,7 @@ def merge_parameter_cf(Dict1, Dict2, overwrite=None):
     paremeter_data_new = merge_parameter(Dict1, Dict2, overwrite=overwrite)
 
     return paremeter_data_new
+
 
 '''
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
@@ -144,16 +142,17 @@ def merge_parameters_wf(*Dicts, overwrite=Bool(True)):
 
     return paremeter_data_new
 '''
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
 
     parser = argparse.ArgumentParser(description='Merge a Dict node.')
-    parser.add_argument('--para1', type=Dict, dest='para1',
-                        help='The first Dict node', required=True)
-    parser.add_argument('--para2', type=Dict, dest='para2',
-                        help='The second Dict node', required=True)
-    parser.add_argument('--overwrite', type=bool, dest='overwrite',
-                        help='Shall values given in Dict2 overwrite the values from the first Dict?', required=False)
+    parser.add_argument('--para1', type=Dict, dest='para1', help='The first Dict node', required=True)
+    parser.add_argument('--para2', type=Dict, dest='para2', help='The second Dict node', required=True)
+    parser.add_argument('--overwrite',
+                        type=bool,
+                        dest='overwrite',
+                        help='Shall values given in Dict2 overwrite the values from the first Dict?',
+                        required=False)
     args = parser.parse_args()
     merge_parameter(Dict1=args.para1, Dict2=args.para1, overwrite=args.overwrite)

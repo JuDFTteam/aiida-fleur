@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 Cd = Dict(dict={
     'atom':{'element' : 'Cd', 'rmt' : 2.5, 'jri' : 981, 'lmax' : 12,
             'lnonsph' : 6, 'lo' : '4d',

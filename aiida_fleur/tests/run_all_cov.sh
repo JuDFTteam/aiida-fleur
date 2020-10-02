@@ -12,4 +12,3 @@ pytest --cov-report=term-missing --cov=aiida_fleur
 
 # pylint (for shield create, by hand, or write script to write total into svg) 
 # pylint ../../aiida_fleur/ > outlint
-

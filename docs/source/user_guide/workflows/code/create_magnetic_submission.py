@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiida.orm import load_node, Dict
 from aiida.engine import submit
 
@@ -50,9 +51,8 @@ calc_eos = {'comp': {'kmax': 3.8,
 
 calc_eos = Dict(dict=calc_eos)
 
-options_eos = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4, "num_cores_per_mpiproc": 6},
+options_eos = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 4, 'num_cores_per_mpiproc': 6},
                'queue_name': 'devel',
-               'environment_variables': {'OMP_NUM_THREADS': '6'},
                'custom_scheduler_commands': '',
                'max_wallclock_seconds':  1*60*60}
 
@@ -101,9 +101,8 @@ calc_relax = {'comp': {'kmax': 4.0,
 
 calc_relax = Dict(dict=calc_relax)
 
-options_relax = {'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 4, "num_cores_per_mpiproc": 6},
+options_relax = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 4, 'num_cores_per_mpiproc': 6},
                  'queue_name': 'devel',
-                 'environment_variables': {'OMP_NUM_THREADS': '6'},
                  'custom_scheduler_commands': '',
                  'max_wallclock_seconds':  1*60*60}
 

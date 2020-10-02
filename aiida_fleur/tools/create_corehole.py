@@ -9,17 +9,20 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
+'''
+Contains helper functions to create core-holes in
+Fleur input files from AiiDA data nodes.
+'''
 from __future__ import absolute_import
 from __future__ import print_function
 from aiida.plugins import DataFactory
 import six
 
-
 # TODO maybe merge these methods into fleurinp or structure util? or create a parameterData utils
 #355
 
-def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterData=None):
+
+def create_corehole_para(structure, kind, econfig, species_name='corehole', parameterdata=None):
     """
     This methods sets of electron configurations for a kind
     or position given, make sure to break the symmetry for this position/kind
@@ -30,13 +33,12 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     param: econfig, string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2"
     ! THis is the new econfig therefore
 
-    returns a parameterData node
+    returns a Dict node
     """
 
     from aiida.common.constants import elements as PeriodicTableElements
 
-    _atomic_numbers = {data['symbol']: num for num,
-                           data in six.iteritems(PeriodicTableElements)}
+    _atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTableElements)}
     #from aiida_fleur.tools.merge_parameter import merge_parameter
 
     kindo = structure.get_kind(kind)
@@ -44,44 +46,44 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     head = kindo.name.rstrip('01223456789')
     #print(kindo)
     charge = _atomic_numbers[kindo.symbol]
-    id = float("{}.{}".format(charge, kindo.name[len(head):]))
-    #print('id {}'.format(id))
+    a_id = float('{}.{}'.format(charge, kindo.name[len(head):]))
+    #print('a_id {}'.format(a_id))
 
     # get kind symbol, get kind name,
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /
     #count = 0
-    if parameterData:
-        new_parameterd = parameterData.get_dict() # dict()otherwise parameterData is changed
+    if parameterdata:
+        new_parameterd = parameterdata.get_dict()  # dict()otherwise parameterdata is changed
         for key, val in six.iteritems(new_parameterd):
             if 'atom' in key:
                 if val.get('element', None) == symbol:
-                    # remember id is atomic number.some int
-                    if (id and float(id) == float(val.get('id', -1))):
-                        val.update({'econfig' : econfig})
+                    # remember atomic id is atomic number.some int
+                    if (a_id and float(a_id) == float(val.get('id', -1))):
+                        val.update({'econfig': econfig})
                         break
-                    elif not id:
-                        val.update({'econfig' : econfig})
+                    if not a_id:
+                        val.update({'econfig': econfig})
                     else:
                         pass
     else:
-        if id:
+        if a_id:
             if species_name:
-                new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig, 'id' : id, 'name' : species_name}}
+                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': a_id, 'name': species_name}}
             else:
-                new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig, 'id' : id}}
+                new_parameterd = {'atom': {'element': symbol, 'econfig': econfig, 'id': a_id}}
         else:
-            new_parameterd = {'atom': {'element' : symbol, 'econfig' : econfig}}
+            new_parameterd = {'atom': {'element': symbol, 'econfig': econfig}}
 
     from aiida.orm import Dict
-    new_parameter= Dict(dict=new_parameterd)
-    #if parameterData:
-    #    new_parameter = merge_parameter(parameterData, new_parameter)
-    return new_parameter#structure
+    new_parameter = Dict(dict=new_parameterd)
+    #if parameterdata:
+    #    new_parameter = merge_parameter(parameterdata, new_parameter)
+    return new_parameter  #structure
 
 
 # Move to fleurinpmod? fleurinp->self
 # This method is fully implemented yet since it turned out to better go over inpgen
-def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='same', valenceconfig='same'):
+def create_corehole_fleurinp(fleurinp, species, stateocc, pos=None, coreconfig='same', valenceconfig='same'):
     """
     Removes an electron from the core and adds it to the valence band of the kind
     given econfig as in inp.xml::
@@ -89,7 +91,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
         [Kr] (5s1/2) (4d3/2) (4d5/2) (4f5/2) (4f7/2)
 
     if position(pos) is given the electronConfig for the specified position will be set.
-    (or todo? econfig, either:: 
+    (or todo? econfig, either::
 
             [Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2
 
@@ -122,7 +124,7 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
 
     FleurinpData = DataFactory('fleur.fleurinp')
     ########### all xpath maintain ########### ? needed?
-    electronConfig_xpath =  '/fleurInput/atomSpecies/species/electronConfig'
+    electronConfig_xpath = '/fleurInput/atomSpecies/species/electronConfig'
     species_xpath = '/fleurInput/atomSpecies/species'
     #####################
 
@@ -139,14 +141,15 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
     # test input.
     if not isinstance(fleurinp, FleurinpData):
         print('No fleurinp Data given to "create_valence_corehole"')
-        return None # TODO throw error?
+        return None  # TODO throw error?
 
     if coreconfig != 'same':
         new_core = True
 
     if valenceconfig != 'same':
         new_valence = True
-
+    if pos is None:
+        pos = []
     species_tags = fleurinp.get_tag(species_xpath)
     for speci in species_tags:
         if get_xml_attribute(speci, 'name') == species:
@@ -169,18 +172,14 @@ def create_corehole_fleurinp(fleurinp, species, stateocc, pos=[], coreconfig='sa
                 if not added:
                     pass
 
-
     #st_inpchanges(change_dict)
 
-
     #alternative
-    change_dict = {'coreConfig' : '', 'valenceConfig': ''}
-    change_dict2 = {'state' : '', 'spinUp' : '', 'spinDown' : ''}
-    change_dict3 = {'valenceElectrons' : ''}
-
+    change_dict = {'coreConfig': '', 'valenceConfig': ''}
+    change_dict2 = {'state': '', 'spinUp': '', 'spinDown': ''}
+    change_dict3 = {'valenceElectrons': ''}
 
     return fleurinp
-
 
 
 def write_change(xmltree, changelist_xpath):
@@ -192,5 +191,3 @@ def write_change(xmltree, changelist_xpath):
         xpath = element[0]
         value = element[1]
     return xmltree_new
-
-

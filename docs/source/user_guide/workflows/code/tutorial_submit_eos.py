@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
 from aiida.orm import Dict, load_node
 
@@ -19,11 +20,11 @@ wf_para_scf = Dict(dict={'fleur_runmax': 2,
                })
 
 
-options_scf = Dict(dict={'resources': {"num_machines": 1, "num_mpiprocs_per_machine": 8},
+options_scf = Dict(dict={'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 8},
                          'queue_name': 'devel',
                          'custom_scheduler_commands': '',
                          'max_wallclock_seconds':  60*60})
-                                   
+
 inputs = {'scf': {
                   'wf_parameters': wf_para_scf,
                   'calc_parameters': parameters,
