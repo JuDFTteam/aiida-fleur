@@ -1,3 +1,7 @@
+## v1.1.1
+### release compatible with AiiDA-core 1.4.0
+- bugfixes and other general improvements
+
 ## v1.1.0
 ### release compatible with AiiDA-core 1.1.0
 - support of Fleur Max4 version (release branch)
