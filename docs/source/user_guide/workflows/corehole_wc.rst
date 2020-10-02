@@ -3,10 +3,6 @@
 Fleur core-hole workflow
 ------------------------
 
-.. warning::
-
-    This workchain does not work with AiiDA 1.1.1 version yet. They need to be updated.
-
 Class name, import from:
   ::
 
