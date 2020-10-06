@@ -18,6 +18,7 @@ FleurinpData objects in a way which keeps the provernance.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import io
 
 from lxml import etree
 
@@ -41,16 +42,17 @@ class FleurinpModifier(object):
         self._tasks = []
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, modification_tasks, schema_tree=None):
+    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_tree=None):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.
         Does not rise an error if inp.xml is not validated, simple prints a message about it.
 
         :param fleurinp_tree_copy: a fleurinp lxml tree to be modified
+        ;param n_mmp_lines_copy: a n_mmp_mat file to be modified
         :param modification_tasks: a list of modification tuples
 
-        :returns: a modified fleurinp lxml tree
+        :returns: a modified fleurinp lxml tree and a modified n_mmp_mat file
         """
         from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
         from aiida_fleur.tools.xml_util import xml_set_all_attribv, xml_set_text
@@ -62,6 +64,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
+        from aiida_fleur.tools.set_nmmpmat import set_nmmpmat
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
@@ -150,6 +153,12 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
             return fleurinp_tree_copy
 
+        def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+                         spin, occStates, denmat, phi, theta):
+            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy,species_name, orbital,\
+                                          spin, occStates,denmat,phi,theta)
+            return nmmp_lines_copy
+
         actions = {
             'xml_set_attribv_occ': xml_set_attribv_occ1,
             'xml_set_first_attribv': xml_set_first_attribv1,
@@ -170,10 +179,12 @@ class FleurinpModifier(object):
             'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
             'set_kpath': set_kpath1,
-            'add_num_to_att': add_num_to_att1
+            'add_num_to_att': add_num_to_att1,
+            'set_nmmpmat': set_nmmpmat1,
         }
 
         workingtree = fleurinp_tree_copy
+        workingnmmp = nmmp_lines_copy
         if schema_tree:
             #xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(schema_tree)
@@ -184,7 +195,10 @@ class FleurinpModifier(object):
             except KeyError:
                 raise ValueError('Unknown task {}'.format(task[0]))
 
-            workingtree = action(workingtree, *task[1:])
+            if task[0] == 'set_nmmpmat':
+                workingnmmp = action(workingtree,workingnmmp, *task[1:])
+            else:
+                workingtree = action(workingtree, *task[1:])
 
         if schema_tree:
             try:
@@ -193,7 +207,7 @@ class FleurinpModifier(object):
                 print('changes were not valid: {}'.format(modification_tasks))
                 raise
 
-        return workingtree
+        return workingtree, workingnmmp
 
     def get_avail_actions(self):
         """
@@ -218,7 +232,8 @@ class FleurinpModifier(object):
             'shift_value': self.shift_value,
             'shift_value_species_label': self.shift_value_species_label,
             'set_nkpts': self.set_nkpts,
-            'add_num_to_att': self.add_num_to_att
+            'add_num_to_att': self.add_num_to_att,
+            'set_nmmpmat': self.set_nmmpmat,
         }
         return outside_actions
 
@@ -450,6 +465,20 @@ class FleurinpModifier(object):
             occ = [0]
         self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ))
 
+    def set_nmmpmat(self, species_name, orbital, spin, occStates=None, denmat=None, phi=None, theta=None):
+        """
+        Appends a :func:`~aiida_fleur.tools.set_nmmpmat.set_nmmpmat()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param species_name: species on which the density matrix should be set
+        :param species_name: orbital on which the density matrix should be set
+        :param occStates: list which specifies the diagonal elements of the density matrix
+        :param denmat: matrix, which specifies the density matrix
+        :param phi: optional angle to rotate density matrix
+        :param theta: optional angle to rotate density matrix
+        """
+        self._tasks.append(('set_nmmpmat', species_name, orbital, spin, occStates, denmat, phi, theta))
+
     def validate(self):
         """
         Extracts the schema-file.
@@ -469,7 +498,7 @@ class FleurinpModifier(object):
             print('No schema file found')
             return
         if with_schema:
-            tree = self.apply_modifications(tree, self._tasks, schema_tree=xmlschema_tree)
+            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks, schema_tree=xmlschema_tree)
         return tree
 
     def show(self, display=True, validate=False):
@@ -489,7 +518,7 @@ class FleurinpModifier(object):
         else:
             with self._original.open(path='inp.xml') as inpxmlfile:
                 tree = etree.parse(inpxmlfile)
-            tree = self.apply_modifications(tree, self._tasks)
+            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
 
         if display:
             xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print=True)
@@ -575,7 +604,15 @@ def modify_fleurinpdata(original, modifications):
         print('Input file is not validated against the schema')
         raise
 
-    new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree, modification_tasks=modification_tasks)
+    try:
+        with new_fleurinp.open(path='n_mmp_mat',mode='r') as n_mmp_file:
+            nmmplines = n_mmp_file.read().split('\n')
+    except FileNotFoundError:
+        nmmplines = None
+
+    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,\
+                                                                        nmmp_lines_copy=nmmplines,\
+                                                                        modification_tasks=modification_tasks)
 
     # To include object store storage this prob has to be done differently
 
@@ -587,6 +624,10 @@ def modify_fleurinpdata(original, modifications):
     new_fleurinp.del_file('inp.xml')
     new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
     os.remove(inpxmlfile_new)
+
+    if new_nmmplines:
+        new_nmmp = bytes('\n'.join(new_nmmplines), 'utf-8')
+        new_fleurinp._add_path(io.BytesIO(new_nmmp), 'n_mmp_mat')
 
     # default label and description
     new_fleurinp.label = 'mod_fleurinp'
