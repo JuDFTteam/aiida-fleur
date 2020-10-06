@@ -350,13 +350,14 @@ class FleurinputgenCalculation(CalcJob):
                     vector_rel[2] = vector_rel[2] * scaling_pos
 
                 if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new specie!
-                    suc = True
                     try:
                         head = kind_name.rstrip('0123456789')
                         kind_namet = int(kind_name[len(head):])
+                        if int(kind_name[len(head)]) > 3:
+                            raise InputValidationError('New specie name/label should start with a digit smaller than 4')
                     except ValueError:
-                        suc = False
-                    if suc:
+                        pass
+                    else:
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
                     # append a label to the detached atom
                     atomic_positions_card_listtmp.append('    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}'
