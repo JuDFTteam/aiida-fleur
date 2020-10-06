@@ -73,7 +73,6 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
          raise KeyError(f'No LDA+U procedure found on species {current_name} with l={orbital}')
 
       if occStates is not None:
-
          #diagonal density matrix
          denmatpad = np.zeros((7,7),dtype=complex)
 
@@ -84,8 +83,7 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
          for i, occ in enumerate(occStatespad):
             denmatpad[i,i] = occ
       elif denmat is not None:
-
-         #density matrix ix completely specified
+         #density matrix is completely specified
          denmatpad = np.zeros((7,7),dtype=complex)
          denmatpad[3-orbital:4+orbital,3-orbital:4+orbital] = denmat
       else:
@@ -95,8 +93,6 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
          #Rotate the density matrix
          denmatpad = d_wigner.T.conj().dot(denmatpad.dot(d_wigner))
 
-
-
       #check if fleurinp has a specified n_mmp_mat file if not initialize it with 0
       if nmmp_lines_copy is None:
          nmmp_lines_copy = []
@@ -105,20 +101,19 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
 
       #Select the right block from n_mmp_mat and overwrite it with denmatpad
       startRow = (nspins*ldau_index+spin-1)*14
-      for index in range(len(nmmp_lines_copy)):
-         if index >= startRow and index < startRow + 14: #check if we are in the correct block
-            currentLine = index-startRow
-            currentRow = currentLine//2
-            if currentLine%2 == 0:
-               #Line ends with a real part
-               nmmp_lines_copy[index] = separator+separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
-                                                     for x in denmatpad[currentRow,:3]]))\
-                                        +separator+'{:16.13f}'.format(denmatpad[currentRow,3].real)
-            else:
-               #Line begins with a imaginary part
-               nmmp_lines_copy[index] = separator+'{:16.13f}'.format(denmatpad[currentRow,3].imag)+separator+\
-                                        separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
-                                                     for x in denmatpad[currentRow,4:]]))
+      for index in range(startRow,startRow+14):
+         currentLine = index-startRow
+         currentRow = currentLine//2
+         if currentLine%2 == 0:
+            #Line ends with a real part
+            nmmp_lines_copy[index] = separator+separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
+                                                  for x in denmatpad[currentRow,:3]]))\
+                                     +separator+'{:16.13f}'.format(denmatpad[currentRow,3].real)
+         else:
+            #Line begins with a imaginary part
+            nmmp_lines_copy[index] = separator+'{:16.13f}'.format(denmatpad[currentRow,3].imag)+separator+\
+                                     separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
+                                                  for x in denmatpad[currentRow,4:]]))
 
    return nmmp_lines_copy
 
