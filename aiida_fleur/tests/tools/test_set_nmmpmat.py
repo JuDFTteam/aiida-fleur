@@ -149,8 +149,6 @@ def test_set_nmmpmat_file(inpxml_etree):
     with open(TEST_NMMPMAT_PATH, mode='r') as nmmpfile:
         nmmp_lines = nmmpfile.read().split('\n')
 
-    print(len(nmmp_lines))
-
     nmmp_lines = set_nmmpmat(etree, nmmp_lines, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
     nmmp_lines = set_nmmpmat(etree, nmmp_lines, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     assert len(nmmp_lines) == len(correct_result)
