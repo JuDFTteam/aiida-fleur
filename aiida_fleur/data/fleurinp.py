@@ -530,8 +530,10 @@ class FleurinpData(Data):
                 fleur_modes['gw'] = int(self.inp_dict['calculationSetup']['expertModes']['gw']) != 0
             except KeyError:
                 fleur_modes['gw'] = False
-            ldau = False  # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
+            for species in inp_dict['atomSpecies']['species']:
+                if 'ldaU' in species:
+                    fleur_modes['ldau'] = True
         return fleur_modes
 
     def get_structuredata_ncf(self):
