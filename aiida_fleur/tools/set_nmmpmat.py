@@ -15,7 +15,6 @@ for LDA+U via the FleurinpModifier
 """
 from __future__ import absolute_import
 from __future__ import print_function
-import six
 import numpy as np
 from aiida_fleur.tools.xml_util import eval_xpath, eval_xpath2
 from aiida_fleur.tools.xml_util import get_xml_attribute, convert_to_int
