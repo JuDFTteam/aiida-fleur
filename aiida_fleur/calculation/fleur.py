@@ -97,6 +97,7 @@ class FleurCalculation(CalcJob):
 
     # files for lda+U
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
+    _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
     # files for hybrid functionals
     _COULOMB1_FILE_NAME = 'coulomb1'
@@ -183,7 +184,7 @@ class FleurCalculation(CalcJob):
         'remove_from_remotecopy_list', 'cmdline'
     ]
     # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw']
+    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldaU']
 
     @classmethod
     def define(cls, spec):
@@ -392,7 +393,10 @@ class FleurCalculation(CalcJob):
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
-                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
+                else:
+                    mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
