@@ -51,6 +51,20 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
    numRows = nspins*14*len(all_ldau)
    separator = '    '
 
+   #Check that numRows matches the number of lines in nmmp_lines_copy
+   #If not either there was an n_mmp_mat file present in Fleurinp before and a lda+u calculation
+   #was added or removed or the n_mmp_mat file was initialized and after the fact lda+u procedures were added
+   #or removed. In both cases the resolution of this modification is very involved so we throw an error
+   if nmmp_lines_copy is not None:
+      #Remove eventual blank lines in nmmp_lines copy here
+      while ('' in nmmp_lines_copy):
+         nmmp_lines_copy.remove("")
+      if numRows != len(nmmp_lines_copy):
+         raise ValueError('The number of lines in n_mmp_mat does not match the number expected from '+\
+                          'the inp.xml file. Either remove the existing file before making modifications '+\
+                          'and only use set_nmmpmat after all modifications to the inp.xml')
+
+
    if phi is not None or theta is not None:
       if phi is None:
          phi = 0.0
