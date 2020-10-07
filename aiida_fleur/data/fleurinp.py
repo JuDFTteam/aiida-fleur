@@ -531,7 +531,7 @@ class FleurinpData(Data):
             except KeyError:
                 fleur_modes['gw'] = False
             fleur_modes['ldau'] = False
-            for species in inp_dict['atomSpecies']['species']:
+            for species in self.inp_dict['atomSpecies']['species']:
                 if 'ldaU' in species:
                     fleur_modes['ldau'] = True
         return fleur_modes
