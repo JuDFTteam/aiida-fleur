@@ -95,7 +95,7 @@ since corresponding input structures are created within the CreateMagnetic workc
 +---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
 | optimized_structure | :py:class:`~aiida.orm.StructureData`| relaxed film structure                                                               | no       |
 +---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
-| distance_suggestion | :py:class:`~aiida.orm.StructureData`| interatomic distance suggestion, output of                                           | no       |
+| distance_suggestion | :py:class:`~aiida.orm.Dict`         | interatomic distance suggestion, output of                                           | no       |
 |                     |                                     | py:func:`~aiida_fleur.tools.StructureData_util.request_average_bond_length_store()`  |          |
 +---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
 
