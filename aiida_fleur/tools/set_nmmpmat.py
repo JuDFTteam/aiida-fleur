@@ -1,14 +1,24 @@
 # -*- coding: utf-8 -*-
+###############################################################################
+# Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
+#                All rights reserved.                                         #
+# This file is part of the AiiDA-FLEUR package.                               #
+#                                                                             #
+# The code is hosted on GitHub at https://github.com/JuDFTteam/aiida-fleur    #
+# For further information on the license, see the LICENSE.txt file            #
+# For further information please visit http://www.flapw.de or                 #
+# http://aiida-fleur.readthedocs.io/en/develop/                               #
+###############################################################################
+"""
+This module contains useful methods for initializing or modifying a n_mmp_mat file
+for LDA+U via the FleurinpModifier
+"""
 from __future__ import absolute_import
 from __future__ import print_function
 import six
 import numpy as np
 from aiida_fleur.tools.xml_util import eval_xpath, eval_xpath2
 from aiida_fleur.tools.xml_util import get_xml_attribute, convert_to_int
-"""
-This module contains useful methods for initializing or modifying a n_mmp_mat file
-for LDA+U
-"""
 
 def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
                 occStates=None,denmat=None,phi=None,theta=None):
@@ -57,7 +67,7 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
     #or removed. In both cases the resolution of this modification is very involved so we throw an error
     if nmmp_lines_copy is not None:
         #Remove eventual blank lines in nmmp_lines copy here
-        while ('' in nmmp_lines_copy):
+        while '' in nmmp_lines_copy:
             nmmp_lines_copy.remove('')
         if numRows != len(nmmp_lines_copy):
             raise ValueError('The number of lines in n_mmp_mat does not match the number expected from '+\
