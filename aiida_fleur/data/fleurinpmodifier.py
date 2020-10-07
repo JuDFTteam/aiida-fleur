@@ -196,7 +196,7 @@ class FleurinpModifier(object):
                 raise ValueError('Unknown task {}'.format(task[0]))
 
             if task[0] == 'set_nmmpmat':
-                workingnmmp = action(workingtree,workingnmmp, *task[1:])
+                workingnmmp = action(workingtree, workingnmmp, *task[1:])
             else:
                 workingtree = action(workingtree, *task[1:])
 
@@ -605,7 +605,7 @@ def modify_fleurinpdata(original, modifications):
         raise
 
     try:
-        with new_fleurinp.open(path='n_mmp_mat',mode='r') as n_mmp_file:
+        with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
             nmmplines = n_mmp_file.read().split('\n')
     except FileNotFoundError:
         nmmplines = None

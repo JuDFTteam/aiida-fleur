@@ -439,7 +439,7 @@ def parse_xmlout_file(outxmlfile):
                     simple_data['ldaUinfo'][ldauKey] = {}
 
                 ldau_l = get_xml_attribute(ldaU, 'l')
-                ldau_l,suc = convert_to_int(ldau_l)
+                ldau_l, suc = convert_to_int(ldau_l)
                 ldau_l = 'spdf'[ldau_l]
                 simple_data['ldaUinfo'][ldauKey][ldau_l] = {}
 
@@ -455,7 +455,6 @@ def parse_xmlout_file(outxmlfile):
                 else:
                     ldau_dc = 'FLL'
                 simple_data['ldaUinfo'][ldauKey][ldau_l]['double_counting'] = ldau_dc
-
 
         title = eval_xpath(root, title_xpath)
         if title:
@@ -972,11 +971,11 @@ def parse_xmlout_file(outxmlfile):
 
             if ldaU:
                 simple_data['ldaUinfo'] = {}
-                eldau = eval_xpath(iteration_node,eldau_xpath)
+                eldau = eval_xpath(iteration_node, eldau_xpath)
                 write_simple_outnode(eldau, 'float', 'ldaU_energy_correction', simple_data['ldaUinfo'])
                 write_simple_outnode(units_e, 'str', 'unit', simple_data['ldaUinfo'])
 
-                ldau_distances = eval_xpath2(iteration_node,ldaudistances_xpath)
+                ldau_distances = eval_xpath2(iteration_node, ldaudistances_xpath)
                 write_simple_outnode(ldau_distances, 'list_floats', 'density_matrix_distance', simple_data['ldaUinfo'])
 
             if relax:

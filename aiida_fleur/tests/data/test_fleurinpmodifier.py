@@ -75,15 +75,13 @@ file_path2 = '../files/inpxml/GaAsMultiForceXML/inp.xml'
 inpxmlfilefolder2 = os.path.dirname(os.path.abspath(__file__))
 inpxmlfilefolder2 = os.path.abspath(os.path.join(inpxmlfilefolder2, file_path2))
 
+
 def test_fleurinp_modifier3(create_fleurinp):
     from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
     fleurinp_tmp = create_fleurinp(inpxmlfilefolder2)
 
     fm = FleurinpModifier(fleurinp_tmp)
-    fm.set_nmmpmat('Ga-1',orbital=2,spin=1,occStates=[1,2,3,4,5])
-    fm.set_nmmpmat('As-2',orbital=1,spin=1,denmat=[[1,-2,3],
-                                                   [4,-5,6],
-                                                   [7,-8,9]])
+    fm.set_nmmpmat('Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
+    fm.set_nmmpmat('As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     new_fleurinp = fm.freeze()
     assert 'n_mmp_mat' in new_fleurinp.files
-
