@@ -471,7 +471,7 @@ class FleurinpModifier(object):
         the list of tasks that will be done on the FleurinpData.
 
         :param species_name: species on which the density matrix should be set
-        :param species_name: orbital on which the density matrix should be set
+        :param orbital: orbital on which the density matrix should be set
         :param occStates: list which specifies the diagonal elements of the density matrix
         :param denmat: matrix, which specifies the density matrix
         :param phi: optional angle to rotate density matrix

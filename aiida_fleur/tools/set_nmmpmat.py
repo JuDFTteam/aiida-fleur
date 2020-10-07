@@ -65,7 +65,7 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
     #was added or removed or the n_mmp_mat file was initialized and after the fact lda+u procedures were added
     #or removed. In both cases the resolution of this modification is very involved so we throw an error
     if nmmp_lines_copy is not None:
-        #Remove eventual blank lines in nmmp_lines copy here
+        #Remove eventual blank lines in nmmp_lines_copy here
         while '' in nmmp_lines_copy:
             nmmp_lines_copy.remove('')
         if numRows != len(nmmp_lines_copy):
