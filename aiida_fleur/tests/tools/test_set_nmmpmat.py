@@ -156,7 +156,7 @@ def test_set_nmmpmat_file(inpxml_etree):
         assert line == correct_result[index]
 
 
-def test_set_validate_nmmpmat(inpxml_etree):
+def test_validate_nmmpmat(inpxml_etree):
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
     etree = inpxml_etree(TEST_INP_XML_PATH)
 
