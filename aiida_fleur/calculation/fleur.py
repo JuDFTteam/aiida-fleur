@@ -248,7 +248,9 @@ class FleurCalculation(CalcJob):
         spec.exit_code(312, 'ERROR_MT_RADII', message='FLEUR calculation failed due to MT overlap.')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
         spec.exit_code(314, 'ERROR_DROP_CDN', message='Problem with cdn is suspected. Consider removing cdn')
-        spec.exit_code(315,'ERROR_INVALID_ELEMENTS_MMPMAT',message='The LDA+U density matrix contains invalid elements.')
+        spec.exit_code(315,
+                       'ERROR_INVALID_ELEMENTS_MMPMAT',
+                       message='The LDA+U density matrix contains invalid elements.')
 
     @classproperty
     def _get_output_folder(self):
