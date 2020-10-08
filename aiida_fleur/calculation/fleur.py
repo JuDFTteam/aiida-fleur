@@ -184,7 +184,7 @@ class FleurCalculation(CalcJob):
         'remove_from_remotecopy_list', 'cmdline'
     ]
     # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldaU']
+    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldau']
 
     @classmethod
     def define(cls, spec):

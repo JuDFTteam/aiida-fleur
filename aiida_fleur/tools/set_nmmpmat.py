@@ -19,8 +19,8 @@ import numpy as np
 from aiida_fleur.tools.xml_util import eval_xpath, eval_xpath2
 from aiida_fleur.tools.xml_util import get_xml_attribute, convert_to_int
 
-def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
-                occStates=None,denmat=None,phi=None,theta=None):
+def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin,\
+                occStates=None, denmat=None, phi=None, theta=None):
     """Routine sets the block in the n_mmp_mat file specified by species_name, orbital and spin
     to the desired density matrix
 
@@ -129,14 +129,15 @@ def set_nmmpmat(fleurinp_tree_copy,nmmp_lines_copy,species_name,orbital,spin,\
             currentRow = currentLine // 2
             if currentLine % 2 == 0:
                 #Line ends with a real part
-                nmmp_lines_copy[index] = separator+separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
-                                                      for x in denmatpad[currentRow,:3]]))\
-                                         +separator+'{:16.13f}'.format(denmatpad[currentRow,3].real)
+                nmmp_lines_copy[index] = separator +\
+                                         separator.join(map(str, ['{:16.13f}{}{:16.13f}'.format(x.real, separator, x.imag)\
+                                                                  for x in denmatpad[currentRow, :3]])) +\
+                                         separator + '{:16.13f}'.format(denmatpad[currentRow, 3].real)
             else:
                 #Line begins with a imaginary part
-                nmmp_lines_copy[index] = separator+'{:16.13f}'.format(denmatpad[currentRow,3].imag)+separator+\
-                                         separator.join(map(str,['{:16.13f}{}{:16.13f}'.format(x.real,separator,x.imag)\
-                                                      for x in denmatpad[currentRow,4:]]))
+                nmmp_lines_copy[index] = separator + '{:16.13f}'.format(denmatpad[currentRow, 3].imag) + separator +\
+                                         separator.join(map(str, ['{:16.13f}{}{:16.13f}'.format(x.real, separator, x.imag)\
+                                                                  for x in denmatpad[currentRow, 4:]]))
 
     return nmmp_lines_copy
 
@@ -146,7 +147,7 @@ def get_wigner_matrix(l, phi, theta):
 
    :param l: int, orbital quantum number
    :param phi: float, angle corresponds to euler angle alpha
-   :param thets: float, angle corresponds to euler angle beta
+   :param theta: float, angle corresponds to euler angle beta
    """
     d_wigner = np.zeros((7, 7), dtype=complex)
     for m in range(-l, l + 1):

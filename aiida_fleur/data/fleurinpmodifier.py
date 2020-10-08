@@ -49,7 +49,7 @@ class FleurinpModifier(object):
         Does not rise an error if inp.xml is not validated, simple prints a message about it.
 
         :param fleurinp_tree_copy: a fleurinp lxml tree to be modified
-        ;param n_mmp_lines_copy: a n_mmp_mat file to be modified
+        :param n_mmp_lines_copy: a n_mmp_mat file to be modified
         :param modification_tasks: a list of modification tuples
 
         :returns: a modified fleurinp lxml tree and a modified n_mmp_mat file
@@ -155,8 +155,8 @@ class FleurinpModifier(object):
 
         def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
                          spin, occStates, denmat, phi, theta):
-            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy,species_name, orbital,\
-                                          spin, occStates,denmat,phi,theta)
+            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+                                          spin, occStates, denmat, phi, theta)
             return nmmp_lines_copy
 
         actions = {
