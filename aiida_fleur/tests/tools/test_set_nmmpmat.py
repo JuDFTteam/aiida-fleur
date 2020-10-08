@@ -155,6 +155,7 @@ def test_set_nmmpmat_file(inpxml_etree):
     for index, line in enumerate(nmmp_lines):
         assert line == correct_result[index]
 
+
 def test_set_validate_nmmpmat(inpxml_etree):
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
     etree = inpxml_etree(TEST_INP_XML_PATH)
@@ -162,13 +163,13 @@ def test_set_validate_nmmpmat(inpxml_etree):
     with open(TEST_NMMPMAT_PATH, mode='r') as nmmpfile:
         nmmp_lines_orig = nmmpfile.read().split('\n')
 
-    validate_nmmpmat(etree,nmmp_lines_orig) #should not raise
+    validate_nmmpmat(etree, nmmp_lines_orig)  #should not raise
 
     #Test number of lines error
     nmmp_lines = nmmp_lines_orig
     nmmp_lines.append('0.0')
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree,nmmp_lines)
+        validate_nmmpmat(etree, nmmp_lines)
     nmmp_lines.remove('0.0')
 
     #Test invalid diagonal element error
@@ -176,12 +177,12 @@ def test_set_validate_nmmpmat(inpxml_etree):
     nmmp_lines = set_nmmpmat(etree, nmmp_lines, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
     nmmp_lines = set_nmmpmat(etree, nmmp_lines, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree,nmmp_lines)
+        validate_nmmpmat(etree, nmmp_lines)
 
     #Test invalid outsied value error
     nmmp_lines = nmmp_lines_orig
-    nmmp_lines[0] = '     0.0000000000000     9.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000'
+    nmmp_lines[
+        0] = '     0.0000000000000     9.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000'
 
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree,nmmp_lines)
-
+        validate_nmmpmat(etree, nmmp_lines)

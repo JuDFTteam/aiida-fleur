@@ -207,7 +207,7 @@ class FleurinpModifier(object):
                 print('changes were not valid: {}'.format(modification_tasks))
                 raise
             try:
-                validate_nmmpmat(workingtree,workingnmmp)
+                validate_nmmpmat(workingtree, workingnmmp)
             except ValueError:
                 print('changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks))
                 raise

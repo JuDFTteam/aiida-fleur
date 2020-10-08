@@ -201,30 +201,31 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
                 nmmp = np.array([float(x) for x in line])
 
                 outside_val = False
-                if abs(currentRow-3) > orbital:
-                    if any(np.abs(nmmp)>1e-12):
+                if abs(currentRow - 3) > orbital:
+                    if any(np.abs(nmmp) > 1e-12):
                         outside_val = True
 
                 if currentLine % 2 == 0:
                     #m=-3 to m=0 real part
-                    if any(np.abs(nmmp[:(3-orbital)*2])>1e-12):
+                    if any(np.abs(nmmp[:(3 - orbital) * 2]) > 1e-12):
                         outside_val = True
 
                 else:
                     #m=0 imag part to m=3
-                    if any(np.abs(nmmp[orbital*2+1:])>1e-12):
+                    if any(np.abs(nmmp[orbital * 2 + 1:]) > 1e-12):
                         outside_val = True
 
                 if outside_val:
-                    raise ValueError(f'Found value outside of valid range in block {ldau_index},spin {spin+1} and for l={orbital}')
+                    raise ValueError(
+                        f'Found value outside of valid range in block {ldau_index},spin {spin+1} and for l={orbital}')
 
                 invalid_diag = False
                 if spin < 2:
-                    if currentRow-3 <= 0 and currentLine % 2 == 0:
-                        if nmmp[currentRow*2] < -tol or nmmp[currentRow*2] > maxOcc + tol:
+                    if currentRow - 3 <= 0 and currentLine % 2 == 0:
+                        if nmmp[currentRow * 2] < -tol or nmmp[currentRow * 2] > maxOcc + tol:
                             invalid_diag = True
                     else:
-                        if nmmp[(currentRow-3)*2-1] < -tol or nmmp[(currentRow-3)*2-1] > maxOcc + tol:
+                        if nmmp[(currentRow - 3) * 2 - 1] < -tol or nmmp[(currentRow - 3) * 2 - 1] > maxOcc + tol:
                             invalid_diag = True
 
                 if invalid_diag:
