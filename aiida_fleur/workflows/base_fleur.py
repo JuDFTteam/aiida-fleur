@@ -82,10 +82,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        message='FLEUR calculation failed because an atom spilled to the'
                        'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
-        spec.exit_code(
-            315,
-            'ERROR_INVALID_ELEMENTS_MMPMAT',
-            message='The LDA+U density matrix contains invalid elements. Consider a less aggresive mixing scheme')
+        spec.exit_code(315,
+                      'ERROR_INVALID_ELEMENTS_MMPMAT',
+                      message='The LDA+U density matrix contains invalid elements.'
+                              ' Consider a less aggresive mixing scheme')
         spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
         spec.exit_code(399,
