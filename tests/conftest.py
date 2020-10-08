@@ -10,8 +10,30 @@ import collections
 import pytest
 import six
 
+# aiida-testing dependencies
+
+import uuid
+import inspect
+import shutil
+import click
+import yaml
+import hashlib
+import pathlib
+import typing as ty
+from voluptuous import Schema
+from enum import Enum
+from aiida.engine import run_get_node
+from aiida.engine import ProcessBuilderNamespace
+from aiida.common.hashing import make_hash
+from aiida.orm import Node, Code, Dict, SinglefileData, List, FolderData, RemoteData
+from aiida.orm import CalcJobNode, ProcessNode  #, load_node
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.manage.caching import enable_caching
+from contextlib import contextmanager
+### end aiida-testing dep
+
 # aiida_testing.mock_codes in development, not yet a stable dependency..
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  #, 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
@@ -35,7 +57,6 @@ def fixture_code(fixture_localhost):
     """Return a `Code` instance configured to run calculations of given entry point on localhost `Computer`."""
 
     def _fixture_code(entry_point_name):
-        from aiida.orm import Code
         return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls'])
 
     return _fixture_code
@@ -193,7 +214,6 @@ def generate_remote_data():
     def _generate_remote_data(computer, remote_path, entry_point_name=None):
         """Return a `KpointsData` with a mesh of npoints in each direction."""
         from aiida.common.links import LinkType
-        from aiida.orm import CalcJobNode, RemoteData
         from aiida.plugins.entry_point import format_entry_point_string
 
         entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
@@ -429,9 +449,8 @@ def generate_structure_cif():
 def create_or_fake_local_code(aiida_local_code_factory):
 
     def _get_code(executable, exec_relpath, entrypoint):
-        import pathlib
         from aiida.tools.importexport import import_data, export
-        from aiida.orm import ProcessNode, QueryBuilder, Code, load_node
+        from aiida.orm import load_node
 
         _exe_path = os.path.abspath(exec_relpath)
 
@@ -500,3 +519,577 @@ def clear_spec():
     clear_sp()
     yield  # test runs
     clear_sp()
+
+
+######################### Fixtures from aiida-testing ###########
+# export cache branch, not released
+# and mock code
+# see https://github.com/aiidateam/aiida-testing/tree/export_cache
+# if this becomes stable and is released remove everything below
+
+#### utils
+
+
+def unnest_dict(nested_dict: ty.Union[dict, ProcessBuilderNamespace]) -> dict:  # type: ignore
+    """
+    Returns a simple dictionary from a possible arbitray nested dictionary
+    or Aiida ProcessBuilderNamespace by adding keys in dot notation, rekrusively
+    """
+    new_dict = {}
+    for key, val in nested_dict.items():
+        if isinstance(val, (dict, ProcessBuilderNamespace)):
+            unval = unnest_dict(val)  #rekursive!
+            for key2, val2 in unval.items():
+                key_new = str(key) + '.' + str(key2)
+                new_dict[key_new] = val2
+        else:
+            new_dict[str(key)] = val  # type: ignore
+    return new_dict
+
+
+def get_hash_process(  # type: ignore # pylint: disable=dangerous-default-value
+        builder: ty.Union[dict, ProcessBuilderNamespace],
+        input_nodes: list = []):
+    """ creates a hash from a builder/dictionary of inputs"""
+
+    # hashing the builder
+    # currently workchains are not hashed in AiiDA so we create a hash for the filename
+    unnest_builder = unnest_dict(builder)
+    md5sum = hashlib.md5()
+    for key, val in sorted(unnest_builder.items()):  # pylint: disable=unused-variable
+        if isinstance(val, Code):
+            continue  # we do not include the code in the hash, might be mocked
+            #TODO include the code to some extent
+        if isinstance(val, Node):
+            if not val.is_stored:
+                val.store()
+            val_hash = val.get_hash()  # only works if nodes are stored!
+            input_nodes.append(val)
+        else:
+            val_hash = make_hash(val)
+        md5sum.update(val_hash.encode())
+    bui_hash = md5sum.hexdigest()
+
+    return bui_hash, input_nodes
+
+
+####
+
+#### fixtures
+
+
+@pytest.fixture(scope='function')
+def export_cache(hash_code_by_entrypoint):
+    """Fixture to export an AiiDA graph from given node(s)"""
+
+    def _export_cache(node, savepath, default_data_dir=None, overwrite=True):
+        """
+        Function to export an AiiDA graph from a given node.
+        Currenlty, uses the export functionalities of aiida-core
+        :param node: AiiDA node which graph is to be exported, or list of nodes
+        :param savepath: str or path where the export file is to be saved
+        :param overwrite: bool, default=True, if existing export is overwritten
+        """
+        from aiida.tools.importexport import export
+
+        # we rehash before the export, what goes in the hash is monkeypatched
+        qub = QueryBuilder()
+        qub.append(ProcessNode)  # rehash all ProcesNodes
+        to_hash = qub.all()
+        for node1 in to_hash:
+            node1[0].rehash()
+
+        if os.path.isabs(savepath):
+            full_export_path = savepath
+        else:
+            if default_data_dir is None:
+                default_data_dir = os.path.join(os.getcwd(), 'data_dir')  # May not be best idea
+            full_export_path = os.path.join(default_data_dir, savepath)
+            #print(full_export_path)
+
+        if isinstance(node, list):
+            to_export = node
+        else:
+            to_export = [node]
+        export(to_export, outfile=full_export_path, overwrite=overwrite,
+               include_comments=True)  # extras are automatically included
+
+    return _export_cache
+
+
+# Do we always want to use hash_code_by_entrypoint here?
+@pytest.fixture(scope='function')
+def load_cache(hash_code_by_entrypoint):
+    """Fixture to load a cached AiiDA graph"""
+
+    def _load_cache(path_to_cache=None, node=None, load_all=False):
+        """
+        Function to import an AiiDA graph
+        :param path_to_cache: str or path to the AiiDA export file to load,
+            if path_to_cache points to a directory, all import files in this dir are imported
+        :param node: AiiDA node which cache to load,
+            if no path_to_cache is given tries to guess it.
+        :raises : OSError, if import file non existent
+        """
+        from aiida.tools.importexport import import_data
+
+        if path_to_cache is None:
+            if node is None:
+                raise ValueError('Node argument can not be None ' "if no explicit 'path_to_cache' is specified")
+            #else:  # create path from node
+            #    pass
+            #    # get default data dir
+            #    # get hash for give node
+            #    # construct path from that
+        else:
+            # relative paths given will be completed with cwd
+            full_import_path = pathlib.Path(path_to_cache)
+
+        if full_import_path.exists():
+            if os.path.isfile(full_import_path):
+                # import cache, also import extras
+                import_data(full_import_path, extras_mode_existing='ncu', extras_mode_new='import')
+            elif os.path.isdir(full_import_path):
+                for filename in os.listdir(full_import_path):
+                    file_full_import_path = os.path.join(full_import_path, filename)
+                    # we curretly assume all files are valid aiida exports...
+                    # maybe check if valid aiida export, or catch exception
+                    import_data(file_full_import_path, extras_mode_existing='ncu', extras_mode_new='import')
+            else:  # Should never get there
+                raise OSError(
+                    'Path: {} to be imported exists, but is neither a file or directory.'.format(full_import_path))
+        else:
+            raise OSError('File: {} to be imported does not exist.'.format(full_import_path))
+
+        # need to rehash after import, otherwise cashing does not work
+        # for this we rehash all process nodes
+        # this way we use the full caching mechanism of aiida-core.
+        # currently this should only cache CalcJobNodes
+        qub = QueryBuilder()
+        qub.append(ProcessNode)  # query for all ProcesNodes
+        to_hash = qub.all()
+        for node1 in to_hash:
+            node1[0].rehash()
+
+    return _load_cache
+
+
+@pytest.fixture(scope='function')
+def with_export_cache(export_cache, load_cache):
+    """
+    Fixture to use in a with() environment within a test to enable caching in the with-statement.
+    Requires to provide an absolutpath to the export file to load or export to.
+    Export the provenance of all calcjobs nodes within the test.
+    """
+
+    @contextmanager
+    def _with_export_cache(data_dir_abspath, calculation_class=None, overwrite=False):
+        """
+        Contextmanager to run calculation within, which aiida graph gets exported
+        """
+
+        # check and load export
+        export_exists = os.path.isfile(data_dir_abspath)
+        if export_exists:
+            load_cache(path_to_cache=data_dir_abspath)
+
+        # default enable globally for all jobcalcs
+        if calculation_class is None:
+            identifier = None
+        else:
+            identifier = calculation_class.build_process_type()
+        with enable_caching(identifier=identifier):
+            yield  # now the test runs
+
+        # This is executed after the test
+        if not export_exists or overwrite:
+            # in case of yield: is the db already cleaned?
+            # create export of all calculation_classes
+            # Another solution out of this is to check the time before and
+            # after the yield and export ONLY the jobcalc classes created within this time frame
+            if calculation_class is None:
+                queryclass = CalcJobNode
+            else:
+                queryclass = calculation_class
+            qub = QueryBuilder()
+            qub.append(queryclass, tag='node')  # query for CalcJobs nodes
+            to_export = [entry[0] for entry in qub.all()]
+            export_cache(node=to_export, savepath=data_dir_abspath, overwrite=overwrite)
+
+    return _with_export_cache
+
+
+@pytest.fixture
+def hash_code_by_entrypoint(monkeypatch):
+    """
+    Monkeypatch .get_objects_to_hash of Code and CalcJobNodes of aiida-core
+    to not include the uuid of the computer and less information of the code node in the hash
+    """
+    from aiida.common.links import LinkType
+
+    def mock_objects_to_hash_code(self):
+        """
+        Return a list of objects which should be included in the hash of a Code node
+        """
+        # computer names are changed by aiida-core if imported and do not have same uuid.
+        return [self.get_attribute(key='input_plugin')]  #, self.get_computer_name()]
+
+    def mock_objects_to_hash_calcjob(self):
+        """
+        Return a list of objects which should be included in the hash of a CalcJobNode.
+        code from aiida-core, only self.computer.uuid is commented out
+        """
+        #from pprint import pprint
+        #from importlib import import_module
+        ignored = list(self._hash_ignored_attributes)
+        ignored.append('version')
+        objects = [
+            #import_module(self.__module__.split('.', 1)[0]).__version__,
+            {
+                key: val
+                for key, val in self.attributes_items()
+                if key not in ignored and key not in self._updatable_attributes
+            },
+            #self.computer.uuid if self.computer is not None else None,
+            {
+                entry.link_label: entry.node.get_hash()
+                for entry in self.get_incoming(link_type=(LinkType.INPUT_CALC, LinkType.INPUT_WORK))
+                if entry.link_label not in self._hash_ignored_inputs
+            }
+        ]
+        #pprint('{} objects to hash calcjob: {}'.format(type(self), objects))
+        return objects
+
+    monkeypatch.setattr(Code, '_get_objects_to_hash', mock_objects_to_hash_code)
+    monkeypatch.setattr(CalcJobNode, '_get_objects_to_hash', mock_objects_to_hash_calcjob)
+
+    # for all other data, since they include the version
+
+    def mock_objects_to_hash(self):
+        """
+        Return a list of objects which should be included in the hash of all Nodes.
+        """
+        ignored = list(self._hash_ignored_attributes)  # pylint: disable=protected-access
+        ignored.append('version')
+        self._hash_ignored_attributes = tuple(ignored)  # pylint: disable=protected-access
+
+        objects = [
+            #importlib.import_module(self.__module__.split('.', 1)[0]).__version__,
+            {
+                key: val
+                for key, val in self.attributes_items()
+                if key not in self._hash_ignored_attributes and key not in self._updatable_attributes
+            },
+            #self._repository._get_base_folder(),
+            #self.computer.uuid if self.computer is not None else None
+        ]
+        #print('{} objects to hash: {}'.format(type(self), objects))
+        return objects
+
+    # since we still want versioning for plugin datatypes and calcs we only monkeypatch aiida datatypes
+    classes_to_patch = [Dict, SinglefileData, List, FolderData, RemoteData]
+    for classe in classes_to_patch:
+        monkeypatch.setattr(classe, '_get_objects_to_hash', mock_objects_to_hash)
+
+    #BaseData, List, Array, ...
+
+
+@pytest.fixture(scope='function')
+def run_with_cache(export_cache, load_cache):
+    """
+    Fixture to automatically import an aiida graph for a given process builder.
+    """
+    def _run_with_cache( # type: ignore
+        builder: ty.Union[dict, ProcessBuilderNamespace
+                          ],  #aiida process builder class, or dict, if process class is given
+        process_class=None,
+        label: str = '',
+        data_dir: ty.Union[str, pathlib.Path] = 'data_dir',
+        overwrite: bool = False,
+    ):
+        """
+        Function, which checks if a aiida export for a given Process builder exists,
+        if it does it imports the aiida graph and runs the builder with caching.
+        If the cache does not exists, it still runs the builder but creates an
+        export afterwards.
+        Inputs:
+        builder : AiiDA Process builder class,
+        data_dir: optional
+            Absolute path of the directory where the exported workchain graphs are
+            stored.
+        overwrite: enforce exporting of a new cache
+        #ignore_nodes : list string, ignore input nodes with these labels/link labels to ignore in hash.
+        # needed?
+        """
+
+        cache_exists = False
+        bui_hash, input_nodes = get_hash_process(builder)  # pylint: disable=unused-variable
+
+        if process_class is None:  # and isinstance(builder, dict):
+            process_class = builder.process_class  # type: ignore
+            # we assume ProcessBuilder, since type(ProcessBuilder) is abc
+        #else:
+        #    raise TypeError(
+        #        'builder has to be of type ProcessBuilder if no process_class is specified'
+        #    )
+        name = label + str(process_class).split('.')[-1].strip("'>") + '-nodes-' + bui_hash
+        print(name)
+
+        # check existence
+        full_import_path = pathlib.Path(data_dir) / (name + '.tar.gz')
+        # make sure the path is absolute (this is needed by export_cache)
+        full_import_path = full_import_path.absolute()
+        print(full_import_path)
+        if full_import_path.exists():
+            cache_exists = True
+
+        if cache_exists:
+            # import data from previous run to use caching
+            load_cache(path_to_cache=full_import_path)
+
+        # now run process/workchain whatever
+        with enable_caching():  # should enable caching globally in this python interpreter
+            #yield #test is running
+            #res, resnode = run_get_node(builder)
+            res, resnode = run_get_node(process_class, **builder)
+
+        # This is executed after the test
+        if not cache_exists or overwrite:
+            # TODO create datadir if not existent
+
+            # in case of yield:
+            # is the db already cleaned?
+            # since we do not the stored process node we try to get it from the inputs,
+            # i.e to which node they are all connected, with the lowest common pk
+            #union_pk: ty.Set[int] = set()
+            #for node in input_nodes:
+            #    pks = {ent.node.pk for ent in node.get_outgoing().all()}
+            #    union_pk = union_pk.union(pks)
+            #if len(union_pk) != 0:
+            #    process_node_pk = min(union_pk)
+            #    #export data to reuse it later
+            #    export_cache(node=load_node(process_node_pk), savepath=full_import_path)
+            #else:
+            #    print("could not find the process node, don't know what to export")
+
+            # if no yield
+            export_cache(node=resnode, savepath=full_import_path, overwrite=overwrite)
+
+        return res, resnode
+
+    return _run_with_cache
+
+###### mock-code
+
+CONFIG_FILE_NAME = '.aiida-testing-config.yml'
+
+
+class ConfigActions(Enum):
+    """
+    An enum containing the actions to perform on the config file.
+    """
+    READ = 'read'
+    GENERATE = 'generate'
+    REQUIRE = 'require'
+
+
+class Config(collections.abc.MutableMapping):
+    """Configuration of aiida-testing package."""
+
+    schema = Schema({'mock_code': Schema({str: str})})
+
+    def __init__(self, config=None):
+        self._dict = config or {}
+        self.validate()
+
+    def validate(self):
+        """Validate configuration dictionary."""
+        return self.schema(self._dict)
+
+    @classmethod
+    def from_file(cls):
+        """
+        Parses the configuration file ``.aiida-testing-config.yml``.
+        The file is searched in the current working directory and all its parent
+        directories.
+        """
+        cwd = pathlib.Path(os.getcwd())
+        config: ty.Dict[str, str]
+        for dir_path in [cwd, *cwd.parents]:
+            config_file_path = (dir_path / CONFIG_FILE_NAME)
+            if config_file_path.exists():
+                with open(config_file_path) as config_file:
+                    config = yaml.load(config_file, Loader=yaml.SafeLoader)
+                    break
+        else:
+            config = {}
+
+        return cls(config)
+
+    def to_file(self):
+        """Write configuration to file in yaml format.
+        Writes to current working directory.
+        :param handle: File handle to write config file to.
+        """
+        cwd = pathlib.Path(os.getcwd())
+        config_file_path = (cwd / CONFIG_FILE_NAME)
+
+        with open(config_file_path, 'w') as handle:
+            yaml.dump(self._dict, handle, Dumper=yaml.SafeDumper)
+
+    def __getitem__(self, item):
+        return self._dict.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        return self._dict.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self._dict.__delitem__(key)
+
+    def __iter__(self):
+        return self._dict.__iter__()
+
+    def __len__(self):
+        return self._dict.__len__()
+
+
+class EnvKeys(Enum):
+    """
+    An enum containing the environment variables defined for
+    the mock code execution.
+    """
+    LABEL = 'AIIDA_MOCK_LABEL'
+    DATA_DIR = 'AIIDA_MOCK_DATA_DIR'
+    EXECUTABLE_PATH = 'AIIDA_MOCK_EXECUTABLE_PATH'
+    IGNORE_FILES = 'AIIDA_MOCK_IGNORE_FILES'
+    REGENERATE_DATA = 'AIIDA_MOCK_REGENERATE_DATA'
+
+
+def pytest_addoption(parser):
+    """Add pytest command line options."""
+    parser.addoption(
+        '--testing-config-action',
+        type=click.Choice((c.value for c in ConfigActions)),
+        default=ConfigActions.READ.value,
+        help=f"Read {CONFIG_FILE_NAME} config file if present ('read'), require config file ('require') or " \
+             "generate new config file ('generate').",
+    )
+    parser.addoption('--mock-regenerate-test-data', action='store_true', default=False, help='Regenerate test data.')
+
+
+@pytest.fixture(scope='session')
+def testing_config_action(request):
+    return request.config.getoption('--testing-config-action')
+
+
+@pytest.fixture(scope='session')
+def mock_regenerate_test_data(request):
+    return request.config.getoption('--mock-regenerate-test-data')
+
+
+@pytest.fixture(scope='session')
+def testing_config(testing_config_action):  # pylint: disable=redefined-outer-name
+    """Get content of .aiida-testing-config.yml
+    testing_config_action :
+        Read config file if present ('read'), require config file ('require') or generate new config file ('generate').
+    """
+    config = Config.from_file()
+
+    if not config and testing_config_action == ConfigActions.REQUIRE.value:
+        raise ValueError(f'Unable to find {CONFIG_FILE_NAME}.')
+
+    yield config
+
+    if testing_config_action == ConfigActions.GENERATE.value:
+        config.to_file()
+
+
+@pytest.fixture(scope='function')
+def mock_code_factory(aiida_localhost, testing_config, testing_config_action, mock_regenerate_test_data):  # pylint: disable=redefined-outer-name
+    """
+    Fixture to create a mock AiiDA Code.
+    testing_config_action :
+        Read config file if present ('read'), require config file ('require') or generate new config file ('generate').
+    """
+
+    def _get_mock_code(
+        label: str,
+        entry_point: str,
+        data_dir_abspath: ty.Union[str, pathlib.Path],
+        ignore_files: ty.Iterable[str] = ('_aiidasubmit.sh'),
+        executable_name: str = '',
+        _config: dict = testing_config,
+        _config_action: str = testing_config_action,
+        _regenerate_test_data: bool = mock_regenerate_test_data,
+    ):
+        """
+        Creates a mock AiiDA code. If the same inputs have been run previously,
+        the results are copied over from the corresponding sub-directory of
+        the ``data_dir_abspath``. Otherwise, the code is executed.
+        Parameters
+        ----------
+        label :
+            Label by which the code is identified in the configuration file.
+        entry_point :
+            The AiiDA calculation entry point for the default calculation
+            of the code.
+        data_dir_abspath :
+            Absolute path of the directory where the code results are
+            stored.
+        ignore_files :
+            A list of files which are not copied to the results directory
+            after the code has been executed.
+        executable_name :
+            Name of code executable to search for in PATH, if configuration file does not specify location already.
+        _config :
+            Dict with contents of configuration file
+        _config_action :
+            If 'require', raise ValueError if config dictionary does not specify path of executable.
+            If 'generate', add new key (label) to config dictionary.
+        _regenerate_test_data :
+            If True, regenerate test data instead of reusing.
+        """
+        # we want to set a custom prepend_text, which is why the code
+        # can not be reused.
+        code_label = f'mock-{label}-{uuid.uuid4()}'
+
+        data_dir_pl = pathlib.Path(data_dir_abspath)
+        if not data_dir_pl.exists():
+            raise ValueError("Data directory '{}' does not exist".format(data_dir_abspath))
+        if not data_dir_pl.is_absolute():
+            raise ValueError('Please provide absolute path to data directory.')
+
+        mock_executable_path = shutil.which('aiida-mock-code')
+        if not mock_executable_path:
+            raise ValueError("'aiida-mock-code' executable not found in the PATH. " +
+                             'Have you run `pip install aiida-testing` in this python environment?')
+
+        # try determine path to actual code executable
+        mock_code_config = _config.get('mock_code', {})
+        if _config_action == ConfigActions.REQUIRE.value and label not in mock_code_config:
+            raise ValueError(
+                f"Configuration file {CONFIG_FILE_NAME} does not specify path to executable for code label '{label}'.")
+        code_executable_path = mock_code_config.get(label, 'TO_SPECIFY')
+        if (not code_executable_path) and executable_name:
+            code_executable_path = shutil.which(executable_name) or 'NOT_FOUND'
+        if _config_action == ConfigActions.GENERATE.value:
+            mock_code_config[label] = code_executable_path
+
+        code = Code(input_plugin_name=entry_point, remote_computer_exec=[aiida_localhost, mock_executable_path])
+        code.label = code_label
+        code.set_prepend_text(
+            inspect.cleandoc(f"""
+                export {EnvKeys.LABEL.value}="{label}"
+                export {EnvKeys.DATA_DIR.value}="{data_dir_abspath}"
+                export {EnvKeys.EXECUTABLE_PATH.value}="{code_executable_path}"
+                export {EnvKeys.IGNORE_FILES.value}="{':'.join(ignore_files)}"
+                export {EnvKeys.REGENERATE_DATA.value}={'True' if _regenerate_test_data else 'False'}
+                """))
+
+        code.store()
+        return code
+
+    return _get_mock_code
+
+
+#################### end from aiida-testing ####
