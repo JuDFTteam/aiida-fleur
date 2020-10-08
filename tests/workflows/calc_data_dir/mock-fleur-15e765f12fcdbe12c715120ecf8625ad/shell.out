@@ -1,0 +1,53 @@
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 4.0          (www.max-centre.eu)
+  stars are always ordered 
+ --------------------------------------------------------
+ Number of OMP-threads:           6
+ --------------------------------------------------------
+ Iteration:           1  Distance:   7.93834702980350     
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           2  Distance:   7.49881525953732     
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           3  Distance:  0.874439927483807     
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           4  Distance:  0.433043002932697     
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           5  Distance:  0.203162273592517     
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           6  Distance:  1.600068898721554E-002
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           7  Distance:  1.199325117485824E-002
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           8  Distance:  1.268576740314318E-003
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           9  Distance:  3.554115091753358E-004
+ Test for time of next iteration:
+ Time provided (min):           5
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:          10  Distance:  1.552064895169906E-004
+ Usage data send using curl: usage.json

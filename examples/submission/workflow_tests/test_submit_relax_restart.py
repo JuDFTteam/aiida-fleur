@@ -99,10 +99,10 @@ wf_para_scf = Dict(dict=wf_para_scf)
 options_scf = Dict(
     dict={
         'resources': {
-            'num_machines': 2,
-            'num_mpiprocs_per_machine': 24
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
-        'queue_name': 'devel',
+        'queue_name': '',
         'custom_scheduler_commands': '',
         'max_wallclock_seconds': 60 * 60
     })
