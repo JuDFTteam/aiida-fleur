@@ -65,7 +65,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
     #was added or removed or the n_mmp_mat file was initialized and after the fact lda+u procedures were added
     #or removed. In both cases the resolution of this modification is very involved so we throw an error
     if nmmp_lines_copy is not None:
-        #Remove eventual blank lines in nmmp_lines_copy here
+        #Remove blank lines
         while '' in nmmp_lines_copy:
             nmmp_lines_copy.remove('')
         if numRows != len(nmmp_lines_copy):
@@ -140,6 +140,95 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
                                                                   for x in denmatpad[currentRow, 4:]]))
 
     return nmmp_lines_copy
+
+
+def validate_nmmpmat(fleurinp_tree, nmmp_lines):
+    """
+    Checks that the given nmmp_lines is valid with the given fleurinp_tree
+
+    :param fleurinp_tree_copy: an xmltree that represents inp.xml
+    :param nmmp_lines_copy: list of lines in the n_mmp_mat file
+
+    Checks that the number of blocks is as expected from the inp.xml and each
+    block does not contain non-zero elements outside their size given by the
+    orbital quantum number in the inp.xml
+    """
+
+    #First check the number of ldau procedures
+    ldau_xpath = '/fleurInput/atomSpecies/species/ldaU'
+    magnetism_xpath = '/fleurInput/calculationSetup/magnetism'
+
+    #Get number of spins (TODO for develop version also read l_mtnocoPot)
+    mag_elem = eval_xpath(fleurinp_tree, magnetism_xpath)
+    nspins = convert_to_int(get_xml_attribute(mag_elem, 'jspins'), suc_return=False)
+
+    all_ldau = eval_xpath2(fleurinp_tree, ldau_xpath)
+    numRows = nspins * 14 * len(all_ldau)
+
+    tol = 0.01
+    if nspins > 1:
+        maxOcc = 1.0
+    else:
+        maxOcc = 2.0
+
+    #Check that numRows matches the number of lines in nmmp_lines
+    if nmmp_lines is not None:
+        #Remove blank lines
+        while '' in nmmp_lines:
+            nmmp_lines.remove('')
+        if numRows != len(nmmp_lines):
+            raise ValueError('The number of lines in n_mmp_mat does not match the number expected from '+\
+                             'the inp.xml file.')
+    else:
+        return
+
+    #Now check for each block if the numbers make sense
+    #(no numbers outside the valid area and no nonsensical occupations)
+    for ldau_index, ldau in enumerate(all_ldau):
+
+        orbital = convert_to_int(get_xml_attribute(ldau, 'l'), suc_return=False)
+
+        for spin in range(nspins):
+            startRow = (nspins * ldau_index + spin) * 14
+
+            for index in range(startRow, startRow + 14):
+                currentLine = index - startRow
+                currentRow = currentLine // 2
+
+                line = nmmp_lines[index].split('    ')
+                while '' in line:
+                    line.remove('')
+                nmmp = np.array([float(x) for x in line])
+
+                outside_val = False
+                if abs(currentRow-3) > orbital:
+                    if any(np.abs(nmmp)>1e-12):
+                        outside_val = True
+
+                if currentLine % 2 == 0:
+                    #m=-3 to m=0 real part
+                    if any(np.abs(nmmp[:(3-orbital)*2])>1e-12):
+                        outside_val = True
+
+                else:
+                    #m=0 imag part to m=3
+                    if any(np.abs(nmmp[orbital*2+1:])>1e-12):
+                        outside_val = True
+
+                if outside_val:
+                    raise ValueError(f'Found value outside of valid range in block {ldau_index},spin {spin+1} and for l={orbital}')
+
+                invalid_diag = False
+                if spin < 2:
+                    if currentRow-3 <= 0 and currentLine % 2 == 0:
+                        if nmmp[currentRow*2] < -tol or nmmp[currentRow*2] > maxOcc + tol:
+                            invalid_diag = True
+                    else:
+                        if nmmp[(currentRow-3)*2-1] < -tol or nmmp[(currentRow-3)*2-1] > maxOcc + tol:
+                            invalid_diag = True
+
+                if invalid_diag:
+                    raise ValueError(f'Found invalid diagonal element in block {ldau_index} and spin {spin+1}')
 
 
 def get_wigner_matrix(l, phi, theta):

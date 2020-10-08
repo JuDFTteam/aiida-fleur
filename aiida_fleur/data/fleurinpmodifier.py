@@ -64,7 +64,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
-        from aiida_fleur.tools.set_nmmpmat import set_nmmpmat
+        from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
@@ -205,6 +205,11 @@ class FleurinpModifier(object):
                 xmlschema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid:
                 print('changes were not valid: {}'.format(modification_tasks))
+                raise
+            try:
+                validate_nmmpmat(workingtree,workingnmmp)
+            except ValueError:
+                print('changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks))
                 raise
 
         return workingtree, workingnmmp
@@ -490,6 +495,12 @@ class FleurinpModifier(object):
         with self._original.open(key='inp.xml') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
 
+        try:
+            with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+                nmmplines = n_mmp_file.read().split('\n')
+        except FileNotFoundError:
+            nmmplines = None
+
         try:  # could be not found or on another computer...
             xmlschema_tree = etree.parse(self._original._schema_file_path)
             with_schema = True
@@ -498,7 +509,7 @@ class FleurinpModifier(object):
             print('No schema file found')
             return
         if with_schema:
-            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks, schema_tree=xmlschema_tree)
+            tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_tree=xmlschema_tree)
         return tree
 
     def show(self, display=True, validate=False):
