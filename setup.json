@@ -56,7 +56,7 @@
             "pytest>=2.9",
             "pytest-timeout",
             "pytest-cov>= 2.5.0",
-            "aiida-testing==0.1.0.dev1",
+            "aiida-testing",
             "pgtest"
         ]
     },
