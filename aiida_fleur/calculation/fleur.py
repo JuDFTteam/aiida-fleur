@@ -170,6 +170,11 @@ class FleurCalculation(CalcJob):
         _WKF2_FILE_NAME, _MIX_HISTORY_FILE_NAME, _OUT_FILE_NAME, _POT_FILE_NAME
     ]
 
+    _copy_scf_ldau_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME],
+                            [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
+
+    _copy_scf_ldau_noinp_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
+
     # files need for rerun
     _copy_filelist_dos = [_INPXML_FILE_NAME, _CDN1_FILE_NAME]
 
@@ -245,7 +250,7 @@ class FleurCalculation(CalcJob):
         spec.exit_code(314, 'ERROR_DROP_CDN', message='Problem with cdn is suspected. Consider removing cdn')
 
     @classproperty
-    def _get_outut_folder(self):
+    def _get_output_folder(self):
         return './'
 
     def prepare_for_submission(self, folder):
@@ -415,6 +420,12 @@ class FleurCalculation(CalcJob):
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
             self.logger.info('out folder path %s', outfolder_uuid)
 
+            outfolder_filenames = [x.name in parent_calc.outputs.retrieved.list_objects()]
+            has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
+            if has_fleurinp:
+                #The n_mmp_mat file from fleurinp takes priority
+                has_nmmpmat_file = self._NMMPMAT_FILE_NAME not in fleurinp.files
+
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
                     local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
@@ -422,6 +433,8 @@ class FleurCalculation(CalcJob):
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
                     copylist = self._copy_scf_hdf
+                elif has_nmmpmat_file:
+                    copylist = self._copy_scf_ldau_nohdf
                 else:
                     copylist = self._copy_scf
                 for file1 in copylist:
@@ -434,6 +447,8 @@ class FleurCalculation(CalcJob):
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:
                     copylist = self._copy_scf_noinp_hdf
+                elif has_nmmpmat_file:
+                    copylist = self._copy_scf_ldau_noinp_nohdf
                 else:
                     copylist = self._copy_scf_noinp
                 for file1 in copylist:
@@ -462,7 +477,7 @@ class FleurCalculation(CalcJob):
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append(
                         (parent_calc_folder.computer.uuid, os.path.join(parent_calc_folder.get_remote_path(),
-                                                                        file1), self._get_outut_folder))
+                                                                        file1), self._get_output_folder))
 
                 self.logger.info('remote copy file list %s', str(remote_copy_list))
 
