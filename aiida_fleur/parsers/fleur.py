@@ -449,6 +449,8 @@ def parse_xmlout_file(outxmlfile):
                 ldau_j = get_xml_attribute(ldaU, 'J')
                 simple_data['ldaUinfo'][ldauKey][ldau_l]['J'], suc = convert_to_float(ldau_j)
 
+                simple_data['ldaUinfo'][ldauKey][ldau_l]['unit'] = 'eV'
+
                 ldau_amf = get_xml_attribute(ldaU, 'l_amf') == 'T'
                 if ldau_amf:
                     ldau_dc = 'AMF'
