@@ -181,6 +181,8 @@ class FleurParser(Parser):
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
+                    elif 'Invalid elements in mmpmat' in error_file_lines:
+                        return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
                     elif 'parent_folder' in calc.inputs:
                         if 'fleurinpdata' in calc.inputs:
                             if 'relax.xml' in calc.inputs.fleurinpdata.files:
