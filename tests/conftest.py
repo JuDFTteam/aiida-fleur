@@ -12,15 +12,9 @@ import six
 
 # aiida-testing dependencies
 
-import uuid
-import inspect
-import shutil
-import click
-import yaml
 import hashlib
 import pathlib
 import typing as ty
-from voluptuous import Schema
 from enum import Enum
 from aiida.engine import run_get_node
 from aiida.engine import ProcessBuilderNamespace
@@ -33,7 +27,7 @@ from contextlib import contextmanager
 ### end aiida-testing dep
 
 # aiida_testing.mock_codes in development, not yet a stable dependency..
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  #, 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code']  #, 'aiida_testing.export_cache']  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
@@ -611,7 +605,7 @@ def export_cache(hash_code_by_entrypoint):
             to_export = node
         else:
             to_export = [node]
-        export(to_export, outfile=full_export_path, overwrite=overwrite,
+        export(to_export, outfile=str(full_export_path), overwrite=overwrite,
                include_comments=True)  # extras are automatically included
 
     return _export_cache
@@ -878,218 +872,5 @@ def run_with_cache(export_cache, load_cache):
         return res, resnode
 
     return _run_with_cache
-
-###### mock-code
-
-CONFIG_FILE_NAME = '.aiida-testing-config.yml'
-
-
-class ConfigActions(Enum):
-    """
-    An enum containing the actions to perform on the config file.
-    """
-    READ = 'read'
-    GENERATE = 'generate'
-    REQUIRE = 'require'
-
-
-class Config(collections.abc.MutableMapping):
-    """Configuration of aiida-testing package."""
-
-    schema = Schema({'mock_code': Schema({str: str})})
-
-    def __init__(self, config=None):
-        self._dict = config or {}
-        self.validate()
-
-    def validate(self):
-        """Validate configuration dictionary."""
-        return self.schema(self._dict)
-
-    @classmethod
-    def from_file(cls):
-        """
-        Parses the configuration file ``.aiida-testing-config.yml``.
-        The file is searched in the current working directory and all its parent
-        directories.
-        """
-        cwd = pathlib.Path(os.getcwd())
-        config: ty.Dict[str, str]
-        for dir_path in [cwd, *cwd.parents]:
-            config_file_path = (dir_path / CONFIG_FILE_NAME)
-            if config_file_path.exists():
-                with open(config_file_path) as config_file:
-                    config = yaml.load(config_file, Loader=yaml.SafeLoader)
-                    break
-        else:
-            config = {}
-
-        return cls(config)
-
-    def to_file(self):
-        """Write configuration to file in yaml format.
-        Writes to current working directory.
-        :param handle: File handle to write config file to.
-        """
-        cwd = pathlib.Path(os.getcwd())
-        config_file_path = (cwd / CONFIG_FILE_NAME)
-
-        with open(config_file_path, 'w') as handle:
-            yaml.dump(self._dict, handle, Dumper=yaml.SafeDumper)
-
-    def __getitem__(self, item):
-        return self._dict.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self._dict.__setitem__(key, value)
-
-    def __delitem__(self, key):
-        return self._dict.__delitem__(key)
-
-    def __iter__(self):
-        return self._dict.__iter__()
-
-    def __len__(self):
-        return self._dict.__len__()
-
-
-class EnvKeys(Enum):
-    """
-    An enum containing the environment variables defined for
-    the mock code execution.
-    """
-    LABEL = 'AIIDA_MOCK_LABEL'
-    DATA_DIR = 'AIIDA_MOCK_DATA_DIR'
-    EXECUTABLE_PATH = 'AIIDA_MOCK_EXECUTABLE_PATH'
-    IGNORE_FILES = 'AIIDA_MOCK_IGNORE_FILES'
-    REGENERATE_DATA = 'AIIDA_MOCK_REGENERATE_DATA'
-
-
-def pytest_addoption(parser):
-    """Add pytest command line options."""
-    parser.addoption(
-        '--testing-config-action',
-        type=click.Choice((c.value for c in ConfigActions)),
-        default=ConfigActions.READ.value,
-        help=f"Read {CONFIG_FILE_NAME} config file if present ('read'), require config file ('require') or " \
-             "generate new config file ('generate').",
-    )
-    parser.addoption('--mock-regenerate-test-data', action='store_true', default=False, help='Regenerate test data.')
-
-
-@pytest.fixture(scope='session')
-def testing_config_action(request):
-    return request.config.getoption('--testing-config-action')
-
-
-@pytest.fixture(scope='session')
-def mock_regenerate_test_data(request):
-    return request.config.getoption('--mock-regenerate-test-data')
-
-
-@pytest.fixture(scope='session')
-def testing_config(testing_config_action):  # pylint: disable=redefined-outer-name
-    """Get content of .aiida-testing-config.yml
-    testing_config_action :
-        Read config file if present ('read'), require config file ('require') or generate new config file ('generate').
-    """
-    config = Config.from_file()
-
-    if not config and testing_config_action == ConfigActions.REQUIRE.value:
-        raise ValueError(f'Unable to find {CONFIG_FILE_NAME}.')
-
-    yield config
-
-    if testing_config_action == ConfigActions.GENERATE.value:
-        config.to_file()
-
-
-@pytest.fixture(scope='function')
-def mock_code_factory(aiida_localhost, testing_config, testing_config_action, mock_regenerate_test_data):  # pylint: disable=redefined-outer-name
-    """
-    Fixture to create a mock AiiDA Code.
-    testing_config_action :
-        Read config file if present ('read'), require config file ('require') or generate new config file ('generate').
-    """
-
-    def _get_mock_code(
-        label: str,
-        entry_point: str,
-        data_dir_abspath: ty.Union[str, pathlib.Path],
-        ignore_files: ty.Iterable[str] = ('_aiidasubmit.sh'),
-        executable_name: str = '',
-        _config: dict = testing_config,
-        _config_action: str = testing_config_action,
-        _regenerate_test_data: bool = mock_regenerate_test_data,
-    ):
-        """
-        Creates a mock AiiDA code. If the same inputs have been run previously,
-        the results are copied over from the corresponding sub-directory of
-        the ``data_dir_abspath``. Otherwise, the code is executed.
-        Parameters
-        ----------
-        label :
-            Label by which the code is identified in the configuration file.
-        entry_point :
-            The AiiDA calculation entry point for the default calculation
-            of the code.
-        data_dir_abspath :
-            Absolute path of the directory where the code results are
-            stored.
-        ignore_files :
-            A list of files which are not copied to the results directory
-            after the code has been executed.
-        executable_name :
-            Name of code executable to search for in PATH, if configuration file does not specify location already.
-        _config :
-            Dict with contents of configuration file
-        _config_action :
-            If 'require', raise ValueError if config dictionary does not specify path of executable.
-            If 'generate', add new key (label) to config dictionary.
-        _regenerate_test_data :
-            If True, regenerate test data instead of reusing.
-        """
-        # we want to set a custom prepend_text, which is why the code
-        # can not be reused.
-        code_label = f'mock-{label}-{uuid.uuid4()}'
-
-        data_dir_pl = pathlib.Path(data_dir_abspath)
-        if not data_dir_pl.exists():
-            raise ValueError("Data directory '{}' does not exist".format(data_dir_abspath))
-        if not data_dir_pl.is_absolute():
-            raise ValueError('Please provide absolute path to data directory.')
-
-        mock_executable_path = shutil.which('aiida-mock-code')
-        if not mock_executable_path:
-            raise ValueError("'aiida-mock-code' executable not found in the PATH. " +
-                             'Have you run `pip install aiida-testing` in this python environment?')
-
-        # try determine path to actual code executable
-        mock_code_config = _config.get('mock_code', {})
-        if _config_action == ConfigActions.REQUIRE.value and label not in mock_code_config:
-            raise ValueError(
-                f"Configuration file {CONFIG_FILE_NAME} does not specify path to executable for code label '{label}'.")
-        code_executable_path = mock_code_config.get(label, 'TO_SPECIFY')
-        if (not code_executable_path) and executable_name:
-            code_executable_path = shutil.which(executable_name) or 'NOT_FOUND'
-        if _config_action == ConfigActions.GENERATE.value:
-            mock_code_config[label] = code_executable_path
-
-        code = Code(input_plugin_name=entry_point, remote_computer_exec=[aiida_localhost, mock_executable_path])
-        code.label = code_label
-        code.set_prepend_text(
-            inspect.cleandoc(f"""
-                export {EnvKeys.LABEL.value}="{label}"
-                export {EnvKeys.DATA_DIR.value}="{data_dir_abspath}"
-                export {EnvKeys.EXECUTABLE_PATH.value}="{code_executable_path}"
-                export {EnvKeys.IGNORE_FILES.value}="{':'.join(ignore_files)}"
-                export {EnvKeys.REGENERATE_DATA.value}={'True' if _regenerate_test_data else 'False'}
-                """))
-
-        code.store()
-        return code
-
-    return _get_mock_code
-
 
 #################### end from aiida-testing ####
