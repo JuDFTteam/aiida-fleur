@@ -158,8 +158,8 @@ def get_wigner_matrix(l, phi, theta):
             for x in range(max(0, m - mp), min(l - mp, l + m) + 1):
                 denom = fac(l - mp - x) * fac(l + m - x) * fac(x) * fac(x + mp - m)
 
-                d_wigner[m+3,mp+3] += base * (-1)**x * np.cos(theta/2.0)**(2*l+m-mp-2*x) \
-                                     * np.sin(theta/2.0)**(2*x+mp-m)/denom
+                d_wigner[m + 3, mp + 3] += base/denom * (-1)**x * np.cos(theta/2.0)**(2*l+m-mp-2*x) \
+                                          * np.sin(theta/2.0)**(2*x+mp-m)
 
     return d_wigner
 

@@ -467,7 +467,7 @@ class FleurinpModifier(object):
 
     def set_nmmpmat(self, species_name, orbital, spin, occStates=None, denmat=None, phi=None, theta=None):
         """
-        Appends a :func:`~aiida_fleur.tools.set_nmmpmat.set_nmmpmat()` to
+        Appends a :py:func:`~aiida_fleur.tools.set_nmmpmat.set_nmmpmat()` to
         the list of tasks that will be done on the FleurinpData.
 
         :param species_name: species on which the density matrix should be set
