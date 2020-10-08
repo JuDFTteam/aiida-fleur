@@ -420,7 +420,7 @@ class FleurCalculation(CalcJob):
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
             self.logger.info('out folder path %s', outfolder_uuid)
 
-            outfolder_filenames = [x.name in parent_calc.outputs.retrieved.list_objects()]
+            outfolder_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
             has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
             if has_fleurinp:
                 #The n_mmp_mat file from fleurinp takes priority
