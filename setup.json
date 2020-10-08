@@ -40,8 +40,7 @@
     ],
     "extras_require": {
         "graphs ": [
-            "matplotlib",
-            "masci-tools==0.3.12-dev4"
+            "matplotlib"
         ],
         "docs": [
             "Sphinx",
@@ -54,9 +53,11 @@
             "pylint==2.5.2"
         ],
         "testing" : [
-            "pytest >= 2.9",
+            "pytest>=2.9",
             "pytest-timeout",
-            "pytest-cov >= 2.5.0",
+            "pytest-cov>= 2.5.0",
+            "voluptuous>=0.11.7",
+            "pyyaml",
             "pgtest"
         ]
     },
