@@ -59,6 +59,7 @@ jobs:
 
     - name: Install python dependencies
       run:
+        pip install aiida-testing @ git+https://github.com/aiidateam/aiida-testing@export_cache
         pip install .[pre-commit,testing]
         pip freeze
 
