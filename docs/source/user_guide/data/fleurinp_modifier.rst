@@ -140,7 +140,7 @@ next to the ``inp.xml`` in the new :py:class:`~aiida_fleur.data.fleurinp.Fleurin
 the :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.freeze()` method and will be used as the initial
 density matrix if a calculation is started from this :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
 
-The code example below shows how to use this method to add a LDA+U procedure to a atom species and provide
+The code example below shows how to use this method to add a LDA+U procedure to an atom species and provide
 an initial guess for the density matrix.
 
 .. code-block:: python
@@ -148,12 +148,13 @@ an initial guess for the density matrix.
   from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
 
   F = FleurinpData(files=['inp.xml'])
-  fm = FleurinpModifier(F)                                                             # Initialise FleurinpModifier class
-  fm.set_species('Nd-1',{'ldaU': {'l': 3, 'U': 6.76, 'J': 0.76, 'l_amf': 'F'}})        # Add LDA+U procedure
-  fm.set_nmmpmat('Nd-1',orbital=3,spin=1,occStates=[1,1,1,1,0,0,0])                    # Initialize n_mmp_mat file with the states
-                                                                                       # m = -3 to m = 0 occupied for spin up
-                                                                                       # spin down is initialized with zeros by default
-  new_fleurinpdata = fm.freeze()                                                       # Apply
+  fm = FleurinpModifier(F)                                             # Initialise FleurinpModifier class
+  fm.set_species('Nd-1', {'ldaU':                                      # Add LDA+U procedure
+                         {'l': 3, 'U': 6.76, 'J': 0.76, 'l_amf': 'F'}}) 
+  fm.set_nmmpmat('Nd-1', orbital=3, spin=1, occStates=[1,1,1,1,0,0,0]) # Initialize n_mmp_mat file with the states
+                                                                       # m = -3 to m = 0 occupied for spin up
+                                                                       # spin down is initialized with 0 by default
+  new_fleurinpdata = fm.freeze()                                       # Apply
 
 .. note::
     The ``n_mmp_mat`` file is a simple text file with no knowledge of which density matrix block corresponds to which
