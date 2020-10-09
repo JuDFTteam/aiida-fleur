@@ -121,7 +121,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
                 nmmp_lines_copy.append(''.join(map(str, [f'{0.0:20.13f}' for x in range(7)])))
 
         #Select the right block from n_mmp_mat and overwrite it with denmatpad
-        startRow = (nspins * ldau_index + spin - 1) * 14
+        startRow = ((spin - 1) * len(all_ldau) + ldau_index) * 14
         for index in range(startRow, startRow + 14):
             currentLine = index - startRow
             currentRow = currentLine // 2
@@ -186,7 +186,7 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
         orbital = convert_to_int(get_xml_attribute(ldau, 'l'), suc_return=False)
 
         for spin in range(nspins):
-            startRow = (nspins * ldau_index + spin) * 14
+            startRow = ((spin - 1) * len(all_ldau) + ldau_index) * 14
 
             for index in range(startRow, startRow + 14):
                 currentLine = index - startRow
