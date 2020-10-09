@@ -427,7 +427,7 @@ class FleurCalculation(CalcJob):
             has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
             if has_fleurinp:
                 #The n_mmp_mat file from fleurinp takes priority
-                has_nmmpmat_file = self._NMMPMAT_FILE_NAME not in fleurinp.files
+                has_nmmpmat_file = has_nmmpmat_file and self._NMMPMAT_FILE_NAME not in fleurinp.files
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
