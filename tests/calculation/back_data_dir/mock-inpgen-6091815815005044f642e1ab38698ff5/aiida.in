@@ -1,0 +1,16 @@
+A Fleur input generator calculation with aiida
+&input  cartesian=F /
+     -6.0276216515       6.0276216515       6.0276216515
+      6.0276216515      -6.0276216515       6.0276216515
+      6.0276216515       6.0276216515      -6.0276216515
+      1.0000000000
+      1.0000000000       1.0000000000       1.0000000000
+
+      1
+         74       0.0000000000       0.0000000000       0.0000000000
+&atom
+  econfig="[Kr] 4d10 4f14 | 5s2 5p6 6s2 5d4"   element="W"   jri=981   lmax=12   lnonsph=6   lo="5s 5p"   rmt=2.1 /
+&comp
+  gmax=15.0   gmaxxc=12.5   kmax=5.0 /
+&kpt
+  div1=3   div2=3   div3=3   tkb=0.0005 /

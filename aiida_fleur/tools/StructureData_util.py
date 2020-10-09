@@ -882,6 +882,16 @@ def create_manual_slab_ase(lattice='fcc',
         structure.pop()
 
     current_symbols = structure.get_chemical_symbols()
+    positions = structure.positions
+
+    zipped = zip(positions, current_symbols)
+    zipped = sorted(zipped, key=lambda x: x[0][2])
+
+    positions = [x for x, _ in zipped]
+    current_symbols = [x for _, x in zipped]
+    structure.set_chemical_symbols(current_symbols)
+    structure.set_positions(positions)
+
     *_, layer_occupancies = get_layers(structure)
     layer_occupancies.insert(0, 0)
     for i, at_type in six.iteritems(replacements):

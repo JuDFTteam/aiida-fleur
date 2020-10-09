@@ -84,7 +84,7 @@ options_scf = Dict(
     dict={
         'resources': {
             'num_machines': 1,
-            'num_mpiprocs_per_machine': 8
+            'num_mpiprocs_per_machine': 1
         },
         'queue_name': 'devel',
         'custom_scheduler_commands': '',

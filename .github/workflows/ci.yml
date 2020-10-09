@@ -59,7 +59,7 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install .[pre-commit]
+        pip install .[pre-commit,testing]
         pip freeze
 
     - name: Run pre-commit
@@ -115,7 +115,7 @@ jobs:
     - name: Run pytest
       run: |
        # create fake codes for tests to work on ci
-       cd ./aiida_fleur/tests/
+       cd ./tests/
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur 
        ./run_all_cov.sh
