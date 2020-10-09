@@ -145,7 +145,9 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
 
     Checks that the number of blocks is as expected from the inp.xml and each
     block does not contain non-zero elements outside their size given by the
-    orbital quantum number in the inp.xml
+    orbital quantum number in the inp.xml. Additionally the occupations, i.e.
+    diagonal elements are checked that they are in between 0 and the maximum
+    possible occupation
 
     :param fleurinp_tree_copy: an xmltree that represents inp.xml
     :param nmmp_lines_copy: list of lines in the n_mmp_mat file
@@ -186,9 +188,10 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
     for ldau_index, ldau in enumerate(all_ldau):
 
         orbital = convert_to_int(get_xml_attribute(ldau, 'l'), suc_return=False)
+        species_name = get_xml_attribute(ldau.getparent(), 'name')
 
         for spin in range(nspins):
-            startRow = ((spin - 1) * len(all_ldau) + ldau_index) * 14
+            startRow = (spin * len(all_ldau) + ldau_index) * 14
 
             for index in range(startRow, startRow + 14):
                 currentLine = index - startRow
@@ -215,8 +218,8 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
                         outside_val = True
 
                 if outside_val:
-                    raise ValueError(
-                        f'Found value outside of valid range in block {ldau_index},spin {spin+1} and for l={orbital}')
+                    raise ValueError(f'Found value outside of valid range in for species {species_name}, spin {spin+1}'
+                                     f' and l={orbital}')
 
                 invalid_diag = False
                 if spin < 2:
@@ -228,7 +231,8 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
                             invalid_diag = True
 
                 if invalid_diag:
-                    raise ValueError(f'Found invalid diagonal element in block {ldau_index} and spin {spin+1}')
+                    raise ValueError(f'Found invalid diagonal element for species {species_name}, spin {spin+1}'
+                                     f' and l={orbital}')
 
 
 def get_wigner_matrix(l, phi, theta):
