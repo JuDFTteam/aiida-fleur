@@ -59,7 +59,7 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install aiida-testing @ git+https://github.com/aiidateam/aiida-testing@export_cache
+        pip install git+https://github.com/aiidateam/aiida-testing@export_cache
         pip install .[pre-commit,testing]
         pip freeze
 
@@ -109,7 +109,7 @@ jobs:
         pip install PyCifRW~=4.4
         # install aiida-testing manually
         #pip install git+https://github.com/broeder-j/aiida-testing.git@fa44c3ba4e57192fdbdee1cf3581576acc93800c
-        #pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install .[testing]
         reentry scan
 

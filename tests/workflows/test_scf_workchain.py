@@ -15,9 +15,9 @@ from __future__ import print_function
 
 import pytest
 import os
-import aiida_fleur
 from aiida.orm import Code, load_node, Dict, StructureData
 from aiida.engine import run_get_node
+import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
@@ -309,6 +309,7 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
     remote data
     """
     assert False
+
 
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')

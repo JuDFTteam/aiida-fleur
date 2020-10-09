@@ -542,6 +542,7 @@ def performance_extract_calcs(calcs):
 
 
 def get_mpi_proc(resources):
+    """Determine number of total processes from given resource dict"""
     nmachines = resources.get('num_machines', 0)
     total_proc = resources.get('tot_num_mpiprocs', 0)
     if not total_proc:
@@ -554,16 +555,19 @@ def get_mpi_proc(resources):
 
 
 def calc_time_cost_function(natom, nkpt, kmax, nspins=1):
+    """Estimates the cost of simulating a single iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins
     return costs
 
 
 def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
+    """Estimates the cost of simulating a all  iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins * niter
     return costs
 
 
 def cost_ratio(total_costs, walltime_sec, ncores):
+    """Estimates if simulation cost matches resources"""
     ratio = total_costs / (walltime_sec * ncores)
     return ratio
 

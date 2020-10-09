@@ -10,7 +10,7 @@ import collections
 import pytest
 import six
 import sys
-from aiida.orm import Node, Code, Dict
+from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
 
 # aiida_testing.mock_codes in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
@@ -440,6 +440,10 @@ def generate_structure_cif():
 
 @pytest.fixture(scope='function')
 def create_or_fake_local_code(aiida_local_code_factory):
+    """
+    Create or fake a local code.
+    This is old consider using mock-code_factory of aiida-testing instead
+    """
 
     def _get_code(executable, exec_relpath, entrypoint):
         from aiida.tools.importexport import import_data, export

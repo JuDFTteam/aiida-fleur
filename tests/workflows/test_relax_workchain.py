@@ -95,7 +95,7 @@ class Test_FleurRelaxWorkChain():
         """
         assert False
 
-    @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.') 
+    @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """

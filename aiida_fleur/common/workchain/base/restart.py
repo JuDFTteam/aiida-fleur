@@ -69,7 +69,10 @@ class BaseRestartWorkChain(WorkChain):
         self._load_error_handlers()
 
     def _load_error_handlers(self):
-        # If an error handler entry point is defined, load them. If the plugin cannot be loaded log it and pass
+        """
+        If an error handler entry point is defined, load them.
+        If the plugin cannot be loaded log it and pass
+        """
         if self._error_handler_entry_point is not None:
             for entry_point_name in get_entry_point_names(self._error_handler_entry_point):
                 try:

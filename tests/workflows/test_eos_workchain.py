@@ -14,9 +14,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import pytest
-import aiida_fleur
 import os
 from aiida.engine import run_get_node
+import aiida_fleur
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 
 from ..conftest import run_regression_tests
