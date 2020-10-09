@@ -8,8 +8,8 @@ import pytest
 import aiida_fleur
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/GaAsMultiForceXML/inp.xml')
-TEST_NMMPMAT_PATH = os.path.join(aiida_path, 'tests/files/n_mmp_mat/n_mmp_mat_GaAsMultiForceXML')
+TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/GaAsMultiForceXML/inp.xml')
+TEST_NMMPMAT_PATH = os.path.join(aiida_path, '../tests/files/n_mmp_mat/n_mmp_mat_GaAsMultiForceXML')
 
 
 def test_set_nmmpmat_nofile(inpxml_etree):
