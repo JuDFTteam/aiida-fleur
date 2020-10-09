@@ -143,12 +143,14 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
     """
     Checks that the given nmmp_lines is valid with the given fleurinp_tree
 
-    :param fleurinp_tree_copy: an xmltree that represents inp.xml
-    :param nmmp_lines_copy: list of lines in the n_mmp_mat file
-
     Checks that the number of blocks is as expected from the inp.xml and each
     block does not contain non-zero elements outside their size given by the
     orbital quantum number in the inp.xml
+
+    :param fleurinp_tree_copy: an xmltree that represents inp.xml
+    :param nmmp_lines_copy: list of lines in the n_mmp_mat file
+
+    :raises ValueError: if any of the above checks are violated.
     """
 
     #First check the number of ldau procedures
