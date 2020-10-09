@@ -58,7 +58,6 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
 
     all_ldau = eval_xpath2(fleurinp_tree_copy, ldau_xpath)
     numRows = nspins * 14 * len(all_ldau)
-    separator = '    '
 
     #Check that numRows matches the number of lines in nmmp_lines_copy
     #If not either there was an n_mmp_mat file present in Fleurinp before and a lda+u calculation
@@ -119,8 +118,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
         if nmmp_lines_copy is None:
             nmmp_lines_copy = []
             for index in range(numRows):
-                nmmp_lines_copy.append(separator +
-                                       separator.join(map(str, ['{:16.13f}'.format(0.0) for x in range(7)])))
+                nmmp_lines_copy.append(''.join(map(str, [f'{0.0:20.13f}' for x in range(7)])))
 
         #Select the right block from n_mmp_mat and overwrite it with denmatpad
         startRow = (nspins * ldau_index + spin - 1) * 14
@@ -129,15 +127,14 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
             currentRow = currentLine // 2
             if currentLine % 2 == 0:
                 #Line ends with a real part
-                nmmp_lines_copy[index] = separator +\
-                                         separator.join(map(str, ['{:16.13f}{}{:16.13f}'.format(x.real, separator, x.imag)\
-                                                                  for x in denmatpad[currentRow, :3]])) +\
-                                         separator + '{:16.13f}'.format(denmatpad[currentRow, 3].real)
+                nmmp_lines_copy[index] = ''.join(map(str, [f'{x.real:20.13f}{x.imag:20.13f}'\
+                                                           for x in denmatpad[currentRow, :3]])) +\
+                                         f'{denmatpad[currentRow, 3].real:20.13f}'
             else:
                 #Line begins with a imaginary part
-                nmmp_lines_copy[index] = separator + '{:16.13f}'.format(denmatpad[currentRow, 3].imag) + separator +\
-                                         separator.join(map(str, ['{:16.13f}{}{:16.13f}'.format(x.real, separator, x.imag)\
-                                                                  for x in denmatpad[currentRow, 4:]]))
+                nmmp_lines_copy[index] = f'{denmatpad[currentRow, 3].imag:20.13f}' +\
+                                         ''.join(map(str, [f'{x.real:20.13f}{x.imag:20.13f}'\
+                                                           for x in denmatpad[currentRow, 4:]]))
 
     return nmmp_lines_copy
 
