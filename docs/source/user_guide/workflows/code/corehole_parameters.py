@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-             
+# -*- coding: utf-8 -*-
 'method' : 'valence',      # what method to use, default for valence to highest open shell
 'hole_charge' : 1.0,       # what is the charge of the corehole? 0<1.0
-'atoms' : ['all'],         # coreholes on what atoms, positions or index for list, 
+'atoms' : ['all'],         # coreholes on what atoms, positions or index for list,
                            # or element ['Be', (0.0, 0.5, 0.334), 3]
 'corelevel': ['all'],      # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
 'supercell_size' : [2,1,1],# size of the supercell [nx,ny,nz]

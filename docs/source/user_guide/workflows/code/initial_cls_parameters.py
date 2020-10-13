@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-             
-'relax': True,               # Not implemented, relax the structure 
+# -*- coding: utf-8 -*-
+'relax': True,               # Not implemented, relax the structure
 'relax_mode': 'Fleur',       # Not implemented, how to relax the structure
 'relax_para': 'default',     # Not implemented, parameter for the relaxation
 'scf_para': 'default',       # Use these parameters for the SCFs

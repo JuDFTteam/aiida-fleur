@@ -120,4 +120,3 @@
     "workflow_name": "fleur_initial_cls_wc",
     "workflow_version": "0.4.0"
 }
-
