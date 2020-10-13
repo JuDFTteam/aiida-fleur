@@ -241,7 +241,7 @@ def abs_to_rel_f(vector, cell, pbc):
 
     :param vector: list or np.array of length 3, vector to be converted
     :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :param pb: Boundary conditions, List or Tuple of 3 Boolean
+    :param pbc: Boundary conditions, List or Tuple of 3 Boolean
     :return: list of legth 3 of scaled vector, or False if vector was not length 3
     """
     # TODO this currently only works if the z-coordinate is the one with no pbc
