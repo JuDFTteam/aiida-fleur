@@ -14,10 +14,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import pytest
-import aiida_fleur
 import os
 from aiida.engine import run_get_node
+import aiida_fleur
 from aiida_fleur.workflows.eos import FleurEosWorkChain
+
+from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
@@ -145,6 +147,7 @@ class Test_FleurEosWorkChain:
         assert outpara.get('warnings') == ['Groundstate volume was not in the scaling range.']
         assert outpara.get('info') == ['Consider rerunning around point 0.9926854655857787']
 
+    @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_eos_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """
