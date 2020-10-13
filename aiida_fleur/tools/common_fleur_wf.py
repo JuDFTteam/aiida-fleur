@@ -575,7 +575,8 @@ def optimize_calc_options(nodes,
                           mpi_omp_ratio,
                           fleurinpData=None,
                           kpts=None,
-                          sacrifice_level=0.9):
+                          sacrifice_level=0.9,
+                          only_even_MPI=False):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -597,6 +598,7 @@ def optimize_calc_options(nodes,
     :param kpts: the total number of kpts
     :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
                             MPI/OMP ratio.
+    :parm only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
     :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
                                                      the last one is an exit message.
     """
@@ -625,7 +627,7 @@ def optimize_calc_options(nodes,
         for advised_cpu_per_node in advise_cpus:
             suggestions.append((n_n, advised_cpu_per_node))
 
-    def add_omp(suggestions):
+    def add_omp(suggestions, only_even_MPI_1):
         """
         Also adds possibility of omp parallelisation
         """
@@ -635,11 +637,16 @@ def optimize_calc_options(nodes,
                 omp = cpus_per_node // suggestion[1]
             else:
                 omp = 1
-            final_suggestion.append([suggestion[0], suggestion[1], omp])
+            # here we drop parallelisations having odd number of MPIs
+            if only_even_MPI_1 and suggestion[1] % 2 == 0 or not only_even_MPI_1:
+                final_suggestion.append([suggestion[0], suggestion[1], omp])
         return final_suggestion
 
     # all possible suggestions taking into account omp
-    suggestions = np.array(add_omp(suggestions))
+    suggestions_save = suggestions
+    suggestions = np.array(add_omp(suggestions, only_even_MPI))
+    if not suggestions:  # only odd MPI parallelisations possible, ignore only_even_MPI
+        suggestions = np.array(add_omp(suggestions_save, False))
 
     best_resources = max(np.prod(suggestions, axis=1))
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
@@ -699,7 +706,7 @@ def find_last_submitted_calcjob(restart_wc):
 
 def find_last_submitted_workchain(restart_wc):
     """
-    Finds the last CalcJob submitted in a higher-level workchain
+    Finds the last WorkChain submitted in a higher-level workchain
     and returns it's uuid
     """
     from aiida.common.exceptions import NotExistent

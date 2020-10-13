@@ -64,6 +64,7 @@ class FleurSSDispWorkChain(WorkChain):
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
         'serial': False,
+        'only_even_MPI': False,
         'inpxml_changes': []
     }
 
@@ -407,7 +408,8 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -442,7 +444,8 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
