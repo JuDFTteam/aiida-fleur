@@ -60,7 +60,15 @@ def is_code(code):
         return None
 
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
+def get_inputs_fleur(code,
+                     remote,
+                     fleurinp,
+                     options,
+                     label='',
+                     description='',
+                     settings=None,
+                     serial=False,
+                     only_even_MPI=False):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -649,7 +657,7 @@ def optimize_calc_options(nodes,
     # all possible suggestions taking into account omp
     suggestions_save = suggestions
     suggestions = np.array(add_omp(suggestions, only_even_MPI))
-    if not suggestions:  # only odd MPI parallelisations possible, ignore only_even_MPI
+    if not len(suggestions):  # only odd MPI parallelisations possible, ignore only_even_MPI
         suggestions = np.array(add_omp(suggestions_save, False))
 
     best_resources = max(np.prod(suggestions, axis=1))
