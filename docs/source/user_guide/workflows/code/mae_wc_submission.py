@@ -13,6 +13,7 @@ wf_para = Dict(dict={'sqa_ref': [0.7, 0.7],
                      'sqas_theta': [0.0, 1.57079, 1.57079],
                      'sqas_phi': [0.0, 0.0, 1.57079],
                      'serial': False,
+                     'only_even_MPI': False,
                      'soc_off': [],
                      'inpxml_changes': [],
                      })

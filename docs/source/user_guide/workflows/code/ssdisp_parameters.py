@@ -8,3 +8,4 @@
 'ref_qss': [0.0, 0.0, 0.0],         # sets a q-vector for the reference calculation
 'inpxml_changes': []                # additional changes before the FT step
 'serial': False                     # False if use MPI version for the FT calc
+'only_even_MPI': False,             # True if suppress parallelisation having odd number of MPI

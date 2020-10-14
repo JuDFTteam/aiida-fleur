@@ -17,7 +17,8 @@ wf_para = Dict(dict={'beta': {'all': 1.57079},
                                    [0.500, 0.500, 0.0]],
                      'ref_qss': [0.0, 0.0, 0.0],
                      'inpxml_changes': [],
-                     'serial': False
+                     'serial': False,
+                     'only_even_MPI': False
                      })
 
 options = Dict(dict={'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 24},
