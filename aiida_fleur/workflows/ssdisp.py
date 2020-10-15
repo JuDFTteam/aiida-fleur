@@ -211,9 +211,9 @@ class FleurSSDispWorkChain(WorkChain):
         if 'inpxml_changes' not in scf_wf_dict:
             scf_wf_dict['inpxml_changes'] = []
         # set up q vector for the reference calculation
-        list_ref_qss = self.ctx.wf_dict['ref_qss']
-        if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True}
+        string_ref_qss = ' '.join(map(str, self.ctx.wf_dict['ref_qss']))
+        if [x for x in self.ctx.wf_dict['ref_qss'] if x != 0]:
+            changes_dict = {'qss': string_ref_qss, 'l_noco': True, 'ctail': False, 'l_ss': True}
         else:
             changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False}
 
