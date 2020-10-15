@@ -222,26 +222,18 @@ class FleurScfWorkChain(WorkChain):
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
                 self.report(warning)
-        elif 'remote_data' in inputs:
-            self.ctx.run_inpgen = False
-            if 'structure' in inputs:
-                error = 'ERROR: structure input is not needed because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'inpgen' in inputs:
-                error = 'ERROR: inpgen code is not needed input because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'calc_parameters' in inputs:
-                error = 'ERROR: calc_parameter input is not needed because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'remote_data' in inputs:
+                warning = ('WARNING: Only initial charge density will be copied from the'
+                           'given remote folder because fleurinp is given.')
+                self.report(warning)
+        elif 'remote_data' in inputs:
+            self.ctx.run_inpgen = False
         else:
             error = 'ERROR: No StructureData nor FleurinpData nor RemoteData was provided'
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
@@ -444,7 +436,7 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_base_wc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs:  # and not self.ctx.wf_dict['use_relax_xml']:
+        elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
         else:
             remote = None
