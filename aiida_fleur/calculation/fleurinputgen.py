@@ -353,7 +353,7 @@ class FleurinputgenCalculation(CalcJob):
                     try:
                         head = kind_name.rstrip('0123456789')
                         kind_namet = int(kind_name[len(head):])
-                        if int(kind_name[len(head)]) > 3:
+                        if int(kind_name[len(head)]) > 4:
                             raise InputValidationError('New specie name/label should start with a digit smaller than 4')
                     except ValueError:
                         pass
