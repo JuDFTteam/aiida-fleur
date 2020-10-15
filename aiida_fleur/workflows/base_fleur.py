@@ -59,6 +59,11 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                    non_db=True,
                    help='Calculation description.')
         spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
+        spec.input('only_even_MPI',
+                   valid_type=orm.Bool,
+                   default=lambda: orm.Bool(False),
+                   help='Set to true if you want to suppress odd number of MPI processes in parallelisation.'
+                   'This might speedup a calculation for machines having even number of sockets per node.')
 
         spec.outline(
             cls.setup,
@@ -162,7 +167,13 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         omp_per_mpi = self.ctx.num_cores_per_mpiproc
         try:
             adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(
-                machines, mpi_proc, omp_per_mpi, self.ctx.use_omp, self.ctx.suggest_mpi_omp_ratio, fleurinp)
+                machines,
+                mpi_proc,
+                omp_per_mpi,
+                self.ctx.use_omp,
+                self.ctx.suggest_mpi_omp_ratio,
+                fleurinp,
+                only_even_MPI=self.inputs.only_even_MPI)
         except ValueError:
             raise Warning('Not optimal computational resources, load less than 60%')
 

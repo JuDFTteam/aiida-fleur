@@ -1,4 +1,4 @@
-AIIDA-FLEUR WorkChains
+AiiDA-FLEUR WorkChains
 ======================
 
 General design

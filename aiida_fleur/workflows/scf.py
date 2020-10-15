@@ -47,15 +47,15 @@ class FleurScfWorkChain(WorkChain):
     (1) Start from a structure and run the inpgen first optional with calc_parameters
     (2) Start from a Fleur calculation, with optional remoteData
 
-    :params wf_parameters: (Dict), Workchain Specifications
-    :params structure: (StructureData), Crystal structure
-    :params calc_parameters: (Dict), Inpgen Parameters
-    :params fleurinp: (FleurinpData), to start with a Fleur calculation
-    :params remote_data: (RemoteData), from a Fleur calculation
-    :params inpgen: (Code)
-    :params fleur: (Code)
+    :param wf_parameters: (Dict), Workchain Specifications
+    :param structure: (StructureData), Crystal structure
+    :param calc_parameters: (Dict), Inpgen Parameters
+    :param fleurinp: (FleurinpData), to start with a Fleur calculation
+    :param remote_data: (RemoteData), from a Fleur calculation
+    :param inpgen: (Code)
+    :param fleur: (Code)
 
-    :returns output_scf_wc_para: (Dict), Information of workflow results
+    :return: output_scf_wc_para (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
     """
 
@@ -67,6 +67,7 @@ class FleurScfWorkChain(WorkChain):
         'force_converged': 0.002,
         'mode': 'density',  # 'density', 'energy' or 'force'
         'serial': False,
+        'only_even_MPI': False,
         'itmax_per_run': 30,
         'force_dict': {
             'qfix': 2,
@@ -221,26 +222,18 @@ class FleurScfWorkChain(WorkChain):
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
                 self.report(warning)
-        elif 'remote_data' in inputs:
-            self.ctx.run_inpgen = False
-            if 'structure' in inputs:
-                error = 'ERROR: structure input is not needed because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'inpgen' in inputs:
-                error = 'ERROR: inpgen code is not needed input because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'calc_parameters' in inputs:
-                error = 'ERROR: calc_parameter input is not needed because remote_data was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
             if not 'inpgen' in inputs:
                 error = 'ERROR: StructureData was provided, but no inpgen code was provided'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'remote_data' in inputs:
+                warning = ('WARNING: Only initial charge density will be copied from the'
+                           'given remote folder because fleurinp is given.')
+                self.report(warning)
+        elif 'remote_data' in inputs:
+            self.ctx.run_inpgen = False
         else:
             error = 'ERROR: No StructureData nor FleurinpData nor RemoteData was provided'
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
@@ -443,7 +436,7 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_base_wc'].outputs.remote_folder
-        elif 'remote_data' in self.inputs:  # and not self.ctx.wf_dict['use_relax_xml']:
+        elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
         else:
             remote = None
@@ -468,7 +461,8 @@ class FleurScfWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.serial)
+                                          serial=self.ctx.serial,
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))

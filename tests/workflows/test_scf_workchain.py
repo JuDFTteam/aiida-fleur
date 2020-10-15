@@ -15,11 +15,13 @@ from __future__ import print_function
 
 import pytest
 import os
-import aiida_fleur
 from aiida.orm import Code, load_node, Dict, StructureData
 from aiida.engine import run_get_node
+import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+
+from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
@@ -28,8 +30,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
 # tests
-#@pytest.mark.skip(reason='fleur executable fails here, test prob works')
-#@pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si(
         #run_with_cache,
@@ -81,7 +82,7 @@ def test_fleur_scf_fleurinp_Si(
     #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
 
 
-#@pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
                                 generate_structure2, clear_spec):
@@ -217,7 +218,7 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
     assert node.exit_status == 362
 
 
-#@pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si_modifications(
         #run_with_cache,
@@ -310,6 +311,7 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
     assert False
 
 
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
                                            clear_spec, clear_database):

@@ -51,7 +51,15 @@ the FleurBaseWorkChain will resubmit it setting twice larger number of computati
 
 .. warning::
 
-    The exit status 310 can be thrown only in case of using Intel complier for the Fleur code.
+    The exit status 310 can be thrown only in a few tested cases. Different machines and different compilers can
+    report the memory issue in various ways. Now only a few kinds of reports are supported:
+
+        1. 'Out Of Memory' or 'cgroup out-of-memory handler' string found in `out.error` file.
+        2. If memory consumption, which is printed out in `out.error` as 'used' or in `usage.json` as 'VmPeak', is
+           larger than 93% of memory available (printed out into `out.xml` as `memoryPerNode`).
+
+    All other possible memory issue reports are not implemented - please contact to the AiiDA-Fleur developers to add
+    new report message.
 
 :py:func:`~aiida_fleur.workflows.base_fleur.FleurBaseWorkChain.check_kpts()` method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -10,6 +10,7 @@ from aiida.common import datastructures
 from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
+from ..conftest import run_regression_tests
 
 
 def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
@@ -137,7 +138,7 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-#@pytest.mark.skip(reason='mock code buggy, todo has to be checked')
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not their or not wanted.')
 def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,

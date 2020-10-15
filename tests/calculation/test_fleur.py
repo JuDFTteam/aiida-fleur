@@ -8,10 +8,9 @@ from aiida import orm
 from aiida.plugins import CalculationFactory
 from aiida.engine import run_get_node
 from aiida.common import datastructures
-
-from aiida_fleur.calculation.fleur import FleurCalculation
-
 import aiida_fleur
+from aiida_fleur.calculation.fleur import FleurCalculation
+from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')  #W/files/inp.xml')
@@ -59,7 +58,7 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-#@pytest.mark.skip(reason='mock code buggy, todo: check, ggf own fixture')
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurinp, clear_database,
                                 hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
     """
