@@ -425,9 +425,14 @@ class FleurCalculation(CalcJob):
 
             outfolder_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
             has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
-            if has_fleurinp:
-                #The n_mmp_mat file from fleurinp takes priority
-                has_nmmpmat_file = has_nmmpmat_file and self._NMMPMAT_FILE_NAME not in fleurinp.files
+            if (self._NMMPMAT_FILE_NAME in outfolder_filenames or \
+                self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
+                if has_fleurinp:
+                    if 'n_mmp_mat' in fleurinp.files:
+                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp'
+                                            'There is already an n_mmp_mat file'
+                                            'for the parent calculation')
+                        local_copy_list.remove((fleurinp.uuid,'n_mmp_mat','n_mmp_mat'))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
