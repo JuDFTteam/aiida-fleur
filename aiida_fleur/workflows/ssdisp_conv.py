@@ -33,7 +33,9 @@ class FleurSSDispConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'beta': {'all': 1.57079}, 'q_vectors': {'label': [0.0, 0.0, 0.0], 'label2': [0.125, 0.0, 0.0]}}
+    _wf_default = {'beta': {'all': 1.57079},
+                   'q_vectors': {'label': [0.0, 0.0, 0.0], 'label2': [0.125, 0.0, 0.0]},
+                   'suppress_symmetries': False}
 
     @classmethod
     def define(cls, spec):
@@ -97,7 +99,12 @@ class FleurSSDispConvWorkChain(WorkChain):
         inputs = {}
         for key, q_vector in six.iteritems(self.ctx.wf_dict['q_vectors']):
             inputs[key] = self.get_inputs_scf()
-            inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
+            if self.ctx.wf_dict('suppress_symmetries'):
+                inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
+                changes_dict = {'qss': ' '.join(map(str, q_vector))}
+                inputs[key].inpxml_changes.append(('set_inpchanges', {'change_dict': changes_dict}))
+            else:
+                inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
             inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
             res = self.submit(FleurScfWorkChain, **inputs[key])
             self.to_context(**{key: res})

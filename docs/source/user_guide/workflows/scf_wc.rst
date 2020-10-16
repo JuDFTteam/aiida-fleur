@@ -159,17 +159,25 @@ on the setup of the inputs, one of the four supported scenarios will happen:
       Files, belonging to the **fleurinp**, will be used as input for the first
       FLEUR calculation.
 
-3. **remote_data** (FLEUR):
-
-      inp.xml file and initial
-      charge density will be copied from the remote folder.
-
-4. **structure** + **inpgen** + *calc_parameters*:
+3. **structure** + **inpgen** + *calc_parameters*:
 
       inpgen code and optional *calc_parameters* will be used to generate a
       new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` using a given **structure**.
       Generated :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will
       be used as an input for the first FLEUR calculation.
+
+3. **structure** + **inpgen** + *calc_parameters* + **remote_data** (FLEUR):
+
+      inpgen code and optional *calc_parameters* will be used to generate a
+      new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` using a given **structure**.
+      Generated :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will
+      be used as an input for the first FLEUR calculation. Initial charge density will be taken from given
+      **remote_data** (FLEUR). **Note**: make sure that **remote_data** (FLEUR) corresponds to the same structure.
+
+5. **remote_data** (FLEUR):
+
+      inp.xml file and initial
+      charge density will be copied from the remote folder.
 
 For example, if you want to continue converging charge density, use the option 3.
 If you want to change

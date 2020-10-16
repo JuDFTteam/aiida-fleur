@@ -10,7 +10,8 @@ wf_para = Dict(dict={'fleur_runmax': 3,
                      'density_converged': 0.001,
                      'mode': 'density',
                      'itmax_per_run': 30,
-                     'serial': False})
+                     'serial': False,
+                     'only_even_MPI': False})
 
 options = Dict(dict={'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 2},
                      'withmpi': True,
