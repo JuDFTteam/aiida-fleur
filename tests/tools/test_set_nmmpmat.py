@@ -242,7 +242,7 @@ def test_set_nmmpmat_file_get_wigner_matrix(inpxml_etree):
     assert len(nmmp_lines) == len(correct_result)
     for index, line in enumerate(nmmp_lines):
         #Replace minus zero with plus zero
-        line = line.replace('-0.0000000000000',' 0.0000000000000')
+        line = line.replace('-0.0000000000000', ' 0.0000000000000')
         assert line == correct_result[index]
 
 
