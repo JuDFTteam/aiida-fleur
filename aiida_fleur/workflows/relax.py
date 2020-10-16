@@ -39,13 +39,13 @@ class FleurRelaxWorkChain(WorkChain):
     _workflowversion = '0.2.0'
 
     _wf_default = {
-        'relax_iter': 5,                    # Stop if not converged after so many relaxation steps
+        'relax_iter': 5,  # Stop if not converged after so many relaxation steps
         'film_distance_relaxation': False,  # Do not relax the z coordinates
-        'force_criterion': 0.001,           # Converge the force until lower this value in atomic units
-        'run_final_scf': False,             # Run a final scf on the final relaxed structure
-        'break_symmetry': False,            # Break the symmetry for the relaxation each atom own type
-        'change_mixing_criterion': 0.025,   # After the force is smaller switch mixing scheme
-        'atoms_off': []                     # Species to be switched off, '49' is reserved
+        'force_criterion': 0.001,  # Converge the force until lower this value in atomic units
+        'run_final_scf': False,  # Run a final scf on the final relaxed structure
+        'break_symmetry': False,  # Break the symmetry for the relaxation each atom own type
+        'change_mixing_criterion': 0.025,  # After the force is smaller switch mixing scheme
+        'atoms_off': []  # Species to be switched off, '49' is reserved
     }
 
     @classmethod
