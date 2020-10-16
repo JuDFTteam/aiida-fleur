@@ -32,8 +32,11 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
     :param occStates: list, sets the diagonal elements of the density matrix and everything
                       else to zero
     :param denmat: matrix, specify the density matrix explicitely
-    :param phi: float, optional angle, by which to rotate the density matrix before writing it
-    :param theta: float, optional angle, by which to rotate the density matrix before writing it
+    :param phi: float, optional angle (radian), by which to rotate the density matrix before writing it
+    :param theta: float, optional angle (radian), by which to rotate the density matrix before writing it
+
+    :raises ValueError: If something in the input is wrong
+    :raises KeyError: If no LDA+U procedure is found on a species
     """
 
     #All lda+U procedures have to be considered since we need to keep the order
@@ -239,8 +242,8 @@ def get_wigner_matrix(l, phi, theta):
     """Produces the wigner rotation matrix for the density matrix
 
    :param l: int, orbital quantum number
-   :param phi: float, angle corresponds to euler angle alpha
-   :param theta: float, angle corresponds to euler angle beta
+   :param phi: float, angle (radian) corresponds to euler angle alpha
+   :param theta: float, angle (radian) corresponds to euler angle beta
    """
     d_wigner = np.zeros((7, 7), dtype=complex)
     for m in range(-l, l + 1):
@@ -258,8 +261,7 @@ def get_wigner_matrix(l, phi, theta):
 
 
 def fac(n):
-    """Returns the factorial of n
-   """
+    """Returns the factorial of n"""
     if n < 2:
         return 1
     else:
