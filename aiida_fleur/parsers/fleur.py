@@ -81,6 +81,7 @@ class FleurParser(Parser):
         has_dos_file = False
         has_bands_file = False
         has_relax_file = False
+        invalid_mmpmat = False
 
         dos_file = None
         band_file = None
@@ -183,7 +184,7 @@ class FleurParser(Parser):
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
                     elif 'Invalid elements in mmpmat' in error_file_lines:
-                        return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
+                        invalid_mmpmat = True
                     elif 'parent_folder' in calc.inputs:
                         if 'fleurinpdata' in calc.inputs:
                             if 'relax.xml' in calc.inputs.fleurinpdata.files:
@@ -280,6 +281,9 @@ class FleurParser(Parser):
                     except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
+
+        if invalid_mmpmat:
+            return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
 
 
 def parse_xmlout_file(outxmlfile):
