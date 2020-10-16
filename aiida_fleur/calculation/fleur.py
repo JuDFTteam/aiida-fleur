@@ -432,7 +432,7 @@ class FleurCalculation(CalcJob):
                         self.logger.warning('Ingnoring n_mmp_mat from fleurinp. '
                                             'There is already an n_mmp_mat file '
                                             'for the parent calculation')
-                        local_copy_list.remove((fleurinp.uuid,'n_mmp_mat','n_mmp_mat'))
+                        local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
