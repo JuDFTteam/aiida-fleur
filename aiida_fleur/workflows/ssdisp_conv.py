@@ -33,9 +33,16 @@ class FleurSSDispConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'beta': {'all': 1.57079},
-                   'q_vectors': {'label': [0.0, 0.0, 0.0], 'label2': [0.125, 0.0, 0.0]},
-                   'suppress_symmetries': False}
+    _wf_default = {
+        'beta': {
+            'all': 1.57079
+        },
+        'q_vectors': {
+            'label': [0.0, 0.0, 0.0],
+            'label2': [0.125, 0.0, 0.0]
+        },
+        'suppress_symmetries': False
+    }
 
     @classmethod
     def define(cls, spec):
