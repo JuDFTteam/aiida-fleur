@@ -429,8 +429,8 @@ class FleurCalculation(CalcJob):
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
                     if 'n_mmp_mat' in fleurinp.files:
-                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp'
-                                            'There is already an n_mmp_mat file'
+                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp. '
+                                            'There is already an n_mmp_mat file '
                                             'for the parent calculation')
                         local_copy_list.remove((fleurinp.uuid,'n_mmp_mat','n_mmp_mat'))
 
