@@ -324,6 +324,12 @@ class FleurScfWorkChain(WorkChain):
             return
         elif 'fleurinp' in inputs:
             fleurin = self.inputs.fleurinp
+        elif 'structure' in inputs:
+            if not self.ctx['inpgen'].is_finished_ok:
+                error = 'Inpgen calculation failed'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+            fleurin = self.ctx['inpgen'].outputs.fleurinpData
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
@@ -342,13 +348,6 @@ class FleurScfWorkChain(WorkChain):
                 fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
                 self.report('INFO: generated FleurinpData from inp.xml')
             fleurin.store()
-        elif 'structure' in inputs:
-            # only structure is given, no remote nor fleurinp
-            if not self.ctx['inpgen'].is_finished_ok:
-                error = 'Inpgen calculation failed'
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-            fleurin = self.ctx['inpgen'].outputs.fleurinpData
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
