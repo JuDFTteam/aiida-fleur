@@ -100,9 +100,6 @@ class Test_FleurCreateMagneticWorkChain:
                 'num_cores_per_mpiproc': 1
             },
             'queue_name': '',
-            'environment_variables': {
-                'OMP_NUM_THREADS': '1'
-            },
             'custom_scheduler_commands': '',
             'max_wallclock_seconds': 1 * 60 * 60
         }
@@ -163,9 +160,6 @@ class Test_FleurCreateMagneticWorkChain:
                 'num_cores_per_mpiproc': 1
             },
             'queue_name': '',
-            'environment_variables': {
-                'OMP_NUM_THREADS': '1'
-            },
             'custom_scheduler_commands': '',
             'max_wallclock_seconds': 1 * 60 * 60
         }
