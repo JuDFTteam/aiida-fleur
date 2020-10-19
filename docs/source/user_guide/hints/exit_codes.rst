@@ -130,6 +130,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 315       | Invalid Elements found in the LDA+U density matrix.     | FleurBase              |
 +-----------+---------------------------------------------------------+------------------------+
+| 316       | Calculation failed due to time limits.                  | FleurCalculation       |
++-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | MAE                    |

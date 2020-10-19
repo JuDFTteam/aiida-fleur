@@ -214,8 +214,8 @@ def _handle_general_error(self, calculation):
 @register_error_handler(FleurBaseWorkChain, 48)
 def _handle_dirac_equation(self, calculation):
     """
-    Calculation failed due to lack of memory.
-    Probably works for JURECA only, has to be tested for other systems.
+    Sometimes relaxation calculation fails with Diraq problem which is usually caused by
+    problems with reusing charge density. In this case we resubmit the calculation, dropping the input cdn.
     """
 
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DROP_CDN']):
@@ -319,3 +319,29 @@ def _handle_not_enough_memory(self, calculation):
                         'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)
+
+@register_error_handler(FleurBaseWorkChain, 47)
+def _handle_time_limits(self, calculation):
+    """
+    If calculation fails due to time limits, we simply resubmit it.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
+
+        self.report('FleurCalculation failed due to time limits, I restart it from where it ended')
+
+        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+
+        # if previous calculation failed for the same reason, do not restart
+        prev_calculation_status = remote.get_incoming().all()[-1].exit_status
+        if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
+            self.ctx.is_finished = True
+            return ErrorHandlerReport(True, True)
+
+        # however, if it is the first time, resubmit profiding inp.xml and cdn from the remote folder
+        self.ctx.is_finished = False
+        self.ctx.inputs.parent_folder = remote
+        if 'fleurinpdata' in self.ctx.inputs:
+            del self.ctx.inputs.fleurinpdata
+
+        return ErrorHandlerReport(True, True)

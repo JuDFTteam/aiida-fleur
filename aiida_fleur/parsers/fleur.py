@@ -135,6 +135,7 @@ class FleurParser(Parser):
                                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish' ' successfully.')
 
+                    # here we estimate how much memory was available and consumed
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
@@ -158,6 +159,15 @@ class FleurParser(Parser):
                                     kb_used = int(re.findall(r'\d+', line_used)[2])
                                 except IndexError:
                                     self.logger.info('Did not manage to find memory usage info.')
+
+                    # here we estimate how much walltime was available and consumed
+                    try:
+                        time_avail_sec = self.node.attributes['last_job_info']['requested_wallclock_time_seconds']
+                        time_calculated = self.node.attributes['last_job_info']['wallclock_time_seconds']
+                        if time_avail_sec < 1.01 * time_calculated:
+                            return self.exit_codes.ERROR_TIME_LIMIT
+                    except KeyError:
+                        pass
 
                     if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
                             'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
