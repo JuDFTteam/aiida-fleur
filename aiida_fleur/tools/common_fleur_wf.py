@@ -664,12 +664,9 @@ def optimize_calc_options(nodes,
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
 
     def best_criterion(suggestion):
-        '''
-        also implements hard preference of even numper of MPIs over odd
-        '''
         if use_omp:
-            return (abs(suggestion[1] % 2 - 1), -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio))
-        return (suggestion[0] * suggestion[1], abs(suggestion[1] % 2 - 1), -suggestion[0])
+            return -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio)
+        return (suggestion[0] * suggestion[1], -suggestion[0])
 
     best_suggestion = max(top_suggestions, key=best_criterion)
 
