@@ -53,6 +53,7 @@ calc_eos = Dict(dict=calc_eos)
 
 options_eos = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 4, 'num_cores_per_mpiproc': 6},
                'queue_name': 'devel',
+               'environment_variables': {'OMP_NUM_THREADS': '6'},
                'custom_scheduler_commands': '',
                'max_wallclock_seconds':  1*60*60}
 
@@ -103,6 +104,7 @@ calc_relax = Dict(dict=calc_relax)
 
 options_relax = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 4, 'num_cores_per_mpiproc': 6},
                  'queue_name': 'devel',
+                 'environment_variables': {'OMP_NUM_THREADS': '6'},
                  'custom_scheduler_commands': '',
                  'max_wallclock_seconds':  1*60*60}
 

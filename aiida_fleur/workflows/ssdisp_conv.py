@@ -106,10 +106,12 @@ class FleurSSDispConvWorkChain(WorkChain):
         inputs = {}
         for key, q_vector in six.iteritems(self.ctx.wf_dict['q_vectors']):
             inputs[key] = self.get_inputs_scf()
-            if self.ctx.wf_dict('suppress_symmetries'):
+            if self.ctx.wf_dict['suppress_symmetries']:
                 inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
                 changes_dict = {'qss': ' '.join(map(str, q_vector))}
-                inputs[key].inpxml_changes.append(('set_inpchanges', {'change_dict': changes_dict}))
+                wf_para = inputs[key].wf_parameters.get_dict()
+                wf_para['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
+                inputs[key].wf_parameters = Dict(dict=wf_para)
             else:
                 inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
             inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
