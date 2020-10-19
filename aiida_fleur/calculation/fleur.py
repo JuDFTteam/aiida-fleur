@@ -97,6 +97,7 @@ class FleurCalculation(CalcJob):
 
     # files for lda+U
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
+    _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
     # files for hybrid functionals
     _COULOMB1_FILE_NAME = 'coulomb1'
@@ -169,6 +170,11 @@ class FleurCalculation(CalcJob):
         _WKF2_FILE_NAME, _MIX_HISTORY_FILE_NAME, _OUT_FILE_NAME, _POT_FILE_NAME
     ]
 
+    _copy_scf_ldau_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME],
+                            [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
+
+    _copy_scf_ldau_noinp_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
+
     # files need for rerun
     _copy_filelist_dos = [_INPXML_FILE_NAME, _CDN1_FILE_NAME]
 
@@ -183,7 +189,7 @@ class FleurCalculation(CalcJob):
         'remove_from_remotecopy_list', 'cmdline'
     ]
     # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw']
+    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldau']
 
     @classmethod
     def define(cls, spec):
@@ -242,9 +248,12 @@ class FleurCalculation(CalcJob):
         spec.exit_code(312, 'ERROR_MT_RADII', message='FLEUR calculation failed due to MT overlap.')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
         spec.exit_code(314, 'ERROR_DROP_CDN', message='Problem with cdn is suspected. Consider removing cdn')
+        spec.exit_code(315,
+                       'ERROR_INVALID_ELEMENTS_MMPMAT',
+                       message='The LDA+U density matrix contains invalid elements.')
 
     @classproperty
-    def _get_outut_folder(self):
+    def _get_output_folder(self):
         return './'
 
     def prepare_for_submission(self, folder):
@@ -392,7 +401,10 @@ class FleurCalculation(CalcJob):
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
-                mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
+                else:
+                    mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
@@ -411,6 +423,17 @@ class FleurCalculation(CalcJob):
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
             self.logger.info('out folder path %s', outfolder_uuid)
 
+            outfolder_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
+            has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
+            if (self._NMMPMAT_FILE_NAME in outfolder_filenames or \
+                self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
+                if has_fleurinp:
+                    if 'n_mmp_mat' in fleurinp.files:
+                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp. '
+                                            'There is already an n_mmp_mat file '
+                                            'for the parent calculation')
+                        local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
+
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
                     local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
@@ -418,6 +441,8 @@ class FleurCalculation(CalcJob):
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
                     copylist = self._copy_scf_hdf
+                elif has_nmmpmat_file:
+                    copylist = self._copy_scf_ldau_nohdf
                 else:
                     copylist = self._copy_scf
                 for file1 in copylist:
@@ -430,6 +455,8 @@ class FleurCalculation(CalcJob):
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:
                     copylist = self._copy_scf_noinp_hdf
+                elif has_nmmpmat_file:
+                    copylist = self._copy_scf_ldau_noinp_nohdf
                 else:
                     copylist = self._copy_scf_noinp
                 for file1 in copylist:
@@ -458,7 +485,7 @@ class FleurCalculation(CalcJob):
                 for file1 in filelist_tocopy_remote:
                     remote_copy_list.append(
                         (parent_calc_folder.computer.uuid, os.path.join(parent_calc_folder.get_remote_path(),
-                                                                        file1), self._get_outut_folder))
+                                                                        file1), self._get_output_folder))
 
                 self.logger.info('remote copy file list %s', str(remote_copy_list))
 

@@ -604,8 +604,8 @@ def test_inpxml_to_dict(inpxml_etree):
                 'epsforce': 1e-05,
             },
             'ldaU': {
-                'l_linMix': 'F',
-                'mixParam': '.050000',
+                'l_linMix': False,
+                'mixParam': 0.05,
                 'spinf': 1.0
             },
             'bzIntegration': {
