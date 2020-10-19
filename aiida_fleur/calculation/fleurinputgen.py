@@ -161,7 +161,7 @@ class FleurinputgenCalculation(CalcJob):
         # convert these 'booleans' to the inpgen format.
         replacer_values_bool = [True, False, 'True', 'False', 't', 'T', 'F', 'f']
         # some keywords require a string " around them in the input file.
-        string_replace = ['econfig', 'lo', 'element', 'name']
+        string_replace = ['econfig', 'lo', 'element', 'name', 'xctyp']
 
         # of some keys only the values are written to the file, specify them here.
         val_only_namelist = ['soc', 'qss']
