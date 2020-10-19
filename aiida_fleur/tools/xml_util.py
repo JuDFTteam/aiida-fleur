@@ -1724,7 +1724,7 @@ def get_inpxml_file_structure():
     all_switches_once = ('dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco', 'ctail', 'swsp', 'lflip', 'off', 'spav',
                          'l_soc', 'soc66', 'pot8', 'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk',
                          'cdinf', 'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice', 'pallst', 'form66',
-                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
+                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss', 'l_linMix')
 
     all_switches_several = ('calculate', 'flipSpin')
 
@@ -1734,7 +1734,7 @@ def get_inpxml_file_structure():
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 'phi', 'epsdisp',
                              'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'ellow', 'elup', 'scale', 'dTilda',
                              'dVac', 'minEnergy', 'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2', 'locy2', 'tworkf',
-                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
+                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged', 'mixParam')
 
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp', 'xcFunctional', 'fleurInputVersion',
                               'species', 'forcemix')
@@ -1807,6 +1807,8 @@ def get_inpxml_file_structure():
         'eig66': '/fleurInput/calculationSetup/expertModes',
         'l_f': '/fleurInput/calculationSetup/geometryOptimization',
         'gamma': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+        'l_linMix': '/fleurInput/calculationSetup/ldaU',
+        'mixParam': '/fleurInput/calculationSetup/ldaU',
         # 'invs': '',
         # 'zrfs': '',
         'vchk': '/fleurInput/output/checks',
