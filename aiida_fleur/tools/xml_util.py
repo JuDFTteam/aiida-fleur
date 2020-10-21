@@ -1758,7 +1758,7 @@ def get_inpxml_file_structure():
 
     # when parsing the xml file to a dict, these tags should become
     # list(sets, or tuples) instead of dictionaries.
-    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'symOp', 'kPoint', 'lo', 'stateOccupation')
+    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'symOp', 'kPoint', 'ldaU', 'lo', 'stateOccupation')
 
     all_text = {
         'comment': 1,
