@@ -198,13 +198,12 @@ class FleurinpData(Data):
         :param mode: the mode with which to open the file handle
         :returns: A file handle in read mode
          """
-        from aiida.orm.nodes.node import WarnWhenNotEntered  # deep import might change
 
         if key is not None:
             path = key
-
-        return WarnWhenNotEntered(self._repository.open(path, mode=mode), repr(self))
-
+        
+        return self._repository.open(path, mode=mode)
+        
     def get_content(self, filename='inp.xml'):
         """
         Returns the content of the single file stored for this data node.
