@@ -201,9 +201,9 @@ class FleurinpData(Data):
 
         if key is not None:
             path = key
-        
+
         return self._repository.open(path, mode=mode)
-        
+
     def get_content(self, filename='inp.xml'):
         """
         Returns the content of the single file stored for this data node.

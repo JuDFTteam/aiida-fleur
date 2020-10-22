@@ -320,6 +320,7 @@ def _handle_not_enough_memory(self, calculation):
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)
 
+
 @register_error_handler(FleurBaseWorkChain, 47)
 def _handle_time_limits(self, calculation):
     """

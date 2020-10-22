@@ -251,8 +251,7 @@ class FleurCalculation(CalcJob):
         spec.exit_code(315,
                        'ERROR_INVALID_ELEMENTS_MMPMAT',
                        message='The LDA+U density matrix contains invalid elements.')
-        spec.exit_code(316,
-                       'ERROR_TIME_LIMIT', message='Calculation failed due to time limits.')
+        spec.exit_code(316, 'ERROR_TIME_LIMIT', message='Calculation failed due to time limits.')
 
     @classproperty
     def _get_output_folder(self):
