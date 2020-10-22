@@ -319,17 +319,22 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
     }
 
 
-inputs_optimize = [(4, 8, 3, True, 0.5, None, 720), (4, 8, 3, True, 2, None, 720), (4, 8, 3, True, 100, None, 720),
-                   (4, 8, 3, True, 100, None, 720, 0.5), (4, 8, 3, False, 0.5, None, 720)]
+inputs_optimize = [(4, 8, 3, True, 0.5, None, 720, 0.9, False), (4, 8, 3, True, 2, None, 720, 0.9, False),
+                   (4, 8, 3, True, 100, None, 720, 0.9, False), (4, 8, 3, True, 100, None, 720, 0.5, False),
+                   (4, 8, 3, False, 0.5, None, 720, 0.9, False), (10, 4, 6, True, 4 / 6., None, 1260, 0.9, False),
+                   (10, 4, 6, True, 4 / 6., None, 1260, 0.9, True)]
 
 results_optimize = [
-    (4, 4, 6, 'Computational setup is perfect! Nodes: 4, MPIs per node 4, OMP per MPI 6. Number of k-points is 720'),
+    (4, 3, 8, 'Computational setup is perfect! Nodes: 4, MPIs per node 3, OMP per MPI 8. Number of k-points is 720'),
     (4, 6, 4, 'Computational setup is perfect! Nodes: 4, MPIs per node 6, OMP per MPI 4. Number of k-points is 720'),
     (4, 12, 2, 'Computational setup is perfect! Nodes: 4, MPIs per node 12, OMP per MPI 2. Number of k-points is 720'),
     (3, 24, 1, 'WARNING: Changed the number of nodes from 4 to 3'),
     (4, 20, 1,
      'WARNING: Changed the number of MPIs per node from 8 to 20 and OMP from 3 to 1. Changed the number of nodes from 4 to 4. Number of k-points is 720.'
-     )
+     ),
+    (10, 3, 8, 'Computational setup is perfect! Nodes: 10, MPIs per node 3, OMP per MPI 8. Number of k-points is 1260'),
+    (10, 2, 12,
+     'Computational setup is perfect! Nodes: 10, MPIs per node 2, OMP per MPI 12. Number of k-points is 1260')
 ]
 
 
