@@ -92,6 +92,9 @@ def get_inputs_fleur(code,
     '''
     Dict = DataFactory('dict')
     inputs = {}
+
+    inputs['only_even_MPI'] = only_even_MPI
+
     if remote:
         inputs['parent_folder'] = remote
     if code:
