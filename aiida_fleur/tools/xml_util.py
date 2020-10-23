@@ -932,7 +932,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             for attrib, value in six.iteritems(val):
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
         else:
-            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, attrib, value)
+            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
 
     return fleurinp_tree_copy
 
