@@ -603,11 +603,11 @@ def test_inpxml_to_dict(inpxml_etree):
                 'epsdisp': 1e-05,
                 'epsforce': 1e-05,
             },
-            'ldaU': {
+            'ldaU': [{
                 'l_linMix': False,
                 'mixParam': 0.05,
                 'spinf': 1.0
-            },
+            }],
             'bzIntegration': {
                 'altKPointSet': {
                     'kPointCount': {
