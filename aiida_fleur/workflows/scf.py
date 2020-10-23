@@ -22,7 +22,7 @@ from lxml import etree
 import six
 
 from aiida.orm import Code, load_node, CalcJobNode
-from aiida.orm import StructureData, RemoteData, Dict, Bool
+from aiida.orm import StructureData, RemoteData, Dict
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -461,7 +461,7 @@ class FleurScfWorkChain(WorkChain):
                                           description,
                                           settings,
                                           serial=self.ctx.serial,
-                                          only_even_MPI=Bool(self.ctx.wf_dict['only_even_MPI']))
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))

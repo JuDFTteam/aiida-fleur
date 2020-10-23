@@ -39,7 +39,7 @@ def test_get_inputs_fleur():
     to check if input types are correct i.e. 'code' is a Fleur code etc.
     '''
     from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
-    from aiida.orm import Dict
+    from aiida.orm import Dict, Bool
 
     inputs = {
         'code': 'code',
@@ -53,7 +53,8 @@ def test_get_inputs_fleur():
         'settings': {
             'test': 1
         },
-        'serial': False
+        'serial': False,
+        'only_even_MPI': True
     }
 
     results = get_inputs_fleur(**inputs)
@@ -66,6 +67,7 @@ def test_get_inputs_fleur():
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'
+    assert results['only_even_MPI'] == Bool(True)
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 

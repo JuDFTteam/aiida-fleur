@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import six
 
-from aiida.orm import Node, load_node
+from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
 
@@ -93,7 +93,7 @@ def get_inputs_fleur(code,
     Dict = DataFactory('dict')
     inputs = {}
 
-    inputs['only_even_MPI'] = only_even_MPI
+    inputs['only_even_MPI'] = Bool(only_even_MPI)
 
     if remote:
         inputs['parent_folder'] = remote
