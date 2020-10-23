@@ -54,7 +54,11 @@ class FleurRelaxWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.expose_inputs(FleurScfWorkChain,
                            namespace='final_scf',
-                           exclude=('structure', 'fleur', 'fleurinp', 'remote_data'))
+                           exclude=('structure', 'fleur', 'fleurinp', 'remote_data'),
+                           namespace_options={
+                               'required': False,
+                               'populate_defaults': False
+                           })
         spec.input('wf_parameters', valid_type=Dict, required=False)
 
         spec.outline(
@@ -397,6 +401,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Run a final scf for charge convergence on the optimized structure
         """
+        self.report('Running final scf after relaxation')
         inputs = {}
 
         inputs = self.get_inputs_final_scf()
