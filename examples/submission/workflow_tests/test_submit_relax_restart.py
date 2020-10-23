@@ -49,7 +49,12 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'relax_iter': 2, 'film_distance_relaxation': False, 'force_criterion': 0.02})
+wf_para = Dict(dict={
+    'relax_iter': 2,
+    'film_distance_relaxation': False,
+    'force_criterion': 0.02,
+    'run_final_scf': True
+})
 
 bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0

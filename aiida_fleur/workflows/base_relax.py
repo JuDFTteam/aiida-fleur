@@ -34,7 +34,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = '0.1.0'
+    _workflowversion = '0.1.1'
 
     _calculation_class = RelaxProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
@@ -112,17 +112,22 @@ def _handle_not_conv_error(self, calculation):
     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_RELAX']):
         self.ctx.is_finished = False
         self.report('Relax WC did not lead to convergence, submit next RelaxWC')
-        last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
+        last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
         last_fleur_calc = load_node(last_fleur_calc)
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+        run_final = self.ctx.wf_dict.get('run_final_scf', False)
 
         self.ctx.inputs.scf.remote_data = remote
         if 'structure' in self.ctx.inputs.scf:
             del self.ctx.inputs.scf.structure
         if 'inpgen' in self.ctx.inputs.scf:
+            if run_final:
+                self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
             del self.ctx.inputs.scf.inpgen
         if 'calc_parameters' in self.ctx.inputs.scf:
+            if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
+                self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
             del self.ctx.inputs.scf.calc_parameters
 
         return ErrorHandlerReport(True, True)
@@ -137,10 +142,11 @@ def _handle_switch_to_bfgs(self, calculation):
     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_SWITCH_BFGS']):
         self.ctx.is_finished = False
         self.report('It is time to switch from straight to BFGS relaxation')
-        last_scf_calc = load_node(calculation.outputs.out.get_dict()['last_scf_wc_uuid'])
+        last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
         last_fleur_calc = load_node(last_fleur_calc)
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+        run_final = self.ctx.wf_dict.get('run_final_scf', False)
 
         self.ctx.inputs.scf.remote_data = remote
 
@@ -151,8 +157,12 @@ def _handle_switch_to_bfgs(self, calculation):
         if 'structure' in self.ctx.inputs.scf:
             del self.ctx.inputs.scf.structure
         if 'inpgen' in self.ctx.inputs.scf:
+            if run_final:
+                self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
             del self.ctx.inputs.scf.inpgen
         if 'calc_parameters' in self.ctx.inputs.scf:
+            if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
+                self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
             del self.ctx.inputs.scf.calc_parameters
 
         return ErrorHandlerReport(True, True)
@@ -219,7 +229,7 @@ def _handle_mt_overlap(self, calculation):
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
 
-        last_scf_wc_uuid = calculation.outputs.out.get_dict()['last_scf_wc_uuid']
+        last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
         last_scf = load_node(last_scf_wc_uuid)
         last_fleur = load_node(last_scf.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         error_params = last_fleur.outputs.error_params.get_dict()

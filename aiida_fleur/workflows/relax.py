@@ -36,7 +36,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _wf_default = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -52,6 +52,9 @@ class FleurRelaxWorkChain(WorkChain):
     def define(cls, spec):
         super(FleurRelaxWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_inputs(FleurScfWorkChain,
+                           namespace='final_scf',
+                           exclude=('structure', 'fleur', 'fleurinp', 'remote_data'))
         spec.input('wf_parameters', valid_type=Dict, required=False)
 
         spec.outline(
@@ -68,11 +71,12 @@ class FleurRelaxWorkChain(WorkChain):
             cls.return_results,
         )
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_relax_wc_para', valid_type=Dict)
         spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INPGEN_MISSING', message='If you want to run a final scf inpgen has to be there.')
         spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence of forces.')
         spec.exit_code(351, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
         spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT', message='Found no relaxed structure info in the output of SCF')
@@ -130,6 +134,16 @@ class FleurRelaxWorkChain(WorkChain):
             error = '"49" label for atoms_off is reserved for internal use'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+        # Check if final scf can be run
+        run_final = self.ctx.wf_dict.get('run_final_scf', False)
+        if run_final:
+            # We need inpgen to be there
+            input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+            input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+            if 'inpgen' not in input_scf and 'inpgen' not in input_final_scf:
+                self.report('Error: Wrong input: inpgen missing for final scf.')
+                return self.exit_codes.ERROR_INPGEN_MISSING
 
     def converge_scf(self):
         """
@@ -344,6 +358,8 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Check if a final scf should be run on the optimized structure
         """
+        # Since we run the final scf on the relaxed structure
+
         return self.ctx.wf_dict.get('run_final_scf', False)
 
     def get_inputs_final_scf(self):
@@ -351,27 +367,31 @@ class FleurRelaxWorkChain(WorkChain):
         Initializes inputs for final scf on relaxed structure.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        if 'structure' in input_scf:
-            del input_scf.structure
-        if 'remote_data' in input_scf:
-            del input_scf.remote_data
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-            if 'inpxml_changes' in scf_wf_dict:
-                old_changes = scf_wf_dict['inpxml_changes']
-                new_changes = []
-                for change in old_changes:
-                    if 'shift_value' not in change[0]:
-                        new_changes.append(change)
-                scf_wf_dict['inpxml_changes'] = new_changes
+        input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+        if 'inpgen' not in input_final_scf:
+            if 'inpgen' in input_scf:
+                input_final_scf.inpgen = input_scf.inpgen
 
-        scf_wf_dict['mode'] = 'density'
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
-        input_scf.structure = self.ctx.final_structure
+        if 'wf_parameters' not in input_final_scf:
+            # use parameters wf para of relax or defaults
+            if 'wf_parameters' not in input_scf:
+                scf_wf_dict = {}
+            else:
+                scf_wf_dict = input_scf.wf_parameters.get_dict()
+                if 'inpxml_changes' in scf_wf_dict:
+                    old_changes = scf_wf_dict['inpxml_changes']
+                    new_changes = []
+                    for change in old_changes:
+                        if 'shift_value' not in change[0]:
+                            new_changes.append(change)
+                    scf_wf_dict['inpxml_changes'] = new_changes
 
-        return input_scf
+            scf_wf_dict['mode'] = 'density'
+            input_final_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_final_scf.structure = self.ctx.final_structure
+        input_final_scf.fleur = input_scf.fleur
+
+        return input_final_scf
 
     def run_final_scf(self):
         """
@@ -528,11 +548,11 @@ def create_relax_result_node(**kwargs):
     """
     outdict = {}
     for key, val in six.iteritems(kwargs):
-        if key == 'out':  # should always be present
+        if key == 'output_relax_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
-            outnode.label = 'out_relax_wc_para'
+            outnode.label = 'output_relax_wc_para'
             outnode.description = ('Contains results and information of an FleurRelaxWorkChain run.')
-            outdict['out'] = outnode
+            outdict['output_relax_wc_para'] = outnode
 
         if key == 'optimized_structure':
             structure = val.clone()  # dublicate node instead of circle (keep DAG)
