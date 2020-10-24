@@ -1659,15 +1659,13 @@ def inpxml_todict(parent, xmlstr):
             # set text
             return_dict = parent.text.strip()
 
-    firstocc = True
     for element in parent:
         if element.tag in tags_several1:
             # make a list, otherwise the tag will be overwritten in the dict
-            if firstocc:  # is this the first occurence?
+            if element.tag not in return_dict:  # is this the first occurence?
                 # create a list
                 return_dict[element.tag] = []
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
-                firstocc = False
             else:  # occured before, a list already exists, therefore just add
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
         else:
