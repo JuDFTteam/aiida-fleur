@@ -1659,15 +1659,13 @@ def inpxml_todict(parent, xmlstr):
             # set text
             return_dict = parent.text.strip()
 
-    firstocc = True
     for element in parent:
         if element.tag in tags_several1:
             # make a list, otherwise the tag will be overwritten in the dict
-            if firstocc:  # is this the first occurence?
+            if element.tag not in return_dict:  # is this the first occurence?
                 # create a list
                 return_dict[element.tag] = []
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
-                firstocc = False
             else:  # occured before, a list already exists, therefore just add
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
         else:
@@ -1726,7 +1724,7 @@ def get_inpxml_file_structure():
                          'cdinf', 'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice', 'pallst', 'form66',
                          'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss', 'l_linMix')
 
-    all_switches_several = ('calculate', 'flipSpin')
+    all_switches_several = ('calculate', 'flipSpin', 'l_amf')
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins', 'gw', 'isec1', 'nx', 'ny', 'nz',
                            'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
@@ -1750,7 +1748,7 @@ def get_inpxml_file_structure():
 
     int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'l', 'n', 'eDeriv',
                               'coreStates')
-    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement')
+    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement', 'U', 'J')
     string_attributes_several = ('name', 'element', 'coreStates', 'type', 'relaxXYZ')
     other_attributes_several = ('name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom', 'radius',
                                 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'species', 'type',
