@@ -10,28 +10,29 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''
-Module for the command line interface of AiiDA-FLEUR
+Module with CLI commands for fleur calcs.
 '''
 import click
-import click_completion
-
-from aiida.cmdline.params import options, types
-
-# Activate the completion of parameter types provided by the click_completion package
-click_completion.init()
-
-# Instead of using entrypoints and directly injecting verdi commands into aiida-core
-# we created our own separete CLI because verdi will prob change and become
-# less material science specific
+from . import cmd_calcjob
 
 
-@click.group('aiida-fleur', context_settings={'help_option_names': ['-h', '--help']})
-@options.PROFILE(type=types.ProfileParamType(load_profile=True))
-def cmd_root(profile):  # pylint: disable=unused-argument
-    """CLI for the `aiida-fleur` plugin."""
+@cmd_calcjob.group('fleur')
+def cmd_fleur():
+    """Commands to handle `fleur` calcs."""
 
 
-from .calculations import cmd_calcjob
-from .data import cmd_structure, cmd_fleurinp
-from .workflows import cmd_workflow
-from .visualization import cmd_plot
+@cmd_fleur.command('list')
+def list_fleur():
+    """
+    List Fleur calc in the database with information
+    """
+    click.echo('Not implemented yet, sorry. Please implement me!')
+    # do a query and list all reuse AiiDA code
+
+
+@cmd_fleur.command('launch')
+def launch_fleur():
+    """
+    Launch an fleur process
+    """
+    click.echo('Not implemented yet, sorry. Please implement me!')

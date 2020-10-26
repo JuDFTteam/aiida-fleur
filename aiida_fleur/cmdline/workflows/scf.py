@@ -9,40 +9,27 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+# pylint: disable=cyclic-import
+# ,reimported,unused-import,wrong-import-position
 """
-contains verdi commands for the scf workchain
+Contains verdi commands for the scf workchain
 in general these should become options of verdi aiida-fleur workchains
 """
 
 from __future__ import absolute_import
 import click
 
-
-@click.group()
-def scf_wc():
-    pass
+from . import cmd_workflow
 
 
-@scf_wc.command()
-def res_scf():
+@cmd_workflow.group('scf')
+def cmd_scf():
+    """Commands to launch and inspect scf workchains."""
+
+
+@cmd_scf.command('launch')
+def launch_scf():
     """
     Prints the result node to screen
     """
-    click.echo('verdi aiida-fleur scf res')
-
-
-@scf_wc.command()
-def show_scf():
-    """
-    plots the results of a
-    """
-    click.echo('verdi aiida-fleur scf show')
-
-
-@scf_wc.command()
-def list_scf():
-    """
-    similar to the verdi work list command, but this displays also some
-    specific information about the scfs
-    """
-    click.echo('verdi aiida-fleur scf list')
+    click.echo('Not implemented yet, sorry. Please implement me!')
