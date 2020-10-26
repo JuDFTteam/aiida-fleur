@@ -100,6 +100,7 @@ class FleurMaeConvWorkChain(WorkChain):
             inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
             inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
             res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
