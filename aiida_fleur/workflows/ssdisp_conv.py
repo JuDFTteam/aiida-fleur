@@ -157,6 +157,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         Retrieve results of converge calculations
         """
         t_energydict = {}
+        original_t_energydict = {}
         outnodedict = {}
         htr_to_eV = 27.21138602
 
@@ -192,9 +193,11 @@ class FleurSSDispConvWorkChain(WorkChain):
             minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
+                original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
         self.ctx.energydict = t_energydict
+        self.ctx.original_energydict = original_t_energydict
 
     def return_results(self):
         """
@@ -212,6 +215,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'energies': self.ctx.energydict,
+            'original_energies' : self.ctx.original_energydict,
             'q_vectors': self.ctx.wf_dict['q_vectors'],
             'failed_labels': failed_labels,
             'energy_units': 'eV',

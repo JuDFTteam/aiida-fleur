@@ -143,6 +143,7 @@ class FleurMaeConvWorkChain(WorkChain):
         Retrieve results of converge calculations
         """
         t_energydict = {}
+        original_t_energydict = {}
         outnodedict = {}
         htr_to_ev = 27.21138602
 
@@ -178,9 +179,11 @@ class FleurMaeConvWorkChain(WorkChain):
             minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
+                original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
         self.ctx.energydict = t_energydict
+        self.ctx.original_energydict = original_t_energydict
 
     def return_results(self):
         """
@@ -198,6 +201,7 @@ class FleurMaeConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'mae': self.ctx.energydict,
+            'original_mae' : self.ctx.original_energydict,
             'sqa': self.ctx.wf_dict['sqas'],
             'failed_labels': failed_labels,
             'mae_units': 'eV',
