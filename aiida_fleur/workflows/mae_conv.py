@@ -202,7 +202,7 @@ class FleurMaeConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'mae': self.ctx.energydict,
-            'original_mae' : self.ctx.original_energydict,
+            'original_mae': self.ctx.original_energydict,
             'sqa': self.ctx.wf_dict['sqas'],
             'failed_labels': failed_labels,
             'mae_units': 'eV',
