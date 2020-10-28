@@ -128,7 +128,10 @@ def get_inputs_fleur(code,
     options['custom_scheduler_commands'] = custom_commands
 
     if settings:
-        inputs['settings'] = Dict(dict=settings)
+        if isinstance(settings, Dict):
+            inputs['settings'] = settings
+        else:
+            inputs['settings'] = Dict(dict=settings)
 
     if options:
         inputs['options'] = Dict(dict=options)
