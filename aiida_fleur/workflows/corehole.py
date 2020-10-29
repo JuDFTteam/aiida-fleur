@@ -541,6 +541,7 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['valence'] = all_changed_valence
                         dict_corelevel_elm['econfig'] = econfigs
                         tempd = dict_corelevel.get(elm_cl[0], {})
+                        # dict_merger also addes numbers!
                         together = dict_merger(dict_corelevel_elm, tempd)
                         #pprint(together)
                         dict_corelevel[elm_cl[0]] = together

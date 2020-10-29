@@ -22,7 +22,7 @@ from lxml import etree
 import six
 
 from aiida.orm import Code, load_node, CalcJobNode
-from aiida.orm import StructureData, RemoteData, Dict
+from aiida.orm import StructureData, RemoteData, Dict, Bool, Float
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -32,6 +32,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpge
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
+from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 from aiida_fleur.data.fleurinp import FleurinpData
@@ -65,6 +66,8 @@ class FleurScfWorkChain(WorkChain):
         'density_converged': 0.00002,
         'energy_converged': 0.002,
         'force_converged': 0.002,
+        'kpoints_distance': None,  # in 1/A, usually 0.1
+        'kpoints_force_parity': False,
         'mode': 'density',  # 'density', 'energy' or 'force'
         'serial': False,
         'only_even_MPI': False,
@@ -215,7 +218,7 @@ class FleurScfWorkChain(WorkChain):
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'calc_parameters' in inputs:
-                error = 'ERROR: calc_parameter input is not needed because Fleurinp was given'
+                error = 'ERROR: calc_parameters input is not needed because Fleurinp was given'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'remote_data' in inputs:
@@ -285,26 +288,43 @@ class FleurScfWorkChain(WorkChain):
         """
         run the inpgen
         """
+
+        ## prepare inputs for inpgen
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
         description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
 
         inpgencode = self.inputs.inpgen
+
         if 'calc_parameters' in self.inputs:
             params = self.inputs.calc_parameters
         else:
-            params = {}
+            params = None
+
+        # If given kpt_dist has prio over given calc_parameters
+        kpt_dist = self.ctx.wf_dict.get('kpoints_distance', None)
+        if kpt_dist is not None:
+            inputs = {
+                'structure': structure,
+                'calc_parameters': params,
+                'distance': Float(kpt_dist),
+                'force_parity': Bool(self.ctx.wf_dict.get('kpoints_force_parity', False)),
+                'metadata': {
+                    'call_link_label': 'create_kpoints_from_distance'
+                }
+            }
+            params = create_kpoints_from_distance_parameter(**inputs)
 
         options = {
             'max_wallclock_seconds': int(self.ctx.options.get('max_wallclock_seconds')),
             'resources': self.ctx.options.get('resources'),
             'queue_name': self.ctx.options.get('queue_name', '')
         }
-        # TODO do not use the same option for inpgen as for FLEUR; so far we ignore the other
-        # clean Idea might be to provide second inpgen options
 
         inputs_build = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
+
+        # Launch inpgen
         self.report('INFO: run inpgen')
         future = self.submit(inputs_build)
 

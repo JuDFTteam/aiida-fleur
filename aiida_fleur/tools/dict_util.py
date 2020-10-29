@@ -16,6 +16,8 @@ commonly used by the fleur plugin and workflows
 from __future__ import print_function
 from __future__ import absolute_import
 import six
+from typing import Any, Dict
+import collections
 
 
 def extract_elementpara(parameter_dict, element):
@@ -38,12 +40,14 @@ def extract_elementpara(parameter_dict, element):
 
 def dict_merger(dict1, dict2):
     """
-    Merge recursively two nested python dictionaries.
+    Merge recursively two nested python dictionaries and
+    if key is in both digionaries tries to add the entries in both dicts.
+    (merges two subdicts, adds lists, strings, floats and numbers together!)
 
-    If key is in both digionaries tries to add the entries in both dicts.
-    (merges two subdicts, adds strings and numbers together)
+    :param dict1: dict
+    :param dict2: dict
 
-    :return: dict
+    :return dict: Merged dict
     """
     new_dict = dict1.copy()
 
@@ -75,3 +79,25 @@ def dict_merger(dict1, dict2):
         else:
             print(("don't know what to do with element : {}".format(key)))
     return new_dict
+
+
+def recursive_merge(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursively merge two dictionaries into a single dictionary.
+
+    keys in right override keys in left!
+
+
+    :param left: first dictionary.
+    :param right: second dictionary.
+    :return: the recursively merged dictionary.
+    """
+    for key, value in left.items():
+        if key in right:
+            if isinstance(value, collections.Mapping) and isinstance(right[key], collections.Mapping):
+                right[key] = recursive_merge(value, right[key])
+
+    merged = left.copy()
+    merged.update(right)
+
+    return merged

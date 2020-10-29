@@ -27,7 +27,7 @@ from aiida.engine import calcfunction as cf
 #Dict = DataFactory('dict')
 
 
-def merge_parameter(Dict1, Dict2, overwrite=True):
+def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     """
     Merges two Dict nodes.
     Additive: uses all namelists of both.
@@ -37,13 +37,16 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     be overwritten.
 
 
-    param: AiiDA Dict Node
-    param: AiiDA Dict Node
+    :param Dict1: AiiDA Dict Node
+    :param Dict2: AiiDA Dict Node
+    :param overwrite: bool, default True
+    :param merge: bool, default True
 
     returns: AiiDA Dict Node
     """
 
     from aiida.common.exceptions import InputValidationError
+    from aiida_fleur.tools.dict_util import recursive_merge
     #Dict = DataFactory('dict')
 
     # layout:
@@ -62,12 +65,12 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 
-    for key in dict1.keys():
+    for key in list(dict1.keys()):
         if 'atom' in key:
             val = dict1.pop(key)
             atomlist.append(val)
 
-    for key in dict2.keys():
+    for key in list(dict2.keys()):
         if 'atom' in key:
             val = dict2.pop(key)
             atomlist.append(val)
@@ -87,9 +90,12 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     else:
         # add second one later?
         new_dict = dict2.copy()
-        new_dict.update(dict1)
-        # TODO or do we want to merge the value dicts? usually does not make sense
-        # for all keys...
+        if merge:
+            new_dict = recursive_merge(new_dict, dict1)
+        else:
+            new_dict.update(dict1)
+        # TODO mergeing does not make sense for all namelist keys.
+        # be more specific here.
     new_dict.update(atoms_dict)
 
     # be carefull with atom namelist
