@@ -36,7 +36,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.2.2'
 
     _wf_default = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -94,24 +94,24 @@ class FleurRelaxWorkChain(WorkChain):
 
     def start(self):
         """
-        Retrieve and initialize paramters of the WorkChain
+        Retrieve and initialize paramters of the WorkChain, validate inputs
         """
-        self.report('INFO: started structure relaxation workflow version {}\n' ''.format(self._workflowversion))
+        self.report('INFO: Started structure relaxation workflow version {}\n'.format(self._workflowversion))
 
-        self.ctx.info = []
-        self.ctx.warnings = []
-        self.ctx.errors = []
+        self.ctx.info = []  # Collects Hints
+        self.ctx.warnings = []  # Collects Warnings
+        self.ctx.errors = []  # Collects Errors
 
         # Pre-initialization of some variables
-        self.ctx.loop_count = 0
-        self.ctx.forces = []
-        self.ctx.final_cell = None
-        self.ctx.final_atom_positions = None
-        self.ctx.pbc = None
-        self.ctx.reached_relax = True
-        self.ctx.switch_bfgs = False
-        self.ctx.scf_res = None
-        self.ctx.final_structure = None
+        self.ctx.loop_count = 0  # Counts relax restarts
+        self.ctx.forces = []  # Collects forces
+        self.ctx.final_cell = None  # The relaxed Bravais matrix
+        self.ctx.final_atom_positions = None  # Relaxed atom positions
+        self.ctx.pbc = None  # Boundary conditions
+        self.ctx.reached_relax = False  # Bool if is relaxed
+        self.ctx.switch_bfgs = False  # Bool if BFGS should be switched on
+        self.ctx.scf_res = None  # Last scf results
+        self.ctx.final_structure = None  # The optimized structure
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._wf_default)
@@ -140,11 +140,29 @@ class FleurRelaxWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # Check if final scf can be run
-        run_final = self.ctx.wf_dict.get('run_final_scf', False)
+        run_final = wf_dict.get('run_final_scf', False)
         if run_final:
             # We need inpgen to be there
             input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-            input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+
+            # policy, reuse as much as possible from scf namespace
+            input_final_scf = input_scf
+            if 'remote_data' in input_final_scf:
+                del input_final_scf.remote_data
+            if 'structure' in input_final_scf:
+                del input_final_scf.structure
+            if 'fleurinp' in input_final_scf:
+                del input_final_scf.fleurinp
+            if 'wf_parameters' in input_final_scf:
+                del input_final_scf.wf_parameters
+
+            if 'final_scf' in self.inputs:
+                # Will defaults of namespace override other given options?
+                input_final_scf_given = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+                for key, val in input_final_scf_given.items():
+                    input_final_scf[key] = val
+
+            self.ctx.input_final_scf = input_final_scf
             if 'inpgen' not in input_scf and 'inpgen' not in input_final_scf:
                 self.report('Error: Wrong input: inpgen missing for final scf.')
                 return self.exit_codes.ERROR_INPGEN_MISSING
@@ -266,10 +284,10 @@ class FleurRelaxWorkChain(WorkChain):
             if scf_wc.exit_status == exit_statuses[0]:
                 fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
                 if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
-                    self.control_end_wc('Failed due to atom and vacuum overlap')
+                    self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
                 elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
-                    self.control_end_wc('Failed due to MT overlap')
+                    self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
 
@@ -277,7 +295,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Checks if relaxation criteria is achieved.
 
-        :return: True if structure is optimised and False otherwise
+        :return: True if structure is optimized and False otherwise
         """
         scf_wc = self.ctx.scf_res
 
@@ -300,17 +318,18 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report('Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
+            self.report('INFO: Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
+            self.ctx.reached_relax = True
             return False
         elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
                 'forcemix'] == 'straight':
-            self.report('Seems it is safe to switch to BFGS. Current largest force: ' '{}'.format(self.ctx.forces[-1]))
+            self.report('INFO: Seems it is safe to switch to BFGS. Current largest force: '
+                        '{}'.format(self.ctx.forces[-1]))
             self.ctx.switch_bfgs = True
             return False
 
         self.ctx.loop_count = self.ctx.loop_count + 1
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
-            self.ctx.reached_relax = False
             self.report('INFO: Reached optimization iteration number {}. Largest force is {}, '
                         'force criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
                                                        self.ctx.wf_dict['force_criterion']))
@@ -363,15 +382,18 @@ class FleurRelaxWorkChain(WorkChain):
         Check if a final scf should be run on the optimized structure
         """
         # Since we run the final scf on the relaxed structure
-
-        return self.ctx.wf_dict.get('run_final_scf', False)
+        return all([self.ctx.wf_dict.get('run_final_scf', False), self.ctx.reached_relax])
 
     def get_inputs_final_scf(self):
         """
         Initializes inputs for final scf on relaxed structure.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+        if input_final_scf in self.inputs:
+            input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
+        else:
+            input_final_scf = AttributeDict({})
+            input_final_scf.metadata = input_scf.metadata
         if 'inpgen' not in input_final_scf:
             if 'inpgen' in input_scf:
                 input_final_scf.inpgen = input_scf.inpgen
@@ -392,8 +414,13 @@ class FleurRelaxWorkChain(WorkChain):
 
             scf_wf_dict['mode'] = 'density'
             input_final_scf.wf_parameters = Dict(dict=scf_wf_dict)
-        input_final_scf.structure = self.ctx.final_structure
+        structure = self.ctx.final_structure
+        formula = structure.get_formula()
+        input_final_scf.structure = structure
         input_final_scf.fleur = input_scf.fleur
+        input_final_scf.metadata.label = 'SCF_final_{}'.format(formula)
+        input_final_scf.metadata.description = ('Final SCF workchain running on optimized structure {}, '
+                                                'part of relax workchain'.format(formula))
 
         return input_final_scf
 
@@ -401,9 +428,8 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Run a final scf for charge convergence on the optimized structure
         """
-        self.report('Running final scf after relaxation')
+        self.report('INFO: Running final SCF after relaxation.')
         inputs = {}
-
         inputs = self.get_inputs_final_scf()
         res = self.submit(FleurScfWorkChain, **inputs)
 
@@ -508,7 +534,7 @@ class FleurRelaxWorkChain(WorkChain):
         if relax_out is not None:
             con_nodes['last_fleur_calc_output'] = relax_out
 
-        if self.ctx.wf_dict.get('run_final_scf', False):
+        if all([self.ctx.wf_dict.get('run_final_scf', False), self.ctx.reached_relax]):
             try:
                 scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
             except NotExistent:
@@ -520,18 +546,20 @@ class FleurRelaxWorkChain(WorkChain):
         # con_nodes
 
         if self.ctx.final_structure is not None:
-            outdict = create_relax_result_node(out=outnode, optimized_structure=self.ctx.final_structure, **con_nodes)
+            outdict = create_relax_result_node(output_relax_wc_para=outnode,
+                                               optimized_structure=self.ctx.final_structure,
+                                               **con_nodes)
         else:
-            outdict = create_relax_result_node(out=outnode, **con_nodes)
+            outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
 
         # return output nodes
         for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
-        if not self.ctx.reached_relax:
-            return self.exit_codes.ERROR_DID_NOT_RELAX
         if self.ctx.switch_bfgs:
             return self.exit_codes.ERROR_SWITCH_BFGS
+        if not self.ctx.reached_relax:
+            return self.exit_codes.ERROR_DID_NOT_RELAX
 
     def control_end_wc(self, errormsg):
         """

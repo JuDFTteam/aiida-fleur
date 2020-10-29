@@ -34,7 +34,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = '0.1.1'
+    _workflowversion = '0.1.2'
 
     _calculation_class = RelaxProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
@@ -116,7 +116,11 @@ def _handle_not_conv_error(self, calculation):
         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
         last_fleur_calc = load_node(last_fleur_calc)
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
-        run_final = self.ctx.wf_dict.get('run_final_scf', False)
+        if 'wf_parameters' in self.ctx.inputs:
+            parameters = self.ctx.inputs.wf_parameters
+            run_final = parameters.get_dict().get('run_final_scf', False)
+        else:
+            run_final = False
 
         self.ctx.inputs.scf.remote_data = remote
         if 'structure' in self.ctx.inputs.scf:
@@ -146,7 +150,11 @@ def _handle_switch_to_bfgs(self, calculation):
         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
         last_fleur_calc = load_node(last_fleur_calc)
         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
-        run_final = self.ctx.wf_dict.get('run_final_scf', False)
+        if 'wf_parameters' in self.ctx.inputs:
+            parameters = self.ctx.inputs.wf_parameters
+            run_final = parameters.get_dict().get('run_final_scf', False)
+        else:
+            run_final = False
 
         self.ctx.inputs.scf.remote_data = remote
 
