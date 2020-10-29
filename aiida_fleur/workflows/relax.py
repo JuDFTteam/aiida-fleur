@@ -57,7 +57,6 @@ class FleurRelaxWorkChain(WorkChain):
                            exclude=('structure', 'fleur', 'fleurinp', 'remote_data'),
                            namespace_options={
                                'required': False,
-                               'populate_defaults': False
                            })
         spec.input('wf_parameters', valid_type=Dict, required=False)
 
