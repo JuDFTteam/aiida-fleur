@@ -388,14 +388,7 @@ class FleurRelaxWorkChain(WorkChain):
         Initializes inputs for final scf on relaxed structure.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        if input_final_scf in self.inputs:
-            input_final_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='final_scf'))
-        else:
-            input_final_scf = AttributeDict({})
-            input_final_scf.metadata = input_scf.metadata
-        if 'inpgen' not in input_final_scf:
-            if 'inpgen' in input_scf:
-                input_final_scf.inpgen = input_scf.inpgen
+        input_final_scf = self.ctx.input_final_scf
 
         if 'wf_parameters' not in input_final_scf:
             # use parameters wf para of relax or defaults

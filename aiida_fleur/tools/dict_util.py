@@ -16,7 +16,7 @@ commonly used by the fleur plugin and workflows
 from __future__ import print_function
 from __future__ import absolute_import
 import six
-from typing import Any, Dict
+import typing as typ
 import collections
 
 
@@ -81,7 +81,7 @@ def dict_merger(dict1, dict2):
     return new_dict
 
 
-def recursive_merge(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, Any]:
+def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any]) -> typ.Dict[str, typ.Any]:
     """
     Recursively merge two dictionaries into a single dictionary.
 
