@@ -36,7 +36,8 @@
         "future",
         "ase",
         "pymatgen",
-        "pyhull"
+        "pyhull",
+	"PyCifRW~=4.4"
     ],
     "extras_require": {
         "graphs ": [
