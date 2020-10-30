@@ -2,7 +2,8 @@ Current active developers:
 
 Jens Broeder (j.broeder@fz-juelich.de) 2015-today
 Vasily Tseplyaev (v.tseplyaev@fz-juelich.de) 2018-today
-
+Anoop Chandran (a.chandran@fz-juelich.de) 2019-today
+Henning Janssen (he.janssen@fz-juelich.de)  2020-today
 
 We would also like to thank the following people for their contibution:
 
@@ -12,4 +13,4 @@ We ackowledge discussions (non-code related) input from:
 
 Daniel Wortmann (d.wortmann@fz-juelich.de)
 Gregor Michalicek (g.michalicek@fz-juelich.de)
-The AiiDAteam
+The AiiDAteam and other aiida plugin developers

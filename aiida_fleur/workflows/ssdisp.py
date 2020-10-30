@@ -64,6 +64,7 @@ class FleurSSDispWorkChain(WorkChain):
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
         'serial': False,
+        'only_even_MPI': False,
         'inpxml_changes': []
     }
 
@@ -210,9 +211,9 @@ class FleurSSDispWorkChain(WorkChain):
         if 'inpxml_changes' not in scf_wf_dict:
             scf_wf_dict['inpxml_changes'] = []
         # set up q vector for the reference calculation
-        list_ref_qss = self.ctx.wf_dict['ref_qss']
-        if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True}
+        string_ref_qss = ' '.join(map(str, self.ctx.wf_dict['ref_qss']))
+        if [x for x in self.ctx.wf_dict['ref_qss'] if x != 0]:
+            changes_dict = {'qss': string_ref_qss, 'l_noco': True, 'ctail': False, 'l_ss': True}
         else:
             changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False}
 
@@ -407,7 +408,8 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -442,7 +444,8 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 

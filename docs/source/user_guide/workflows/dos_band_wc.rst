@@ -5,7 +5,7 @@ Fleur dos/band workflows
 
 .. warning::
 
-    These workchains do not work with AiiDA 1.1.1 version yet. They need to be updated.
+    These workchains do not work with AiiDA >1.0 version yet. They need to be updated.
 
 These are two seperate workflows which are pretty similar so we treat them here together
 

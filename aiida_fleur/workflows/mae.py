@@ -60,6 +60,7 @@ class FleurMaeWorkChain(WorkChain):
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
         'serial': False,
+        'only_even_MPI': False,
         'soc_off': [],
         'inpxml_changes': [],
     }
@@ -400,7 +401,8 @@ class FleurMaeWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -435,7 +437,8 @@ class FleurMaeWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 

@@ -10,7 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
-This is the worklfow 'corehole' using the Fleur code, which calculates Binding
+This is the workflow 'corehole' using the Fleur code, which calculates binding
 energies and corelevel shifts with different methods.
 'divide and conquer'
 """
@@ -68,14 +68,14 @@ class fleur_corehole_wc(WorkChain):
 
     Also it is recommended to provide a calc parameter node for the structure
 
-    :Params: wf_parameters: Dict node, specify, resources and what should be calculated
-    :Params: structure : structureData node, crystal structure
-    :Params: calc_parameters: Dict node, inpgen parameters for the crystal structure
-    :Params: fleurinp:  fleurinpData node,
-    :Params: inpgen: Code node,
-    :Params: fleur: Code node,
+    :param wf_parameters: Dict node, specify, resources and what should be calculated
+    :param structure: structureData node, crystal structure
+    :param calc_parameters: Dict node, inpgen parameters for the crystal structure
+    :param fleurinp:  fleurinpData node,
+    :param inpgen: Code node,
+    :param fleur: Code node,
 
-    :returns: output_corehole_wc_para: Dict node,  successful=True if no error
+    :return: output_corehole_wc_para Dict node,  successful=True if no error
 
     :uses workchains: fleur_scf_wc, fleur_relax_wc
     :uses calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
@@ -541,6 +541,7 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['valence'] = all_changed_valence
                         dict_corelevel_elm['econfig'] = econfigs
                         tempd = dict_corelevel.get(elm_cl[0], {})
+                        # dict_merger also addes numbers!
                         together = dict_merger(dict_corelevel_elm, tempd)
                         #pprint(together)
                         dict_corelevel[elm_cl[0]] = together

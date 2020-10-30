@@ -59,6 +59,11 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                    non_db=True,
                    help='Calculation description.')
         spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
+        spec.input('only_even_MPI',
+                   valid_type=orm.Bool,
+                   default=lambda: orm.Bool(False),
+                   help='Set to true if you want to suppress odd number of MPI processes in parallelisation.'
+                   'This might speedup a calculation for machines having even number of sockets per node.')
 
         spec.outline(
             cls.setup,
@@ -82,6 +87,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        message='FLEUR calculation failed because an atom spilled to the'
                        'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(315,
+                       'ERROR_INVALID_ELEMENTS_MMPMAT',
+                       message='The LDA+U density matrix contains invalid elements.'
+                       ' Consider a less aggresive mixing scheme')
         spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
         spec.exit_code(399,
@@ -158,7 +167,13 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         omp_per_mpi = self.ctx.num_cores_per_mpiproc
         try:
             adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(
-                machines, mpi_proc, omp_per_mpi, self.ctx.use_omp, self.ctx.suggest_mpi_omp_ratio, fleurinp)
+                machines,
+                mpi_proc,
+                omp_per_mpi,
+                self.ctx.use_omp,
+                self.ctx.suggest_mpi_omp_ratio,
+                fleurinp,
+                only_even_MPI=self.inputs.only_even_MPI)
         except ValueError:
             raise Warning('Not optimal computational resources, load less than 60%')
 
@@ -199,8 +214,8 @@ def _handle_general_error(self, calculation):
 @register_error_handler(FleurBaseWorkChain, 48)
 def _handle_dirac_equation(self, calculation):
     """
-    Calculation failed due to lack of memory.
-    Probably works for JURECA only, has to be tested for other systems.
+    Sometimes relaxation calculation fails with Diraq problem which is usually caused by
+    problems with reusing charge density. In this case we resubmit the calculation, dropping the input cdn.
     """
 
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_DROP_CDN']):
@@ -253,6 +268,26 @@ def _handle_mt_relax_error(self, calculation):
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
 
 
+@register_error_handler(FleurBaseWorkChain, 51)
+def _handle_invalid_elements_mmpmat(self, calculation):
+    """
+    Calculation failed due to invalid elements in the LDA+U density matrix.
+    Mixing history is reset.
+    TODO: HOw to handle consecutive errors
+    """
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_INVALID_ELEMENTS_MMPMAT']):
+        self.ctx.restart_calc = None
+        self.ctx.is_finished = False
+        self.report('FLEUR calculation failed due to invalid elements in mmpmat. Resetting mixing_history')
+
+        if 'settings' not in self.ctx.inputs:
+            self.ctx.inputs.settings = {}
+        else:
+            self.ctx.inputs.settings = self.inputs.settings.get_dict()
+        self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
+        return ErrorHandlerReport(True, True)
+
+
 @register_error_handler(FleurBaseWorkChain, 50)
 def _handle_not_enough_memory(self, calculation):
     """
@@ -284,3 +319,30 @@ def _handle_not_enough_memory(self, calculation):
                         'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)
+
+
+@register_error_handler(FleurBaseWorkChain, 47)
+def _handle_time_limits(self, calculation):
+    """
+    If calculation fails due to time limits, we simply resubmit it.
+    """
+
+    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
+
+        self.report('FleurCalculation failed due to time limits, I restart it from where it ended')
+
+        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+
+        # if previous calculation failed for the same reason, do not restart
+        prev_calculation_status = remote.get_incoming().all()[-1].exit_status
+        if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
+            self.ctx.is_finished = True
+            return ErrorHandlerReport(True, True)
+
+        # however, if it is the first time, resubmit profiding inp.xml and cdn from the remote folder
+        self.ctx.is_finished = False
+        self.ctx.inputs.parent_folder = remote
+        if 'fleurinpdata' in self.ctx.inputs:
+            del self.ctx.inputs.fleurinpdata
+
+        return ErrorHandlerReport(True, True)

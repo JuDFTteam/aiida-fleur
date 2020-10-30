@@ -630,7 +630,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     # &comp
     # attrib = get_xml_attribute(
     comp_dict = {}
-    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_float(eval_xpath(root, jspins_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_int(eval_xpath(root, jspins_xpath), suc_return=False))
     comp_dict = set_dict_or_not(comp_dict, 'frcor', convert_from_fortran_bool(eval_xpath(root, frcor_xpath)))
     comp_dict = set_dict_or_not(comp_dict, 'ctail', convert_from_fortran_bool(eval_xpath(root, ctail_xpath)))
     comp_dict = set_dict_or_not(comp_dict, 'kcrel', eval_xpath(root, kcrel_xpath))
@@ -932,7 +932,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             for attrib, value in six.iteritems(val):
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
         else:
-            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, attrib, value)
+            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
 
     return fleurinp_tree_copy
 
@@ -1659,15 +1659,13 @@ def inpxml_todict(parent, xmlstr):
             # set text
             return_dict = parent.text.strip()
 
-    firstocc = True
     for element in parent:
         if element.tag in tags_several1:
             # make a list, otherwise the tag will be overwritten in the dict
-            if firstocc:  # is this the first occurence?
+            if element.tag not in return_dict:  # is this the first occurence?
                 # create a list
                 return_dict[element.tag] = []
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
-                firstocc = False
             else:  # occured before, a list already exists, therefore just add
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
         else:
@@ -1724,9 +1722,9 @@ def get_inpxml_file_structure():
     all_switches_once = ('dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco', 'ctail', 'swsp', 'lflip', 'off', 'spav',
                          'l_soc', 'soc66', 'pot8', 'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk',
                          'cdinf', 'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice', 'pallst', 'form66',
-                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
+                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss', 'l_linMix')
 
-    all_switches_several = ('calculate', 'flipSpin')
+    all_switches_several = ('calculate', 'flipSpin', 'l_amf')
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins', 'gw', 'isec1', 'nx', 'ny', 'nz',
                            'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
@@ -1734,7 +1732,7 @@ def get_inpxml_file_structure():
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 'phi', 'epsdisp',
                              'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'ellow', 'elup', 'scale', 'dTilda',
                              'dVac', 'minEnergy', 'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2', 'locy2', 'tworkf',
-                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
+                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged', 'mixParam')
 
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp', 'xcFunctional', 'fleurInputVersion',
                               'species', 'forcemix')
@@ -1750,7 +1748,7 @@ def get_inpxml_file_structure():
 
     int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'l', 'n', 'eDeriv',
                               'coreStates')
-    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement')
+    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement', 'U', 'J')
     string_attributes_several = ('name', 'element', 'coreStates', 'type', 'relaxXYZ')
     other_attributes_several = ('name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom', 'radius',
                                 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'species', 'type',
@@ -1758,7 +1756,8 @@ def get_inpxml_file_structure():
 
     # when parsing the xml file to a dict, these tags should become
     # list(sets, or tuples) instead of dictionaries.
-    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint', 'lo', 'stateOccupation')
+    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'symOp', 'kPoint', 'ldaU', 'lo',
+                    'stateOccupation')
 
     all_text = {
         'comment': 1,
@@ -1807,6 +1806,8 @@ def get_inpxml_file_structure():
         'eig66': '/fleurInput/calculationSetup/expertModes',
         'l_f': '/fleurInput/calculationSetup/geometryOptimization',
         'gamma': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+        'l_linMix': '/fleurInput/calculationSetup/ldaU',
+        'mixParam': '/fleurInput/calculationSetup/ldaU',
         # 'invs': '',
         # 'zrfs': '',
         'vchk': '/fleurInput/output/checks',

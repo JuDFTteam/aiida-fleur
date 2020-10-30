@@ -198,12 +198,11 @@ class FleurinpData(Data):
         :param mode: the mode with which to open the file handle
         :returns: A file handle in read mode
          """
-        from aiida.orm.nodes.node import WarnWhenNotEntered  # deep import might change
 
         if key is not None:
             path = key
 
-        return WarnWhenNotEntered(self._repository.open(path, mode=mode), repr(self))
+        return self._repository.open(path, mode=mode)
 
     def get_content(self, filename='inp.xml'):
         """
@@ -530,8 +529,10 @@ class FleurinpData(Data):
                 fleur_modes['gw'] = int(self.inp_dict['calculationSetup']['expertModes']['gw']) != 0
             except KeyError:
                 fleur_modes['gw'] = False
-            ldau = False  # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
+            for species in self.inp_dict['atomSpecies']['species']:
+                if 'ldaU' in species:
+                    fleur_modes['ldau'] = True
         return fleur_modes
 
     def get_structuredata_ncf(self):

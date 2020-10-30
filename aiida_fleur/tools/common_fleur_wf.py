@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import six
 
-from aiida.orm import Node, load_node
+from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
 
@@ -60,7 +60,15 @@ def is_code(code):
         return None
 
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
+def get_inputs_fleur(code,
+                     remote,
+                     fleurinp,
+                     options,
+                     label='',
+                     description='',
+                     settings=None,
+                     serial=False,
+                     only_even_MPI=False):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -84,6 +92,11 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     '''
     Dict = DataFactory('dict')
     inputs = {}
+    if isinstance(only_even_MPI, Bool):
+        inputs['only_even_MPI'] = only_even_MPI
+    else:
+        inputs['only_even_MPI'] = Bool(only_even_MPI)
+
     if remote:
         inputs['parent_folder'] = remote
     if code:
@@ -115,7 +128,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     options['custom_scheduler_commands'] = custom_commands
 
     if settings:
-        inputs['settings'] = Dict(dict=settings)
+        if isinstance(settings, Dict):
+            inputs['settings'] = settings
+        else:
+            inputs['settings'] = Dict(dict=settings)
 
     if options:
         inputs['options'] = Dict(dict=options)
@@ -542,6 +558,7 @@ def performance_extract_calcs(calcs):
 
 
 def get_mpi_proc(resources):
+    """Determine number of total processes from given resource dict"""
     nmachines = resources.get('num_machines', 0)
     total_proc = resources.get('tot_num_mpiprocs', 0)
     if not total_proc:
@@ -554,16 +571,19 @@ def get_mpi_proc(resources):
 
 
 def calc_time_cost_function(natom, nkpt, kmax, nspins=1):
+    """Estimates the cost of simulating a single iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins
     return costs
 
 
 def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
+    """Estimates the cost of simulating a all  iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins * niter
     return costs
 
 
 def cost_ratio(total_costs, walltime_sec, ncores):
+    """Estimates if simulation cost matches resources"""
     ratio = total_costs / (walltime_sec * ncores)
     return ratio
 
@@ -575,7 +595,8 @@ def optimize_calc_options(nodes,
                           mpi_omp_ratio,
                           fleurinpData=None,
                           kpts=None,
-                          sacrifice_level=0.9):
+                          sacrifice_level=0.9,
+                          only_even_MPI=False):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -597,6 +618,7 @@ def optimize_calc_options(nodes,
     :param kpts: the total number of kpts
     :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
                             MPI/OMP ratio.
+    :parm only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
     :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
                                                      the last one is an exit message.
     """
@@ -625,7 +647,7 @@ def optimize_calc_options(nodes,
         for advised_cpu_per_node in advise_cpus:
             suggestions.append((n_n, advised_cpu_per_node))
 
-    def add_omp(suggestions):
+    def add_omp(suggestions, only_even_MPI_1):
         """
         Also adds possibility of omp parallelisation
         """
@@ -635,22 +657,24 @@ def optimize_calc_options(nodes,
                 omp = cpus_per_node // suggestion[1]
             else:
                 omp = 1
-            final_suggestion.append([suggestion[0], suggestion[1], omp])
+            # here we drop parallelisations having odd number of MPIs
+            if only_even_MPI_1 and suggestion[1] % 2 == 0 or not only_even_MPI_1:
+                final_suggestion.append([suggestion[0], suggestion[1], omp])
         return final_suggestion
 
     # all possible suggestions taking into account omp
-    suggestions = np.array(add_omp(suggestions))
+    suggestions_save = suggestions
+    suggestions = np.array(add_omp(suggestions, only_even_MPI))
+    if not len(suggestions):  # only odd MPI parallelisations possible, ignore only_even_MPI
+        suggestions = np.array(add_omp(suggestions_save, False))
 
     best_resources = max(np.prod(suggestions, axis=1))
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
 
     def best_criterion(suggestion):
-        '''
-        also implements hard preference of even numper of MPIs over odd
-        '''
         if use_omp:
-            return (abs(suggestion[1] % 2 - 1), -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio))
-        return (suggestion[0] * suggestion[1], abs(suggestion[1] % 2 - 1), -suggestion[0])
+            return -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio)
+        return (suggestion[0] * suggestion[1], -suggestion[0])
 
     best_suggestion = max(top_suggestions, key=best_criterion)
 
@@ -699,7 +723,7 @@ def find_last_submitted_calcjob(restart_wc):
 
 def find_last_submitted_workchain(restart_wc):
     """
-    Finds the last CalcJob submitted in a higher-level workchain
+    Finds the last WorkChain submitted in a higher-level workchain
     and returns it's uuid
     """
     from aiida.common.exceptions import NotExistent
