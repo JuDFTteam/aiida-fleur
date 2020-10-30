@@ -37,7 +37,7 @@ class FleurinputgenCalculation(CalcJob):
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
 
-    __version__ = '1.2.0'
+    __version__ = '1.2.1'
 
     # Default input and output files
     _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
@@ -306,9 +306,8 @@ class FleurinputgenCalculation(CalcJob):
             cell = structure.cell
             for vector in cell:
                 scaled = [a * scaling_pos for a in vector]  # scaling_pos=1./bohr_to_ang
-                cell_parameters_card += ('{0:18.10f} {1:18.10f} {2:18.10f}'
-                                         '\n'.format(scaled[0], scaled[1], scaled[2]))
-            scaling_factor_card += ('{0:18.10f} {1:18.10f} {2:18.10f}'
+                cell_parameters_card += ('{0:18.9f} {1:18.9f} {2:18.9f}' '\n'.format(scaled[0], scaled[1], scaled[2]))
+            scaling_factor_card += ('{0:18.9f} {1:18.9f} {2:18.9f}'
                                     '\n'.format(scaling_factors[0], scaling_factors[1], scaling_factors[2]))
 
         #### ATOMIC_POSITIONS ####
