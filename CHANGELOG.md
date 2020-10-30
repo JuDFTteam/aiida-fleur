@@ -1,3 +1,16 @@
+
+## v1.1.2
+### release compatible with AiiDA-core 1.3.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- downdgraded aiida-core dependency, do release does not depend on aiida-testing
+- Added userfriendly LDA+U support
+- SCF workchain can generate kpoints from a given density
+- Base fleur has now time limit error handler
+- Relax workchain can now run a final scf
+- Update documentation for corehole, initial CLS and create magnetic workchains
+- Various bug fixes and robustness improvements of magnetic workchains
+- For devs: Enforced pre-commit, tests dir moved out of source
+
 ## v1.1.1
 ### release compatible with AiiDA-core 1.4.0
 - still support of Fleur MaX4 version (release branch) with inpgen
