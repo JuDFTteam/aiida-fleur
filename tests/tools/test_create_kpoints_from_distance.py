@@ -12,7 +12,7 @@
 '''Contains tests for the functions in create_kpoints_from_distance'''
 import pytest
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
-from aiida.orm import Bool, Float, Dict
+from aiida.orm import Dict
 
 
 def test_create_kpoints_from_distance_no_para(generate_structure):
@@ -20,10 +20,8 @@ def test_create_kpoints_from_distance_no_para(generate_structure):
 
     wanted_result = {'kpt': {'div1': 22, 'div2': 22, 'div3': 22}}
     structure = generate_structure()
-    distance = Float(0.1)
-    force_parity = Bool(True)
-
-    result_para = create_kpoints_from_distance_parameter(structure, distance, force_parity, calc_parameters=None)
+    cf_para = Dict(dict={'distance': 0.1, 'force_parity': True, 'force_even': True})
+    result_para = create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=None)
 
     assert result_para.get_dict() == wanted_result
 
@@ -45,15 +43,16 @@ def test_create_kpoints_from_distance_with_para(generate_structure):
             'gmax': 15.0
         },
         'kpt': {
-            'div1': 22,
-            'div2': 22,
-            'div3': 22,
+            'div1': 23,
+            'div2': 23,
+            'div3': 23,
             'tkb': 0.0005
         }
     }
     structure = generate_structure()
-    distance = Float(0.1)
-    force_parity = Bool(True)
+
+    cf_para = Dict(dict={'distance': 0.1, 'force_parity': True, 'force_odd': True})
+
     parameters = Dict(
         dict={
             'atom': {
@@ -76,5 +75,5 @@ def test_create_kpoints_from_distance_with_para(generate_structure):
             }
         })
 
-    result_para = create_kpoints_from_distance_parameter(structure, distance, force_parity, calc_parameters=parameters)
+    result_para = create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=parameters)
     assert result_para.get_dict() == wanted_result

@@ -60,7 +60,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.4.1'
+    _workflowversion = '0.4.2'
     _wf_default = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -68,6 +68,8 @@ class FleurScfWorkChain(WorkChain):
         'force_converged': 0.002,
         'kpoints_distance': None,  # in 1/A, usually 0.1
         'kpoints_force_parity': False,
+        'kpoints_force_odd': False,
+        'kpoints_force_false': False,
         'mode': 'density',  # 'density', 'energy' or 'force'
         'serial': False,
         'only_even_MPI': False,
@@ -305,11 +307,17 @@ class FleurScfWorkChain(WorkChain):
         # If given kpt_dist has prio over given calc_parameters
         kpt_dist = self.ctx.wf_dict.get('kpoints_distance', None)
         if kpt_dist is not None:
+            cf_para_kpt = Dict(
+                dict={
+                    'distance': kpt_dist,
+                    'force_parity': self.ctx.wf_dict.get('kpoints_force_parity', False),
+                    'force_even': self.ctx.wf_dict.get('kpoints_force_even', False),
+                    'force_odd': self.ctx.wf_dict.get('kpoints_force_odd', False)
+                })
             inputs = {
                 'structure': structure,
                 'calc_parameters': params,
-                'distance': Float(kpt_dist),
-                'force_parity': Bool(self.ctx.wf_dict.get('kpoints_force_parity', False)),
+                'cf_para': cf_para_kpt,
                 'metadata': {
                     'call_link_label': 'create_kpoints_from_distance'
                 }
