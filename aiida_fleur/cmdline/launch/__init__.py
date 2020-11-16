@@ -10,29 +10,14 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''
-Module with CLI commands for fleur calcs.
+Module with CLI commands for calcjob types of aiida-fleur.
 '''
-import click
-from . import cmd_calcjob
+from .. import cmd_root
 
 
-@cmd_calcjob.group('fleur')
-def cmd_fleur():
-    """Commands to handle `fleur` calcs."""
+@cmd_root.group('launch')
+def cmd_launch():
+    """Commands to launch workflows and calcjobs of aiida-fleur."""
 
 
-@cmd_fleur.command('list')
-def list_fleur():
-    """
-    List Fleur calc in the database with information
-    """
-    click.echo('Not implemented yet, sorry. Please implement me!')
-    # do a query and list all reuse AiiDA code
-
-
-@cmd_fleur.command('launch')
-def launch_fleur():
-    """
-    Launch an fleur process
-    """
-    click.echo('Not implemented yet, sorry. Please implement me!')
+from .launch import *

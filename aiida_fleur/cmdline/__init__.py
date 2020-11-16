@@ -31,7 +31,7 @@ def cmd_root(profile):  # pylint: disable=unused-argument
     """CLI for the `aiida-fleur` plugin."""
 
 
-from .calculations import cmd_calcjob
+from .launch import cmd_launch
 from .data import cmd_structure, cmd_fleurinp
 from .workflows import cmd_workflow
 from .visualization import cmd_plot

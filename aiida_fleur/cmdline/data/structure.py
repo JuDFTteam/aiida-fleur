@@ -40,6 +40,9 @@ def cmd_import(filename, dry_run, fleurinp):
     Import a `StructureData` from a Fleur input file.
 
     FILENAME is the name/path of the inp.xml file to use.
+
+    If you want to import a structure from any file type you can use
+    'verdi data structure import -ase <filename>' instead.
     """
     from aiida_fleur.data.fleurinp import FleurinpData
 

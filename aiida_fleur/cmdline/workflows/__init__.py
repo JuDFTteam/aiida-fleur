@@ -21,11 +21,11 @@ from aiida.cmdline.utils import decorators, echo
 
 @cmd_root.group('workflow')
 def cmd_workflow():
-    """Commands to launch and inspect various workchains."""
+    """Commands to inspect aiida-fleur workchains."""
 
 
 # Import the sub commands to register them with the CLI
-from .scf import cmd_scf
+#from .scf import cmd_scf
 #from .relax import cmd_relax
 #from .banddos import cmd_banddos
 #from .eos import cmd_eos

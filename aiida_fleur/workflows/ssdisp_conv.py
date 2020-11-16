@@ -215,7 +215,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'energies': self.ctx.energydict,
-            'original_energies' : self.ctx.original_energydict,
+            'original_energies': self.ctx.original_energydict,
             'q_vectors': self.ctx.wf_dict['q_vectors'],
             'failed_labels': failed_labels,
             'energy_units': 'eV',

@@ -18,9 +18,10 @@ from aiida.cmdline.commands.cmd_data.cmd_list import query, list_options
 from aiida.cmdline.params import arguments, options, types
 from aiida.cmdline.utils import decorators, echo
 from aiida.cmdline.params.types import DataParamType
-
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida.plugins import DataFactory
+#from aiida_fleur.data.fleurinp import FleurinpData
 from . import cmd_data
+FleurinpData = DataFactory('fleur.fleurinp')
 
 
 @cmd_data.group('fleurinp')
