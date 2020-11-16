@@ -116,6 +116,7 @@ class FleurSSDispConvWorkChain(WorkChain):
                 inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
             inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
             res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
