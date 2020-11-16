@@ -60,7 +60,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num
         }
     }
 
-    builder = process_class.get_builder(code=load_node(inpgen), **inputs)
+    builder = process_class.get_builder(code=inpgen, **inputs)
 
     launch_process(builder, daemon)
 
@@ -68,7 +68,6 @@ def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num
 @cmd_launch.command('fleur')
 @options.FLEURINP()
 @options.FLEUR()
-@options.WF_PARAMETERS()
 @options.REMOTE()
 @options.SETTINGS()
 @options.DAEMON()
@@ -83,7 +82,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num
               show_default=True,
               help=('Run the base_fleur workchain, which also handles errors instead '
                     'of a single fleur calcjob.'))
-def launch_fleur(fleurinp, fleur, wf_parameters, parent_folder, daemon, launch_base, settings, max_num_machines,
+def launch_fleur(fleurinp, fleur, parent_folder, daemon, launch_base, settings, max_num_machines,
                  num_mpiprocs_per_machine, max_wallclock_seconds, with_mpi, option_node):
     """
     Launch a base_fleur workchain.
@@ -95,15 +94,15 @@ def launch_fleur(fleurinp, fleur, wf_parameters, parent_folder, daemon, launch_b
     workchain_class = WorkflowFactory('fleur.base')
 
     inputs = {
+        'code': fleur,
         'fleurinpdata': fleurinp,
-        'wf_parameters': wf_parameters,
         'parent_folder': parent_folder,
         'settings': settings,
         'metadata': {
             'options': {
                 'withmpi': with_mpi,
+                'max_wallclock_seconds': max_wallclock_seconds,
                 'resources': {
-                    'wallclock_seconds': max_wallclock_seconds,
                     'num_machines': max_num_machines,
                     'num_mpiprocs_per_machine': num_mpiprocs_per_machine,
                 }
@@ -113,28 +112,30 @@ def launch_fleur(fleurinp, fleur, wf_parameters, parent_folder, daemon, launch_b
 
     if not launch_base:
         inputs = clean_nones(inputs)
-        builder = process_class.get_builder(code=load_node(fleur), **inputs)
+        builder = process_class.get_builder()
+        builder.update(inputs)
     else:
         if option_node is None:
             option_node = Dict(
                 dict={
                     'withmpi': with_mpi,
+                    'max_wallclock_seconds': max_wallclock_seconds,
                     'resources': {
-                        'wallclock_seconds': max_wallclock_seconds,
                         'num_machines': max_num_machines,
                         'num_mpiprocs_per_machine': num_mpiprocs_per_machine
                     }
                 })
 
         inputs_base = {
+            'code': fleur,
             'fleurinpdata': fleurinp,
-            'wf_parameters': wf_parameters,
             'parent_folder': parent_folder,
             'settings': settings,
             'options': option_node
         }
         inputs_base = clean_nones(inputs_base)
-        builder = workchain_class.get_builder(code=load_node(fleur), **inputs_base)
+        builder = workchain_class.get_builder()
+        builder.update(**inputs_base)
 
     launch_process(builder, daemon)
 
