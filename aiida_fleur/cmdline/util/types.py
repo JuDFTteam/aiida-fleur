@@ -20,7 +20,7 @@ from aiida.plugins import DataFactory
 
 
 #StructureOption = types.DataParamType(sub_classes=('aiida.data:structure',))
-class StructureNodeOrFileParamType(types.DataParamType):
+class StructureNodeOrFileParamType(click.ParamType):  #types.DataParamType):
     """
     The ParamType for identifying a structure by node or to extract it from a given file
 
@@ -30,7 +30,6 @@ class StructureNodeOrFileParamType(types.DataParamType):
     """
 
     name = 'StructureFile'
-    sub_classes = ('aiida.data:structure',)
 
     def convert(self, value, param, ctx):
         is_path = False
@@ -38,9 +37,9 @@ class StructureNodeOrFileParamType(types.DataParamType):
         # aiida allows also for shorten uuids
 
         try:
-            structure = super().convert(value, param, ctx)
-        except NotExistent:
-            echo.echo(f'Tried to load node, could not fine one for {value}.'
+            structure = types.DataParamType(sub_classes=('aiida.data:structure',)).convert(value, param, ctx)
+        except (NotExistent, click.exceptions.BadParameter) as er:
+            echo.echo(f'Tried to load node, could not fine one for {value}. '
                       'I will further check if it is a filepath.')
             is_path = True
 

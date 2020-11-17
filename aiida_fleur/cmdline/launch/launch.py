@@ -45,23 +45,24 @@ def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num
 
     process_class = CalculationFactory('fleur.inpgen')
     inputs = {
+        'code': inpgen,
         'structure': structure,
         'parameters': calc_parameters,
         'settings': settings,
         'metadata': {
             'options': {
                 'withmpi': False,
+                'max_wallclock_seconds': 6000,
                 'resources': {
-                    'wallclock_seconds': 600,
                     'num_machines': 1,
                     'num_mpiprocs_per_machine': 1,
                 }
             }
         }
     }
-
-    builder = process_class.get_builder(code=inpgen, **inputs)
-
+    inputs = clean_nones(inputs)
+    builder = process_class.get_builder()
+    builder.update(inputs)
     launch_process(builder, daemon)
 
 
