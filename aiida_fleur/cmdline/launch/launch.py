@@ -160,6 +160,8 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     """
     workchain_class = WorkflowFactory('fleur.scf')
     inputs = {
+        'inpgen': inpgen,
+        'fleur': fleur,
         'structure': structure,
         'fleurinpdata': fleurinp,
         'wf_parameters': wf_parameters,
@@ -168,10 +170,9 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
         'settings': settings,
         'options': option_node
     }
-    if inpgen is not None:
-        inputs['inpgen'] = load_node(inpgen)
+
     inputs = clean_nones(inputs)
-    builder = workchain_class.get_builder(code=load_node(fleur))
+    builder = workchain_class.get_builder()
     builder.update(inputs)
     launch_process(builder, daemon)
 

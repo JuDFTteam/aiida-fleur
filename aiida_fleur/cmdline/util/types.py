@@ -19,8 +19,7 @@ from aiida.common.exceptions import NotExistent
 from aiida.plugins import DataFactory
 
 
-#StructureOption = types.DataParamType(sub_classes=('aiida.data:structure',))
-class StructureNodeOrFileParamType(click.ParamType):  #types.DataParamType):
+class StructureNodeOrFileParamType(click.ParamType):
     """
     The ParamType for identifying a structure by node or to extract it from a given file
 
