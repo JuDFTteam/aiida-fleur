@@ -19,7 +19,6 @@ from . import cmd_launch
 from ..util import options
 from ..util.utils import launch_process
 from ..util import defaults
-#from ..util.defaults import si_structure
 from aiida_fleur.tools.dict_util import clean_nones
 from aiida.orm import Code, load_node, Dict
 from aiida.plugins import WorkflowFactory
@@ -32,7 +31,7 @@ from aiida.plugins import CalculationFactory
 @options.CALC_PARAMETERS()
 @options.SETTINGS()
 @options.DAEMON()
-def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num_machines, wallclock_seconds, daemon):
+def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
     """
     Launch an inpgen calcjob on given input
 
@@ -83,8 +82,8 @@ def launch_inpgen(structure, inpgen, calc_parameters, daemon, settings):  #, num
               show_default=True,
               help=('Run the base_fleur workchain, which also handles errors instead '
                     'of a single fleur calcjob.'))
-def launch_fleur(fleurinp, fleur, parent_folder, daemon, launch_base, settings, max_num_machines,
-                 num_mpiprocs_per_machine, max_wallclock_seconds, with_mpi, option_node):
+def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machines, max_wallclock_seconds,
+                 num_mpiprocs_per_machine, option_node, with_mpi, launch_base):
     """
     Launch a base_fleur workchain.
     If launch_base is False launch a single fleur calcjob instead.
@@ -150,8 +149,8 @@ def launch_fleur(fleurinp, fleur, parent_folder, daemon, launch_base, settings, 
 @options.FLEUR()
 @options.WF_PARAMETERS()
 @options.REMOTE()
-@options.SETTINGS()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameters, parent_folder, daemon, settings,
                option_node):
@@ -163,7 +162,7 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
         'inpgen': inpgen,
         'fleur': fleur,
         'structure': structure,
-        'fleurinpdata': fleurinp,
+        'fleurinp': fleurinp,
         'wf_parameters': wf_parameters,
         'calc_parameters': calc_parameters,
         'remote_data': parent_folder,
@@ -181,11 +180,11 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
-@options.SETTINGS()
 @options.FLEUR()
 @options.WF_PARAMETERS()
 @options.SCF_PARAMETERS()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_parameters, daemon, settings,
                  option_node):
@@ -216,11 +215,11 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
-@options.SETTINGS()
 @options.FLEUR()
 @options.WF_PARAMETERS()
 @options.SCF_PARAMETERS()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_parameters, daemon, settings, option_node):
     """
@@ -250,12 +249,12 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
 @options.WF_PARAMETERS()
 @options.REMOTE()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings, option_node):
     """
     Launch a banddos workchain
     """
-    click.echo('Not implemented yet, sorry. Please implement me!')
     workchain_class = WorkflowFactory('fleur.banddos')
     inputs = {
         'wf_parameters': wf_parameters,
@@ -274,17 +273,16 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
-@options.SETTINGS()
 @options.FLEURINP()
 @options.FLEUR()
 @options.WF_PARAMETERS()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_init_cls(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameters, daemon, settings, option_node):
     """
     Launch an init_cls workchain
     """
-    click.echo('Not implemented yet, sorry. Please implement me!')
     workchain_class = WorkflowFactory('fleur.init_cls')
     inputs = {
         'calc_parameters': calc_parameters,
@@ -304,17 +302,16 @@ def launch_init_cls(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
-@options.SETTINGS()
 @options.FLEURINP()
 @options.FLEUR()
 @options.WF_PARAMETERS()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
 def launch_corehole(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameters, daemon, settings, option_node):
     """
     Launch a corehole workchain
     """
-    click.echo('Not implemented yet, sorry. Please implement me!')
     workchain_class = WorkflowFactory('fleur.corehole')
     inputs = {
         'calc_parameters': calc_parameters,
@@ -331,26 +328,90 @@ def launch_corehole(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
 
 
 @cmd_launch.command('mae')
-@options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
+@options.STRUCTURE_OR_FILE(default=defaults.get_fept_film_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
-@options.SETTINGS()
 @options.FLEURINP()
 @options.FLEUR()
 @options.WF_PARAMETERS()
+@options.SCF_PARAMETERS()
 @options.REMOTE()
 @options.DAEMON()
+@options.SETTINGS()
 @options.OPTION_NODE()
-def launch_mae(structure_or_file, inpgen, calc_parameters, fleurinp, fleur, wf_parameter, remote, daemon, settings,
-               option_node):
+def launch_mae(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameters, scf_parameters, parent_folder,
+               daemon, settings, option_node):
     """
     Launch a mae workchain
     """
-    click.echo('Not implemented yet, sorry. Please implement me!')
-    #workchain_class = WorkflowFactory('fleur.mae')
-    #inputs = {}
-    #builder = workchain_class.get_builder(code=load_node(fleur),**inputs)
-    #launch_process(builder, daemon)
+    workchain_class = WorkflowFactory('fleur.mae')
+    inputs = {
+        'scf': {
+            'wf_parameters': scf_parameters,
+            'structure': structure,
+            'calc_parameters': calc_parameters,
+            'settings': settings,
+            'inpgen': inpgen,
+            'fleur': fleur
+        },
+        'wf_parameters': wf_parameters,
+        'fleurinp': fleurinp,
+        'remote': parent_folder,
+        'fleur': fleur,
+        'options': option_node
+    }
+
+    inputs = clean_nones(inputs)
+    builder = workchain_class.get_builder()
+    builder.update(inputs)
+    launch_process(builder, daemon)
+
+
+@cmd_launch.command('create_magnetic')
+@options.INPGEN()
+@options.CALC_PARAMETERS()
+@options.FLEUR()
+@options.WF_PARAMETERS(required=True)
+@options.EOS_PARAMETERS()
+@options.SCF_PARAMETERS()
+@options.RELAX_PARAMETERS()
+@options.DAEMON()
+@options.OPTION_NODE()
+def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_parameters, scf_parameters,
+                           relax_parameters, daemon, option_node):
+    """
+    Launch a create_magnetic workchain
+    """
+    workchain_class = WorkflowFactory('fleur.create_magnetic')
+    inputs = {
+        'eos': {
+            'scf': {
+                'wf_parameters': scf_parameters,
+                'calc_parameters': calc_parameters,
+                'options': option_node,
+                'inpgen': inpgen,
+                'fleur': fleur
+            },
+            'wf_parameters': eos_parameters
+        },
+        'relax': {
+            'scf': {
+                'wf_parameters': scf_parameters,
+                'calc_parameters': calc_parameters,
+                'options': option_node,
+                'inpgen': inpgen,
+                'fleur': fleur
+            },
+            'wf_parameters': relax_parameters,
+            'label': 'relaxation',
+        },
+        'wf_parameters': wf_parameters
+    }
+
+    inputs = clean_nones(inputs)
+    builder = workchain_class.get_builder()
+    builder.update(inputs)
+    launch_process(builder, daemon)
 
 
 @cmd_launch.command('ssdisp')
@@ -372,18 +433,6 @@ def launch_dmi():
     """
     click.echo('Not implemented yet, sorry. Please implement me!')
     #workchain_class = WorkflowFactory('fleur.dmi')
-    #inputs = {}
-    #builder = workchain_class.get_builder(code=load_node(fleur),**inputs)
-    #launch_process(builder, daemon)
-
-
-@cmd_launch.command('create_magnetic')
-def launch_create_magnetic():
-    """
-    Launch a create_magnetic workchain
-    """
-    click.echo('Not implemented yet, sorry. Please implement me!')
-    #workchain_class = WorkflowFactory('fleur.create_magnetic')
     #inputs = {}
     #builder = workchain_class.get_builder(code=load_node(fleur),**inputs)
     #launch_process(builder, daemon)

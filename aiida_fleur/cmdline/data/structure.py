@@ -11,18 +11,18 @@
 ###############################################################################
 """Command line utilities to create and inspect `StructureData` nodes."""
 import click
-
 from aiida.cmdline.params import options
 from aiida.cmdline.utils import decorators, echo
 
 from . import cmd_data
 
 
-@cmd_data.group('structure')
+@click.group('structure')
 def cmd_structure():
     """Commands to create and inspect `StructureData` nodes."""
 
 
+cmd_data.add_command(cmd_structure)
 # import filename
 # import -N pk_fleurinp
 

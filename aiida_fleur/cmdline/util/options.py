@@ -20,12 +20,6 @@ from aiida.cmdline.params.options import OverridableOption
 from .defaults import get_inpgen, get_fleur, get_si_bulk_structure
 from .types import StructureNodeOrFileParamType
 
-#ANYSOURCE_STRUCTURE = OverridableOption(
-#    '-as', '--anysource_structure',
-#    type=click.Path(exists=True),
-#    help=('A path to a file which contains structural information which will '
-#        'be parsed with ase or pymatgen extracting a StructureData node.'))
-
 STRUCTURE_OR_FILE = OverridableOption(
     '-s',
     '--structure',
@@ -46,14 +40,14 @@ FULL_PROVENANCE = OverridableOption('-fp',
                                           'also the given file will be stored in the database together with a '
                                           'calcfunction extracting the structure.'))
 
-INPGEN = OverridableOption('-inpgen',
+INPGEN = OverridableOption('-i',
                            '--inpgen',
                            type=types.CodeParamType(entry_point='fleur.inpgen'),
                            default=get_inpgen,
                            show_default=True,
                            help='A code node or label for an inpgen executable.')
 
-FLEUR = OverridableOption('-fleur',
+FLEUR = OverridableOption('-f',
                           '--fleur',
                           type=types.CodeParamType(entry_point='fleur.fleur'),
                           default=get_fleur,
@@ -66,53 +60,63 @@ FLEURINP = OverridableOption('-inp',
                              help='FleurinpData node for the fleur calculation.')
 
 CALC_PARAMETERS = OverridableOption(
-    '-cp',
+    '-calc_p',
     '--calc-parameters',
     type=types.DataParamType(sub_classes=('aiida.data:dict',)),
     help='Dict with calculation (FLAPW) parameters to build, which will be given to inpgen.')
 
-SETTINGS = OverridableOption('-se',
+SETTINGS = OverridableOption('-set',
                              '--settings',
                              type=types.DataParamType(sub_classes=('aiida.data:dict',)),
                              help='Settings node for the calcjob.')
 
-WF_PARAMETERS = OverridableOption('-wp',
+WF_PARAMETERS = OverridableOption('-wf',
                                   '--wf-parameters',
                                   type=types.DataParamType(sub_classes=('aiida.data:dict',)),
                                   help='Dict containing parameters given to the workchain.')
 
-SCF_PARAMETERS = OverridableOption('-sp',
+SCF_PARAMETERS = OverridableOption('-scf',
                                    '--scf-parameters',
                                    type=types.DataParamType(sub_classes=('aiida.data:dict',)),
                                    help='Dict containing parameters given to the sub SCF workchains.')
 
-OPTION_NODE = OverridableOption('-on',
+EOS_PARAMETERS = OverridableOption('-eos',
+                                   '--eos-parameters',
+                                   type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                   help='Dict containing wf parameters given to the sub EOS workchains.')
+
+RELAX_PARAMETERS = OverridableOption('-relax',
+                                     '--relax-parameters',
+                                     type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                     help='Dict containing wf parameters given to the sub relax workchains.')
+
+OPTION_NODE = OverridableOption('-opt',
                                 '--option-node',
                                 type=types.DataParamType(sub_classes=('aiida.data:dict',)),
                                 help='Dict, an option node for the workchain.')
 
-MAX_NUM_MACHINES = OverridableOption('-m',
+MAX_NUM_MACHINES = OverridableOption('-N',
                                      '--max-num-machines',
                                      type=click.INT,
                                      default=1,
                                      show_default=True,
                                      help='The maximum number of machines (nodes) to use for the calculations.')
 
-MAX_WALLCLOCK_SECONDS = OverridableOption('-w',
+MAX_WALLCLOCK_SECONDS = OverridableOption('-W',
                                           '--max-wallclock-seconds',
                                           type=click.INT,
                                           default=1800,
                                           show_default=True,
                                           help='The maximum wallclock time in seconds to set for the calculations.')
 
-NUM_MPIPROCS_PER_MACHINE = OverridableOption('-n',
+NUM_MPIPROCS_PER_MACHINE = OverridableOption('-M',
                                              '--num-mpiprocs-per-machine',
                                              type=click.INT,
                                              default=12,
                                              show_default=True,
                                              help='Run the simulation with so many num-mpi-procs-per-machine.')
 
-WITH_MPI = OverridableOption('-i',
+WITH_MPI = OverridableOption('-I',
                              '--with-mpi',
                              is_flag=True,
                              default=False,

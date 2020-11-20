@@ -24,9 +24,12 @@ from . import cmd_data
 FleurinpData = DataFactory('fleur.fleurinp')
 
 
-@cmd_data.group('fleurinp')
+@click.group('fleurinp')
 def cmd_fleurinp():
     """Commands to handle `FleurinpData` nodes."""
+
+
+cmd_data.add_command(cmd_fleurinp)
 
 
 @cmd_fleurinp.command('list')

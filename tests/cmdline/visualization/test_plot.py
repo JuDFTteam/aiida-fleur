@@ -9,21 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-"""
-Module with CLI commands for various data types.
-"""
-import click
-from .. import cmd_root
-
-
-@click.group('data')
-def cmd_data():
-    """Commands to create and inspect data nodes."""
-
-
-cmd_root.add_command(cmd_data)
-
-# Import the sub commands to register them with the CLI
-#from .structure import cmd_structure
-#from .parameters import cmd_parameter
-#from .fleurinp import cmd_fleurinp
+'''
+Module to test the plot cmd from the commandline
+'''
+from aiida_fleur.cmdline.visualization import cmd_plot
