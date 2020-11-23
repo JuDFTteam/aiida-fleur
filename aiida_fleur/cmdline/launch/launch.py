@@ -414,24 +414,67 @@ def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_pa
 
 
 @click.command('ssdisp')
-def launch_ssdisp():
+@options.STRUCTURE_OR_FILE(default=defaults.get_fept_film_structure, show_default=True)
+@options.INPGEN()
+@options.CALC_PARAMETERS()
+@options.FLEUR()
+@options.WF_PARAMETERS(required=True)
+@options.SCF_PARAMETERS()
+@options.DAEMON()
+@options.OPTION_NODE()
+def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_parameters, daemon, option_node):
     """
     Launch a ssdisp workchain
     """
-    click.echo('Not implemented yet, sorry. Please implement me!')
-    #workchain_class = WorkflowFactory('fleur.ssdisp')
-    #inputs = {}
-    #builder = workchain_class.get_builder(code=load_node(fleur),**inputs)
-    #launch_process(builder, daemon)
+    workchain_class = WorkflowFactory('fleur.ssdisp')
+    inputs = {
+        'scf': {
+            'wf_parameters': scf_parameters,
+            'structure': structure,
+            'calc_parameters': calc_parameters,
+            'options': option_node,
+            'inpgen': inpgen,
+            'fleur': fleur
+        },
+        'wf_parameters': wf_parameters,
+        'fleur': fleur,
+        'options': option_node
+    }
+    inputs = clean_nones(inputs)
+    builder = workchain_class.get_builder()
+    builder.update(inputs)
+    launch_process(builder, daemon)
 
 
 @click.command('dmi')
-def launch_dmi():
+@options.STRUCTURE_OR_FILE(default=defaults.get_fept_film_structure, show_default=True)
+@options.INPGEN()
+@options.CALC_PARAMETERS()
+@options.FLEUR()
+@options.WF_PARAMETERS(required=True)
+@options.SCF_PARAMETERS()
+@options.DAEMON()
+@options.OPTION_NODE()
+def launch_dmi(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_parameters, daemon, option_node):
     """
     Launch a dmi workchain
     """
     click.echo('Not implemented yet, sorry. Please implement me!')
-    #workchain_class = WorkflowFactory('fleur.dmi')
-    #inputs = {}
-    #builder = workchain_class.get_builder(code=load_node(fleur),**inputs)
-    #launch_process(builder, daemon)
+    workchain_class = WorkflowFactory('fleur.dmi')
+    inputs = {
+        'scf': {
+            'wf_parameters': scf_parameters,
+            'structure': structure,
+            'calc_parameters': calc_parameters,
+            'options': option_node,
+            'inpgen': inpgen,
+            'fleur': fleur
+        },
+        'wf_parameters': wf_parameters,
+        'fleur': fleur,
+        'options': option_node
+    }
+    inputs = clean_nones(inputs)
+    builder = workchain_class.get_builder()
+    builder.update(inputs)
+    launch_process(builder, daemon)

@@ -104,7 +104,6 @@ def test_launch_init_cls_base(run_cli_process_launch_command, fixture_code):
     run_cli_process_launch_command(launch_init_cls, options=options)
 
 
-'''
 def test_launch_banddos_base(run_cli_process_launch_command, fixture_code, generate_remote_data, create_fleurinp):
     """Test invoking the banddow workchain launch command with only required inputs."""
     from aiida_fleur.cmdline.launch import launch_banddos
@@ -117,7 +116,6 @@ def test_launch_banddos_base(run_cli_process_launch_command, fixture_code, gener
 
     options = ['--fleur', fleur.uuid, '-P', remote.uuid, '-inp', fleurinp.uuid]
     run_cli_process_launch_command(launch_banddos, options=options)
-'''
 
 
 def test_launch_mae_base(run_cli_process_launch_command, fixture_code):
@@ -169,3 +167,68 @@ def test_launch_create_magnetic_base(run_cli_process_launch_command, fixture_cod
 
     options = ['--inpgen', inpgen.uuid, '--fleur', fleur.uuid, '-wf', wf_para.uuid]
     run_cli_process_launch_command(launch_create_magnetic, options=options)
+
+
+def test_launch_dmi_base(run_cli_process_launch_command, fixture_code):
+    """Test invoking the mae workchain launch command with only required inputs."""
+    from aiida_fleur.cmdline.launch import launch_dmi
+
+    inpgen = fixture_code('fleur.inpgen').store()
+    fleur = fixture_code('fleur.fleur').store()
+
+    wf_para = {
+        'serial': False,
+        'beta': {
+            '123': 1.57079
+        },
+        'sqas_theta': [0.0, 1.57079, 1.57079],
+        'sqas_phi': [0.0, 0.0, 1.57079],
+        'soc_off': [],
+        #  'prop_dir': [0.125, 0.15, 0.24],
+        'q_vectors': [[0.0, 0.0, 0.0], [0.1, 0.1, 0.0]],
+        'ref_qss': [0.0, 0.0, 0.0],
+        'inpxml_changes': []
+    }
+
+    wf_para = Dict(dict=wf_para).store()
+    options = ['--inpgen', inpgen.uuid, '--fleur', fleur.uuid, '-wf', wf_para.uuid]
+    run_cli_process_launch_command(launch_dmi, options=options)
+
+
+def test_launch_ssdisp_base(run_cli_process_launch_command, fixture_code):
+    """Test invoking the mae workchain launch command with only required inputs."""
+    from aiida_fleur.cmdline.launch import launch_ssdisp
+
+    inpgen = fixture_code('fleur.inpgen').store()
+    fleur = fixture_code('fleur.fleur').store()
+
+    wf_para = {
+        'lattice': 'fcc',
+        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+        'host_symbol': 'Pt',
+        'latticeconstant': 4.0,
+        'size': (1, 1, 5),
+        'replacements': {
+            0: 'Fe',
+            -1: 'Fe'
+        },
+        'decimals': 10,
+        'pop_last_layers': 1,
+        'total_number_layers': 8,
+        'num_relaxed_layers': 3
+    }
+
+    wf_para = {
+        'beta': {
+            'all': 1.57079
+        },
+        'prop_dir': [0.125, 0.125, 0.0],
+        'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.125, 0.0], [0.250, 0.250, 0.0], [0.375, 0.375, 0.0],
+                      [0.500, 0.500, 0.0]],
+        'ref_qss': [0.0, 0.0, 0.0],
+        'inpxml_changes': []
+    }
+
+    wf_para = Dict(dict=wf_para).store()
+    options = ['--inpgen', inpgen.uuid, '--fleur', fleur.uuid, '-wf', wf_para.uuid]
+    run_cli_process_launch_command(launch_ssdisp, options=options)
