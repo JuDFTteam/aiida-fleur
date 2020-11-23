@@ -20,6 +20,8 @@ from aiida.cmdline.params import options, types
 # Activate the completion of parameter types provided by the click_completion package
 click_completion.init()
 
+# for bash use eval "$(_AIIDA_FLEUR_COMPLETE=source_bash aiida-fleur)"
+
 # Instead of using entrypoints and directly injecting verdi commands into aiida-core
 # we created our own separete CLI because verdi will prob change and become
 # less material science specific
@@ -31,7 +33,7 @@ def cmd_root(profile):  # pylint: disable=unused-argument
     """CLI for the `aiida-fleur` plugin."""
 
 
-#from .launch import cmd_launch
-#from .data import cmd_structure, cmd_fleurinp
-#from .workflows import cmd_workflow
-#from .visualization import cmd_plot
+from .launch import cmd_launch
+from .data import cmd_data
+from .workflows import cmd_workflow
+from .visualization import cmd_plot

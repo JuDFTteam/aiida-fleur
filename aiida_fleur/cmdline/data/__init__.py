@@ -9,6 +9,8 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+# pylint: disable=cyclic-import
+# ,reimported,unused-import,wrong-import-position
 """
 Module with CLI commands for various data types.
 """
@@ -24,6 +26,6 @@ def cmd_data():
 cmd_root.add_command(cmd_data)
 
 # Import the sub commands to register them with the CLI
-#from .structure import cmd_structure
-#from .parameters import cmd_parameter
-#from .fleurinp import cmd_fleurinp
+from .structure import cmd_structure
+from .parameters import cmd_parameter
+from .fleurinp import cmd_fleurinp

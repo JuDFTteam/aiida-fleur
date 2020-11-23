@@ -9,6 +9,8 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
+# pylint: disable=cyclic-import
+# ,reimported,unused-import,wrong-import-position
 """
 Module with CLI commands to launch and inspect various aiida-fleur workchains.
 """
@@ -23,18 +25,6 @@ from aiida.cmdline.utils import decorators, echo
 def cmd_workflow():
     """Commands to inspect aiida-fleur workchains."""
 
-
-# Import the sub commands to register them with the CLI
-#from .scf import cmd_scf
-#from .relax import cmd_relax
-#from .banddos import cmd_banddos
-#from .eos import cmd_eos
-#from .corehole import cmd_corehole
-#from .initial_cls import cmd_initial_cls
-
-#from .dmi import cmd_dmi
-#from .mae import cmd_mae
-#from .ssdisp import cmd_ssdisp
 
 # general further commands for fleur workchains
 
