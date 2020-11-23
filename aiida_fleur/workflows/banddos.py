@@ -301,11 +301,16 @@ class FleurBandDosWorkChain(WorkChain):
                     efermi_scf = scf_results.fermi_energy
                     bandgap_scf = scf_results.bandgap
 
-        efermi_band = last_calc_out_dict['fermi_energy']
-        bandgap_band = last_calc_out_dict['bandgap']
+        efermi_band = last_calc_out_dict.get('fermi_energy', None)
+        bandgap_band = last_calc_out_dict.get('bandgap', None)
 
-        diff_efermi = efermi_scf - efermi_band
-        diff_bandgap = bandgap_scf - bandgap_band
+        diff_efermi = None
+        if efermi_band is not None:
+            diff_efermi = efermi_scf - efermi_band
+
+        diff_bandgap = None
+        if bandgap_band is not None:
+            diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
 

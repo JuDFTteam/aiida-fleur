@@ -50,6 +50,7 @@ def fixture_code(fixture_localhost):
     """Return a `Code` instance configured to run calculations of given entry point on localhost `Computer`."""
 
     def _fixture_code(entry_point_name):
+
         return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls'])
 
     return _fixture_code

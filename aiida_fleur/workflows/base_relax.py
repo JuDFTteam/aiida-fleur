@@ -89,7 +89,11 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         """
         pops some inpxml_changes that do not stack, for example shift_value.
         """
-        wf_param = self.ctx.inputs.scf.wf_parameters.get_dict()
+        if 'wf_parameters' in self.ctx.inputs.scf:
+            wf_param = self.ctx.inputs.scf.wf_parameters.get_dict()
+        else:
+            wf_param = {}
+
         if 'inpxml_changes' not in wf_param:
             return
 
