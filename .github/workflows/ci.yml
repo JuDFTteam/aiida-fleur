@@ -120,3 +120,8 @@ jobs:
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur 
        ./run_all_cov.sh
+    
+    - name: Upload report to Codecov
+      uses: codecov/codecov-action@v1.0.15
+      with:
+        file: ./coverage.xml

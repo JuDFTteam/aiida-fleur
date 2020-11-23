@@ -6,6 +6,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.python.org/pypi/aiida-fleur)
 [![Build status](https://github.com/JuDFTteam/aiida-fleur/workflows/aiida-fleur/badge.svg?branch=develop&event=push)](https://github.com/JuDFTteam/aiida-fleur/actions)
 [![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](https://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
+[![codecov](https://codecov.io/gh/JuDFTteam/aiida-fleur/branch/develop/graph/badge.svg)](https://codecov.io/gh/JuDFTteam/aiida-fleur)
 
 
 This software contains a plugin that enables the usage of the all-electron
@@ -42,7 +43,7 @@ In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48
 
 ### Comments/Disclaimer:
 
-The plug-in and the workflows will only work with a Fleur version using xml files as I/O.
+The plug-in and the workflows will only work with a Fleur version using xml files as I/O, i.e >v0.27.
 
 
 ### Contents
@@ -98,6 +99,49 @@ read_cif.py | This can be used as stand-alone to create StructureData nodes from
 
 Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository,
 which is a dependency of aiida-fleur.
+
+
+### Command line interface (CLI)
+
+Besides the python API, aiida-fleur comes with a builtin CLI: `aiida-fleur`. 
+This interface is built using the click library and supports tab-completion. 
+
+To enable tab-completion, add the following to your shell loading script, e.g. the .bashrc or virtual environment activate script:
+
+    eval "$(_AIIDA_FLEUR_COMPLETE=source aiida-fleur)"
+
+the main subcommands include:
+
+    data: Commands to create and inspect data nodes
+        fleurinp   Commands to handle `FleurinpData` nodes.
+        parameter  Commands to create and inspect `Dict` nodes containing FLAPW parameters
+        structure  Commands to create and inspect `StructureData` nodes.
+    launch: Commands to launch workflows and calcjobs of aiida-fleur
+
+        banddos          Launch a banddos workchain
+        corehole         Launch a corehole workchain
+        create_magnetic  Launch a create_magnetic workchain
+        dmi              Launch a dmi workchain
+        eos              Launch a eos workchain
+        fleur            Launch a base_fleur workchain.
+        init_cls         Launch an init_cls workchain
+        inpgen           Launch an inpgen calcjob on given input If no    code is...
+        mae              Launch a mae workchain
+        relax            Launch a base relax workchain # TODO final scf    input
+        scf              Launch a scf workchain
+        ssdisp           Launch a ssdisp workchain
+    
+    plot: Invoke the plot_fleur command on given nodes
+    
+    workflow: Commands to inspect aiida-fleur workchains and prepare inputs
+
+for example to launch an scf workchain on a given structure execute:
+    
+    $ aiida-fleur launch scf -i <inpgenpk> -f <fleurpk> -S <structurepk>
+
+the command can also process structures in any format `ase` can handle, this includes `Cif`, `xsf` and `poscar` files. In such a case simply parse the path to the file:
+
+    $ aiida-fleur launch scf -i <inpgenpk> -f <fleurpk> -S ./structure/Cu.cif
 
 ## Installation Instructions <a name="Installation"></a>
 
@@ -159,7 +203,7 @@ Mainly AiiDA:
 Easy plotting and other useful routines that do not depend on aiida_core are part of
 the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository.
 
-For easy ploting we recommend using 'plot_methods' from masci-tools, which are also deployed by the 'plot_fleur(<node(s)>)' function.
+For easy plotting we recommend using 'plot_methods' from masci-tools, which are also deployed by the 'plot_fleur(<node(s)>)' function.
 
 ## Further Information <a name="FurtherInfo"></a>
 

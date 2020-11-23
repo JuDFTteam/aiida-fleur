@@ -22,7 +22,7 @@ from .workflows import cmd_workflow
 from .visualization import cmd_plot
 
 # Activate the completion of parameter types provided by the click_completion package
-# for bash: eval "$(_AIIDA_FLEUR_COMPLETE=source_bash aiida-fleur)"
+# for bash: eval "$(_AIIDA_FLEUR_COMPLETE=source aiida-fleur)"
 click_completion.init()
 
 # Instead of using entrypoints and directly injecting verdi commands into aiida-core
