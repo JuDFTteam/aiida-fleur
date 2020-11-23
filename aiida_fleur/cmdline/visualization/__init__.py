@@ -9,18 +9,17 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-# pylint: disable=cyclic-import
-# ,reimported,unused-import,wrong-import-position
 """
 Module with CLI commands for various visualizations of data types.
 """
+# if in the future there are futher sub commands of plot, the current plot
+# command can become plot_fleur
 import click
 from aiida.cmdline.utils import decorators
 from aiida.cmdline.params import arguments
-from .. import cmd_root
 
 
-@cmd_root.command('plot')
+@click.command('plot')
 @arguments.NODES('nodes')
 #                help='The pks for the nodes to be parsed to plot_fleur')
 # type=click.Path(exists=True))

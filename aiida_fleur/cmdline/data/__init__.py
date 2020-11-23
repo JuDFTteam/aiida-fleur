@@ -15,7 +15,6 @@
 Module with CLI commands for various data types.
 """
 import click
-from .. import cmd_root
 
 
 @click.group('data')
@@ -23,7 +22,7 @@ def cmd_data():
     """Commands to create and inspect data nodes."""
 
 
-cmd_root.add_command(cmd_data)
+#cmd_root.add_command(cmd_data)
 
 # Import the sub commands to register them with the CLI
 from .structure import cmd_structure

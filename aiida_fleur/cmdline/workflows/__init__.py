@@ -9,19 +9,16 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-# pylint: disable=cyclic-import
-# ,reimported,unused-import,wrong-import-position
 """
 Module with CLI commands to launch and inspect various aiida-fleur workchains.
 """
 import click
-from .. import cmd_root
 from aiida.cmdline.params.types import ProcessParamType
 from aiida.cmdline.params import arguments, options
 from aiida.cmdline.utils import decorators, echo
 
 
-@cmd_root.group('workflow')
+@click.group('workflow')
 def cmd_workflow():
     """Commands to inspect aiida-fleur workchains."""
 

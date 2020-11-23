@@ -16,11 +16,14 @@ import click
 import click_completion
 
 from aiida.cmdline.params import options, types
+from .launch import cmd_launch
+from .data import cmd_data
+from .workflows import cmd_workflow
+from .visualization import cmd_plot
 
 # Activate the completion of parameter types provided by the click_completion package
+# for bash: eval "$(_AIIDA_FLEUR_COMPLETE=source_bash aiida-fleur)"
 click_completion.init()
-
-# for bash use eval "$(_AIIDA_FLEUR_COMPLETE=source_bash aiida-fleur)"
 
 # Instead of using entrypoints and directly injecting verdi commands into aiida-core
 # we created our own separete CLI because verdi will prob change and become
@@ -33,7 +36,10 @@ def cmd_root(profile):  # pylint: disable=unused-argument
     """CLI for the `aiida-fleur` plugin."""
 
 
-from .launch import cmd_launch
-from .data import cmd_data
-from .workflows import cmd_workflow
-from .visualization import cmd_plot
+# To avoid circular imports all commands are not yet connected to the root
+# but they have to be here because of bash completion
+
+cmd_root.add_command(cmd_launch)
+cmd_root.add_command(cmd_data)
+cmd_root.add_command(cmd_workflow)
+cmd_root.add_command(cmd_plot)

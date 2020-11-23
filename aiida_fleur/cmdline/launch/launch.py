@@ -11,11 +11,10 @@
 ###############################################################################
 '''
 Module with CLI commands to launch for calcjob and workflows of aiida-fleur.
-
-# TODO: these launch commands should be put in seperate files, if this one becomes to large..
 '''
+# TODO: these launch commands should be put in separate files, if this one becomes to large..
+
 import click
-from . import cmd_launch
 from ..util import options
 from ..util.utils import launch_process
 from ..util import defaults
@@ -25,7 +24,7 @@ from aiida.plugins import WorkflowFactory
 from aiida.plugins import CalculationFactory
 
 
-@cmd_launch.command('inpgen')
+@click.command('inpgen')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -65,7 +64,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('fleur')
+@click.command('fleur')
 @options.FLEURINP()
 @options.FLEUR()
 @options.REMOTE()
@@ -140,7 +139,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('scf')
+@click.command('scf')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -176,7 +175,7 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('relax')
+@click.command('relax')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -211,7 +210,7 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('eos')
+@click.command('eos')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -243,7 +242,7 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('banddos')
+@click.command('banddos')
 @options.FLEURINP()
 @options.FLEUR()
 @options.WF_PARAMETERS()
@@ -269,7 +268,7 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('init_cls')
+@click.command('init_cls')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -298,7 +297,7 @@ def launch_init_cls(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('corehole')
+@click.command('corehole')
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -327,7 +326,7 @@ def launch_corehole(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('mae')
+@click.command('mae')
 @options.STRUCTURE_OR_FILE(default=defaults.get_fept_film_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
@@ -367,7 +366,7 @@ def launch_mae(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('create_magnetic')
+@click.command('create_magnetic')
 @options.INPGEN()
 @options.CALC_PARAMETERS()
 @options.FLEUR()
@@ -414,7 +413,7 @@ def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_pa
     launch_process(builder, daemon)
 
 
-@cmd_launch.command('ssdisp')
+@click.command('ssdisp')
 def launch_ssdisp():
     """
     Launch a ssdisp workchain
@@ -426,7 +425,7 @@ def launch_ssdisp():
     #launch_process(builder, daemon)
 
 
-@cmd_launch.command('dmi')
+@click.command('dmi')
 def launch_dmi():
     """
     Launch a dmi workchain
