@@ -13,6 +13,13 @@ def mock_launch_process(*_, **__):
 
 
 @pytest.fixture
+def struct_file_type():
+    """Return instance of ``StructureNodeOrFileParamType``."""
+    from aiida_fleur.cmdline.util.types import StructureNodeOrFileParamType
+    return StructureNodeOrFileParamType()
+
+
+@pytest.fixture
 def run_cli_command():
     """Run a `click` command with the given options.
 

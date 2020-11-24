@@ -125,13 +125,10 @@ def cat_file(node, filename):
     Dumb the content of a file contained in given fleurinpdata, per default dump
     inp.xml
     """
-    #if filename is None:
-    #    filename = 'inp.xml'
     echo.echo(node.get_content(filename=filename))
 
-    #click.echo('Not implemented yet, sorry. Please implement me!')
 
-
+'''
 @cmd_fleurinp.command('info')
 def info():
     """
@@ -182,3 +179,4 @@ def get_parameters():
     parameter data uuid/pk
     """
     click.echo('Not implemented yet, sorry. Please implement me!')
+'''

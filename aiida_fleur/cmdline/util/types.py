@@ -17,6 +17,7 @@ from aiida.cmdline.params import types
 from aiida.cmdline.utils import echo
 from aiida.common.exceptions import NotExistent
 from aiida.plugins import DataFactory
+from aiida.cmdline.utils.decorators import with_dbenv
 
 
 class StructureNodeOrFileParamType(click.ParamType):
@@ -30,10 +31,12 @@ class StructureNodeOrFileParamType(click.ParamType):
 
     name = 'StructureFile'
 
+    @with_dbenv()
     def convert(self, value, param, ctx):
         is_path = False
         # Alternative one could check if int or uuid
         # aiida allows also for shorten uuids
+        from aiida.orm import StructureData, QueryBuilder
 
         try:
             structure = types.DataParamType(sub_classes=('aiida.data:structure',)).convert(value, param, ctx)
@@ -43,7 +46,6 @@ class StructureNodeOrFileParamType(click.ParamType):
             is_path = True
 
         if is_path:
-            StructureData = DataFactory('structure')
             # If it is a path to a file try to convert the structure
             pathtype = click.Path(exists=True, dir_okay=False, resolve_path=True)
             filename = pathtype.convert(value, param, ctx)
@@ -59,4 +61,10 @@ class StructureNodeOrFileParamType(click.ParamType):
                 echo.echo_critical(str(err))
             # do not store structure, since this option is for calculation and workflow
             # input, which will store the structure anyway.
+
+        # do not store again if structure is already there.
+        duplicate = QueryBuilder().append(StructureData, filters={'extras._aiida_hash': structure._get_hash()}).first()  # pylint: disable=protected-access
+
+        if duplicate:
+            return duplicate[0]
         return structure
