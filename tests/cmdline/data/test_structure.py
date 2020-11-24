@@ -34,7 +34,7 @@ def test_import_structure(run_cli_command):
     dest_path = FEPT_INPXML_FILE.strip('.xml')
     copyfile(FEPT_INPXML_FILE, dest_path)
     options = [dest_path, '--fleurinp', '--dry-run']
-    result = run_cli_command(cmd_import, options=options)
+    result = run_cli_command(cmd_import, options=options, raises=True)
     os.remove(dest_path)
-    assert 'Error: Currently, only StructureData from a inp.xml file can be '\
+    assert 'Critical: Error: Currently, only StructureData from a inp.xml file can be '\
            'extracted.' in result.output_lines

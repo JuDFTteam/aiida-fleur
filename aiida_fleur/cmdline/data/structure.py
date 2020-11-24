@@ -47,7 +47,7 @@ def cmd_import(filename, dry_run, fleurinp):
     from aiida_fleur.data.fleurinp import FleurinpData
 
     if not filename.endswith('.xml'):
-        echo.echo_failure('Error: Currently, only StructureData from a inp.xml file can be extracted.')
+        echo.echo_critical('Error: Currently, only StructureData from a inp.xml file can be extracted.')
     fleurinpd = FleurinpData(files=[filename])
     if not fleurinp or dry_run:
         structure = fleurinpd.get_structuredata_ncf()

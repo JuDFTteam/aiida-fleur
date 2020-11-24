@@ -37,6 +37,6 @@ def test_cmd_param_import(run_cli_command):
     dest_path = SI_INPXML_FILE.strip('.xml')
     copyfile(SI_INPXML_FILE, dest_path)
     options = [dest_path, '--fleurinp', '--dry-run']
-    result = run_cli_command(cmd_param_import, options=options)
+    result = run_cli_command(cmd_param_import, options=options, raises=True)
     os.remove(dest_path)
-    assert 'Error: Currently, we can only extract information from an inp.xml file.' in result.output_lines
+    assert 'Critical: Error: Currently, we can only extract information from an inp.xml file.' in result.output_lines

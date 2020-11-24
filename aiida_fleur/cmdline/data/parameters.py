@@ -42,7 +42,7 @@ def cmd_param_import(filename, dry_run, fleurinp, show):
     from aiida_fleur.data.fleurinp import FleurinpData
 
     if not filename.endswith('.xml'):
-        echo.echo_failure('Error: Currently, we can only extract information from an inp.xml file.')
+        echo.echo_critical('Error: Currently, we can only extract information from an inp.xml file.')
     fleurinpd = FleurinpData(files=[filename])
     if not fleurinp or dry_run:
         parameters = fleurinpd.get_parameterdata_ncf()
