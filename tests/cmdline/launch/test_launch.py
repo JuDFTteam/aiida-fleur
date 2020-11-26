@@ -31,6 +31,9 @@ def test_launch_inpgen_base(run_cli_process_launch_command, fixture_code):
     options = ['--inpgen', code.uuid]
     run_cli_process_launch_command(launch_inpgen, options=options)
 
+    options = ['--inpgen', code.uuid, '--daemon']
+    run_cli_process_launch_command(launch_inpgen, options=options)
+
 
 def test_launch_fleur_base(run_cli_process_launch_command, fixture_code, create_fleurinp):
     """Test invoking the fleur launch command with only required inputs."""
