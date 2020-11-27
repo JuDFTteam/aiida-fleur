@@ -287,9 +287,9 @@ def test_center_film_wf(generate_film_structure, generate_structure):
     structure_film = move_atoms_incell(structure_film, [0.0, 0.0, 1.1242])
 
     centered_film = center_film_wf(structure_film)
-    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.2286013142),
-                                                         (1.4026317387, 1.9836207751, -0.1740305093),
-                                                         (0.0, 0.0, 1.2286013141)]
+    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.2286013139),
+                                                         (1.4026317384, 1.9836207747, -0.1740305094),
+                                                         (0.0, 0.0, 1.2286013138)]
 
     with pytest.raises(TypeError):
         center_film(structure_bulk)
@@ -297,20 +297,19 @@ def test_center_film_wf(generate_film_structure, generate_structure):
 
 def test_get_layers(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import get_layers
-
+    from aiida_fleur.common.constants import BOHR_A
     structure = generate_film_structure()
 
-    assert get_layers(structure) == ([[([0.0, 0.0, -1.054570804781922], 'Fe')],
-                                      [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
-                                      [([0.0, 0.0, 1.4026318234924429], 'Pt')]], [-1.0545708048, 0.0,
-                                                                                  1.4026318235], [1, 1, 1])
+    assert get_layers(structure) == ([[([0.0, 0.0, -1.05457080454278], 'Fe')],
+                                      [([1.402631738400183, 1.9836207746838, 0.0], 'Pt')],
+                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708045, 0.0,
+                                                                                 1.4026318232], [1, 1, 1])
 
-    bohr_a_0 = 0.52917721092
-    structure.append_atom(position=(1.0, 0., -1.99285 * bohr_a_0), symbols='Fe')
-    assert get_layers(structure) == ([[([0.0, 0.0, -1.054570804781922], 'Fe'), ([1.0, 0.0, -1.054570804781922], 'Fe')],
-                                      [([1.4026317387182539, 1.9836207751336201, 0.0], 'Pt')],
-                                      [([0.0, 0.0, 1.4026318234924429], 'Pt')]], [-1.0545708048, 0.0,
-                                                                                  1.4026318235], [2, 1, 1])
+    structure.append_atom(position=(1.0, 0., -1.99285 * BOHR_A), symbols='Fe')
+    assert get_layers(structure) == ([[([0.0, 0.0, -1.05457080454278], 'Fe'), ([1.0, 0.0, -1.05457080454278], 'Fe')],
+                                      [([1.402631738400183, 1.9836207746838, 0.0], 'Pt')],
+                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708045, 0.0,
+                                                                                 1.4026318232], [2, 1, 1])
 
 
 create_slab_inputs = [{

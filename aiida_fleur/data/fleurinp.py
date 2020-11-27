@@ -35,7 +35,7 @@ from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
-from aiida_fleur.common.constants import bohr_a as BOHR_A
+from aiida_fleur.common.constants import BOHR_A
 
 
 class FleurinpData(Data):

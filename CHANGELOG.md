@@ -1,4 +1,11 @@
 
+## v1.1.3
+### release compatible with AiiDA-core 1.3.0
+- Introduced common constants, for bohr and htr, increased precision
+- Command line interface (CLI) `aiida-fleur` with various functionalities exposed
+- For devs: Increased test coverage
+
+
 ## v1.1.2
 ### release compatible with AiiDA-core 1.3.0
 - still support of Fleur MaX4 version (release branch) with inpgen

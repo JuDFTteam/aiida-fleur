@@ -28,7 +28,7 @@ def test_parse_xmlout_file():
         'creator_target_architecture': 'GEN',
         'creator_target_structure': ' ',
         'density_convergence_units': 'me/bohr^3',
-        'energy': -23635.691764717936,
+        'energy': -23635.691961010132,
         'energy_core_electrons': -496.172547773,
         'energy_hartree': -868.5956587197,
         'energy_hartree_units': 'Htr',

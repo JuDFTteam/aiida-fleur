@@ -13,6 +13,16 @@
 Here we collect physical constants which are used throughout the code
 that way we ensure consitency
 '''
+# at some point one should import these from masci-tools to ensure,
+# that all judft plugins and tools take the same values, to make roundtrips consistent
+# NIST https://physics.nist.gov/cgi-bin/cuu/Value?hrev
+HTR_TO_EV = 27.211386245988  #(53)
+BOHR_A = 0.5291772108
 
-htr_to_ev = 27.21138602
-bohr_a = 0.52917720903
+# NIST BOHR 0.529177210903 #(80)
+#https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0
+
+#Fleur
+#htr_eV   = 27.21138386
+#bohr=0.5291772108
+#bohrtocm=0.529177e-8

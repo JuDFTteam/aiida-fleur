@@ -24,6 +24,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):
@@ -146,7 +147,6 @@ class FleurMaeConvWorkChain(WorkChain):
         t_energydict = {}
         original_t_energydict = {}
         outnodedict = {}
-        htr_to_ev = 27.21138602
 
         for label in six.iterkeys(self.ctx.wf_dict['sqas']):
             calc = self.ctx[label]
@@ -172,7 +172,7 @@ class FleurMaeConvWorkChain(WorkChain):
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             t_energydict[label] = t_e
 
         if t_energydict:

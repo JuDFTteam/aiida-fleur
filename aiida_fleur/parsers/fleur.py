@@ -28,6 +28,7 @@ from lxml import etree
 from aiida.parsers import Parser
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurParser(Parser):
@@ -644,11 +645,11 @@ def parse_xmlout_file(outxmlfile):
         """
         Multiplies the value given with the Hartree factor (converts htr to eV)
         """
-        htr = 27.21138602
+        #htr = 27.21138602
         suc = False
         value_to_save, suc = convert_to_float(value)
         if suc:
-            return value_to_save * htr
+            return value_to_save * HTR_TO_EV
         else:
             return value
 

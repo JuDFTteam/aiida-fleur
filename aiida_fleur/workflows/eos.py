@@ -32,6 +32,7 @@ from aiida.common import AttributeDict
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurEosWorkChain(WorkChain):
@@ -190,7 +191,6 @@ class FleurEosWorkChain(WorkChain):
         vol_peratom_success = []
         outnodedict = {}
         natoms = len(self.inputs.structure.sites)
-        htr_to_ev = 27.21138602
         e_u = 'eV'
         dis_u = 'me/bohr^3'
         for label in self.ctx.labels:
@@ -220,7 +220,7 @@ class FleurEosWorkChain(WorkChain):
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             t_energylist.append(t_e)

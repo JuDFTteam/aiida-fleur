@@ -25,7 +25,7 @@ def test_create_group(capsys, clear_database):
 
     assert captured.out == (f'Group created with PK={pk} and name test_group\n'
                             'Skipping not-existent-uuid, it does not exist in the DB\n'
-                            'added nodes: [{para.pk}] to group test_group {pk}\n')
+                            f'added nodes: [{para.pk}] to group test_group {pk}\n')
     para2 = para.clone()
     para2.store()
     group = create_group(name='test_group', nodes=[para2], add_if_exist=False)
@@ -40,7 +40,7 @@ def test_create_group(capsys, clear_database):
 
     assert captured.out == (f'Group with name test_group and pk {pk} already exists.\n'
                             'Adding nodes to the existing group test_group\n'
-                            'added nodes: [{para2.pk}] to group test_group {pk}\n')
+                            f'added nodes: [{para2.pk}] to group test_group {pk}\n')
 
     assert isinstance(group, Group)
 

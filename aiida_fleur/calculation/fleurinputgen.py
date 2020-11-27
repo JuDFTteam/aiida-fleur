@@ -28,7 +28,7 @@ from aiida.orm import StructureData, Dict
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
-from aiida_fleur.common.constants import bohr_a
+from aiida_fleur.common.constants import BOHR_A
 
 
 class FleurinputgenCalculation(CalcJob):
@@ -170,7 +170,7 @@ class FleurinputgenCalculation(CalcJob):
         # but we have to convert from Angstrom to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0]
         scaling_lat = 1.  # /bohr_to_ang = 0.52917720859
-        scaling_pos = 1. / bohr_a  # Angstrom to atomic
+        scaling_pos = 1. / BOHR_A  # Angstrom to atomic
         own_lattice = False  # not self._use_aiida_structure
 
         ##########################################

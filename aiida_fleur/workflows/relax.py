@@ -27,7 +27,7 @@ from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
-from aiida_fleur.common.constants import bohr_a
+from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
@@ -461,7 +461,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         # we build the structure here, that way we can run an scf afterwards
         if self.ctx.final_cell:
-            np_cell = np.array(self.ctx.final_cell) * bohr_a
+            np_cell = np.array(self.ctx.final_cell) * BOHR_A
             structure = StructureData(cell=np_cell.tolist())
 
             for atom in self.ctx.final_atom_positions:
@@ -470,7 +470,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if self.ctx.pbc == (True, True, True):
                     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=atom[0])
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * bohr_a), symbols=atom[0])
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A), symbols=atom[0])
 
             structure.pbc = self.ctx.pbc
             self.ctx.final_structure = structure

@@ -110,13 +110,15 @@ def convert_htr_to_ev(value, parser_info_out=None):
     """
     Multiplies the value given with the Hartree factor (converts htr to eV)
     """
+    from aiida_fleur.common.constants import HTR_TO_EV
+    # htr = 27.21138602
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
-    htr = 27.21138602
+
     suc = False
     value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
     if suc:
-        return value_to_save * htr
+        return value_to_save * HTR_TO_EV
     else:
         return value
 
@@ -125,13 +127,14 @@ def convert_ev_to_htr(value, parser_info_out=None):
     """
     Divides the value given with the Hartree factor (converts htr to eV)
     """
+    from aiida_fleur.common.constants import HTR_TO_EV
+    # htr = 27.21138602
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
-    htr = 27.21138602
     suc = False
     value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
     if suc:
-        return value_to_save / htr
+        return value_to_save / HTR_TO_EV
     else:
         return value
 
