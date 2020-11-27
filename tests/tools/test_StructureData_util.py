@@ -16,6 +16,7 @@ import numpy as np
 
 
 def test_is_structure(generate_structure):
+    """Test if is structure can differentiate between structures, identifiers and else"""
     from aiida_fleur.tools.StructureData_util import is_structure
     from aiida.orm import Dict
 
@@ -52,22 +53,38 @@ def test_is_primitive(generate_structure):
 
 def test_rescale_nowf(generate_structure):
     from aiida_fleur.tools.StructureData_util import rescale_nowf
+    from aiida_fleur.tools.StructureData_util import rescale
+    from aiida.orm import Dict, Float
+
     structure = generate_structure()
     old_cell = np.array(structure.cell)
 
     rescaled = rescale_nowf(structure, 1.05)
+    rescaled2 = rescale(structure, Float(1.05))
     rescaled_cell = np.array(rescaled.cell)
+    rescaled_cell2 = np.array(rescaled2.cell)
 
     assert (rescaled_cell == 1.05**(1 / 3.) * old_cell).all()
+    #assert (np.round(rescaled_cell2, 13) == 1.05**(1 / 3.) * old_cell).all()
+    # This does not work, seems to check if it is the same object, not if values are the same
+    # The precision between these functions is strangely different
+    assert list(np.round(rescaled_cell[0], 13)) == list(rescaled_cell2[0])
+    assert list(np.round(rescaled_cell[1], 13)) == list(rescaled_cell2[1])
+    assert list(np.round(rescaled_cell[2], 13)) == list(rescaled_cell2[2])
 
     positions_old = [x.position for x in structure.sites]
     positions_rescaled = [x.position for x in rescaled.sites]
     for position in positions_old:
         assert tuple(pos * 1.05**(1 / 3.) for pos in position) in positions_rescaled
 
+    no_struc = Dict(dict={})
+    no_rescaled = rescale_nowf(no_struc, 1.05)
+    assert no_rescaled is None
+
 
 def test_supercell(generate_structure):
     from aiida_fleur.tools.StructureData_util import supercell
+    from aiida_fleur.tools.StructureData_util import supercell_ncf
     from aiida.orm import Int
     from itertools import product
 
@@ -88,6 +105,10 @@ def test_supercell(generate_structure):
                 np.array(position) + x * np.array(structure.cell[0]) + y * np.array(structure.cell[1]) +
                 z * np.array(structure.cell[2]))
             assert test_pos in positions_rescaled
+
+    no_struc = Int(1)
+    no_supercell = supercell_ncf(no_struc, 2, 3, 4)
+    assert no_supercell is None
 
 
 def test_abs_to_rel(generate_structure):
@@ -113,6 +134,7 @@ def test_abs_to_rel_f(generate_film_structure):
 
 
 def test_rel_to_abs(generate_structure):
+    """Test if rel_to_abs for bulk function scales coordinates right"""
     from aiida_fleur.tools.StructureData_util import rel_to_abs
 
     structure = generate_structure()
@@ -124,6 +146,7 @@ def test_rel_to_abs(generate_structure):
 
 
 def test_rel_to_abs_f(generate_film_structure):
+    """Test if rel_to_abs film function scales coordinates right"""
     from aiida_fleur.tools.StructureData_util import rel_to_abs_f
 
     structure = generate_film_structure()
@@ -135,10 +158,9 @@ def test_rel_to_abs_f(generate_film_structure):
 
 
 def test_break_symmetry_wf(generate_film_structure):
-    """
-    Check if it does not crash and able to destroy all symmetries
-    """
+    """Check if it does not crash and able to destroy all symmetries"""
     from aiida_fleur.tools.StructureData_util import break_symmetry_wf, supercell_ncf
+    from aiida_fleur.tools.StructureData_util import break_symmetry
     from aiida.orm import Dict
 
     structure = generate_film_structure()
@@ -154,8 +176,49 @@ def test_break_symmetry_wf(generate_film_structure):
     for kind_name in ['Fe1', 'Fe1', 'Fe1', 'Fe1', 'Pt1', 'Pt2', 'Pt3', 'Pt4', 'Pt5', 'Pt6', 'Pt7', 'Pt8']:
         assert kind_name in kind_names
 
+    # Test if break symmetry adjusts the parameter data right.
+    should_out_dict = {
+        'atom': {
+            'id': 26,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom1': {
+            'id': 78.1,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom2': {
+            'id': 78.2,
+            'rmt': 2.2,
+            'bmu': 1
+        }
+    }
+    parameter_data = Dict(
+        dict={
+            'atom': {
+                'id': 26,
+                'rmt': 2.1,
+                'bmu': -1
+            },
+            'atom1': {
+                'id': 78.1,
+                'rmt': 2.1,
+                'bmu': -1
+            },
+            'atom2': {
+                'id': 78.2,
+                'rmt': 2.2,
+                'bmu': 1
+            }
+        })
+    out, parameterdata_new = break_symmetry(structure, parameterdata=parameter_data)
+    out_dict = parameterdata_new.get_dict()
+    assert out_dict == should_out_dict
+
 
 def test_find_equi_atoms(generate_film_structure):
+    """Test if find_equi_atoms functions returns equidistant atoms"""
     from aiida_fleur.tools.StructureData_util import find_equi_atoms, supercell_ncf
     from numpy import array
 
@@ -174,6 +237,7 @@ def test_find_equi_atoms(generate_film_structure):
 
 
 def test_get_spacegroup(generate_film_structure):
+    """Test if get_spacegroup function returns the right spacegroup"""
     from aiida_fleur.tools.StructureData_util import get_spacegroup
 
     structure = generate_film_structure()
@@ -181,6 +245,7 @@ def test_get_spacegroup(generate_film_structure):
 
 
 def test_move_atoms_incell_wf(generate_structure):
+    """Test if move atoms incell functions moves atoms correctly"""
     from aiida_fleur.tools.StructureData_util import move_atoms_incell_wf
     from aiida.orm import Dict
 
@@ -198,6 +263,7 @@ def test_move_atoms_incell_wf(generate_structure):
 
 def test_find_primitive_cell_wf(generate_structure):
     from aiida_fleur.tools.StructureData_util import find_primitive_cell_wf, supercell_ncf
+    from aiida_fleur.tools.StructureData_util import find_primitive_cells
 
     structure_primitive = generate_structure()
     structure = supercell_ncf(structure_primitive, 2, 2, 22)
@@ -206,6 +272,10 @@ def test_find_primitive_cell_wf(generate_structure):
     result = result['primitive_cell']
 
     assert all(x in structure_primitive.cell for x in result.cell)
+
+    resultlist = find_primitive_cells([structure.uuid, structure.uuid])
+    for struc in resultlist:
+        assert all(x in structure_primitive.cell for x in result.cell)
 
 
 def test_center_film_wf(generate_film_structure, generate_structure):
@@ -346,6 +416,8 @@ def test_magnetic_slab_from_relaxed(generate_film_structure):
 
 
 def test_request_average_bond_length(generate_film_structure):
+    """Test interface of request average bond length from mp, requires mp_api_key"""
+    # Todo mock the mp query, since result could change overtime, also that the CI can run this
     import os
     from aiida_fleur.tools.StructureData_util import request_average_bond_length
 
@@ -368,6 +440,8 @@ def test_request_average_bond_length(generate_film_structure):
 
 
 def test_adjust_film_relaxation(generate_film_structure):
+    """Test interface of adjust film relaxation, requires mp_api_key"""
+    # Todo mock the mp query, since result could change overtime, also that the CI can run this
     import os
     from aiida_fleur.tools.StructureData_util import adjust_film_relaxation
 
@@ -398,3 +472,35 @@ def test_adjust_film_relaxation(generate_film_structure):
     assert result.sites[0].position[2] == -1.1709859694
     assert result.sites[1].position[2] == 0.2602185234
     assert result.sites[2].position[2] == 1.1709859694
+
+
+def test_create_slap(generate_structure):
+    """Test if create_slap"""
+    from aiida_fleur.tools.StructureData_util import create_slap
+
+    structure = generate_structure()
+    film_struc = create_slap(structure, [1, 1, 1], 2)
+    cell_should = [[3.839589821842953, 0.0, 2.351070692679364e-16],
+                   [1.9197949109214756, 3.3251823258281643, 2.351070692679364e-16], [0.0, 0.0, 9.405035885099004]]
+    sites_should = [(3.839589821842953, 2.216788217218776, 3.135011961699669), (0.0, 0.0, 0.0),
+                    (1.9197949109214758, 1.1083941086093878, 6.270023923399337)]
+
+    assert film_struc.cell == cell_should
+    assert film_struc.sites[0].position == sites_should[0]
+    assert film_struc.sites[1].position == sites_should[1]
+    assert film_struc.sites[2].position == sites_should[2]
+
+
+def test_create_all_slabs(generate_structure):
+    """Test if create_all_slabs"""
+    from aiida_fleur.tools.StructureData_util import create_all_slabs
+    from aiida.orm import StructureData
+
+    structure = generate_structure()
+    film_strucs = create_all_slabs(structure, 2, 5)
+
+    assert len(film_strucs.keys()) == 9
+    assert list(film_strucs.keys()) == [(1, 1, 1), (2, 2, 1), (1, 1, 0), (2, 2, -1), (2, 1, 1), (2, 1, -1), (2, 1, -2),
+                                        (2, 0, -1), (2, -1, -1)]
+    for key, film_struc in film_strucs.items():
+        assert isinstance(film_struc, StructureData)

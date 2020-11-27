@@ -21,7 +21,7 @@ thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
-def test_cmd_plot(run_cli_command):
+def test_cmd_plot(run_cli_command, temp_dir):
     """Test invoking the plot command in all variants.
 
     If this test hangs, --no-show is not working
@@ -29,14 +29,14 @@ def test_cmd_plot(run_cli_command):
     from aiida_fleur.cmdline.visualization import cmd_plot
 
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE)
+    import_data(EXPORTFILE_FILE, group=None)
     process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
 
     options = [process_uuid, '--no-show']
     result = run_cli_command(cmd_plot, options=options)
 
-    #provide a file with ids
-    tempfile_name = 'test_uuids.txt'
+    # provide a file with ids
+    tempfile_name = os.path.join(temp_dir, 'test_uuids.txt')
     with open(tempfile_name, 'w') as file1:
         file1.write('7f9f4cfb-4170-48ea-801d-4269f88792e0\n7f9f4cfb-4170-48ea-801d-4269f88792e0')
     options = [process_uuid, '--no-show', '-f', tempfile_name]

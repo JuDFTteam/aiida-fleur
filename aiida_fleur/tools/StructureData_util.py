@@ -666,6 +666,7 @@ def get_all_miller_indices(structure, highestindex):
     return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
 
 
+'''
 def create_all_slabs_buggy(initial_structure,
                            miller_index,
                            min_slab_size_ang,
@@ -705,6 +706,7 @@ def create_all_slabs_buggy(initial_structure,
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
     return aiida_strucs
+'''
 
 
 def create_all_slabs(initial_structure,
@@ -728,9 +730,9 @@ def create_all_slabs(initial_structure,
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
         slab = create_slap(initial_structure, index, min_slab_size_ang, min_vacuum_size, min_slab_size_ang)
-        film_struc = StructureData(pymatgen_structure=slab)
-        film_struc.pbc = (True, True, False)
-        aiida_strucs[slab.miller_index] = film_struc
+        #film_struc = StructureData(pymatgen_structure=slab)
+        #film_struc.pbc = (True, True, False)
+        aiida_strucs[index] = slab
 
     return aiida_strucs
 
@@ -1271,6 +1273,7 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
     return Dict(dict=bond_data)
 
 
+'''
 def estimate_mt_radii(structure, stepsize=0.05):
     """
     # TODO implement
@@ -1311,3 +1314,4 @@ def find_common_mt(structures):
 
     """
     return None
+'''

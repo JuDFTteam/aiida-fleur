@@ -28,7 +28,7 @@ def test_workchain_res(run_cli_command):
     EXPECTED1 = '"total_energy": -580.0719889044,'
     EXPECTED2 = '"energy_core_electrons": -316.8117066016,'
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE)
+    import_data(EXPORTFILE_FILE, group=None)
     process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
 
     options = [process_uuid]
@@ -52,7 +52,7 @@ def test_workchain_inputdict(run_cli_command):
     from aiida_fleur.cmdline.workflows import workchain_inputdict
 
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE)
+    import_data(EXPORTFILE_FILE, group=None)
 
     EXPECTED = '"max_wallclock_seconds": 300,'
     EXPECTED2 = '"num_machines": 1,'

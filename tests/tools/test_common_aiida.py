@@ -8,8 +8,8 @@ import json
 import pytest
 
 
-def test_create_group(capsys):
-    'Test group creation'
+def test_create_group(capsys, clear_database):
+    """Test group creation"""
     from aiida_fleur.tools.common_aiida import create_group
     from aiida.orm import Group, Dict
 
@@ -18,26 +18,29 @@ def test_create_group(capsys):
     group = create_group(name='test_group', nodes=[para.pk, 'not-existent-uuid'], description='test_description')
 
     captured = capsys.readouterr()
+    if '=4' in captured.out:
+        pk = 4  # when running all tests the import group counter is not reset...
+    else:
+        pk = 1
 
-    assert captured.out == ('Group created with PK=1 and name test_group\n'
+    assert captured.out == (f'Group created with PK={pk} and name test_group\n'
                             'Skipping not-existent-uuid, it does not exist in the DB\n'
-                            'added nodes: [{}] to group test_group 1\n'.format(para.pk))
-
+                            'added nodes: [{para.pk}] to group test_group {pk}\n')
     para2 = para.clone()
     para2.store()
     group = create_group(name='test_group', nodes=[para2], add_if_exist=False)
 
     captured = capsys.readouterr()
-    assert captured.out == ('Group with name test_group and pk 1 already exists.\n'
-                            'Nodes were not added to the existing group test_group\n')
+    assert captured.out == ('Group with name test_group and pk {} already exists.\n'
+                            'Nodes were not added to the existing group test_group\n'.format(pk))
 
     group = create_group(name='test_group', nodes=[para2], add_if_exist=True)
 
     captured = capsys.readouterr()
 
-    assert captured.out == ('Group with name test_group and pk 1 already exists.\n'
+    assert captured.out == (f'Group with name test_group and pk {pk} already exists.\n'
                             'Adding nodes to the existing group test_group\n'
-                            'added nodes: [{}] to group test_group 1\n'.format(para2.pk))
+                            'added nodes: [{para2.pk}] to group test_group {pk}\n')
 
     assert isinstance(group, Group)
 

@@ -60,7 +60,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             'wf_parameters',
             valid_type=Dict,
             required=False,
-            default=Dict(
+            default=lambda: Dict(
                 dict={
                     'resources': {
                         'num_machines': 1
