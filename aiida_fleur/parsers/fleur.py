@@ -970,14 +970,14 @@ def parse_xmlout_file(outxmlfile):
                 # Total charges, total magentic moment
 
                 total_c = eval_xpath2(iteration_node, all_spin_charges_total_xpath)
-                write_simple_outnode(total_c, 'list_floats', 'spind_dependent_charge_total', simple_data)
+                write_simple_outnode(total_c, 'list_floats', 'spin_dependent_charge_total', simple_data)
 
                 total_magentic_moment_cell = None
                 if len(total_c) == 2:
                     val, suc = convert_to_float(total_c[0])
                     val2, suc2 = convert_to_float(total_c[1])
                     total_magentic_moment_cell = np.abs(val - val2)
-                write_simple_outnode(total_magentic_moment_cell, 'float', 'total_magentic_moment_cell', simple_data)
+                write_simple_outnode(total_magentic_moment_cell, 'float', 'total_magnetic_moment_cell', simple_data)
 
                 total_c_i = eval_xpath2(iteration_node, all_spin_charges_interstitial_xpath)
                 write_simple_outnode(total_c_i, 'list_floats', 'spin_dependent_charge_intersitial', simple_data)
