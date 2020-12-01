@@ -980,10 +980,10 @@ def parse_xmlout_file(outxmlfile):
                 write_simple_outnode(total_magentic_moment_cell, 'float', 'total_magentic_moment_cell', simple_data)
 
                 total_c_i = eval_xpath2(iteration_node, all_spin_charges_interstitial_xpath)
-                write_simple_outnode(total_c_i, 'list_floats', 'spind_dependent_charge_intersitial', simple_data)
+                write_simple_outnode(total_c_i, 'list_floats', 'spin_dependent_charge_intersitial', simple_data)
 
                 total_c_mt = eval_xpath2(iteration_node, all_spin_charges_mt_spheres_xpath)
-                write_simple_outnode(total_c_mt, 'list_floats', 'spind_dependent_charge_mt', simple_data)
+                write_simple_outnode(total_c_mt, 'list_floats', 'spin_dependent_charge_mt', simple_data)
 
                 total_c = eval_xpath(iteration_node, all_total_charge_xpath)
                 write_simple_outnode(total_c, 'float', 'total_charge', simple_data)
