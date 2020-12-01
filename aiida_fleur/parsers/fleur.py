@@ -22,6 +22,7 @@ from __future__ import absolute_import
 import os
 import re
 import json
+import numpy as np
 from datetime import date
 from lxml import etree
 
@@ -140,7 +141,8 @@ class FleurParser(Parser):
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open('out.xml', 'r') as out_file:  # lazy out.xml parsing
+                    with output_folder.open(FleurCalculation._OUTXML_FILE_NAME,
+                                            'r') as out_file:  # lazy out.xml parsing
                         outlines = out_file.read()
                         try:
                             line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
@@ -226,13 +228,11 @@ class FleurParser(Parser):
                 return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
             elif simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
-                #outputdata['CalcJob_uuid'] = self.node.uuid
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
             elif complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
-                #parameter_data['CalcJob_uuid'] = self.node.uuid
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)
@@ -314,7 +314,7 @@ def parse_xmlout_file(outxmlfile):
     # FIXME: This is global, look for a different way to do this, python logging?
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
-    parser_version = '0.3.0'
+    parser_version = '0.3.1'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 
@@ -715,12 +715,12 @@ def parse_xmlout_file(outxmlfile):
         spindowncharge_name = 'spinDownCharge'
         moment_name = 'moment'
 
-        # all electron charges
-        allelectronchages_xpath = ''
+        # All electron charges
+        all_spin_charges_total_xpath = 'allelectronCharges/spinDependentCharge/@total'
+        all_spin_charges_interstitial_xpath = 'allelectronCharges/spinDependentCharge/@interstitial'
+        all_spin_charges_mt_spheres_xpath = 'allelectronCharges/spinDependentCharge/@mtSpheres'
+        all_total_charge_xpath = 'allelectronCharges/totalCharge/@value'
 
-        a = 'total'
-        b = 'interstitial'
-        c = 'value'
         # energy
         totalenergy_xpath = 'totalEnergy'
         sumofeigenvalues_xpath = 'totalEnergy/sumOfEigenvalues'
@@ -950,7 +950,7 @@ def parse_xmlout_file(outxmlfile):
                                                                distance_name)
                     write_simple_outnode(overall_charge_density, 'float', 'overall_charge_density', simple_data)
 
-                # magnetic moments            #TODO orbMag Moment
+                # magnetic moments
                 m_units = get_xml_attribute(eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
                 write_simple_outnode(m_units, 'str', 'magnetic_moment_units', simple_data)
                 write_simple_outnode(m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
@@ -964,6 +964,28 @@ def parse_xmlout_file(outxmlfile):
                 spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
                 write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
 
+                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
+                write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
+
+                # Total charges, total magentic moment
+
+                total_c = eval_xpath(iteration_node, all_spin_charges_total_xpath)
+                write_simple_outnode(total_c, 'list_floats', 'spind_dependent_charge_total', simple_data)
+
+                total_magentic_moment_cell = None
+                if len(total_c) == 2:
+                    total_magentic_moment_cell = np.abs(total_c[0] - total_c[1])
+                write_simple_outnode(total_magentic_moment_cell, 'float', 'total_magentic_moment_cell', simple_data)
+
+                total_c_i = eval_xpath(iteration_node, all_spin_charges_interstitial_xpath)
+                write_simple_outnode(total_c_i, 'list_floats', 'spind_dependent_charge_intersitial', simple_data)
+
+                total_c_mt = eval_xpath(iteration_node, all_spin_charges_mt_spheres_xpath)
+                write_simple_outnode(total_c_i, 'list_floats', 'spind_dependent_charge_mt', simple_data)
+
+                total_c = eval_xpath(iteration_node, all_total_charge_xpath)
+                write_simple_outnode(total_c, 'float', 'total_charge', simple_data)
+
                 # orbital magnetic moments
                 orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
                 write_simple_outnode(orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
@@ -973,21 +995,6 @@ def parse_xmlout_file(outxmlfile):
 
                 orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
                 write_simple_outnode(orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
-
-                # TODO: atomtype dependence
-                # moment = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
-                #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
-
-                # spinup = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
-                #write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
-
-                # spindown = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
-                #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-
-                # Total charges, total magentic moment
 
             if ldaU:
                 simple_data['ldau_info'] = {}

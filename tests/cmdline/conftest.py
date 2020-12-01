@@ -13,6 +13,40 @@ def mock_launch_process(*_, **__):
 
 
 @pytest.fixture
+def import_with_migrate(temp_dir):
+    """Import an aiida export file and migrate it
+
+    We want to be able to run the test with several aiida versions,
+    therefore imports have to be migrate, but we also do not want to use verdi
+    """
+    _DEFAULT_IMPORT_KWARGS = {'group': None}
+
+    def _import_with_migrate(filename, tempdir=temp_dir, import_kwargs=None, try_migration=True):
+        from click import echo
+        from aiida.tools.importexport import import_data
+        from aiida.tools.importexport import EXPORT_VERSION, IncompatibleArchiveVersionError
+        #from aiida.tools.importexport import detect_archive_type,
+        #from aiida.tools.importexport.archive.migrators import get_migrator
+        #from aiida.tools.importexport.common.config import ExportFileFormat
+        if import_kwargs is None:
+            import_kwargs = _DEFAULT_IMPORT_KWARGS
+        archive_path = filename
+        try:
+            import_data(archive_path, **import_kwargs)
+        except IncompatibleArchiveVersionError as exception:
+            raise ValueError
+            #if try_migration:
+            #    echo(f'incompatible version detected for {archive}, trying migration')
+            #    migrator = get_migrator(ExportFileFormat.TAR_GZIPPED)(archive_path)
+            #    archive_path = migrator.migrate(
+            #        EXPORT_VERSION, None, out_compression='none', work_dir=tempdir
+            #        )
+            #    import_data(archive_path, **import_kwargs)
+
+    return _import_with_migrate
+
+
+@pytest.fixture
 def struct_file_type():
     """Return instance of ``StructureNodeOrFileParamType``."""
     from aiida_fleur.cmdline.util.types import StructureNodeOrFileParamType

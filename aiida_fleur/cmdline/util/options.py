@@ -145,3 +145,8 @@ CLEAN_WORKDIR = OverridableOption(
     default=False,
     show_default=True,
     help='Clean the remote folder of all the launched calculations after completion of the workchain.')
+
+SHOW = OverridableOption('--show/--no-show',
+                         default=True,
+                         show_default=True,
+                         help='Show the main output of the command.')

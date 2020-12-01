@@ -14,21 +14,21 @@ Module to test all CLI workflow commands.
 '''
 
 import os
-from aiida.tools.importexport import import_data
-
+#from aiida.tools.importexport import import_data
 file_path = '../../files/exports/fleur_scf_fleurinp_Si.tar.gz'
 thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
-def test_workchain_res(run_cli_command):
+def test_workchain_res(run_cli_command, import_with_migrate):
     """Test invoking the workchain res command in all variants."""
     from aiida_fleur.cmdline.workflows import workchain_res
 
     EXPECTED1 = '"total_energy": -580.0719889044,'
     EXPECTED2 = '"energy_core_electrons": -316.8117066016,'
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE, group=None)
+    #import_data(EXPORTFILE_FILE, group=None)
+    import_with_migrate(EXPORTFILE_FILE)
     process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
 
     options = [process_uuid]
@@ -47,13 +47,13 @@ def test_workchain_res(run_cli_command):
     run_cli_command(workchain_res, options=options, raises=KeyError)
 
 
-def test_workchain_inputdict(run_cli_command):
+def test_workchain_inputdict(run_cli_command, import_with_migrate):
     """Test invoking the workchain inputdict command in all variants."""
     from aiida_fleur.cmdline.workflows import workchain_inputdict
 
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE, group=None)
-
+    #import_data(EXPORTFILE_FILE, group=None)
+    import_with_migrate(EXPORTFILE_FILE)
     EXPECTED = '"max_wallclock_seconds": 300,'
     EXPECTED2 = '"num_machines": 1,'
     process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'

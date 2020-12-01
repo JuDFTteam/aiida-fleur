@@ -21,7 +21,7 @@ from __future__ import print_function
 # from ase.io import *
 import six
 
-from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
+from pymatgen.core.surface import generate_all_slabs  #, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator
 
 import numpy as np
@@ -663,6 +663,7 @@ def get_all_miller_indices(structure, highestindex):
     """
     wraps the pymatgen function get_symmetrically_distinct_miller_indices for an AiiDa structure
     """
+    from pymatgen.core.surface import get_symmetrically_distinct_miller_indices
     return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
 
 

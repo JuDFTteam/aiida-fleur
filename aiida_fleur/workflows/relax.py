@@ -111,6 +111,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.switch_bfgs = False  # Bool if BFGS should be switched on
         self.ctx.scf_res = None  # Last scf results
         self.ctx.final_structure = None  # The optimized structure
+        self.ctx.total_magnetic_moment = None
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._wf_default)
@@ -496,6 +497,13 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
 
+        #if jspin ==2
+        try:
+            total_mag = scf_out_d['total_magnetic_moment_cell']
+        except KeyError:
+            self.report('ERROR: Could not parse total magnetic moment cell of final scf run')
+        self.ctx.total_magnetic_moment = total_mag
+
     def return_results(self):
         """
         This function stores results of the workchain into the output nodes.
@@ -514,7 +522,9 @@ class FleurRelaxWorkChain(WorkChain):
             'force_iter_done': self.ctx.loop_count,
             # uuids in the output are bad for caching should be avoided,
             # instead better return the node.
-            'last_scf_wc_uuid': self.ctx.scf_res.uuid
+            'last_scf_wc_uuid': self.ctx.scf_res.uuid,
+            'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
+            'total_magnetic_moment_cell_units': 'muBohr'
         }
         outnode = Dict(dict=out)
 

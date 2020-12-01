@@ -16,6 +16,8 @@ import click
 from aiida.cmdline.params.types import ProcessParamType
 from aiida.cmdline.params import arguments, options
 from aiida.cmdline.utils import decorators, echo
+from aiida import orm
+from aiida_fleur.cmdline.util import options as options_fl
 
 
 @click.group('workflow')
@@ -31,13 +33,12 @@ def cmd_workflow():
                    )  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
 @click.option('--info/--no-info', default=False, help='Print an info header above each node.')
 @click.option('-l', '--label', 'label', type=str, help='Print only output dicts with a certain link_label.')
+@options_fl.SHOW()
 @options.DICT_KEYS()
 @options.DICT_FORMAT()
 @decorators.with_dbenv()
-def workchain_res(process, fmt, keys, label, info):
+def workchain_res(process, info, label, show, keys, fmt):
     """Print data from Dict nodes returned or created by any fleur process."""
-    #from aiida.cmdline.utils.echo import echo_dictionary
-    from aiida.orm import Dict
 
     returned_dicts_info = []
     returned_dicts = []
@@ -46,7 +47,7 @@ def workchain_res(process, fmt, keys, label, info):
     except ValueError as exception:
         echo.echo_critical(str(exception))
     for result in results:
-        if isinstance(result.node, Dict):
+        if isinstance(result.node, orm.Dict):
             if label is not None:
                 if label == result.link_label:
                     returned_dicts.append(result.node.get_dict())
@@ -73,12 +74,12 @@ def workchain_res(process, fmt, keys, label, info):
                    )  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
 @click.option('--info/--no-info', default=False, help='Print an info header above each node.')
 @click.option('-l', '--label', 'label', type=str, help='Print only output dicts with a certain link_label.')
+@options_fl.SHOW()
 @options.DICT_KEYS()
 @options.DICT_FORMAT()
 @decorators.with_dbenv()
-def workchain_inputdict(process, fmt, keys, label, info):
-    """Print data from Dict nodes inputed into any fleur process."""
-    #from aiida.cmdline.utils.echo import echo_dictionary
+def workchain_inputdict(process, info, label, show, keys, fmt):
+    """Print data from Dict nodes input into any fleur process."""
     from aiida.orm import Dict
 
     returned_dicts_info = []
@@ -88,7 +89,7 @@ def workchain_inputdict(process, fmt, keys, label, info):
     except ValueError as exception:
         echo.echo_critical(str(exception))
     for result in results:
-        if isinstance(result.node, Dict):
+        if isinstance(result.node, orm.Dict):
             if label is not None:
                 if label == result.link_label:
                     returned_dicts.append(result.node.get_dict())
@@ -107,10 +108,42 @@ def workchain_inputdict(process, fmt, keys, label, info):
             result = re_dict
         if info:
             echo.echo('# Info: {} {} dict:'.format(returned_dicts_info[i].link_label, returned_dicts_info[i].node))
-        echo.echo_dictionary(result, fmt=fmt)
+        if show:
+            echo.echo_dictionary(result, fmt=fmt)
 
 
 '''
+@cmd_workflow.command('gen_wf_para')
+@arguments.ENTRYPOINTSTR('entrypoint', default='fleur.scf')
+@options.SHOW()
+@options.STORE()
+@options.CHECK_EXISTENCE()
+@options.KWARGS()
+@decorators.with_dbenv()
+def gen_wf_para_cmd(entrypoint, show, store, check_existence, kwargs):
+    """
+    Generates a default parameter wf parameter node for given entrypoint.
+    """
+    from aiida_fleur.tools.node_generators import generate_wf_para_node
+    from aiida.plugins import entry_point
+    try:
+        wf =  entry_point.load_entry_point('aiida.workflows', prefix)
+    except ValueError:
+        echo.echo('here1')
+    try:
+        wf =  entry_point.load_entry_point('aiida.calculations', prefix)
+    except ValueError:
+        echo.echo('here1')
+
+    wf_para = generate_wf_para_node(entrypoint=entrypoint, **kwargs)
+    if store:
+        wf_para.store()
+        echo.echo('Created)
+    else:
+        echo.echo('Created)
+    if show:
+        echo.echo_dictionary(wf.para.get_dict())
+
 @cmd_workflow.command('inputls')
 def inputls_wc():
     """
