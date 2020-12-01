@@ -500,9 +500,9 @@ class FleurRelaxWorkChain(WorkChain):
         #if jspin ==2
         try:
             total_mag = scf_out_d['total_magnetic_moment_cell']
+            self.ctx.total_magnetic_moment = total_mag
         except KeyError:
             self.report('ERROR: Could not parse total magnetic moment cell of final scf run')
-        self.ctx.total_magnetic_moment = total_mag
 
     def return_results(self):
         """

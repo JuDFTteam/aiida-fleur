@@ -716,10 +716,10 @@ def parse_xmlout_file(outxmlfile):
         moment_name = 'moment'
 
         # All electron charges
-        all_spin_charges_total_xpath = 'allelectronCharges/spinDependentCharge/@total'
-        all_spin_charges_interstitial_xpath = 'allelectronCharges/spinDependentCharge/@interstitial'
-        all_spin_charges_mt_spheres_xpath = 'allelectronCharges/spinDependentCharge/@mtSpheres'
-        all_total_charge_xpath = 'allelectronCharges/totalCharge/@value'
+        all_spin_charges_total_xpath = 'allElectronCharges/spinDependentCharge/@total'
+        all_spin_charges_interstitial_xpath = 'allElectronCharges/spinDependentCharge/@interstitial'
+        all_spin_charges_mt_spheres_xpath = 'allelEctronCharges/spinDependentCharge/@mtSpheres'
+        all_total_charge_xpath = 'allElectronCharges/totalCharge/@value'
 
         # energy
         totalenergy_xpath = 'totalEnergy'
