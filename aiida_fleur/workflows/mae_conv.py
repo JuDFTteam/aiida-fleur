@@ -34,7 +34,18 @@ class FleurMaeConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
 
     @classmethod
     def define(cls, spec):
@@ -68,7 +79,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.mae_phis = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

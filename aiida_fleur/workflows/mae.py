@@ -55,7 +55,7 @@ class FleurMaeWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    _wf_default = {
+    _default_wf_para = {
         'sqa_ref': [0.7, 0.7],
         'use_soc_ref': False,
         'sqas_theta': [0.0, 1.57079, 1.57079],
@@ -116,7 +116,7 @@ class FleurMaeWorkChain(WorkChain):
         self.ctx.fleuroutuuid = None
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

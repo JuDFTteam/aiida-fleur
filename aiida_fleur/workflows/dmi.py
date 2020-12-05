@@ -58,7 +58,7 @@ class FleurDMIWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    _wf_default = {
+    _default_wf_para = {
         'serial': False,
         'only_even_MPI': False,
         'beta': {
@@ -124,7 +124,7 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
