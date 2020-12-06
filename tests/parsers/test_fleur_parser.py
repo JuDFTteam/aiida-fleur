@@ -287,6 +287,7 @@ def test_fleurparse_all_xmlout_file(xmloutfile):
 
     assert successful
 
+
 def test_fleurparse_relax_file():
     """Test if parsing of a given relax.xml file is successfull"""
     from aiida_fleur.parsers.fleur import parse_relax_file
@@ -297,7 +298,6 @@ def test_fleurparse_relax_file():
         result = parse_relax_file(relaxfile)
     assert isinstance(result, Dict)
     assert result.get_dict() != {}
-    
 
 
 # parse_dos_file, test for different dos files with spin and without

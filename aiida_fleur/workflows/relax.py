@@ -474,9 +474,13 @@ class FleurRelaxWorkChain(WorkChain):
                 np_pos = np.array(atom)
                 pos_abs = np_pos @ np_cell
                 if self.ctx.pbc == (True, True, True):
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=element, name=species_name)
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
+                                          symbols=element,
+                                          name=species_name)
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A), symbols=element, name=species_name)
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A),
+                                          symbols=element,
+                                          name=species_name)
 
             structure.pbc = self.ctx.pbc
             self.ctx.final_structure = structure

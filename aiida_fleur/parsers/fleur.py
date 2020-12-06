@@ -1041,7 +1041,7 @@ def parse_xmlout_file(outxmlfile):
                         pos = [convert_frac(x) for x in pos.text.split()]
                         atom_positions.append(pos)
                         relax_atom_info.append([species, element])
-                
+
                 write_simple_outnode(relax_atom_info, 'list', 'relax_atomtype_info', simple_data)
                 write_simple_outnode(relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
                 write_simple_outnode(atom_positions, 'list', 'relax_atom_positions', simple_data)

@@ -26,7 +26,9 @@ EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 # because the change the import export and how things are migrated
 # and we still want the other test to be runing by using the older export version
 
-@pytest.mark.skipif(version.parse(aiida.__version__) >= version.parse("1.5.0"), reason='does not work yet with aiida-core 1.5.0')
+
+@pytest.mark.skipif(version.parse(aiida.__version__) >= version.parse('1.5.0'),
+                    reason='does not work yet with aiida-core 1.5.0')
 def test_cmd_plot(run_cli_command, temp_dir):
     """Test invoking the plot command in all variants.
 
