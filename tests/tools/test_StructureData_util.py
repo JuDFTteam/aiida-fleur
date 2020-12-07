@@ -484,10 +484,10 @@ def test_create_slap(generate_structure):
     sites_should = [(3.839589821842953, 2.216788217218776, 3.135011961699669), (0.0, 0.0, 0.0),
                     (1.9197949109214758, 1.1083941086093878, 6.270023923399337)]
     # since this depends on pymatgen we round here the last digits.
-    assert np.round(film_struc.cell, 8) == np.round(cell_should, 8)
-    assert np.round(film_struc.sites[0].position, 8) == np.round(sites_should[0], 8)
-    assert np.round(film_struc.sites[1].position, 8) == np.round(sites_should[1], 8)
-    assert np.round(film_struc.sites[2].position, 8) == np.round(sites_should[2], 8)
+    assert (np.round(film_struc.cell, 8) == np.round(cell_should, 8)).all()
+    assert (np.round(film_struc.sites[0].position, 8) == np.round(sites_should[0], 8)).all()
+    assert (np.round(film_struc.sites[1].position, 8) == np.round(sites_should[1], 8)).all()
+    assert (np.round(film_struc.sites[2].position, 8) == np.round(sites_should[2], 8)).all()
 
 
 def test_create_all_slabs(generate_structure):
