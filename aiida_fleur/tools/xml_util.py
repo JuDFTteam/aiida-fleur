@@ -586,7 +586,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     atom_jri_xpath = 'mtSphere/@gridPoints'
     atom_lmax_xpath = 'atomicCutoffs/@lmax'
     atom_lnosph_xpath = 'atomicCutoffs/@lnonsphr'
-    atom_ncst_xpath = '@coreStates'
+    #atom_ncst_xpath = '@coreStates'
     atom_econfig_xpath = 'electronConfig'  # converting todo
     atom_bmu_xpath = '@magMom'
     atom_lo_xpath = 'lo'  # converting todo
@@ -654,7 +654,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_jri = convert_to_int(eval_xpath(species, atom_jri_xpath), suc_return=False)
         atom_lmax = convert_to_int(eval_xpath(species, atom_lmax_xpath), suc_return=False)
         atom_lnosph = convert_to_int(eval_xpath(species, atom_lnosph_xpath), suc_return=False)
-        atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
+        #atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
         atom_econfig = eval_xpath(species, atom_econfig_xpath)
         atom_bmu = convert_to_float(eval_xpath(species, atom_bmu_xpath), suc_return=False)
         atom_lo = eval_xpath(species, atom_lo_xpath)
@@ -667,7 +667,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-        atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
+        #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:

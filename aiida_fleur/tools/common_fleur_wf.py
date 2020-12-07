@@ -290,6 +290,9 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     workchain_dict = {'Be12W' : uuid_wc or output, 'Be2W' : uuid, ...}
 
     return dictionary that ranks the reactions after their enthalpy
+
+    TODO: refactor aiida part out of this, leaving an aiida independent part and one
+    more universal
     """
     from aiida.engine import WorkChain
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
@@ -321,7 +324,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
-                            print(('WARNING: ouput node of {} not found. I skip'.format(n)))
+                            print(('WARNING: output node of {} not found. I skip'.format(n)))
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -336,28 +339,6 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         energy_sorted_reactions.append([reaction_string, ent_peratom])
     energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])
     return energy_sorted_reactions
-
-
-# test
-# reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
-# workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
-#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4',
-#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc',
-#                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
-#                  'Be' : 0.0}
-# reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
-# print reac_list
-# {'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
-# 0.0
-# {'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
-# 0.114321037514
-# {'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
-# -0.868053153884
-# {'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
-# -0.0946046496213
-# {'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
-# 0.180159355144
-# [['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
 
 
 def performance_extract_calcs(calcs):

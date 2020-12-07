@@ -27,6 +27,12 @@ def test_get_natoms_element_Be2W():
     assert get_natoms_element('Be2W') == {'Be': 2, 'W': 1}
 
 
+def test_convert_frac_formula_BeW():
+    from aiida_fleur.tools.common_fleur_wf_util import convert_frac_formula
+
+    assert convert_frac_formula('Be0.5W0.5') == 'BeW'
+
+
 def test_ucell_to_atompr():
     from aiida_fleur.tools.common_fleur_wf_util import ucell_to_atompr
 
@@ -60,12 +66,6 @@ def test_get_atomprocent_Be24W2():
     assert get_atomprocent('Be24W2') == {'Be': 24. / 26., 'W': 2. / 26.}
 
 
-#@pytest.mark.skip(reason='The function is not implemented')
-#def test_get_weight_procent():
-#    from aiida_fleur.tools.common_fleur_wf_util import get_weight_procent
-#    pass
-
-
 def test_determine_formation_energy():
     from aiida_fleur.tools.common_fleur_wf_util import determine_formation_energy
 
@@ -77,9 +77,15 @@ def test_determine_formation_energy():
     assert form_en_dict == form_en_dict_exp
 
 
-@pytest.mark.skip(reason='Test is not implemented')
 def test_determine_convex_hull():
     from aiida_fleur.tools.common_fleur_wf_util import determine_convex_hull
+    from pyhull.convex_hull import ConvexHull
+
+    formation_en_grid = [[0.5, -1.0], [0.5, -0.5]]
+
+    hull = determine_convex_hull(formation_en_grid)
+
+    assert isinstance(hull, ConvexHull)
 
 
 def test_inpgen_dict_set_mesh(generate_kpoints_mesh):
@@ -125,9 +131,19 @@ def test_convert_eq_to_dict():
     assert convert_eq_to_dict('1*Be12Ti->10*Be+1*Be2Ti+5*Be') == res_dict
 
 
-@pytest.mark.skip(reason='Test is not implemented')
 def test_get_enhalpy_of_equation():
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
+
+    reaction_list = [
+        '1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W',
+        '1*Be12W->1*Be2W+10*Be'
+    ]
+    formenergydict = {'Be12W': -0.21, 'Be2W': -0.3, 'Be22W': -0.1, 'W': 0.0, 'Be': 0.0}
+    results = [0.0, -0.019999999999999962, -1.71, -0.21, 0.09]
+
+    for i, reaction in enumerate(reaction_list):
+        result = get_enhalpy_of_equation(reaction, formenergydict)
+        assert result == results[i]
 
 
 @pytest.mark.parametrize('test_input,expected', [('C7H16+O2 -> CO2+H2O', '1*C7H16+11*O2 ->7* CO2+8*H2O'),
@@ -138,6 +154,20 @@ def test_balance_equation(test_input, expected):
     assert balance_equation(test_input) == expected
 
 
-@pytest.mark.skip(reason='Test is not implemented')
 def test_check_eos_energies():
     from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
+
+    energylist = [-1, -2, -3, -2, -4, -3, -2, -1]
+    abnormality, abnormalityindexlist = check_eos_energies(energylist)
+    assert abnormality
+    assert abnormalityindexlist == [3]
+
+    energylist = [-1, -2, -3, -2, -2, -3, -2, -1]
+    abnormality, abnormalityindexlist = check_eos_energies(energylist)
+    assert not abnormality
+    assert abnormalityindexlist == []
+
+    energylist = [-1, -2, -3, -4, -5, -3, -2, -1]
+    abnormality, abnormalityindexlist = check_eos_energies(energylist)
+    assert not abnormality
+    assert abnormalityindexlist == []
