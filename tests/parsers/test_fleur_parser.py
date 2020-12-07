@@ -67,7 +67,7 @@ def test_parse_xmlout_file():
         }
     }
 
-    expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.3.1', 'parser_warnings': [], 'unparsed': []}
+    expected_parser_info_out = {'parser_info': 'AiiDA Fleur Parser v0.3.2', 'parser_warnings': [], 'unparsed': []}
     simple_out.pop('outputfile_path', None)  # otherwise test will fail on different installations
     # also this should go away any way...
 
@@ -93,7 +93,7 @@ def test_parse_xmlout_file_broken_xmlout_file():
         'last_iteration_parsed':
         15,
         'parser_info':
-        'AiiDA Fleur Parser v0.3.1',
+        'AiiDA Fleur Parser v0.3.2',
         'parser_warnings': [
             'The out.xml file is broken I try to repair it.',
             'Endtime was unparsed, inp.xml prob not complete, do not believe the walltime!'
@@ -123,7 +123,7 @@ def test_parse_xmlout_file_broken_first_xmlout_file():
         'last_iteration_parsed':
         1,
         'parser_info':
-        'AiiDA Fleur Parser v0.3.1',
+        'AiiDA Fleur Parser v0.3.2',
         'parser_warnings': [
             'The out.xml file is broken I try to repair it.',
             'Can not get attributename: "units" from node "[]", because node is not an element of etree.',
@@ -212,7 +212,7 @@ def test_parse_xmlout_file_fortran_garbage_in_xmlout_file():
 
     expected_parser_info_out = {
         'parser_info':
-        'AiiDA Fleur Parser v0.3.1',
+        'AiiDA Fleur Parser v0.3.2',
         'parser_warnings': [
             'Could not convert: "**" to float, ValueError',
             'Could not convert: "        !#@)!(U$*(Y" to float, ValueError'
@@ -252,7 +252,7 @@ def test_parse_xmlout_file_empty_file():
 
     expected_parser_info_out = {
         'parser_info':
-        'AiiDA Fleur Parser v0.3.1',
+        'AiiDA Fleur Parser v0.3.2',
         'parser_warnings': [
             'The out.xml file is broken I try to repair it.',
             'Skipping the parsing of the xml file. Repairing was not possible.'
