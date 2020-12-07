@@ -38,7 +38,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     _workflowversion = '0.2.2'
 
-    _wf_default = {
+    _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
         'film_distance_relaxation': False,  # Do not relax the z coordinates
         'force_criterion': 0.001,  # Converge the force until lower this value in atomic units
@@ -47,6 +47,8 @@ class FleurRelaxWorkChain(WorkChain):
         'change_mixing_criterion': 0.025,  # After the force is smaller switch mixing scheme
         'atoms_off': []  # Species to be switched off, '49' is reserved
     }
+
+    _default_options = FleurScfWorkChain._default_options
 
     @classmethod
     def define(cls, spec):
@@ -114,7 +116,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.total_magnetic_moment = None
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

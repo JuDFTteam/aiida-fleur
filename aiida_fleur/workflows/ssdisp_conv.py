@@ -33,7 +33,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {
+    _default_wf_para = {
         'beta': {
             'all': 1.57079
         },
@@ -76,7 +76,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

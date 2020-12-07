@@ -127,22 +127,24 @@ def gen_wf_para_cmd(entrypoint, show, store, check_existence, kwargs):
     from aiida_fleur.tools.node_generators import generate_wf_para_node
     from aiida.plugins import entry_point
     try:
-        wf =  entry_point.load_entry_point('aiida.workflows', prefix)
+        wf = entry_point.load_entry_point('aiida.workflows', prefix)
     except ValueError:
         echo.echo('here1')
     try:
-        wf =  entry_point.load_entry_point('aiida.calculations', prefix)
+        wf = entry_point.load_entry_point('aiida.calculations', prefix)
     except ValueError:
         echo.echo('here1')
 
     wf_para = generate_wf_para_node(entrypoint=entrypoint, **kwargs)
     if store:
         wf_para.store()
-        echo.echo('Created)
+        echo.echo('Created wf para node')
     else:
-        echo.echo('Created)
+        echo.echo('Created wf para node')
     if show:
         echo.echo_dictionary(wf.para.get_dict())
+
+
 
 @cmd_workflow.command('inputls')
 def inputls_wc():

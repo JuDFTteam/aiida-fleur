@@ -55,7 +55,8 @@ class FleurEosWorkChain(WorkChain):
 
     _workflowversion = '0.4.0'
 
-    _wf_default = {'points': 9, 'step': 0.002, 'guess': 1.00}
+    _default_wf_para = {'points': 9, 'step': 0.002, 'guess': 1.00}
+    _default_options = FleurScfWorkChain._default_options
 
     @classmethod
     def define(cls, spec):
@@ -101,7 +102,7 @@ class FleurEosWorkChain(WorkChain):
         # TODO get all successful from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = self._wf_default
+        wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

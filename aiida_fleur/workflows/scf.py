@@ -61,7 +61,7 @@ class FleurScfWorkChain(WorkChain):
     """
 
     _workflowversion = '0.4.2'
-    _wf_default = {
+    _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
         'energy_converged': 0.002,
@@ -144,7 +144,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.abort = False
         self.ctx.reached_conv = True
 
-        wf_default = self._wf_default
+        wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -201,7 +201,7 @@ class FleurScfWorkChain(WorkChain):
         """
         extra_keys = []
         for key in self.ctx.wf_dict.keys():
-            if key not in self._wf_default.keys():
+            if key not in self._default_wf_para.keys():
                 extra_keys.append(key)
         if extra_keys:
             error = 'ERROR: input wf_parameters for SCF contains extra keys: {}'.format(extra_keys)

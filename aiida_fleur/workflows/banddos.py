@@ -60,7 +60,7 @@ class FleurBandDosWorkChain(WorkChain):
         'import_sys_environment': False,
         'environment_variables': {}
     }
-    _wf_default = {
+    _default_wf_para = {
         'fleur_runmax': 4,
         'kpath': 'auto',
         # 'nkpts' : 800,
@@ -120,7 +120,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         inputs = self.inputs
 
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in inputs:
             wf_dict = inputs.wf_parameters.get_dict()
         else:
