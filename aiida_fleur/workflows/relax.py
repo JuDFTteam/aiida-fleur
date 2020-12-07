@@ -45,7 +45,9 @@ class FleurRelaxWorkChain(WorkChain):
         'run_final_scf': False,  # Run a final scf on the final relaxed structure
         'break_symmetry': False,  # Break the symmetry for the relaxation each atom own type
         'change_mixing_criterion': 0.025,  # After the force is smaller switch mixing scheme
-        'atoms_off': []  # Species to be switched off, '49' is reserved
+        'atoms_off': [],  # Species to be switched off, '49' is reserved
+        'relaxation_type': 'atoms'  # others include None and maybe in the future volume
+        # None would run an scf only
     }
 
     _default_options = FleurScfWorkChain._default_options
@@ -64,13 +66,11 @@ class FleurRelaxWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            cls.converge_scf,
-            cls.check_failure,
-            while_(cls.condition)(
+            if_(cls.should_relax)(cls.converge_scf, cls.check_failure, while_(cls.condition)(
                 cls.generate_new_fleurinp,
                 cls.converge_scf,
                 cls.check_failure,
-            ),
+            )),
             cls.get_results_relax,
             if_(cls.should_run_final_scf)(cls.run_final_scf, cls.get_results_final_scf),
             cls.return_results,
@@ -168,6 +168,19 @@ class FleurRelaxWorkChain(WorkChain):
             if 'inpgen' not in input_scf and 'inpgen' not in input_final_scf:
                 self.report('Error: Wrong input: inpgen missing for final scf.')
                 return self.exit_codes.ERROR_INPGEN_MISSING
+
+    def should_relax(self):
+        """
+        Should we run a relaxation or only a final scf
+        This allows to call the workchain to run an scf only and makes
+        logic of other higher workflows a lot easier
+        """
+        relaxtype = self.ctx.wf_dict.get('relaxation_type', 'atoms')
+        if relaxtype is None:
+            self.ctx.reached_relax = True
+            return False
+        else:
+            return True
 
     def converge_scf(self):
         """
@@ -436,6 +449,24 @@ class FleurRelaxWorkChain(WorkChain):
         Creates a new structure data node which is an
         optimized structure.
         """
+
+        if self.ctx.wf_dict.get('relaxation_type', 'atoms') is None:
+            input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+            if 'structure' in input_scf:
+                structure = input_scf.structure
+            elif 'fleurinp' in input_scf:
+                structure = input_scf.fleurinp.get_structuredata_ncf()
+            else:
+                pass
+            self.ctx.final_structure = structure
+            self.ctx.total_energy_last = None  #total_energy
+            self.ctx.total_energy_units = None  #total_energy_units
+            self.ctx.final_cell = structure.cell
+            self.ctx.final_atom_positions = None  #atom_positions
+            self.ctx.atomtype_info = None
+
+            return
+
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
         except NotExistent:
@@ -507,6 +538,10 @@ class FleurRelaxWorkChain(WorkChain):
 
         self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
+
+        if self.ctx.wf_dict.get('relaxation_type', 'atoms') is None:
+            # we need this for run through
+            self.ctx.scf_res = self.ctx.scf_final_res
 
         #if jspin ==2
         try:
