@@ -160,11 +160,6 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     assert get_inputs_inpgen(**inputs) == returns
 
 
-@pytest.mark.skip(reason='Test is not implemented')
-def test_get_scheduler_extras():
-    from aiida_fleur.tools.common_fleur_wf import get_scheduler_extras
-
-
 # test_and_get_codenode
 
 

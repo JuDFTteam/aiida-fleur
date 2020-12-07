@@ -194,69 +194,6 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     return inputs
 
 
-def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
-    """
-    This is a utility function with the goal to make prepare the right resource
-    and scheduler extras for a given computer.
-    Since this is user dependend you might want to create your own.
-
-    return: dict, custom scheduler commands
-    """
-    if extras is None:
-        extras = {}
-    nnodes = resources.get('num_machines', 1)
-
-    # TODO memory has to be done better...
-    mem_per_node = 120000  # max recommend 126000 MB on claix jara-clx nodes
-    mem_per_process = mem_per_node / 24
-    if not extras:
-        # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {
-            'lsf': ('#BSUB -P {} \n#BSUB -M {}  \n'
-                    '#BSUB -a intelmpi'.format(project, mem_per_process)),
-            'torque': '',
-            'direct': ''
-        }
-
-    # get the scheduler type from the computer the code is run on.
-    com = code.computer
-    # com_name = com.get_name()
-    scheduler_type = com.get_scheduler_type()
-
-    default_per_machine = com.get_default_mpiprocs_per_machine()
-    if not default_per_machine:
-        default_per_machine = 24  # claix, lsf does can not have default mpiprocs... #TODO this better
-    tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine * nnodes)
-
-    if scheduler_type == 'lsf':
-        new_resources = {'tot_num_mpiprocs': tot_num_mpiprocs}  # only this needs to be given
-    elif scheduler_type == 'torque':
-        # {'num_machines', 1} # on iff003 currently we do not do multinode mpi,
-        new_resources = resources
-        # like this it will get stuck on iff003
-    else:
-        new_resources = resources
-    scheduler_extras = extras.get(scheduler_type, '')
-
-    return new_resources, scheduler_extras
-
-
-# test
-###############################
-# codename = 'inpgen@local_mac'#'inpgen_v0.28@iff003'#'inpgen_iff@local_iff'
-# codename2 = 'fleur_v0.28@iff003'#'fleur_mpi_v0.28@iff003'# 'fleur_iff_0.28@local_iff''
-# codename2 = 'fleur_max_1.3_dev@iff003'
-# codename2 = 'fleur_mpi_max_1.3_dev@iff003'
-# codename4 = 'fleur_mpi_v0.28@claix'
-###############################
-# code = Code.get_from_string(codename)
-# code2 = Code.get_from_string(codename2)
-# code4 = Code.get_from_string(codename4)
-# print(get_scheduler_extras(code, {'num_machines' : 1}))
-# print(get_scheduler_extras(code2, {'num_machines' : 2}))
-# print(get_scheduler_extras(code4, {'num_machines' : 1}))
-
-
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     """
     Pass a code node and an expected code (plugin) type. Check that the
