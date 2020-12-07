@@ -288,6 +288,18 @@ def test_fleurparse_all_xmlout_file(xmloutfile):
     assert successful
 
 
+def test_fleurparse_relax_file():
+    """Test if parsing of a given relax.xml file is successfull"""
+    from aiida_fleur.parsers.fleur import parse_relax_file
+    from aiida.orm import Dict
+
+    filename = os.path.abspath('./files/relaxxml/Fe_relax.xml')
+    with open(filename, 'r') as relaxfile:
+        result = parse_relax_file(relaxfile)
+    assert isinstance(result, Dict)
+    assert result.get_dict() != {}
+
+
 # parse_dos_file, test for different dos files with spin and without
 @pytest.mark.skip(reason='Test is not implemented')
 def test_parse_dos_file():

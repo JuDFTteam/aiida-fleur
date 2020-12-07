@@ -36,7 +36,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.2.2'
+    _workflowversion = '0.3.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -449,6 +449,7 @@ class FleurRelaxWorkChain(WorkChain):
             film = relax_out['film']
             total_energy = relax_out['energy']
             total_energy_units = relax_out['energy_units']
+            atomtype_info = relax_out['relax_atomtype_info']
         except KeyError:
             return self.exit_codes.ERROR_NO_RELAX_OUTPUT
 
@@ -456,6 +457,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.total_energy_units = total_energy_units
         self.ctx.final_cell = cell
         self.ctx.final_atom_positions = atom_positions
+        self.ctx.atomtype_info = atomtype_info
 
         if film == 'True':
             self.ctx.pbc = (True, True, False)
@@ -463,17 +465,24 @@ class FleurRelaxWorkChain(WorkChain):
             self.ctx.pbc = (True, True, True)
 
         # we build the structure here, that way we can run an scf afterwards
+        # construct it in a way which preserves the species information from the initial input structure
         if self.ctx.final_cell:
             np_cell = np.array(self.ctx.final_cell) * BOHR_A
             structure = StructureData(cell=np_cell.tolist())
-
-            for atom in self.ctx.final_atom_positions:
-                np_pos = np.array(atom[1:])
+            #self.report('############ {}'.format(atomtype_info))
+            for i, atom in enumerate(self.ctx.final_atom_positions):
+                species_name = atomtype_info[i][0]
+                element = atomtype_info[i][1]
+                np_pos = np.array(atom)
                 pos_abs = np_pos @ np_cell
                 if self.ctx.pbc == (True, True, True):
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=atom[0])
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
+                                          symbols=element,
+                                          name=species_name)
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A), symbols=atom[0])
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A),
+                                          symbols=element,
+                                          name=species_name)
 
             structure.pbc = self.ctx.pbc
             self.ctx.final_structure = structure

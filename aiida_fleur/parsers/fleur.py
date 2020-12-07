@@ -314,7 +314,7 @@ def parse_xmlout_file(outxmlfile):
     # FIXME: This is global, look for a different way to do this, python logging?
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
-    parser_version = '0.3.1'
+    parser_version = '0.3.2'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 
@@ -756,6 +756,7 @@ def parse_xmlout_file(outxmlfile):
         new_y_name = 'y'
         new_z_name = 'z'
 
+        species_xpath = '/fleurOutput/inputData/atomSpecies'
         relPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/relPos'
         absPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/absPos'
         filmPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/filmPos'
@@ -763,7 +764,6 @@ def parse_xmlout_file(outxmlfile):
 
         film_lat_xpath = '/fleurOutput/inputData/cell/filmLattice/bravaisMatrix/'
         bulk_lat_xpath = '/fleurOutput/inputData/cell/bulkLattice/bravaisMatrix/'
-
         kmax_xpath = '/fleurOutput/inputData/calculationSetup/cutoffs/@Kmax'
 
         ###################################################
@@ -1029,15 +1029,20 @@ def parse_xmlout_file(outxmlfile):
                 relax_brav_vectors = [v_1, v_2, v_3]
 
                 atom_positions = []
+                relax_atom_info = []
 
                 all_atoms = eval_xpath2(root, atomstypes_xpath)
                 for a_type in all_atoms:
-                    element = get_xml_attribute(a_type, 'species').split('-')[0]
+                    species = get_xml_attribute(a_type, 'species')
+                    full_xpath = species_xpath + '/species[@name = "{}"]/@element'.format(species)
+                    element = eval_xpath(root, full_xpath)
                     type_positions = eval_xpath2(a_type, pos_attr)
                     for pos in type_positions:
                         pos = [convert_frac(x) for x in pos.text.split()]
-                        atom_positions.append([element] + pos)
+                        atom_positions.append(pos)
+                        relax_atom_info.append([species, element])
 
+                write_simple_outnode(relax_atom_info, 'list', 'relax_atomtype_info', simple_data)
                 write_simple_outnode(relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
                 write_simple_outnode(atom_positions, 'list', 'relax_atom_positions', simple_data)
                 write_simple_outnode(str(bool(film)), 'str', 'film', simple_data)
