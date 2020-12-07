@@ -14,14 +14,18 @@ Module to test the plot cmd from the commandline
 '''
 
 import os
-from aiida.tools.importexport import import_data
+import pytest
+import aiida
+from packaging import version
 
 file_path = '../../files/exports/fleur_scf_fleurinp_Si.tar.gz'
 thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
-def test_cmd_plot(run_cli_command, temp_dir):
+@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
+                    reason='archive import and migration works only with aiida-core > 1.5.0')
+def test_cmd_plot(run_cli_command, temp_dir, import_with_migrate):
     """Test invoking the plot command in all variants.
 
     If this test hangs, --no-show is not working
@@ -29,7 +33,7 @@ def test_cmd_plot(run_cli_command, temp_dir):
     from aiida_fleur.cmdline.visualization import cmd_plot
 
     # import an an aiida export, this does not migrate
-    import_data(EXPORTFILE_FILE, group=None)
+    import_with_migrate(EXPORTFILE_FILE)
     process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
 
     options = [process_uuid, '--no-show']

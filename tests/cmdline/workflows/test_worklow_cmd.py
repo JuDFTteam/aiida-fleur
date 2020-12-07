@@ -14,12 +14,17 @@ Module to test all CLI workflow commands.
 '''
 
 import os
-#from aiida.tools.importexport import import_data
+import pytest
+import aiida
+from packaging import version
+
 file_path = '../../files/exports/fleur_scf_fleurinp_Si.tar.gz'
 thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
+@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
+                    reason='archive import and migration works only with aiida-core > 1.5.0')
 def test_workchain_res(run_cli_command, import_with_migrate):
     """Test invoking the workchain res command in all variants."""
     from aiida_fleur.cmdline.workflows import workchain_res
@@ -47,6 +52,8 @@ def test_workchain_res(run_cli_command, import_with_migrate):
     run_cli_command(workchain_res, options=options, raises=KeyError)
 
 
+@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
+                    reason='archive import and migration works only with aiida-core > 1.5.0')
 def test_workchain_inputdict(run_cli_command, import_with_migrate):
     """Test invoking the workchain inputdict command in all variants."""
     from aiida_fleur.cmdline.workflows import workchain_inputdict
