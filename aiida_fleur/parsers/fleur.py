@@ -314,7 +314,7 @@ def parse_xmlout_file(outxmlfile):
     # FIXME: This is global, look for a different way to do this, python logging?
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
-    parser_version = '0.3.1'
+    parser_version = '0.3.2'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 
