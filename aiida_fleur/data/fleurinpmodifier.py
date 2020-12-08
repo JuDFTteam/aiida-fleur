@@ -23,6 +23,7 @@ import io
 from lxml import etree
 
 from aiida.plugins import DataFactory
+from aiida import orm
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.data.fleurinp import FleurinpData
 
@@ -40,6 +41,7 @@ class FleurinpModifier(object):
 
         self._original = original
         self._tasks = []
+        self._other_nodes = {}
 
     @staticmethod
     def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_tree=None):
@@ -153,6 +155,10 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
             return fleurinp_tree_copy
 
+        def set_kpointsdata1(fleurinp_tree_copy, kpointsdata_uuid):
+            fleurinp_tree_copy = set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid)
+            return fleurinp_tree_copy
+
         def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
                          spin, occStates, denmat, phi, theta):
             nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
@@ -179,8 +185,9 @@ class FleurinpModifier(object):
             'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
             'set_kpath': set_kpath1,
+            'set_kpointsdata': set_kpointsdata1,
             'add_num_to_att': add_num_to_att1,
-            'set_nmmpmat': set_nmmpmat1,
+            'set_nmmpmat': set_nmmpmat1
         }
 
         workingtree = fleurinp_tree_copy
@@ -237,8 +244,10 @@ class FleurinpModifier(object):
             'shift_value': self.shift_value,
             'shift_value_species_label': self.shift_value_species_label,
             'set_nkpts': self.set_nkpts,
+            'set_kpath': self.set_kpath,
+            'set_kpointsdata': self.set_kpointsdata,
             'add_num_to_att': self.add_num_to_att,
-            'set_nmmpmat': self.set_nmmpmat,
+            'set_nmmpmat': self.set_nmmpmat
         }
         return outside_actions
 
@@ -455,6 +464,22 @@ class FleurinpModifier(object):
         """
         self._tasks.append(('set_kpath', kpath, count, gamma))
 
+    def set_kpointsdata(self, kpointsdata_uuid):
+        """
+        Appends a :py:func:`set_kpointsdata_f()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param kpointsdata_uuid: an aiida.orm.KpointsData or node uuid,
+        since the node is self cannot be be serialized in tasks.
+        """
+        from aiida.orm import KpointsData, load_node
+
+        if isinstance(kpointsdata_uuid, KpointsData):
+            kpointsdata_uuid = kpointsdata_uuid.uuid
+        # Be more careful? Needs to be stored, otherwise we cannot load it
+        self._other_nodes['kpoints'] = load_node(kpointsdata_uuid)
+        self._tasks.append(('set_kpointsdata', kpointsdata_uuid))
+
     def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_util.add_num_to_att()` to
@@ -552,16 +577,20 @@ class FleurinpModifier(object):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
-        modifications = DataFactory('dict')(dict={'tasks': self._tasks})
+        modifications = orm.Dict(dict={'tasks': self._tasks})
+        #print(self._tasks)
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        out = modify_fleurinpdata(original=self._original,
-                                  modifications=modifications,
-                                  metadata={
-                                      'label': 'fleurinp modifier',
-                                      'description': 'This calcfunction modified an Fleurinpdataobject'
-                                  })
+        print(self._original)
+        inputs = dict(original=self._original,
+                      modifications=modifications,
+                      metadata={
+                          'label': 'fleurinp modifier',
+                          'description': 'This calcfunction modified an Fleurinpdataobject'
+                      },
+                      **self._other_nodes)
+        out = modify_fleurinpdata(**inputs)
         return out
 
     def undo(self, revert_all=False):
@@ -574,20 +603,21 @@ class FleurinpModifier(object):
             self._tasks = []
         else:
             if self._tasks:
-                self._tasks.pop()
+                task = self._tasks.pop()
+                #TODO delete nodes from other nodes
                 #del self._tasks[-1]
         return self._tasks
 
 
 @cf
-def modify_fleurinpdata(original, modifications):
+def modify_fleurinpdata(original, modifications, **kwargs):
     """
     A CalcFunction that performs the modification of the given FleurinpData and stores
     the result in a database.
 
     :param original: a FleurinpData to be modified
     :param modifications: a python dictionary of modifications in the form of {'task': ...}
-
+    :param kwargs: dict of other aiida nodes to be linked to the modifications
     :returns new_fleurinp: a modified FleurinpData that is stored in a database
     """
 
@@ -645,3 +675,52 @@ def modify_fleurinpdata(original, modifications):
     new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
 
     return new_fleurinp
+
+
+def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
+    """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
+    in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
+    ``inp.xml`` file.
+    Currently it is the users responsibility to provide a full
+    :class:`~aiida.orm.KpointsData` node with weights.
+
+    :param fleurinp_tree_copy: fleurinp_tree_copy
+    :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
+    :returns: modified xml tree
+    """
+    # TODO: check on weights,
+    # also fleur allows for several kpoint sets, lists, paths and meshes,
+    # support this.
+    from aiida.orm import KpointsData, load_node
+    from aiida.common.exceptions import InputValidationError
+    from aiida_fleur.tools.xml_util import replace_tag
+
+    # all hardcoded xpaths used and attributes names:
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
+
+    # replace the kpoints tag.(delete old write new)
+    # <kPointList posScale="36.00000000" weightScale="324.00000000" count="324">
+    #    <kPoint weight="    1.000000">   17.000000     0.000000     0.000000</kPoint>
+    # add new inp.xml to fleurinpdata
+    if not isinstance(kpointsdata_uuid, KpointsData):
+        KpointsDataNode = load_node(kpointsdata_uuid)
+    else:
+        KpointsDataNode = kpointsdata_uuid
+
+    if not isinstance(KpointsDataNode, KpointsData):
+        raise InputValidationError('The node given is not a valid KpointsData node.')
+
+    kpoint_list = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
+    nkpts = len(kpoint_list[0])
+    totalw = 0
+    for weight in kpoint_list[1]:
+        totalw = totalw + weight
+    #weightscale = totalw
+    # fleur will re weight? renormalize?
+    new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
+    for i, kpos in enumerate(kpoint_list[0]):
+        new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
+        new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
+        new_kpo.append(new_k)
+    new_tree = replace_tag(fleurinp_tree_copy, kpointlist_xpath, new_kpo)
+    return new_tree
