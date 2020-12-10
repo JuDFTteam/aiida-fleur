@@ -34,7 +34,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
     """
     _workflowversion = '0.1.2'
 
-    _wf_default = {
+    _default_wf_para = {
         'lattice': 'fcc',
         'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
         'host_symbol': 'Pt',
@@ -133,7 +133,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         self.ctx.substrate = None
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -195,8 +195,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
                         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
         if 'relax' in inputs and 'distance_suggestion' not in inputs:
-            self.report('ERROR: relax wc input was given but distance_suggestion was not.')
-            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'eos' or 'eos_output' in inputs:
+                self.report('ERROR: relax wc input was given but distance_suggestion was not.')
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
         if self.ctx.wf_dict['latticeconstant'] == 0 and 'distance_suggestion' not in inputs:
             self.report('ERROR: latticeconstant equals to 0 but distance_suggestion was not given.')

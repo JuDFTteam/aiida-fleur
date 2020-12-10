@@ -31,7 +31,7 @@ make it modular, and import the method (goes along with point 2.).
 5. Write clear report statements in the workflow report.
 
 6. Exit code conventions:
-   See https://aiida-fleur.readthedocs.io/en/v1.1.0/user_guide/hints/exit_codes.html
+   See https://aiida-fleur.readthedocs.io/en/v1.1.1/user_guide/hints/exit_codes.html
    Everything from 0-200 is used by AiiDA-core.
    If you implement a new exit code it has to be added to this list.
 

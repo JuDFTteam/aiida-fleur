@@ -116,7 +116,7 @@ to:
       </species>
 
 As you can see, I was careful about "Ir-2" specie  and it contained a single atom with a
-label 458.
+label 458. Please also refer to :ref:`setting_labels` section to learn how to set labels up.
 
 **sqas** is a python dictionary (``key: value`` pairs). The ``key`` can be any string which
 sets a label of the SQA. ``value`` must be a list of 2 values: ``[theta, phi]``.

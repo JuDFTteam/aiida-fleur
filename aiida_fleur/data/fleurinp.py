@@ -24,6 +24,7 @@ input manipulation plus methods for extration of AiiDA data structures.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import io
 import re
 import six
 from lxml import etree
@@ -34,8 +35,7 @@ from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
 from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
-
-BOHR_A = 0.52917721092
+from aiida_fleur.common.constants import BOHR_A
 
 
 class FleurinpData(Data):
@@ -190,7 +190,7 @@ class FleurinpData(Data):
         """
         self._add_path(filename, dst_filename=dst_filename, node=node)
 
-    def open(self, key='inp.xml', mode='r'):
+    def open(self, path='inp.xml', mode='r', key=None):
         """
         Returns an open file handle to the content of this data node.
 
@@ -198,7 +198,11 @@ class FleurinpData(Data):
         :param mode: the mode with which to open the file handle
         :returns: A file handle in read mode
          """
-        return super(FleurinpData, self).open(key, mode=mode)
+
+        if key is not None:
+            path = key
+
+        return self._repository.open(path, mode=mode)
 
     def get_content(self, filename='inp.xml'):
         """
@@ -206,7 +210,7 @@ class FleurinpData(Data):
 
         :returns: A string of the file content
         """
-        with self.open(key=filename, mode='r') as handle:
+        with self.open(path=filename, mode='r') as handle:
             return handle.read()
 
     def del_file(self, filename):
@@ -283,28 +287,42 @@ class FleurinpData(Data):
 
     def _add_path(self, file1, dst_filename=None, node=None):
         """
-        Add a single file to folder. The destination name can be different.
-        ``inp.xml`` is a special case.
-        file names are stored in the db, files in the repo.
+        Add a single file to the FleurinpData folder.
+        The destination name can be different. ``inp.xml`` is a special case.
+        file names are stored in the db, the whole file in the reporsitory.
 
+        :param file1: the file to be added, either string, absolute path, or filelike object whose contents to copy
+            Hint: Pass io.BytesIO(b"my string") to construct the file directly from a string.
+        :param dst_filename: string, new filename for given file in repo and db
+        :param node: aiida.orm.Node, usually FolderData if node is given get the 'file1' from the node
+
+        :raise: ValueError, InputValidationError
+        :return: None
         """
-        # TODO, only certain files should be allowed to be added
+        # TODO? Maybe only certain files should be allowed to be added
+        # contra: has to be maintained, also these files can be inputed from byte strings...
         #_list_of_allowed_files = ['inp.xml', 'enpara', 'cdn1', 'sym.out', 'kpts']
-
-        #old_file_list = self.get_folder_list()
 
         if node:
             if not isinstance(node, Node):
-                # try:
-                node = load_node(node)
-                # except
-
-            if file1 in node.list_object_names():
-                file1 = node.open(file1, mode='r')
-            else:  # throw error? you try to add something that is not there
+                node = load_node(node)  # if this fails it will raise
+            if file1 not in node.list_object_names():
+                # throw error, you try to add something that is not there
                 raise ValueError('file1 has to be in the specified node')
 
-        if isinstance(file1, six.string_types):
+            is_filelike = True
+            if dst_filename is None:
+                final_filename = file1
+            else:
+                final_filename = dst_filename
+            # Override file1 with bytestring of file
+            # since we have to use 'with', and node has no method to copy files
+            # we read the whole file and write it again later
+            # this is not so nice, but we assume that input files are rather small...
+            with node.open(file1, mode='rb') as file2:
+                file1 = io.BytesIO(file2.read())
+
+        elif isinstance(file1, six.string_types):
             is_filelike = False
 
             if not os.path.isabs(file1):
@@ -320,13 +338,20 @@ class FleurinpData(Data):
                 final_filename = dst_filename
         else:
             is_filelike = True
-            final_filename = os.path.basename(file1.name)
+            if dst_filename is None:
+                try:
+                    final_filename = os.path.basename(file1.name)  # Not sure if this still works for aiida>2.0
+                except AttributeError:
+                    final_filename = 'inp.xml'  # fall back to default
+            else:
+                final_filename = dst_filename
 
         key = final_filename
 
         old_file_list = self.list_object_names()
         old_files_list = self.get_attribute('files', [])
 
+        # remove file from folder first if it exists
         if final_filename not in old_file_list:
             old_files_list.append(final_filename)
         else:
@@ -336,36 +361,29 @@ class FleurinpData(Data):
                 pass
 
         if is_filelike:
-            self.put_object_from_filelike(file1, key)
-            if file1.closed:
-                file1 = self.open(file1.name, file1.mode)
-            else:  # reset reading to 0
-                file1.seek(0)
+            self.put_object_from_filelike(file1, key, mode='wb')
         else:
             self.put_object_from_file(file1, key)
 
-        self.set_attribute('files', old_files_list)
+        self.set_attribute('files', old_files_list)  # We want to keep the other files
 
+        ### Special case: 'inp.xml' ###
         # here this is hardcoded, might want to change? get filename from elsewhere
+
         if final_filename == 'inp.xml':
             # get input file version number
             inp_version_number = None
-            if is_filelike:  # at this point it was read..
-                # TODO this does not work.. reading it now is []..
-                inpfile = file1
-            else:
-                inpfile = open(file1, 'r')
-            for line in inpfile.readlines():
-                if re.search('fleurInputVersion', line):
-                    inp_version_number = re.findall(r'\d+.\d+', line)[0]
+            lines = self.get_content(filename=final_filename).split('\n')
+            for line in lines:
+                if re.search('fleurInputVersion', str(line)):
+                    inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
                     break
-            inpfile.close()
-            if inp_version_number is None:  # we raise after file closure
+            if inp_version_number is None:
                 raise InputValidationError('No fleurInputVersion number found '
-                                           'in given input file: {}. '
+                                           'in given input file: {}. {}'
                                            'Please check if this is a valid fleur input file. '
                                            'It can not be validated and I can not use it. '
-                                           ''.format(file1))
+                                           ''.format(file1, lines))
             # search for Schema file with same version number
             schemafile_paths, found = self.find_schema(inp_version_number)
 
@@ -377,7 +395,6 @@ class FleurinpData(Data):
                            'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                         schemafile_paths))
                 raise InputValidationError(err_msg)
-            # or ('fleurInputVersion' in self.inp_userchanges): #(not)
             if self._schema_file_path is None:
                 schemafile_paths, found = self.find_schema(inp_version_number)
                 if not found:
@@ -388,7 +405,8 @@ class FleurinpData(Data):
                                'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
                                                                             schemafile_paths))
                 raise InputValidationError(err_msg)
-            # set inp dict of Fleurinpdata
+
+            # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
     def _set_inp_dict(self):
@@ -407,21 +425,19 @@ class FleurinpData(Data):
 
         # read xmlinp file into an etree with autocomplition from schema
         # we do not validate here because we want this to always succeed
-        inpxmlfile = self.open(key='inp.xml', mode='r')
 
         xmlschema_doc = etree.parse(self._schema_file_path)
         xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True)
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
         # dtd_validation=True
-
-        tree_x = etree.parse(inpxmlfile, parser)
-        inpxmlfile.close()
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            tree_x = etree.parse(inpxmlfile, parser)
 
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
         fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
         try:
-            with self.open('relax.xml', mode='r') as relax_file:
+            with self.open(path='relax.xml', mode='r') as relax_file:
                 relax_content = relax_file.read()
         except FileNotFoundError:
             relax_content = ''
@@ -442,7 +458,7 @@ class FleurinpData(Data):
         if not xmlschema.validate(tree_x):
             # get a more information on what does not validate
             message = ''
-            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema)
+            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema, encoding='utf-8')
             inpxmlfile = etree.tostring(tree_x)
             try:
                 tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
@@ -513,8 +529,10 @@ class FleurinpData(Data):
                 fleur_modes['gw'] = int(self.inp_dict['calculationSetup']['expertModes']['gw']) != 0
             except KeyError:
                 fleur_modes['gw'] = False
-            ldau = False  # TODO test if ldau in inp_dict....
             fleur_modes['ldau'] = False
+            for species in self.inp_dict['atomSpecies']['species']:
+                if 'ldaU' in species:
+                    fleur_modes['ldau'] = True
         return fleur_modes
 
     def get_structuredata_ncf(self):
@@ -559,13 +577,13 @@ class FleurinpData(Data):
             return None
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
         if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -576,14 +594,14 @@ class FleurinpData(Data):
                 raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -779,13 +797,13 @@ class FleurinpData(Data):
             return False
 
         # else read in inpxml
-        inpxmlfile = self.open(key='inp.xml')
 
         if self._schema_file_path:  # Schema there, parse with schema
             xmlschema_doc = etree.parse(self._schema_file_path)
             xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True)
-            tree = etree.parse(inpxmlfile, parser)
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile, parser)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
@@ -796,14 +814,14 @@ class FleurinpData(Data):
                 raise ValueError('Input file is not validated against the schema.')
         else:  # schema not there, parse without
             print('parsing inp.xml without XMLSchema')
-            tree = etree.parse(inpxmlfile)
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                tree = etree.parse(inpxmlfile)
             tree.xinclude()
             # remove comments from inp.xml
             comments = tree.xpath('//comment()')
             for c in comments:
                 p = c.getparent()
                 p.remove(c)
-        inpxmlfile.close()
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -907,9 +925,8 @@ class FleurinpData(Data):
             return False
 
         # read in inpxml
-        inpxmlfile = self.open(key='inp.xml', mode='r')
-        new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
-        inpxmlfile.close()  # I don’t like this
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
         return new_parameters
 
     # Is there a way to give self to calcfunctions?
@@ -926,105 +943,6 @@ class FleurinpData(Data):
 
         return fleurinp.get_parameterdata_ncf()
 
-    @cf
-    def set_kpointsdata(self, fleurinp_orgi, KpointsDataNode):
-        """
-        This calc function writes the all the kpoints from a :class:`~aiida.orm.KpointsData` node
-        in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
-        ``inp.xml`` file. The output :class:`~aiida_fleur.data.fleurinp.FleurinpData` is stored in
-        the database.
-
-        Currently it is the users resposibility to provide a full
-        :class:`~aiida.orm.KpointsData` node with weights.
-
-        :param KpointsDataNode: :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
-        :returns: modified :class:`~aiida_fleur.data.fleurinp.FleurinpData` node
-        """
-        from aiida.orm import KpointsData
-        #from aiida.common.exceptions import InputValidationError
-
-        # all hardcoded xpaths used and attributes names:
-        fleurinp = fleurinp_orgi.copy()
-        kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-        #kpoint_tag = 'kPoint'
-        #kpointlist_attrib_posscale = 'posScale'
-        #kpointlist_attrib_weightscale = 'weightScale'
-        #kpointlist_attrib_count = 'count'
-        #kpoint_attrib_weight = 'weight'
-
-        #### method layout: #####
-        # Check if Kpoints node
-        # get kpoints, weights, inp.xml
-
-        # replace the kpoints tag.(delete old write new)
-        # kpoint list posScale, wightScale, count
-        # <kPointList posScale="36.00000000" weightScale="324.00000000" count="324">
-        #    <kPoint weight="    1.000000">   17.000000     0.000000     0.000000</kPoint>
-
-        # add new inp.xml to fleurinpdata
-
-        if not isinstance(KpointsDataNode, KpointsData):
-            raise InputValidationError('The node given is not a valid KpointsData node.')
-
-        if 'inp.xml' in fleurinp.files:
-            # read in inpxml
-            inpxmlfile = fleurinp.open(key='inp.xml')
-            if fleurinp._schema_file_path:  # Schema there, parse with schema
-                xmlschema_doc = etree.parse(fleurinp._schema_file_path)
-                xmlschema = etree.XMLSchema(xmlschema_doc)
-                parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True, remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
-            else:  # schema not there, parse without
-                print('parsing inp.xml without XMLSchema')
-                parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-                tree = etree.parse(inpxmlfile, parser)
-            inpxmlfile.close()
-            #root = tree.getroot()
-        else:
-            raise InputValidationError('No inp.xml file yet specified, to add kpoints to.')
-
-        #cell_k = KpointsDataNode.cell
-
-        # TODO: shall we check if cell is the same as cell from structure?
-        # or is that to narrow?
-
-        kpoint_list = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
-        nkpts = len(kpoint_list[0])
-        totalw = 0
-        for weight in kpoint_list[1]:
-            totalw = totalw + weight
-        #weightscale = totalw
-
-        new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
-        for i, kpos in enumerate(kpoint_list[0]):
-            new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
-            new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
-            new_kpo.append(new_k)
-
-        new_tree = replace_tag(tree, kpointlist_xpath, new_kpo)
-        # use _write_new_fleur_xmlinp_file(fleurinp, inp_file_xmltree, fleur_change_dic):
-
-        # TODO this should be sourced out to other methods.
-        # somehow directly writing inp.xml does not work, create new one
-        inpxmlfile = os.path.join(fleurinp._get_folder_pathsubfolder.abspath, 'temp_inp.xml')
-
-        # write new inp.xml, schema evaluation will be done when the file gets added
-        new_tree.write(inpxmlfile, pretty_print=True)
-        print(('wrote tree to' + str(inpxmlfile)))
-
-        # delete old inp.xml file, not needed anymore
-        # TODO maybe do some checks before
-        fleurinp.del_file('inp.xml')
-
-        # now the new inp.xml file is added and with that the inpxml_dict will
-        # be overwritten, and the file validated
-        fleurinp._add_path(str(inpxmlfile), 'inp.xml')
-
-        # remove temporary inp.xml file
-        os.remove(inpxmlfile)
-
-        return fleurinp
-
     def get_tag(self, xpath):
         """
         Tries to evaluate an xpath expression for ``inp.xml`` file. If it fails it logs it.
@@ -1035,16 +953,16 @@ class FleurinpData(Data):
 
         if 'inp.xml' in self.files:
             # read in inpxml
-            inpxmlfile = self.open(key='inp.xml', mode='r')
             if self._schema_file_path:  # Schema there, parse with schema
                 #xmlschema_doc = etree.parse(self._schema_file_path)
                 #xmlschema = etree.XMLSchema(xmlschema_doc)
                 #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                tree = etree.parse(inpxmlfile)  # , parser)
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)  # , parser)
             else:  # schema not there, parse without
                 print('parsing inp.xml without XMLSchema')
-                tree = etree.parse(inpxmlfile)
-            inpxmlfile.close()
+                with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                    tree = etree.parse(inpxmlfile)
             root = tree.getroot()
         else:
             raise InputValidationError('No inp.xml file yet specified, to get a tag from')

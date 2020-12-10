@@ -9,6 +9,7 @@ fleur_code = load_node(FLEUR_PK)
 inpgen_code = load_node(INPGEN_PK)
 
 wf_para = Dict(dict={'serial': False,
+                     'only_even_MPI': False,
                      'beta': {'all': 1.57079},
                      'sqas_theta': [0.0, 1.57079, 1.57079],
                      'sqas_phi': [0.0, 0.0, 1.57079],

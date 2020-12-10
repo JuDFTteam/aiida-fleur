@@ -24,6 +24,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):
@@ -33,7 +34,18 @@ class FleurMaeConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
 
     @classmethod
     def define(cls, spec):
@@ -67,7 +79,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.mae_phis = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -100,6 +112,7 @@ class FleurMaeConvWorkChain(WorkChain):
             inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
             inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
             res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
@@ -143,8 +156,8 @@ class FleurMaeConvWorkChain(WorkChain):
         Retrieve results of converge calculations
         """
         t_energydict = {}
+        original_t_energydict = {}
         outnodedict = {}
-        htr_to_ev = 27.21138602
 
         for label in six.iterkeys(self.ctx.wf_dict['sqas']):
             calc = self.ctx[label]
@@ -170,7 +183,7 @@ class FleurMaeConvWorkChain(WorkChain):
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             t_energydict[label] = t_e
 
         if t_energydict:
@@ -178,9 +191,11 @@ class FleurMaeConvWorkChain(WorkChain):
             minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
+                original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
         self.ctx.energydict = t_energydict
+        self.ctx.original_energydict = original_t_energydict
 
     def return_results(self):
         """
@@ -198,6 +213,7 @@ class FleurMaeConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'mae': self.ctx.energydict,
+            'original_mae': self.ctx.original_energydict,
             'sqa': self.ctx.wf_dict['sqas'],
             'failed_labels': failed_labels,
             'mae_units': 'eV',

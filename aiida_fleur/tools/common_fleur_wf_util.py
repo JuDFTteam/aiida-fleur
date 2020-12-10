@@ -568,13 +568,3 @@ def check_eos_energies(energylist):
             print('annormly detected')
 
     return abnormality, abnormalityindexlist
-
-
-#total_energy = [ -1, -2, -3 ,-2,-4,-3,-2,-1]
-#check_eos_energies(total_energy)
-#(True, [3])
-#total_energy = [ -1, -2, -3 ,-2,-2,-3,-2,-1]
-#check_eos_energies(total_energy)
-#(False, [])
-#total_energy = [ -1, -2, -3 ,-4,-5,-3,-2,-1]
-#(False, [])

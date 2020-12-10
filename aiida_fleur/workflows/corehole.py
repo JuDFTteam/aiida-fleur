@@ -10,7 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
-This is the worklfow 'corehole' using the Fleur code, which calculates Binding
+This is the workflow 'corehole' using the Fleur code, which calculates binding
 energies and corelevel shifts with different methods.
 'divide and conquer'
 """
@@ -68,14 +68,14 @@ class fleur_corehole_wc(WorkChain):
 
     Also it is recommended to provide a calc parameter node for the structure
 
-    :Params: wf_parameters: Dict node, specify, resources and what should be calculated
-    :Params: structure : structureData node, crystal structure
-    :Params: calc_parameters: Dict node, inpgen parameters for the crystal structure
-    :Params: fleurinp:  fleurinpData node,
-    :Params: inpgen: Code node,
-    :Params: fleur: Code node,
+    :param wf_parameters: Dict node, specify, resources and what should be calculated
+    :param structure: structureData node, crystal structure
+    :param calc_parameters: Dict node, inpgen parameters for the crystal structure
+    :param fleurinp:  fleurinpData node,
+    :param inpgen: Code node,
+    :param fleur: Code node,
 
-    :returns: output_corehole_wc_para: Dict node,  successful=True if no error
+    :return: output_corehole_wc_para Dict node,  successful=True if no error
 
     :uses workchains: fleur_scf_wc, fleur_relax_wc
     :uses calcfunctions: supercell, create_corehole_result_node, prepare_struc_corehole_wf
@@ -99,8 +99,8 @@ class fleur_corehole_wc(WorkChain):
     #         #'references' : 'calculate',# at some point aiida will have fast forwarding
     #         'relax' : False,          # relax the unit cell first?
     #         'relax_mode': 'Fleur',    # what releaxation do you want
-    #         'relax_para' : 'default', # parameter dict for the relaxation
-    #         'scf_para' : 'default',    # wf parameter dict for the scfs
+    #         'relax_para' : None, # parameter dict for the relaxation
+    #         'scf_para' : None,    # wf parameter dict for the scfs
     #         'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
     #         'resources' : {"num_machines": 1},# resources per job
     #         'max_wallclock_seconds' : 6*60*60,    # walltime per job
@@ -126,61 +126,36 @@ class fleur_corehole_wc(WorkChain):
         #'import_sys_environment': False,
         #'environment_variables': {}
     }
+    _default_wf_para = {
+        'method': 'valence',  # what method to use, default for valence to highest open shell
+        'hole_charge': 1.0,  # what is the charge of the corehole? 0<1.0
+        'atoms':
+        ['all'],  # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
+        'corelevel': ['all'],  # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
+        'supercell_size': [2, 1, 1],  # size of the supercell [nx,ny,nz]
+        'para_group': None,  # use parameter nodes from a parameter group
+        #'references' : 'calculate',# at some point aiida will have fast forwarding
+        #'relax' : False,          # relax the unit cell first?
+        #'relax_mode': 'Fleur',    # what releaxation do you want
+        #'relax_para' : None, # parameter dict for the relaxation
+        'scf_para': None,  # wf parameter dict for the scfs
+        'same_para': True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
+        'serial': True,  # run fleur in serial, or parallel?
+        #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
+        'magnetic': True
+    }
 
     @classmethod
     def define(cls, spec):
         super(fleur_corehole_wc, cls).define(spec)
-        spec.input(
-            'wf_parameters',
-            valid_type=Dict,
-            required=False,
-            #default=Dict(
-            #    dict={
-            #        'method':
-            #        'valence',  # what method to use, default for valence to highest open shell
-            #        'hole_charge': 1.0,  # what is the charge of the corehole? 0<1.0
-            #        'atoms': [
-            #            'all'
-            #        ],  # coreholes on what atoms, positions or index for list, or element ['Be', (0.0, 0.5, 0.334), 3]
-            #        'corelevel': ['all'
-            #                      ],  # coreholes on which corelevels [ 'Be1s', 'W4f', 'Oall'...]
-            #        'supercell_size': [2, 1, 1],  # size of the supercell [nx,ny,nz]
-            #        'para_group': None,  # use parameter nodes from a parameter group
-            #        #'references' : 'calculate',# at some point aiida will have fast forwarding
-            #        #'relax' : False,          # relax the unit cell first?
-            #        #'relax_mode': 'Fleur',    # what releaxation do you want
-            #        #'relax_para' : 'default', # parameter dict for the relaxation
-            #        'scf_para': 'default',  # wf parameter dict for the scfs
-            #        'same_para':
-            #        True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
-            #        'serial': True,  # run fleur in serial, or parallel?
-            #        #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
-            #        'magnetic': True
-            #    }
-            #)
-        )
+        spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('inpgen', valid_type=Code, required=True)
         spec.input('structure', valid_type=StructureData, required=False)
         spec.input('calc_parameters', valid_type=Dict, required=False)
-        spec.input(
-            'options',
-            valid_type=Dict,
-            required=False  #,
-            #default=Dict(
-            #    dict={
-            #        'resources': {
-            #            "num_machines": 1, "num_mpiprocs_per_machine": 1,
-            #        },
-            #        'max_wallclock_seconds': 60 * 60,
-            #        'queue_name': '',
-            #        'custom_scheduler_commands': '',
-            #        'import_sys_environment': False,
-            #        'environment_variables': {}
-            #    }
-            #)
-        )
+        spec.input('options', valid_type=Dict, required=False)  #, default=lambda: Dict(dict=cls._default_options))
+
         spec.outline(
             cls.check_input,  # first check if input is consistent
             if_(cls.relaxation_needed)(  # ggf relax the given cell
@@ -541,6 +516,7 @@ class fleur_corehole_wc(WorkChain):
                         dict_corelevel_elm['valence'] = all_changed_valence
                         dict_corelevel_elm['econfig'] = econfigs
                         tempd = dict_corelevel.get(elm_cl[0], {})
+                        # dict_merger also addes numbers!
                         together = dict_merger(dict_corelevel_elm, tempd)
                         #pprint(together)
                         dict_corelevel[elm_cl[0]] = together
@@ -647,8 +623,8 @@ class fleur_corehole_wc(WorkChain):
             #pprint('inpxml_changes {}'.format(corehole['inpxml_changes']))
             # create_wf para or write in last line what should be in 'fleur_change'
             #  for scf, which with the changes in the inp.xml needed
-            para = self.ctx.scf_para.copy()  # Otherwise inline edit... What about Provenance? TODO check
-            if para == 'default':
+            para = self.ctx.scf_para  # Otherwise inline edit... What about Provenance? TODO check
+            if para is None:
                 wf_parameter = {}
             else:
                 wf_parameter = para
@@ -696,7 +672,7 @@ class fleur_corehole_wc(WorkChain):
         self.report('INFO: In run_ref_scf fleur_corehole_wc')
         print('INFO: In run_ref_scf fleur_corehole_wc')
         para = self.ctx.scf_para
-        if para == 'default':
+        if para is None:
             wf_parameter = {}
         else:
             wf_parameter = para
@@ -840,7 +816,7 @@ class fleur_corehole_wc(WorkChain):
         self.report('INFO: In run_scfs fleur_corehole_wc')
         print('INFO: In run_scfs fleur_corehole_wc')
         para = self.ctx.scf_para
-        if para == 'default':
+        if para is None:
             wf_parameter = {}
         else:
             wf_parameter = para
@@ -1097,7 +1073,9 @@ def create_corehole_result_node(**kwargs):  #*args):
 #                               'inpxml_changes' : fleurinp_change}
 @cf
 def prepare_struc_corehole_wf(
-    base_supercell, wf_para, para
+    base_supercell,
+    wf_para,
+    para=None,
 ):  #, _label='prepare_struc_corehole_wf', _description='WF, used in the corehole_wc, breaks the symmetry and moves the cell, prepares the inpgen parameters for a corehole.'):
     """
     calcfunction which does all/some the structure+calcparameter manipulations together
@@ -1105,6 +1083,7 @@ def prepare_struc_corehole_wf(
     wf_para: Dict node dict: {'site' : sites[8], 'kindname' : 'W1', 'econfig': "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2", 'fleurinp_change' : []}
     """
     from aiida_fleur.tools.StructureData_util import move_atoms_incell
+
     #from aiida.orm.data.structure import Site
 
     wf_para_dict = wf_para.get_dict()
@@ -1119,12 +1098,14 @@ def prepare_struc_corehole_wf(
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    new_struc, new_para = break_symmetry(base_supercell,
-                                         atoms=[],
-                                         site=[],
-                                         pos=[(pos[0], pos[1], pos[2])],
-                                         new_kinds_names=new_kinds_names,
-                                         parameterdata=para)
+    inputs = dict(structure=base_supercell,
+                  atoms=[],
+                  site=[],
+                  pos=[(pos[0], pos[1], pos[2])],
+                  new_kinds_names=new_kinds_names)
+    if para is not None:
+        inputs['parameterdata'] = para
+    new_struc, new_para = break_symmetry(**inputs)
     #kinds = new_struc.kinds
     #for kind in kinds:
     #    if kind.name == broke_kn:
@@ -1159,11 +1140,12 @@ def extract_results_corehole(calcs):
         print(calc.exit_status, calc.exit_message)
         print(calc.get_outgoing().all())
         try:
-            calc_uuids.append(calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+            calc_uuid = calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
         except (KeyError, AttributeError):
             print('continue')
             continue
-        #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
+        if calc_uuid is not None:
+            calc_uuids.append(calc_uuid)
     #print(calc_uuids)
 
     #all_corelevels = {}

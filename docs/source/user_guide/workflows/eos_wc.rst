@@ -39,17 +39,19 @@ Input nodes
 The :py:class:`~aiida_fleur.workflows.eos.FleurEosWorkChain` employs
 `exposed`_ feature of the AiiDA-core, thus inputs for the
 :ref:`SCF<scf_wc>` sub-workchain should be passed in the namespace called
-``scf`` (see :ref:`example of usage<example_use_eos>`).
+``scf`` (see :ref:`example of usage<example_use_eos>`). Please note that the `structure` input node
+is excluded from the `scf` namespace since the EOS workchain should process input structure before
+performing energy calculations.
 
-+-----------------+--------------------------------------+-------------------------------------+----------+
-| name            | type                                 | description                         | required |
-+=================+======================================+=====================================+==========+
-| scf             | namespace                            | inputs for nested SCF WorkChain     | no       |
-+-----------------+--------------------------------------+-------------------------------------+----------+
-| wf_parameters   | :py:class:`~aiida.orm.Dict`          | Settings of the workchain           | no       |
-+-----------------+--------------------------------------+-------------------------------------+----------+
-| structure       | :py:class:`~aiida.orm.StructureData` | input structure                     | no       |
-+-----------------+--------------------------------------+-------------------------------------+----------+
++-----------------+--------------------------------------+------------------------------------------------------------------+----------+
+| name            | type                                 | description                                                      | required |
++=================+======================================+==================================================================+==========+
+| scf             | namespace                            | inputs for nested SCF WorkChain. structure input is excluded     | no       |
++-----------------+--------------------------------------+------------------------------------------------------------------+----------+
+| wf_parameters   | :py:class:`~aiida.orm.Dict`          | Settings of the workchain                                        | no       |
++-----------------+--------------------------------------+------------------------------------------------------------------+----------+
+| structure       | :py:class:`~aiida.orm.StructureData` | input structure                                                  | no       |
++-----------------+--------------------------------------+------------------------------------------------------------------+----------+
 
 Returns nodes
 ^^^^^^^^^^^^^

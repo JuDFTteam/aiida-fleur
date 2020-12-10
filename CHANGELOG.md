@@ -1,3 +1,34 @@
+
+## v1.1.3
+### release compatible with AiiDA-core 1.3.0
+- Introduced common constants, for bohr and htr, increased precision
+- Command line interface (CLI) `aiida-fleur` with various functionalities exposed
+- For devs: Increased test coverage
+
+
+## v1.1.2
+### release compatible with AiiDA-core 1.3.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- downdgraded aiida-core dependency, do release does not depend on aiida-testing
+- Added userfriendly LDA+U support
+- SCF workchain can generate kpoints from a given density
+- Base fleur has now time limit error handler
+- Relax workchain can now run a final scf
+- Update documentation for corehole, initial CLS and create magnetic workchains
+- Various bug fixes and robustness improvements of magnetic workchains
+- For devs: Enforced pre-commit, tests dir moved out of source
+
+## v1.1.1
+### release compatible with AiiDA-core 1.4.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- bugfixes and other general improvements
+- new: BandDos workchain: workchain for Band and DOS calculation using the new Fleur BandDOS file
+- basic workchains are now cachable, by moving cf out of workchains
+- first calcjob and workchain regression tests for outside CI env
+- provenance of the result nodes of magnetic workchains is fixed
+- corehole and initial_cls workchain are fixed and working
+- exit codes for inpgen parser
+
 ## v1.1.0
 ### release compatible with AiiDA-core 1.1.0
 - support of Fleur Max4 version (release branch)

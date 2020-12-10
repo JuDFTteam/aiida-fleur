@@ -33,7 +33,16 @@ class FleurSSDispConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'beta': {'all': 1.57079}, 'q_vectors': {'label': [0.0, 0.0, 0.0], 'label2': [0.125, 0.0, 0.0]}}
+    _default_wf_para = {
+        'beta': {
+            'all': 1.57079
+        },
+        'q_vectors': {
+            'label': [0.0, 0.0, 0.0],
+            'label2': [0.125, 0.0, 0.0]
+        },
+        'suppress_symmetries': False
+    }
 
     @classmethod
     def define(cls, spec):
@@ -67,7 +76,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -97,9 +106,17 @@ class FleurSSDispConvWorkChain(WorkChain):
         inputs = {}
         for key, q_vector in six.iteritems(self.ctx.wf_dict['q_vectors']):
             inputs[key] = self.get_inputs_scf()
-            inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
+            if self.ctx.wf_dict['suppress_symmetries']:
+                inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
+                changes_dict = {'qss': ' '.join(map(str, q_vector))}
+                wf_para = inputs[key].wf_parameters.get_dict()
+                wf_para['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
+                inputs[key].wf_parameters = Dict(dict=wf_para)
+            else:
+                inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
             inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
             res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
@@ -141,6 +158,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         Retrieve results of converge calculations
         """
         t_energydict = {}
+        original_t_energydict = {}
         outnodedict = {}
         htr_to_eV = 27.21138602
 
@@ -176,9 +194,11 @@ class FleurSSDispConvWorkChain(WorkChain):
             minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
+                original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
         self.ctx.energydict = t_energydict
+        self.ctx.original_energydict = original_t_energydict
 
     def return_results(self):
         """
@@ -196,6 +216,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'energies': self.ctx.energydict,
+            'original_energies': self.ctx.original_energydict,
             'q_vectors': self.ctx.wf_dict['q_vectors'],
             'failed_labels': failed_labels,
             'energy_units': 'eV',

@@ -1,4 +1,4 @@
-AIIDA-FLEUR WorkChains
+AiiDA-FLEUR WorkChains
 ======================
 
 General design
@@ -10,7 +10,7 @@ Inputs
 ''''''
 
 There is always a ``wf_parameters``:
-:py:class:`~aiida.orm.Dict` node for controlling the workflow behaviour.
+:py:class:`~aiida.orm.Dict` node for controlling the workflow behavior.
 It contains all the parameters related to physical aspects of the
 workchain and its content vary between different workchains.
 

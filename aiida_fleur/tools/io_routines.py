@@ -27,24 +27,24 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     param data: 2D array (numpy,scipy) with data [colum1 colum2, ...]
     """
 
-    thefile = open(destination, 'w')
-    thefile.write(headerstring)
-    datastring = ''
-    #seperator = seperator  # '\t'
-    if transpose:
-        datat = data.transpose()
-    else:
-        datat = data
-    for item in datat:
-        itemstring = ''
-        for value in item:
-            if isinstance(value, (six.string_types, str)):
-                itemstring = itemstring + '{}{}'.format(value, seperator)
-            else:
-                itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
-        datastring = datastring + itemstring.strip() + '\n'
-    thefile.write(datastring)
-    thefile.close()
+    with open(destination, 'w') as thefile:
+        thefile.write(headerstring)
+        datastring = ''
+        #seperator = seperator  # '\t'
+        if transpose:
+            datat = data.transpose()
+        else:
+            datat = data
+        for item in datat:
+            itemstring = ''
+            for value in item:
+                if isinstance(value, (six.string_types, str)):
+                    itemstring = itemstring + '{}{}'.format(value, seperator)
+                else:
+                    itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
+            datastring = datastring + itemstring.strip() + '\n'
+        thefile.write(datastring)
+    #thefile.close()
 
 
 def write_xps_spectra_datafile(nodes,

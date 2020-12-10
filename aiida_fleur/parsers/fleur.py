@@ -22,12 +22,14 @@ from __future__ import absolute_import
 import os
 import re
 import json
+import numpy as np
 from datetime import date
 from lxml import etree
 
 from aiida.parsers import Parser
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurParser(Parser):
@@ -81,6 +83,7 @@ class FleurParser(Parser):
         has_dos_file = False
         has_bands_file = False
         has_relax_file = False
+        invalid_mmpmat = False
 
         dos_file = None
         band_file = None
@@ -134,10 +137,12 @@ class FleurParser(Parser):
                                         ' : \n {}'.format(errorfile, error_file_lines))
                     self.logger.error('FLEUR calculation did not finish' ' successfully.')
 
+                    # here we estimate how much memory was available and consumed
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open('out.xml', 'r') as out_file:  # lazy out.xml parsing
+                    with output_folder.open(FleurCalculation._OUTXML_FILE_NAME,
+                                            'r') as out_file:  # lazy out.xml parsing
                         outlines = out_file.read()
                         try:
                             line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
@@ -158,7 +163,17 @@ class FleurParser(Parser):
                                 except IndexError:
                                     self.logger.info('Did not manage to find memory usage info.')
 
-                    if kb_used * mpiprocs / mem_kb_avail > 0.93 or 'cgroup out-of-memory handler' in error_file_lines:
+                    # here we estimate how much walltime was available and consumed
+                    try:
+                        time_avail_sec = self.node.attributes['last_job_info']['requested_wallclock_time_seconds']
+                        time_calculated = self.node.attributes['last_job_info']['wallclock_time_seconds']
+                        if time_avail_sec < 1.01 * time_calculated:
+                            return self.exit_codes.ERROR_TIME_LIMIT
+                    except KeyError:
+                        pass
+
+                    if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
+                            'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
                     elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
@@ -181,6 +196,8 @@ class FleurParser(Parser):
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
+                    elif 'Invalid elements in mmpmat' in error_file_lines:
+                        invalid_mmpmat = True
                     elif 'parent_folder' in calc.inputs:
                         if 'fleurinpdata' in calc.inputs:
                             if 'relax.xml' in calc.inputs.fleurinpdata.files:
@@ -202,9 +219,8 @@ class FleurParser(Parser):
 
         if has_xml_outfile:
             # open output file
-            outxmlfile_opened = output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r')
-            simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
-            outxmlfile_opened.close()
+            with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile_opened:
+                simpledata, complexdata, parser_info, success = parse_xmlout_file(outxmlfile_opened)
 
             # Call routines for output node creation
             if not success:
@@ -212,13 +228,11 @@ class FleurParser(Parser):
                 return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
             elif simpledata:
                 outputdata = dict(list(simpledata.items()) + list(parser_info.items()))
-                #outputdata['CalcJob_uuid'] = self.node.uuid
                 outxml_params = Dict(dict=outputdata)
                 link_name = self.get_linkname_outparams()
                 self.out(link_name, outxml_params)
             elif complexdata:
                 parameter_data = dict(list(complexdata.items()) + list(parser_info.items()))
-                #parameter_data['CalcJob_uuid'] = self.node.uuid
                 outxml_params_complex = Dict(dict=parameter_data)
                 link_name = self.get_linkname_outparams_complex()
                 self.out(link_name, outxml_params_complex)
@@ -279,6 +293,9 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
 
+        if invalid_mmpmat:
+            return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
+
 
 def parse_xmlout_file(outxmlfile):
     """
@@ -297,7 +314,7 @@ def parse_xmlout_file(outxmlfile):
     # FIXME: This is global, look for a different way to do this, python logging?
 
     parser_info_out = {'parser_warnings': [], 'unparsed': []}
-    parser_version = '0.3.0'
+    parser_version = '0.3.2'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
 
@@ -365,6 +382,7 @@ def parse_xmlout_file(outxmlfile):
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
         l_f_xpath = '/fleurOutput/inputData/calculationSetup/geometryOptimization/@l_f'
+        ldau_xpath = '/fleurOutput/inputData/atomSpecies/species/ldaU'
 
         # timing
         start_time_xpath = '/fleurOutput/startDateAndTime/@time'
@@ -406,6 +424,7 @@ def parse_xmlout_file(outxmlfile):
 
         relax = eval_xpath(root, l_f_xpath)
         fleurmode['relax'] = relax == 'T'
+        fleurmode['ldau'] = len(eval_xpath2(root, ldau_xpath)) != 0
 
         if data_exists:
             simple_data = parse_simple_outnode(iteration_to_parse, fleurmode)
@@ -425,6 +444,37 @@ def parse_xmlout_file(outxmlfile):
         simple_data['number_of_species'] = len(eval_xpath2(root, species_xpath))
         simple_data['number_of_kpoints'] = len(eval_xpath2(root, kpoints_xpath))
         simple_data['number_of_spin_components'] = fleurmode['jspin']
+
+        if fleurmode['ldau']:
+            ldaU_definitions = eval_xpath2(root, ldau_xpath)
+            for ldaU in ldaU_definitions:
+                parent = ldaU.getparent()
+                element_name = get_xml_attribute(parent, 'element')
+                species_name = get_xml_attribute(parent, 'name')
+                ldauKey = f'{element_name}/{species_name}'
+
+                if ldauKey not in simple_data['ldau_info']:
+                    simple_data['ldau_info'][ldauKey] = {}
+
+                ldau_l = get_xml_attribute(ldaU, 'l')
+                ldau_l, suc = convert_to_int(ldau_l)
+                ldau_l = 'spdf'[ldau_l]
+                simple_data['ldau_info'][ldauKey][ldau_l] = {}
+
+                ldau_u = get_xml_attribute(ldaU, 'U')
+                simple_data['ldau_info'][ldauKey][ldau_l]['u'], suc = convert_to_float(ldau_u)
+
+                ldau_j = get_xml_attribute(ldaU, 'J')
+                simple_data['ldau_info'][ldauKey][ldau_l]['j'], suc = convert_to_float(ldau_j)
+
+                simple_data['ldau_info'][ldauKey][ldau_l]['unit'] = 'eV'
+
+                ldau_amf = get_xml_attribute(ldaU, 'l_amf') == 'T'
+                if ldau_amf:
+                    ldau_dc = 'AMF'
+                else:
+                    ldau_dc = 'FLL'
+                simple_data['ldau_info'][ldauKey][ldau_l]['double_counting'] = ldau_dc
 
         title = eval_xpath(root, title_xpath)
         if title:
@@ -595,11 +645,11 @@ def parse_xmlout_file(outxmlfile):
         """
         Multiplies the value given with the Hartree factor (converts htr to eV)
         """
-        htr = 27.21138602
+        #htr = 27.21138602
         suc = False
         value_to_save, suc = convert_to_float(value)
         if suc:
-            return value_to_save * htr
+            return value_to_save * HTR_TO_EV
         else:
             return value
 
@@ -665,12 +715,12 @@ def parse_xmlout_file(outxmlfile):
         spindowncharge_name = 'spinDownCharge'
         moment_name = 'moment'
 
-        # all electron charges
-        allelectronchages_xpath = ''
+        # All electron charges
+        all_spin_charges_total_xpath = 'allElectronCharges/spinDependentCharge/@total'
+        all_spin_charges_interstitial_xpath = 'allElectronCharges/spinDependentCharge/@interstitial'
+        all_spin_charges_mt_spheres_xpath = 'allElectronCharges/spinDependentCharge/@mtSpheres'
+        all_total_charge_xpath = 'allElectronCharges/totalCharge/@value'
 
-        a = 'total'
-        b = 'interstitial'
-        c = 'value'
         # energy
         totalenergy_xpath = 'totalEnergy'
         sumofeigenvalues_xpath = 'totalEnergy/sumOfEigenvalues'
@@ -683,6 +733,10 @@ def parse_xmlout_file(outxmlfile):
         # forces
         forces_units_xpath = 'totalForcesOnRepresentativeAtoms'
         forces_total_xpath = 'totalForcesOnRepresentativeAtoms/forceTotal'
+
+        #ldau
+        eldau_xpath = 'totalEnergy/dftUCorrection/@value'
+        ldaudistances_xpath = 'ldaUdensityMatrixConvergence/distance/'
 
         #
         iteration_xpath = '.'
@@ -702,6 +756,7 @@ def parse_xmlout_file(outxmlfile):
         new_y_name = 'y'
         new_z_name = 'z'
 
+        species_xpath = '/fleurOutput/inputData/atomSpecies'
         relPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/relPos'
         absPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/absPos'
         filmPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/filmPos'
@@ -709,13 +764,13 @@ def parse_xmlout_file(outxmlfile):
 
         film_lat_xpath = '/fleurOutput/inputData/cell/filmLattice/bravaisMatrix/'
         bulk_lat_xpath = '/fleurOutput/inputData/cell/bulkLattice/bravaisMatrix/'
-
         kmax_xpath = '/fleurOutput/inputData/calculationSetup/cutoffs/@Kmax'
 
         ###################################################
 
         jspin = fleurmode['jspin']
         relax = fleurmode['relax']
+        ldaU = fleurmode['ldau']
         simple_data = {}
 
         def write_simple_outnode(value, value_type, value_name, dict_out):
@@ -895,7 +950,7 @@ def parse_xmlout_file(outxmlfile):
                                                                distance_name)
                     write_simple_outnode(overall_charge_density, 'float', 'overall_charge_density', simple_data)
 
-                # magnetic moments            #TODO orbMag Moment
+                # magnetic moments
                 m_units = get_xml_attribute(eval_xpath(iteration_node, magnetic_moments_in_mtpheres_xpath), units_name)
                 write_simple_outnode(m_units, 'str', 'magnetic_moment_units', simple_data)
                 write_simple_outnode(m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
@@ -909,6 +964,30 @@ def parse_xmlout_file(outxmlfile):
                 spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
                 write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
 
+                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
+                write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
+
+                # Total charges, total magentic moment
+
+                total_c = eval_xpath2(iteration_node, all_spin_charges_total_xpath)
+                write_simple_outnode(total_c, 'list_floats', 'spin_dependent_charge_total', simple_data)
+
+                total_magentic_moment_cell = None
+                if len(total_c) == 2:
+                    val, suc = convert_to_float(total_c[0])
+                    val2, suc2 = convert_to_float(total_c[1])
+                    total_magentic_moment_cell = np.abs(val - val2)
+                write_simple_outnode(total_magentic_moment_cell, 'float', 'total_magnetic_moment_cell', simple_data)
+
+                total_c_i = eval_xpath2(iteration_node, all_spin_charges_interstitial_xpath)
+                write_simple_outnode(total_c_i, 'list_floats', 'spin_dependent_charge_interstitial', simple_data)
+
+                total_c_mt = eval_xpath2(iteration_node, all_spin_charges_mt_spheres_xpath)
+                write_simple_outnode(total_c_mt, 'list_floats', 'spin_dependent_charge_mt', simple_data)
+
+                total_c = eval_xpath(iteration_node, all_total_charge_xpath)
+                write_simple_outnode(total_c, 'float', 'total_charge', simple_data)
+
                 # orbital magnetic moments
                 orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
                 write_simple_outnode(orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
@@ -919,20 +998,14 @@ def parse_xmlout_file(outxmlfile):
                 orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
                 write_simple_outnode(orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
 
-                # TODO: atomtype dependence
-                # moment = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), moment_name)
-                #write_simple_outnode(moment, 'float', 'magnetic_moment', simple_data)
+            if ldaU:
+                simple_data['ldau_info'] = {}
+                eldau = eval_xpath(iteration_node, eldau_xpath)
+                write_simple_outnode(eldau, 'float', 'ldau_energy_correction', simple_data['ldau_info'])
+                write_simple_outnode(units_e, 'str', 'unit', simple_data['ldau_info'])
 
-                # spinup = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), spinupcharge_name)
-                #write_simple_outnode(spinup, 'float', 'spin_up_charge', simple_data)
-
-                # spindown = get_xml_attribute(
-                #    eval_xpath(iteration_node, magneticmoment_xpath), spindowncharge_name)
-                #write_simple_outnode(spindown, 'float', 'spin_down_charge', simple_data)
-
-                # Total charges, total magentic moment
+                ldau_distances = eval_xpath2(iteration_node, ldaudistances_xpath)
+                write_simple_outnode(ldau_distances, 'list_floats', 'density_matrix_distance', simple_data['ldau_info'])
 
             if relax:
                 # check if it is a film or a bulk structure
@@ -956,15 +1029,20 @@ def parse_xmlout_file(outxmlfile):
                 relax_brav_vectors = [v_1, v_2, v_3]
 
                 atom_positions = []
+                relax_atom_info = []
 
                 all_atoms = eval_xpath2(root, atomstypes_xpath)
                 for a_type in all_atoms:
-                    element = get_xml_attribute(a_type, 'species').split('-')[0]
+                    species = get_xml_attribute(a_type, 'species')
+                    full_xpath = species_xpath + '/species[@name = "{}"]/@element'.format(species)
+                    element = eval_xpath(root, full_xpath)
                     type_positions = eval_xpath2(a_type, pos_attr)
                     for pos in type_positions:
                         pos = [convert_frac(x) for x in pos.text.split()]
-                        atom_positions.append([element] + pos)
+                        atom_positions.append(pos)
+                        relax_atom_info.append([species, element])
 
+                write_simple_outnode(relax_atom_info, 'list', 'relax_atomtype_info', simple_data)
                 write_simple_outnode(relax_brav_vectors, 'list', 'relax_brav_vectors', simple_data)
                 write_simple_outnode(atom_positions, 'list', 'relax_atom_positions', simple_data)
                 write_simple_outnode(str(bool(film)), 'str', 'film', simple_data)

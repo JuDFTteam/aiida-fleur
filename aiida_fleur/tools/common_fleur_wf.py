@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import six
 
-from aiida.orm import Node, load_node
+from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
 
@@ -60,7 +60,15 @@ def is_code(code):
         return None
 
 
-def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, serial=False):
+def get_inputs_fleur(code,
+                     remote,
+                     fleurinp,
+                     options,
+                     label='',
+                     description='',
+                     settings=None,
+                     serial=False,
+                     only_even_MPI=False):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -84,6 +92,11 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     '''
     Dict = DataFactory('dict')
     inputs = {}
+    if isinstance(only_even_MPI, Bool):
+        inputs['only_even_MPI'] = only_even_MPI
+    else:
+        inputs['only_even_MPI'] = Bool(only_even_MPI)
+
     if remote:
         inputs['parent_folder'] = remote
     if code:
@@ -115,7 +128,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     options['custom_scheduler_commands'] = custom_commands
 
     if settings:
-        inputs['settings'] = Dict(dict=settings)
+        if isinstance(settings, Dict):
+            inputs['settings'] = settings
+        else:
+            inputs['settings'] = Dict(dict=settings)
 
     if options:
         inputs['options'] = Dict(dict=options)
@@ -176,69 +192,6 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     #    inputs[key] = val
 
     return inputs
-
-
-def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
-    """
-    This is a utility function with the goal to make prepare the right resource
-    and scheduler extras for a given computer.
-    Since this is user dependend you might want to create your own.
-
-    return: dict, custom scheduler commands
-    """
-    if extras is None:
-        extras = {}
-    nnodes = resources.get('num_machines', 1)
-
-    # TODO memory has to be done better...
-    mem_per_node = 120000  # max recommend 126000 MB on claix jara-clx nodes
-    mem_per_process = mem_per_node / 24
-    if not extras:
-        # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {
-            'lsf': ('#BSUB -P {} \n#BSUB -M {}  \n'
-                    '#BSUB -a intelmpi'.format(project, mem_per_process)),
-            'torque': '',
-            'direct': ''
-        }
-
-    # get the scheduler type from the computer the code is run on.
-    com = code.computer
-    # com_name = com.get_name()
-    scheduler_type = com.get_scheduler_type()
-
-    default_per_machine = com.get_default_mpiprocs_per_machine()
-    if not default_per_machine:
-        default_per_machine = 24  # claix, lsf does can not have default mpiprocs... #TODO this better
-    tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine * nnodes)
-
-    if scheduler_type == 'lsf':
-        new_resources = {'tot_num_mpiprocs': tot_num_mpiprocs}  # only this needs to be given
-    elif scheduler_type == 'torque':
-        # {'num_machines', 1} # on iff003 currently we do not do multinode mpi,
-        new_resources = resources
-        # like this it will get stuck on iff003
-    else:
-        new_resources = resources
-    scheduler_extras = extras.get(scheduler_type, '')
-
-    return new_resources, scheduler_extras
-
-
-# test
-###############################
-# codename = 'inpgen@local_mac'#'inpgen_v0.28@iff003'#'inpgen_iff@local_iff'
-# codename2 = 'fleur_v0.28@iff003'#'fleur_mpi_v0.28@iff003'# 'fleur_iff_0.28@local_iff''
-# codename2 = 'fleur_max_1.3_dev@iff003'
-# codename2 = 'fleur_mpi_max_1.3_dev@iff003'
-# codename4 = 'fleur_mpi_v0.28@claix'
-###############################
-# code = Code.get_from_string(codename)
-# code2 = Code.get_from_string(codename2)
-# code4 = Code.get_from_string(codename4)
-# print(get_scheduler_extras(code, {'num_machines' : 1}))
-# print(get_scheduler_extras(code2, {'num_machines' : 2}))
-# print(get_scheduler_extras(code4, {'num_machines' : 1}))
 
 
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
@@ -337,6 +290,9 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     workchain_dict = {'Be12W' : uuid_wc or output, 'Be2W' : uuid, ...}
 
     return dictionary that ranks the reactions after their enthalpy
+
+    TODO: refactor aiida part out of this, leaving an aiida independent part and one
+    more universal
     """
     from aiida.engine import WorkChain
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
@@ -368,7 +324,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
-                            print(('WARNING: ouput node of {} not found. I skip'.format(n)))
+                            print(('WARNING: output node of {} not found. I skip'.format(n)))
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -383,28 +339,6 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         energy_sorted_reactions.append([reaction_string, ent_peratom])
     energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])
     return energy_sorted_reactions
-
-
-# test
-# reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
-# workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
-#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4',
-#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc',
-#                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
-#                  'Be' : 0.0}
-# reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
-# print reac_list
-# {'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
-# 0.0
-# {'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
-# 0.114321037514
-# {'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
-# -0.868053153884
-# {'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
-# -0.0946046496213
-# {'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
-# 0.180159355144
-# [['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
 
 
 def performance_extract_calcs(calcs):
@@ -542,6 +476,7 @@ def performance_extract_calcs(calcs):
 
 
 def get_mpi_proc(resources):
+    """Determine number of total processes from given resource dict"""
     nmachines = resources.get('num_machines', 0)
     total_proc = resources.get('tot_num_mpiprocs', 0)
     if not total_proc:
@@ -554,16 +489,19 @@ def get_mpi_proc(resources):
 
 
 def calc_time_cost_function(natom, nkpt, kmax, nspins=1):
+    """Estimates the cost of simulating a single iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins
     return costs
 
 
 def calc_time_cost_function_total(natom, nkpt, kmax, niter, nspins=1):
+    """Estimates the cost of simulating a all  iteration of a system"""
     costs = natom**3 * kmax**3 * nkpt * nspins * niter
     return costs
 
 
 def cost_ratio(total_costs, walltime_sec, ncores):
+    """Estimates if simulation cost matches resources"""
     ratio = total_costs / (walltime_sec * ncores)
     return ratio
 
@@ -575,7 +513,8 @@ def optimize_calc_options(nodes,
                           mpi_omp_ratio,
                           fleurinpData=None,
                           kpts=None,
-                          sacrifice_level=0.9):
+                          sacrifice_level=0.9,
+                          only_even_MPI=False):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -597,6 +536,7 @@ def optimize_calc_options(nodes,
     :param kpts: the total number of kpts
     :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
                             MPI/OMP ratio.
+    :parm only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
     :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
                                                      the last one is an exit message.
     """
@@ -625,7 +565,7 @@ def optimize_calc_options(nodes,
         for advised_cpu_per_node in advise_cpus:
             suggestions.append((n_n, advised_cpu_per_node))
 
-    def add_omp(suggestions):
+    def add_omp(suggestions, only_even_MPI_1):
         """
         Also adds possibility of omp parallelisation
         """
@@ -635,22 +575,24 @@ def optimize_calc_options(nodes,
                 omp = cpus_per_node // suggestion[1]
             else:
                 omp = 1
-            final_suggestion.append([suggestion[0], suggestion[1], omp])
+            # here we drop parallelisations having odd number of MPIs
+            if only_even_MPI_1 and suggestion[1] % 2 == 0 or not only_even_MPI_1:
+                final_suggestion.append([suggestion[0], suggestion[1], omp])
         return final_suggestion
 
     # all possible suggestions taking into account omp
-    suggestions = np.array(add_omp(suggestions))
+    suggestions_save = suggestions
+    suggestions = np.array(add_omp(suggestions, only_even_MPI))
+    if not len(suggestions):  # only odd MPI parallelisations possible, ignore only_even_MPI
+        suggestions = np.array(add_omp(suggestions_save, False))
 
     best_resources = max(np.prod(suggestions, axis=1))
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
 
     def best_criterion(suggestion):
-        '''
-        also implements hard preference of even numper of MPIs over odd
-        '''
         if use_omp:
-            return (abs(suggestion[1] % 2 - 1), -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio))
-        return (suggestion[0] * suggestion[1], abs(suggestion[1] % 2 - 1), -suggestion[0])
+            return -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio)
+        return (suggestion[0] * suggestion[1], -suggestion[0])
 
     best_suggestion = max(top_suggestions, key=best_criterion)
 
@@ -699,7 +641,7 @@ def find_last_submitted_calcjob(restart_wc):
 
 def find_last_submitted_workchain(restart_wc):
     """
-    Finds the last CalcJob submitted in a higher-level workchain
+    Finds the last WorkChain submitted in a higher-level workchain
     and returns it's uuid
     """
     from aiida.common.exceptions import NotExistent

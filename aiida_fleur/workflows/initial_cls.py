@@ -108,7 +108,7 @@ class fleur_initial_cls_wc(WorkChain):
     @classmethod
     def define(cls, spec):
         super(fleur_initial_cls_wc, cls).define(spec)
-        spec.input('wf_parameters', valid_type=Dict, required=False, default=Dict(dict=cls._default_wf_para))
+        spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('inpgen', valid_type=Code, required=False)
@@ -163,6 +163,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.bandgaps = {}
         self.ctx.atomtypes = {}
         # set values, or defaults for Wf_para
+        # 'wf_parameters' always there
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
@@ -174,7 +175,7 @@ class fleur_initial_cls_wc(WorkChain):
         self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
 
         defaultoptions = self._default_options
-        if self.inputs.options:
+        if 'options' in self.inputs:
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
@@ -774,34 +775,47 @@ class fleur_initial_cls_wc(WorkChain):
         if self.ctx.errors:
             self.ctx.warnings.append(self.ctx.errors)
 
+        material = list(efermi.keys())
+        if material:
+            material = material[0]
+        fermi_energy = list(efermi.values())
+        if fermi_energy:
+            fermi_energy = fermi_energy[0]
+        total_energy = list(tE.values())
+        if total_energy:
+            total_energy = total_energy[0]
+        bandgap = list(gap.values())
+        if bandgap:
+            bandgap = bandgap[0]
+
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['material'] = list(efermi.keys())[0]
+        outputnode_dict['material'] = material
         outputnode_dict['corelevel_energies'] = cl
         outputnode_dict['corelevel_energies_units'] = 'htr'  #'eV'
         outputnode_dict['reference_corelevel_energies'] = ref_cl
         outputnode_dict['reference_corelevel_energies_units'] = 'htr'  #'eV'
         outputnode_dict['reference_fermi_energy'] = list(ref_efermi.values())
         outputnode_dict['reference_fermi_energy_des'] = list(ref_efermi.keys())
-        outputnode_dict['fermi_energy'] = list(efermi.values())[0]
+        outputnode_dict['fermi_energy'] = efermi
         outputnode_dict['fermi_energy_units'] = 'htr'
         outputnode_dict['corelevelshifts'] = cls
         outputnode_dict['corelevelshifts_units'] = 'htr'
         outputnode_dict['binding_energy_convention'] = 'negativ'
         #outputnode_dict['coresetup'] = []#cls
         #outputnode_dict['reference_coresetup'] = []#cls
-        outputnode_dict['bandgap'] = list(gap.values())[0]
+        outputnode_dict['bandgap'] = bandgap
         outputnode_dict['bandgap_units'] = 'htr'
         outputnode_dict['reference_bandgaps'] = list(ref_gap.values())
         outputnode_dict['reference_bandgaps_des'] = list(ref_gap.keys())
         outputnode_dict['atomtypes'] = at
         outputnode_dict['formation_energy'] = formE
         outputnode_dict['formation_energy_units'] = 'eV/atom'
-        outputnode_dict['total_energy'] = list(tE.values())[0]
+        outputnode_dict['total_energy'] = total_energy
         outputnode_dict['total_energy_units'] = 'eV'
         outputnode_dict['total_energy_ref'] = list(tE_ref.values())
         outputnode_dict['total_energy_ref_des'] = list(tE_ref.keys())
@@ -926,12 +940,14 @@ def extract_results(calcs):
     for calc in calcs:
         #print(calc)
         try:
-            calc_uuids.append(calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid'])
+            calc_uuid = calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid']
         except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
             logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
                       'key in it for calculation: {}'.format(calc))
             log.append(logmsg)
             continue
+        if calc_uuid is not None:
+            calc_uuids.append(calc_uuid)
         #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
 
     all_corelevels = {}

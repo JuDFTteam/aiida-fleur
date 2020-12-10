@@ -5,12 +5,12 @@ Fleur dos/band workflows
 
 .. warning::
 
-    These workchains do not work with AiiDA 1.1.0 version yet. They need to be updated.
+    These workchains do not work with AiiDA >1.0 version yet. They need to be updated.
 
 These are two seperate workflows which are pretty similar so we treat them here together
 
-* **Class**: :py:class:`~aiida_fleur.workflows.dos.fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.band.FleurBandWorkChain`
-* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.dos``, ``fleur.band``
+* **Class**: :py:class:`~aiida_fleur.workflows.dos.fleur_dos_wc` and  :py:class:`~aiida_fleur.workflows.banddos.FleurBandDosWorkChain`
+* **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.dos``, ``fleur.banddos``
 * **Workflow type**:  Workflow (lv 1)
 * **Aim**: Calculate a density of states. Calculate a Band structure.
 * **Compuational demand**: 1 ``Fleur Job calculation``
@@ -28,9 +28,9 @@ Import Example:
     #or
     WorkflowFactory('fleur.dos')
 
-    from aiida_fleur.workflows.band import FleurBandWorkChain
+    from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
     #or
-    WorkflowFactory('fleur.band')
+    WorkflowFactory('fleur.banddos')
 
 Description/Purpose
 ^^^^^^^^^^^^^^^^^^^
@@ -38,11 +38,11 @@ Description/Purpose
 
   Calculates an Density of states (DOS) ontop of a given Fleur calculation (converged or not).
 
-  Band:
+  BandDos:
 
   Calculates an electronic band structure ontop of a given Fleur calculation (converged or not).
 
-  In the future we plan to add the posibility to converge a calculation before, and choose the kpaths automatic.
+  In the future we plan to add the possibility to converge a calculation before, and choose the kpaths automatic.
   This version should be able start simply from a crystal structure.
 
   Each of these workflows prepares/chances the Fleur input and manages one Fleur calculation.

@@ -49,7 +49,12 @@ args = parser.parse_args()
 print(args)
 
 ### Defaults ###
-wf_para = Dict(dict={'relax_iter': 2, 'film_distance_relaxation': False, 'force_criterion': 0.02})
+wf_para = Dict(dict={
+    'relax_iter': 2,
+    'film_distance_relaxation': False,
+    'force_criterion': 0.02,
+    'run_final_scf': True
+})
 
 bohr_a_0 = 0.52917721092  # A
 a = 7.497 * bohr_a_0
@@ -99,10 +104,10 @@ wf_para_scf = Dict(dict=wf_para_scf)
 options_scf = Dict(
     dict={
         'resources': {
-            'num_machines': 2,
-            'num_mpiprocs_per_machine': 24
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
-        'queue_name': 'devel',
+        'queue_name': '',
         'custom_scheduler_commands': '',
         'max_wallclock_seconds': 60 * 60
     })

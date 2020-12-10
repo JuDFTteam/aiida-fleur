@@ -28,7 +28,7 @@ from aiida.orm import StructureData, Dict
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
 from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
-from aiida_fleur.common.constants import bohr_a
+from aiida_fleur.common.constants import BOHR_A
 
 
 class FleurinputgenCalculation(CalcJob):
@@ -37,7 +37,7 @@ class FleurinputgenCalculation(CalcJob):
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
 
-    __version__ = '1.2.0'
+    __version__ = '1.2.2'
 
     # Default input and output files
     _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
@@ -161,7 +161,7 @@ class FleurinputgenCalculation(CalcJob):
         # convert these 'booleans' to the inpgen format.
         replacer_values_bool = [True, False, 'True', 'False', 't', 'T', 'F', 'f']
         # some keywords require a string " around them in the input file.
-        string_replace = ['econfig', 'lo', 'element', 'name']
+        string_replace = ['econfig', 'lo', 'element', 'name', 'xctyp']
 
         # of some keys only the values are written to the file, specify them here.
         val_only_namelist = ['soc', 'qss']
@@ -170,7 +170,7 @@ class FleurinputgenCalculation(CalcJob):
         # but we have to convert from Angstrom to a.u (bohr radii)
         scaling_factors = [1.0, 1.0, 1.0]
         scaling_lat = 1.  # /bohr_to_ang = 0.52917720859
-        scaling_pos = 1. / bohr_a  # Angstrom to atomic
+        scaling_pos = 1. / BOHR_A  # Angstrom to atomic
         own_lattice = False  # not self._use_aiida_structure
 
         ##########################################
@@ -306,9 +306,8 @@ class FleurinputgenCalculation(CalcJob):
             cell = structure.cell
             for vector in cell:
                 scaled = [a * scaling_pos for a in vector]  # scaling_pos=1./bohr_to_ang
-                cell_parameters_card += ('{0:18.10f} {1:18.10f} {2:18.10f}'
-                                         '\n'.format(scaled[0], scaled[1], scaled[2]))
-            scaling_factor_card += ('{0:18.10f} {1:18.10f} {2:18.10f}'
+                cell_parameters_card += ('{0:18.9f} {1:18.9f} {2:18.9f}' '\n'.format(scaled[0], scaled[1], scaled[2]))
+            scaling_factor_card += ('{0:18.9f} {1:18.9f} {2:18.9f}'
                                     '\n'.format(scaling_factors[0], scaling_factors[1], scaling_factors[2]))
 
         #### ATOMIC_POSITIONS ####
@@ -350,13 +349,14 @@ class FleurinputgenCalculation(CalcJob):
                     vector_rel[2] = vector_rel[2] * scaling_pos
 
                 if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new specie!
-                    suc = True
                     try:
                         head = kind_name.rstrip('0123456789')
                         kind_namet = int(kind_name[len(head):])
+                        if int(kind_name[len(head)]) > 4:
+                            raise InputValidationError('New specie name/label should start with a digit smaller than 4')
                     except ValueError:
-                        suc = False
-                    if suc:
+                        pass
+                    else:
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
                     # append a label to the detached atom
                     atomic_positions_card_listtmp.append('    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}'
@@ -473,8 +473,15 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        # cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
-        cmdline_params = ['-explicit']
+
+        # We support different inpgen and fleur version via reading the version from the code node extras 
+        code_extras = code.extras
+        code_version = code_extras.get('version', 32)
+        if int(code_version) < 32:
+            # run old inpgen
+            cmdline_params = ['-explicit']
+        else:
+            cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

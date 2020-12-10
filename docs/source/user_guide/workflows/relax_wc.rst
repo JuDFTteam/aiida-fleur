@@ -3,7 +3,7 @@
 Fleur structure optimization workchain
 --------------------------------------
 
-* **Current version**: 0.1.2
+* **Current version**: 0.2.1
 * **Class**: :py:class:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.relax``
 * **Workflow type**: Technical
@@ -49,6 +49,8 @@ The FleurSSDispWorkChain employs
 +=================+=============================+=================================+==========+
 | scf             | namespace                   | inputs for nested SCF WorkChain | yes      |
 +-----------------+-----------------------------+---------------------------------+----------+
+| final_scf       | namespace                   | inputs for a final SCF WorkChain| no       |
++-----------------+-----------------------------+---------------------------------+----------+
 | wf_parameters   | :py:class:`~aiida.orm.Dict` | Settings of the workchain       | no       |
 +-----------------+-----------------------------+---------------------------------+----------+
 
@@ -67,7 +69,7 @@ Workchain parameters and its defaults
 Output nodes
 ^^^^^^^^^^^^^
 
-  * ``out``: :py:class:`~aiida.orm.Dict` - Information of workflow results
+  * ``output_relax_wc_para``: :py:class:`~aiida.orm.Dict` - Information of workflow results
   * ``optimized_structure``: :py:class:`~aiida.orm.StructureData` - Optimized structure
 
 .. _layout_relax:
@@ -83,7 +85,7 @@ Output nodes
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
 | name                    | type                                                 | comment                                              |
 +=========================+======================================================+======================================================+
-| out                     | :py:class:`~aiida.orm.Dict`                          | results of the workchain                             |
+| output_relax_wc_para    | :py:class:`~aiida.orm.Dict`                          | results of the workchain                             |
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
 | optimized_structure     | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`  | FleurinpData that was used (after all modifications) |
 +-------------------------+------------------------------------------------------+------------------------------------------------------+
@@ -113,6 +115,10 @@ A list of implemented exit codes:
 
 +-----------+----------------------------------------------------------
 | Code      | Meaning                                                 |
++-----------+---------------------------------------------------------+
+| 230       | Input: Invalid workchain parameters given.              |
++-----------+---------------------------------------------------------+
+| 231       | Input: Inpgen missing in input for final scf.           |
 +-----------+----------------------------------------------------------
 | 350       | The workchain execution did not lead to                 |
 |           | relaxation criterion. Thrown in the very                |

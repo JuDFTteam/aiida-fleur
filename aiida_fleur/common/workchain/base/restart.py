@@ -69,7 +69,10 @@ class BaseRestartWorkChain(WorkChain):
         self._load_error_handlers()
 
     def _load_error_handlers(self):
-        # If an error handler entry point is defined, load them. If the plugin cannot be loaded log it and pass
+        """
+        If an error handler entry point is defined, load them.
+        If the plugin cannot be loaded log it and pass
+        """
         if self._error_handler_entry_point is not None:
             for entry_point_name in get_entry_point_names(self._error_handler_entry_point):
                 try:
@@ -85,9 +88,9 @@ class BaseRestartWorkChain(WorkChain):
         # yapf: disable
         # pylint: disable=bad-continuation
         super(BaseRestartWorkChain, cls).define(spec)
-        spec.input('max_iterations', valid_type=orm.Int, default=orm.Int(3),
+        spec.input('max_iterations', valid_type=orm.Int, default=lambda: orm.Int(3),
                    help='Maximum number of iterations the work chain will restart the calculation to finish successfully.')
-        spec.input('clean_workdir', valid_type=orm.Bool, default=orm.Bool(False),
+        spec.input('clean_workdir', valid_type=orm.Bool, default=lambda: orm.Bool(False),
                    help='If `True`, work directories of all called calculation will be cleaned at the end of execution.')
         spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
                        message='The maximum number of iterations was exceeded.')

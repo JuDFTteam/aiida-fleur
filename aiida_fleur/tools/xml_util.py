@@ -110,13 +110,15 @@ def convert_htr_to_ev(value, parser_info_out=None):
     """
     Multiplies the value given with the Hartree factor (converts htr to eV)
     """
+    from aiida_fleur.common.constants import HTR_TO_EV
+    # htr = 27.21138602
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
-    htr = 27.21138602
+
     suc = False
     value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
     if suc:
-        return value_to_save * htr
+        return value_to_save * HTR_TO_EV
     else:
         return value
 
@@ -125,13 +127,14 @@ def convert_ev_to_htr(value, parser_info_out=None):
     """
     Divides the value given with the Hartree factor (converts htr to eV)
     """
+    from aiida_fleur.common.constants import HTR_TO_EV
+    # htr = 27.21138602
     if parser_info_out is None:
         parser_info_out = {'parser_warnings': []}
-    htr = 27.21138602
     suc = False
     value_to_save, suc = convert_to_float(value, parser_info_out=parser_info_out)
     if suc:
-        return value_to_save / htr
+        return value_to_save / HTR_TO_EV
     else:
         return value
 
@@ -583,7 +586,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     atom_jri_xpath = 'mtSphere/@gridPoints'
     atom_lmax_xpath = 'atomicCutoffs/@lmax'
     atom_lnosph_xpath = 'atomicCutoffs/@lnonsphr'
-    atom_ncst_xpath = '@coreStates'
+    #atom_ncst_xpath = '@coreStates'
     atom_econfig_xpath = 'electronConfig'  # converting todo
     atom_bmu_xpath = '@magMom'
     atom_lo_xpath = 'lo'  # converting todo
@@ -630,7 +633,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
     # &comp
     # attrib = get_xml_attribute(
     comp_dict = {}
-    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_float(eval_xpath(root, jspins_xpath), suc_return=False))
+    comp_dict = set_dict_or_not(comp_dict, 'jspins', convert_to_int(eval_xpath(root, jspins_xpath), suc_return=False))
     comp_dict = set_dict_or_not(comp_dict, 'frcor', convert_from_fortran_bool(eval_xpath(root, frcor_xpath)))
     comp_dict = set_dict_or_not(comp_dict, 'ctail', convert_from_fortran_bool(eval_xpath(root, ctail_xpath)))
     comp_dict = set_dict_or_not(comp_dict, 'kcrel', eval_xpath(root, kcrel_xpath))
@@ -651,7 +654,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_jri = convert_to_int(eval_xpath(species, atom_jri_xpath), suc_return=False)
         atom_lmax = convert_to_int(eval_xpath(species, atom_lmax_xpath), suc_return=False)
         atom_lnosph = convert_to_int(eval_xpath(species, atom_lnosph_xpath), suc_return=False)
-        atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
+        #atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
         atom_econfig = eval_xpath(species, atom_econfig_xpath)
         atom_bmu = convert_to_float(eval_xpath(species, atom_bmu_xpath), suc_return=False)
         atom_lo = eval_xpath(species, atom_lo_xpath)
@@ -664,7 +667,7 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-        atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
+        #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:
@@ -720,7 +723,7 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     method for a certain atom specie that corresponds to an atom with a given label
 
     :param fleurinp_tree_copy: xml etree of the inp.xml
-    :param at_label: string, a label of the atom which specie will be changed
+    :param at_label: string, a label of the atom which specie will be changed. 'all' to change all the species
     :param attributedict: a python dict specifying what you want to change.
     :param create: bool, if species does not exist create it and all subtags?
     """
@@ -733,6 +736,9 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
+    species_to_set = []
+
+    # set all species, where given label is present
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
         if not positions:
@@ -740,9 +746,12 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
+    species_to_set = list(set(species_to_set))
+
+    for specie in species_to_set:
+        fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
 
     return fleurinp_tree_copy
 
@@ -926,7 +935,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
             for attrib, value in six.iteritems(val):
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
         else:
-            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, attrib, value)
+            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
 
     return fleurinp_tree_copy
 
@@ -935,11 +944,20 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     """
     Shifts value of a specie by label
     if at_label contains 'all' then applies to all species
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param at_label: string, a label of the atom which specie will be changed. 'all' if set up all species
+    :param attr_name: name of the attribute to change
+    :param value_given: value to add or to multiply by
+    :param mode: 'rel' for multiplication or 'abs' for addition
     """
     import numpy as np
     specie = ''
-    at_label = '{: >20}'.format(at_label)
+    if at_label != 'all':
+        at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+
+    species_to_set = []
 
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
@@ -947,47 +965,49 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
             positions = eval_xpath2(group, 'relPos')
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
-            if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+            if at_label in ['all', atom_label]:
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
-    if 'all' in at_label:
-        xpath_species = '/fleurInput/atomSpecies/species'
+    species_to_set = list(set(species_to_set))
 
-    xpath_mt = '{}/mtSphere'.format(xpath_species)
-    xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
-    xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
-    xpath_final = 'initialise'
+    for specie in species_to_set:
 
-    if attr_name in ['radius', 'gridPoints', 'logIncrement']:
-        xpath_final = xpath_mt
-    elif attr_name in ['lmax', 'lnonsphr']:
-        xpath_final = xpath_atomic_cutoffs
-    elif attr_name in ['s', 'p', 'd', 'f']:
-        xpath_final = xpath_energy_parameters
+        xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
 
-    old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name])))
+        xpath_mt = '{}/mtSphere'.format(xpath_species)
+        xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
+        xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
+        xpath_final = 'initialise'
 
-    if old_val.size == 0:
-        print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
-    else:
-        old_val = old_val.astype('float')
+        if attr_name in ['radius', 'gridPoints', 'logIncrement']:
+            xpath_final = xpath_mt
+        elif attr_name in ['lmax', 'lnonsphr']:
+            xpath_final = xpath_atomic_cutoffs
+        elif attr_name in ['s', 'p', 'd', 'f']:
+            xpath_final = xpath_energy_parameters
 
-    if mode == 'rel':
-        value = value_given * old_val
-    elif mode == 'abs':
-        value = value_given + old_val
-    else:
-        raise ValueError("Mode should be 'res' or 'abs' only")
+        old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name])))
 
-    if attr_name in ['radius', 'logIncrement']:
-        value_to_write = value
-    else:
-        if not np.all(value == value.astype('int')):
-            raise ValueError('You are trying to write a float to an integer attribute')
-        value_to_write = value.astype('int')
+        if old_val.size == 0:
+            print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
+        else:
+            old_val = old_val.astype('float')
 
-    xml_set_all_attribv(fleurinp_tree_copy, xpath_final, attr_name, value_to_write)
+        if mode == 'rel':
+            value = value_given * old_val
+        elif mode == 'abs':
+            value = value_given + old_val
+        else:
+            raise ValueError("Mode should be 'res' or 'abs' only")
+
+        if attr_name in ['radius', 'logIncrement']:
+            value_to_write = value
+        else:
+            if not np.all(value == value.astype('int')):
+                raise ValueError('You are trying to write a float to an integer attribute')
+            value_to_write = value.astype('int')
+
+        xml_set_all_attribv(fleurinp_tree_copy, xpath_final, attr_name, value_to_write)
 
     return fleurinp_tree_copy
 
@@ -996,6 +1016,21 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`
     method for a certain atom specie that corresponds to an atom with a given label.
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param at_label: string, a label of the atom which specie will be changed. 'all' to change all the species
+    :param attributedict: a python dict specifying what you want to change.
+
+    :return fleurinp_tree_copy: xml etree of the new inp.xml
+
+    **attributedict** is a python dictionary containing dictionaries that specify attributes
+    to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
+    can be done via::
+
+        'attributedict': {'nocoParams': [('beta', val)]}
+
+    ``force`` and ``nocoParams`` keys are supported.
+    To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
 
     if at_label == 'all':
@@ -1006,6 +1041,8 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     at_label = '{: >20}'.format(at_label)
     all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
 
+    species_to_set = []
+
     for group in all_groups:
         positions = eval_xpath2(group, 'filmPos')
         if not positions:
@@ -1013,9 +1050,12 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
         for atom in positions:
             atom_label = get_xml_attribute(atom, 'label')
             if atom_label == at_label:
-                specie = get_xml_attribute(group, 'species')
+                species_to_set.append(get_xml_attribute(group, 'species'))
 
-    fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=specie)
+    species_to_set = list(set(species_to_set))
+
+    for specie in species_to_set:
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=specie)
 
     return fleurinp_tree_copy
 
@@ -1622,15 +1662,13 @@ def inpxml_todict(parent, xmlstr):
             # set text
             return_dict = parent.text.strip()
 
-    firstocc = True
     for element in parent:
         if element.tag in tags_several1:
             # make a list, otherwise the tag will be overwritten in the dict
-            if firstocc:  # is this the first occurence?
+            if element.tag not in return_dict:  # is this the first occurence?
                 # create a list
                 return_dict[element.tag] = []
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
-                firstocc = False
             else:  # occured before, a list already exists, therefore just add
                 return_dict[element.tag].append(inpxml_todict(element, xmlstructure))
         else:
@@ -1687,9 +1725,9 @@ def get_inpxml_file_structure():
     all_switches_once = ('dos', 'band', 'secvar', 'ctail', 'frcor', 'l_noco', 'ctail', 'swsp', 'lflip', 'off', 'spav',
                          'l_soc', 'soc66', 'pot8', 'eig66', 'gamma', 'gauss', 'tria', 'invs', 'invs2', 'zrfs', 'vchk',
                          'cdinf', 'disp', 'vacdos', 'integ', 'star', 'score', 'plplot', 'slice', 'pallst', 'form66',
-                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss')
+                         'eonly', 'bmt', 'relativisticCorrections', 'l_J', 'l_f', 'l_ss', 'l_linMix')
 
-    all_switches_several = ('calculate', 'flipSpin')
+    all_switches_several = ('calculate', 'flipSpin', 'l_amf')
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins', 'gw', 'isec1', 'nx', 'ny', 'nz',
                            'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
@@ -1697,7 +1735,7 @@ def get_inpxml_file_structure():
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 'phi', 'epsdisp',
                              'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'ellow', 'elup', 'scale', 'dTilda',
                              'dVac', 'minEnergy', 'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2', 'locy2', 'tworkf',
-                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged')
+                             'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged', 'mixParam')
 
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp', 'xcFunctional', 'fleurInputVersion',
                               'species', 'forcemix')
@@ -1713,7 +1751,7 @@ def get_inpxml_file_structure():
 
     int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'l', 'n', 'eDeriv',
                               'coreStates')
-    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement')
+    float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement', 'U', 'J')
     string_attributes_several = ('name', 'element', 'coreStates', 'type', 'relaxXYZ')
     other_attributes_several = ('name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom', 'radius',
                                 'gridPoints', 'logIncrement', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'species', 'type',
@@ -1721,7 +1759,8 @@ def get_inpxml_file_structure():
 
     # when parsing the xml file to a dict, these tags should become
     # list(sets, or tuples) instead of dictionaries.
-    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'kPoint', 'lo', 'stateOccupation')
+    tags_several = ('atomGroup', 'relPos', 'absPos', 'filmPos', 'species', 'symOp', 'kPoint', 'ldaU', 'lo',
+                    'stateOccupation')
 
     all_text = {
         'comment': 1,
@@ -1770,6 +1809,8 @@ def get_inpxml_file_structure():
         'eig66': '/fleurInput/calculationSetup/expertModes',
         'l_f': '/fleurInput/calculationSetup/geometryOptimization',
         'gamma': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
+        'l_linMix': '/fleurInput/calculationSetup/ldaU',
+        'mixParam': '/fleurInput/calculationSetup/ldaU',
         # 'invs': '',
         # 'zrfs': '',
         'vchk': '/fleurInput/output/checks',

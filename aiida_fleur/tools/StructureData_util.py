@@ -21,7 +21,7 @@ from __future__ import print_function
 # from ase.io import *
 import six
 
-from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
+from pymatgen.core.surface import generate_all_slabs  #, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator
 
 import numpy as np
@@ -241,7 +241,7 @@ def abs_to_rel_f(vector, cell, pbc):
 
     :param vector: list or np.array of length 3, vector to be converted
     :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :param pb: Boundary conditions, List or Tuple of 3 Boolean
+    :param pbc: Boundary conditions, List or Tuple of 3 Boolean
     :return: list of legth 3 of scaled vector, or False if vector was not length 3
     """
     # TODO this currently only works if the z-coordinate is the one with no pbc
@@ -663,9 +663,11 @@ def get_all_miller_indices(structure, highestindex):
     """
     wraps the pymatgen function get_symmetrically_distinct_miller_indices for an AiiDa structure
     """
+    from pymatgen.core.surface import get_symmetrically_distinct_miller_indices
     return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
 
 
+'''
 def create_all_slabs_buggy(initial_structure,
                            miller_index,
                            min_slab_size_ang,
@@ -705,6 +707,7 @@ def create_all_slabs_buggy(initial_structure,
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
     return aiida_strucs
+'''
 
 
 def create_all_slabs(initial_structure,
@@ -728,9 +731,9 @@ def create_all_slabs(initial_structure,
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
         slab = create_slap(initial_structure, index, min_slab_size_ang, min_vacuum_size, min_slab_size_ang)
-        film_struc = StructureData(pymatgen_structure=slab)
-        film_struc.pbc = (True, True, False)
-        aiida_strucs[slab.miller_index] = film_struc
+        #film_struc = StructureData(pymatgen_structure=slab)
+        #film_struc.pbc = (True, True, False)
+        aiida_strucs[index] = slab
 
     return aiida_strucs
 
@@ -882,6 +885,16 @@ def create_manual_slab_ase(lattice='fcc',
         structure.pop()
 
     current_symbols = structure.get_chemical_symbols()
+    positions = structure.positions
+
+    zipped = zip(positions, current_symbols)
+    zipped = sorted(zipped, key=lambda x: x[0][2])
+
+    positions = [x for x, _ in zipped]
+    current_symbols = [x for _, x in zipped]
+    structure.set_chemical_symbols(current_symbols)
+    structure.set_positions(positions)
+
     *_, layer_occupancies = get_layers(structure)
     layer_occupancies.insert(0, 0)
     for i, at_type in six.iteritems(replacements):
@@ -1261,6 +1274,7 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
     return Dict(dict=bond_data)
 
 
+'''
 def estimate_mt_radii(structure, stepsize=0.05):
     """
     # TODO implement
@@ -1301,3 +1315,4 @@ def find_common_mt(structures):
 
     """
     return None
+'''

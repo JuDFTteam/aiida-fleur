@@ -35,7 +35,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-
+from aiida_fleur.common.constants import HTR_TO_EV
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -58,8 +58,9 @@ class FleurDMIWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    _wf_default = {
+    _default_wf_para = {
         'serial': False,
+        'only_even_MPI': False,
         'beta': {
             'all': 1.57079
         },
@@ -123,7 +124,7 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -447,7 +448,8 @@ class FleurDMIWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -482,7 +484,8 @@ class FleurDMIWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'])
+                                          serial=self.ctx.wf_dict['serial'],
+                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -490,7 +493,6 @@ class FleurDMIWorkChain(WorkChain):
         """
         Generates results of the workchain.
         """
-        htr_to_ev = 27.21138602
         t_energydict = []
         mae_thetas = []
         mae_phis = []
@@ -528,7 +530,7 @@ class FleurDMIWorkChain(WorkChain):
 
             if e_u == 'Htr' or 'htr':
                 for labels, energies in t_energydict.items():
-                    t_energydict[labels] = energies * htr_to_ev
+                    t_energydict[labels] = energies * HTR_TO_EV
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)

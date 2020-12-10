@@ -18,10 +18,12 @@ FleurinpData objects in a way which keeps the provernance.
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import io
 
 from lxml import etree
 
 from aiida.plugins import DataFactory
+from aiida import orm
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.data.fleurinp import FleurinpData
 
@@ -39,18 +41,20 @@ class FleurinpModifier(object):
 
         self._original = original
         self._tasks = []
+        self._other_nodes = {}
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, modification_tasks, schema_tree=None):
+    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_tree=None):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.
         Does not rise an error if inp.xml is not validated, simple prints a message about it.
 
         :param fleurinp_tree_copy: a fleurinp lxml tree to be modified
+        :param n_mmp_lines_copy: a n_mmp_mat file to be modified
         :param modification_tasks: a list of modification tuples
 
-        :returns: a modified fleurinp lxml tree
+        :returns: a modified fleurinp lxml tree and a modified n_mmp_mat file
         """
         from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
         from aiida_fleur.tools.xml_util import xml_set_all_attribv, xml_set_text
@@ -62,6 +66,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.xml_util import clear_xml
+        from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
@@ -150,6 +155,16 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
             return fleurinp_tree_copy
 
+        def set_kpointsdata1(fleurinp_tree_copy, kpointsdata_uuid):
+            fleurinp_tree_copy = set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid)
+            return fleurinp_tree_copy
+
+        def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+                         spin, occStates, denmat, phi, theta):
+            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+                                          spin, occStates, denmat, phi, theta)
+            return nmmp_lines_copy
+
         actions = {
             'xml_set_attribv_occ': xml_set_attribv_occ1,
             'xml_set_first_attribv': xml_set_first_attribv1,
@@ -170,10 +185,13 @@ class FleurinpModifier(object):
             'shift_value_species_label': shift_value_species_label1,
             'set_nkpts': set_nkpts1,
             'set_kpath': set_kpath1,
-            'add_num_to_att': add_num_to_att1
+            'set_kpointsdata': set_kpointsdata1,
+            'add_num_to_att': add_num_to_att1,
+            'set_nmmpmat': set_nmmpmat1
         }
 
         workingtree = fleurinp_tree_copy
+        workingnmmp = nmmp_lines_copy
         if schema_tree:
             #xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
             xmlschema = etree.XMLSchema(schema_tree)
@@ -184,7 +202,10 @@ class FleurinpModifier(object):
             except KeyError:
                 raise ValueError('Unknown task {}'.format(task[0]))
 
-            workingtree = action(workingtree, *task[1:])
+            if task[0] == 'set_nmmpmat':
+                workingnmmp = action(workingtree, workingnmmp, *task[1:])
+            else:
+                workingtree = action(workingtree, *task[1:])
 
         if schema_tree:
             try:
@@ -192,8 +213,13 @@ class FleurinpModifier(object):
             except etree.DocumentInvalid:
                 print('changes were not valid: {}'.format(modification_tasks))
                 raise
+            try:
+                validate_nmmpmat(workingtree, workingnmmp)
+            except ValueError:
+                print('changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks))
+                raise
 
-        return workingtree
+        return workingtree, workingnmmp
 
     def get_avail_actions(self):
         """
@@ -218,7 +244,10 @@ class FleurinpModifier(object):
             'shift_value': self.shift_value,
             'shift_value_species_label': self.shift_value_species_label,
             'set_nkpts': self.set_nkpts,
-            'add_num_to_att': self.add_num_to_att
+            'set_kpath': self.set_kpath,
+            'set_kpointsdata': self.set_kpointsdata,
+            'add_num_to_att': self.add_num_to_att,
+            'set_nmmpmat': self.set_nmmpmat
         }
         return outside_actions
 
@@ -435,6 +464,22 @@ class FleurinpModifier(object):
         """
         self._tasks.append(('set_kpath', kpath, count, gamma))
 
+    def set_kpointsdata(self, kpointsdata_uuid):
+        """
+        Appends a :py:func:`set_kpointsdata_f()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param kpointsdata_uuid: an aiida.orm.KpointsData or node uuid,
+        since the node is self cannot be be serialized in tasks.
+        """
+        from aiida.orm import KpointsData, load_node
+
+        if isinstance(kpointsdata_uuid, KpointsData):
+            kpointsdata_uuid = kpointsdata_uuid.uuid
+        # Be more careful? Needs to be stored, otherwise we cannot load it
+        self._other_nodes['kpoints'] = load_node(kpointsdata_uuid)
+        self._tasks.append(('set_kpointsdata', kpointsdata_uuid))
+
     def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_util.add_num_to_att()` to
@@ -450,6 +495,20 @@ class FleurinpModifier(object):
             occ = [0]
         self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ))
 
+    def set_nmmpmat(self, species_name, orbital, spin, occStates=None, denmat=None, phi=None, theta=None):
+        """
+        Appends a :py:func:`~aiida_fleur.tools.set_nmmpmat.set_nmmpmat()` to
+        the list of tasks that will be done on the FleurinpData.
+
+        :param species_name: species on which the density matrix should be set
+        :param orbital: orbital on which the density matrix should be set
+        :param occStates: list which specifies the diagonal elements of the density matrix
+        :param denmat: matrix, which specifies the density matrix
+        :param phi: optional angle to rotate density matrix
+        :param theta: optional angle to rotate density matrix
+        """
+        self._tasks.append(('set_nmmpmat', species_name, orbital, spin, occStates, denmat, phi, theta))
+
     def validate(self):
         """
         Extracts the schema-file.
@@ -461,6 +520,12 @@ class FleurinpModifier(object):
         with self._original.open(key='inp.xml') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
 
+        try:
+            with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+                nmmplines = n_mmp_file.read().split('\n')
+        except FileNotFoundError:
+            nmmplines = None
+
         try:  # could be not found or on another computer...
             xmlschema_tree = etree.parse(self._original._schema_file_path)
             with_schema = True
@@ -469,7 +534,7 @@ class FleurinpModifier(object):
             print('No schema file found')
             return
         if with_schema:
-            tree = self.apply_modifications(tree, self._tasks, schema_tree=xmlschema_tree)
+            tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_tree=xmlschema_tree)
         return tree
 
     def show(self, display=True, validate=False):
@@ -487,9 +552,9 @@ class FleurinpModifier(object):
         if validate:
             tree = self.validate()
         else:
-            with self._original.open(key='inp.xml') as inpxmlfile:
+            with self._original.open(path='inp.xml') as inpxmlfile:
                 tree = etree.parse(inpxmlfile)
-            tree = self.apply_modifications(tree, self._tasks)
+            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
 
         if display:
             xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print=True)
@@ -512,16 +577,20 @@ class FleurinpModifier(object):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
-        modifications = DataFactory('dict')(dict={'tasks': self._tasks})
+        modifications = orm.Dict(dict={'tasks': self._tasks})
+        #print(self._tasks)
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        out = modify_fleurinpdata(original=self._original,
-                                  modifications=modifications,
-                                  metadata={
-                                      'label': 'fleurinp modifier',
-                                      'description': 'This calcfunction modified an Fleurinpdataobject'
-                                  })
+        print(self._original)
+        inputs = dict(original=self._original,
+                      modifications=modifications,
+                      metadata={
+                          'label': 'fleurinp modifier',
+                          'description': 'This calcfunction modified an Fleurinpdataobject'
+                      },
+                      **self._other_nodes)
+        out = modify_fleurinpdata(**inputs)
         return out
 
     def undo(self, revert_all=False):
@@ -534,20 +603,21 @@ class FleurinpModifier(object):
             self._tasks = []
         else:
             if self._tasks:
-                self._tasks.pop()
+                task = self._tasks.pop()
+                #TODO delete nodes from other nodes
                 #del self._tasks[-1]
         return self._tasks
 
 
 @cf
-def modify_fleurinpdata(original, modifications):
+def modify_fleurinpdata(original, modifications, **kwargs):
     """
     A CalcFunction that performs the modification of the given FleurinpData and stores
     the result in a database.
 
     :param original: a FleurinpData to be modified
     :param modifications: a python dictionary of modifications in the form of {'task': ...}
-
+    :param kwargs: dict of other aiida nodes to be linked to the modifications
     :returns new_fleurinp: a modified FleurinpData that is stored in a database
     """
 
@@ -561,15 +631,13 @@ def modify_fleurinpdata(original, modifications):
     from aiida_fleur.tools.xml_util import clear_xml
 
     new_fleurinp = original.clone()
-    # TODO test if file is there!
-    inpxmlfile = new_fleurinp.open(key='inp.xml')
     modification_tasks = modifications.get_dict()['tasks']
 
     xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
     xmlschema = etree.XMLSchema(xmlschema_doc)
     parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-
-    tree = etree.parse(inpxmlfile, parser)
+    with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
+        tree = etree.parse(inpxmlfile, parser)
 
     try:
         xmlschema.assertValid(clear_xml(tree))
@@ -577,7 +645,15 @@ def modify_fleurinpdata(original, modifications):
         print('Input file is not validated against the schema')
         raise
 
-    new_fleurtree = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree, modification_tasks=modification_tasks)
+    try:
+        with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+            nmmplines = n_mmp_file.read().split('\n')
+    except FileNotFoundError:
+        nmmplines = None
+
+    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,\
+                                                                        nmmp_lines_copy=nmmplines,\
+                                                                        modification_tasks=modification_tasks)
 
     # To include object store storage this prob has to be done differently
 
@@ -590,8 +666,61 @@ def modify_fleurinpdata(original, modifications):
     new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
     os.remove(inpxmlfile_new)
 
+    if new_nmmplines:
+        new_nmmp = bytes('\n'.join(new_nmmplines), 'utf-8')
+        new_fleurinp._add_path(io.BytesIO(new_nmmp), 'n_mmp_mat')
+
     # default label and description
     new_fleurinp.label = 'mod_fleurinp'
     new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
 
     return new_fleurinp
+
+
+def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
+    """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
+    in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
+    ``inp.xml`` file.
+    Currently it is the users responsibility to provide a full
+    :class:`~aiida.orm.KpointsData` node with weights.
+
+    :param fleurinp_tree_copy: fleurinp_tree_copy
+    :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
+    :returns: modified xml tree
+    """
+    # TODO: check on weights,
+    # also fleur allows for several kpoint sets, lists, paths and meshes,
+    # support this.
+    from aiida.orm import KpointsData, load_node
+    from aiida.common.exceptions import InputValidationError
+    from aiida_fleur.tools.xml_util import replace_tag
+
+    # all hardcoded xpaths used and attributes names:
+    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
+
+    # replace the kpoints tag.(delete old write new)
+    # <kPointList posScale="36.00000000" weightScale="324.00000000" count="324">
+    #    <kPoint weight="    1.000000">   17.000000     0.000000     0.000000</kPoint>
+    # add new inp.xml to fleurinpdata
+    if not isinstance(kpointsdata_uuid, KpointsData):
+        KpointsDataNode = load_node(kpointsdata_uuid)
+    else:
+        KpointsDataNode = kpointsdata_uuid
+
+    if not isinstance(KpointsDataNode, KpointsData):
+        raise InputValidationError('The node given is not a valid KpointsData node.')
+
+    kpoint_list = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
+    nkpts = len(kpoint_list[0])
+    totalw = 0
+    for weight in kpoint_list[1]:
+        totalw = totalw + weight
+    #weightscale = totalw
+    # fleur will re weight? renormalize?
+    new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
+    for i, kpos in enumerate(kpoint_list[0]):
+        new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
+        new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
+        new_kpo.append(new_k)
+    new_tree = replace_tag(fleurinp_tree_copy, kpointlist_xpath, new_kpo)
+    return new_tree

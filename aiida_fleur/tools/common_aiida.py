@@ -79,11 +79,11 @@ def import_extras(filename):
     """
 
     all_extras = {}
-
-    try:
-        all_extras = json.load(open(filename))
-    except json.JSONDecodeError:
-        print('The file has to be loadable by json. i.e json format (which it is not).')
+    with open(filename, mode='r') as file1:
+        try:
+            all_extras = json.load(file1)
+        except json.JSONDecodeError:
+            print('The file has to be loadable by json. i.e json format (which it is not).')
 
     for uuid, extras in six.iteritems(all_extras):
 
@@ -192,6 +192,7 @@ def create_group(name, nodes, description=None, add_if_exist=False):
     """
     Creates a group for a given node list.
 
+    !!! Now aiida-core has these functionality, use it from there instead!!!
     So far this is only an AiiDA verdi command.
 
     :params name: string name for the group
@@ -246,6 +247,8 @@ def create_group(name, nodes, description=None, add_if_exist=False):
 def get_nodes_from_group(group, return_format='uuid'):
     """
     Returns a list of pk or uuid of a nodes in a given group. Since 1.1.0, this function does
+    !!! Now aiida-core has these functionality, use it from there instead!!!
+
     not load a group using the label or any other identification. Use Group.objects.get(filter=ID) to
     pre-load this, available filters are: id, uuid, label, type_string, time, description, user_id.
     """
