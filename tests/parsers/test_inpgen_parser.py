@@ -30,7 +30,7 @@ def test_inpgen_parser_default(fixture_localhost, generate_parser, generate_calc
     assert 'fleurinpData' in results
 
     data_regression.check({
-        'fleurinpData': results['fleurinpData'].attributes,
+        'fleurinpData': results['fleurinpData'].inp_dict,
     })
 
 

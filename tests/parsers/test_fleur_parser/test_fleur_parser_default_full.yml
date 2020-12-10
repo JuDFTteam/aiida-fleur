@@ -1,0 +1,35 @@
+output_parameters:
+  bandgap: 0.85561712
+  bandgap_units: eV
+  charge_den_xc_den_integral: -41.74447706
+  charge_density: 3.29535e-05
+  density_convergence_units: me/bohr^3
+  energy: -15784.562940686706
+  energy_core_electrons: -316.8117176949
+  energy_hartree: -580.0719889092
+  energy_hartree_units: Htr
+  energy_units: eV
+  energy_valence_electrons: 0.1710194344
+  fermi_energy: 0.2022322894
+  fermi_energy_units: Htr
+  force_largest: -0.0
+  kmax: 3.5
+  number_of_atom_types: 1
+  number_of_atoms: 2
+  number_of_iterations: 11
+  number_of_iterations_total: 11
+  number_of_kpoints: 60
+  number_of_species: 1
+  number_of_spin_components: 1
+  number_of_symmetries: 48
+  parser_info: AiiDA Fleur Parser v0.3.2
+  parser_warnings: []
+  sum_of_eigenvalues: -316.6406982605
+  unparsed: []
+  walltime: 4
+  walltime_units: seconds
+  warnings:
+    debug: {}
+    error: {}
+    info: {}
+    warning: {}

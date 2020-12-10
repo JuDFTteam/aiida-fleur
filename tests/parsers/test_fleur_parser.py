@@ -373,12 +373,10 @@ def test_fleur_parser_default_full(fixture_localhost, generate_parser, generate_
     assert 'output_params_complex' not in results
     assert 'relax_parameters' not in results
     assert 'error_params' not in results
-    print(results['output_parameters'].get_dict())
-    res_dict = results['output_parameters'].get_dict()
 
-    #data_regression.check({
-    #    'output_parameters': dict(res_dict),#results['output_parameters'].get_dict(),
-    #   })
+    data_regression.check({
+        'output_parameters': clean_outdict_for_reg_dump(results['output_parameters'].get_dict()),
+    })
 
 
 '''
@@ -448,7 +446,7 @@ def test_fleur_parser_relax(fixture_localhost, generate_parser, generate_calc_jo
     assert 'error_params' not in results
 
     data_regression.check({
-        #'output_parameters': results['output_parameters'].get_dict(),
+        'output_parameters': clean_outdict_for_reg_dump(results['output_parameters'].get_dict()),
         'relax_parameters': results['relax_parameters'].get_dict()
     })
 
@@ -518,3 +516,21 @@ def test_fleur_parser_complex_erroroutput(fixture_localhost, generate_parser, ge
     assert 'output_params_complex' not in results
     assert 'relax_parameters' not in results
     assert 'error_params' not in results
+
+
+def clean_outdict_for_reg_dump(outdict):
+    """
+    Apparently the regression dumper has problems with
+    '  ', '0.33', 'fleur 31', dates
+    we remove these keys.
+    """
+    outdict.pop('creator_target_structure', None)
+    outdict.pop('creator_name', None)
+    outdict.pop('creator_target_architecture', None)
+    outdict.pop('title', None)
+    outdict.pop('output_file_version', None)
+    outdict.pop('start_date', None)
+    outdict.pop('end_date', None)
+    outdict.pop('relax_atomtype_info', None)
+
+    return outdict
