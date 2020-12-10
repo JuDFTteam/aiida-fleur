@@ -431,8 +431,12 @@ class FleurinpData(Data):
         parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
         # dtd_validation=True
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
-            tree_x = etree.parse(inpxmlfile, parser)
-
+            try:
+                tree_x = etree.parse(inpxmlfile, parser)
+            except etree.XMLSyntaxError:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg)
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
         fo = tempfile.NamedTemporaryFile(mode='w', delete=False)

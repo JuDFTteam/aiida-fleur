@@ -466,11 +466,10 @@ class FleurinpModifier(object):
 
     def set_kpointsdata(self, kpointsdata_uuid):
         """
-        Appends a :py:func:`set_kpointsdata_f()` to
+        Appends a :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
-        :param kpointsdata_uuid: an aiida.orm.KpointsData or node uuid,
-        since the node is self cannot be be serialized in tasks.
+        :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.
         """
         from aiida.orm import KpointsData, load_node
 
@@ -680,13 +679,12 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
     """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
     in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
-    ``inp.xml`` file.
-    Currently it is the users responsibility to provide a full
+    ``inp.xml`` file. Currently it is the users responsibility to provide a full
     :class:`~aiida.orm.KpointsData` node with weights.
 
     :param fleurinp_tree_copy: fleurinp_tree_copy
     :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
-    :returns: modified xml tree
+    :return: modified xml tree
     """
     # TODO: check on weights,
     # also fleur allows for several kpoint sets, lists, paths and meshes,
