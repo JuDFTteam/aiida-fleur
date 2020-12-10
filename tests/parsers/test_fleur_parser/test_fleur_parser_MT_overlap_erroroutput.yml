@@ -1,0 +1,8 @@
+error_params:
+  description: This output node contains informationabout FLEUR error
+  error_name: MT_OVERLAP_RELAX
+  iteration_number: 3
+  overlaping_value: '6.8200E-03'
+  overlapped_indices:
+  - '2'
+  - '1'

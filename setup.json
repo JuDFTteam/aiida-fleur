@@ -57,7 +57,8 @@
             "pytest>=2.9",
             "pytest-timeout",
             "pytest-cov>= 2.5.0",
-            "pgtest"
+            "pgtest",
+            "pytest-regressions>=1.0"
         ]
     },
     "entry_points": {
