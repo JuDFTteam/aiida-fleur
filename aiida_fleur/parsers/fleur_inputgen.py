@@ -69,10 +69,16 @@ class Fleur_inputgenParser(Parser):
             except IOError:
                 self.logger.error('Failed to open error file: {}.'.format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
-            # if not empty, has_error equals True, parse error.
+            # if not empty, has_error equals True, prior fleur 32
             if error_file_lines:
-                self.logger.error("The following was written to the error file {} : \n '{}'"
-                                  ''.format(errorfile, error_file_lines))
+                if isinstance(error_file_lines, type(b'')):
+                    error_file_lines = error_file_lines.replace(b'\x00', b' ')
+                else:
+                    error_file_lines = error_file_lines.replace('\x00', ' ')
+                if 'Run finished successfully' not in error_file_lines:
+                    self.logger.warning('The following was written into std error and piped to {}'
+                                        ' : \n {}'.format(errorfile, error_file_lines))
+                    self.logger.error('Inpgen calculation did not finish' ' successfully.')
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
