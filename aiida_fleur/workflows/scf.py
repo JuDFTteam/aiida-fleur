@@ -107,7 +107,7 @@ class FleurScfWorkChain(WorkChain):
         spec.input('remote_data', valid_type=RemoteData, required=False)
         spec.input('options', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
-
+        spec.input('settings_inpgen', valid_type=Dict, required=False)
         spec.outline(cls.start, cls.validate_input,
                      if_(cls.fleurinpgen_needed)(cls.run_fleurinpgen), cls.run_fleur, cls.inspect_fleur, cls.get_res,
                      while_(cls.condition)(cls.run_fleur, cls.inspect_fleur, cls.get_res), cls.return_results)
@@ -304,6 +304,11 @@ class FleurScfWorkChain(WorkChain):
         else:
             params = None
 
+        if 'settings_inpgen' in self.inputs:
+            settings = self.inputs.settings_inpgen
+        else:
+            settings = None
+
         # If given kpt_dist has prio over given calc_parameters
         kpt_dist = self.ctx.wf_dict.get('kpoints_distance', None)
         if kpt_dist is not None:
@@ -330,7 +335,13 @@ class FleurScfWorkChain(WorkChain):
             'queue_name': self.ctx.options.get('queue_name', '')
         }
 
-        inputs_build = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
+        inputs_build = get_inputs_inpgen(structure,
+                                         inpgencode,
+                                         options,
+                                         label,
+                                         description,
+                                         settings=settings,
+                                         params=params)
 
         # Launch inpgen
         self.report('INFO: run inpgen')

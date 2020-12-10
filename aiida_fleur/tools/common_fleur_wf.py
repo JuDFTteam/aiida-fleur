@@ -139,7 +139,7 @@ def get_inputs_fleur(code,
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None, **kwargs):
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='', settings=None, params=None, **kwargs):
     '''
     Assembles the input dictionary for Fleur Calculation.
 
@@ -167,7 +167,8 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
         inputs.code = inpgencode
     if params:
         inputs.parameters = params
-
+    if settings:
+        inputs.settings = settings
     if description:
         inputs.metadata.description = description
     else:
