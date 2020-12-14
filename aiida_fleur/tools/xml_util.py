@@ -554,12 +554,14 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
     return Dict(dict=para_dict)
 
 
-def get_inpgen_para_from_xml(inpxmlfile):
+def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
     """
     This routine returns an python dictionary produced from the inp.xml
     file, which can be used as a calc_parameters node by inpgen.
     Be aware that inpgen does not take all information that is contained in an inp.xml file
 
+    :param inpxmlfile: and xml etree of a inp.xml file
+    :param inpgen_ready: Bool, return a dict which can be inputed into inpgen while setting atoms
     :return new_parameters: A Dict, which will lead to the same inp.xml (in case if other defaults,
                             which can not be controlled by input for inpgen, were changed)
 
@@ -661,19 +663,21 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_element = eval_xpath(species, atom_element_xpath)
         atom_name_2 = eval_xpath(species, atom_name_xpath)
 
-        atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
+        if not inpgen_ready:
+            atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
+            #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
+            #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst) (deprecated)
         atom_dict = set_dict_or_not(atom_dict, 'rmt', atom_rmt)
         atom_dict = set_dict_or_not(atom_dict, 'dx', atom_dx)
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-        #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
+
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
         atom_dict = set_dict_or_not(atom_dict, 'element', '{}'.format(atom_element))
-        #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
 
         new_parameters[atoms_name] = atom_dict
 
