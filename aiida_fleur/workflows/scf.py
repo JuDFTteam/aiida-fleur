@@ -60,7 +60,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.4.2'
+    _workflowversion = '0.4.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -89,7 +89,7 @@ class FleurScfWorkChain(WorkChain):
             'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 6 * 60 * 60,
-        'queue_name': '',
+        'queue_name': None,
         'custom_scheduler_commands': '',
         'import_sys_environment': False,
         'environment_variables': {}
@@ -155,12 +155,33 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.wf_dict = wf_dict
 
         self.ctx.serial = self.ctx.wf_dict.get('serial', False)
+        fleur = self.inputs.fleur
+        fleur_extras = fleur.extras
+        inpgen_extras = None
+        if 'inpgen' in self.inputs:
+            inpgen = self.inputs.inpgen
+            inpgen_extras = inpgen.extras
 
-        defaultoptions = self._default_options
+        defaultoptions = self._default_options.copy()
+        user_options = {}
         if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
+            user_options = self.inputs.options.get_dict()
+
+        # extend options by code defaults given in code extras
+        # Maybe do full recursive merge
+        if 'queue_defaults' in fleur_extras:
+            qd = fleur_extras['queue_defaults']
+            queue = user_options.get('queue', 'default')
+            defaults_queue = qd.get(queue, {})
+            for key, val in defaultoptions.items():
+                defaultoptions[key] = defaults_queue.get(key, val)
+
+        if 'options' in self.inputs:
+            options = user_options
         else:
             options = defaultoptions
+        # we use the same options for both codes, inpgen resources get overridden
+        # and queue does not matter in case of direct scheduler
 
         # extend options given by user using defaults
         for key, val in six.iteritems(defaultoptions):
