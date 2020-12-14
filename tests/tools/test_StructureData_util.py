@@ -211,6 +211,67 @@ def test_break_symmetry_wf_film_structure_only(generate_film_structure):
     assert len(set(kind_names)) == len(kind_names_should)
 
 
+def test_break_symmetry_corhole(generate_structure):
+    """Test if what the corehole workflow does works"""
+    from aiida_fleur.tools.StructureData_util import break_symmetry
+    from aiida import orm
+
+    structure = generate_structure()
+    sites = structure.sites
+    pos = sites[0].position
+    kind_name = sites[0].kind_name
+    para = orm.Dict(dict={
+        'atom': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    })
+    new_kinds_names = {'Si': [kind_name + '_corehole1']}
+    inputs = dict(structure=structure,
+                  atoms=[],
+                  site=[],
+                  pos=[(pos[0], pos[1], pos[2])],
+                  new_kinds_names=new_kinds_names)
+    if para is not None:
+        inputs['parameterdata'] = para
+    new_struc, new_para = break_symmetry(**inputs)
+
+    #print(new_para.get_dict())
+    kind_names = ['Si_corehole1', 'Si']
+    for i, site in enumerate(new_struc.sites):
+        assert site.kind_name == kind_names[i]
+
+    # Test if the kind name was set to the atom lists
+    should = {
+        'atom1': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },
+        'comp': {
+            'kmax': 5.0
+        },
+        'atom2': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6,
+            'id': '14.1',
+            'name': 'Si_corehole1'
+        }
+    }
+    assert new_para.get_dict() == should
+
+
 def test_break_symmetry_film_parameters_only_simple(generate_film_structure):
     """Test if these break symmetry operation adjusted the parameter data right.
     This basicly tests

@@ -387,7 +387,9 @@ def break_symmetry(structure,
 
     if new_kinds_names is None:
         new_kinds_names = {}
-
+        write_new_kind_names = False
+    else:
+        write_new_kind_names = True
     from aiida.common.constants import elements as PeriodicTableElements
     from aiida.orm import Dict
 
@@ -461,7 +463,10 @@ def break_symmetry(structure,
         # TODO This may not enough, since for magnetic systems one need a kind mapping
         # i.e if the parameters are for a partly 'pre symmetry broken system'
         # and we want to keep track from which 'old' kind which new kind spawn
-        para_new = adjust_calc_para_to_structure(parameterdata, new_structure, add_atom_base_lists=add_atom_base_lists)
+        para_new = adjust_calc_para_to_structure(parameterdata,
+                                                 new_structure,
+                                                 add_atom_base_lists=add_atom_base_lists,
+                                                 write_new_kind_names=write_new_kind_names)
 
     new_structure.label = structure.label
     new_structure.description = structure.description + 'more kinds, less sym'
@@ -469,7 +474,7 @@ def break_symmetry(structure,
     return new_structure, para_new
 
 
-def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True):
+def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True, write_new_kind_names=False):
     """
     Adjust calculation parameters for inpgen to a given structure with several kinds
 
@@ -542,6 +547,8 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
             if atomlst.get('element', None) == symbol or atomlst.get('z', None) == atomic_number:
                 new_alst = atomlst.copy()
                 new_alst['id'] = should_id
+                if write_new_kind_names:
+                    new_alst[u'name'] = kind_name
                 atomlistname = 'atom{}'.format(j)
                 param_new_dict[atomlistname] = new_alst
                 j = j + 1
