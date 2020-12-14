@@ -353,7 +353,7 @@ def break_symmetry(structure,
                    site=None,
                    pos=None,
                    new_kinds_names=None,
-                   add_atom_base_lists=False,
+                   add_atom_base_lists=True,
                    parameterdata=None):
     """
     This routine introduces different 'kind objects' in a structure
@@ -372,7 +372,7 @@ def break_symmetry(structure,
     :param parameterdata: Dict node, containing calculation_parameters, however,
                 this only works well if you prepare already a node for containing
                 the atom lists from the symmetry breaking, or lists without ids.
-
+    :param add_atom_base_lists: Bool (default True), if the atom base lists should be added or not
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     :return: DictData, a AiiDA dict with new parameters for inpgen.
     """
@@ -458,7 +458,10 @@ def break_symmetry(structure,
 
     # update parameter data
     if parameterdata is not None:
-        para_new = adjust_calc_para_to_structure(parameterdata, new_structure)
+        # TODO This may not enough, since for magnetic systems one need a kind mapping
+        # i.e if the parameters are for a partly 'pre symmetry broken system'
+        # and we want to keep track from which 'old' kind which new kind spawn
+        para_new = adjust_calc_para_to_structure(parameterdata, new_structure, add_atom_base_lists=add_atom_base_lists)
 
     new_structure.label = structure.label
     new_structure.description = structure.description + 'more kinds, less sym'
@@ -480,7 +483,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
 
     :param parameter: aiida.orm.Dict node containing calc parameters
     :param structure: aiida.orm.StructureData node containing a crystal structure
-
+    :param add_atom_base_lists: Bool (default True), if the atom base lists should be added or not
     :return: new aiida.orm.Dict with new calc_parameters
     """
     from aiida.common.constants import elements as PeriodicTableElements

@@ -35,6 +35,7 @@ def test_is_structure(generate_structure):
 
 
 def test_is_primitive(generate_structure):
+    """Test if is_primitive test can distinguish between a primitive and non primitive structure"""
     from aiida_fleur.tools.StructureData_util import is_primitive
     structure = generate_structure()
     structure.store()
@@ -52,6 +53,7 @@ def test_is_primitive(generate_structure):
 
 
 def test_rescale_nowf(generate_structure):
+    """Test to rescale some structure """
     from aiida_fleur.tools.StructureData_util import rescale_nowf
     from aiida_fleur.tools.StructureData_util import rescale
     from aiida.orm import Dict, Float
@@ -83,6 +85,7 @@ def test_rescale_nowf(generate_structure):
 
 
 def test_supercell(generate_structure):
+    """Test to create a super cell"""
     from aiida_fleur.tools.StructureData_util import supercell
     from aiida_fleur.tools.StructureData_util import supercell_ncf
     from aiida.orm import Int
@@ -193,7 +196,6 @@ def test_break_symmetry_wf_film_structure_only(generate_film_structure):
 
     struc_b_site, para_new_site = break_symmetry(structure, atoms=[], site=[0, 1])
     kind_names = [x.kind_name for x in struc_b_site.sites]
-    print(kind_names)
     kind_names_should = ['Fe', 'Fe1', 'Fe2', 'Pt']
     for kind_name in kind_names_should:
         assert kind_name in kind_names
@@ -203,14 +205,13 @@ def test_break_symmetry_wf_film_structure_only(generate_film_structure):
 
     struc_b_pos, para_new_pos = break_symmetry(structure, atoms=[], pos=pos)
     kind_names = [x.kind_name for x in struc_b_pos.sites]
-    print(kind_names)
     kind_names_should = ['Fe', 'Fe1', 'Fe2', 'Pt']
     for kind_name in kind_names_should:
         assert kind_name in kind_names
     assert len(set(kind_names)) == len(kind_names_should)
 
 
-def test_break_symmetry_film_parameters_only(generate_film_structure):
+def test_break_symmetry_film_parameters_only_simple(generate_film_structure):
     """Test if these break symmetry operation adjusted the parameter data right.
     This basicly tests
     from aiida_fleur.tools.StructureData_util import adjust_calc_para_to_structure
@@ -220,16 +221,183 @@ def test_break_symmetry_film_parameters_only(generate_film_structure):
     from aiida.orm import Dict
 
     structure = generate_film_structure()
+    para = Dict(
+        dict={
+            'atom': {
+                'element': 'Fe',
+                'z': 26,
+                'rmt': 2.1,
+                'bmu': -1
+            },
+            'atom1': {
+                'element': 'Pt',
+                'rmt': 2.2,
+                'bmu': 1
+            },
+            'comp': {
+                'kmax': 5.0,
+            }
+        })
 
-    structure_broken, para_out = break_symmetry(structure)
-    #print(para_out.get_dict())
-    struc_b_fe, para_new_fe = break_symmetry(structure, atoms=['Fe'])
-    struc_b_pt, para_new_pt = break_symmetry(structure, atoms=['Pt'])
-    struc_b_site, para_new_site = break_symmetry(structure, atoms=[], site=[0, 1])
-    pos = [structure.sites[0].position, structure.sites[1].position]
-    struc_b_pos, para_new_pos = break_symmetry(structure, atoms=[], pos=pos)
+    structure_broken, para_out = break_symmetry(structure, parameterdata=para)
+    should1 = {
+        'atom1': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom2': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0
+        },
+        'atom3': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1,
+            'id': '26.1'
+        },
+        'atom4': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1,
+            'id': '78.1'
+        },
+        'atom5': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1,
+            'id': '78.2'
+        }
+    }
+    assert para_out.get_dict() == should1
 
-    #assert False
+    # breaking again should not change something
+    structure_broken, para_out = break_symmetry(structure_broken, parameterdata=para_out)
+    assert para_out.get_dict() == should1
+
+    should2 = {
+        'comp': {
+            'kmax': 5.0
+        },
+        'atom1': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1,
+            'id': '26.1'
+        },
+        'atom2': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1,
+            'id': '78.1'
+        },
+        'atom3': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1,
+            'id': '78.2'
+        }
+    }
+    structure_broken, para_out = break_symmetry(structure_broken, parameterdata=para_out, add_atom_base_lists=False)
+    print(para_out.get_dict())
+    assert para_out.get_dict() == should2
+
+    struc_b_fe, para_new_fe = break_symmetry(structure, atoms=['Fe'], parameterdata=para)
+
+    should3 = {
+        'atom1': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom2': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0
+        },
+        'atom3': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1,
+            'id': '26.1'
+        }
+    }
+    assert para_new_fe.get_dict() == should3
+
+
+def test_break_symmetry_film_parameters_only_complex(generate_film_structure):
+    """Test if these break symmetry operation adjusted the complex parameter data right.
+    This basicly tests
+    from aiida_fleur.tools.StructureData_util import adjust_calc_para_to_structure
+    for a separate test we would have to generate these structures again
+    """
+    from aiida_fleur.tools.StructureData_util import break_symmetry
+    from aiida.orm import Dict
+
+    structure = generate_film_structure()
+    para = Dict(
+        dict={
+            'atom': {
+                'element': 'Fe',
+                'id': 26.1,
+                'rmt': 2.1,
+                'bmu': -1
+            },
+            'atom1': {
+                'element': 'Pt',
+                'id': 78.1,
+                'rmt': 2.2,
+                'bmu': 1
+            },
+            'comp': {
+                'kmax': 5.0,
+            }
+        })
+
+    structure_broken, para_out = break_symmetry(structure, parameterdata=para)
+    struc_b_fe, para_new_fe = break_symmetry(structure, atoms=['Fe'], parameterdata=para)
+
+    should1 = {
+        'atom1': {
+            'element': 'Fe',
+            'id': '26.1',
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom2': {
+            'element': 'Pt',
+            'id': '78.1',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'atom3': {
+            'element': 'Pt',
+            'id': '78.2',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    }
+
+    assert para_out.get_dict() == should1
+
+    should2 = {'atom1': {'bmu': -1, 'element': 'Fe', 'id': '26.1', 'rmt': 2.1}, 'comp': {'kmax': 5.0}}
+    assert para_new_fe.get_dict() == should2
+    # Deletes the other Ids because Pt had an id
 
 
 '''
