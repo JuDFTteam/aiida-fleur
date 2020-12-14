@@ -1,10 +1,19 @@
-
 ## v1.1.3
 ### release compatible with AiiDA-core 1.3.0
+- still support of Fleur MaXR4 version with inpgen
+- Does not support yet for Fleur MaXR5 and new inpgen
+- Set_kpoints was moved from fleurinp to fleurinpmodifier
+- Break_symmetry of a structure was refactored
+- Implemented feature in fleurinputCalculation to set significant figures
+- Implemented feature scf can now use default queues specified in code extras
+- First implementation of relax type None, which cases the relax workchain to skip the
+relaxation, becoming a usual scf wc,  which might make it easier to switch relaxation on 
+and off in other workchains.
+- Fleur parser parses now the total magnetic moment of the cell
 - Introduced common constants, for bohr and htr, increased precision
 - Command line interface (CLI) `aiida-fleur` with various functionalities exposed
-- For devs: Increased test coverage
-
+- For devs: Increased test coverage, codecov is now added to CI and linked to badge
+removed some older outdated code
 
 ## v1.1.2
 ### release compatible with AiiDA-core 1.3.0
