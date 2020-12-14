@@ -1,0 +1,33 @@
+parameters1:
+  atom:
+    element: Si
+    jri: 981
+    lmax: 12
+    lnonsph: 6
+    rmt: 2.1
+  comp:
+    kmax: 5.0
+parameters2:
+  atom:
+    element: Si
+    jri: 981
+    lmax: 10
+    lnonsph: 6
+    rmt: 2.0
+  atom1:
+    element: Si
+    id: 16.1
+    jri: 981
+    lmax: 12
+    lnonsph: 6
+    rmt: 2.2
+  atom2:
+    element: Si
+    id: 16.2
+    jri: 981
+    lmax: 11
+    lnonsph: 6
+    rmt: 2.1
+    z: 16
+  comp:
+    kmax: 5.0

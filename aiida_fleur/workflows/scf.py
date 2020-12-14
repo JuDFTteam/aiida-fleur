@@ -89,7 +89,7 @@ class FleurScfWorkChain(WorkChain):
             'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 6 * 60 * 60,
-        'queue_name': None,
+        'queue_name': '',
         'custom_scheduler_commands': '',
         'import_sys_environment': False,
         'environment_variables': {}

@@ -1,19 +1,35 @@
 parameters1:
   atom1:
+    econfig: '[He] 2s1 2p6 | 3s2 3p3'
     element: Si
-    id: '16.1'
+    id: '14.1'
     jri: 981
     lmax: 12
     lnonsph: 6
     rmt: 2.1
   atom2:
     element: Si
-    id: '16.2'
+    id: '14.1'
     jri: 981
     lmax: 12
     lnonsph: 6
     rmt: 2.1
-    z: 16
+    z: 14
+  atom3:
+    element: Si
+    id: '14.2'
+    jri: 981
+    lmax: 12
+    lnonsph: 6
+    rmt: 2.1
+  atom4:
+    element: Si
+    id: '14.2'
+    jri: 981
+    lmax: 12
+    lnonsph: 6
+    rmt: 2.1
+    z: 14
   comp:
     kmax: 5.0
 parameters2:

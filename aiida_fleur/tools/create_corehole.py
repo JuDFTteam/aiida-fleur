@@ -26,7 +26,6 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     :param structure: StructureData
     :param kind: a string with the kind_name (TODO: alternative the kind object)
     :param econfig: string, e.g. econfig = "[Kr] 5s2 4d10 4f13 | 5p6 5d5 6s2" to set, i.e. the corehole
-    ! This is the new (MaXR2) econfig therefore
 
     :return: a Dict node
     """
