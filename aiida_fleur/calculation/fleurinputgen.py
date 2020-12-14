@@ -261,7 +261,8 @@ class FleurinputgenCalculation(CalcJob):
                     if self._use_aiida_structure:
                         input_params.pop('lattice', {})
                         own_lattice = False
-
+        #TODO check if input parameter dict is consistent to given structure.
+        # if not issue warnings.
         # TODO allow only usual kpt meshes and use therefore Aiida kpointData
         # if self._use_kpoints:
         #     try:
@@ -355,19 +356,21 @@ class FleurinputgenCalculation(CalcJob):
                     vector_rel = abs_to_rel_f(pos, cell, structure.pbc)
                     vector_rel[2] = vector_rel[2] * scaling_pos
 
-                if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new specie!
+                if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new atomtype or species!
                     try:
                         # Kind names can be more then numbers now, this might need to be reworked
                         head = kind_name.rstrip('0123456789')
                         kind_namet = int(kind_name[len(head):])
-                        if int(kind_name[len(head)]) > 4:
-                            raise InputValidationError('New specie name/label should start with a digit smaller than 4')
+                        #if int(kind_name[len(head)]) > 4:
+                        #    raise InputValidationError('New specie name/label should start with a digit smaller than 4')
                     except ValueError:
-                        pass
+                        self.report(
+                            'Warning: Kind name {} will be ignored by the FleurinputgenCalculation and not set a charge number.'
+                            .format(kind_name))
                     else:
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
                     # append a label to the detached atom
-                    reg_string = '    {0:7} {1:18.' + sf_p + 'f} {2:18.' + sf_p + 'f} {3:18.' + sf_p + 'f} {4}\n'
+                    reg_string = '    {0:7} {1:18.' + sf_p + 'f} {2:18.' + sf_p + 'f} {3:18.' + sf_p + 'f} {}\n'
                     atomic_positions_card_listtmp.append(
                         reg_string.format(atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2], kind_namet))
                 else:
