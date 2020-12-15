@@ -416,7 +416,8 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
         try:
             newelement = etree.Element(newelement)
         except ValueError as v:
-            raise ValueError('{}. If this is a species, are you sure this species exists ' 'in your inp.xml?'.format(v))
+            raise ValueError('{}. If this is a species, are you sure this species exists '
+                             'in your inp.xml?'.format(v)) from v
     nodes = eval_xpath3(xmlnode, xpath, create=create)
     if nodes:
         for node_1 in nodes:
@@ -426,8 +427,8 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     # behind what shall I place it
                     try:
                         place_index = tag_order.index(newelement_name)
-                    except:
-                        raise ValueError('Did not find element name in the tag_order list')
+                    except ValueError as exc:
+                        raise ValueError('Did not find element name in the tag_order list') from exc
                     behind_tags = tag_order[:place_index]
                     # check if children are in the same sequence as given in tag_order
                     tags = []
@@ -438,8 +439,9 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     for name in tags:
                         try:
                             current = tag_order.index(name)
-                        except ValueError:
-                            raise ValueError('Did not find existing tag name in the tag_order list' ': {}'.format(name))
+                        except ValueError as exc:
+                            raise ValueError('Did not find existing tag name in the tag_order list'
+                                             ': {}'.format(name)) from exc
                         if current > prev:
                             prev = current
                         else:
@@ -452,10 +454,10 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                             tag_index = node_1.index(child)
                             try:
                                 node_1.insert(tag_index + 1, element_to_write)
-                            except ValueError as v:
+                            except ValueError as exc:
                                 raise ValueError('{}. If this is a species, are'
                                                  'you sure this species exists in your inp.xml?'
-                                                 ''.format(v))
+                                                 ''.format(exc)) from exc
                             was_set = True
                             break
                         if was_set:
@@ -463,23 +465,23 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     if not was_set:  # just append
                         try:
                             node_1.insert(0, element_to_write)
-                        except ValueError as v:
+                        except ValueError as exc:
                             raise ValueError('{}. If this is a species, are you'
                                              ' sure this species exists in your inp.xml?'
-                                             ''.format(v))
+                                             ''.format(exc)) from exc
                     # (or remove all and write them again in right order?)
                 else:
                     try:
                         node_1.insert(place_index, element_to_write)
-                    except ValueError as v:
+                    except ValueError as exc:
                         raise ValueError('{}. If this is a species, are you sure this species '
-                                         'exists in your inp.xml?'.format(v))
+                                         'exists in your inp.xml?'.format(exc)) from exc
             else:
                 try:
                     node_1.append(element_to_write)
-                except ValueError as v:
+                except ValueError as exc:
                     raise ValueError('{}. If this is a species, are you sure this species exists'
-                                     'in your inp.xml?'.format(v))
+                                     'in your inp.xml?'.format(exc)) from exc
     return xmlnode
 
 
@@ -1478,11 +1480,11 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
     """
     try:
         return_value = node.xpath(xpath)
-    except etree.XPathEvalError:
+    except etree.XPathEvalError as exc:
         message = ('There was a XpathEvalError on the xpath: {} \n Either it does '
                    'not exist, or something is wrong with the expression.'
                    ''.format(xpath))
-        raise etree.XPathEvalError(message)
+        raise etree.XPathEvalError(message) from exc
 
     if return_value == []:
         if create:

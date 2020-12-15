@@ -218,7 +218,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         code = codenode
         if code.get_input_plugin_name() != expected_code_type:
             raise ValueError
-    except ValueError:
+    except ValueError as exc:
         from aiida.orm.querybuilder import QueryBuilder
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
@@ -231,7 +231,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
             msg += '\n'.join('* {}'.format(l) for l in valid_code_labels)
 
             if use_exceptions:
-                raise ValueError(msg)
+                raise ValueError(msg) from exc
             else:
                 print(msg)  # , file=sys.stderr)
                 sys.exit(1)
@@ -240,7 +240,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                    'Configure at least one first using\n'
                    '    verdi code setup'.format(expected_code_type))
             if use_exceptions:
-                raise ValueError(msg)
+                raise ValueError(msg) from exc
             else:
                 print(msg)  # , file=sys.stderr)
                 sys.exit(1)

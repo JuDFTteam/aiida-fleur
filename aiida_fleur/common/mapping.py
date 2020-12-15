@@ -57,8 +57,8 @@ def prepare_process_inputs(process, inputs):
 
     try:
         process_spec = process.spec()
-    except AttributeError:
-        raise ValueError('process {} does not have a spec')
+    except AttributeError as exc:
+        raise ValueError('Process {} does not have a spec') from exc
 
     for key, value in six.iteritems(inputs):
 

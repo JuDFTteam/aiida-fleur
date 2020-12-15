@@ -199,8 +199,8 @@ class FleurinpModifier(object):
         for task in modification_tasks:
             try:
                 action = actions[task[0]]
-            except KeyError:
-                raise ValueError('Unknown task {}'.format(task[0]))
+            except KeyError as exc:
+                raise ValueError('Unknown task {}'.format(task[0])) from exc
 
             if task[0] == 'set_nmmpmat':
                 workingnmmp = action(workingtree, workingnmmp, *task[1:])
@@ -210,14 +210,16 @@ class FleurinpModifier(object):
         if schema_tree:
             try:
                 xmlschema.assertValid(clear_xml(workingtree))
-            except etree.DocumentInvalid:
-                print('changes were not valid: {}'.format(modification_tasks))
-                raise
+            except etree.DocumentInvalid as exc:
+                msg = 'Changes were not valid: {}'.format(modification_tasks)
+                print(msg)
+                raise etree.DocumentInvalid(msg) from exc
             try:
                 validate_nmmpmat(workingtree, workingnmmp)
-            except ValueError:
-                print('changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks))
-                raise
+            except ValueError as exc:
+                msg = 'Changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks)
+                print(msg)
+                raise ValueError(msg) from exc
 
         return workingtree, workingnmmp
 
@@ -640,9 +642,10 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
     try:
         xmlschema.assertValid(clear_xml(tree))
-    except etree.DocumentInvalid:
-        print('Input file is not validated against the schema')
-        raise
+    except etree.DocumentInvalid as exc:
+        msg = 'Input file is not validated against the schema'
+        print(msg)
+        raise etree.DocumentInvalid(msg) from exc
 
     try:
         with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
