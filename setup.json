@@ -51,7 +51,7 @@
         "pre-commit": [
             "pre-commit>=2.6.0",
             "yapf~=0.30",
-            "pylint~=2.5"
+            "pylint>=2.5"
         ],
         "testing" : [
             "pytest>=2.9",

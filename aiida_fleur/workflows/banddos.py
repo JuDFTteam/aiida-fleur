@@ -71,7 +71,7 @@ class FleurBandDosWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurBandDosWorkChain, cls).define(spec)
+        super().define(spec)
         # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)

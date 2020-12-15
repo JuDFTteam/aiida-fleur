@@ -193,7 +193,7 @@ class FleurCalculation(CalcJob):
 
     @classmethod
     def define(cls, spec):
-        super(FleurCalculation, cls).define(spec)
+        super().define(spec)
 
         # spec.input('metadata.options.input_filename', valid_type=six.string_types,
         #            default=cls._INPXML_FILE_NAME)

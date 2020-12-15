@@ -97,7 +97,7 @@ class FleurScfWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurScfWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('inpgen', valid_type=Code, required=False)
         spec.input('wf_parameters', valid_type=Dict, required=False)

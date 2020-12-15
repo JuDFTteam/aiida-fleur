@@ -53,7 +53,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurCreateMagneticWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurEosWorkChain,
                            namespace_options={
                                'required': False,

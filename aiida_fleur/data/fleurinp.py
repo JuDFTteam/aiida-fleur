@@ -82,7 +82,7 @@ class FleurinpData(Data):
                 files.append(filename)
                 break
         node = kwargs.pop('node', None)
-        super(FleurinpData, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         search_paths = []
         ifolders = get_internal_search_paths()
@@ -433,10 +433,10 @@ class FleurinpData(Data):
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
             try:
                 tree_x = etree.parse(inpxmlfile, parser)
-            except etree.XMLSyntaxError:
+            except etree.XMLSyntaxError as exc:
                 # prob inp.xml file broken
                 err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
-                raise InputValidationError(err_msg)
+                raise InputValidationError(err_msg) from exc
         # relax.xml should be available to be used in xinclude
         # hence copy relax.xml from the retrieved node into the temp file
         fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
@@ -468,7 +468,8 @@ class FleurinpData(Data):
                 tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
             except etree.XMLSyntaxError as msg:
                 message = msg
-                raise InputValidationError('Input file does not validate against the schema: {}'.format(message))
+                raise InputValidationError(
+                    'Input file does not validate against the schema: {}'.format(message)) from msg
 
             raise InputValidationError('Input file is not validated against the schema.' 'Reason is unknown')
 
@@ -495,7 +496,7 @@ class FleurinpData(Data):
         """
         #from aiida.common.exceptions import ValidationError
 
-        super(FleurinpData, self)._validate()
+        super()._validate()
 
         if 'inp.xml' in self.files:
             # has_inpxml = True # does nothing so far
@@ -973,10 +974,10 @@ class FleurinpData(Data):
 
         try:
             return_value = root.xpath(xpath)
-        except etree.XPathEvalError:
+        except etree.XPathEvalError as exc:
             raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
                                        'not exist, or something is wrong with the expression.'
-                                       ''.format(xpath))
+                                       ''.format(xpath)) from exc
 
         if len(return_value) == 1:
             return return_value

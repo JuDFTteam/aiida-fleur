@@ -100,7 +100,7 @@ class FleurinputgenCalculation(CalcJob):
 
     @classmethod
     def define(cls, spec):
-        super(FleurinputgenCalculation, cls).define(spec)
+        super().define(spec)
 
         spec.input('metadata.options.input_filename', valid_type=six.string_types, default=cls._INPUT_FILE)
         spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._INPXML_FILE_NAME)
@@ -568,8 +568,8 @@ def get_input_data_text(key, val, value_only, mapping=None):
         for elemk, itemval in six.iteritems(val):
             try:
                 idx = mapping[elemk]
-            except KeyError:
-                raise ValueError("Unable to find the key '{}' in the mapping " 'dictionary'.format(elemk))
+            except KeyError as exc:
+                raise ValueError("Unable to find the key '{}' in the mapping " 'dictionary'.format(elemk)) from exc
 
             list_of_strings.append((idx, '  {0}({2})={1} '.format(key, conv_to_fortran(itemval), idx)))
             # changed {0}({2}) = {1}\n".format

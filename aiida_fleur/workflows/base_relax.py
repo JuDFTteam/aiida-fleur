@@ -41,7 +41,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurBaseRelaxWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(RelaxProcess)
         spec.input('description',
                    valid_type=six.string_types,

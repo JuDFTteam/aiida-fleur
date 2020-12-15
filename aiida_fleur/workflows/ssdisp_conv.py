@@ -46,7 +46,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurSSDispConvWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
 
