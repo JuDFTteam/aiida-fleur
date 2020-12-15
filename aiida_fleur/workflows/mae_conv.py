@@ -24,6 +24,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):
@@ -33,11 +34,22 @@ class FleurMaeConvWorkChain(WorkChain):
 
     _workflowversion = '0.2.0'
 
-    _wf_default = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}
+    }
 
     @classmethod
     def define(cls, spec):
-        super(FleurMaeConvWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
 
@@ -67,7 +79,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.mae_phis = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -146,7 +158,6 @@ class FleurMaeConvWorkChain(WorkChain):
         t_energydict = {}
         original_t_energydict = {}
         outnodedict = {}
-        htr_to_ev = 27.21138602
 
         for label in six.iterkeys(self.ctx.wf_dict['sqas']):
             calc = self.ctx[label]
@@ -172,7 +183,7 @@ class FleurMaeConvWorkChain(WorkChain):
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             t_energydict[label] = t_e
 
         if t_energydict:

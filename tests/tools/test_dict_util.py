@@ -88,3 +88,13 @@ def test_extract_elementpara_interface_W():
 
     para_dict = {'a': 1, 'atom': {'element': 'H', 'rmt': 1}, 'atom1': {'element': 'W', 'rmt': 4}}
     assert extract_elementpara(para_dict, 'W') == {'a': 1, 'atom1': {'element': 'W', 'rmt': 4}}
+
+
+def test_clean_nones():
+    from aiida_fleur.tools.dict_util import clean_nones
+
+    test_dict = {1: None, 2: 3, 4: {1: None}}
+    expected = {2: 3, 4: {}}
+    out_dict = clean_nones(test_dict)
+
+    assert out_dict == expected

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fleurOutput fleurOutputVersion="0.27">
+   <programVersion version="fleur 31">
+      <compilationInfo date="2020-11-30T09:13:10" user="broeder" host="iffcluster0105.iff.kfa-juelich.de" flag="-mkl -qopenmp -assume byterecl -no-wrap-margin" link="-lxml2"/>
+      <gitInfo version="MaX-R4-38-g9cddd6d" branch="release" lastCommitHash="9cddd6d3ed47288c8d096c3f755728090cc6dc36"/>
+      <targetComputerArchitectures>GEN</targetComputerArchitectures>
+      <precision type="DOUBLE"/>
+      <targetStructureClass> </targetStructureClass>
+   </programVersion>
+   <parallelSetup>
+      <openMP ompThreads="12"/>
+      <mem memoryPerNode="24676972 kB"/>
+   </parallelSetup>
+   <startDateAndTime date="2020/12/01" time="11:31:01" zone="+0100"/>
+   <ERROR Message="Overlapping MT-spheres during relaxation: 
+2 1 olap: 6.8200E-03
+Treat as an error: writing rescaled displacements to relax.xml is not implemented"/>
+   <endDateAndTime date="2020/12/01" time="11:31:01" zone="+0100"/>
+</fleurOutput>

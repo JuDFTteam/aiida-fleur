@@ -139,7 +139,7 @@ def get_inputs_fleur(code,
     return inputs
 
 
-def get_inputs_inpgen(structure, inpgencode, options, label='', description='', params=None, **kwargs):
+def get_inputs_inpgen(structure, inpgencode, options, label='', description='', settings=None, params=None, **kwargs):
     '''
     Assembles the input dictionary for Fleur Calculation.
 
@@ -167,7 +167,8 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
         inputs.code = inpgencode
     if params:
         inputs.parameters = params
-
+    if settings:
+        inputs.settings = settings
     if description:
         inputs.metadata.description = description
     else:
@@ -194,69 +195,6 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     return inputs
 
 
-def get_scheduler_extras(code, resources, extras=None, project='jara0172'):
-    """
-    This is a utility function with the goal to make prepare the right resource
-    and scheduler extras for a given computer.
-    Since this is user dependend you might want to create your own.
-
-    return: dict, custom scheduler commands
-    """
-    if extras is None:
-        extras = {}
-    nnodes = resources.get('num_machines', 1)
-
-    # TODO memory has to be done better...
-    mem_per_node = 120000  # max recommend 126000 MB on claix jara-clx nodes
-    mem_per_process = mem_per_node / 24
-    if not extras:
-        # use defaults # TODO add other things, span, pinnning... openmp
-        extras = {
-            'lsf': ('#BSUB -P {} \n#BSUB -M {}  \n'
-                    '#BSUB -a intelmpi'.format(project, mem_per_process)),
-            'torque': '',
-            'direct': ''
-        }
-
-    # get the scheduler type from the computer the code is run on.
-    com = code.computer
-    # com_name = com.get_name()
-    scheduler_type = com.get_scheduler_type()
-
-    default_per_machine = com.get_default_mpiprocs_per_machine()
-    if not default_per_machine:
-        default_per_machine = 24  # claix, lsf does can not have default mpiprocs... #TODO this better
-    tot_num_mpiprocs = resources.get('tot_num_mpiprocs', default_per_machine * nnodes)
-
-    if scheduler_type == 'lsf':
-        new_resources = {'tot_num_mpiprocs': tot_num_mpiprocs}  # only this needs to be given
-    elif scheduler_type == 'torque':
-        # {'num_machines', 1} # on iff003 currently we do not do multinode mpi,
-        new_resources = resources
-        # like this it will get stuck on iff003
-    else:
-        new_resources = resources
-    scheduler_extras = extras.get(scheduler_type, '')
-
-    return new_resources, scheduler_extras
-
-
-# test
-###############################
-# codename = 'inpgen@local_mac'#'inpgen_v0.28@iff003'#'inpgen_iff@local_iff'
-# codename2 = 'fleur_v0.28@iff003'#'fleur_mpi_v0.28@iff003'# 'fleur_iff_0.28@local_iff''
-# codename2 = 'fleur_max_1.3_dev@iff003'
-# codename2 = 'fleur_mpi_max_1.3_dev@iff003'
-# codename4 = 'fleur_mpi_v0.28@claix'
-###############################
-# code = Code.get_from_string(codename)
-# code2 = Code.get_from_string(codename2)
-# code4 = Code.get_from_string(codename4)
-# print(get_scheduler_extras(code, {'num_machines' : 1}))
-# print(get_scheduler_extras(code2, {'num_machines' : 2}))
-# print(get_scheduler_extras(code4, {'num_machines' : 1}))
-
-
 def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     """
     Pass a code node and an expected code (plugin) type. Check that the
@@ -280,7 +218,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         code = codenode
         if code.get_input_plugin_name() != expected_code_type:
             raise ValueError
-    except ValueError:
+    except ValueError as exc:
         from aiida.orm.querybuilder import QueryBuilder
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
@@ -293,7 +231,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
             msg += '\n'.join('* {}'.format(l) for l in valid_code_labels)
 
             if use_exceptions:
-                raise ValueError(msg)
+                raise ValueError(msg) from exc
             else:
                 print(msg)  # , file=sys.stderr)
                 sys.exit(1)
@@ -302,7 +240,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
                    'Configure at least one first using\n'
                    '    verdi code setup'.format(expected_code_type))
             if use_exceptions:
-                raise ValueError(msg)
+                raise ValueError(msg) from exc
             else:
                 print(msg)  # , file=sys.stderr)
                 sys.exit(1)
@@ -353,6 +291,9 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     workchain_dict = {'Be12W' : uuid_wc or output, 'Be2W' : uuid, ...}
 
     return dictionary that ranks the reactions after their enthalpy
+
+    TODO: refactor aiida part out of this, leaving an aiida independent part and one
+    more universal
     """
     from aiida.engine import WorkChain
     from aiida_fleur.tools.common_fleur_wf_util import get_enhalpy_of_equation
@@ -384,7 +325,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
-                            print(('WARNING: ouput node of {} not found. I skip'.format(n)))
+                            print(('WARNING: output node of {} not found. I skip'.format(n)))
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -399,28 +340,6 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         energy_sorted_reactions.append([reaction_string, ent_peratom])
     energy_sorted_reactions = sorted(energy_sorted_reactions, key=lambda ent: ent[1])
     return energy_sorted_reactions
-
-
-# test
-# reaction_list = ['1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W', '1*Be12W->1*Be2W+10*Be']
-# workchain_dict = {'Be12W' : '4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
-#                  'Be2W' : '045d3071-f442-46b4-8d6b-3c85d72b24d4',
-#                  'Be22W' : '1e32880a-bdc9-4081-a5da-be04860aa1bc',
-#                  'W' : 'f8b12b23-0b71-45a1-9040-b51ccf379439',
-#                  'Be' : 0.0}
-# reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
-# print reac_list
-# {'products': {'Be12W': 1}, 'educts': {'Be12W': 1}}
-# 0.0
-# {'products': {'Be2W': 1, 'Be22W': 1}, 'educts': {'Be12W': 2}}
-# 0.114321037514
-# {'products': {'Be22W': 6, 'W': 5}, 'educts': {'Be12W': 11}}
-# -0.868053153884
-# {'products': {'Be': 12, 'W': 1}, 'educts': {'Be12W': 1}}
-# -0.0946046496213
-# {'products': {'Be': 10, 'Be2W': 1}, 'educts': {'Be12W': 1}}
-# 0.180159355144
-# [['11*Be12W->5*W+6*Be22W', -0.8680531538839534], ['1*Be12W->12*Be+1*W', -0.0946046496213127], ['1*Be12W->1*Be12W', 0.0], ['2*Be12W->1*Be2W+1*Be22W', 0.11432103751404535], ['1*Be12W->1*Be2W+10*Be', 0.1801593551436103]]
 
 
 def performance_extract_calcs(calcs):

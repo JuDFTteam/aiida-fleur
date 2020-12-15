@@ -13,8 +13,6 @@
 This module, contains a method to merge Dict nodes used by the FLEUR inpgen.
 This might also be of interest for other all-electron codes
 """
-# TODO this should be made an inline calculation or calcfunction to
-# keep the proverance!
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
@@ -43,6 +41,8 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     :param merge: bool, default True
 
     returns: AiiDA Dict Node
+
+    #TODO be more carefull how to merge ids in atom namelists, i.e species labels
     """
 
     from aiida.common.exceptions import InputValidationError
@@ -64,6 +64,9 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
         raise InputValidationError('Dict2, must be of ' 'type Dict')
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
+
+    if dict1 == dict2:
+        return Dict(dict=dict1)
 
     for key in list(dict1.keys()):
         if 'atom' in key:
@@ -148,6 +151,8 @@ def merge_parameters_wf(*Dicts, overwrite=Bool(True)):
 
     return paremeter_data_new
 '''
+'''
+#TODO this has to moved into cmdline
 if __name__ == '__main__':
     import argparse
     #Dict = DataFactory('dict')
@@ -162,3 +167,4 @@ if __name__ == '__main__':
                         required=False)
     args = parser.parse_args()
     merge_parameter(Dict1=args.para1, Dict2=args.para1, overwrite=args.overwrite)
+    '''

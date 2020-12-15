@@ -33,7 +33,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-
+from aiida_fleur.common.constants import HTR_TO_EV
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
@@ -56,7 +56,7 @@ class FleurSSDispWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    _wf_default = {
+    _default_wf_para = {
         'beta': {
             'all': 1.57079
         },
@@ -70,7 +70,7 @@ class FleurSSDispWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurSSDispWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
@@ -113,7 +113,7 @@ class FleurSSDispWorkChain(WorkChain):
         self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -454,7 +454,6 @@ class FleurSSDispWorkChain(WorkChain):
         Generates results of the workchain.
         """
         t_energydict = []
-        htr_to_ev = 27.21138602
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
@@ -476,7 +475,7 @@ class FleurSSDispWorkChain(WorkChain):
             minenergy = min(t_energydict)
 
             if e_u == 'Htr' or 'htr':
-                t_energydict = [htr_to_ev * (x - minenergy) for x in t_energydict]
+                t_energydict = [HTR_TO_EV * (x - minenergy) for x in t_energydict]
             else:
                 t_energydict = [(x - minenergy) for x in t_energydict]
 

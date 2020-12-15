@@ -54,9 +54,9 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
         input_written = handle.read()
 
     aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
-       0.000000000        5.130606447        5.130606447
-       5.130606447        0.000000000        5.130606447
-       5.130606447        5.130606447        0.000000000
+       0.000000000        5.130606429        5.130606429
+       5.130606429        0.000000000        5.130606429
+       5.130606429        5.130606429        0.000000000
       1.0000000000
        1.000000000        1.000000000        1.000000000
 
@@ -117,9 +117,9 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
         input_written = handle.read()
 
     aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
-       0.000000000        5.130606447        5.130606447
-       5.130606447        0.000000000        5.130606447
-       5.130606447        5.130606447        0.000000000
+       0.000000000        5.130606429        5.130606429
+       5.130606429        0.000000000        5.130606429
+       5.130606429        5.130606429        0.000000000
       1.0000000000
        1.000000000        1.000000000        1.000000000
 

@@ -58,11 +58,11 @@ class fleur_dos_wc(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(fleur_dos_wc, cls).define(spec)
-        spec.input('wf_parameters', valid_type=Dict, required=False, default=Dict(dict=cls._default_wf_para))
+        super().define(spec)
+        spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
-        spec.input('options', valid_type=Dict, required=False, default=Dict(dict=cls._default_options))
+        spec.input('options', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_options))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         # TODO ggf run convergence first
         spec.input('remote_data', valid_type=RemoteData, required=False)

@@ -55,22 +55,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = fleur_dos_wc.get_builder()
 
-    def test_fleur_band_wc_init(self):
-        """
-        Test the interface of the band workchain
-        """
-        from aiida_fleur.workflows.band import FleurBandWorkChain
-
-        builder = FleurBandWorkChain.get_builder()
-
-    # def test_fleur_band2_wc_init(self):
-    #    """
-    #    Test the interface of the band2 workchain
-    #    """
-    #    from aiida_fleur.workflows.band2 import fleur_band2_wc
-    #
-    #    builder = fleur_band2_wc.get_builder()
-
     def test_fleur_corehole_wc_init(self):
         """
         Test the interface of the corehole workchain
@@ -86,14 +70,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
 
         builder = fleur_initial_cls_wc.get_builder()
-
-    def test_fleur_delta_wc_init(self):
-        """
-        Test the interface of the delta workchain
-        """
-        from aiida_fleur.workflows.delta import fleur_delta_wc
-
-        builder = fleur_delta_wc.get_builder()
 
     def test_fleur_relax_wc_init(self):
         """

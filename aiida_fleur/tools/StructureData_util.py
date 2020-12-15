@@ -14,14 +14,11 @@ Collection of utility routines dealing with StructureData objects
 """
 # TODO move imports to workfuncitons namespace?
 
-from __future__ import absolute_import
-from __future__ import print_function
 # from ase import *
 # from ase.lattice.surface import *
 # from ase.io import *
-import six
 
-from pymatgen.core.surface import generate_all_slabs, get_symmetrically_distinct_miller_indices
+from pymatgen.core.surface import generate_all_slabs  #, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator
 
 import numpy as np
@@ -351,8 +348,276 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     return {'new_structure': new_structure, 'new_parameters': para_new}
 
 
+def break_symmetry(structure,
+                   atoms=None,
+                   site=None,
+                   pos=None,
+                   new_kinds_names=None,
+                   add_atom_base_lists=True,
+                   parameterdata=None):
+    """
+    This routine introduces different 'kind objects' in a structure
+    and names them that inpgen will make different species/atomgroups out of them.
+    If nothing specified breaks ALL symmetry (i.e. every atom gets their own kind)
+
+    :param structure: StructureData
+    :param atoms: python list of symbols, exp: ['W', 'Be']. This would make for
+                all Be and W atoms their own kinds.
+    :param site: python list of integers, exp: [1, 4, 8]. This would create for
+                atom 1, 4 and 8 their own kinds.
+    :param pos: python list of tuples of 3, exp [(0.0, 0.0, -1.837927), ...].
+                This will create a new kind for the atom at that position.
+                Be carefull the number given has to match EXACTLY the position
+                in the structure.
+    :param parameterdata: Dict node, containing calculation_parameters, however,
+                this only works well if you prepare already a node for containing
+                the atom lists from the symmetry breaking, or lists without ids.
+    :param add_atom_base_lists: Bool (default True), if the atom base lists should be added or not
+    :return: StructureData, a AiiDA crystal structure with new kind specification.
+    :return: DictData, a AiiDA dict with new parameters for inpgen.
+    """
+    if atoms is None:
+        atoms = ['all']
+
+    if site is None:
+        site = []
+
+    if pos is None:
+        pos = []
+
+    if new_kinds_names is None:
+        new_kinds_names = {}
+        write_new_kind_names = False
+    else:
+        write_new_kind_names = True
+    from aiida.common.constants import elements as PeriodicTableElements
+    from aiida.orm import Dict
+
+    _atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}
+
+    # get all atoms, get the symbol of the atom
+    # if wanted make individual kind for that atom
+    # kind names will be atomsymbol+number
+    # create new structure with new kinds and atoms
+    symbol_count = {}  # Counts the atom symbol occurrence to set id's and kind names right
+    replace = []  # all atoms symbols ('W') to be replaced
+    replace_siteN = []  # all site integers to be replaced
+    replace_pos = []  # all the atom positions to be replaced
+    para_new = None
+    kind_name_id_mapping = {}
+
+    struc = is_structure(structure)
+    if not struc:
+        print('Error, no structure given')
+        # throw error?
+        return None, None
+
+    cell = struc.cell
+    pbc = struc.pbc
+    sites = struc.sites
+    new_structure = DataFactory('structure')(cell=cell, pbc=pbc)
+
+    for sym in atoms:
+        replace.append(sym)
+    for position in pos:
+        replace_pos.append(position)
+    for atom in site:
+        replace_siteN.append(atom)
+
+    for i, site_c in enumerate(sites):
+        # get site info
+        kind_name = site_c.kind_name
+        pos = site_c.position
+        kind = struc.get_kind(kind_name)
+        symbol = kind.symbol
+        replace_kind = False
+
+        # check if kind to replace is in inputs
+        if symbol in replace or 'all' in replace:
+            replace_kind = True
+        if pos in replace_pos:
+            replace_kind = True
+        if i in replace_siteN:
+            replace_kind = True
+
+        if replace_kind:
+            symbol_count[symbol] = symbol_count.get(symbol, 0) + 1
+            symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+            if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
+                newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
+                kind_name_id_mapping[newkindname] = symbol_count[symbol] - 1
+            else:
+                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                kind_name_id_mapping[newkindname] = symbol_count[symbol]
+            new_kind = Kind(name=newkindname, symbols=symbol)
+            new_structure.append_kind(new_kind)
+
+        else:
+            newkindname = kind_name
+            if not kind_name in new_structure.get_kind_names():
+                new_structure.append_kind(kind)
+        new_structure.append_site(Site(kind_name=newkindname, position=pos))
+
+    # update parameter data
+    if parameterdata is not None:
+        # TODO This may not enough, since for magnetic systems one need a kind mapping
+        # i.e if the parameters are for a partly 'pre symmetry broken system'
+        # and we want to keep track from which 'old' kind which new kind spawn
+        para_new = adjust_calc_para_to_structure(parameterdata,
+                                                 new_structure,
+                                                 add_atom_base_lists=add_atom_base_lists,
+                                                 write_new_kind_names=write_new_kind_names)
+
+    new_structure.label = structure.label
+    new_structure.description = structure.description + 'more kinds, less sym'
+
+    return new_structure, para_new
+
+
+def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True, write_new_kind_names=False):
+    """
+    Adjust calculation parameters for inpgen to a given structure with several kinds
+
+    Rules:
+    1. Only atom lists are changed in the parameter node
+    2. If at least one atomlist of a certain element is in parameter
+    all kinds with this elements will have atomlists in the end
+    3. For a certain kind which has no atom list yet and at least one list with such an element
+    exists it gets the parameters from the atom list with the lowest number (while atom<atom0<atom1)
+    4. Atom lists with ids are preserved
+
+    :param parameter: aiida.orm.Dict node containing calc parameters
+    :param structure: aiida.orm.StructureData node containing a crystal structure
+    :param add_atom_base_lists: Bool (default True), if the atom base lists should be added or not
+    :return: new aiida.orm.Dict with new calc_parameters
+    """
+    from aiida.common.constants import elements as PeriodicTableElements
+    from aiida import orm
+    atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}
+
+    param_new_dict = {}
+    para_dict = parameter.get_dict()
+    atom_lists = []
+    j = 1
+    for key in sorted(para_dict):
+        val = para_dict[key]
+        if 'atom' in key:
+            atom_lists.append(val)
+            if add_atom_base_lists:
+                if not 'id' in val:
+                    atomlistname = 'atom{}'.format(j)
+                    param_new_dict[atomlistname] = val
+                    j = j + 1
+        else:
+            param_new_dict[key] = val
+
+    for i, kind in enumerate(structure.kinds):
+        symbol = kind.symbol
+        atomic_number = atomic_numbers.get(symbol)
+        kind_name = kind.name
+        try:
+            # Kind names can be more then numbers now, this might need to be reworked
+            # Every string without a number excepts and will be ignored/assumed covered by base lists
+            head = kind_name.rstrip('0123456789')
+            kind_namet = int(kind_name[len(head):])
+        except ValueError:
+            # base lists are already added
+            kind_namet = None
+            should_id = None
+            continue
+
+        should_id = '{}.{}'.format(atomic_number, kind_namet)
+        # check if atom list with id was given if yes use that one
+        found_kind = False
+        for atomlst in atom_lists:
+            if atomlst.get('id', None) == should_id:
+                #if atomlst.get('element', None) != symbol or atomlst.get('z', None) != atomic_number:
+                #    continue # None id, but wrong element
+                atomlistname = 'atom{}'.format(j)
+                param_new_dict[atomlistname] = atomlst
+                j = j + 1
+                found_kind = True
+
+        if found_kind:
+            continue
+
+        # we have to create a new list with right id
+        # get first list which has element or charge in given list
+        for atomlst in atom_lists:
+            if atomlst.get('element', None) == symbol or atomlst.get('z', None) == atomic_number:
+                new_alst = atomlst.copy()
+                new_alst['id'] = should_id
+                if write_new_kind_names:
+                    new_alst[u'name'] = kind_name
+                atomlistname = 'atom{}'.format(j)
+                param_new_dict[atomlistname] = new_alst
+                j = j + 1
+
+    return orm.Dict(dict=param_new_dict)
+
+
+def check_structure_para_consistent(parameter, structure, verbose=True):
+    """
+    Check if the given calculation parameters for inpgen match to a given structure
+
+    If parameter contains atom lists which do not fit to any kind in the structure,
+    false is returned
+    This knows how the FleurinputgenCalculation prepares structures.
+
+    :param parameter: aiida.orm.Dict node containing calc parameters
+    :param structure: aiida.orm.StructureData node containing a crystal structure
+
+    :return: Boolean, True if parameter is consistent to structure
+    """
+    from aiida.common.constants import elements as PeriodicTableElements
+    atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}
+
+    consistent = True
+    para_dict = parameter.get_dict()
+    kinds = structure.kinds
+    kind_symbols = [kind.symbol for kind in kinds]
+    kind_charges = [atomic_numbers[kind.symbol] for kind in kinds]
+    kind_names = [kind.name for kind in kinds]
+    possible_ids = []
+    for i, kind_name in enumerate(kind_names):
+        try:
+            # Kind names can be more then numbers now, this might need to be reworked
+            head = kind_name.rstrip('0123456789')
+            kind_namet = int(kind_name[len(head):])
+        except ValueError:
+            pass
+            #print('Warning: Kind name {} will be ignored by a FleurinputgenCalculation and not set a charge number. id'.
+            #      format(kind_name))
+        else:
+            atomic_number_name = '{}.{}'.format(kind_charges[i], kind_namet)
+            possible_ids.append(atomic_number_name)
+        # Id can also be integer number only?
+
+    # Now perform the consitency check
+    for key, val in para_dict.items():
+        if 'atom' in key:
+            if 'z' in val:
+                if val['z'] not in kind_charges:
+                    consistent = False
+                    if not verbose:
+                        print('Charge z in atomlist {} is not consistent with structure.'.format(key))
+            if 'element' in val:
+                if val['element'] not in kind_symbols:
+                    consistent = False
+                    if not verbose:
+                        print('Element in atomlist {} is not consistent with structure.'.format(key))
+            if 'id' in val:
+                if str(val['id']) not in possible_ids:
+                    consistent = False
+                    if not verbose:
+                        print('Id in atomlist {} is not consistent with kinds in structure.'.format(key))
+
+    return consistent
+
+
+'''
 # TODO: Bug: parameter data production not right...to many atoms list if break sym of everything
-def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=None, parameterdata=None):
+def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=None, add_atom_base_lists=False, parameterdata=None):
     """
     This routine introduces different 'kind objects' in a structure
     and names them that inpgen will make different species/atomgroups out of them.
@@ -367,8 +632,11 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
                  This will create a new kind for the atom at that position.
                  Be carefull the number given has to match EXACTLY the position
                  in the structure.
-
+    :param parameterdata: Dict node, containing calculation_parameters, however, this only works well
+    if you prepare already a node for containing the atom lists from the symmetry breaking,
+    or lists without ids.
     :return: StructureData, a AiiDA crystal structure with new kind specification.
+    :return: DictData, a AiiDA dict with new parameters for inpgen.
     """
     if atoms is None:
         atoms = ['all']
@@ -385,7 +653,7 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
     from aiida.common.constants import elements as PeriodicTableElements
     from aiida.orm import Dict
 
-    _atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTableElements)}
+    _atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}
 
     # get all atoms, get the symbol of the atom
     # if wanted make individual kind for that atom
@@ -397,6 +665,8 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
     replace_siteN = []  # all site integers to be replaced
     replace_pos = []  # all the atom positions to be replaced
     new_parameterd = None
+    kind_name_id_mapping = {}
+
     struc = is_structure(structure)
     if not struc:
         print('Error, no structure given')
@@ -415,19 +685,15 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
     for atom in site:
         replace_siteN.append(atom)
 
-    if parameterdata:
-        para = parameterdata.get_dict()
-        new_parameterd = dict(para)
-    else:
-        new_parameterd = {}
-
     for i, site_c in enumerate(sites):
+        # get site info
         kind_name = site_c.kind_name
         pos = site_c.position
         kind = struc.get_kind(kind_name)
         symbol = kind.symbol
         replace_kind = False
 
+        # check if kind to replace is in inputs
         if symbol in replace or 'all' in replace:
             replace_kind = True
         if pos in replace_pos:
@@ -436,73 +702,122 @@ def break_symmetry(structure, atoms=None, site=None, pos=None, new_kinds_names=N
             replace_kind = True
 
         if replace_kind:
-            if symbol in symbol_count:
-                symbol_count[symbol] = symbol_count[symbol] + 1
-                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                # print(symbol_new_kinds_names)
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                    newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
-                else:
-                    newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+            symbol_count[symbol] = symbol_count.get(symbol, 0) + 1
+            symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+            if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
+                newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
+                kind_name_id_mapping[newkindname] = symbol_count[symbol]-1
             else:
-                symbol_count[symbol] = 1
-                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                    newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
-                else:
-                    newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                kind_name_id_mapping[newkindname] = symbol_count[symbol]
             new_kind = Kind(name=newkindname, symbols=symbol)
             new_structure.append_kind(new_kind)
 
-            # now we have to add an atom list to parameterData with the corresponding id.
-            if parameterdata:
-                # '{}.{}'.format(charge, symbol_count[symbol])
-                id_a = symbol_count[symbol]
-                for key, val in six.iteritems(para):
-                    if 'atom' in key:
-                        if val.get('element', None) == symbol:
-                            if id_a and id_a == val.get('id', None):
-                                break  # we assume the user is smart and provides a para node,
-                                # which incorporates the symmetry breaking already
-                            if id_a:  # != 1: # copy parameter of symbol and add id
-                                val_new = dict(val)
-                                # getting the charge over element might be risky
-                                charge = _atomic_numbers.get((val.get('element')))
-                                idp = '{}.{}'.format(charge, symbol_count[symbol])
-                                idp = float('{0:.2f}'.format(float(idp)))
-                                # dot cannot be stored in AiiDA dict...
-                                val_new.update({u'id': idp})
-                                atomlistname = 'atom{}'.format(id_a)
-                                i = 0
-                                while new_parameterd.get(atomlistname, {}):
-                                    i = i + 1
-                                    atomlistname = 'atom{}'.format(id_a + i)
-
-                                symbol_new_kinds_names = new_kinds_names.get(symbol, [])
-                                # print(symbol_new_kinds_names)
-                                if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
-                                    species_name = symbol_new_kinds_names[symbol_count[symbol] - 1]
-                                val_new.update({u'name': species_name})
-
-                                new_parameterd[atomlistname] = val_new
-            else:
-                pass
-                # TODO write basic parameter data node
         else:
             newkindname = kind_name
             if not kind_name in new_structure.get_kind_names():
                 new_structure.append_kind(kind)
         new_structure.append_site(Site(kind_name=newkindname, position=pos))
 
+    # now we have to add an atom list to parameterdata with the corresponding id.
+    # generate possible IDs
+    #symbol_count_added = {symbol: 0 for symbol in symbol_count.keys()}
+    symbol_possible_ids = {}
+    for key, val in symbol_count.items():
+        symbol_possible_ids[key] = [i+1 for i in range(val)]
+    new_parameterd = {}
     if parameterdata:
+        para = parameterdata.get_dict()
+'''
+'''
+        for i, kind in enumerate(new_structure.kinds):
+            # for each kind in structure add an individual atom list to parameterdata with id
+            # as long as there was some predefined atom list for such an element
+            # use the first one you find as base for all new
+            # if there is an atom list with such an id use that one
+            atomlistname = 'atom{}'.format(i)
+            symbol = kind.symbol
+            kind_found = False
+            for key in sorted(para):
+                val = para[key]
+                if 'atom' in key:
+                    # ignore atom lists elements not to break sym for.
+                    # we also only use the first one we find.
+                    # therefore best to give only one atom list per element
+                    if val.get('element', None) != symbol:
+                        if val.get('z', None) != _atomic_numbers.get(symbol):
+                            continue
+                    # we have a list of a kind we did something for
+                    el_id = str(val.get('id', '0.0'))
+                    # 0.0 because if case where id is no specified
+                    # cast str since sometimes people might give as float
+                    # id has the form Int.Int
+                    el_id = int(el_id.split('.')[1])
+                    ids = symbol_possible_ids.get(symbol)
+                    if el_id in ids: #id_a == el_id and el_id > 0:
+                        new_parameterd[atomlistname] = val
+                        ids.remove(el_id)
+                        symbol_possible_ids[symbol] = ids
+                        kind_found = True
+                        break  # we assume the user is smart and provides a para node,
+                        # which incorporates the symmetry breaking already
+                        # but we need to see all atom lists to know if it is there...
+            if kind_found:
+                continue
+            for key in sorted(para):
+                val = para[key]
+                if 'atom' in key:
+                    if val.get('element', None) != symbol:
+                        if val.get('z', None) != _atomic_numbers.get(symbol):
+                            continue
+                    el_id = str(val.get('id', '0.0'))
+                    el_id = int(el_id.split('.')[1])
+                    ids = symbol_possible_ids.get(symbol)
+                    # copy parameter of symbol and add id
+                    # this would be the lowest predefined atom list of an element
+                    val_new = {}
+                    val_new.update(val)
+                    charge = _atomic_numbers.get((val.get('element', None)))
+                    if charge is None:
+                        charge = val.get('z', None)
+                    idp = '{}.{}'.format(charge, ids[0])
+                    ids.remove(el_id)
+                    idp = float('{0:.2f}'.format(float(idp)))
+                    # dot cannot be stored in AiiDA dict...
+                    val_new.update({u'id': idp})
+                    atomlistname = 'atom{}'.format(i)#id_a)
+                    # Since there are other atoms list also find the next
+                    # free atom key.
+                    #j = 0
+                    #while new_parameterd.get(atomlistname, {}):
+                    #    j = j + 1
+                    #    atomlistname = 'atom{}'.format(id_a + i)
+                    #symbol_new_kinds_names = new_kinds_names.get(symbol, [])
+                    # print(symbol_new_kinds_names)
+                    #if symbol_new_kinds_names and ((len(symbol_new_kinds_names)) == symbol_count[symbol]):
+                    #    species_name = symbol_new_kinds_names[symbol_count[symbol] - 1]
+                    #    val_new.update({u'name': species_name})
+                    new_parameterd[atomlistname] = val_new
+                    break # max one new atom list per kind
+'''
+'''
+        # add other non atom keys from original parameterdata
+        for key, val in para.items():
+            if 'atom' not in key:
+                new_parameterd[key] = val
+            elif add_atom_base_lists:
+                if not 'id' in val:
+                    new_parameterd[key] = val
         para_new = Dict(dict=new_parameterd)
     else:
         para_new = None
 
+    print(new_parameterd)
     new_structure.label = structure.label
     new_structure.description = structure.description + 'more kinds, less sym'
 
     return new_structure, para_new
+'''
 
 
 def find_equi_atoms(structure):  # , sitenumber=0, position=None):
@@ -663,9 +978,11 @@ def get_all_miller_indices(structure, highestindex):
     """
     wraps the pymatgen function get_symmetrically_distinct_miller_indices for an AiiDa structure
     """
+    from pymatgen.core.surface import get_symmetrically_distinct_miller_indices
     return get_symmetrically_distinct_miller_indices(structure.get_pymatgen_structure(), highestindex)
 
 
+'''
 def create_all_slabs_buggy(initial_structure,
                            miller_index,
                            min_slab_size_ang,
@@ -705,6 +1022,7 @@ def create_all_slabs_buggy(initial_structure,
         film_struc.pbc = (True, True, False)
         aiida_strucs[slab.miller_index] = film_struc
     return aiida_strucs
+'''
 
 
 def create_all_slabs(initial_structure,
@@ -728,9 +1046,9 @@ def create_all_slabs(initial_structure,
     indices = get_all_miller_indices(initial_structure, miller_index)
     for index in indices:
         slab = create_slap(initial_structure, index, min_slab_size_ang, min_vacuum_size, min_slab_size_ang)
-        film_struc = StructureData(pymatgen_structure=slab)
-        film_struc.pbc = (True, True, False)
-        aiida_strucs[slab.miller_index] = film_struc
+        #film_struc = StructureData(pymatgen_structure=slab)
+        #film_struc.pbc = (True, True, False)
+        aiida_strucs[index] = slab
 
     return aiida_strucs
 
@@ -869,7 +1187,7 @@ def create_manual_slab_ase(lattice='fcc',
     *_, layer_occupancies = get_layers(structure)
 
     if replacements is not None:
-        keys = six.viewkeys(replacements)
+        keys = list(replacements.keys())
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
                              ' {}'.format(len(layer_occupancies)))
@@ -894,7 +1212,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     *_, layer_occupancies = get_layers(structure)
     layer_occupancies.insert(0, 0)
-    for i, at_type in six.iteritems(replacements):
+    for i, at_type in replacements.items():
         if isinstance(i, str):
             i = int(i)
         if i < 0:
@@ -1271,6 +1589,7 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
     return Dict(dict=bond_data)
 
 
+'''
 def estimate_mt_radii(structure, stepsize=0.05):
     """
     # TODO implement
@@ -1311,3 +1630,4 @@ def find_common_mt(structures):
 
     """
     return None
+'''

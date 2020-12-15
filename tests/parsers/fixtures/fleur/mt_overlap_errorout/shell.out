@@ -1,0 +1,6 @@
+iffcluster0111: Using InfiniBand for MPI communication.
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 4.0          (www.max-centre.eu)
+ Attention: Overlapping MT-spheres. Reduced displacement by 10%
+           2           1  6.819998745005051E-003
+ Usage data send using curl: usage.json

@@ -1,0 +1,214 @@
+iffcluster0107: Using InfiniBand for MPI communication.
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 4.0          (www.max-centre.eu)
+ nop =          16
+ --------------------------------------------------------
+ Number of OMP-threads:          12
+ --------------------------------------------------------
+ Iteration:           1  Distance:  0.163237983230284     
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):           4
+ Time per iter (min):           4
+ Iteration:           2  Distance:  0.152278301128890     
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):           8
+ Time per iter (min):           4
+ Iteration:           3  Distance:  1.280699031885719E-002
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          11
+ Time per iter (min):           4
+ Iteration:           4  Distance:  1.544701303213275E-002
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          15
+ Time per iter (min):           4
+ Iteration:           5  Distance:  4.020987856830026E-003
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          19
+ Time per iter (min):           4
+ Iteration:           6  Distance:  1.945253362703284E-004
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          23
+ Time per iter (min):           4
+ Iteration:           7  Distance:  2.468709825867029E-004
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          26
+ Time per iter (min):           4
+ Iteration:           8  Distance:  1.028491110414090E-004
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          30
+ Time per iter (min):           4
+ Iteration:           9  Distance:  9.929615259078387E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          34
+ Time per iter (min):           4
+ Iteration:          10  Distance:  3.876139978531418E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          38
+ Time per iter (min):           4
+ Iteration:          11  Distance:  5.192625893104915E-006
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          41
+ Time per iter (min):           4
+ Iteration:          12  Distance:  9.189232451067283E-006
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          45
+ Time per iter (min):           4
+ Iteration:          13  Distance:  2.783739128832825E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          49
+ Time per iter (min):           4
+ Iteration:          14  Distance:  4.212128520807909E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          53
+ Time per iter (min):           4
+ Iteration:          15  Distance:  7.731771252447340E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          57
+ Time per iter (min):           4
+ Iteration:          16  Distance:  7.768845617471034E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          61
+ Time per iter (min):           4
+ Iteration:          17  Distance:  7.341253721698628E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          65
+ Time per iter (min):           4
+ Iteration:          18  Distance:  3.526433224843018E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          69
+ Time per iter (min):           4
+ Iteration:          19  Distance:  6.266528245181366E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          73
+ Time per iter (min):           4
+ Iteration:          20  Distance:  7.731238834573022E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          77
+ Time per iter (min):           4
+ Iteration:          21  Distance:  3.388841940099947E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          81
+ Time per iter (min):           4
+ Iteration:          22  Distance:  3.230813132151605E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          85
+ Time per iter (min):           4
+ Iteration:          23  Distance:  3.288678618197010E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          89
+ Time per iter (min):           4
+ Iteration:          24  Distance:  2.973785652738386E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          94
+ Time per iter (min):           4
+ Iteration:          25  Distance:  2.924083584706251E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):          98
+ Time per iter (min):           4
+ Iteration:          26  Distance:  2.913527221808891E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         102
+ Time per iter (min):           4
+ Iteration:          27  Distance:  2.999922005973378E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         106
+ Time per iter (min):           4
+ Iteration:          28  Distance:  3.008806094258066E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         110
+ Time per iter (min):           4
+ Iteration:          29  Distance:  3.504814074016484E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         115
+ Time per iter (min):           4
+ Iteration:          30  Distance:  3.338360515741878E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         119
+ Time per iter (min):           4
+ Iteration:          31  Distance:  3.842254803335153E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         123
+ Time per iter (min):           4
+ Iteration:          32  Distance:  4.627627754515800E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         128
+ Time per iter (min):           4
+ Iteration:          33  Distance:  4.311438958929168E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         132
+ Time per iter (min):           4
+ Iteration:          34  Distance:  4.488399890836128E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         137
+ Time per iter (min):           5
+ Iteration:          35  Distance:  4.932233829957257E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         141
+ Time per iter (min):           5
+ Iteration:          36  Distance:  3.389671397825875E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         146
+ Time per iter (min):           5
+ Iteration:          37  Distance:  1.990699684397925E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         150
+ Time per iter (min):           5
+ Iteration:          38  Distance:  2.212929999310191E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         155
+ Time per iter (min):           5
+ Iteration:          39  Distance:  2.515473192069385E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         159
+ Time per iter (min):           5
+ Iteration:          40  Distance:  1.265346941883755E-005
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         164
+ Time per iter (min):           5
+ Iteration:          41  Distance:  1.531689360592881E-006
+ Test for time of next iteration:
+ Time provided (min):         360
+ Time used     (min):         168
+ Time per iter (min):           5
+ Reset of history
+ Usage data send using curl: usage.json

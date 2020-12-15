@@ -49,6 +49,8 @@ def read_cif_folder(path=os.getcwd(),
     :params: extras: dir/string/arb: extras added to the structures stored in the db
 
     """
+    # TODO check for duplicates in the database, so that reruning the functions
+    # won't import anything else in the database
     cifdata = DataFactory('cif')
     ############ parameters for the user to set ########
 
@@ -104,7 +106,7 @@ def read_cif_folder(path=os.getcwd(),
         #    continue
         #asecell = new_cif[0].get_ase()
         #structuredatas.append(DataFactory('structure'))
-        #filenames2.append(filenames[i])
+        filenames2.append(filenames[i])
         #struc = structuredatas[-1](ase=asecell)
         #formula = struc.get_formula()
         if store_db:
@@ -119,7 +121,7 @@ def read_cif_folder(path=os.getcwd(),
                 user = struc.user  # we are the creator
                 struc.add_comment(comment, user)
             if extra:
-                if isinstance(extra, type(dict())):
+                if isinstance(extra, dict):
                     struc.set_extra_many(extra)
                 else:
                     struc.set_extra('specification', extra)
@@ -127,7 +129,7 @@ def read_cif_folder(path=os.getcwd(),
             structuredatas2.append(struc)
         else:
             struc = struc_from_cif(new_cif[0])
-            structuredatas.append(struc)
+            structuredatas2.append(struc)
             formula = struc.get_formula()
         if write_log:
             # This file is a logfile/info file created by 'read_cif_folder'
@@ -154,9 +156,7 @@ def read_cif_folder(path=os.getcwd(),
 
 @cf
 def wf_struc_from_cif(cif):
-    asecell = cif.get_ase()
-    struc = DataFactory('structure')(ase=asecell)
-    return struc
+    return struc_from_cif(cif)
 
 
 def struc_from_cif(cif):
@@ -165,6 +165,9 @@ def struc_from_cif(cif):
     return struc
 
 
+# TODO add this to command line, or better move to aiida-jutools
+# ggf add what Roman has done there.
+'''
 if __name__ == '__main__':
     import argparse
     import json
@@ -212,3 +215,4 @@ if __name__ == '__main__':
         read_cif_folder(path=args.p, recursive=args.r, store=args.s, log=args.l, comments=args.c, extras=args.e)
     else:
         read_cif_folder(recursive=args.r, store=args.s, log=args.l, comments=args.c, extras=args.e)
+'''

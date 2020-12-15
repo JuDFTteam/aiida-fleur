@@ -32,6 +32,7 @@ from aiida.common import AttributeDict
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurEosWorkChain(WorkChain):
@@ -54,11 +55,12 @@ class FleurEosWorkChain(WorkChain):
 
     _workflowversion = '0.4.0'
 
-    _wf_default = {'points': 9, 'step': 0.002, 'guess': 1.00}
+    _default_wf_para = {'points': 9, 'step': 0.002, 'guess': 1.00}
+    _default_options = FleurScfWorkChain._default_options
 
     @classmethod
     def define(cls, spec):
-        super(FleurEosWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf', exclude=(
             'structure',
             'remote_data',
@@ -100,7 +102,7 @@ class FleurEosWorkChain(WorkChain):
         # TODO get all successful from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = self._wf_default
+        wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -190,7 +192,6 @@ class FleurEosWorkChain(WorkChain):
         vol_peratom_success = []
         outnodedict = {}
         natoms = len(self.inputs.structure.sites)
-        htr_to_ev = 27.21138602
         e_u = 'eV'
         dis_u = 'me/bohr^3'
         for label in self.ctx.labels:
@@ -220,7 +221,7 @@ class FleurEosWorkChain(WorkChain):
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             t_energylist.append(t_e)

@@ -13,6 +13,25 @@
 Here we collect physical constants which are used throughout the code
 that way we ensure consitency
 '''
+# at some point one should import these from masci-tools, or better scipy or ase to ensure,
+# that all judft plugins and tools take the same values, to make roundtrips consistent
+# NIST https://physics.nist.gov/cgi-bin/cuu/Value?hrev
+HTR_TO_EV = 27.211386245988  #(53)
+BOHR_A = 0.5291772108
+#Scipy bohr 5.29177210903e-11 m
+#Scipy htr 27.211386245988 eV
+# NIST BOHR 0.529177210903 #(80)
+#https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0
 
-htr_to_ev = 27.21138602
-bohr_a = 0.52917720903
+#Fleur
+#htr_eV   = 27.21138602
+#bohr=0.5291772108
+#bohrtocm=0.529177e-8
+#pymatgen uses scipy.constants
+#ase: Bohr 0.5291772105638411
+#Hartree 27.211386024367243
+#Rydberg 13.605693012183622
+#1/Bohr
+#1.8897261258369282
+#aiida-core units:
+#bohr_to_ang = 0.52917720859

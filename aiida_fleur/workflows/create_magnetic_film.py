@@ -34,7 +34,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
     """
     _workflowversion = '0.1.2'
 
-    _wf_default = {
+    _default_wf_para = {
         'lattice': 'fcc',
         'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
         'host_symbol': 'Pt',
@@ -53,7 +53,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurCreateMagneticWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurEosWorkChain,
                            namespace_options={
                                'required': False,
@@ -133,7 +133,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         self.ctx.substrate = None
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:

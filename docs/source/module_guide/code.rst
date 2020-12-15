@@ -59,10 +59,10 @@ SCF: Fleur-Scf WorkChain
 .. automodule:: aiida_fleur.workflows.scf
    :members:
 
-Band: Bandstructure WorkChain
-------------------------------
+BandDos: Bandstructure WorkChain
+--------------------------------
 
-.. automodule:: aiida_fleur.workflows.band
+.. automodule:: aiida_fleur.workflows.banddos
    :members:
 
 DOS: Density of states WorkChain
@@ -93,12 +93,6 @@ corehole: Performance of coreholes calculations
 -----------------------------------------------
 
 .. automodule:: aiida_fleur.workflows.corehole
-   :members:
-
-delta: Calculates a Delta Factor
---------------------------------
-
-.. automodule:: aiida_fleur.workflows.delta
    :members:
 
 MAE: Force-theorem calculation of magnetic anisotropy energies

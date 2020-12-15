@@ -56,7 +56,7 @@ class BaseRestartWorkChain(WorkChain):
     _error_handler_entry_point = None
 
     def __init__(self, *args, **kwargs):
-        super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if self._calculation_class is None or not issubclass(self._calculation_class, (CalcJob, WorkChain)):
             raise ValueError('no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
@@ -65,7 +65,7 @@ class BaseRestartWorkChain(WorkChain):
 
     @override
     def load_instance_state(self, saved_state, load_context):
-        super(BaseRestartWorkChain, self).load_instance_state(saved_state, load_context)
+        super().load_instance_state(saved_state, load_context)
         self._load_error_handlers()
 
     def _load_error_handlers(self):
@@ -86,8 +86,7 @@ class BaseRestartWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         # yapf: disable
-        # pylint: disable=bad-continuation
-        super(BaseRestartWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('max_iterations', valid_type=orm.Int, default=lambda: orm.Int(3),
                    help='Maximum number of iterations the work chain will restart the calculation to finish successfully.')
         spec.input('clean_workdir', valid_type=orm.Bool, default=lambda: orm.Bool(False),
@@ -121,8 +120,8 @@ class BaseRestartWorkChain(WorkChain):
 
         try:
             unwrapped_inputs = self.ctx.inputs
-        except AttributeError:
-            raise AttributeError('no calculation input dictionary was defined in `self.ctx.inputs`')
+        except AttributeError as exc:
+            raise AttributeError('no calculation input dictionary was defined in `self.ctx.inputs`') from exc
 
         inputs = prepare_process_inputs(self._calculation_class, unwrapped_inputs)
         calculation = self.submit(self._calculation_class, **inputs)
@@ -201,7 +200,7 @@ class BaseRestartWorkChain(WorkChain):
 
     def on_terminated(self):
         """Clean the working directories of all child calculations if `clean_workdir=True` in the inputs."""
-        super(BaseRestartWorkChain, self).on_terminated()
+        super().on_terminated()
 
         if self.inputs.clean_workdir.value is False:
             self.report('remote folders will not be cleaned')

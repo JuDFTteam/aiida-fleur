@@ -1,0 +1,31 @@
+{
+   "url":"www.flapw.de/collect.pl",
+   "calculation-id":"F6674BD6CD51AA09",
+   "data": {
+        "githash":"9cddd6d3ed47288c8d096c3f755728090cc6dc36",
+        "XC-treatment":2,
+        "MPI-PE":1,
+        "OMP":12,
+        "A-Types":3,
+        "Atoms":4,
+        "Real":false,
+        "Spins":1,
+        "Noco":false,
+        "SOC":false,
+        "SpinSpiral":false,
+        "PlaneWaves":47937,
+        "LOs":0,
+        "nkpt":1,
+        "gpu_per_node":0,
+        "Runtime":39.00,
+        "Error":"Allocation of memmory failed for mat datatype",
+        "cpu_model":"44",
+        "cpu_modelname":"Intel(R) Xeon(R) CPU           X5670  @ 2.93GHz",
+        "VmPeak":3412936,
+        "VmSize":2194828,
+        "VmData":1614740,
+        "VmStk":350524,
+        "VmExe":12428,
+        "VmSwap":0
+      }
+}

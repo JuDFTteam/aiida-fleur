@@ -50,17 +50,19 @@ class fleur_optimize_parameters_wc(WorkChain):
 
     _workflowversion = '0.1.0'
 
+    _default_wf_para = {}
+
     def __init__(self, *args, **kwargs):
-        super(fleur_optimize_parameters_wc, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def define(cls, spec):
-        super(fleur_optimize_parameters_wc, cls).define(spec)
+        super().define(spec)
         spec.input(
             'wf_parameters',
             valid_type=Dict,
             required=False,
-            default=Dict(
+            default=lambda: Dict(
                 dict={
                     'resources': {
                         'num_machines': 1

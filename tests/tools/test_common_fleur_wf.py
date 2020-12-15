@@ -17,6 +17,7 @@ import os
 
 # is_code
 def test_is_code_interface(fixture_code):
+    """Test if is_code interface can take all inputs types without failure"""
     from aiida_fleur.tools.common_fleur_wf import is_code
 
     assert is_code('random_string') is None
@@ -160,15 +161,15 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     assert get_inputs_inpgen(**inputs) == returns
 
 
-@pytest.mark.skip(reason='Test is not implemented')
-def test_get_scheduler_extras():
-    from aiida_fleur.tools.common_fleur_wf import get_scheduler_extras
-
-
 # test_and_get_codenode
-
-
 def test_test_and_get_codenode_inpgen(fixture_code):
+    """Tests for test_and_get_code_node function
+
+    test interface for cases:
+    if code exists and is right,
+    if code is wrong,
+    if code does not exists
+    """
     from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
     from aiida.orm import Code
     from aiida.common.exceptions import NotExistent
@@ -198,6 +199,7 @@ def test_test_and_get_codenode_inpgen(fixture_code):
 
 
 def test_get_kpoints_mesh_from_kdensity(generate_structure):
+    """Test genration of a kpoints mesh node from a given density"""
     from aiida_fleur.tools.common_fleur_wf import get_kpoints_mesh_from_kdensity
     from aiida.orm import KpointsData
 
@@ -206,9 +208,35 @@ def test_get_kpoints_mesh_from_kdensity(generate_structure):
     assert isinstance(b, KpointsData)
 
 
-@pytest.mark.skip(reason='Test is not implemented')
 def test_determine_favorable_reaction():
+    """Test favorable reaction function
+
+    which returns a list which ranks which reaction is energetically the most favorable.
+    We only test the way if the formation energies are provided
+    not when they have to be taken from the node
+    """
     from aiida_fleur.tools.common_fleur_wf import determine_favorable_reaction
+
+    reaction_list = [
+        '1*Be12W->1*Be12W', '2*Be12W->1*Be2W+1*Be22W', '11*Be12W->5*W+6*Be22W', '1*Be12W->12*Be+1*W',
+        '1*Be12W->1*Be2W+10*Be'
+    ]
+    workchain_dict = {
+        'Be12W': -0.21,  #'4f685bc5-b5fb-46d3-aad6-e0f512c3313d',
+        'Be2W': -0.3,  #'045d3071-f442-46b4-8d6b-3c85d72b24d4',
+        'Be22W': -0.1,  #'1e32880a-bdc9-4081-a5da-be04860aa1bc',
+        'W': 0.0,  #'f8b12b23-0b71-45a1-9040-b51ccf379439',
+        'Be': 0.0
+    }
+    best_order = [['11*Be12W->5*W+6*Be22W', -1.71], ['1*Be12W->12*Be+1*W', -0.21],
+                  ['2*Be12W->1*Be2W+1*Be22W', -0.019999999999999962], ['1*Be12W->1*Be12W', 0.0],
+                  ['1*Be12W->1*Be2W+10*Be', 0.09]]
+
+    reac_list = determine_favorable_reaction(reaction_list, workchain_dict)
+
+    assert len(reac_list) == len(reaction_list)
+    for i, reaction in enumerate(reac_list):
+        assert reaction == best_order[i]
 
 
 # @pytest.mark.skip(reason="There seems to be now way to add outputs to CalcJobNode")

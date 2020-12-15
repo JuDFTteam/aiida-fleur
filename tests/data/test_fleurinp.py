@@ -117,10 +117,10 @@ def test_fleurinp_structuredata_extraction(create_fleurinp, inpxmlfilepath):
         assert isinstance(struc, StructureData)
     else:
         pass
-        # What todo here, may test inpxml are with latnam definded,
-        # which does not work here.
-        # But if something else fails also None return. T
-        # Therefore this test might let two much through
+    #    # What todo here, may test inpxml are with latnam definded,
+    #    # which does not work here.
+    #    # But if something else fails also None return. T
+    #    # Therefore this test might let two much through
 
 
 # Input Modification tests
@@ -145,8 +145,9 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
 
 
 @pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
-def test_fleurinp_first_species_modification(create_fleurinp, inpxmlfilepath):
-    """
-    Decrease the rmt of the first species by 10%, check if rmt was set
-    """
-    return
+def test_get_tag(create_fleurinp, inpxmlfilepath):
+
+    fleurinp_tmp = create_fleurinp(inpxmlfilepath)
+    tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
+
+    assert tag != []

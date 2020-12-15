@@ -1,0 +1,82 @@
+output_parameters:
+  abspos_x_type1: 0.0
+  abspos_y_type1: 0.0
+  abspos_z_type1: -0.741699
+  bandgap: 10.6740023301
+  bandgap_units: eV
+  charge_den_xc_den_integral: -0.6753699578
+  density_convergence_units: null
+  energy: -31.649357888579065
+  energy_core_electrons: 0.0
+  energy_hartree: -1.1630924497
+  energy_hartree_units: Htr
+  energy_units: eV
+  energy_valence_electrons: -0.747242106
+  fermi_energy: -0.373621053
+  fermi_energy_units: Htr
+  film: 'True'
+  force_largest: 0.02082935
+  force_units: Htr/bohr
+  force_x_type1: 0.0
+  force_y_type1: 0.0
+  force_z_type1: 0.02082935
+  kmax: 5.0
+  number_of_atom_types: 1
+  number_of_atoms: 2
+  number_of_iterations: 42
+  number_of_iterations_total: 142
+  number_of_kpoints: 1
+  number_of_species: 1
+  number_of_spin_components: 1
+  number_of_symmetries: 16
+  parser_info: AiiDA Fleur Parser v0.3.2
+  parser_warnings:
+  - 'Can not get attributename: "units" from node "[]", because node is not an element
+    of etree.'
+  relax_atom_positions:
+  - - 0.0
+    - 0.0
+    - -0.741699171
+  - - 0.0
+    - 0.0
+    - 0.741699171
+  relax_brav_vectors:
+  - - 28.345891875
+    - 0.0
+    - 0.0
+  - - 0.0
+    - 28.345891875
+    - 0.0
+  - - 0.0
+    - 0.0
+    - 4.63
+  sum_of_eigenvalues: -0.747242106
+  unparsed: []
+  walltime: 10290
+  walltime_units: seconds
+  warnings:
+    debug: {}
+    error: {}
+    info: {}
+    warning: {}
+relax_parameters:
+  displacements:
+  - - 0.0
+    - 0.0
+    - 0.0246059526
+  energies:
+  - -1.1623986264
+  - -1.1630924497
+  posforces:
+  - - - 0.0
+      - 0.0
+      - -0.75589045
+      - 0.0
+      - 0.0
+      - 0.028382558
+  - - - 0.0
+      - 0.0
+      - -0.741699171
+      - 0.0
+      - 0.0
+      - 0.0208293472

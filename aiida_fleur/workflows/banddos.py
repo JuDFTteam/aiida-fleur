@@ -60,7 +60,7 @@ class FleurBandDosWorkChain(WorkChain):
         'import_sys_environment': False,
         'environment_variables': {}
     }
-    _wf_default = {
+    _default_wf_para = {
         'fleur_runmax': 4,
         'kpath': 'auto',
         # 'nkpts' : 800,
@@ -71,7 +71,7 @@ class FleurBandDosWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurBandDosWorkChain, cls).define(spec)
+        super().define(spec)
         # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
@@ -120,7 +120,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         inputs = self.inputs
 
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in inputs:
             wf_dict = inputs.wf_parameters.get_dict()
         else:
@@ -301,11 +301,16 @@ class FleurBandDosWorkChain(WorkChain):
                     efermi_scf = scf_results.fermi_energy
                     bandgap_scf = scf_results.bandgap
 
-        efermi_band = last_calc_out_dict['fermi_energy']
-        bandgap_band = last_calc_out_dict['bandgap']
+        efermi_band = last_calc_out_dict.get('fermi_energy', None)
+        bandgap_band = last_calc_out_dict.get('bandgap', None)
 
-        diff_efermi = efermi_scf - efermi_band
-        diff_bandgap = bandgap_scf - bandgap_band
+        diff_efermi = None
+        if efermi_band is not None:
+            diff_efermi = efermi_scf - efermi_band
+
+        diff_bandgap = None
+        if bandgap_band is not None:
+            diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
 
