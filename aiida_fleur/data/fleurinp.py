@@ -479,6 +479,47 @@ class FleurinpData(Data):
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
+    def _include_files(self, xmltree):
+        """
+        Tries to insert all .xml, which are not inp.xml file into the etree since they are
+        not naturally available for the parser (open vs self.open)
+
+        Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
+        Then it is reparsed into a ElementTree and hte xi:include tags are executed
+        """
+        from masci_tools.util.xml.common_xml_util import clear_xml
+
+        xmltree_string = etree.tostring(xmltree)
+
+        temp_files = []
+        for file in self.files:
+            if file.endswith('.xml') and file != 'inp.xml':
+
+                #Get file content from node
+                include_content = ''
+                with self.open(path=file, mode='r') as include_file:
+                    include_content = include_file.read()
+
+                #Write content into temporary file
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
+                    fo.write(include_content)
+                    temp_files.append(fo.name)
+                    #If the include tag for the given file is not present nothing is replaced
+                    xmltree_string = xmltree_string.replace(bytes(file, 'utf-8'), bytes(fo.name, 'utf-8'))
+
+        #Regenerate the tree with tempfile names
+        xmltree_with_includes = etree.fromstring(xmltree_string).getroottree()
+
+        #Performs the inclusions and remove comments
+        cleared_tree = clear_xml(xmltree_with_includes)
+
+        #Remove temporary files
+        for file in temp_files:
+            os.remove(file)
+
+        return cleared_tree
+
+
     # dict with inp paramters parsed from inp.xml
     @property
     def inp_dict(self):
