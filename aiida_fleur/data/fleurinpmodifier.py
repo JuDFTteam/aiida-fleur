@@ -44,7 +44,7 @@ class FleurinpModifier(object):
         self._other_nodes = {}
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_tree=None):
+    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema=None):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.
@@ -65,8 +65,8 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
-        from aiida_fleur.tools.xml_util import clear_xml
         from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
+        from masci_tools.util.xml.common_xml_util import clear_xml
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
@@ -192,9 +192,6 @@ class FleurinpModifier(object):
 
         workingtree = fleurinp_tree_copy
         workingnmmp = nmmp_lines_copy
-        if schema_tree:
-            #xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-            xmlschema = etree.XMLSchema(schema_tree)
 
         for task in modification_tasks:
             try:
@@ -207,9 +204,9 @@ class FleurinpModifier(object):
             else:
                 workingtree = action(workingtree, *task[1:])
 
-        if schema_tree:
+        if schema:
             try:
-                xmlschema.assertValid(clear_xml(workingtree))
+                schema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid as exc:
                 msg = 'Changes were not valid: {}'.format(modification_tasks)
                 #print(msg)
@@ -518,6 +515,8 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+
         with self._original.open(key='inp.xml') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
 
@@ -527,15 +526,11 @@ class FleurinpModifier(object):
         except FileNotFoundError:
             nmmplines = None
 
-        try:  # could be not found or on another computer...
-            xmlschema_tree = etree.parse(self._original._schema_file_path)
-            with_schema = True
-        except BaseException:
-            with_schema = False
-            print('No schema file found')
-            return
-        if with_schema:
-            tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_tree=xmlschema_tree)
+        schema_dict, xmlschema = load_inpschema(self._original.inp_version, schema_return=True)
+
+        tree = self._original._include_files(tree)
+
+        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema=xmlschema)
         return tree
 
     def show(self, display=True, validate=False):
@@ -627,19 +622,21 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # validate
     # save inp.xml
     # store new fleurinp (copy)
-    from aiida_fleur.tools.xml_util import clear_xml
+    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
     new_fleurinp = original.clone()
     modification_tasks = modifications.get_dict()['tasks']
 
-    xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-    xmlschema = etree.XMLSchema(xmlschema_doc)
+    schema_dict, xmlschema = load_inpschema(new_fleurinp.inp_version, schema_return=True)
+
     parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
     with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
         tree = etree.parse(inpxmlfile, parser)
 
+    tree = new_fleurinp._include_files(tree)
+
     try:
-        xmlschema.assertValid(clear_xml(tree))
+        xmlschema.assertValid(tree)
     except etree.DocumentInvalid as exc:
         msg = 'Input file is not validated against the schema'
         #print(msg)
