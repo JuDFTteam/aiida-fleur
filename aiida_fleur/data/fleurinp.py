@@ -64,13 +64,6 @@ class FleurinpData(Data):
     FleurinpData that way and start a new calculation from it.
     """
 
-    # search in current folder and search in aiida source code
-    # we want to search in the Aiida source directory, get it from python path,
-    # maybe better from somewhere else.
-    # TODO: don not walk the whole python path, test if dir below is aiida?
-    # needs to be improved, schema file is often after new installation not found...
-    # installation with pip should always lead to a schema file in the python path, or even specific place
-
     def __init__(self, **kwargs):
         """
         Initialize a FleurinpData object set the files given
@@ -84,36 +77,13 @@ class FleurinpData(Data):
         node = kwargs.pop('node', None)
         super().__init__(**kwargs)
 
-        search_paths = []
-        ifolders = get_internal_search_paths()
-        ischemas = get_schema_paths()
-        for path in ischemas:
-            search_paths.append(path)
-        for path in ifolders:
-            search_paths.append(path)
-        search_paths.append('./')
-
-        # Now add also python path maybe will be decaptivated
-        # if pythonpath is non existent catch error
-        try:
-            pythonpath = os.environ['PYTHONPATH'].split(':')
-        except KeyError:
-            pythonpath = []
-
-        for path in pythonpath[:]:
-            search_paths.append(path)
-
         self.set_attribute('_has_schema', False)
-        self.set_attribute('_schema_file_path', None)
-        self.set_attribute('_search_paths', search_paths)
+        self.set_attribute('inp_version', None)
         if files:
             if node:
                 self.set_files(files, node=node)
             else:
                 self.set_files(files)
-
-    # ignore machine dependent attributes in hash
-    _hash_ignored_attributes = ['_schema_file_path', '_search_paths']
 
     @property
     def _has_schema(self):
@@ -122,20 +92,6 @@ class FleurinpData(Data):
         """
         return self.get_attribute('_has_schema')
 
-    @property
-    def _schema_file_path(self):
-        """
-        A string, which stores the absolute path to the schemafile found
-        """
-        return self.get_attribute('_schema_file_path')
-
-    @property
-    def _search_paths(self):
-        """
-        A string, which stores the paths to search for  schemafiles
-        """
-        return self.get_attribute('_search_paths')
-
     @_has_schema.setter
     def _has_schema(self, boolean):
         """
@@ -143,12 +99,19 @@ class FleurinpData(Data):
         """
         self.set_attribute('_has_schema', boolean)
 
-    @_schema_file_path.setter
-    def _schema_file_path(self, schemapath):
+    @property
+    def _parser_info(self):
         """
-        Setter for the schema file path
+        Dict property, with the info and warnings from the inpxml_parser
         """
-        self.set_attribute('_schema_file_path', schemapath)
+        return self.get_attribute('_parser_info')
+
+    @_parser_info.setter
+    def _parser_info(self, info_dict):
+        """
+        Setter for has_schema
+        """
+        self.set_attribute('_parser_info', info_dict)
 
     # files
     @property
@@ -230,60 +193,6 @@ class FleurinpData(Data):
         # remove from sandbox folder
         if filename in self.list_object_names():  # get_folder_list():
             self.delete_object(filename)
-
-    def find_schema(self, inp_version_number):
-        """
-        Method which searches for a schema files (.xsd) which correspond
-        to the input xml file. (compares the version numbers)
-
-        :param inp_version_number: a version of ``inp.xml`` file schema to be found
-
-        :return: A two-element tuple:
-
-                     1. A list of paths where schema files are located
-                     2. A boolen which shows if the required version schema file was found
-
-        """
-        # user changed version number, or no file yet known.
-        # TODO test if this still does the right thing if user adds one
-        # inp.xml and then an inp.xml with different version.
-        # or after copying and read
-        schemafile_paths = []
-
-        for path in self._search_paths:  # paths:
-            for root, dirs, files in os.walk(path):
-                for file1 in files:
-                    if file1.endswith('.xsd'):
-                        if ('Fleur' in file1) or ('fleur' in file1):
-                            schemafile_path = os.path.join(root, file1)
-                            schemafile_paths.append(schemafile_path)
-                            i = 0
-                            imin = 0
-                            imax = 0
-                            schemafile = open(schemafile_path, 'r')
-                            for line in schemafile.readlines():
-                                i = i + 1
-                                # This kind of hardcoded
-                                if re.search('name="FleurVersionType"', line):
-                                    imax = i + 10  # maybe make larger or different
-                                    imin = i
-                                    schema_version_numbers = []
-                                if imin < i <= imax:
-                                    if re.search('enumeration value', line):
-                                        schema_version_number = re.findall(r'\d+.\d+', line)[0]
-                                    elif re.search('simpleType>', line):
-                                        break
-                            schema_version_numbers.append(schema_version_number)
-                            schemafile.close()
-                            # test if schemafiles works with multiple fleur versions
-                            for version_number in schema_version_numbers:
-                                if version_number == inp_version_number:
-                                    # we found the right schemafile for the current inp.xml
-                                    self.set_attribute('_schema_file_path', schemafile_path)
-                                    self.set_attribute('_has_schema', True)
-                                    return schemafile_paths, True
-
-        return schemafile_paths, False
 
     def _add_path(self, file1, dst_filename=None, node=None):
         """
@@ -384,28 +293,8 @@ class FleurinpData(Data):
                                            'Please check if this is a valid fleur input file. '
                                            'It can not be validated and I can not use it. '
                                            ''.format(file1, lines))
-            # search for Schema file with same version number
-            schemafile_paths, found = self.find_schema(inp_version_number)
 
-            if (not self._has_schema) and (self._schema_file_path is None):
-                err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                           'to the inp.xml file was found. I have looked here: {} '
-                           'and have found only these schema files for Fleur: {}. '
-                           'I need this file to validate your input and to know the structure '
-                           'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                        schemafile_paths))
-                raise InputValidationError(err_msg)
-            if self._schema_file_path is None:
-                schemafile_paths, found = self.find_schema(inp_version_number)
-                if not found:
-                    err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                               'to the inp.xml file was found. I have looked here: {} '
-                               'and have found only these schema files for Fleur: {}. '
-                               'I need this file to validate your input and to know the structure '
-                               'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                            schemafile_paths))
-                raise InputValidationError(err_msg)
-
+            self.set_attribute('inp_version', inp_version_number)
             # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
@@ -413,71 +302,39 @@ class FleurinpData(Data):
         """
         Sets the inputxml_dict from the ``inp.xml`` file attached to FleurinpData
 
-        1. get ``inp.xml`` structure/layout
-        2. load ``inp.xml`` file
-        3. call inpxml_to_dict
+        1. load ``inp.xml`` file
+        2. insert all files to include into the etree
+        3. call masci-tools input file parser (Validation happens inside here)
         4. set inputxml_dict
         """
-        from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict, clear_xml
-        import tempfile
-        # get inpxml structure
-        inpxmlstructure = get_inpxml_file_structure()
+        from masci_tools.io.parsers.fleur import inpxml_parser
 
         # read xmlinp file into an etree with autocomplition from schema
         # we do not validate here because we want this to always succeed
 
-        xmlschema_doc = etree.parse(self._schema_file_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
         parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
         # dtd_validation=True
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
             try:
-                tree_x = etree.parse(inpxmlfile, parser)
+                xmltree = etree.parse(inpxmlfile, parser)
             except etree.XMLSyntaxError as exc:
                 # prob inp.xml file broken
                 err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
                 raise InputValidationError(err_msg) from exc
-        # relax.xml should be available to be used in xinclude
-        # hence copy relax.xml from the retrieved node into the temp file
-        fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
+
+        xmltree = self._include_files(xmltree)
+
+        parser_info = {'parser_warnings': []}
         try:
-            with self.open(path='relax.xml', mode='r') as relax_file:
-                relax_content = relax_file.read()
-        except FileNotFoundError:
-            relax_content = ''
-        fo.write(relax_content)
-        tempfile_name = fo.name
-        fo.close()
+            inpxml_dict = inpxml_parser(xmltree, version=self.inp_version, parser_info_out=parser_info)
+        except (ValueError,FileNotFoundError) as exc:
+            raise InputValidationError from exc
 
-        # replace relax.xml by the temp file path
-        tree_x_string = etree.tostring(tree_x)
-        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
-        tree_x = etree.fromstring(tree_x_string).getroottree()
-
-        # replace XInclude parts to validate against schema
-        tree_x = clear_xml(tree_x)
-        os.remove(tempfile_name)
-
-        # check if it validates against the schema
-        if not xmlschema.validate(tree_x):
-            # get a more information on what does not validate
-            message = ''
-            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema, encoding='utf-8')
-            inpxmlfile = etree.tostring(tree_x)
-            try:
-                tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
-            except etree.XMLSyntaxError as msg:
-                message = msg
-                raise InputValidationError(
-                    'Input file does not validate against the schema: {}'.format(message)) from msg
-
-            raise InputValidationError('Input file is not validated against the schema.' 'Reason is unknown')
-
-        # convert etree into python dictionary
-        root = tree_x.getroot()
-        inpxml_dict = inpxml_todict(root, inpxmlstructure)
+        self.set_attribute('_has_schema', True)
+        self.set_attribute('_parser_info', parser_info)
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
+
 
     def _include_files(self, xmltree):
         """
@@ -529,6 +386,14 @@ class FleurinpData(Data):
         """
         return self.get_attribute('inp_dict', {})
 
+    # version of the inp.xml file
+    @property
+    def inp_version(self):
+        """
+        Returns the version string corresponding to the inp.xml file
+        """
+        return self.get_attribute('inp_version', None)
+
     # TODO better validation? other files, if has a schema
 
     def _validate(self):
@@ -576,7 +441,7 @@ class FleurinpData(Data):
             except KeyError:
                 fleur_modes['gw'] = False
             fleur_modes['ldau'] = False
-            for species in self.inp_dict['atomSpecies']['species']:
+            for species in self.inp_dict['atomSpecies']:
                 if 'ldaU' in species:
                     fleur_modes['ldau'] = True
         return fleur_modes
@@ -591,6 +456,7 @@ class FleurinpData(Data):
         """
         from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
         # StructureData = DataFactory(‘structure’)
         # Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
@@ -624,30 +490,24 @@ class FleurinpData(Data):
 
         # read in inpxml
 
-        if self._schema_file_path:  # Schema there, parse with schema
-            xmlschema_doc = etree.parse(self._schema_file_path)
-            xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+        # dtd_validation=True
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            try:
                 tree = etree.parse(inpxmlfile, parser)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
+            except etree.XMLSyntaxError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg) from exc
+
+        tree = self._include_files(tree)
+
+        if self.inp_version is not None:
+            schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
             if not xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
-        else:  # schema not there, parse without
+        else:
             print('parsing inp.xml without XMLSchema')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                tree = etree.parse(inpxmlfile)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -809,6 +669,7 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.KpointsData` node
         """
         from aiida.orm import KpointsData
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
         # HINT, TODO:? in this routine, the 'cell' you might get in an other way
         # exp: StructureData.cell, but for this you have to make a structureData Node,
@@ -844,30 +705,25 @@ class FleurinpData(Data):
 
         # else read in inpxml
 
-        if self._schema_file_path:  # Schema there, parse with schema
-            xmlschema_doc = etree.parse(self._schema_file_path)
-            xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+        # dtd_validation=True
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            try:
                 tree = etree.parse(inpxmlfile, parser)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
+            except etree.XMLSyntaxError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg) from exc
+
+        tree = self._include_files(tree)
+
+        if self.inp_version is not None:
+            schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
             if not xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
-        else:  # schema not there, parse without
+        else:
             print('parsing inp.xml without XMLSchema')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                tree = etree.parse(inpxmlfile)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
+
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -996,19 +852,27 @@ class FleurinpData(Data):
         :param xpath: an xpath expression
         :returns: A node list retrived using given xpath
         """
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
         if 'inp.xml' in self.files:
-            # read in inpxml
-            if self._schema_file_path:  # Schema there, parse with schema
-                #xmlschema_doc = etree.parse(self._schema_file_path)
-                #xmlschema = etree.XMLSchema(xmlschema_doc)
-                #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                    tree = etree.parse(inpxmlfile)  # , parser)
-            else:  # schema not there, parse without
+            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+            # dtd_validation=True
+            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+                try:
+                    tree = etree.parse(inpxmlfile, parser)
+                except etree.XMLSyntaxError as exc:
+                    # prob inp.xml file broken
+                    err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                    raise InputValidationError(err_msg) from exc
+
+            tree = self._include_files(tree)
+
+            if self.inp_version is not None:
+                schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
+                if not xmlschema.validate(tree):
+                    raise ValueError('Input file is not validated against the schema.')
+            else:
                 print('parsing inp.xml without XMLSchema')
-                with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                    tree = etree.parse(inpxmlfile)
             root = tree.getroot()
         else:
             raise InputValidationError('No inp.xml file yet specified, to get a tag from')
