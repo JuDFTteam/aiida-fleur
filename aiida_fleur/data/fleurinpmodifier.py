@@ -110,22 +110,22 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = replace_tag(fleurinp_tree_copy, xpath, newelement)
             return fleurinp_tree_copy
 
-        def set_species1(fleurinp_tree_copy, species_name, attributedict, create=False):
+        def set_species1(fleurinp_tree_copy, schema_dict, species_name, attributedict, create=False):
             fleurinp_tree_copy = set_species(fleurinp_tree_copy, species_name, attributedict, create=create)
             return fleurinp_tree_copy
 
-        def set_species2(fleurinp_tree_copy, at_label, attributedict, create=False):
+        def set_species2(fleurinp_tree_copy, schema_dict, at_label, attributedict, create=False):
             fleurinp_tree_copy = set_species_label(fleurinp_tree_copy, at_label, attributedict, create=create)
             return fleurinp_tree_copy
 
-        def change_atomgr_att1(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
+        def change_atomgr_att1(fleurinp_tree_copy, schema_dict, attributedict, position=None, species=None, create=False):
             fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
                                                    attributedict,
                                                    position=position,
                                                    species=species)
             return fleurinp_tree_copy
 
-        def change_atomgr_att2(fleurinp_tree_copy, attributedict, atom_label, create=False):
+        def change_atomgr_att2(fleurinp_tree_copy, schema_dict, attributedict, atom_label, create=False):
             fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label=atom_label)
             return fleurinp_tree_copy
 
@@ -135,31 +135,31 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy, xpathn, attributename, set_val, mode=mode, occ=occ)
             return fleurinp_tree_copy
 
-        def set_inpchanges1(fleurinp_tree_copy, change_dict):
+        def set_inpchanges1(fleurinp_tree_copy, schema_dict, change_dict):
             fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
             return fleurinp_tree_copy
 
-        def shift_value1(fleurinp_tree_copy, change_dict, mode):
+        def shift_value1(fleurinp_tree_copy, schema_dict, change_dict, mode):
             fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict, mode)
             return fleurinp_tree_copy
 
-        def shift_value_species_label1(fleurinp_tree_copy, label, att_name, value, mode):
+        def shift_value_species_label1(fleurinp_tree_copy, schema_dict, label, att_name, value, mode):
             fleurinp_tree_copy = shift_value_species_label(fleurinp_tree_copy, label, att_name, value, mode)
             return fleurinp_tree_copy
 
-        def set_nkpts1(fleurinp_tree_copy, count, gamma):
+        def set_nkpts1(fleurinp_tree_copy, schema_dict, count, gamma):
             fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
             return fleurinp_tree_copy
 
-        def set_kpath1(fleurinp_tree_copy, kpath, count, gamma):
+        def set_kpath1(fleurinp_tree_copy, schema_dict, kpath, count, gamma):
             fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
             return fleurinp_tree_copy
 
-        def set_kpointsdata1(fleurinp_tree_copy, kpointsdata_uuid):
+        def set_kpointsdata1(fleurinp_tree_copy, schema_dict, kpointsdata_uuid):
             fleurinp_tree_copy = set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid)
             return fleurinp_tree_copy
 
-        def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+        def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, orbital,\
                          spin, occStates, denmat, phi, theta):
             nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
                                           spin, occStates, denmat, phi, theta)
@@ -190,6 +190,11 @@ class FleurinpModifier(object):
             'set_nmmpmat': set_nmmpmat1
         }
 
+        #These are the tasks not relying on a specific xpath, i.e. they need the schema_dict
+        schema_dict_required = {'set_species', 'set_species_label', 'set_atomgr_att', 'set_atomgr_att_label', 'set_inpchanges',
+                        'shift_value', 'shift_value_species_label', 'set_nkpts', 'set_kpath',
+                        'set_nmmpmat','set_kpointsdata'}
+
         workingtree = fleurinp_tree_copy
         workingnmmp = nmmp_lines_copy
 
@@ -199,8 +204,11 @@ class FleurinpModifier(object):
             except KeyError as exc:
                 raise ValueError('Unknown task {}'.format(task[0])) from exc
 
-            if task[0] == 'set_nmmpmat':
-                workingnmmp = action(workingtree, workingnmmp, *task[1:])
+            if task[0] in schema_dict_required:
+                if task[0] == 'set_nmmpmat':
+                    workingnmmp = action(workingtree, workingnmmp, schema_dict, *task[1:])
+                else:
+                    workingtree = action(workingtree, schema_dict, *task[1:])
             else:
                 workingtree = action(workingtree, *task[1:])
 
