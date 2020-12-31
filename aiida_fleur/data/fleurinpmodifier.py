@@ -44,7 +44,7 @@ class FleurinpModifier(object):
         self._other_nodes = {}
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema=None):
+    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_dict, schema=None):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.
@@ -530,7 +530,7 @@ class FleurinpModifier(object):
 
         tree = self._original._include_files(tree)
 
-        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema=xmlschema)
+        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_dict, schema=xmlschema)
         return tree
 
     def show(self, display=True, validate=False):
@@ -544,13 +544,16 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
         if validate:
             tree = self.validate()
         else:
             with self._original.open(path='inp.xml') as inpxmlfile:
                 tree = etree.parse(inpxmlfile)
-            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
+
+            schema_dict = load_inpschema(self._original.inp_version)
+            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks, schema_dict)
 
         if display:
             xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print=True)
@@ -650,7 +653,8 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
     new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,\
                                                                         nmmp_lines_copy=nmmplines,\
-                                                                        modification_tasks=modification_tasks)
+                                                                        modification_tasks=modification_tasks,
+                                                                        schema_dict=schema_dict)
 
     # To include object store storage this prob has to be done differently
 
