@@ -34,7 +34,6 @@ from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
-from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 from aiida_fleur.common.constants import BOHR_A
 
 
