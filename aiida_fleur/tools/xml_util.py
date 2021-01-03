@@ -723,7 +723,7 @@ def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
 ####### XML SETTERS SPECIAL ########
 
 
-def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False):
+def set_species_label(fleurinp_tree_copy, schema_dict, at_label, attributedict, create=False):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.set_species()`
     method for a certain atom specie that corresponds to an atom with a given label
@@ -733,14 +733,17 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     :param attributedict: a python dict specifying what you want to change.
     :param create: bool, if species does not exist create it and all subtags?
     """
+    from masci_tools.util.schema_dict_util import get_tag_xpath
 
     if at_label == 'all':
-        fleurinp_tree_copy = set_species(fleurinp_tree_copy, 'all', attributedict, create)
+        fleurinp_tree_copy = set_species(fleurinp_tree_copy, schema_dict, 'all', attributedict, create)
         return fleurinp_tree_copy
+
+    atomgroup_base_path = get_tag_xpath(schema_dict, 'atomGroup')
 
     specie = ''
     at_label = '{: >20}'.format(at_label)
-    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+    all_groups = eval_xpath2(fleurinp_tree_copy, atomgroup_base_path)
 
     species_to_set = []
 
@@ -757,12 +760,12 @@ def set_species_label(fleurinp_tree_copy, at_label, attributedict, create=False)
     species_to_set = list(set(species_to_set))
 
     for specie in species_to_set:
-        fleurinp_tree_copy = set_species(fleurinp_tree_copy, specie, attributedict, create)
+        fleurinp_tree_copy = set_species(fleurinp_tree_copy, schema_dict, specie, attributedict, create)
 
     return fleurinp_tree_copy
 
 
-def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
+def set_species(fleurinp_tree_copy, schema_dict, species_name, attributedict, create=False):
     """
     Method to set parameters of a species tag of the fleur inp.xml file.
 
@@ -791,157 +794,21 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     ``special`` keys are supported. To find possible
     keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
+    from masci_tools.util.schema_dict_util import get_tag_xpath
+
+    base_xpath_species = get_tag_xpath(schema_dict, 'species')
+
     # TODO lowercase everything
     # TODO make a general specifier for species, not only the name i.e. also
     # number, other parameters
     if species_name == 'all':
-        xpath_species = '/fleurInput/atomSpecies/species'
+        xpath_species = base_xpath_species
     elif species_name[:4] == 'all-':  #format all-<string>
-        xpath_species = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
+        xpath_species = f'{base_xpath_species}[contains(@name,"{species_name[4:]}")]'
     else:
-        xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
+        xpath_species = f'{base_xpath_species}[@name = "{species_name}"]'
 
-    xpath_mt = '{}/mtSphere'.format(xpath_species)
-    xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
-    xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
-    xpath_lo = '{}/lo'.format(xpath_species)
-    xpath_electron_config = '{}/electronConfig'.format(xpath_species)
-    xpath_core_occ = '{}/electronConfig/stateOccupation'.format(xpath_species)
-    xpath_lda_u = '{}/ldaU'.format(xpath_species)
-    xpath_soc_scale = '{}/special'.format(xpath_species)
-
-    # can we get this out of schema file?
-    species_seq = [
-        'mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force', 'electronConfig',
-        'nocoParams', 'ldaU', 'lo'
-    ]
-
-    for key, val in six.iteritems(attributedict):
-        if key == 'mtSphere':  # always in inp.xml
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_mt, attrib, value)
-        elif key == 'atomicCutoffs':  # always in inp.xml
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_atomic_cutoffs, attrib, value)
-        elif key == 'energyParameters':  # always in inp.xml
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_energy_parameters, attrib, value)
-        elif key == 'lo':  # optional in inp.xml
-            # policy: we DELETE all LOs, and create new ones from the given parameters.
-            existinglos = eval_xpath3(fleurinp_tree_copy, xpath_lo)
-            for los in existinglos:
-                parent = los.getparent()
-                parent.remove(los)
-
-            # there can be multible LO tags, so I expect either one or a list
-            if isinstance(val, dict):
-                create_tag(fleurinp_tree_copy,
-                           xpath_species,
-                           'lo',
-                           place_index=species_seq.index('lo'),
-                           tag_order=species_seq)
-                for attrib, value in six.iteritems(val):
-                    xml_set_all_attribv(fleurinp_tree_copy, xpath_lo, attrib, value, create=True)
-            else:  # I expect a list of dicts
-                # lonodes = eval_xpath3(root, xpathlo)#, create=True, place_index=species_seq.index('lo'), tag_order=species_seq)
-                #nlonodes = len(lonodes)
-                # ggf create more lo tags of needed
-                los_need = len(val)  # - nlonodes
-                for j in range(0, los_need):
-                    create_tag(fleurinp_tree_copy,
-                               xpath_species,
-                               'lo',
-                               place_index=species_seq.index('lo'),
-                               tag_order=species_seq)
-                for i, lodict in enumerate(val):
-                    for attrib, value in six.iteritems(lodict):
-                        sets = []
-                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/lo')) // los_need):
-                            sets.append(k * los_need + i)
-                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lo, attrib, value, occ=sets)
-
-        elif key == 'electronConfig':
-            # eval electronConfig and ggf create tag at right place.
-            eval_xpath3(fleurinp_tree_copy,
-                        xpath_electron_config,
-                        create=True,
-                        place_index=species_seq.index('electronConfig'),
-                        tag_order=species_seq)
-
-            for tag in ['coreConfig', 'valenceConfig', 'stateOccupation']:
-                for etag, edictlist in six.iteritems(val):
-                    if not etag == tag:
-                        continue
-                    if etag == 'stateOccupation':  # there can be multiple times stateOccupation
-                        # policy: default we DELETE all existing occs and create new ones for the
-                        # given input!
-                        existingocc = eval_xpath3(fleurinp_tree_copy, xpath_core_occ)
-                        for occ in existingocc:
-                            parent = occ.getparent()
-                            parent.remove(occ)
-                        if isinstance(edictlist, dict):
-                            for attrib, value in six.iteritems(edictlist):
-                                xml_set_all_attribv(fleurinp_tree_copy, xpath_core_occ, attrib, value, create=True)
-                        else:  # I expect a list of dicts
-                            nodes_need = len(edictlist)
-                            for j in range(0, nodes_need):
-                                create_tag(fleurinp_tree_copy, xpath_electron_config, 'stateOccupation', create=True)
-                            for i, occdict in enumerate(edictlist):
-                                # override them one after one
-                                sets = []
-                                for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_core_occ)) // nodes_need):
-                                    sets.append(k * nodes_need + i)
-                                for attrib, value in six.iteritems(occdict):
-                                    xml_set_attribv_occ(fleurinp_tree_copy, xpath_core_occ, attrib, value, occ=sets)
-
-                    else:
-                        xpathconfig = xpath_electron_config + '/{}'.format(etag)
-                        xml_set_all_text(fleurinp_tree_copy,
-                                         xpathconfig,
-                                         edictlist,
-                                         create=create,
-                                         tag_order=['coreConfig', 'valenceConfig', 'stateOccupation'])
-        elif key == 'ldaU':
-            #Same policy as los: delete existing ldaU and add the ldaU specified
-            existingldaus = eval_xpath3(fleurinp_tree_copy, xpath_lda_u)
-            for ldau in existingldaus:
-                parent = ldau.getparent()
-                parent.remove(ldau)
-
-            if isinstance(val, dict):
-                create_tag(fleurinp_tree_copy,
-                           xpath_species,
-                           'ldaU',
-                           place_index=species_seq.index('ldaU'),
-                           tag_order=species_seq)
-                for attrib, value in six.iteritems(val):
-                    xml_set_all_attribv(fleurinp_tree_copy, xpath_lda_u, attrib, value, create=True)
-            else:  #list of dicts
-
-                ldaus_needed = len(val)
-                for j in range(0, ldaus_needed):
-                    create_tag(fleurinp_tree_copy,
-                               xpath_species,
-                               'ldaU',
-                               place_index=species_seq.index('ldaU'),
-                               tag_order=species_seq)
-                for i, ldaudict in enumerate(val):
-                    for attrib, value in six.iteritems(ldaudict):
-                        sets = []
-                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_species + '/ldaU')) // ldaus_needed):
-                            sets.append(k * ldaus_needed + i)
-                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_lda_u, attrib, value, occ=sets)
-
-        elif key == 'special':
-            eval_xpath3(fleurinp_tree_copy,
-                        xpath_soc_scale,
-                        create=True,
-                        place_index=species_seq.index('special'),
-                        tag_order=species_seq)
-            for attrib, value in six.iteritems(val):
-                xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
-        else:
-            xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
+    fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath_species, xpath_species, attributedict)
 
     return fleurinp_tree_copy
 
@@ -1507,6 +1374,121 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, schema_dict, fleur_change_dic,
                 xml_set_first_attribv(xmltree_new, key_xpath, key, change_value)
 
     return xmltree_new
+
+def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attributedict):
+    """
+    Recursive Function to correctly set tags/attributes for a given tag.
+    Goes through the attributedict and decides based on the schem_dict, how the corresponding
+    key has to be handled.
+    Supports:
+        attributes (no type checking)
+        tags with text only
+        simple tags, i.e. only attributes (can be optional single/multiple)
+        complex tags, will recursively create/modify them
+
+    :param fleurinp_tree_copy: xml etree of the inp.xml
+    :param schema_dict: dict, represents the inputschema
+    :param base_xpath: string, xpath of the tag to set without complex syntax (to get info from the schema_dict)
+    :param xpath: string, actual xpath to use
+    ;param attributedict: dict, changes to be made
+
+    :return fleurinp_tree_copy: xml etree of the new inp.xml
+    """
+    #TODO create parameter
+    tag_info = schema_dict['tag_info'][base_xpath]
+
+    for key, val in attributedict.items():
+        if key not in tag_info['order'] and key not in tag_info['attribs']:
+            raise InputValidationError(f"The key {key} is not expected for this version of the input for the {base_xpath.split('/')[-1]} tag. "
+                                       f"Allowed tags are: {tag_info['order']}"
+                                       f"Allowed attributes are: {tag_info['attribs']}")
+
+        xpath_key = f'{xpath}/{key}'
+        if key in tag_info['attribs']:
+            xml_set_all_attribv(fleurinp_tree_copy, xpath, key, val)
+        elif key in tag_info['text']:
+            xml_set_all_text(fleurinp_tree_copy,
+                             xpath_key,
+                             val,
+                             create=True,
+                             tag_order=tag_info['order'])
+        elif key in tag_info['simple'] and key not in tag_info['several']:  # only one tag with attributes
+            if key in tag_info['optional']: # This key might not be present
+                eval_xpath3(fleurinp_tree_copy,
+                            xpath_key,
+                            create=True,
+                            place_index=tag_info['order'].index(key),
+                            tag_order=tag_info['order'])
+            for attrib, value in val.items():
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value)
+        elif key in tag_info['simple'] and key in tag_info['several']: #multiple tags but simple (i.e. only attributes)
+            # policy: we DELETE all existing tags, and create new ones from the given parameters.
+            existingtags = eval_xpath3(fleurinp_tree_copy, xpath_key)
+            for tag in existingtags:
+                parent = tag.getparent()
+                parent.remove(tag)
+
+            # there can be multible tags, so I expect either one or a list
+            if isinstance(val, dict):
+                create_tag(fleurinp_tree_copy,
+                           xpath,
+                           key,
+                           place_index=tag_info['order'].index(key),
+                           tag_order=tag_info['order'])
+                for attrib, value in val.items():
+                    xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value, create=True)
+            else:  # I expect a list of dicts
+                tags_need = len(val)
+                for j in range(0, tags_need):
+                    create_tag(fleurinp_tree_copy,
+                               xpath,
+                               key,
+                               place_index=tag_info['order'].index(key),
+                               tag_order=tag_info['order'])
+                for i, tagdict in enumerate(val):
+                    for attrib, value in tagdict.items():
+                        sets = []
+                        for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_key)) // tags_need):
+                            sets.append(k * tags_need + i)
+                        xml_set_attribv_occ(fleurinp_tree_copy, xpath_key, attrib, value, occ=sets)
+
+        elif key not in tag_info['several']: #Complex tag but only one (electronConfig)
+
+            # eval and ggf create tag at right place.
+            eval_xpath3(fleurinp_tree_copy,
+                        xpath_key,
+                        create=True,
+                        place_index=tag_info['order'].index(key),
+                        tag_order=tag_info['order'])
+
+            fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}', xpath_key, val)
+
+        else:
+
+            # policy: we DELETE all existing tags, and create new ones from the given parameters.
+            existingtags = eval_xpath3(fleurinp_tree_copy, xpath_key)
+            for tag in existingtags:
+                parent = tag.getparent()
+                parent.remove(tag)
+            if isinstance(val, dict):
+                create_tag(fleurinp_tree_copy,
+                           xpath,
+                           key,
+                           place_index=tag_info['order'].index(key),
+                           tag_order=tag_info['order'])
+                fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}', xpath_key, val)
+            else:
+                tags_need = len(val)
+                for j in range(0, tags_need):
+                    create_tag(fleurinp_tree_copy,
+                               xpath,
+                               key,
+                               place_index=tag_info['order'].index(key),
+                               tag_order=tag_info['order'])
+                for i, tagdict in enumerate(val):
+                    for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_key)) // tags_need):
+                        fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}', f'{xpath_key}[{k*tags_need+i}]', tagdict)
+    return fleurinp_tree_copy
 
 
 # This is probably only used to represent the whole inp.xml in the database for the fleurinpData attributes

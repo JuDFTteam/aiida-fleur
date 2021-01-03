@@ -308,9 +308,9 @@ class TestSetSpecies:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_set_species(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import set_species, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        set_species(etree, 'Fe-1', attributedict=attr_dict)
+        set_species(etree, schema_dict, 'Fe-1', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
 
@@ -328,9 +328,9 @@ class TestSetSpecies:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_set_species_label(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import set_species_label, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        set_species_label(etree, '                 222', attributedict=attr_dict)
+        set_species_label(etree, schema_dict, '                 222', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
 
@@ -348,9 +348,9 @@ class TestSetSpecies:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_set_species_all_string(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import set_species, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        set_species(etree, 'all-Fe', attributedict=attr_dict)
+        set_species(etree, schema_dict, 'all-Fe', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species[@name="Fe-1"]/' + path)
 
@@ -370,9 +370,9 @@ class TestSetSpecies:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_set_species_all(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import set_species, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        set_species(etree, 'all', attributedict=attr_dict)
+        set_species(etree, schema_dict, 'all', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species/' + path)
 
@@ -388,9 +388,9 @@ class TestSetSpecies:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_set_species_label_all(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import set_species_label, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        set_species_label(etree, 'all', attributedict=attr_dict)
+        set_species_label(etree, schema_dict, 'all', attributedict=attr_dict)
 
         result = eval_xpath2(etree, '/fleurInput/atomSpecies/species/' + path)
 

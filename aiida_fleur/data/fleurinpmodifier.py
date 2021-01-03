@@ -111,11 +111,11 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def set_species1(fleurinp_tree_copy, schema_dict, species_name, attributedict, create=False):
-            fleurinp_tree_copy = set_species(fleurinp_tree_copy, species_name, attributedict, create=create)
+            fleurinp_tree_copy = set_species(fleurinp_tree_copy, schema_dict, species_name, attributedict, create=create)
             return fleurinp_tree_copy
 
         def set_species2(fleurinp_tree_copy, schema_dict, at_label, attributedict, create=False):
-            fleurinp_tree_copy = set_species_label(fleurinp_tree_copy, at_label, attributedict, create=create)
+            fleurinp_tree_copy = set_species_label(fleurinp_tree_copy, schema_dict, at_label, attributedict, create=create)
             return fleurinp_tree_copy
 
         def change_atomgr_att1(fleurinp_tree_copy, schema_dict, attributedict, position=None, species=None, create=False):
