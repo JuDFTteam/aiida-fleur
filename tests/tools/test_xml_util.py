@@ -592,21 +592,17 @@ class TestShiftValue:
         from aiida_fleur.tools.xml_util import shift_value
         etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match="You try to shift the attribute:'does_not_exist'"):
             shift_value(etree, schema_dict, {'does_not_exist': 1.2442})
-        assert 'Given attribute name either does not ex' in str(excinfo.value)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match='You are trying to write a float'):
             shift_value(etree, schema_dict, {'jspins': 3.3})
-        assert 'You are trying to write a float' in str(excinfo.value)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match='Given attribute name is not float or int'):
             shift_value(etree, schema_dict, {'l_noco': 33})
-        assert 'Given attribute name either does not ex' in str(excinfo.value)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match="Mode should be 'res' "):
             shift_value(etree, schema_dict, {'jspins': 33}, mode='not_a_mode')
-        assert "Mode should be 'res' " in str(excinfo.value)
 
         shift_value(etree, schema_dict, {'nz': 333})
         captured = capsys.readouterr()

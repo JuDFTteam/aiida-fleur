@@ -173,4 +173,4 @@ line to ``inpxml_changes`` of workchain parameters:
   # in this example the atomgroup, to which the atom with label '222' belongs,
   # will be modified
   fm = FleurinpModifier(SomeFleurinp)
-  fm.set_atomgr_att_label(attributedict={'force': [('relaxXYZ', 'FFF')]}, atom_label='                 222')
+  fm.set_atomgr_att_label(attributedict={'force': {'relaxXYZ': 'FFF'}, atom_label='                 222')
