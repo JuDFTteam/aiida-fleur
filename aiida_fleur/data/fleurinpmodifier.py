@@ -135,12 +135,12 @@ class FleurinpModifier(object):
             fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy, xpathn, attributename, set_val, mode=mode, occ=occ)
             return fleurinp_tree_copy
 
-        def set_inpchanges1(fleurinp_tree_copy, schema_dict, change_dict):
-            fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
+        def set_inpchanges1(fleurinp_tree_copy, schema_dict, change_dict, path_spec=None):
+            fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, schema_dict, change_dict, path_spec=path_spec)
             return fleurinp_tree_copy
 
-        def shift_value1(fleurinp_tree_copy, schema_dict, change_dict, mode):
-            fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict, mode)
+        def shift_value1(fleurinp_tree_copy, schema_dict, change_dict, mode, path_spec=None):
+            fleurinp_tree_copy = shift_value(fleurinp_tree_copy, schema_dict, change_dict, mode, path_spec=path_spec)
             return fleurinp_tree_copy
 
         def shift_value_species_label1(fleurinp_tree_copy, schema_dict, label, att_name, value, mode):
