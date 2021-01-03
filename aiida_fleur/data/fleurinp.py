@@ -819,14 +819,16 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
+        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
         if 'inp.xml' not in self.files:
             print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
 
+        schema_dict = load_inpschema(self.inp_version)
         # read in inpxml
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
-            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
+            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile), schema_dict)
         return new_parameters
 
     # Is there a way to give self to calcfunctions?

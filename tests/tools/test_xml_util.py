@@ -188,7 +188,7 @@ def test_replace_tag(inpxml_etree):
 @pytest.mark.skip(reason='econfig extraction is not implemented')
 def test_get_inpgen_para_from_xml(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_inpgen_para_from_xml
-    etree = inpxml_etree(TEST_INP_XML_PATH)
+    etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
     result = {
         'comp': {
@@ -228,7 +228,7 @@ def test_get_inpgen_para_from_xml(inpxml_etree):
         }
     }
 
-    dict_result = get_inpgen_para_from_xml(etree)
+    dict_result = get_inpgen_para_from_xml(etree, schema_dict)
     assert dict_result == result
 
 
