@@ -885,7 +885,7 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     return fleurinp_tree_copy
 
 
-def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
+def change_atomgr_att_label(fleurinp_tree_copy, schema_dict, attributedict, at_label):
     """
     This method calls :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()`
     method for a certain atom specie that corresponds to an atom with a given label.
@@ -907,7 +907,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     """
 
     if at_label == 'all':
-        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species='all')
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, schema_dict, attributedict, position=None, species='all')
         return fleurinp_tree_copy
 
     specie = ''
@@ -928,12 +928,12 @@ def change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label):
     species_to_set = list(set(species_to_set))
 
     for specie in species_to_set:
-        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=specie)
+        fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy, schema_dict, attributedict, position=None, species=specie)
 
     return fleurinp_tree_copy
 
 
-def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=None):
+def change_atomgr_att(fleurinp_tree_copy, schema_dict, attributedict, position=None, species=None):
     """
     Method to set parameters of an atom group of the fleur inp.xml file.
 
@@ -949,38 +949,27 @@ def change_atomgr_att(fleurinp_tree_copy, attributedict, position=None, species=
     to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
     can be done via::
 
-        'attributedict': {'nocoParams': [('beta', val)]}
+        'attributedict': {'nocoParams': {'beta': val]}
 
     ``force`` and ``nocoParams`` keys are supported.
     To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
-    xpathatmgroup = '/fleurInput/atomGroups/atomGroup'
-    xpathforce = '{}/force'.format(xpathatmgroup)
-    xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
+    from masci_tools.util.schema_dict_util import get_tag_xpath
+
+    atomgroup_base_path = get_tag_xpath(schema_dict, 'atomGroup')
+    atomgroup_xpath = atomgroup_base_path
 
     if not position and not species:  # not specfied what to change
         return fleurinp_tree_copy
 
     if position:
         if not position == 'all':
-            xpathatmgroup = '/fleurInput/atomGroups/atomGroup[{}]'.format(position)
-            xpathforce = '{}/force'.format(xpathatmgroup)
-            xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
+            atomgroup_xpath = f'{atomgroup_base_path}[{position}]'
     if species:
         if not species == 'all':
-            xpathatmgroup = '/fleurInput/atomGroups/atomGroup[@species = "{}"]'.format(species)
-            xpathforce = '{}/force'.format(xpathatmgroup)
-            xpathnocoParams = '{}/nocoParams'.format(xpathatmgroup)
+            atomgroup_xpath = f'{atomgroup_base_path}[@species = "{species}"]'
 
-    for key, val in six.iteritems(attributedict):
-        if key == 'force':
-            for attrib, value in val:
-                xml_set_all_attribv(fleurinp_tree_copy, xpathforce, attrib, value)
-        elif key == 'nocoParams':
-            for attrib, value in val:
-                xml_set_all_attribv(fleurinp_tree_copy, xpathnocoParams, attrib, value)
-        else:
-            xml_set_all_attribv(fleurinp_tree_copy, xpathatmgroup, attrib, value)
+    fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, atomgroup_base_path, atomgroup_xpath, attributedict)
 
     return fleurinp_tree_copy
 
@@ -1057,10 +1046,7 @@ def shift_value(fleurinp_tree_copy, schema_dict, change_dict, mode='abs', path_s
         elif 'other' not in key_spec['exclude']:
             key_spec['exclude'].append('other')
 
-        try:
-            key_xpath = get_attrib_xpath(schema_dict, key, **key_spec)
-        except ValueError as exc:
-            raise InputValidationError(exc) from exc
+        key_xpath = get_attrib_xpath(schema_dict, key, **key_spec)
 
         old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([key_xpath, key]))
 

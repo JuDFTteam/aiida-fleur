@@ -405,7 +405,7 @@ class TestChangeAtomgrAtt:
 
     paths = ['force/@relaxXYZ', 'nocoParams/@beta']
 
-    attdicts = [{'force': [('relaxXYZ', 'FFF')]}, {'nocoParams': [('beta', 7.0)]}]
+    attdicts = [{'force': {'relaxXYZ': 'FFF'}}, {'nocoParams': {'beta': 7.0}}]
 
     results = ['FFF', '7.0']
 
@@ -413,9 +413,9 @@ class TestChangeAtomgrAtt:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_change_atomgr_att(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att(etree, attributedict=attr_dict, species='Fe-1')
+        change_atomgr_att(etree, schema_dict, attributedict=attr_dict, species='Fe-1')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + path)
 
@@ -425,9 +425,9 @@ class TestChangeAtomgrAtt:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_change_atomgr_att_position(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att(etree, attributedict=attr_dict, position=1)
+        change_atomgr_att(etree, schema_dict, attributedict=attr_dict, position=1)
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
 
@@ -437,9 +437,9 @@ class TestChangeAtomgrAtt:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results, paths))
     def test_change_atomgr_att_label(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att_label(etree, attributedict=attr_dict, at_label='                 222')
+        change_atomgr_att_label(etree, schema_dict, attributedict=attr_dict, at_label='                 222')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + path)
 
@@ -451,9 +451,9 @@ class TestChangeAtomgrAtt:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_change_atomgr_att_all(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att(etree, attributedict=attr_dict, species='all')
+        change_atomgr_att(etree, schema_dict, attributedict=attr_dict, species='all')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
 
@@ -463,9 +463,9 @@ class TestChangeAtomgrAtt:
     @pytest.mark.parametrize('attr_dict,correct_result,path', zip(attdicts, results_all, paths))
     def test_change_atomgr_att_label_all(inpxml_etree, attr_dict, correct_result, path):
         from aiida_fleur.tools.xml_util import change_atomgr_att_label, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att_label(etree, attributedict=attr_dict, at_label='all')
+        change_atomgr_att_label(etree, schema_dict, attributedict=attr_dict, at_label='all')
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup/' + path)
 
@@ -473,9 +473,9 @@ class TestChangeAtomgrAtt:
 
     def test_change_atomgr_att_fail(self, inpxml_etree):
         from aiida_fleur.tools.xml_util import change_atomgr_att, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
-        change_atomgr_att(etree, attributedict=self.attdicts[0])
+        change_atomgr_att(etree, schema_dict, attributedict=self.attdicts[0])
 
         result = eval_xpath2(etree, '/fleurInput/atomGroups/atomGroup[@species="Fe-1"]/' + self.paths[0])
 
