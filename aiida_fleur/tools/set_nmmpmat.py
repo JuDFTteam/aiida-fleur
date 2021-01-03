@@ -19,7 +19,9 @@ import numpy as np
 from aiida_fleur.tools.xml_util import eval_xpath, eval_xpath2
 from aiida_fleur.tools.xml_util import get_xml_attribute, convert_to_int
 
-def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin,\
+from masci_tools.util.schema_dict_util import get_tag_xpath, get_attrib_xpath
+
+def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, orbital, spin,\
                 occStates=None, denmat=None, phi=None, theta=None):
     """Routine sets the block in the n_mmp_mat file specified by species_name, orbital and spin
     to the desired density matrix
@@ -38,22 +40,22 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
     :raises ValueError: If something in the input is wrong
     :raises KeyError: If no LDA+U procedure is found on a species
     """
-
     #All lda+U procedures have to be considered since we need to keep the order
-    ldau_xpath = '/fleurInput/atomSpecies/species/ldaU'
-    magnetism_xpath = '/fleurInput/calculationSetup/magnetism'
+    ldau_xpath = get_tag_xpath(schema_dict, 'ldaU', contains='species')
+    spins_xpath = get_attrib_xpath(schema_dict, 'jspins')
+    species_base_path = get_tag_xpath(schema_dict, 'species')
 
     if species_name == 'all':
-        species_xpath = '/fleurInput/atomSpecies/species'
+        species_xpath = species_base_path
     elif species_name[:4] == 'all-':  #format all-<string>
-        species_xpath = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
+        species_xpath = f'{species_base_path}[contains(@name,"{species_name[4:]}")]'
     else:
-        species_xpath = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
+        species_xpath = f'{species_base_path}[@name = "{species_name}"]'
 
     all_species = eval_xpath2(fleurinp_tree_copy, species_xpath)
 
     #Get number of spins (TODO for develop version also read l_mtnocoPot)
-    mag_elem = eval_xpath(fleurinp_tree_copy, magnetism_xpath)
+    mag_elem = eval_xpath(fleurinp_tree_copy, spins_xpath)
     nspins = convert_to_int(get_xml_attribute(mag_elem, 'jspins'), suc_return=False)
 
     if spin > nspins:
