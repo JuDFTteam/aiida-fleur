@@ -813,7 +813,7 @@ def set_species(fleurinp_tree_copy, schema_dict, species_name, attributedict, cr
     return fleurinp_tree_copy
 
 
-def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_given, mode='abs'):
+def shift_value_species_label(fleurinp_tree_copy, schema_dict, at_label, attr_name, value_given, mode='abs'):
     """
     Shifts value of a specie by label
     if at_label contains 'all' then applies to all species
@@ -824,11 +824,24 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
     :param value_given: value to add or to multiply by
     :param mode: 'rel' for multiplication or 'abs' for addition
     """
+    from masci_tools.util.schema_dict_util import get_tag_xpath, get_attrib_xpath
     import numpy as np
+
+    atomgroup_base_path = get_tag_xpath(schema_dict, 'atomGroup')
+    species_base_path = get_tag_xpath(schema_dict, 'species')
+    attr_base_path = get_attrib_xpath(schema_dict, attr_name, contains='species')
+
+    possible_types = schema_dict['attrib_types'][attr_name]
+
+    if 'float' not in possible_types and \
+       'float_expression' not in possible_types and \
+       'int' not in possible_types:
+        raise ValueError('Given attribute name is not float or int')
+
     specie = ''
     if at_label != 'all':
         at_label = '{: >20}'.format(at_label)
-    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+    all_groups = eval_xpath2(fleurinp_tree_copy, atomgroup_base_path)
 
     species_to_set = []
 
@@ -845,21 +858,10 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
 
     for specie in species_to_set:
 
-        xpath_species = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(specie)
+        xpath_species = f'{species_base_path}[@name = "{specie}"]'
+        attr_xpath = attr_base_path.replace(species_base_path, xpath_species)
 
-        xpath_mt = '{}/mtSphere'.format(xpath_species)
-        xpath_atomic_cutoffs = '{}/atomicCutoffs'.format(xpath_species)
-        xpath_energy_parameters = '{}/energyParameters'.format(xpath_species)
-        xpath_final = 'initialise'
-
-        if attr_name in ['radius', 'gridPoints', 'logIncrement']:
-            xpath_final = xpath_mt
-        elif attr_name in ['lmax', 'lnonsphr']:
-            xpath_final = xpath_atomic_cutoffs
-        elif attr_name in ['s', 'p', 'd', 'f']:
-            xpath_final = xpath_energy_parameters
-
-        old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([xpath_final, attr_name])))
+        old_val = np.array(eval_xpath2(fleurinp_tree_copy, '/@'.join([attr_xpath, attr_name])))
 
         if old_val.size == 0:
             print('Can not find {} attribute in the inp.xml, skip it'.format(attr_name))
@@ -873,14 +875,14 @@ def shift_value_species_label(fleurinp_tree_copy, at_label, attr_name, value_giv
         else:
             raise ValueError("Mode should be 'res' or 'abs' only")
 
-        if attr_name in ['radius', 'logIncrement']:
+        if 'float' in possible_types or 'float_expression' in possible_types:
             value_to_write = value
-        else:
+        elif 'int' in possible_types:
             if not np.all(value == value.astype('int')):
                 raise ValueError('You are trying to write a float to an integer attribute')
             value_to_write = value.astype('int')
 
-        xml_set_all_attribv(fleurinp_tree_copy, xpath_final, attr_name, value_to_write)
+        xml_set_all_attribv(fleurinp_tree_copy, attr_xpath, attr_name, value_to_write)
 
     return fleurinp_tree_copy
 
@@ -1364,7 +1366,7 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, schema_dict, fleur_change_dic,
 def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attributedict):
     """
     Recursive Function to correctly set tags/attributes for a given tag.
-    Goes through the attributedict and decides based on the schem_dict, how the corresponding
+    Goes through the attributedict and decides based on the schema_dict, how the corresponding
     key has to be handled.
     Supports:
         attributes (no type checking)
