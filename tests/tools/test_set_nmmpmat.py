@@ -78,8 +78,20 @@ def test_set_nmmpmat_nofile(inpxml_etree):
     ]
 
     nmmp_lines = None
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     assert len(nmmp_lines) == len(correct_result)
     for index, line in enumerate(nmmp_lines):
         assert line == correct_result[index]
@@ -152,8 +164,20 @@ def test_set_nmmpmat_file(inpxml_etree):
     with open(TEST_NMMPMAT_PATH, mode='r') as nmmpfile:
         nmmp_lines = nmmpfile.read().split('\n')
 
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict,  species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     assert len(nmmp_lines) == len(correct_result)
     for index, line in enumerate(nmmp_lines):
         assert line == correct_result[index]
@@ -267,8 +291,20 @@ def test_validate_nmmpmat(inpxml_etree):
 
     #Test invalid diagonal element error
     nmmp_lines = nmmp_lines_orig
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, schema_dict, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     with pytest.raises(ValueError):
         validate_nmmpmat(etree, nmmp_lines)
 
