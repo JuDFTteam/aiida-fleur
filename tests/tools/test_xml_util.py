@@ -493,27 +493,27 @@ class TestSetInpchanges:
     @pytest.mark.parametrize('name,path', paths.items())
     def test_set_inpchanges(self, inpxml_etree, name, path):
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
         skip_paths = ['atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice', 'bravaisMatrix', 'a1']
 
         if any(x in path for x in skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
         elif name in self.xml_structure[11].keys():
-            set_inpchanges(etree, change_dict={name: 'test'})
+            set_inpchanges(etree, schema_dict, change_dict={name: 'test'})
             if name not in ['relPos', 'absPos']:
                 result = eval_xpath2(etree, path)[0]
                 assert result.text == 'test'
         elif name in self.xml_structure[0]:
-            set_inpchanges(etree, change_dict={name: 'T'})
+            set_inpchanges(etree, schema_dict, change_dict={name: 'T'})
             result = eval_xpath2(etree, path + '/@{}'.format(name))
             assert result[0] == 'T'
         elif name in self.xml_structure[4] or name in self.xml_structure[3]:
-            set_inpchanges(etree, change_dict={name: 33})
+            set_inpchanges(etree, schema_dict, change_dict={name: 33})
             result = eval_xpath2(etree, path + '/@{}'.format(name))
             assert float(result[0]) == 33
         elif name in self.xml_structure[5]:
-            set_inpchanges(etree, change_dict={name: 'test'})
+            set_inpchanges(etree, schema_dict, change_dict={name: 'test'})
             if name == 'xcFunctional':
                 result = eval_xpath2(etree, path + '/@{}'.format('name'))
             else:
@@ -527,9 +527,9 @@ class TestSetInpchanges:
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
         from aiida.common.exceptions import InputValidationError
 
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
         with pytest.raises(InputValidationError):
-            set_inpchanges(etree, change_dict={'not_existing': 'test'})
+            set_inpchanges(etree, schema_dict, change_dict={'not_existing': 'test'})
 
 
 class TestShiftValue:
@@ -543,7 +543,7 @@ class TestShiftValue:
     @pytest.mark.parametrize('attr_name', attr_to_test)
     def test_shift_value(self, inpxml_etree, attr_name):
         from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
         path = self.xml_structure[12][attr_name]
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
@@ -554,12 +554,12 @@ class TestShiftValue:
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
-            shift_value(etree, {attr_name: 333})
+            shift_value(etree, schema_dict, {attr_name: 333})
             result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
 
             assert float(result) - float(result_before) == 333
 
-            shift_value(etree, {attr_name: 333})
+            shift_value(etree, schema_dict, {attr_name: 333})
             result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
             assert float(result) - float(result_before) == 666
 
@@ -569,7 +569,7 @@ class TestShiftValue:
     def test_shift_value_rel(self, inpxml_etree, attr_name):
         import math
         from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
         path = self.xml_structure[12][attr_name]
         result_before = eval_xpath2(etree, path + '/@{}'.format(attr_name))
@@ -580,7 +580,7 @@ class TestShiftValue:
             raise BaseException('Can not find attribute that should exist in FePt/inp.xml')
         else:
             result_before = result_before[0]
-            shift_value(etree, {attr_name: 1.2442}, mode='rel')
+            shift_value(etree, schema_dict, {attr_name: 1.2442}, mode='rel')
             result = eval_xpath2(etree, path + '/@{}'.format(attr_name))[0]
 
             if float(result_before) != 0:
@@ -590,25 +590,25 @@ class TestShiftValue:
 
     def test_shift_value_errors(self, inpxml_etree, capsys):
         from aiida_fleur.tools.xml_util import shift_value
-        etree = inpxml_etree(TEST_INP_XML_PATH)
+        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
         with pytest.raises(ValueError) as excinfo:
-            shift_value(etree, {'does_not_exist': 1.2442})
+            shift_value(etree, schema_dict, {'does_not_exist': 1.2442})
         assert 'Given attribute name either does not ex' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            shift_value(etree, {'jspins': 3.3})
+            shift_value(etree, schema_dict, {'jspins': 3.3})
         assert 'You are trying to write a float' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            shift_value(etree, {'l_noco': 33})
+            shift_value(etree, schema_dict, {'l_noco': 33})
         assert 'Given attribute name either does not ex' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            shift_value(etree, {'jspins': 33}, mode='not_a_mode')
+            shift_value(etree, schema_dict, {'jspins': 33}, mode='not_a_mode')
         assert "Mode should be 'res' " in str(excinfo.value)
 
-        shift_value(etree, {'nz': 333})
+        shift_value(etree, schema_dict, {'nz': 333})
         captured = capsys.readouterr()
         assert captured.out == 'Can not find nz attribute in the inp.xml, skip it\n'
 
