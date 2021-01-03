@@ -162,7 +162,7 @@ class FleurinpModifier(object):
 
         def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, orbital,\
                          spin, occStates, denmat, phi, theta):
-            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
+            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, orbital,\
                                           spin, occStates, denmat, phi, theta)
             return nmmp_lines_copy
 
