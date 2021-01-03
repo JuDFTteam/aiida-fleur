@@ -326,14 +326,13 @@ class FleurinpData(Data):
         parser_info = {'parser_warnings': []}
         try:
             inpxml_dict = inpxml_parser(xmltree, version=self.inp_version, parser_info_out=parser_info)
-        except (ValueError,FileNotFoundError) as exc:
+        except (ValueError, FileNotFoundError) as exc:
             raise InputValidationError from exc
 
         self.set_attribute('_has_schema', True)
         self.set_attribute('_parser_info', parser_info)
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
-
 
     def _include_files(self, xmltree):
         """
@@ -344,6 +343,7 @@ class FleurinpData(Data):
         Then it is reparsed into a ElementTree and hte xi:include tags are executed
         """
         from masci_tools.util.xml.common_xml_util import clear_xml
+        import tempfile
 
         xmltree_string = etree.tostring(xmltree)
 
@@ -374,7 +374,6 @@ class FleurinpData(Data):
             os.remove(file)
 
         return cleared_tree
-
 
     # dict with inp paramters parsed from inp.xml
     @property
