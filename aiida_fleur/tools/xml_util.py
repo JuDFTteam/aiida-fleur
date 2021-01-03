@@ -1011,7 +1011,7 @@ def set_inpchanges(fleurinp_tree_copy, schema_dict, change_dict, path_spec=None)
     """
     tree = fleurinp_tree_copy
     # apply changes to etree
-    new_tree = write_new_fleur_xmlinp_file(tree, schema_dict, change_dict, path_spec=path_spec)
+    new_tree = update_fleurinput_xmltree(tree, schema_dict, change_dict, path_spec=path_spec)
 
     return new_tree
 
@@ -1300,7 +1300,7 @@ def get_xml_attribute(node, attributename, parser_info_out=None):
 # TODO this has to be done better. be able to write tags and
 # certain attributes of attributes that occur possible more then once.
 # HINT: This is not really used anymore. use fleurinpmodifier
-def write_new_fleur_xmlinp_file(inp_file_xmltree, schema_dict, fleur_change_dic, path_spec=None):
+def update_fleurinput_xmltree(inp_file_xmltree, schema_dict, fleur_change_dic, path_spec=None):
     """
     This modifies the xml-inp file. Makes all the changes wanted by
     the user or sets some default values for certain modes
@@ -1311,7 +1311,6 @@ def write_new_fleur_xmlinp_file(inp_file_xmltree, schema_dict, fleur_change_dic,
     :returns: an etree of the xml-inp file with changes.
     """
     from masci_tools.util.schema_dict_util import get_attrib_xpath
-    # TODO rename, name is misleaded just changes the tree.
     xmltree_new = inp_file_xmltree
 
     if path_spec is None:
@@ -1741,34 +1740,3 @@ def get_inpxml_file_structure():
                   float_attributes_several, string_attributes_several, tags_several, all_text, all_attrib_xpath,
                   expertkey)
     return returnlist
-
-
-def clear_xml(tree):
-    """
-    Removes comments and executes xinclude tags of an
-    xml tree.
-
-    :param tree: an xml-tree which will be processes
-    :return cleared_tree: an xml-tree without comments and with replaced xinclude tags
-    """
-    import copy
-
-    cleared_tree = copy.deepcopy(tree)
-
-    # replace XInclude parts to validate against schema
-    cleared_tree.xinclude()
-
-    # get rid of xml:base attribute in the relaxation part
-    relax = eval_xpath(cleared_tree, '/fleurInput/relaxation')
-    if relax != []:
-        for attribute in relax.keys():
-            if 'base' in attribute:
-                cleared_tree = delete_att(cleared_tree, '/fleurInput/relaxation', attribute)
-
-    # remove comments from inp.xml
-    comments = cleared_tree.xpath('//comment()')
-    for comment in comments:
-        com_parent = comment.getparent()
-        com_parent.remove(comment)
-
-    return cleared_tree
