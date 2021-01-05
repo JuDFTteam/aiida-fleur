@@ -29,7 +29,6 @@ from lxml import etree
 from aiida.parsers import Parser
 from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
-from aiida_fleur.common.constants import HTR_TO_EV
 
 from masci_tools.io.parsers.fleur import outxml_parser
 
@@ -227,7 +226,8 @@ class FleurParser(Parser):
                 parser_info = {'parser_warnings': []}
                 try:
                     out_dict = outxml_parser(outxmlfile_opened, parser_info_out=parser_info, strict=True)
-                except (ValueError, FileNotFoundError, KeyError):
+                except (ValueError, FileNotFoundError, KeyError) as exc:
+                    self.logger.error(f'XML output parsing failed: {str(exc)}')
                     success = False
 
             # Call routines for output node creation
