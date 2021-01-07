@@ -439,7 +439,7 @@ def birch_murnaghan_fit(energies, volumes):
     fitdata = np.polyfit(volumes[:]**(-2. / 3.), energies[:], 3, full=True)
     ssr = fitdata[1]
     sst = np.sum((energies[:] - np.average(energies[:]))**2.)
-    print(ssr, sst, energies)
+    #print(ssr, sst, energies)
     if sst == 0:
         residuals0 = -1
     else:
