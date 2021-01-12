@@ -110,7 +110,9 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             'metadata': AttributeDict()
         })
 
-        self.ctx.inputs.metadata.options = self.inputs.options.get_dict()
+        input_options = self.inputs.options.get_dict()
+        self.ctx.optimize_resources = input_options.pop('optimize_resources', False)
+        self.ctx.inputs.metadata.options = input_options
 
         if 'parent_folder' in self.inputs:
             self.ctx.inputs.parent_folder = self.inputs.parent_folder
@@ -128,6 +130,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.settings = self.inputs.settings.get_dict()
         else:
             self.ctx.inputs.settings = {}
+
+        if not self.ctx.optimize_resources:
+            self.ctx.can_be_optimised = False  # set this for handlers to not change resources
+            return
 
         resources_input = self.ctx.inputs.metadata.options['resources']
         try:
