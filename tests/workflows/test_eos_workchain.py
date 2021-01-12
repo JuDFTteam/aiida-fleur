@@ -214,10 +214,12 @@ def test_birch_murnaghan_fit():
     import numpy as np
     from aiida_fleur.workflows.eos import birch_murnaghan_fit
 
-    should_vol = 50.15185277312836
-    should_bulk_mod = 30.630869193205523
-    should_bulk_deriv = -6.120875695109946
-    should_residuals = [0.05862235697619352]
+    # ignore numerical differences
+    dezi = 8
+    should_vol = round(50.15185277312836, dezi)
+    should_bulk_mod = round(30.630869193205523, dezi)
+    should_bulk_deriv = round(-6.120875695109946, dezi)
+    should_residuals = [round(0.05862235697619352, dezi)]
     energies = np.array([-1, -2, -3, -4, -3.2, -2.1, -1])
     base = 50.0
     scales = np.array([0.94, 0.96, 0.98, 1.0, 1.02, 1.04, 1.06])
@@ -225,10 +227,10 @@ def test_birch_murnaghan_fit():
     volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(energies, volumes)
 
     # print(volume, bulk_modulus, bulk_deriv, residuals)
-    assert volume == should_vol
-    assert bulk_modulus == should_bulk_mod
-    assert bulk_deriv == should_bulk_deriv
-    assert list(residuals) == should_residuals
+    assert round(volume, dezi) == should_vol
+    assert round(bulk_modulus, dezi) == should_bulk_mod
+    assert round(bulk_deriv, dezi) == should_bulk_deriv
+    assert [round(res, dezi) for res in residuals] == should_residuals
 
 
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
