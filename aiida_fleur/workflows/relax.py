@@ -169,6 +169,13 @@ class FleurRelaxWorkChain(WorkChain):
                 self.report('Error: Wrong input: inpgen missing for final scf.')
                 return self.exit_codes.ERROR_INPGEN_MISSING
 
+            # initialize contents to avoid access failures
+            self.ctx.total_energy_last = None  #total_energy
+            self.ctx.total_energy_units = None  #total_energy_units
+            self.ctx.final_cell = None
+            self.ctx.final_atom_positions = None  #atom_positions
+            self.ctx.atomtype_info = None
+
     def should_relax(self):
         """
         Should we run a relaxation or only a final scf
@@ -459,12 +466,8 @@ class FleurRelaxWorkChain(WorkChain):
             else:
                 pass
             self.ctx.final_structure = structure
-            self.ctx.total_energy_last = None  #total_energy
-            self.ctx.total_energy_units = None  #total_energy_units
             self.ctx.final_cell = structure.cell
-            self.ctx.final_atom_positions = None  #atom_positions
-            self.ctx.atomtype_info = None
-
+            # The others are already put to None
             return
 
         try:
@@ -497,7 +500,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         # we build the structure here, that way we can run an scf afterwards
         # construct it in a way which preserves the species information from the initial input structure
-        if self.ctx.final_cell:
+        if self.ctx.final_cell is not None:
             np_cell = np.array(self.ctx.final_cell) * BOHR_A
             structure = StructureData(cell=np_cell.tolist())
             #self.report('############ {}'.format(atomtype_info))
