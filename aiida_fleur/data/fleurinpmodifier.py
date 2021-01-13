@@ -212,13 +212,13 @@ class FleurinpModifier(object):
                 xmlschema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid as exc:
                 msg = 'Changes were not valid: {}'.format(modification_tasks)
-                print(msg)
+                #print(msg)
                 raise etree.DocumentInvalid(msg) from exc
             try:
                 validate_nmmpmat(workingtree, workingnmmp)
             except ValueError as exc:
                 msg = 'Changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks)
-                print(msg)
+                #print(msg)
                 raise ValueError(msg) from exc
 
         return workingtree, workingnmmp
@@ -579,11 +579,9 @@ class FleurinpModifier(object):
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
         modifications = orm.Dict(dict={'tasks': self._tasks})
-        #print(self._tasks)
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        print(self._original)
         inputs = dict(original=self._original,
                       modifications=modifications,
                       metadata={
@@ -644,7 +642,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
         xmlschema.assertValid(clear_xml(tree))
     except etree.DocumentInvalid as exc:
         msg = 'Input file is not validated against the schema'
-        print(msg)
+        #print(msg)
         raise etree.DocumentInvalid(msg) from exc
 
     try:
