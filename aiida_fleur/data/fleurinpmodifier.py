@@ -548,16 +548,16 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-
         if validate:
             tree = self.validate()
         else:
             with self._original.open(path='inp.xml') as inpxmlfile:
-                tree = etree.parse(inpxmlfile)
+                parser = etree.XMLParser(remove_blank_text=True, remove_comments=True)
+                tree = etree.parse(inpxmlfile, parser)
             tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
 
         if display:
-            xmltreestring = etree.tostring(tree, xml_declaration=True, pretty_print=True)
+            xmltreestring = etree.tostring(tree, encoding="unicode", pretty_print=True)
             print(xmltreestring)
         return tree
 

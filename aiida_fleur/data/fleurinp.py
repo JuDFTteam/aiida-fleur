@@ -29,7 +29,7 @@ import re
 import six
 from lxml import etree
 
-from aiida.orm import Data, Node, load_node
+from aiida.orm import Data, Node, load_node, Int
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -82,7 +82,7 @@ class FleurinpData(Data):
                 files.append(filename)
                 break
         node = kwargs.pop('node', None)
-        super(FleurinpData, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         search_paths = []
         ifolders = get_internal_search_paths()
@@ -491,7 +491,7 @@ class FleurinpData(Data):
         """
         #from aiida.common.exceptions import ValidationError
 
-        super(FleurinpData, self)._validate()
+        super()._validate()
 
         if 'inp.xml' in self.files:
             # has_inpxml = True # does nothing so far
@@ -754,7 +754,7 @@ class FleurinpData(Data):
         """
         return self.get_structuredata_ncf()
 
-    def get_kpointsdata_ncf(self):
+    def get_kpointsdata_ncf(self, index=0):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
@@ -779,8 +779,9 @@ class FleurinpData(Data):
         # all hardcoded xpaths used and attributes names:
         bravaismatrix_bulk_xpath = '/fleurInput/cell/bulkLattice/bravaisMatrix/'
         bravaismatrix_film_xpath = '/fleurInput/cell/filmLattice/bravaisMatrix/'
-        kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList/'
-
+        #kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration//kPointList/'
+        #kpointlist_xpath = '/fleurInput/cell/bzIntegration/kPointLists/kPointList'
+        kpointlist_xpath = '/fleurInput//kPointList'
         kpoint_tag = 'kPoint'
         kpointlist_attrib_posscale = 'posScale'
         kpointlist_attrib_weightscale = 'weightScale'
@@ -865,11 +866,24 @@ class FleurinpData(Data):
                   'not supported.')
             return None
         # get kpoints only works if kpointlist in inp.xml
-        kpoints = root.xpath(kpointlist_xpath + kpoint_tag)
+        kpointslists = root.xpath(kpointlist_xpath)# + kpoint_tag)
 
-        if kpoints:
-            posscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_posscale)
-            weightscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_weightscale)
+        if kpointslists:
+            # TODO in fleur there can be several sets, either return the one which is meant to be calculated, 
+            # or return all
+            index = int(index)
+            if len(kpointslists) != 1:
+                print('Found {} kpoints lists in the inp.xml file, the one with index {} will be returned only.'.format(len(kpointslists), index))
+
+            kpoints = kpointslists[index].xpath(kpoint_tag)
+            #posscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_posscale)
+            posscale = kpointslists[index].xpath('@' + kpointlist_attrib_posscale)
+            if not posscale:
+                posscale = [1.0]
+            #weightscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_weightscale)
+            weightscale = kpointslists[index].xpath('@' + kpointlist_attrib_weightscale)
+            if not weightscale:
+                weightscale = [1.0]
             #count = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_count)
 
             kpoints_pos = []
@@ -878,6 +892,10 @@ class FleurinpData(Data):
             for kpoint in kpoints:
                 kpoint_pos = kpoint.text.split()
                 for i, kval in enumerate(kpoint_pos):
+                    if isinstance(kval, str):
+                        if '/' in kval:
+                            parts = kval.split('/')
+                            kval = float(parts[0])/float(parts[1])
                     kpoint_pos[i] = float(kval) / float(posscale[0])
                     kpoint_weight = float(kpoint.get(kpoint_attrib_weight)) / float(weightscale[0])
                 kpoints_pos.append(kpoint_pos)
@@ -899,7 +917,7 @@ class FleurinpData(Data):
             return None
 
     @cf
-    def get_kpointsdata(self):
+    def get_kpointsdata(self, index=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
@@ -907,8 +925,9 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
-
-        return self.get_kpointsdata_ncf()
+        if index is None:
+            index = Int(0)
+        return self.get_kpointsdata_ncf(index=index)
 
     def get_parameterdata_ncf(self):
         """
