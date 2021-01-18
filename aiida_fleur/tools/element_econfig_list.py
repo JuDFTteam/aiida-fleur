@@ -27,6 +27,11 @@ atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTab
 # because the starting point matters, especially in the magnetic case.
 
 econfiguration = {
+    0: {  # This is for empty spheres etc.
+        'mass': 1.00000,
+        'name': 'Unknown',
+        'symbol': 'X'
+    },
     1: {
         'mass': 1.00794,
         'name': 'Hydrogen',

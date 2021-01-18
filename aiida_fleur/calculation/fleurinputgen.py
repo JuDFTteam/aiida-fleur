@@ -625,3 +625,27 @@ def _lowercase_dict(dic, dict_name):
         return new_dict
     else:
         raise TypeError('_lowercase_dict accepts only dictionaries as argument')
+
+
+def write_inpgen_file_aiida_struct(structure, path, input_params=None, settings=None):
+    """Wraps around masci_tools write inpgen_file, unpacks aiida structure"""
+    from masci_tools.io.io_fleur_inpgen import write_inpgen_file
+
+    atoms_dict_list = []
+    kind_list = []
+
+    for kind in structure.kinds:
+        kind_list.append(kind.get_raw())
+
+    for site in structure.sites:
+        atoms_dict_list.append(site.get_raw())
+
+    report = write_inpgen_file(structure.cell,
+                               atoms_dict_list,
+                               kind_list,
+                               path=path,
+                               pbc=structure.pbc,
+                               input_params=input_params,
+                               settings=settings)
+
+    return report
