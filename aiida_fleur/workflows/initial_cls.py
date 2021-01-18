@@ -107,7 +107,7 @@ class fleur_initial_cls_wc(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(fleur_initial_cls_wc, cls).define(spec)
+        super().define(spec)
         spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('fleur', valid_type=Code, required=True)

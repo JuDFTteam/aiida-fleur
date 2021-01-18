@@ -199,8 +199,8 @@ class FleurinpModifier(object):
         for task in modification_tasks:
             try:
                 action = actions[task[0]]
-            except KeyError:
-                raise ValueError('Unknown task {}'.format(task[0]))
+            except KeyError as exc:
+                raise ValueError('Unknown task {}'.format(task[0])) from exc
 
             if task[0] == 'set_nmmpmat':
                 workingnmmp = action(workingtree, workingnmmp, *task[1:])
@@ -210,14 +210,16 @@ class FleurinpModifier(object):
         if schema_tree:
             try:
                 xmlschema.assertValid(clear_xml(workingtree))
-            except etree.DocumentInvalid:
-                print('changes were not valid: {}'.format(modification_tasks))
-                raise
+            except etree.DocumentInvalid as exc:
+                msg = 'Changes were not valid: {}'.format(modification_tasks)
+                print(msg)
+                raise etree.DocumentInvalid(msg) from exc
             try:
                 validate_nmmpmat(workingtree, workingnmmp)
-            except ValueError:
-                print('changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks))
-                raise
+            except ValueError as exc:
+                msg = 'Changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks)
+                print(msg)
+                raise ValueError(msg) from exc
 
         return workingtree, workingnmmp
 
@@ -466,11 +468,10 @@ class FleurinpModifier(object):
 
     def set_kpointsdata(self, kpointsdata_uuid):
         """
-        Appends a :py:func:`set_kpointsdata_f()` to
+        Appends a :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
-        :param kpointsdata_uuid: an aiida.orm.KpointsData or node uuid,
-        since the node is self cannot be be serialized in tasks.
+        :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.
         """
         from aiida.orm import KpointsData, load_node
 
@@ -641,9 +642,10 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
     try:
         xmlschema.assertValid(clear_xml(tree))
-    except etree.DocumentInvalid:
-        print('Input file is not validated against the schema')
-        raise
+    except etree.DocumentInvalid as exc:
+        msg = 'Input file is not validated against the schema'
+        print(msg)
+        raise etree.DocumentInvalid(msg) from exc
 
     try:
         with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -680,13 +682,12 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
     """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
     in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
-    ``inp.xml`` file.
-    Currently it is the users responsibility to provide a full
+    ``inp.xml`` file. Currently it is the users responsibility to provide a full
     :class:`~aiida.orm.KpointsData` node with weights.
 
     :param fleurinp_tree_copy: fleurinp_tree_copy
     :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
-    :returns: modified xml tree
+    :return: modified xml tree
     """
     # TODO: check on weights,
     # also fleur allows for several kpoint sets, lists, paths and meshes,

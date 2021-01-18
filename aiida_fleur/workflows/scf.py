@@ -60,7 +60,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.4.2'
+    _workflowversion = '0.4.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -97,7 +97,7 @@ class FleurScfWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurScfWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('inpgen', valid_type=Code, required=False)
         spec.input('wf_parameters', valid_type=Dict, required=False)
@@ -107,7 +107,7 @@ class FleurScfWorkChain(WorkChain):
         spec.input('remote_data', valid_type=RemoteData, required=False)
         spec.input('options', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
-
+        spec.input('settings_inpgen', valid_type=Dict, required=False)
         spec.outline(cls.start, cls.validate_input,
                      if_(cls.fleurinpgen_needed)(cls.run_fleurinpgen), cls.run_fleur, cls.inspect_fleur, cls.get_res,
                      while_(cls.condition)(cls.run_fleur, cls.inspect_fleur, cls.get_res), cls.return_results)
@@ -155,12 +155,33 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.wf_dict = wf_dict
 
         self.ctx.serial = self.ctx.wf_dict.get('serial', False)
+        fleur = self.inputs.fleur
+        fleur_extras = fleur.extras
+        inpgen_extras = None
+        if 'inpgen' in self.inputs:
+            inpgen = self.inputs.inpgen
+            inpgen_extras = inpgen.extras
 
-        defaultoptions = self._default_options
+        defaultoptions = self._default_options.copy()
+        user_options = {}
         if 'options' in self.inputs:
-            options = self.inputs.options.get_dict()
+            user_options = self.inputs.options.get_dict()
+
+        # extend options by code defaults given in code extras
+        # Maybe do full recursive merge
+        if 'queue_defaults' in fleur_extras:
+            qd = fleur_extras['queue_defaults']
+            queue = user_options.get('queue', 'default')
+            defaults_queue = qd.get(queue, {})
+            for key, val in defaultoptions.items():
+                defaultoptions[key] = defaults_queue.get(key, val)
+
+        if 'options' in self.inputs:
+            options = user_options
         else:
             options = defaultoptions
+        # we use the same options for both codes, inpgen resources get overridden
+        # and queue does not matter in case of direct scheduler
 
         # extend options given by user using defaults
         for key, val in six.iteritems(defaultoptions):
@@ -304,6 +325,11 @@ class FleurScfWorkChain(WorkChain):
         else:
             params = None
 
+        if 'settings_inpgen' in self.inputs:
+            settings = self.inputs.settings_inpgen
+        else:
+            settings = None
+
         # If given kpt_dist has prio over given calc_parameters
         kpt_dist = self.ctx.wf_dict.get('kpoints_distance', None)
         if kpt_dist is not None:
@@ -330,7 +356,13 @@ class FleurScfWorkChain(WorkChain):
             'queue_name': self.ctx.options.get('queue_name', '')
         }
 
-        inputs_build = get_inputs_inpgen(structure, inpgencode, options, label, description, params=params)
+        inputs_build = get_inputs_inpgen(structure,
+                                         inpgencode,
+                                         options,
+                                         label,
+                                         description,
+                                         settings=settings,
+                                         params=params)
 
         # Launch inpgen
         self.report('INFO: run inpgen')

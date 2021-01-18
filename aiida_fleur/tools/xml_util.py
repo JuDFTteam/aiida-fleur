@@ -416,7 +416,8 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
         try:
             newelement = etree.Element(newelement)
         except ValueError as v:
-            raise ValueError('{}. If this is a species, are you sure this species exists ' 'in your inp.xml?'.format(v))
+            raise ValueError('{}. If this is a species, are you sure this species exists '
+                             'in your inp.xml?'.format(v)) from v
     nodes = eval_xpath3(xmlnode, xpath, create=create)
     if nodes:
         for node_1 in nodes:
@@ -426,8 +427,8 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     # behind what shall I place it
                     try:
                         place_index = tag_order.index(newelement_name)
-                    except:
-                        raise ValueError('Did not find element name in the tag_order list')
+                    except ValueError as exc:
+                        raise ValueError('Did not find element name in the tag_order list') from exc
                     behind_tags = tag_order[:place_index]
                     # check if children are in the same sequence as given in tag_order
                     tags = []
@@ -438,8 +439,9 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     for name in tags:
                         try:
                             current = tag_order.index(name)
-                        except ValueError:
-                            raise ValueError('Did not find existing tag name in the tag_order list' ': {}'.format(name))
+                        except ValueError as exc:
+                            raise ValueError('Did not find existing tag name in the tag_order list'
+                                             ': {}'.format(name)) from exc
                         if current > prev:
                             prev = current
                         else:
@@ -452,10 +454,10 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                             tag_index = node_1.index(child)
                             try:
                                 node_1.insert(tag_index + 1, element_to_write)
-                            except ValueError as v:
+                            except ValueError as exc:
                                 raise ValueError('{}. If this is a species, are'
                                                  'you sure this species exists in your inp.xml?'
-                                                 ''.format(v))
+                                                 ''.format(exc)) from exc
                             was_set = True
                             break
                         if was_set:
@@ -463,23 +465,23 @@ def create_tag(xmlnode, xpath, newelement, create=False, place_index=None, tag_o
                     if not was_set:  # just append
                         try:
                             node_1.insert(0, element_to_write)
-                        except ValueError as v:
+                        except ValueError as exc:
                             raise ValueError('{}. If this is a species, are you'
                                              ' sure this species exists in your inp.xml?'
-                                             ''.format(v))
+                                             ''.format(exc)) from exc
                     # (or remove all and write them again in right order?)
                 else:
                     try:
                         node_1.insert(place_index, element_to_write)
-                    except ValueError as v:
+                    except ValueError as exc:
                         raise ValueError('{}. If this is a species, are you sure this species '
-                                         'exists in your inp.xml?'.format(v))
+                                         'exists in your inp.xml?'.format(exc)) from exc
             else:
                 try:
                     node_1.append(element_to_write)
-                except ValueError as v:
+                except ValueError as exc:
                     raise ValueError('{}. If this is a species, are you sure this species exists'
-                                     'in your inp.xml?'.format(v))
+                                     'in your inp.xml?'.format(exc)) from exc
     return xmlnode
 
 
@@ -554,12 +556,14 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
     return Dict(dict=para_dict)
 
 
-def get_inpgen_para_from_xml(inpxmlfile):
+def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
     """
     This routine returns an python dictionary produced from the inp.xml
     file, which can be used as a calc_parameters node by inpgen.
     Be aware that inpgen does not take all information that is contained in an inp.xml file
 
+    :param inpxmlfile: and xml etree of a inp.xml file
+    :param inpgen_ready: Bool, return a dict which can be inputed into inpgen while setting atoms
     :return new_parameters: A Dict, which will lead to the same inp.xml (in case if other defaults,
                             which can not be controlled by input for inpgen, were changed)
 
@@ -661,19 +665,21 @@ def get_inpgen_para_from_xml(inpxmlfile):
         atom_element = eval_xpath(species, atom_element_xpath)
         atom_name_2 = eval_xpath(species, atom_name_xpath)
 
-        atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
+        if not inpgen_ready:
+            atom_dict = set_dict_or_not(atom_dict, 'z', atom_z)
+            #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
+            #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst) (deprecated)
         atom_dict = set_dict_or_not(atom_dict, 'rmt', atom_rmt)
         atom_dict = set_dict_or_not(atom_dict, 'dx', atom_dx)
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-        #atom_dict = set_dict_or_not(atom_dict, 'ncst', atom_ncst)
+
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
         atom_dict = set_dict_or_not(atom_dict, 'element', '{}'.format(atom_element))
-        #atom_dict = set_dict_or_not(atom_dict, 'name', atom_name_2)
 
         new_parameters[atoms_name] = atom_dict
 
@@ -1474,11 +1480,11 @@ def eval_xpath3(node, xpath, create=False, place_index=None, tag_order=None):
     """
     try:
         return_value = node.xpath(xpath)
-    except etree.XPathEvalError:
+    except etree.XPathEvalError as exc:
         message = ('There was a XpathEvalError on the xpath: {} \n Either it does '
                    'not exist, or something is wrong with the expression.'
                    ''.format(xpath))
-        raise etree.XPathEvalError(message)
+        raise etree.XPathEvalError(message) from exc
 
     if return_value == []:
         if create:

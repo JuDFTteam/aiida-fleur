@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fleurOutput fleurOutputVersion="0.27">
+   <programVersion version="fleur 31">
+      <compilationInfo date="2020-11-30T09:13:10" user="broeder" host="iffcluster0105.iff.kfa-juelich.de" flag="-mkl -qopenmp -assume byterecl -no-wrap-margin" link="-lxml2"/>
+      <gitInfo version="MaX-R4-38-g9cddd6d" branch="release" lastCommitHash="9cddd6d3ed47288c8d096c3f755728090cc6dc36"/>
+      <targetComputerArchitectures>GEN</targetComputerArchitectures>
+      <precision type="DOUBLE"/>
+      <targetStructureClass> </targetStructureClass>
+   </programVersion>
+   <parallelSetup>
+      <openMP ompThreads="12"/>
+      <mem memoryPerNode="24676972 kB"/>
+   </parallelSetup>
+   <startDateAndTime date="2020/12/08" time="13:05:57" zone="+0100"/>
+   <inputData>
+   <comment>
+      A Fleur input generator calculation with aiida                                  
+   </comment>
+   <calculationSetup>
+      <cutoffs Kmax="5.00000000" Gmax="20.90000000" GmaxXC="17.40000000" numbands="0"/>
+      <scfLoop itmax="120" minDistance=".00000200" maxIterBroyd="99" imix="Anderson" alpha=".05000000" precondParam="0.0" spinf="2.00000000"/>
+      <coreElectrons ctail="T" frcor="F" kcrel="0" coretail_lmax="0"/>
+      <magnetism jspins="1" l_noco="F" swsp="F" lflip="F"/>
+      <soc theta=".00000000" phi=".00000000" l_soc="F" spav="F"/>
+      <prodBasis gcutm="6.50000000" tolerance=".00010000" ewaldlambda="3" lexp="16" bands="0"/>
+      <nocoParams l_ss="F" l_mperp="F" l_constr="F" mix_b=".00000000">
+         <qss>.0000000000 .0000000000 .0000000000</qss>
+      </nocoParams>
+      <expertModes gw="0" secvar="F"/>
+      <geometryOptimization l_f="T" forcealpha=".50000000" forcemix="straight" epsdisp=".00001000" epsforce=".00001000"/>
+      <ldaU l_linMix="F" mixParam=".050000" spinf="1.000000"/>
+      <bzIntegration valenceElectrons="8.00000000" mode="hist" fermiSmearingEnergy=".00100000">
+         <kPointList posScale="1.00000000" weightScale="1.00000000" count="1">
+            <kPoint weight="    1.000000">    0.000000     0.000000     0.000000</kPoint>
+         </kPointList>
+      </bzIntegration>
+      <energyParameterLimits ellow="-.80000000" elup="1.00000000"/>
+   </calculationSetup>
+   <cell>
+      <symmetryOperations>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 -1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+      </symmetryOperations>
+      <bulkLattice scale="1.0000000000" latnam="any">
+         <bravaisMatrix>
+            <row-1>28.345891875000000 .000000000000000 .000000000000000</row-1>
+            <row-2>.000000000000000 28.345891875000000 .000000000000000</row-2>
+            <row-3>.000000000000000 .000000000000000 28.345891875000000</row-3>
+         </bravaisMatrix>
+      </bulkLattice>
+   </cell>
+   <xcFunctional name="pbe" relativisticCorrections="F"/>
+   <atomSpecies>
+      <species name="N-1" element="N" atomicNumber="7" coreStates="1" magMom=".00000000" flipSpin="T">
+         <mtSphere radius="1.12000000" gridPoints="371" logIncrement=".02700000"/>
+         <atomicCutoffs lmax="6" lnonsphr="4"/>
+         <energyParameters s="2" p="2" d="3" f="4"/>
+         <prodBasis lcutm="4" lcutwf="6" select="4 0 4 2"/>
+      </species>
+      <species name="H-1" element="H" atomicNumber="1" coreStates="0" magMom=".00000000" flipSpin="T">
+         <mtSphere radius=".86000000" gridPoints="287" logIncrement=".02800000"/>
+         <atomicCutoffs lmax="6" lnonsphr="4"/>
+         <energyParameters s="1" p="2" d="3" f="4"/>
+         <prodBasis lcutm="4" lcutwf="6" select="4 0 4 2"/>
+      </species>
+   </atomSpecies>
+   <atomGroups>
+      <atomGroup species="N-1">
+         <relPos label="                   1">.0000000000 .0000000000 .0000000000</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+      <atomGroup species="H-1">
+         <relPos label="                   2">-1.000/15.000 .0000000000 -.0266666667</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+      <atomGroup species="H-1">
+         <relPos label="                   3">1.000/30.000 .0577350267 -.0266666667</relPos>
+         <relPos label="                   4">1.000/30.000 -.0577350267 -.0266666667</relPos>
+         <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams l_relax="F" alpha=".00000000" beta=".00000000" b_cons_x=".00000000" b_cons_y=".00000000"/>
+      </atomGroup>
+   </atomGroups>
+   <output dos="F" band="F" vacdos="F" slice="F" mcd="F">
+      <checks vchk="F" cdinf="F"/>
+      <densityOfStates ndir="0" minEnergy="-.50000000" maxEnergy=".50000000" sigma=".01500000"/>
+      <vacuumDOS layers="1" integ="F" star="F" nstars="0" locx1=".00000" locy1=".00000" locx2=".00000" locy2=".00000" nstm="0" tworkf=".00000"/>
+      <unfoldingBand unfoldBand="F" supercellX="1" supercellY="1" supercellZ="1"/>
+      <plotting iplot="0" score="F" plplot="F"/>
+      <chargeDensitySlicing numkpt="0" minEigenval=".00000000" maxEigenval=".00000000" nnne="0" pallst="F"/>
+      <specialOutput eonly="F" bmt="F"/>
+      <magneticCircularDichroism energyLo="-10.00000000" energyUp=".00000000"/>
+   </output>
+   </inputData>
+   <numericalParameters>
+      <atomsInCell nat="4" ntype="3" jmtd="371" n_u="0"/>
+      <basis nvd="47937" lmaxd="6" nlotot="0"/>
+      <density ng3="1769767" ng2="2"/>
+      <bands numbands="7"/>
+      <volumes unitCell="22775.6289" interstitial="22761.7510">
+         <mtVolume atomType="1" mtRadius="1.12000000" mtVolume="5.88494864"/>
+         <mtVolume atomType="2" mtRadius=".86000000" mtVolume="2.66430514"/>
+         <mtVolume atomType="3" mtRadius=".86000000" mtVolume="2.66430514"/>
+      </volumes>
+      <kPointList posScale="1.00000000" weightScale="1.00000000" count="    1">
+         <kPoint weight="1.000000">0.000000            0.000000            0.000000</kPoint>
+      </kPointList>
+   </numericalParameters>
+   <spinDependentCharge spin="1" total="9.9999988" interstitial="4.9049187" mtSpheres="5.0950802"/>
+   <totalCharge value="9.9999988457"/>
+   <scfLoop>
+      <iteration numberForCurrentRun="    1" overallNumber="    1">
+         <energyParameters units="Htr">
+            <atomicEP atomType="1" spin="1" branch="2s" branchLowest="-14.27" branchHighest="3.00" value="-1.4387536393"/>
+            <atomicEP atomType="1" spin="1" branch="2p" branchLowest="-9.99" branchHighest="2.22" value="-1.2205211963"/>
+            <atomicEP atomType="1" spin="1" branch="3d" branchLowest="-9.99" branchHighest="8.96" value="-1.0235862816"/>
+            <atomicEP atomType="1" spin="1" branch="4f" branchLowest="-9.99" branchHighest="15.78" value="-0.8640350042"/>
+            <atomicEP atomType="2" spin="1" branch="1s" branchLowest="-9.99" branchHighest="3.87" value="-0.7418478184"/>
+            <atomicEP atomType="2" spin="1" branch="2p" branchLowest="-9.99" branchHighest="11.64" value="-0.4925987129"/>
+            <atomicEP atomType="2" spin="1" branch="3d" branchLowest="-9.99" branchHighest="20.70" value="-0.3159989266"/>
+            <atomicEP atomType="2" spin="1" branch="4f" branchLowest="-9.99" branchHighest="31.38" value="-0.1567190274"/>
+            <atomicEP atomType="3" spin="1" branch="1s" branchLowest="-9.99" branchHighest="3.87" value="-0.7418442882"/>
+            <atomicEP atomType="3" spin="1" branch="2p" branchLowest="-9.99" branchHighest="11.64" value="-0.4925949076"/>
+            <atomicEP atomType="3" spin="1" branch="3d" branchLowest="-9.99" branchHighest="20.70" value="-0.3159951161"/>
+            <atomicEP atomType="3" spin="1" branch="4f" branchLowest="-9.99" branchHighest="31.38" value="-0.1567152170"/>
+         </energyParameters>
+         <ERROR Message="Allocation of memmory failed for mat datatype"/>
+      </iteration>
+   </scfLoop>
+   <endDateAndTime date="2020/12/08" time="13:06:36" zone="+0100"/>
+</fleurOutput>

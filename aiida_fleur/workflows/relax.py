@@ -54,7 +54,7 @@ class FleurRelaxWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurRelaxWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.expose_inputs(FleurScfWorkChain,
                            namespace='final_scf',

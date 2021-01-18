@@ -8,7 +8,6 @@ import io
 import os
 import collections
 import pytest
-import six
 import sys
 from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
 
@@ -84,20 +83,26 @@ def generate_calc_job():
 
 
 @pytest.fixture
-def generate_calc_job_node():
+def generate_calc_job_node(fixture_localhost):
     """Fixture to generate a mock `CalcJobNode` for testing parsers."""
 
     def flatten_inputs(inputs, prefix=''):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
-        for key, value in six.iteritems(inputs):
+        for key, value in inputs.items():
             if isinstance(value, collections.Mapping):
                 flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
             else:
                 flat_inputs.append((prefix + key, value))
         return flat_inputs
 
-    def _generate_calc_job_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
+    def _generate_calc_job_node(entry_point_name,
+                                computer=None,
+                                test_name=None,
+                                inputs=None,
+                                attributes=None,
+                                store=False,
+                                retrieve_list=None):
         """Fixture to generate a mock `CalcJobNode` for testing parsers.
 
         :param entry_point_name: entry point name of the calculation class
@@ -111,6 +116,9 @@ def generate_calc_job_node():
         from aiida.common import LinkType
         from aiida.plugins.entry_point import format_entry_point_string
 
+        if computer is None:
+            computer = fixture_localhost
+
         entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
 
         node = orm.CalcJobNode(computer=computer, process_type=entry_point)
@@ -121,6 +129,8 @@ def generate_calc_job_node():
         node.set_option('withmpi', True)
         node.set_option('max_wallclock_seconds', 1800)
 
+        if retrieve_list is not None:
+            node.set_attribute('retrieve_list', retrieve_list)
         if attributes:
             node.set_attribute_many(attributes)
 
@@ -129,12 +139,12 @@ def generate_calc_job_node():
                 input_node.store()
                 node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
-        # node.store()
+        if store:  # needed if test_name is not None
+            node.store()
 
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
-            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):],
-                                    test_name)
+            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('fleur.'):], test_name)
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
@@ -262,7 +272,7 @@ def generate_work_chain_node():
     def flatten_inputs(inputs, prefix=''):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
-        for key, value in six.iteritems(inputs):
+        for key, value in inputs.items():
             if isinstance(value, collections.Mapping):
                 flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
             else:

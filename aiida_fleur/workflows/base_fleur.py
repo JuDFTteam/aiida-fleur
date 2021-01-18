@@ -39,7 +39,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurBaseWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('code', valid_type=orm.Code, help='The FLEUR code.')
         spec.input('parent_folder',
                    valid_type=orm.RemoteData,
@@ -174,8 +174,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                 self.ctx.suggest_mpi_omp_ratio,
                 fleurinp,
                 only_even_MPI=self.inputs.only_even_MPI)
-        except ValueError:
-            raise Warning('Not optimal computational resources, load less than 60%')
+        except ValueError as exc:
+            raise Warning('Not optimal computational resources, load less than 60%') from exc
 
         self.report(message)
 

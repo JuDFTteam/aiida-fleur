@@ -1,0 +1,18 @@
+/O warning : failed to load external entity "relax.xml"
+**************juDFT-Error*****************
+Error message:Allocation of memmory failed for mat datatype
+Hint:You probably run out of memory
+*****************************************
+ Last kown location:
+ Last timer:Setup of H&S matrices                                       
+ Timerstack:
+ Timer:eigen                                                       
+ Timer:gen. of hamil. and diag. (total)                            
+ Timer:Iteration                                                   
+ Timer:Total Run                                                   
+ *****************************************
+Rank:0 used    2.093GB/	 3412936 kB
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   873  100   101  100   772    257   1966 --:--:-- --:--:-- --:--:--  1969
+juDFT-STOPPED

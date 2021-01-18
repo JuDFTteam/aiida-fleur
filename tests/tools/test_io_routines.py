@@ -60,6 +60,8 @@ def test_compress_fleuroutxml():
 
     testfilepath = abspath('./files/outxml/BeTi_out.xml')
     dest_path = testfilepath.replace('.xml', '_test.xml')
+    testfilepath_broken = abspath('./files/outxml/special/broken_first_BeTi_out.xml')
+    dest_path2 = testfilepath_broken.replace('.xml', '_test.xml')
     niter_file = 19
     xpath_iter = '/fleurOutput/scfLoop/iteration'
     xpath_eig = '/fleurOutput/scfLoop/iteration/eigenvalues'
@@ -94,5 +96,9 @@ def test_compress_fleuroutxml():
 
     assert niter3 == niter_file  # check if no iteration deleted
 
+    # test if broken file will not generate an error
+    compress_fleuroutxml(testfilepath_broken, dest_file_path=dest_path2, iterations_to_keep=25)
+
     # cleanup
     remove(dest_path)
+    remove(dest_path2)

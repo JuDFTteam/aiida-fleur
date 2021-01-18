@@ -58,7 +58,7 @@ class fleur_dos_wc(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(fleur_dos_wc, cls).define(spec)
+        super().define(spec)
         spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)

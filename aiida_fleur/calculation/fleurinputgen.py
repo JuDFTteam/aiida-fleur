@@ -51,7 +51,10 @@ class FleurinputgenCalculation(CalcJob):
     _ERROR_FILE_NAME = 'out.error'
     _STRUCT_FILE_NAME = 'struct.xsf'
 
-    _settings_keys = ['additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline']
+    _settings_keys = [
+        'additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline', 'significant_figures_cell',
+        'significant_figures_positions'
+    ]
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
     _PREFIX = 'aiida'
@@ -97,7 +100,7 @@ class FleurinputgenCalculation(CalcJob):
 
     @classmethod
     def define(cls, spec):
-        super(FleurinputgenCalculation, cls).define(spec)
+        super().define(spec)
 
         spec.input('metadata.options.input_filename', valid_type=six.string_types, default=cls._INPUT_FILE)
         spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._INPXML_FILE_NAME)
@@ -136,7 +139,7 @@ class FleurinputgenCalculation(CalcJob):
                        'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
                        message=('During parsing: FleurinpData could not be initialized, see log. '
                                 'Maybe no Schemafile was found or the Fleurinput is not valid.'))
-        spec.exit_code(309, 'ERROR_FLEURINPDATE_NOT_VALID', message='During parsing: FleurinpData failed validation.')
+        spec.exit_code(309, 'ERROR_FLEURINPDATA_NOT_VALID', message='During parsing: FleurinpData failed validation.')
 
     def prepare_for_submission(self, folder):
         """
@@ -258,7 +261,8 @@ class FleurinputgenCalculation(CalcJob):
                     if self._use_aiida_structure:
                         input_params.pop('lattice', {})
                         own_lattice = False
-
+        #TODO check if input parameter dict is consistent to given structure.
+        # if not issue warnings.
         # TODO allow only usual kpt meshes and use therefore Aiida kpointData
         # if self._use_kpoints:
         #     try:
@@ -301,14 +305,18 @@ class FleurinputgenCalculation(CalcJob):
 
         scaling_factor_card = ''
         cell_parameters_card = ''
-
+        # We allow to set the significant figures format, because sometimes
+        # inpgen has numerical problems which are not there with less precise formatting
+        sf_c = str(settings_dict.get('significant_figures_cell', 9))
+        sf_p = str(settings_dict.get('significant_figure_positions', 10))
         if not own_lattice:
             cell = structure.cell
             for vector in cell:
                 scaled = [a * scaling_pos for a in vector]  # scaling_pos=1./bohr_to_ang
-                cell_parameters_card += ('{0:18.9f} {1:18.9f} {2:18.9f}' '\n'.format(scaled[0], scaled[1], scaled[2]))
-            scaling_factor_card += ('{0:18.9f} {1:18.9f} {2:18.9f}'
-                                    '\n'.format(scaling_factors[0], scaling_factors[1], scaling_factors[2]))
+                reg_string = '{0:18.' + sf_c + 'f} {1:18.' + sf_c + 'f} {2:18.' + sf_c + 'f}\n'
+                cell_parameters_card += (reg_string.format(scaled[0], scaled[1], scaled[2]))
+            reg_string = '{0:18.' + sf_c + 'f} {1:18.' + sf_c + 'f} {2:18.' + sf_c + 'f}\n'
+            scaling_factor_card += (reg_string.format(scaling_factors[0], scaling_factors[1], scaling_factors[2]))
 
         #### ATOMIC_POSITIONS ####
 
@@ -348,24 +356,27 @@ class FleurinputgenCalculation(CalcJob):
                     vector_rel = abs_to_rel_f(pos, cell, structure.pbc)
                     vector_rel[2] = vector_rel[2] * scaling_pos
 
-                if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new specie!
+                if site_symbol != kind_name:  # This is an important fact, if user renames it becomes a new atomtype or species!
                     try:
+                        # Kind names can be more then numbers now, this might need to be reworked
                         head = kind_name.rstrip('0123456789')
                         kind_namet = int(kind_name[len(head):])
-                        if int(kind_name[len(head)]) > 4:
-                            raise InputValidationError('New specie name/label should start with a digit smaller than 4')
+                        #if int(kind_name[len(head)]) > 4:
+                        #    raise InputValidationError('New specie name/label should start with a digit smaller than 4')
                     except ValueError:
-                        pass
+                        self.report(
+                            'Warning: Kind name {} will be ignored by the FleurinputgenCalculation and not set a charge number.'
+                            .format(kind_name))
                     else:
                         atomic_number_name = '{}.{}'.format(atomic_number, kind_namet)
                     # append a label to the detached atom
-                    atomic_positions_card_listtmp.append('    {0:7} {1:18.10f} {2:18.10f} {3:18.10f} {4}'
-                                                         '\n'.format(atomic_number_name, vector_rel[0], vector_rel[1],
-                                                                     vector_rel[2], kind_namet))
+                    reg_string = '    {0:7} {1:18.' + sf_p + 'f} {2:18.' + sf_p + 'f} {3:18.' + sf_p + 'f} {4}\n'
+                    atomic_positions_card_listtmp.append(
+                        reg_string.format(atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2], kind_namet))
                 else:
-                    atomic_positions_card_listtmp.append('    {0:7} {1:18.10f} {2:18.10f} {3:18.10f}'
-                                                         '\n'.format(atomic_number_name, vector_rel[0], vector_rel[1],
-                                                                     vector_rel[2]))
+                    reg_string = '    {0:7} {1:18.' + sf_p + 'f} {2:18.' + sf_p + 'f} {3:18.' + sf_p + 'f}\n'
+                    atomic_positions_card_listtmp.append(
+                        reg_string.format(atomic_number_name, vector_rel[0], vector_rel[1], vector_rel[2]))
             # TODO check format
             # we write it later, since we do not know what natoms is before the loop...
             atomic_positions_card_list.append('    {0:3}\n'.format(natoms))
@@ -564,8 +575,8 @@ def get_input_data_text(key, val, value_only, mapping=None):
         for elemk, itemval in six.iteritems(val):
             try:
                 idx = mapping[elemk]
-            except KeyError:
-                raise ValueError("Unable to find the key '{}' in the mapping " 'dictionary'.format(elemk))
+            except KeyError as exc:
+                raise ValueError("Unable to find the key '{}' in the mapping " 'dictionary'.format(elemk)) from exc
 
             list_of_strings.append((idx, '  {0}({2})={1} '.format(key, conv_to_fortran(itemval), idx)))
             # changed {0}({2}) = {1}\n".format
