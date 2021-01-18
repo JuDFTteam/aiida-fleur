@@ -63,6 +63,7 @@ class FleurBandDosWorkChain(WorkChain):
     _default_wf_para = {
         'fleur_runmax': 4,
         'kpath': 'auto',
+        'mode': 'band',
         # 'nkpts' : 800,
         'sigma': 0.005,
         'emin': -0.50,
@@ -191,10 +192,11 @@ class FleurBandDosWorkChain(WorkChain):
         emax = wf_dict.get('emax', 0.80)
 
         if wf_dict.get('mode') == 'dos':
-            change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+            #change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+            change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         else:
-            change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-
+            #change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+            change_dict = {'band': True,  'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         fleurmode.set_inpchanges(change_dict)
 
         if wf_dict.get('kpath') != 'auto':
