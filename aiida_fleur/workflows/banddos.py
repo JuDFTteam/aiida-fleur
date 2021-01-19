@@ -63,7 +63,7 @@ class FleurBandDosWorkChain(WorkChain):
     _default_wf_para = {
         'fleur_runmax': 4,
         'kpath': 'auto',
-        'klistname' : 'path-2', 
+        'klistname': 'path-2',
         'mode': 'band',
         # 'nkpts' : 800,
         'sigma': 0.005,
@@ -198,7 +198,7 @@ class FleurBandDosWorkChain(WorkChain):
             change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
         else:
             #change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-            change_dict = {'band': True,  'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
+            change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
         fleurmode.set_inpchanges(change_dict)
 
         if wf_dict.get('kpath') != 'auto':
@@ -285,11 +285,11 @@ class FleurBandDosWorkChain(WorkChain):
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
         bandfiles = ['bands.1', 'bands.2', 'banddos.hdf']
-        
+
         bandfile_res = []
         if retrieved:
             bandfile_res = retrieved.list_object_names()
-        
+
         for name in bandfiles:
             if name in bandfile_res:
                 self.ctx.successful = True
@@ -343,7 +343,7 @@ class FleurBandDosWorkChain(WorkChain):
                                               last_calc_retrieved=retrieved)
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
-        
+
         if retrieved:
             outdict['last_calc_retrieved'] = retrieved
 

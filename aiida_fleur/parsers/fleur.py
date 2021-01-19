@@ -319,7 +319,7 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
     #parsed_data = {}
     if outfile_version is None:
         outfile_version = 27
-        
+
     inputfile_dump_version = None
     successful = True
     outfile_broken = False
@@ -342,7 +342,7 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
                                                       'Repairing was not possible.')
             parse_xml = False
             successful = False
-    
+
     def parse_simplexmlout_file(root, outfile_broken, outfile_version=None, fleurinputversion=0.33):
         """
         Parses the xml.out file of a Fleur calculation
@@ -1119,7 +1119,10 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
                 fleurinputversion = 0.32
             else:
                 fleurinputversion, suc = convert_to_float(fleurinputversion[0])
-            simple_out = parse_simplexmlout_file(root, outfile_broken, outfile_version=outfile_version, fleurinputversion=fleurinputversion)
+            simple_out = parse_simplexmlout_file(root,
+                                                 outfile_broken,
+                                                 outfile_version=outfile_version,
+                                                 fleurinputversion=fleurinputversion)
             #simple_out['outputfile_path'] = outxmlfile
             # TODO: parse complex out
             complex_out = {}  # parse_xmlout_file(root)

@@ -871,14 +871,15 @@ class FleurinpData(Data):
                   'not supported.')
             return None
         # get kpoints only works if kpointlist in inp.xml
-        kpointslists = root.xpath(kpointlist_xpath)# + kpoint_tag)
+        kpointslists = root.xpath(kpointlist_xpath)  # + kpoint_tag)
 
         if kpointslists:
-            # TODO in fleur there can be several sets, either return the one which is meant to be calculated, 
+            # TODO in fleur there can be several sets, either return the one which is meant to be calculated,
             # or return all
             index = int(index)
             if len(kpointslists) != 1:
-                print('Found {} kpoints lists in the inp.xml file, the one with index {} will be returned only.'.format(len(kpointslists), index))
+                print('Found {} kpoints lists in the inp.xml file, the one with index {} will be returned only.'.format(
+                    len(kpointslists), index))
 
             kpoints = kpointslists[index].xpath(kpoint_tag)
             #posscale = root.xpath(kpointlist_xpath + '@' + kpointlist_attrib_posscale)
@@ -900,7 +901,7 @@ class FleurinpData(Data):
                     if isinstance(kval, str):
                         if '/' in kval:
                             parts = kval.split('/')
-                            kval = float(parts[0])/float(parts[1])
+                            kval = float(parts[0]) / float(parts[1])
                     kpoint_pos[i] = float(kval) / float(posscale[0])
                     kpoint_weight = float(kpoint.get(kpoint_attrib_weight)) / float(weightscale[0])
                 kpoints_pos.append(kpoint_pos)

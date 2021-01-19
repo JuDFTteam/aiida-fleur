@@ -558,7 +558,7 @@ class FleurinpModifier(object):
             tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
 
         if display:
-            xmltreestring = etree.tostring(tree, encoding="unicode", pretty_print=True)
+            xmltreestring = etree.tostring(tree, encoding='unicode', pretty_print=True)
             print(xmltreestring)
         return tree
 
