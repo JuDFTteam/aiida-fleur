@@ -53,9 +53,9 @@ class FleurEosWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.0'
 
-    _default_wf_para = {'points': 9, 'step': 0.002, 'guess': 1.00}
+    _default_wf_para = {'points': 9, 'step': 0.002, 'guess': 1.00, 'enforce_same_para': True}
     _default_options = FleurScfWorkChain._default_options
 
     @classmethod
@@ -69,13 +69,16 @@ class FleurEosWorkChain(WorkChain):
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=True)
 
-        spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
+        spec.outline(cls.start, cls.structures, cls.run_first, cls.inspect_first, cls.converge_scf, cls.return_results)
 
         spec.output('output_eos_wc_para', valid_type=Dict)
         spec.output('output_eos_wc_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(400,
+                       'ERROR_SUB_PROCESS_FAILED',
+                       message='At least one of the SCF sub processes did not finish successfully.')
 
     def start(self):
         """
@@ -127,6 +130,7 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)  # True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
+        self.ctx.enforce_para = wf_dict.get('enforce_same_para', True)
 
     def structures(self):
         """
@@ -147,19 +151,57 @@ class FleurEosWorkChain(WorkChain):
         # since cf this has to be a dict, we sort to assure ordering of scale
         self.ctx.structures = [struc_dict[key] for key in sorted(struc_dict)]
 
+    def run_first(self):
+        """
+        Launch the first fleur SCF workchain
+        """
+        calcs = {}
+
+        i = 0
+        struc = self.ctx.structures[i]
+        inputs = self.get_inputs_scf_first()
+        inputs.structure = struc
+        natoms = len(struc.sites)
+        label = str(self.ctx.scalelist[i])
+        label_c = '|eos| fleur_scf_wc'
+        description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
+
+        self.ctx.volume.append(struc.get_cell_volume())
+        self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
+        self.ctx.structures_uuids.append(struc.uuid)
+
+        result = self.submit(FleurScfWorkChain, **inputs)
+        self.ctx.labels.append(label)
+        calcs[label] = result
+
+        return ToContext(**calcs)
+
+    def inspect_first(self):
+        """
+        Check if the first calculation failed and
+        """
+        label = self.ctx.labels[0]
+        first_scf = self.ctx[label]
+        if not first_scf.is_finished_ok:
+            self.report('Initial sub process did not finish successful so aborting the workchain.')
+            return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
+
+        fleurinp = first_scf.outputs.fleurinp
+        self.ctx.first_calc_parameters = fleurinp.get_parameterdata()
+
     def converge_scf(self):
         """
         Launch fleur_scfs from the generated structures
         """
         calcs = {}
 
-        for i, struc in enumerate(self.ctx.structures):
+        for i, struc in enumerate(self.ctx.structures[1:]):
             inputs = self.get_inputs_scf()
             inputs.structure = struc
             natoms = len(struc.sites)
-            label = str(self.ctx.scalelist[i])
+            label = str(self.ctx.scalelist[i + 1])
             label_c = '|eos| fleur_scf_wc'
-            description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
+            description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i + 1)
             #inputs.label = label_c
             #inputs.description = description
 
@@ -173,11 +215,24 @@ class FleurEosWorkChain(WorkChain):
 
         return ToContext(**calcs)
 
+    def get_inputs_scf_first(self):
+        """
+        get and 'produce' the inputs for a scf-cycle
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+
+        return input_scf
+
     def get_inputs_scf(self):
         """
         get and 'produce' the inputs for a scf-cycle
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+
+        # ensure that all are run with the same FLAPW parameters
+        if ('calc_parameters' not in input_scf) and self.ctx.enforce_para:
+            # TODO maybe merge with user given calcparameters...
+            input_scf['calc_parameters'] = self.ctx.first_calc_parameters
 
         return input_scf
 
