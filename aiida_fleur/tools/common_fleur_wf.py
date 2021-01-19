@@ -547,12 +547,20 @@ def optimize_calc_options(nodes,
     cpus_per_node = mpi_per_node * omp_per_mpi
     if fleurinpData:
         modes = fleurinpData.get_fleur_modes()
-        kpts = fleurinpData.attributes['inp_dict']['calculationSetup']['bzIntegration']
+
+        # fleur version < 32 # todo this is not nice
+        kpts = fleurinpData.attributes['inp_dict']['calculationSetup'].get('bzIntegration', None)
+        if kpts is None:
+            kpts = fleurinpData.attributes['inp_dict']['cell']['bzIntegration']
         if modes['band'] or modes['gw']:
             kpts = kpts['altKPointSet']['count']
         else:
             if 'kPointList' in kpts:
                 kpts = kpts['kPointList']['count']
+            elif 'kPointLists' in kpts:  # There can probably be others
+                # also it is not clear for which kpoint set to optimize the execution
+                # the one with the most kpoints? Find one which best for all?
+                kpts = kpts['kPointLists']['kPointList']['count']
             else:
                 kpts = kpts['kPointCount']['count']
         kpts = int(kpts)

@@ -1744,7 +1744,7 @@ def get_inpxml_file_structure():
                              'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged', 'mixParam')
 
     string_attributes_once = ('imix', 'mode', 'filename', 'latnam', 'spgrp', 'xcFunctional', 'fleurInputVersion',
-                              'species', 'forcemix')
+                              'species', 'forcemix', 'listName')
 
     other_attributes_once = tuple(
         list(int_attributes_once) + list(float_attributes_once) + list(string_attributes_once))
@@ -1819,6 +1819,7 @@ def get_inpxml_file_structure():
         'mixParam': '/fleurInput/calculationSetup/ldaU',
         # 'invs': '',
         # 'zrfs': '',
+        'listName': '/fleurInput/cell/bzIntegration/kPointListSelection',
         'vchk': '/fleurInput/output/checks',
         'cdinf': '/fleurInput/output/checks',
         'disp': '/fleurInput/output/checks',
@@ -1872,9 +1873,9 @@ def get_inpxml_file_structure():
         'scale': '/fleurInput/cell/bulkLattice',
         # 'film_scale': '/fleurInput/cell/filmLattice',
         'ndir': '/fleurInput/output/densityOfStates',
-        'minEnergy': '/fleurInput/output/densityOfStates',
-        'maxEnergy': '/fleurInput/output/densityOfStates',
-        'sigma': ' /fleurInput/output/densityOfStates',
+        'minEnergy': '/fleurInput/output/bandDOS',  #'/fleurInput/output/densityOfStates',
+        'maxEnergy': '/fleurInput/output/bandDOS',  #'/fleurInput/output/densityOfStates',
+        'sigma': '/fleurInput/output/bandDOS',  #'/fleurInput/output/densityOfStates',
         'layers': '/fleurInput/output/vacuumDOS',
         'nstars': '/fleurInput/output/vacuumDOS',
         'locx1': '/fleurInput/output/vacuumDOS',

@@ -297,7 +297,7 @@ class FleurParser(Parser):
             return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
 
 
-def parse_xmlout_file(outxmlfile):
+def parse_xmlout_file(outxmlfile, outfile_version=None):
     """
     Parses the out.xml file of a FLEUR calculation
     Receives as input the absolute path to the xml output file
@@ -317,7 +317,10 @@ def parse_xmlout_file(outxmlfile):
     parser_version = '0.3.2'
     parser_info_out['parser_info'] = 'AiiDA Fleur Parser v{}'.format(parser_version)
     #parsed_data = {}
+    if outfile_version is None:
+        outfile_version = 27
 
+    inputfile_dump_version = None
     successful = True
     outfile_broken = False
     parse_xml = True
@@ -340,7 +343,7 @@ def parse_xmlout_file(outxmlfile):
             parse_xml = False
             successful = False
 
-    def parse_simplexmlout_file(root, outfile_broken):
+    def parse_simplexmlout_file(root, outfile_broken, outfile_version=None, fleurinputversion=0.33):
         """
         Parses the xml.out file of a Fleur calculation
         Receives in input the root of an xmltree of the xml output file
@@ -354,17 +357,22 @@ def parse_xmlout_file(outxmlfile):
         """
 
         ### all xpath used. (maintain this) ###
+        if fleurinputversion <= 0.32:
+            base_input_xpath = '/fleurOutput/inputData/'
+        else:
+            base_input_xpath = '/fleurOutput/fleurInput/'
+
         iteration_xpath = '/fleurOutput/scfLoop/iteration'
-        magnetism_xpath = '/fleurOutput/inputData/calculationSetup/magnetism'
+        magnetism_xpath = base_input_xpath + 'calculationSetup/magnetism'
 
-        relPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/relPos'
-        absPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/absPos'
-        filmPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/filmPos'
+        relPos_xpath = base_input_xpath + 'atomGroups/atomGroup/relPos'
+        absPos_xpath = base_input_xpath + 'atomGroups/atomGroup/absPos'
+        filmPos_xpath = base_input_xpath + 'atomGroups/atomGroup/filmPos'
 
-        atomstypes_xpath = '/fleurOutput/inputData/atomGroups/atomGroup'
-        symmetries_xpath = '/fleurOutput/inputData/cell/symmetryOperations/symOp'
-        kpoints_xpath = '/fleurOutput/inputData/calculationSetup/bzIntegration/kPointList/kPoint'
-        species_xpath = '/fleurOutput/inputData/atomSpecies'
+        atomstypes_xpath = base_input_xpath + 'atomGroups/atomGroup'
+        symmetries_xpath = base_input_xpath + 'cell/symmetryOperations/symOp'
+        kpoints_xpath = base_input_xpath + 'calculationSetup/bzIntegration/kPointList/kPoint'
+        species_xpath = base_input_xpath + 'atomSpecies'
 
         # input parameters
         creator_name_xpath = 'programVersion/@version'
@@ -373,7 +381,7 @@ def parse_xmlout_file(outxmlfile):
         creator_target_structure_xpath = 'programVersion/targetStructureClass/text()'
         precision_xpath = 'programVersion/precision/@type'
 
-        title_xpath = '/fleurOutput/inputData/comment/text()'
+        title_xpath = base_input_xpath + 'comment/text()'
         kmax_xpath = 'calculationSetup/cutoffs'
         gmax_xpath = 'calculationSetup/cutoffs'
         mixing_xpath = 'calculationSetup/scfLoop'
@@ -381,8 +389,8 @@ def parse_xmlout_file(outxmlfile):
         spin_orbit_calculation = 'calculationSetup/soc'
         smearing_energy_xpath = 'calculationSetup/bzIntegration/@fermiSmearingEnergy'
         jspin_name = 'jspins'
-        l_f_xpath = '/fleurOutput/inputData/calculationSetup/geometryOptimization/@l_f'
-        ldau_xpath = '/fleurOutput/inputData/atomSpecies/species/ldaU'
+        l_f_xpath = base_input_xpath + 'calculationSetup/geometryOptimization/@l_f'
+        ldau_xpath = base_input_xpath + 'atomSpecies/species/ldaU'
 
         # timing
         start_time_xpath = '/fleurOutput/startDateAndTime/@time'
@@ -416,7 +424,6 @@ def parse_xmlout_file(outxmlfile):
 
         # for getting the fleur modes use fleurinp methods
         spin = get_xml_attribute(eval_xpath(root, magnetism_xpath), jspin_name)
-
         if spin:
             fleurmode = {'jspin': int(spin)}
         else:
@@ -668,6 +675,11 @@ def parse_xmlout_file(outxmlfile):
         ##########  all xpaths (maintain this) ############
         # (specifies where to find things in the out.xml) #
 
+        if fleurinputversion <= 0.32:
+            base_input_xpath = '/fleurOutput/inputData/'
+        else:
+            base_input_xpath = '/fleurOutput/fleurInput/'
+
         # density
         densityconvergence_xpath = 'densityConvergence'
         chargedensity_xpath = 'densityConvergence/chargeDensity'
@@ -756,15 +768,15 @@ def parse_xmlout_file(outxmlfile):
         new_y_name = 'y'
         new_z_name = 'z'
 
-        species_xpath = '/fleurOutput/inputData/atomSpecies'
-        relPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/relPos'
-        absPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/absPos'
-        filmPos_xpath = '/fleurOutput/inputData/atomGroups/atomGroup/filmPos'
-        atomstypes_xpath = '/fleurOutput/inputData/atomGroups/atomGroup'
+        species_xpath = base_input_xpath + 'atomSpecies'
+        relPos_xpath = base_input_xpath + 'atomGroups/atomGroup/relPos'
+        absPos_xpath = base_input_xpath + 'atomGroups/atomGroup/absPos'
+        filmPos_xpath = base_input_xpath + 'atomGroups/atomGroup/filmPos'
+        atomstypes_xpath = base_input_xpath + 'atomGroups/atomGroup'
 
-        film_lat_xpath = '/fleurOutput/inputData/cell/filmLattice/bravaisMatrix/'
-        bulk_lat_xpath = '/fleurOutput/inputData/cell/bulkLattice/bravaisMatrix/'
-        kmax_xpath = '/fleurOutput/inputData/calculationSetup/cutoffs/@Kmax'
+        film_lat_xpath = base_input_xpath + 'cell/filmLattice/bravaisMatrix/'
+        bulk_lat_xpath = base_input_xpath + 'cell/bulkLattice/bravaisMatrix/'
+        kmax_xpath = base_input_xpath + 'calculationSetup/cutoffs/@Kmax'
 
         ###################################################
 
@@ -883,7 +895,6 @@ def parse_xmlout_file(outxmlfile):
             write_simple_outnode(units_e[0], 'str', 'energy_units', simple_data)
         else:
             # total energy
-
             kmax_used = eval_xpath2(root, kmax_xpath)[0]
             write_simple_outnode(kmax_used, 'float', 'kmax', simple_data)
 
@@ -1102,7 +1113,16 @@ def parse_xmlout_file(outxmlfile):
             successful = False
             return {}, {}, parser_info_out, successful
         else:
-            simple_out = parse_simplexmlout_file(root, outfile_broken)
+            fleurinputversion = eval_xpath2(root, '//@fleurInputVersion')
+            # This does not work prior fleur 32 so input is <=32
+            if fleurinputversion == []:
+                fleurinputversion = 0.32
+            else:
+                fleurinputversion, suc = convert_to_float(fleurinputversion[0])
+            simple_out = parse_simplexmlout_file(root,
+                                                 outfile_broken,
+                                                 outfile_version=outfile_version,
+                                                 fleurinputversion=fleurinputversion)
             #simple_out['outputfile_path'] = outxmlfile
             # TODO: parse complex out
             complex_out = {}  # parse_xmlout_file(root)

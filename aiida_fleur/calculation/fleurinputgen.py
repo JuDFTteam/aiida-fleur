@@ -484,8 +484,15 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        #cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
-        cmdline_params = ['-explicit']
+
+        # We support different inpgen and fleur version via reading the version from the code node extras
+        code_extras = code.extras
+        code_version = code_extras.get('version', 32)
+        if int(code_version) < 32:
+            # run old inpgen
+            cmdline_params = ['-explicit']
+        else:
+            cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
