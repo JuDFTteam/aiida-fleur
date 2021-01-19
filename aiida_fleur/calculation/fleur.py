@@ -78,6 +78,7 @@ class FleurCalculation(CalcJob):
     _DOSINP_FILE_NAME = 'dosinp'
     _BAND_GNU_FILE_NAME = 'band.gnu'
     _BAND_FILE_NAME = 'bands.*'
+    _BANDDOS_FILE_NAME = 'banddos.hdf'
 
     # helper files
     _FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
@@ -396,8 +397,12 @@ class FleurCalculation(CalcJob):
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
                 mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['forces']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)

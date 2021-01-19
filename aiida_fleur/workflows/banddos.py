@@ -23,7 +23,7 @@ import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
-from aiida.orm import load_node, CalcJobNode
+from aiida.orm import load_node, CalcJobNode, FolderData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -47,7 +47,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.3.5'
+    _workflowversion = '0.3.7'
 
     _default_options = {
         'resources': {
@@ -63,6 +63,7 @@ class FleurBandDosWorkChain(WorkChain):
     _default_wf_para = {
         'fleur_runmax': 4,
         'kpath': 'auto',
+        'klistname' : 'path-2', 
         'mode': 'band',
         # 'nkpts' : 800,
         'sigma': 0.005,
@@ -92,6 +93,7 @@ class FleurBandDosWorkChain(WorkChain):
             ), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
+        spec.output('last_calc_retrieved', valid_type=FolderData)
 
         spec.exit_code(233,
                        'ERROR_INVALID_CODE_PROVIDED',
@@ -190,13 +192,13 @@ class FleurBandDosWorkChain(WorkChain):
         sigma = wf_dict.get('sigma', 0.005)
         emin = wf_dict.get('emin', -0.30)
         emax = wf_dict.get('emax', 0.80)
-
+        listname = wf_dict.get('klistname', 'path-2')
         if wf_dict.get('mode') == 'dos':
             #change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-            change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+            change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
         else:
             #change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-            change_dict = {'band': True,  'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+            change_dict = {'band': True,  'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
         fleurmode.set_inpchanges(change_dict)
 
         if wf_dict.get('kpath') != 'auto':
@@ -282,15 +284,18 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        # bandfilename = 'bands.1' # ['bands.1', 'bands.2', ...]
-
-        # bandfile =retrieved.open(bandfilename).name
-
-        # if os.path.isfile(bandfile):
-        #     self.ctx.successful = True
-        # else:
-        #     bandfile = None
-        #     self.report('!NO bandstructure file was found, something went wrong!')
+        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf']
+        
+        bandfile_res = []
+        if retrieved:
+            bandfile_res = retrieved.list_object_names()
+        
+        for name in bandfiles:
+            if name in bandfile_res:
+                self.ctx.successful = True
+        if not self.ctx.successful:
+            bandfile = None
+            self.report('!NO bandstructure file was found, something went wrong!')
 
         # # get efermi from last calculation
         scf_results = None
@@ -338,9 +343,12 @@ class FleurBandDosWorkChain(WorkChain):
                                               last_calc_retrieved=retrieved)
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
+        
+        if retrieved:
+            outdict['last_calc_retrieved'] = retrieved
 
         #TODO parse Bandstructure
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):
