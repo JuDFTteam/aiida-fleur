@@ -167,7 +167,7 @@ class FleurScfWorkChain(WorkChain):
         user_options = {}
         if 'options' in self.inputs:
             user_options = self.inputs.options.get_dict()
-
+        '''
         # extend options by code defaults given in code extras
         # Maybe do full recursive merge
         if 'queue_defaults' in fleur_extras:
@@ -176,7 +176,7 @@ class FleurScfWorkChain(WorkChain):
             defaults_queue = qd.get(queue, {})
             for key, val in defaultoptions.items():
                 defaultoptions[key] = defaults_queue.get(key, val)
-
+        '''
         if 'options' in self.inputs:
             options = user_options
         else:
