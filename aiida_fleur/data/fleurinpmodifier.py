@@ -529,6 +529,8 @@ class FleurinpModifier(object):
 
         schema = self._original._schema_file_path
         if schema is None or not os.path.isfile(schema):
+            search_paths = self._original.get_search_paths()
+            self._original.set_extra('_search_paths', search_paths)
             self._original.update_schema_path()
         schema = self._original._schema_file_path
 
