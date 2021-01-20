@@ -527,8 +527,13 @@ class FleurinpModifier(object):
         except FileNotFoundError:
             nmmplines = None
 
+        schema = self._original._schema_file_path
+        if schema is None or not os.path.isfile(schema):
+            self._original.update_schema_path()
+        schema = self._original._schema_file_path
+
         try:  # could be not found or on another computer...
-            xmlschema_tree = etree.parse(self._original._schema_file_path)
+            xmlschema_tree = etree.parse(schema)
             with_schema = True
         except BaseException:
             with_schema = False
@@ -631,7 +636,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
     new_fleurinp = original.clone()
     modification_tasks = modifications.get_dict()['tasks']
-
+    #
     xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
     xmlschema = etree.XMLSchema(xmlschema_doc)
     parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)

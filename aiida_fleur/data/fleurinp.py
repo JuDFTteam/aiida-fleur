@@ -71,6 +71,11 @@ class FleurinpData(Data):
     # needs to be improved, schema file is often after new installation not found...
     # installation with pip should always lead to a schema file in the python path, or even specific place
 
+    __version__ = '0.4.0'
+
+    # ignore machine dependent attributes in hash
+    _hash_ignored_attributes = []  #'_schema_file_path', '_search_paths']
+
     def __init__(self, **kwargs):
         """
         Initialize a FleurinpData object set the files given
@@ -84,6 +89,20 @@ class FleurinpData(Data):
         node = kwargs.pop('node', None)
         super().__init__(**kwargs)
 
+        search_paths = self.get_search_paths()
+        self.set_extra('_has_schema', False)
+        self.set_extra('_schema_file_path', None)
+        self.set_extra('_search_paths', search_paths)
+        if files:
+            if node:
+                self.set_files(files, node=node)
+            else:
+                self.set_files(files)
+
+    def get_search_paths(self):
+        """
+        return a lists of paths to search for schema files
+        """
         search_paths = []
         ifolders = get_internal_search_paths()
         ischemas = get_schema_paths()
@@ -103,52 +122,42 @@ class FleurinpData(Data):
         for path in pythonpath[:]:
             search_paths.append(path)
 
-        self.set_attribute('_has_schema', False)
-        self.set_attribute('_schema_file_path', None)
-        self.set_attribute('_search_paths', search_paths)
-        if files:
-            if node:
-                self.set_files(files, node=node)
-            else:
-                self.set_files(files)
-
-    # ignore machine dependent attributes in hash
-    _hash_ignored_attributes = ['_schema_file_path', '_search_paths']
+        return search_paths
 
     @property
     def _has_schema(self):
         """
         Boolean property, which stores if a schema file is already known
         """
-        return self.get_attribute('_has_schema')
+        return self.get_extra('_has_schema', False)
 
     @property
     def _schema_file_path(self):
         """
         A string, which stores the absolute path to the schemafile found
         """
-        return self.get_attribute('_schema_file_path')
+        return self.get_extra('_schema_file_path', None)
 
     @property
     def _search_paths(self):
         """
         A string, which stores the paths to search for  schemafiles
         """
-        return self.get_attribute('_search_paths')
+        return self.get_extra('_search_paths', [])
 
     @_has_schema.setter
     def _has_schema(self, boolean):
         """
         Setter for has_schema
         """
-        self.set_attribute('_has_schema', boolean)
+        self.set_extra('_has_schema', boolean)
 
     @_schema_file_path.setter
     def _schema_file_path(self, schemapath):
         """
         Setter for the schema file path
         """
-        self.set_attribute('_schema_file_path', schemapath)
+        self.set_extra('_schema_file_path', schemapath)
 
     # files
     @property
@@ -279,8 +288,8 @@ class FleurinpData(Data):
                             for version_number in schema_version_numbers:
                                 if version_number == inp_version_number:
                                     # we found the right schemafile for the current inp.xml
-                                    self.set_attribute('_schema_file_path', schemafile_path)
-                                    self.set_attribute('_has_schema', True)
+                                    self.set_extra('_schema_file_path', schemafile_path)
+                                    self.set_extra('_has_schema', True)
                                     return schemafile_paths, True
 
         return schemafile_paths, False
@@ -409,6 +418,28 @@ class FleurinpData(Data):
             # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
+    def update_schema_path(self):
+        """
+        Search again for version number in inp.xml and for schema files matching it.
+        will update the keys in the extras
+        """
+        # get input file version number
+        inp_version_number = None
+        lines = self.get_content(filename='inp.xml').split('\n')
+        for line in lines:
+            if re.search('fleurInputVersion', str(line)):
+                inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
+                break
+        schemafile_paths, found = self.find_schema(inp_version_number)
+        if not found:
+            err_msg = ('No XML schema file (.xsd) with matching version number {} '
+                       'to the inp.xml file was found. I have looked here: {} '
+                       'and have found only these schema files for Fleur: {}. '
+                       'I need this file to validate your input and to know the structure '
+                       'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
+                                                                    schemafile_paths))
+            raise InputValidationError(err_msg)
+
     def _set_inp_dict(self):
         """
         Sets the inputxml_dict from the ``inp.xml`` file attached to FleurinpData
@@ -495,7 +526,7 @@ class FleurinpData(Data):
         A validation method. Checks if an ``inp.xml`` file is in the FleurinpData.
         """
         #from aiida.common.exceptions import ValidationError
-
+        # check if schema file path exists.
         super()._validate()
 
         if 'inp.xml' in self.files:
@@ -746,6 +777,20 @@ class FleurinpData(Data):
         # label='self.structure'
         # return {label : struc}
         return struc
+
+    def clone(self):
+        """
+        Override clone method.
+        returns a new fleurinpdata object
+        """
+        new = super().clone()
+        search_paths = new.get_search_paths()
+        new.set_extra('_search_paths', search_paths)
+        schema = new._schema_file_path
+        if schema is None or not os.path.isfile(schema):
+            new.update_schema_path()
+
+        return new
 
     @cf
     def get_structuredata(self):
