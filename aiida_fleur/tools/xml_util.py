@@ -544,7 +544,7 @@ def replace_tag(xmltree, xpath, newelement):
     return xmltree
 
 
-def get_inpgen_paranode_from_xml(inpxmlfile):
+def get_inpgen_paranode_from_xml(inpxmlfile, inpgen_ready=True, write_ids=True):
     """
     This routine returns an AiiDA Parameter Data type produced from the inp.xml
     file, which can be used by inpgen.
@@ -552,11 +552,11 @@ def get_inpgen_paranode_from_xml(inpxmlfile):
     :return: ParameterData node
     """
     from aiida.orm import Dict
-    para_dict = get_inpgen_para_from_xml(inpxmlfile)
+    para_dict = get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=inpgen_ready, write_ids=write_ids)
     return Dict(dict=para_dict)
 
 
-def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
+def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True, write_ids=True):
     """
     This routine returns an python dictionary produced from the inp.xml
     file, which can be used as a calc_parameters node by inpgen.
@@ -648,11 +648,19 @@ def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
 
     # &atoms
     species_list = eval_xpath2(root, species_xpath)
+    species_several = {}
+    # first we see if there are several species with the same atomic number
+    for i, species in enumerate(species_list):
+        atom_z = convert_to_int(eval_xpath(species, atom_z_xpath), suc_return=False)
+        species_several[atom_z] = species_several.get(atom_z, 0) + 1
 
+    species_count = {}
     for i, species in enumerate(species_list):
         atom_dict = {}
         atoms_name = 'atom{}'.format(i)
         atom_z = convert_to_int(eval_xpath(species, atom_z_xpath), suc_return=False)
+        species_count[atom_z] = species_count.get(atom_z, 0) + 1
+        atom_id = '{}.{}'.format(atom_z, species_count[atom_z])
         atom_rmt = convert_to_float(eval_xpath(species, atom_rmt_xpath), suc_return=False)
         atom_dx = convert_to_float(eval_xpath(species, atom_dx_xpath), suc_return=False)
         atom_jri = convert_to_int(eval_xpath(species, atom_jri_xpath), suc_return=False)
@@ -674,7 +682,9 @@ def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True):
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-
+        if write_ids:
+            if species_several[atom_z] > 1:
+                atom_dict = set_dict_or_not(atom_dict, 'id', atom_id)
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:

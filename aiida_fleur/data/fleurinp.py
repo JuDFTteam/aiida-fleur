@@ -960,7 +960,7 @@ class FleurinpData(Data):
 
         return self.get_kpointsdata_ncf()
 
-    def get_parameterdata_ncf(self):
+    def get_parameterdata_ncf(self, inpgen_ready=True, write_ids=True):
         """
         This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
         file. This node can be used for inpgen as `calc_parameters`.
@@ -976,7 +976,9 @@ class FleurinpData(Data):
 
         # read in inpxml
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
-            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile))
+            new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile),
+                                                          inpgen_ready=inpgen_ready,
+                                                          write_ids=write_ids)
         return new_parameters
 
     # Is there a way to give self to calcfunctions?
