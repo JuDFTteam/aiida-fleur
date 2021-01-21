@@ -161,7 +161,7 @@ class FleurinpModifier(object):
             return fleurinp_tree_copy
 
         def shift_value_species_label1(fleurinp_tree_copy, schema_dict, label, att_name, value, mode):
-            fleurinp_tree_copy = shift_value_species_label(fleurinp_tree_copy, label, att_name, value, mode)
+            fleurinp_tree_copy = shift_value_species_label(fleurinp_tree_copy, schema_dict, label, att_name, value, mode)
             return fleurinp_tree_copy
 
         def set_nkpts1(fleurinp_tree_copy, schema_dict, count, gamma):
