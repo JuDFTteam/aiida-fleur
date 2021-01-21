@@ -309,28 +309,6 @@ class FleurinpData(Data):
             # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
 
-    def update_schema_path(self):
-        """
-        Search again for version number in inp.xml and for schema files matching it.
-        will update the keys in the extras
-        """
-        # get input file version number
-        inp_version_number = None
-        lines = self.get_content(filename='inp.xml').split('\n')
-        for line in lines:
-            if re.search('fleurInputVersion', str(line)):
-                inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
-                break
-        schemafile_paths, found = self.find_schema(inp_version_number)
-        if not found:
-            err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                       'to the inp.xml file was found. I have looked here: {} '
-                       'and have found only these schema files for Fleur: {}. '
-                       'I need this file to validate your input and to know the structure '
-                       'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                    schemafile_paths))
-            raise InputValidationError(err_msg)
-
     def _set_inp_dict(self):
         """
         Sets the inputxml_dict from the ``inp.xml`` file attached to FleurinpData
@@ -363,8 +341,8 @@ class FleurinpData(Data):
         except (ValueError, FileNotFoundError) as exc:
             raise InputValidationError from exc
 
-        self.set_attribute('_has_schema', True)
-        self.set_attribute('_parser_info', parser_info)
+        self.set_extra('_has_schema', True)
+        self.set_extra('_parser_info', parser_info)
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
@@ -679,20 +657,6 @@ class FleurinpData(Data):
         # label='self.structure'
         # return {label : struc}
         return struc
-
-    def clone(self):
-        """
-        Override clone method.
-        returns a new fleurinpdata object
-        """
-        new = super().clone()
-        search_paths = new.get_search_paths()
-        new.set_extra('_search_paths', search_paths)
-        schema = new._schema_file_path
-        if schema is None or not os.path.isfile(schema):
-            new.update_schema_path()
-
-        return new
 
     @cf
     def get_structuredata(self):
