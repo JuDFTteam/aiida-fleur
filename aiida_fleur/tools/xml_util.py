@@ -544,7 +544,7 @@ def replace_tag(xmltree, xpath, newelement):
     return xmltree
 
 
-def get_inpgen_paranode_from_xml(inpxmlfile, schema_dict):
+def get_inpgen_paranode_from_xml(inpxmlfile, schema_dict, inpgen_ready=True, write_ids=True):
     """
     This routine returns an AiiDA Parameter Data type produced from the inp.xml
     file, which can be used by inpgen.
@@ -552,11 +552,11 @@ def get_inpgen_paranode_from_xml(inpxmlfile, schema_dict):
     :return: ParameterData node
     """
     from aiida.orm import Dict
-    para_dict = get_inpgen_para_from_xml(inpxmlfile, schema_dict)
+    para_dict = get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=inpgen_ready, write_ids=write_ids)
     return Dict(dict=para_dict)
 
 
-def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True):
+def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True, write_ids=True):
     """
     This routine returns an python dictionary produced from the inp.xml
     file, which can be used as a calc_parameters node by inpgen.
@@ -618,11 +618,20 @@ def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True):
 
     # &atoms
     species_list = eval_simple_xpath(root, schema_dict, 'species', list_return=True)
+    species_list = eval_xpath2(root, species_xpath)
+    species_several = {}
+    # first we see if there are several species with the same atomic number
+    for i, species in enumerate(species_list):
+        atom_z = evaluate_attribute(species, schema_dict, 'atomicNumber', constants)
+        species_several[atom_z] = species_several.get(atom_z, 0) + 1
 
+    species_count = {}
     for i, species in enumerate(species_list):
         atom_dict = {}
         atoms_name = 'atom{}'.format(i)
         atom_z = evaluate_attribute(species, schema_dict, 'atomicNumber', constants)
+        species_count[atom_z] = species_count.get(atom_z, 0) + 1
+        atom_id = '{}.{}'.format(atom_z, species_count[atom_z])
         atom_rmt = evaluate_attribute(species, schema_dict, 'radius', constants)
         atom_dx = evaluate_attribute(species, schema_dict, 'logIncrement', constants)
         atom_jri = evaluate_attribute(species, schema_dict, 'gridPoints', constants)
@@ -644,7 +653,9 @@ def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True):
         atom_dict = set_dict_or_not(atom_dict, 'jri', atom_jri)
         atom_dict = set_dict_or_not(atom_dict, 'lmax', atom_lmax)
         atom_dict = set_dict_or_not(atom_dict, 'lnonsph', atom_lnosph)
-
+        if write_ids:
+            if species_several[atom_z] > 1:
+                atom_dict = set_dict_or_not(atom_dict, 'id', atom_id)
         atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:

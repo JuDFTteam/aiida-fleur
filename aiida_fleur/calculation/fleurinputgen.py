@@ -346,6 +346,9 @@ class FleurinputgenCalculation(CalcJob):
                 site_symbol = kind.symbols[0]
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
+                if atomic_number == 0:  # 'X' element for vacancies
+                    natoms = natoms - 1
+                    continue
 
                 # per default we use relative coordinates in Fleur
                 # we have to scale back to atomic units from angstrom
