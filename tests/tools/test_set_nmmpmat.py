@@ -101,14 +101,14 @@ def test_validate_nmmpmat(inpxml_etree):
     validate_nmmpmat(etree, nmmp_lines_orig)  #should not raise
 
     #Test number of lines error
-    nmmp_lines = nmmp_lines_orig
+    nmmp_lines = nmmp_lines_orig.copy()
     nmmp_lines.append('0.0')
     with pytest.raises(ValueError):
         validate_nmmpmat(etree, nmmp_lines)
     nmmp_lines.remove('0.0')
 
     #Test invalid diagonal element error
-    nmmp_lines = nmmp_lines_orig
+    nmmp_lines = nmmp_lines_orig.copy()
     nmmp_lines = set_nmmpmat(etree,
                              nmmp_lines,
                              schema_dict,
@@ -127,7 +127,7 @@ def test_validate_nmmpmat(inpxml_etree):
         validate_nmmpmat(etree, nmmp_lines)
 
     #Test invalid outsied value error
-    nmmp_lines = nmmp_lines_orig
+    nmmp_lines = nmmp_lines_orig.copy()
     nmmp_lines[
         0] = '     0.0000000000000     9.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000'
 
