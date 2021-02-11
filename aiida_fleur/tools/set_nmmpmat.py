@@ -55,8 +55,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, 
     all_species = eval_xpath2(fleurinp_tree_copy, species_xpath)
 
     #Get number of spins (TODO for develop version also read l_mtnocoPot)
-    mag_elem = eval_xpath(fleurinp_tree_copy, spins_xpath)
-    nspins = convert_to_int(get_xml_attribute(mag_elem, 'jspins'), suc_return=False)
+    nspins = convert_to_int(eval_xpath(fleurinp_tree_copy, spins_xpath), suc_return=False)
 
     if spin > nspins:
         raise ValueError(f'Invalid input: spin {spin} requested, but input has only {nspins} spins')

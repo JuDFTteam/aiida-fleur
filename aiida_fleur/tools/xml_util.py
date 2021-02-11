@@ -618,7 +618,6 @@ def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True, write_i
 
     # &atoms
     species_list = eval_simple_xpath(root, schema_dict, 'species', list_return=True)
-    species_list = eval_xpath2(root, species_xpath)
     species_several = {}
     # first we see if there are several species with the same atomic number
     for i, species in enumerate(species_list):
@@ -812,6 +811,8 @@ def shift_value_species_label(fleurinp_tree_copy, schema_dict, at_label, attr_na
     atomgroup_base_path = get_tag_xpath(schema_dict, 'atomGroup')
     species_base_path = get_tag_xpath(schema_dict, 'species')
     attr_base_path = get_attrib_xpath(schema_dict, attr_name, contains='species')
+    attr_base_path, attr_name = tuple(attr_base_path.split('/@'))
+
 
     possible_types = schema_dict['attrib_types'][attr_name]
 
@@ -889,6 +890,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, schema_dict, attributedict, at_l
     ``force`` and ``nocoParams`` keys are supported.
     To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
     """
+    from masci_tools.util.schema_dict_util import eval_simple_xpath
 
     if at_label == 'all':
         fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
@@ -900,7 +902,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, schema_dict, attributedict, at_l
 
     specie = ''
     at_label = '{: >20}'.format(at_label)
-    all_groups = eval_xpath2(fleurinp_tree_copy, '/fleurInput/atomGroups/atomGroup')
+    all_groups = eval_simple_xpath(fleurinp_tree_copy, schema_dict, 'atomGroup', list_return=True)
 
     species_to_set = []
 
@@ -914,7 +916,6 @@ def change_atomgr_att_label(fleurinp_tree_copy, schema_dict, attributedict, at_l
                 species_to_set.append(get_xml_attribute(group, 'species'))
 
     species_to_set = list(set(species_to_set))
-
     for specie in species_to_set:
         fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
                                                schema_dict,
@@ -1038,6 +1039,7 @@ def shift_value(fleurinp_tree_copy, schema_dict, change_dict, mode='abs', path_s
             key_spec['exclude'].append('other')
 
         key_xpath = get_attrib_xpath(schema_dict, key, **key_spec)
+        key_xpath, key = tuple(key_xpath.split('/@'))
 
         old_val = eval_xpath2(fleurinp_tree_copy, '/@'.join([key_xpath, key]))
 
@@ -1303,6 +1305,7 @@ def update_fleurinput_xmltree(inp_file_xmltree, schema_dict, fleur_change_dic, p
         if key == 'xcFunctional':
             key = 'name'
 
+
         if key not in schema_dict['attrib_types'] and key not in schema_dict['simple_elements']:
             raise InputValidationError(f"You try to set the key:'{key}' to : '{change_value}', but the key is unknown"
                                        ' to the fleur plug-in')
@@ -1322,6 +1325,7 @@ def update_fleurinput_xmltree(inp_file_xmltree, schema_dict, fleur_change_dic, p
 
         try:
             key_xpath = get_attrib_xpath(schema_dict, key, **key_spec)
+            key_xpath, key = tuple(key_xpath.split('/@'))
         except ValueError as exc:
             raise InputValidationError(exc) from exc
 
@@ -1375,13 +1379,17 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
     tag_info = schema_dict['tag_info'][base_xpath]
 
     for key, val in attributedict.items():
-        if key not in tag_info['order'] and key not in tag_info['attribs']:
+
+        if key not in tag_info['complex']|tag_info['simple']|tag_info['attribs']:
             raise InputValidationError(
                 f"The key {key} is not expected for this version of the input for the {base_xpath.split('/')[-1]} tag. "
-                f"Allowed tags are: {tag_info['order']}"
-                f"Allowed attributes are: {tag_info['attribs']}")
+                f"Allowed tags are: {sorted((tag_info['complex']|tag_info['simple']).original_case.values())}"
+                f"Allowed attributes are: {sorted(tag_info['attribs'].original_case.values())}")
+
+        key = (tag_info['complex']|tag_info['simple']|tag_info['attribs']).original_case[key]
 
         xpath_key = f'{xpath}/{key}'
+        base_xpath_key = f'{base_xpath}/{key}'
         if key in tag_info['attribs']:
             xml_set_all_attribv(fleurinp_tree_copy, xpath, key, val)
         elif key in tag_info['text']:
@@ -1394,6 +1402,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                             place_index=tag_info['order'].index(key),
                             tag_order=tag_info['order'])
             for attrib, value in val.items():
+                attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value)
         elif key in tag_info['simple'] and key in tag_info['several']:  #multiple tags but simple (i.e. only attributes)
             # policy: we DELETE all existing tags, and create new ones from the given parameters.
@@ -1402,7 +1411,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                 parent = tag.getparent()
                 parent.remove(tag)
 
-            # there can be multible tags, so I expect either one or a list
+            # there can be multiple tags, so I expect either one or a list
             if isinstance(val, dict):
                 create_tag(fleurinp_tree_copy,
                            xpath,
@@ -1410,6 +1419,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                            place_index=tag_info['order'].index(key),
                            tag_order=tag_info['order'])
                 for attrib, value in val.items():
+                    attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                     xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value, create=True)
             else:  # I expect a list of dicts
                 tags_need = len(val)
@@ -1421,6 +1431,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                                tag_order=tag_info['order'])
                 for i, tagdict in enumerate(val):
                     for attrib, value in tagdict.items():
+                        attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                         sets = []
                         for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_key)) // tags_need):
                             sets.append(k * tags_need + i)
@@ -1435,7 +1446,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                         place_index=tag_info['order'].index(key),
                         tag_order=tag_info['order'])
 
-            fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}', xpath_key, val)
+            fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath_key, xpath_key, val)
 
         else:
 
@@ -1450,7 +1461,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                            key,
                            place_index=tag_info['order'].index(key),
                            tag_order=tag_info['order'])
-                fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}', xpath_key,
+                fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath_key, xpath_key,
                                                      val)
             else:
                 tags_need = len(val)
@@ -1462,7 +1473,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                                tag_order=tag_info['order'])
                 for i, tagdict in enumerate(val):
                     for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_key)) // tags_need):
-                        fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, f'{base_xpath}/{key}',
+                        fleurinp_tree_copy = set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath_key,
                                                              f'{xpath_key}[{k*tags_need+i}]', tagdict)
     return fleurinp_tree_copy
 

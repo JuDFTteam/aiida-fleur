@@ -360,7 +360,7 @@
    </atomSpecies>
    <atomGroups>
       <atomGroup species="Fe-1">
-         <filmPos label="                   1">.0000000000 .0000000000 -.9964250044</filmPos>
+         <filmPos label="                 222">.0000000000 .0000000000 -.9964250044</filmPos>
          <force calculate="T" relaxXYZ="TTT"/>
          <nocoParams  alpha=".00000000" beta=".00000000"/>
       </atomGroup>

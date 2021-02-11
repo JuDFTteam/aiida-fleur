@@ -32,7 +32,7 @@
         "pytest-cov >= 2.5.0",
         "numpy>=1.16.4,<1.20.0",
         "sympy",
-        "masci-tools>=0.4.0-dev2",
+        "masci-tools==0.4.0-dev5",
         "future",
         "ase",
         "pymatgen",
