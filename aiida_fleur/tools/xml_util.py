@@ -1382,7 +1382,7 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
 
         if key not in tag_info['complex']|tag_info['simple']|tag_info['attribs']:
             raise InputValidationError(
-                f"The key {key} is not expected for this version of the input for the {base_xpath.split('/')[-1]} tag. "
+                f"The key '{key}' is not expected for this version of the input for the '{base_xpath.split('/')[-1]}' tag. "
                 f"Allowed tags are: {sorted((tag_info['complex']|tag_info['simple']).original_case.values())}"
                 f"Allowed attributes are: {sorted(tag_info['attribs'].original_case.values())}")
 
@@ -1402,6 +1402,10 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                             place_index=tag_info['order'].index(key),
                             tag_order=tag_info['order'])
             for attrib, value in val.items():
+                if attrib not in schema_dict['tag_info'][base_xpath_key]['attribs']:
+                    raise InputValidationError(
+                        f"The key '{attrib}' is not expected for this version of the input for the '{key}' tag. "
+                        f"Allowed attributes are: {sorted(schema_dict['tag_info'][base_xpath_key]['attribs'].original_case.values())}")
                 attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value)
         elif key in tag_info['simple'] and key in tag_info['several']:  #multiple tags but simple (i.e. only attributes)
@@ -1419,6 +1423,10 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                            place_index=tag_info['order'].index(key),
                            tag_order=tag_info['order'])
                 for attrib, value in val.items():
+                    if attrib not in schema_dict['tag_info'][base_xpath_key]['attribs']:
+                        raise InputValidationError(
+                            f"The key '{attrib}' is not expected for this version of the input for the '{key}' tag. "
+                        f"Allowed attributes are: {sorted(schema_dict['tag_info'][base_xpath_key]['attribs'].original_case.values())}")
                     attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                     xml_set_all_attribv(fleurinp_tree_copy, xpath_key, attrib, value, create=True)
             else:  # I expect a list of dicts
@@ -1431,6 +1439,10 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
                                tag_order=tag_info['order'])
                 for i, tagdict in enumerate(val):
                     for attrib, value in tagdict.items():
+                        if attrib not in schema_dict['tag_info'][base_xpath_key]['attribs']:
+                            raise InputValidationError(
+                                f"The key '{attrib}' is not expected for this version of the input for the '{key}' tag. "
+                                f"Allowed attributes are: {sorted(schema_dict['tag_info'][base_xpath_key]['attribs'].original_case.values())}")
                         attrib = schema_dict['tag_info'][base_xpath_key]['attribs'].original_case[attrib]
                         sets = []
                         for k in range(len(eval_xpath2(fleurinp_tree_copy, xpath_key)) // tags_need):
