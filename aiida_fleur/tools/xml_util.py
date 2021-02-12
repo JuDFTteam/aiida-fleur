@@ -795,7 +795,7 @@ def set_species(fleurinp_tree_copy, schema_dict, species_name, attributedict, cr
     return fleurinp_tree_copy
 
 
-def shift_value_species_label(fleurinp_tree_copy, schema_dict, at_label, attr_name, value_given, mode='abs'):
+def shift_value_species_label(fleurinp_tree_copy, schema_dict, at_label, attr_name, value_given, mode='abs', contains=None, not_contains=None, exclude=None):
     """
     Shifts value of a specie by label
     if at_label contains 'all' then applies to all species
@@ -809,9 +809,16 @@ def shift_value_species_label(fleurinp_tree_copy, schema_dict, at_label, attr_na
     from masci_tools.util.schema_dict_util import get_tag_xpath, get_attrib_xpath
     import numpy as np
 
+    if contains is not None:
+        if not isinstance(contains, list):
+            contains = [contains]
+        contains.append('species')
+    else:
+        contains = 'species'
+
     atomgroup_base_path = get_tag_xpath(schema_dict, 'atomGroup')
     species_base_path = get_tag_xpath(schema_dict, 'species')
-    attr_base_path = get_attrib_xpath(schema_dict, attr_name, contains='species')
+    attr_base_path = get_attrib_xpath(schema_dict, attr_name, contains=contains, not_contains=not_contains, exclude=exclude)
     attr_base_path, attr_name = tuple(attr_base_path.split('/@'))
 
     possible_types = schema_dict['attrib_types'][attr_name]

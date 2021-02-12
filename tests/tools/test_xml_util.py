@@ -238,7 +238,7 @@ class TestSetSpecies:
     paths = [
         'mtSphere/@radius', 'atomicCutoffs/@lmax', 'energyParameters/@s', 'electronConfig/coreConfig',
         'electronConfig/stateOccupation/@state', 'electronConfig/stateOccupation/@state', 'special/@socscale',
-        'ldaU/@test_att', 'ldaU/@test_att', 'lo/@test_att', 'lo/@test_att'
+        'ldaU/@U', 'ldaU/@U', 'lo/@n', 'lo/@n'
     ]
 
     attdicts = [{
@@ -277,23 +277,23 @@ class TestSetSpecies:
         }
     }, {
         'ldaU': {
-            'test_att': 2.0
+            'U': 2.0
         }
     }, {
         'ldaU': [{
-            'test_att': 2.0
+            'U': 2.0
         }, {
-            'test_att': 23.0
+            'U': 23.0
         }]
     }, {
         'lo': {
-            'test_att': 2.0
+            'n': 2.0
         }
     }, {
         'lo': [{
-            'test_att': 2.0
+            'n': 2.0
         }, {
-            'test_att': 33.0
+            'n': 33.0
         }]
     }
                 #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
@@ -693,6 +693,8 @@ class TestShiftSpeciesLabel:
         'energyParameters', 'energyParameters'
     ]
 
+    path_spec = {'energyParameters': {'contains': 'energyParameters'}}
+
     @pytest.mark.parametrize('att_name,tag', zip(attr_names, tags))
     def test_shift_species_label(self, inpxml_etree, att_name, tag):
         from aiida_fleur.tools.xml_util import shift_value_species_label, eval_xpath2
@@ -701,7 +703,9 @@ class TestShiftSpeciesLabel:
         path = '/fleurInput/atomSpecies/species[@name = "Fe-1"]/' + tag + '/@' + att_name
         old_result = eval_xpath2(etree, path)[0]
 
-        shift_value_species_label(etree, schema_dict, '                 222', att_name, 3, mode='abs')
+        path_spec = self.path_spec.get(tag, {})
+
+        shift_value_species_label(etree, schema_dict, '                 222', att_name, 3, mode='abs', **path_spec)
         result = eval_xpath2(etree, path)[0]
 
         assert math.isclose(float(result) - float(old_result), 3)
@@ -734,7 +738,9 @@ class TestShiftSpeciesLabel:
         path = '/fleurInput/atomSpecies/species/' + tag + '/@' + att_name
         old_result = np.array(eval_xpath2(etree, path)).astype('float')
 
-        shift_value_species_label(etree, schema_dict, 'all', att_name, 3, mode='abs')
+        path_spec = self.path_spec.get(tag, {})
+
+        shift_value_species_label(etree, schema_dict, 'all', att_name, 3, mode='abs', **path_spec)
         result = np.array(eval_xpath2(etree, path)).astype('float')
 
         assert np.all(np.isclose(old_result + 3, result))
@@ -747,7 +753,9 @@ class TestShiftSpeciesLabel:
         path = '/fleurInput/atomSpecies/species/' + tag + '/@' + att_name
         old_result = np.array(eval_xpath2(etree, path)).astype('float')
 
-        shift_value_species_label(etree, schema_dict, 'all', att_name, 2, mode='rel')
+        path_spec = self.path_spec.get(tag, {})
+
+        shift_value_species_label(etree, schema_dict, 'all', att_name, 2, mode='rel', **path_spec)
         result = np.array(eval_xpath2(etree, path)).astype('float')
 
         assert np.all(np.isclose(old_result * 2, result))
@@ -826,8 +834,3 @@ def test_get_xml_attribute(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_xml_attribute
     return False
 
-
-# get_inpxml_file_structure
-# IMPORTANT: Here we need thats that tell us when the plugin has to be maintained, i.e Know thing in the inp schema where changed
-# Is there a way to test for not yet know attributes? i.e if the plugin is complete? Back compatible?
-# I.e make for each Fleur schema file, complete inp.xml file version a test if the attributes exists.
