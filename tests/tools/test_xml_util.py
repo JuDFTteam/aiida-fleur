@@ -484,52 +484,116 @@ class TestChangeAtomgrAtt:
 
 class TestSetInpchanges:
     """Tests group for set_inpchanges method"""
-    from aiida_fleur.tools.xml_util import get_inpxml_file_structure
+    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
 
-    xml_structure = get_inpxml_file_structure()
+    schema_dict = load_inpschema('0.33')
 
-    paths = xml_structure[12]
+    skip_paths = {
+        'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
+        'juPhon', 'spinSpiralQPointMesh', 'forceTheorem', 'bulkLattice', 'qsc'
+    }
 
-    @pytest.mark.parametrize('name,path', paths.items())
+    @pytest.mark.parametrize('name,path', schema_dict['unique_attribs'].items())
     def test_set_inpchanges(self, inpxml_etree, name, path):
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
-        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
+        etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        skip_paths = ['atomSpecies', 'atomGroups', 'bzIntegration', 'kPointCount', 'bulkLattice', 'bravaisMatrix', 'a1']
-
-        if any(x in path for x in skip_paths):
+        if any([x in path for x in self.skip_paths]):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
-        elif name in self.xml_structure[11].keys():
-            set_inpchanges(etree, schema_dict, change_dict={name: 'test'})
-            if name not in ['relPos', 'absPos']:
-                result = eval_xpath2(etree, path)[0]
-                assert result.text == 'test'
-        elif name in self.xml_structure[0]:
-            set_inpchanges(etree, schema_dict, change_dict={name: 'T'})
-            result = eval_xpath2(etree, path + '/@{}'.format(name))
-            assert result[0] == 'T'
-        elif name in self.xml_structure[4] or name in self.xml_structure[3]:
-            set_inpchanges(etree, schema_dict, change_dict={name: 33})
-            result = eval_xpath2(etree, path + '/@{}'.format(name))
-            assert float(result[0]) == 33
-        elif name in self.xml_structure[5]:
-            set_inpchanges(etree, schema_dict, change_dict={name: 'test'})
-            if name == 'xcFunctional':
-                result = eval_xpath2(etree, path + '/@{}'.format('name'))
-            else:
-                result = eval_xpath2(etree, path + '/@{}'.format(name))
-            assert result[0] == 'test'
+
+        if name == 'xcFunctional':
+            name = 'name'
+
+        text_attrib = False
+        if name in self.schema_dict['attrib_types']:
+            possible_types = self.schema_dict['attrib_types'][name]
         else:
-            raise BaseException('A switch that you want to set is not one of the supported types.'
-                                'Or you made a mistake during new switch registration')
+            text_attrib = True
+
+        if text_attrib:
+            set_inpchanges(etree, self.schema_dict, change_dict={name: 'test'})
+            result = eval_xpath2(etree, path)[0]
+            assert result.text == 'test'
+        else:
+            if 'switch' in possible_types:
+                set_inpchanges(etree, self.schema_dict, change_dict={name: 'T'})
+                result = eval_xpath2(etree, path)
+                assert result[0] == 'T'
+            elif 'float' in possible_types or 'float_expression' in possible_types:
+                set_inpchanges(etree, self.schema_dict, change_dict={name: 33.0})
+                result = eval_xpath2(etree, path)
+                assert float(result[0]) == 33
+            elif 'int' in possible_types:
+                set_inpchanges(etree, self.schema_dict, change_dict={name: 33})
+                result = eval_xpath2(etree, path)
+                assert int(result[0]) == 33
+            else:
+                set_inpchanges(etree, self.schema_dict, change_dict={name: 'test'})
+                result = eval_xpath2(etree, path)
+                assert result[0] == 'test'
 
     def test_set_inpchanges_fail(self, inpxml_etree):
-        from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
+        from aiida_fleur.tools.xml_util import set_inpchanges
         from aiida.common.exceptions import InputValidationError
 
-        etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
+        etree = inpxml_etree(TEST_INP_XML_PATH)
         with pytest.raises(InputValidationError):
-            set_inpchanges(etree, schema_dict, change_dict={'not_existing': 'test'})
+            set_inpchanges(etree, self.schema_dict, change_dict={'not_existing': 'test'})
+
+    def test_set_inpchanges_path_spec_under_specified(self, inpxml_etree):
+        from aiida_fleur.tools.xml_util import set_inpchanges
+        from aiida.common.exceptions import InputValidationError
+
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        with pytest.raises(InputValidationError):
+            set_inpchanges(etree, self.schema_dict, change_dict={'spinf': 10.0, 'phi': 2.14})
+
+    def test_set_inpchanges_path_spec(self, inpxml_etree):
+        from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
+
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        set_inpchanges(etree,
+                       self.schema_dict,
+                       change_dict={
+                           'spinf': 10.0,
+                           'phi': 2.14
+                       },
+                       path_spec={
+                           'spinf': {
+                               'contains': 'scfLoop'
+                           },
+                           'phi': {
+                               'not_contains': 'forceTheorem'
+                           }
+                       })
+
+        result_spinf = eval_xpath2(etree, '/fleurInput/calculationSetup/scfLoop/@spinf')
+        assert float(result_spinf[0]) == 10.0
+
+        result_phi = eval_xpath2(etree, '/fleurInput/calculationSetup/soc/@phi')
+        assert float(result_phi[0]) == 2.14
+
+    def test_set_inpchanges_path_spec_over_specified(self, inpxml_etree):
+        from aiida_fleur.tools.xml_util import set_inpchanges
+        from aiida.common.exceptions import InputValidationError
+
+        etree = inpxml_etree(TEST_INP_XML_PATH)
+        with pytest.raises(InputValidationError):
+            set_inpchanges(etree,
+                           self.schema_dict,
+                           change_dict={
+                               'spinf': 10.0,
+                               'phi': 2.14
+                           },
+                           path_spec={
+                               'spinf': {
+                                   'contains': 'scfLoop'
+                               },
+                               'phi': {
+                                   'not_contains': 'forceTheorem',
+                                   'contains': 'atom'
+                               }
+                           })
 
 
 class TestShiftValue:

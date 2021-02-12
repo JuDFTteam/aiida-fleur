@@ -134,9 +134,9 @@ def test_validate_nmmpmat(inpxml_etree):
     with pytest.raises(ValueError):
         validate_nmmpmat(etree, nmmp_lines)
 
+
 def prepare_for_file_dump(file_lines):
     """
     Join lines together with linebreaks and remove negative zeros
     """
     return '\n'.join([line.replace('-0.0000000000000', ' 0.0000000000000') for line in file_lines])
-
