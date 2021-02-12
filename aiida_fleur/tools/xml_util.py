@@ -1370,17 +1370,19 @@ def set_complex_tag(fleurinp_tree_copy, schema_dict, base_xpath, xpath, attribut
     Recursive Function to correctly set tags/attributes for a given tag.
     Goes through the attributedict and decides based on the schema_dict, how the corresponding
     key has to be handled.
+
     Supports:
-        attributes (no type checking)
-        tags with text only
-        simple tags, i.e. only attributes (can be optional single/multiple)
-        complex tags, will recursively create/modify them
+
+        - attributes (no type checking)
+        - tags with text only
+        - simple tags, i.e. only attributes (can be optional single/multiple)
+        - complex tags, will recursively create/modify them
 
     :param fleurinp_tree_copy: xml etree of the inp.xml
     :param schema_dict: dict, represents the inputschema
     :param base_xpath: string, xpath of the tag to set without complex syntax (to get info from the schema_dict)
     :param xpath: string, actual xpath to use
-    ;param attributedict: dict, changes to be made
+    :param attributedict: dict, changes to be made
 
     :return fleurinp_tree_copy: xml etree of the new inp.xml
     """
