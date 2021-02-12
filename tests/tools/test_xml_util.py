@@ -604,8 +604,8 @@ class TestShiftValue:
 
     skip_paths = {
         'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
-        'juPhon', 'spinSpiralQPointMesh', 'forceTheorem', 'bulkLattice', 'qsc', 'geometryOptimization', 'fermiSmearingTemp',
-        'fixed_moment', 'plotting', 'expertModes', 'maxTimeToStartIter', 'ldaHIA', 'numberPoints'
+        'juPhon', 'spinSpiralQPointMesh', 'forceTheorem', 'bulkLattice', 'qsc', 'geometryOptimization',
+        'fermiSmearingTemp', 'fixed_moment', 'plotting', 'expertModes', 'maxTimeToStartIter', 'ldaHIA', 'numberPoints'
     }
 
     attr_dict = {}
@@ -681,7 +681,7 @@ class TestShiftValue:
         with pytest.raises(ValueError, match="Mode should be 'res' "):
             shift_value(etree, schema_dict, {'jspins': 33}, mode='not_a_mode')
 
-        with pytest.raises(ValueError, match="The attrib nz has no possible paths with the current specification"):
+        with pytest.raises(ValueError, match='The attrib nz has no possible paths with the current specification'):
             shift_value(etree, schema_dict, {'nz': 333})
 
 
@@ -769,8 +769,8 @@ class TestAddNumToAtt:
 
     skip_paths = {
         'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
-        'juPhon', 'spinSpiralQPointMesh', 'forceTheorem', 'bulkLattice', 'qsc', 'geometryOptimization', 'fermiSmearingTemp',
-        'fixed_moment', 'plotting', 'expertModes', 'maxTimeToStartIter', 'ldaHIA', 'numberPoints'
+        'juPhon', 'spinSpiralQPointMesh', 'forceTheorem', 'bulkLattice', 'qsc', 'geometryOptimization',
+        'fermiSmearingTemp', 'fixed_moment', 'plotting', 'expertModes', 'maxTimeToStartIter', 'ldaHIA', 'numberPoints'
     }
 
     attr_dict = {}
@@ -783,7 +783,6 @@ class TestAddNumToAtt:
                'float_expression'  in schema_dict['attrib_types'][key]:
                 attr_dict[key] = path
                 attr_dict_float[key] = path
-
 
     @pytest.mark.parametrize('attr_name, path', attr_dict.items())
     def test_add_num_to_att(self, inpxml_etree, attr_name, path):
@@ -833,4 +832,3 @@ class TestAddNumToAtt:
 def test_get_xml_attribute(inpxml_etree):
     from aiida_fleur.tools.xml_util import get_xml_attribute
     return False
-
