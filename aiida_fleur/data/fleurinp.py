@@ -466,7 +466,7 @@ class FleurinpData(Data):
         """
         from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         # StructureData = DataFactory(‘structure’)
         # Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
@@ -513,8 +513,8 @@ class FleurinpData(Data):
         tree = self._include_files(tree)
 
         if self.inp_version is not None:
-            schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
-            if not xmlschema.validate(tree):
+            schema_dict = InputSchemaDict.fromVersion(self.inp_version)
+            if not schema_dict.xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
         else:
             print('parsing inp.xml without XMLSchema')
@@ -679,7 +679,7 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.KpointsData` node
         """
         from aiida.orm import KpointsData
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         # HINT, TODO:? in this routine, the 'cell' you might get in an other way
         # exp: StructureData.cell, but for this you have to make a structureData Node,
@@ -729,8 +729,8 @@ class FleurinpData(Data):
         tree = self._include_files(tree)
 
         if self.inp_version is not None:
-            schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
-            if not xmlschema.validate(tree):
+            schema_dict = InputSchemaDict.fromVersion(self.inp_version)
+            if not schema_dict.xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
         else:
             print('parsing inp.xml without XMLSchema')
@@ -851,13 +851,13 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
         if 'inp.xml' not in self.files:
             print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
 
-        schema_dict = load_inpschema(self.inp_version)
+        schema_dict = InputSchemaDict.fromVersion(self.inp_version)
         # read in inpxml
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
             new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile),
@@ -887,7 +887,7 @@ class FleurinpData(Data):
         :param xpath: an xpath expression
         :returns: A node list retrived using given xpath
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         if 'inp.xml' in self.files:
             parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
@@ -903,8 +903,8 @@ class FleurinpData(Data):
             tree = self._include_files(tree)
 
             if self.inp_version is not None:
-                schema_dict, xmlschema = load_inpschema(self.inp_version, schema_return=True)
-                if not xmlschema.validate(tree):
+                schema_dict = InputSchemaDict.fromVersion(self.inp_version)
+                if not schema_dict.xmlschema.validate(tree):
                     raise ValueError('Input file is not validated against the schema.')
             else:
                 print('parsing inp.xml without XMLSchema')

@@ -44,7 +44,7 @@ class FleurinpModifier(object):
         self._other_nodes = {}
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_dict, schema=None):
+    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_dict, validate_changes=False):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.
@@ -231,9 +231,9 @@ class FleurinpModifier(object):
             else:
                 workingtree = action(workingtree, *task[1:])
 
-        if schema:
+        if validate_changes:
             try:
-                schema.assertValid(clear_xml(workingtree))
+                schema_dict.xmlschema.assertValid(clear_xml(workingtree))
             except etree.DocumentInvalid as exc:
                 msg = 'Changes were not valid: {}'.format(modification_tasks)
                 #print(msg)
@@ -542,7 +542,7 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         with self._original.open(key='inp.xml') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
@@ -553,11 +553,11 @@ class FleurinpModifier(object):
         except FileNotFoundError:
             nmmplines = None
 
-        schema_dict, xmlschema = load_inpschema(self._original.inp_version, schema_return=True)
+        schema_dict = InputSchemaDict.fromVersion(self._original.inp_version)
 
         tree = self._original._include_files(tree)
 
-        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_dict, schema=xmlschema)
+        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_dict, validate_changes=True)
         return tree
 
     def show(self, display=True, validate=False):
@@ -571,7 +571,7 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         if validate:
             tree = self.validate()
@@ -580,7 +580,7 @@ class FleurinpModifier(object):
                 parser = etree.XMLParser(remove_blank_text=True, remove_comments=True)
                 tree = etree.parse(inpxmlfile, parser)
 
-            schema_dict = load_inpschema(self._original.inp_version)
+            schema_dict = InputSchemaDict.fromVersion(self._original.inp_version)
             tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks, schema_dict)
 
         if display:
@@ -653,12 +653,12 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # validate
     # save inp.xml
     # store new fleurinp (copy)
-    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
     new_fleurinp = original.clone()
     modification_tasks = modifications.get_dict()['tasks']
 
-    schema_dict, xmlschema = load_inpschema(new_fleurinp.inp_version, schema_return=True)
+    schema_dict = InputSchemaDict.fromVersion(new_fleurinp.inp_version)
 
     parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
     with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
@@ -667,7 +667,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     tree = new_fleurinp._include_files(tree)
 
     try:
-        xmlschema.assertValid(tree)
+        schema_dict.xmlschema.assertValid(tree)
     except etree.DocumentInvalid as exc:
         msg = 'Input file is not validated against the schema'
         #print(msg)

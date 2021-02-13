@@ -484,9 +484,9 @@ class TestChangeAtomgrAtt:
 
 class TestSetInpchanges:
     """Tests group for set_inpchanges method"""
-    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
-    schema_dict = load_inpschema('0.33')
+    schema_dict = InputSchemaDict.fromVersion('0.33')
 
     skip_paths = {
         'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
@@ -598,9 +598,9 @@ class TestSetInpchanges:
 
 class TestShiftValue:
     """ Test group for test_shift value function """
-    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
-    schema_dict = load_inpschema('0.33')
+    schema_dict = InputSchemaDict.fromVersion('0.33')
 
     skip_paths = {
         'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
@@ -763,9 +763,9 @@ class TestShiftSpeciesLabel:
 
 class TestAddNumToAtt:
     """ Test group for add_num_to_att function """
-    from masci_tools.io.parsers.fleur.fleur_schema import load_inpschema
+    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
-    schema_dict = load_inpschema('0.33')
+    schema_dict = InputSchemaDict.fromVersion('0.33')
 
     skip_paths = {
         'coreSpectrum', 'oneDParams', 'wannier', 'fields', 'xcParams', 'greensFunction', 'rdmft', 'ggaPrinting',
