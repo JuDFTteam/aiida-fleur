@@ -239,7 +239,7 @@ class FleurinpModifier(object):
                 #print(msg)
                 raise etree.DocumentInvalid(msg) from exc
             try:
-                validate_nmmpmat(workingtree, workingnmmp)
+                validate_nmmpmat(workingtree, workingnmmp, schema_dict)
             except ValueError as exc:
                 msg = 'Changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks)
                 #print(msg)
