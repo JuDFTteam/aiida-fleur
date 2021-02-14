@@ -88,27 +88,11 @@ class FleurinpData(Data):
         node = kwargs.pop('node', None)
         super().__init__(**kwargs)
 
-        self.set_attribute('_has_schema', False)
-        self.set_attribute('inp_version', None)
         if files:
             if node:
                 self.set_files(files, node=node)
             else:
                 self.set_files(files)
-
-    @property
-    def _has_schema(self):
-        """
-        Boolean property, which stores if a schema file is already known
-        """
-        return self.get_extra('_has_schema', False)
-
-    @_has_schema.setter
-    def _has_schema(self, boolean):
-        """
-        Setter for has_schema
-        """
-        self.set_extra('_has_schema', boolean)
 
     @property
     def _parser_info(self):
@@ -341,8 +325,7 @@ class FleurinpData(Data):
         except (ValueError, FileNotFoundError) as exc:
             raise InputValidationError from exc
 
-        self.set_extra('_has_schema', True)
-        self.set_extra('_parser_info', parser_info)
+        self._parser_info = parser_info
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
