@@ -819,6 +819,7 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     xpath_core_occ = '{}/electronConfig/stateOccupation'.format(xpath_species)
     xpath_lda_u = '{}/ldaU'.format(xpath_species)
     xpath_soc_scale = '{}/special'.format(xpath_species)
+    xpath_modInitDen = '{}/modInitDen'.format(xpath_species)
 
     # can we get this out of schema file?
     species_seq = [
@@ -950,6 +951,14 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                         tag_order=species_seq)
             for attrib, value in six.iteritems(val):
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
+        elif key == 'modInitDen':
+            eval_xpath3(fleurinp_tree_copy,
+                        xpath_modInitDen,
+                        create=True,
+                        place_index=species_seq.index('modInitDen'),
+                        tag_order=species_seq)
+            for attrib, value in six.iteritems(val):
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_modInitDen, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
 
