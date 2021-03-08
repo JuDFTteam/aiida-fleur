@@ -1186,7 +1186,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     *_, layer_occupancies = get_layers(structure)
 
-    if replacements is not None:
+    if replacements is not None or len(replacements) > 0:
         keys = list(replacements.keys())
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
