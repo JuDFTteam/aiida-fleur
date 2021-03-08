@@ -1001,10 +1001,8 @@ class FleurinpData(Data):
                                                           write_ids=write_ids)
         return new_parameters
 
-    # Is there a way to give self to calcfunctions?
-    @staticmethod
     @cf
-    def get_parameterdata(fleurinp):
+    def get_parameterdata(self):
         """
         This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
         file. The returned node can be used for inpgen as `calc_parameters`.
@@ -1013,7 +1011,7 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
 
-        return fleurinp.get_parameterdata_ncf()
+        return self.get_parameterdata_ncf()
 
     def get_tag(self, xpath):
         """
