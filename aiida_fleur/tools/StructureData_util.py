@@ -1330,6 +1330,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
 def get_layers(structure, decimals=10):
     """
     Extracts atom positions and their types belonging to the same layer
+    Removes any information related to kind specie.
 
     :param structure: ase lattice or StructureData which represents a slab
     :param number: the layer number. Note, that layers will be sorted according to z-position
@@ -1347,7 +1348,8 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [(list(x.position), x.kind_name) for x in sorted(structure.sites, key=lambda x: x.position[2])]
+        reformat = [(list(x.position), x.kind_name.split('-')[0])
+                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:
