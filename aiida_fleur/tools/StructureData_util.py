@@ -1295,6 +1295,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure = StructureData(cell=sorted_struc.cell)
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
+        kind = kind.split('-')[0]
         magn_structure.append_kind(kind)
 
     done_layers = 0
