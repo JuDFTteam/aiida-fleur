@@ -282,7 +282,7 @@ class FleurScfWorkChain(WorkChain):
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy', 'gw']:
-            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density' or 'energy' was expected.")
+            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density', 'energy' or 'gw' was expected.")
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
