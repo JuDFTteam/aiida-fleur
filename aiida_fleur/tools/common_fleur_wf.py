@@ -552,7 +552,7 @@ def optimize_calc_options(nodes,
         kpts = fleurinpData.attributes['inp_dict']['calculationSetup'].get('bzIntegration', None)
         if kpts is None:
             kpts = fleurinpData.attributes['inp_dict']['cell']['bzIntegration']
-        if modes['band'] or modes['gw']:
+        if modes['band']:
             kpts = kpts['altKPointSet']['count']
         else:
             if 'kPointList' in kpts:
