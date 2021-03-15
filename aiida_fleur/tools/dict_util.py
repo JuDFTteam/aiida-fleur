@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This contains code snippets and utility useful for dealing with parameter data nodes
 commonly used by the fleur plugin and workflows
@@ -17,6 +16,9 @@ commonly used by the fleur plugin and workflows
 from __future__ import print_function
 from __future__ import absolute_import
 import six
+import typing as typ
+import collections
+
 
 def extract_elementpara(parameter_dict, element):
     """
@@ -38,12 +40,14 @@ def extract_elementpara(parameter_dict, element):
 
 def dict_merger(dict1, dict2):
     """
-    Merge recursively two nested python dictionaries.
+    Merge recursively two nested python dictionaries and
+    if key is in both digionaries tries to add the entries in both dicts.
+    (merges two subdicts, adds lists, strings, floats and numbers together!)
 
-    If key is in both digionaries tries to add the entries in both dicts.
-    (merges two subdicts, adds strings and numbers together)
+    :param dict1: dict
+    :param dict2: dict
 
-    :return: dict
+    :return dict: Merged dict
     """
     new_dict = dict1.copy()
 
@@ -75,3 +79,44 @@ def dict_merger(dict1, dict2):
         else:
             print(("don't know what to do with element : {}".format(key)))
     return new_dict
+
+
+def clean_nones(dict_to_clean):
+    """Recursively remove all keys which values are None from a nested dictionary
+    return the cleaned dictionary
+
+    :param dict_to_clean: (dict): python dictionary to remove keys with None as value
+    :return: dict, cleaned dictionary
+    """
+    new_dict = {}
+    for key, val in dict_to_clean.items():
+        if isinstance(val, dict):
+            new_val = clean_nones(val)
+        else:
+            new_val = val
+        if new_val is not None:  # currently we keep empty dicts
+            new_dict[key] = new_val
+
+    return new_dict
+
+
+def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any]) -> typ.Dict[str, typ.Any]:
+    """
+    Recursively merge two dictionaries into a single dictionary.
+
+    keys in right override keys in left!
+
+
+    :param left: first dictionary.
+    :param right: second dictionary.
+    :return: the recursively merged dictionary.
+    """
+    for key, value in left.items():
+        if key in right:
+            if isinstance(value, collections.Mapping) and isinstance(right[key], collections.Mapping):
+                right[key] = recursive_merge(value, right[key])
+
+    merged = left.copy()
+    merged.update(right)
+
+    return merged

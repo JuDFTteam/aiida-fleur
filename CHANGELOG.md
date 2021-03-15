@@ -1,3 +1,43 @@
+## v1.1.3
+### release compatible with AiiDA-core 1.3.0
+- still support of Fleur MaXR4 version with inpgen
+- Does not support yet for Fleur MaXR5 and new inpgen
+- Set_kpoints was moved from fleurinp to fleurinpmodifier
+- Break_symmetry of a structure was refactored
+- Implemented feature in fleurinputCalculation to set significant figures
+- Implemented feature scf can now use default queues specified in code extras
+- First implementation of relax type None, which cases the relax workchain to skip the
+relaxation, becoming a usual scf wc,  which might make it easier to switch relaxation on 
+and off in other workchains.
+- Fleur parser parses now the total magnetic moment of the cell
+- Introduced common constants, for bohr and htr, increased precision
+- Command line interface (CLI) `aiida-fleur` with various functionalities exposed
+- For devs: Increased test coverage, codecov is now added to CI and linked to badge
+removed some older outdated code
+
+## v1.1.2
+### release compatible with AiiDA-core 1.3.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- downdgraded aiida-core dependency, do release does not depend on aiida-testing
+- Added userfriendly LDA+U support
+- SCF workchain can generate kpoints from a given density
+- Base fleur has now time limit error handler
+- Relax workchain can now run a final scf
+- Update documentation for corehole, initial CLS and create magnetic workchains
+- Various bug fixes and robustness improvements of magnetic workchains
+- For devs: Enforced pre-commit, tests dir moved out of source
+
+## v1.1.1
+### release compatible with AiiDA-core 1.4.0
+- still support of Fleur MaX4 version (release branch) with inpgen
+- bugfixes and other general improvements
+- new: BandDos workchain: workchain for Band and DOS calculation using the new Fleur BandDOS file
+- basic workchains are now cachable, by moving cf out of workchains
+- first calcjob and workchain regression tests for outside CI env
+- provenance of the result nodes of magnetic workchains is fixed
+- corehole and initial_cls workchain are fixed and working
+- exit codes for inpgen parser
+
 ## v1.1.0
 ### release compatible with AiiDA-core 1.1.0
 - support of Fleur Max4 version (release branch)
@@ -122,4 +162,3 @@ Version for used at the MAX AiiDA-fleur tutorial in May 2017
 
 ### Workflows
 - Some basic sketches of basic workflows available (working AiiDa workflow system just released)i
-

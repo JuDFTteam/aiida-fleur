@@ -6,7 +6,7 @@ jobs:
 
   docs:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v1
@@ -37,7 +37,8 @@ jobs:
 
   pre-commit:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v1
@@ -58,15 +59,22 @@ jobs:
 
     - name: Install python dependencies
       run:
-        pip install .
+        pip install git+https://github.com/aiidateam/aiida-testing@export_cache
+        pip install .[pre-commit,testing]
+        pip freeze
+
+    - name: Run pre-commit
+      run: 
+        pre-commit run --all-files || (git status --short; git diff ; exit 1)
 
   tests:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
 
     strategy:
       matrix:
-        python-version: ['3.7', '3.6']
+        python-version: ['3.8', '3.7', '3.6']
 
     steps:
     - uses: actions/checkout@v1
@@ -99,9 +107,22 @@ jobs:
       run: |
         pip install numpy==1.16.4
         pip install PyCifRW~=4.4
-        pip install .
+        # install aiida-testing manually
+        #pip install git+https://github.com/broeder-j/aiida-testing.git@fa44c3ba4e57192fdbdee1cf3581576acc93800c
+        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install .[testing]
         reentry scan
 
     - name: Run pytest
-      run:
-        cd ./aiida_fleur/tests/ && ./run_all_cov.sh
+      run: |
+       # create fake codes for tests to work on ci
+       cd ./tests/
+       touch local_exe/inpgen && chmod +x local_exe/inpgen
+       touch local_exe/fleur && chmod +x local_exe/fleur 
+       ./run_all_cov.sh
+    
+    - name: Upload report to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./tests/coverage.xml
+        fail_ci_if_error: False

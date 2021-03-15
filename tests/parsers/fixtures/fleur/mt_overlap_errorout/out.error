@@ -1,0 +1,16 @@
+**************juDFT-Error*****************
+Error message:Overlapping MT-spheres during relaxation: 
+2 1 olap: 6.8200E-03
+Treat as an error: writing rescaled displacements to relax.xml is not implemented
+*****************************************
+ Last kown location:
+ Last timer:postprocessInput                                            
+ Timerstack:
+ Timer:Initialization                                              
+ Timer:Total Run                                                   
+ *****************************************
+Rank:0 used    0.171GB/	  178892 kB
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   697  100   101  100   596    295   1745 --:--:-- --:--:-- --:--:--  1747
+juDFT-STOPPED

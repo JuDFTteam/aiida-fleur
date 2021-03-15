@@ -56,21 +56,23 @@ class BaseRestartWorkChain(WorkChain):
     _error_handler_entry_point = None
 
     def __init__(self, *args, **kwargs):
-        super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if self._calculation_class is None or not issubclass(self._calculation_class, (CalcJob, WorkChain)):
-            raise ValueError(
-                'no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
+            raise ValueError('no valid CalcJob or WorkChain class defined for `_calculation_class` attribute')
 
         self._load_error_handlers()
 
     @override
     def load_instance_state(self, saved_state, load_context):
-        super(BaseRestartWorkChain, self).load_instance_state(saved_state, load_context)
+        super().load_instance_state(saved_state, load_context)
         self._load_error_handlers()
 
     def _load_error_handlers(self):
-        # If an error handler entry point is defined, load them. If the plugin cannot be loaded log it and pass
+        """
+        If an error handler entry point is defined, load them.
+        If the plugin cannot be loaded log it and pass
+        """
         if self._error_handler_entry_point is not None:
             for entry_point_name in get_entry_point_names(self._error_handler_entry_point):
                 try:
@@ -84,11 +86,10 @@ class BaseRestartWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         # yapf: disable
-        # pylint: disable=bad-continuation
-        super(BaseRestartWorkChain, cls).define(spec)
-        spec.input('max_iterations', valid_type=orm.Int, default=orm.Int(3),
+        super().define(spec)
+        spec.input('max_iterations', valid_type=orm.Int, default=lambda: orm.Int(3),
                    help='Maximum number of iterations the work chain will restart the calculation to finish successfully.')
-        spec.input('clean_workdir', valid_type=orm.Bool, default=orm.Bool(False),
+        spec.input('clean_workdir', valid_type=orm.Bool, default=lambda: orm.Bool(False),
                    help='If `True`, work directories of all called calculation will be cleaned at the end of execution.')
         spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
                        message='The maximum number of iterations was exceeded.')
@@ -119,8 +120,8 @@ class BaseRestartWorkChain(WorkChain):
 
         try:
             unwrapped_inputs = self.ctx.inputs
-        except AttributeError:
-            raise AttributeError('no calculation input dictionary was defined in `self.ctx.inputs`')
+        except AttributeError as exc:
+            raise AttributeError('no calculation input dictionary was defined in `self.ctx.inputs`') from exc
 
         inputs = prepare_process_inputs(self._calculation_class, unwrapped_inputs)
         calculation = self.submit(self._calculation_class, **inputs)
@@ -199,7 +200,7 @@ class BaseRestartWorkChain(WorkChain):
 
     def on_terminated(self):
         """Clean the working directories of all child calculations if `clean_workdir=True` in the inputs."""
-        super(BaseRestartWorkChain, self).on_terminated()
+        super().on_terminated()
 
         if self.inputs.clean_workdir.value is False:
             self.report('remote folders will not be cleaned')

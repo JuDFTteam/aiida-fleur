@@ -17,20 +17,18 @@ from aiida.common.exceptions import NotExistent
 
 ################################################################
 
-
 Dict = DataFactory('dict')
 StructureData = DataFactory('structure')
 try:
     dontsend = sys.argv[1]
-    if dontsend == "--dont-send":
+    if dontsend == '--dont-send':
         submit_test = True
-    elif dontsend == "--send":
+    elif dontsend == '--send':
         submit_test = False
     else:
         raise IndexError
 except IndexError:
-    print(("The first parameter can only be either "
-           "--send or --dont-send"), file=sys.stderr)
+    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -52,58 +50,70 @@ try:
     if code.get_input_plugin_name() != expected_code_type:
         raise ValueError
 except (NotExistent, ValueError):
-    print('codename {} does not exist or is not of the expected type : {}'.format(
-        codename, expected_code_type))
+    print('codename {} does not exist or is not of the expected type : {}'.format(codename, expected_code_type))
 
 # W bcc structure
 bohr_a_0 = 0.52917721092  # A
-a = 3.013812049196*bohr_a_0
+a = 3.013812049196 * bohr_a_0
 cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
 s = StructureData(cell=cell)
 s.append_atom(position=(0., 0., 0.), symbols='W')
-parameters = Dict(dict={
-                  'atom': {
-                      'element': 'W',
-                      'jri': 833,
-                      'rmt': 2.3,
-                      'dx': 0.015,
-                      'lmax': 8,
-                      'lo': '5p',
-                      'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                  },
-                  'comp': {
-                      'kmax': 3.5,
-                      'gmax': 2.9,
-                  },
-                  'kpt': {
-                      'nkpt': 200,
-                  }})
+parameters = Dict(
+    dict={
+        'atom': {
+            'element': 'W',
+            'jri': 833,
+            'rmt': 2.3,
+            'dx': 0.015,
+            'lmax': 8,
+            'lo': '5p',
+            'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+        },
+        'comp': {
+            'kmax': 3.5,
+            'gmax': 2.9,
+        },
+        'kpt': {
+            'nkpt': 200,
+        }
+    })
 JobCalc = FleurinputgenCalculation
 label = 'Test inpgen run'
 description = 'Test inpgen run on W'
 label = 'fleur_scf_wc inpgen on W'
 description = '|fleur_scf_wc| inpgen on W, pbc(True, True, True)'
 
-attrs = {"resources": {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-         "withmpi": False}  # ,
+attrs = {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}, 'withmpi': False}  # ,
 
-inp = {'structure': s, 'parameters': parameters, 'code': code,
-       "metadata": {
-           "options": {"resources": {"num_machines": 1,
-                                     "num_mpiprocs_per_machine": 1},
-                       "withmpi": False}}}
+inp = {
+    'structure': s,
+    'parameters': parameters,
+    'code': code,
+    'metadata': {
+        'options': {
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'withmpi': False
+        }
+    }
+}
 
-inputs = {"structure": s,
-        "parameters": parameters,
-        "metadata": {
-                "options": {
-                    "withmpi": False,
-                    "resources": {
-                        "num_machines": 1,
-                        "num_mpiprocs_per_machine": 1
-                    }
-                }}}
-                # 'label': label, 'description': description}}
+inputs = {
+    'structure': s,
+    'parameters': parameters,
+    'metadata': {
+        'options': {
+            'withmpi': False,
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            }
+        }
+    }
+}
+# 'label': label, 'description': description}}
 
 if submit_test:
     # subfolder, script_filename = calc.submit_test()

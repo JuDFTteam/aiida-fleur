@@ -17,10 +17,11 @@ from __future__ import absolute_import
 import os
 
 # any additional schema file add here, plugin will find them
-SCHEMA_FILE_PATHS = ['./input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd',
-                     './input/0.29/FleurInputSchema.xsd', './input/0.30/FleurInputSchema.xsd',
-                     '.']
-
+SCHEMA_FILE_PATHS = [
+    './input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', './input/0.29/FleurInputSchema.xsd',
+    './input/0.30/FleurInputSchema.xsd', './input/0.31/FleurInputSchema.xsd', './input/0.32/FleurInputSchema.xsd',
+    './input/0.33/FleurInputSchema.xsd', '.'
+]
 
 PACKAGE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,6 +36,7 @@ def get_schema_paths():
         if os.path.isfile(path):
             schema_paths.append(path)
     return schema_paths
+
 
 def get_internal_search_paths():
     """

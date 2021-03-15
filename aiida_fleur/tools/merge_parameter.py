@@ -9,13 +9,10 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 This module, contains a method to merge Dict nodes used by the FLEUR inpgen.
 This might also be of interest for other all-electron codes
 """
-# TODO this should be made an inline calculation or calcfunction to
-# keep the proverance!
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
@@ -23,11 +20,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aiida.plugins import DataFactory
-from aiida.orm import Bool
+from aiida.orm import Bool, Dict
 from aiida.engine import calcfunction as cf
+#Dict = DataFactory('dict')
 
 
-def merge_parameter(Dict1, Dict2, overwrite=True):
+def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     """
     Merges two Dict nodes.
     Additive: uses all namelists of both.
@@ -37,14 +35,19 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     be overwritten.
 
 
-    param: AiiDA Dict Node
-    param: AiiDA Dict Node
+    :param Dict1: AiiDA Dict Node
+    :param Dict2: AiiDA Dict Node
+    :param overwrite: bool, default True
+    :param merge: bool, default True
 
     returns: AiiDA Dict Node
+
+    #TODO be more carefull how to merge ids in atom namelists, i.e species labels
     """
 
     from aiida.common.exceptions import InputValidationError
-    Dict = DataFactory('dict')
+    from aiida_fleur.tools.dict_util import recursive_merge
+    #Dict = DataFactory('dict')
 
     # layout:
     # check input
@@ -56,24 +59,24 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     atoms_dict = {}
     atomlist = []
     if not isinstance(Dict1, Dict):
-        raise InputValidationError("Dict1, must be of "
-                                   "type Dict")
+        raise InputValidationError('Dict1, must be of ' 'type Dict')
     if not isinstance(Dict2, Dict):
-        raise InputValidationError("Dict2, must be of "
-                                   "type Dict")
+        raise InputValidationError('Dict2, must be of ' 'type Dict')
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 
-    for key in dict1.keys():
+    if dict1 == dict2:
+        return Dict(dict=dict1)
+
+    for key in list(dict1.keys()):
         if 'atom' in key:
             val = dict1.pop(key)
             atomlist.append(val)
 
-    for key in dict2.keys():
+    for key in list(dict2.keys()):
         if 'atom' in key:
             val = dict2.pop(key)
             atomlist.append(val)
-
 
     # TODO do something on atom list,
     # we do not want doubles, check element and Id? Keep first ones?
@@ -90,13 +93,15 @@ def merge_parameter(Dict1, Dict2, overwrite=True):
     else:
         # add second one later?
         new_dict = dict2.copy()
-        new_dict.update(dict1)
-        # TODO or do we want to merge the value dicts? usually does not make sense
-        # for all keys...
+        if merge:
+            new_dict = recursive_merge(new_dict, dict1)
+        else:
+            new_dict.update(dict1)
+        # TODO mergeing does not make sense for all namelist keys.
+        # be more specific here.
     new_dict.update(atoms_dict)
 
     # be carefull with atom namelist
-
 
     return Dict(dict=new_dict)
 
@@ -105,8 +110,8 @@ def merge_parameters(DictList, overwrite=True):
     """
     Merge together all parameter nodes in the given list.
     """
-    Dict = DataFactory('dict')
-    paremeter_data_new = Dict(dict= {})
+    #Dict = DataFactory('dict')
+    paremeter_data_new = Dict(dict={})
 
     for i, parameter in enumerate(DictList):
         if isinstance(parameter, Dict):
@@ -116,6 +121,7 @@ def merge_parameters(DictList, overwrite=True):
             print(('WARNING: Entry : {} {} is not of type Dict, I skip it.'.format(i, parameter)))
 
     return paremeter_data_new
+
 
 @cf
 def merge_parameter_cf(Dict1, Dict2, overwrite=None):
@@ -127,6 +133,7 @@ def merge_parameter_cf(Dict1, Dict2, overwrite=None):
     paremeter_data_new = merge_parameter(Dict1, Dict2, overwrite=overwrite)
 
     return paremeter_data_new
+
 
 '''
 # TODO how to deal with a list? *args, prob is not the best, also it is not working here.
@@ -144,16 +151,20 @@ def merge_parameters_wf(*Dicts, overwrite=Bool(True)):
 
     return paremeter_data_new
 '''
-if __name__ == "__main__":
+'''
+#TODO this has to moved into cmdline
+if __name__ == '__main__':
     import argparse
-    Dict = DataFactory('dict')
+    #Dict = DataFactory('dict')
 
     parser = argparse.ArgumentParser(description='Merge a Dict node.')
-    parser.add_argument('--para1', type=Dict, dest='para1',
-                        help='The first Dict node', required=True)
-    parser.add_argument('--para2', type=Dict, dest='para2',
-                        help='The second Dict node', required=True)
-    parser.add_argument('--overwrite', type=bool, dest='overwrite',
-                        help='Shall values given in Dict2 overwrite the values from the first Dict?', required=False)
+    parser.add_argument('--para1', type=Dict, dest='para1', help='The first Dict node', required=True)
+    parser.add_argument('--para2', type=Dict, dest='para2', help='The second Dict node', required=True)
+    parser.add_argument('--overwrite',
+                        type=bool,
+                        dest='overwrite',
+                        help='Shall values given in Dict2 overwrite the values from the first Dict?',
+                        required=False)
     args = parser.parse_args()
     merge_parameter(Dict1=args.para1, Dict2=args.para1, overwrite=args.overwrite)
+    '''

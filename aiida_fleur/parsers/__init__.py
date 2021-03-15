@@ -16,6 +16,7 @@ FLEUR plug-in
 from __future__ import absolute_import
 from aiida.common.exceptions import OutputParsingError
 
+
 #mainly created this Outputparsing error, that the user sees, that it comes from parsing a fleur calculation.
 class FleurOutputParsingError(OutputParsingError):
     pass

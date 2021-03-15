@@ -9,8 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 '''
 AiiDA-FLEUR
 '''
-__version__ = "1.1.0"
+__version__ = '1.1.3'

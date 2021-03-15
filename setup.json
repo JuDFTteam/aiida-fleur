@@ -1,5 +1,5 @@
 {
-    "version": "1.1.0",
+    "version": "1.1.3",
     "name": "aiida-fleur",
     "url": "https://github.com/JuDFTteam/aiida-fleur",
     "license": "MIT License, see LICENSE.txt file.",
@@ -27,22 +27,21 @@
     ],
     "reentry_register": true,
     "install_requires": [
-        "aiida-core>=1.0.1,<2.0.0",
+        "aiida-core>=1.3.0,<2.0.0",
         "lxml >= 3.6.4",
         "pytest-cov >= 2.5.0",
-        "pytest >= 2.9",
-        "pgtest",
-        "numpy>=1.16.4,<1.18.0",
+        "numpy>=1.16.4,<1.20.0",
         "sympy",
-        "masci-tools",
+        "masci-tools>=0.3.12-dev4",
         "future",
         "ase",
-        "pymatgen"
+        "pymatgen",
+        "pyhull",
+	"PyCifRW~=4.4"
     ],
     "extras_require": {
         "graphs ": [
-            "matplotlib",
-            "masci-tools"
+            "matplotlib"
         ],
         "docs": [
             "Sphinx",
@@ -50,10 +49,16 @@
             "sphinx_rtd_theme"
         ],
         "pre-commit": [
-            "pre-commit==1.11.0",
-            "yapf==0.24.0",
-            "prospector==0.12.11",
-            "pylint==1.9.3"
+            "pre-commit>=2.6.0",
+            "yapf~=0.30",
+            "pylint>=2.5"
+        ],
+        "testing" : [
+            "pytest>=2.9",
+            "pytest-timeout",
+            "pytest-cov>= 2.5.0",
+            "pgtest",
+            "pytest-regressions>=1.0"
         ]
     },
     "entry_points": {
@@ -72,7 +77,6 @@
         "aiida.workflows": [
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
-            "fleur.band = aiida_fleur.workflows.band:FleurBandWorkChain",
             "fleur.banddos = aiida_fleur.workflows.banddos:FleurBandDosWorkChain",
             "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:fleur_initial_cls_wc",
@@ -86,6 +90,9 @@
             "fleur.create_magnetic = aiida_fleur.workflows.create_magnetic_film:FleurCreateMagneticWorkChain",
             "fleur.base_relax = aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain",
             "fleur.base = aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
+        ],
+        "console_scripts": [
+            "aiida-fleur = aiida_fleur.cmdline:cmd_root"
         ]
     }
 }

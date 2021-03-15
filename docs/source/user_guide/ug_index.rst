@@ -16,4 +16,3 @@ This is the AiiDA-FLEUR user's guide.
    ./tutorials/tutorials
    ./hints/hints_faq
    ./hints/exit_codes
-

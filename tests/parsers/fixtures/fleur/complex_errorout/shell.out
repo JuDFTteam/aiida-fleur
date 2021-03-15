@@ -1,0 +1,8 @@
+iffcluster0105: Using InfiniBand for MPI communication.
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 4.0          (www.max-centre.eu)
+  stars are always ordered 
+ --------------------------------------------------------
+ Number of OMP-threads:          12
+ --------------------------------------------------------
+ Usage data send using curl: usage.json

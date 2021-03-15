@@ -62,5 +62,3 @@ ParameterData utility
 +++++++++++++++++++++
 .. automodule:: aiida.tools.codespecific.fleur.merge_parameter
    :members:
-
-

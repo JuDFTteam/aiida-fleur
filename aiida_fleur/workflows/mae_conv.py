@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
     In this module you find the workflow 'FleurMAEWorkChain' for the calculation of
     Magnetic Anisotropy Energy converging all the directions.
@@ -25,6 +24,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):
@@ -32,35 +32,35 @@ class FleurMaeConvWorkChain(WorkChain):
     This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = "0.2.0"
+    _workflowversion = '0.2.0'
 
-    _wf_default = {
-        'sqas': {'label': [0.0, 0.0]},
-        'soc_off': []
+    _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
+    _default_options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 6 * 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'import_sys_environment': False,
+        'environment_variables': {}
     }
 
     @classmethod
     def define(cls, spec):
-        super(FleurMaeConvWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
-        spec.input("wf_parameters", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
 
-        spec.outline(
-            cls.start,
-            cls.converge_scf,
-            cls.get_results,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
         spec.output('out', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM',
-                       message="Invalid workchain parameters.")
-        spec.exit_code(343, 'ERROR_ALL_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for all SQAs.")
-        spec.exit_code(344, 'ERROR_SOME_SQAS_FAILED',
-                       message="Convergence MAE calculation failed for some SQAs.")
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(343, 'ERROR_ALL_SQAS_FAILED', message='Convergence MAE calculation failed for all SQAs.')
+        spec.exit_code(344, 'ERROR_SOME_SQAS_FAILED', message='Convergence MAE calculation failed for some SQAs.')
 
     def start(self):
         """
@@ -79,7 +79,7 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.mae_phis = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._wf_default)
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -90,8 +90,7 @@ class FleurMaeConvWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for MAE Conv contains extra keys: {}'.format(
-                extra_keys)
+            error = 'ERROR: input wf_parameters for MAE Conv contains extra keys: {}'.format(extra_keys)
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -113,6 +112,7 @@ class FleurMaeConvWorkChain(WorkChain):
             inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
             inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
             res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
             self.to_context(**{key: res})
 
     def get_inputs_scf(self):
@@ -131,12 +131,15 @@ class FleurMaeConvWorkChain(WorkChain):
 
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
-            scf_wf_dict['inpxml_changes'].append(
-                ('set_species_label',
-                 {'at_label': atom_label,
-                  'attributedict': {'special': {'socscale': 0.0}},
-                  'create': True
-                  }))
+            scf_wf_dict['inpxml_changes'].append(('set_species_label', {
+                'at_label': atom_label,
+                'attributedict': {
+                    'special': {
+                        'socscale': 0.0
+                    }
+                },
+                'create': True
+            }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -153,8 +156,8 @@ class FleurMaeConvWorkChain(WorkChain):
         Retrieve results of converge calculations
         """
         t_energydict = {}
+        original_t_energydict = {}
         outnodedict = {}
-        htr_to_ev = 27.21138602
 
         for label in six.iterkeys(self.ctx.wf_dict['sqas']):
             calc = self.ctx[label]
@@ -167,9 +170,7 @@ class FleurMaeConvWorkChain(WorkChain):
             try:
                 outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = (
-                    'One SCF workflow failed, no scf output node: {}.'
-                    ' I skip this one.'.format(label))
+                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 continue
 
@@ -177,14 +178,12 @@ class FleurMaeConvWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', 'failed')
             if not isinstance(t_e, float):
-                message = (
-                    'Did not manage to extract float total energy from one '
-                    'SCF workflow: {}'.format(label))
+                message = ('Did not manage to extract float total energy from one ' 'SCF workflow: {}'.format(label))
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
             if e_u == 'Htr' or 'htr':
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             t_energydict[label] = t_e
 
         if t_energydict:
@@ -192,9 +191,11 @@ class FleurMaeConvWorkChain(WorkChain):
             minenergy = min(t_energydict.values())
 
             for key in six.iterkeys(t_energydict):
+                original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
         self.ctx.energydict = t_energydict
+        self.ctx.original_energydict = original_t_energydict
 
     def return_results(self):
         """
@@ -207,16 +208,19 @@ class FleurMaeConvWorkChain(WorkChain):
             if label not in six.iterkeys(self.ctx.energydict):
                 failed_labels.append(label)
 
-        out = {'workflow_name': self.__class__.__name__,
-               'workflow_version': self._workflowversion,
-               # 'initial_structure': self.inputs.structure.uuid,
-               'mae': self.ctx.energydict,
-               'sqa': self.ctx.wf_dict['sqas'],
-               'failed_labels': failed_labels,
-               'mae_units': 'eV',
-               'info': self.ctx.info,
-               'warnings': self.ctx.warnings,
-               'errors': self.ctx.errors}
+        out = {
+            'workflow_name': self.__class__.__name__,
+            'workflow_version': self._workflowversion,
+            # 'initial_structure': self.inputs.structure.uuid,
+            'mae': self.ctx.energydict,
+            'original_mae': self.ctx.original_energydict,
+            'sqa': self.ctx.wf_dict['sqas'],
+            'failed_labels': failed_labels,
+            'mae_units': 'eV',
+            'info': self.ctx.info,
+            'warnings': self.ctx.warnings,
+            'errors': self.ctx.errors
+        }
 
         # create link to workchain node
         out = save_output_node(Dict(dict=out))

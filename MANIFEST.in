@@ -1,8 +1,6 @@
 
 include aiida_fleur/tools/exp_bindingenergies.json
 include aiida_fleur/fleur_schema/input/*/*.xsd
-include aiida_fleur/tests/run*
-recursive-include aiida_fleur/tests/files/ *
 include setup.json
 include setup_requirements.txt
 include AUTHORS.txt

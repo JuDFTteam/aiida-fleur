@@ -152,7 +152,14 @@ Each exit code has it's own reason:
 +-----------+--------------------------------------------------------------+
 | 312       | FLEUR calculation failed due to MT overlap                   |
 +-----------+--------------------------------------------------------------+
-
+| 313       | FLEUR calculation failed due to MT overlap during relaxation |
++-----------+--------------------------------------------------------------+
+| 314       | Problem with cdn is suspected                                |
++-----------+--------------------------------------------------------------+
+| 315       | Invalid Elements found in the LDA+U density matrix.          |
++-----------+--------------------------------------------------------------+
+| 316       | Calculation failed due to time limits.                       |
++-----------+--------------------------------------------------------------+
 
 .. _Fleur_settings:
 

@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find methods to parse/extract corelevel shifts from an
 out.xml file of FLEUR.
@@ -21,11 +20,10 @@ out.xml file of FLEUR.
 from __future__ import absolute_import
 from __future__ import print_function
 import six
-from lxml import etree#, objectify
+from lxml import etree  #, objectify
 
 from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
 #convert_to_float
-
 
 #import time
 #start_time = time.time()
@@ -45,7 +43,6 @@ from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath
 #    except:
 #        pass
 #####
-
 '''
 # check if calculation pks belong to successful fleur calculations
 for pk in calcs_pks:
@@ -55,10 +52,11 @@ for pk in calcs_pks:
     if calc.get_state() != 'FINISHED':
         raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 '''
+
+
 def extract_lo_energies(outxmlfile, options=None):
     pass
     #TODO: how? out of DOS?
-
 
 
 def extract_corelevels(outxmlfile, options=None):
@@ -133,25 +131,24 @@ def extract_corelevels(outxmlfile, options=None):
     #TODO all the attribute names...
     ######################
 
-
     #1. read out.xml in etree
     # TODO this should be common, moved somewhere else and importet
     parsed_data = {}
     outfile_broken = False
     parse_xml = True
-    parser = etree.XMLParser(recover=False)#, remove_blank_text=True)
-    parser_info = {'parser_warnings': [], 'unparsed' : []}
+    parser = etree.XMLParser(recover=False)  #, remove_blank_text=True)
+    parser_info = {'parser_warnings': [], 'unparsed': []}
 
     try:
         tree = etree.parse(outxmlfile, parser)
     except etree.XMLSyntaxError:
         outfile_broken = True
-    #print 'broken xml'
+        #print 'broken xml'
         parser_info['parser_warnings'].append('The out.xml file is broken I try to repair it.')
 
     if outfile_broken:
         #repair xmlfile and try to parse what is possible.
-        parser = etree.XMLParser(recover=True)#, remove_blank_text=True)
+        parser = etree.XMLParser(recover=True)  #, remove_blank_text=True)
         try:
             tree = etree.parse(outxmlfile, parser)
         except etree.XMLSyntaxError:
@@ -160,7 +157,6 @@ def extract_corelevels(outxmlfile, options=None):
 
     #if parse_xml:
     root = tree.getroot()
-
 
     # 2. get all species from input
     # get element, name, coreStates
@@ -176,32 +172,33 @@ def extract_corelevels(outxmlfile, options=None):
         species_magMom = species.get('magMom')
         #TODO sometimes not in inp.xml... what if it is not there
         coreconfig = eval_xpath(species, coreconfig_xpath, parser_info)
-        valenceconfig = eval_xpath(species, valenceconfig_xpath , parser_info)
+        valenceconfig = eval_xpath(species, valenceconfig_xpath, parser_info)
         state_occ = eval_xpath2(species, state_occ_xpath, parser_info)
 
         #parse state occ
         state_results = []
-        for tag in state_occ:#always a list?
+        for tag in state_occ:  #always a list?
             state = tag.get('state')
             spinUp = tag.get('spinUp')
             spinDown = tag.get('spinDown')
-            state_results.append({state : [spinUp, spinDown]})
+            state_results.append({state: [spinUp, spinDown]})
 
-
-        species_atts[species_name] = {'name' : species_name,
-                                      'corestates' : species_corestates,
-                                      'element': species_element,
-                                      'atomgroups' : [],
-                                      'mag_mom' : species_magMom,
-                                      'atomic_number' : species_atomicnumber,
-                                      'coreconfig' : coreconfig,
-                                      'valenceconfig' : valenceconfig,
-                                      'stateOccupation' : state_results}
+        species_atts[species_name] = {
+            'name': species_name,
+            'corestates': species_corestates,
+            'element': species_element,
+            'atomgroups': [],
+            'mag_mom': species_magMom,
+            'atomic_number': species_atomicnumber,
+            'coreconfig': coreconfig,
+            'valenceconfig': valenceconfig,
+            'stateOccupation': state_results
+        }
         species_names.append(species_name)
 
     #3. get number of atom types and their species from input
     atomtypes = []
-    atomgroup_nodes = eval_xpath(root, atomgroup_xpath, parser_info)#/fleurinp/
+    atomgroup_nodes = eval_xpath(root, atomgroup_xpath, parser_info)  #/fleurinp/
     # always a list?
     for atomgroup in atomgroup_nodes:
         types_dict = {}
@@ -213,13 +210,19 @@ def extract_corelevels(outxmlfile, options=None):
             coreconf = species_atts[group_species]['coreconfig']
             valenceconf = species_atts[group_species]['valenceconfig']
             stateocc = species_atts[group_species]['stateOccupation']
-            a = eval_xpath2(atomgroup, relpos_xpath, parser_info) + eval_xpath2(atomgroup, abspos_xpath, parser_info) + eval_xpath2(atomgroup, filmpos_xpath, parser_info)# always list
+            a = eval_xpath2(atomgroup, relpos_xpath,
+                            parser_info) + eval_xpath2(atomgroup, abspos_xpath, parser_info) + eval_xpath2(
+                                atomgroup, filmpos_xpath, parser_info)  # always list
             natoms = len(a)
-            types_dict = {'species' : group_species, 'element' : element,
-                          'atomic_number' : atomicnumber, 'coreconfig': coreconf,
-                          'valenceconfig' : valenceconf,
-                          'stateOccupation' : stateocc,
-                          'natoms' : natoms}
+            types_dict = {
+                'species': group_species,
+                'element': element,
+                'atomic_number': atomicnumber,
+                'coreconfig': coreconf,
+                'valenceconfig': valenceconf,
+                'stateOccupation': stateocc,
+                'natoms': natoms
+            }
         atomtypes.append(types_dict)
 
     #natomgroup = len(atomgroup_nodes)
@@ -233,16 +236,16 @@ def extract_corelevels(outxmlfile, options=None):
     iteration_nodes = eval_xpath2(root, iteration_xpath, parser_info)
     nIteration = len(iteration_nodes)
     if nIteration >= 1:
-        iteration_to_parse = iteration_nodes[-1]#TODO:Optional all or other
+        iteration_to_parse = iteration_nodes[-1]  #TODO:Optional all or other
         #print iteration_to_parse
         corestatescards = eval_xpath2(iteration_to_parse, relcoreStates_xpath, parser_info)
         # maybe does not return a list...
-        for type in atomtypes: # spin=2 is already in there
+        for atype in atomtypes:  # spin=2 is already in there
             corelevels.append([])
 
         for corestatescard in corestatescards:
             corelv = parse_state_card(corestatescard, iteration_to_parse, parser_info)
-            corelevels[int(corelv['atomtype'])-1].append(corelv)# is corelv['atomtype'] always an integer?
+            corelevels[int(corelv['atomtype']) - 1].append(corelv)  # is corelv['atomtype'] always an integer?
 
     #print parser_info
     #pprint(corelevels[0][1]['corestates'][2]['energy'])
@@ -250,7 +253,7 @@ def extract_corelevels(outxmlfile, options=None):
     return corelevels, atomtypes
 
 
-def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warnings' : []}):
+def parse_state_card(corestateNode, iteration_node, parser_info=None):
     """
     Parses the ONE core state card
 
@@ -288,6 +291,8 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     lostElectrons_name = 'lostElectrons'
     atomtype_name = 'atomType'
     #######
+    if parser_info is None:
+        parser_info = {'parser_warnings': []}
 
     atomtype = get_xml_attribute(corestateNode, atomtype_name, parser_info)
 
@@ -308,24 +313,30 @@ def parse_state_card(corestateNode, iteration_node, parser_info={'parser_warning
     # some only the first interation, then get all state tags of the corestate tag (atom depended)
     # parse each core state #Attention to spin
     states = []
-    corestates = eval_xpath2(corestateNode, state_xpath)#, parser_info)
+    corestates = eval_xpath2(corestateNode, state_xpath)  #, parser_info)
 
-    for corestate in corestates:# be careful that corestates is a list
+    for corestate in corestates:  # be careful that corestates is a list
         state_dict = {}
         n_state = get_xml_attribute(corestate, n_name, parser_info)
         l_state = get_xml_attribute(corestate, l_name, parser_info)
         j_state = get_xml_attribute(corestate, j_name, parser_info)
         energy, suc = convert_to_float(get_xml_attribute(corestate, energy_name, parser_info), parser_info)
         weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name, parser_info), parser_info)
-        state_dict = {'n' : n_state, 'l' : l_state, 'j' : j_state, 'energy' : energy, 'weight' : weight}
+        state_dict = {'n': n_state, 'l': l_state, 'j': j_state, 'energy': energy, 'weight': weight}
         states.append(state_dict)
 
-    core_states = {'eigenvalue_sum' : eigenvalueSum, 'corestates': states, 'spin' : spin, 'kin_energy' : kinEnergy, 'atomtype' : atomtype}
+    core_states = {
+        'eigenvalue_sum': eigenvalueSum,
+        'corestates': states,
+        'spin': spin,
+        'kin_energy': kinEnergy,
+        'atomtype': atomtype
+    }
     return core_states
 
 
 # TODO should be used from somewhere else, probably double
-def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
+def convert_to_float(value_string, parser_info=None):
     """
     Tries to make a float out of a string. If it can't it logs a warning
     and returns True or False if convertion worked or not.
@@ -334,6 +345,9 @@ def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
     :returns value: the new float or value_string: the string given
     :retruns: True or False
     """
+    if parser_info is None:
+        parser_info = {'parser_warnings': []}
+
     try:
         value = float(value_string)
     except TypeError:
@@ -343,6 +357,7 @@ def convert_to_float(value_string, parser_info={'parser_warnings':[]}):
         parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
         return value_string, False
     return value, True
+
 
 '''
 ### call
@@ -399,19 +414,18 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
     for elem, corelevel_dict in six.iteritems(coreleveldict):
         ref_el = reference_dict.get(elem, {})
 
-        if not ref_el: # no refernce for that element given
+        if not ref_el:  # no refernce for that element given
             if warn:
-                print(("WARNING: Reference for element: '{}' not given. "
-                      "I ignore these.".format(elem)))
+                print(("WARNING: Reference for element: '{}' not given. " 'I ignore these.'.format(elem)))
             continue
 
         return_corelevel_dict[elem] = {}
         for corelevel_name, corelevel_list in six.iteritems(corelevel_dict):
             ref_cl = ref_el.get(corelevel_name, [])
-            if not ref_cl: # no reference corelevel given for that element
+            if not ref_cl:  # no reference corelevel given for that element
                 if warn:
-                   print(("WARNING: Reference corelevel '{}' for element: '{}' "
-                         "not given. I ignore these.".format(corelevel_name, elem)))
+                    print(("WARNING: Reference corelevel '{}' for element: '{}' "
+                           'not given. I ignore these.'.format(corelevel_name, elem)))
                 continue
             be_all = []
             nref = len(ref_cl)
@@ -425,6 +439,5 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
                     be = corelevel + ref_cl[0]
                     be_all.append(be)
             return_corelevel_dict[elem][corelevel_name] = be_all
-
 
     return return_corelevel_dict
