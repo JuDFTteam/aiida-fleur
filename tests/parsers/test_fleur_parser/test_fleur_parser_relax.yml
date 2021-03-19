@@ -1,11 +1,12 @@
 output_parameters:
-  abspos_x_type1: 0.0
-  abspos_y_type1: 0.0
-  abspos_z_type1: -0.741699
+  abspos_atoms:
+  - - 1
+    - - 0.0
+      - 0.0
+      - -0.741699
   bandgap: 10.6740023301
   bandgap_units: eV
   charge_den_xc_den_integral: -0.6753699578
-  density_convergence_units: null
   energy: -31.649357888579065
   energy_core_electrons: 0.0
   energy_hartree: -1.1630924497
@@ -14,13 +15,26 @@ output_parameters:
   energy_valence_electrons: -0.747242106
   fermi_energy: -0.373621053
   fermi_energy_units: Htr
-  film: 'True'
-  force_largest: 0.02082935
+  film: true
+  fleur_modes:
+    band: false
+    bz_integration: hist
+    dos: false
+    film: true
+    jspin: 1
+    ldau: false
+    noco: false
+    relax: true
+    soc: false
+  force_atoms:
+  - - 1
+    - - 0.0
+      - 0.0
+      - 0.02082935
+  force_largest_component: 0.02082935
   force_units: Htr/bohr
-  force_x_type1: 0.0
-  force_y_type1: 0.0
-  force_z_type1: 0.02082935
-  kmax: 5.0
+  gmax: '25.10000000'
+  kmax: '5.00000000'
   number_of_atom_types: 1
   number_of_atoms: 2
   number_of_iterations: 42
@@ -29,36 +43,39 @@ output_parameters:
   number_of_species: 1
   number_of_spin_components: 1
   number_of_symmetries: 16
-  parser_info: AiiDA Fleur Parser v0.3.2
+  parser_info: Masci-Tools Fleur out.xml Parser v0.4.0
   parser_warnings:
-  - 'Can not get attributename: "units" from node "[]", because node is not an element
-    of etree.'
+  - Ignoring '0.27' outputVersion for MaX4.0 release
+  - "Output file does not validate against the schema: \nLine 15: Element 'inputData':\
+    \ The attribute 'fleurInputVersion' is required but missing. \nLine 160: Element\
+    \ 'atomsInCell': The attribute 'n_hia' is required but missing. \nLine 167: Element\
+    \ 'kPointList', attribute 'posScale': The attribute 'posScale' is not allowed.\
+    \ \nLine 172: Element 'spinDependentCharge': This element is not expected. Expected\
+    \ is ( iteration ). \n"
   relax_atom_positions:
-  - - 0.0
-    - 0.0
-    - -0.741699171
-  - - 0.0
-    - 0.0
-    - 0.741699171
+  - - '.0000000000'
+    - '.0000000000'
+    - -.7416991710
+  - - '.0000000000'
+    - '.0000000000'
+    - '.7416991710'
   relax_brav_vectors:
-  - - 28.345891875
-    - 0.0
-    - 0.0
-  - - 0.0
-    - 28.345891875
-    - 0.0
-  - - 0.0
-    - 0.0
-    - 4.63
+  - - '28.345891875000000'
+    - '.000000000000000'
+    - '.000000000000000'
+  - - '.000000000000000'
+    - '28.345891875000000'
+    - '.000000000000000'
+  - - '.000000000000000'
+    - '.000000000000000'
+    - '4.630000000000000'
+  spin_dependent_charge_interstitial: 1.3187829
+  spin_dependent_charge_mt_spheres: 0.5077481
+  spin_dependent_charge_total: 2.0000006
   sum_of_eigenvalues: -0.747242106
-  unparsed: []
+  total_charge: 2.0000005869
   walltime: 10290
   walltime_units: seconds
-  warnings:
-    debug: {}
-    error: {}
-    info: {}
-    warning: {}
 relax_parameters:
   displacements:
   - - 0.0

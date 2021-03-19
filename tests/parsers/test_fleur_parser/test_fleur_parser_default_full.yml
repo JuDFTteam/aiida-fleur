@@ -2,7 +2,7 @@ output_parameters:
   bandgap: 0.85561712
   bandgap_units: eV
   charge_den_xc_den_integral: -41.74447706
-  charge_density: 3.29535e-05
+  density_convergence: 3.29535e-05
   density_convergence_units: me/bohr^3
   energy: -15784.562940686706
   energy_core_electrons: -316.8117176949
@@ -12,8 +12,19 @@ output_parameters:
   energy_valence_electrons: 0.1710194344
   fermi_energy: 0.2022322894
   fermi_energy_units: Htr
-  force_largest: -0.0
-  kmax: 3.5
+  film: false
+  fleur_modes:
+    band: false
+    bz_integration: hist
+    dos: false
+    film: false
+    jspin: 1
+    ldau: false
+    noco: false
+    relax: false
+    soc: false
+  gmax: '11.00000000'
+  kmax: '3.50000000'
   number_of_atom_types: 1
   number_of_atoms: 2
   number_of_iterations: 11
@@ -22,14 +33,18 @@ output_parameters:
   number_of_species: 1
   number_of_spin_components: 1
   number_of_symmetries: 48
-  parser_info: AiiDA Fleur Parser v0.3.2
-  parser_warnings: []
+  parser_info: Masci-Tools Fleur out.xml Parser v0.4.0
+  parser_warnings:
+  - Ignoring '0.27' outputVersion for MaX4.0 release
+  - "Output file does not validate against the schema: \nLine 14: Element 'inputData':\
+    \ The attribute 'fleurInputVersion' is required but missing. \nLine 377: Element\
+    \ 'atomsInCell': The attribute 'n_hia' is required but missing. \nLine 384: Element\
+    \ 'kPointList', attribute 'posScale': The attribute 'posScale' is not allowed.\
+    \ \nLine 447: Element 'spinDependentCharge': This element is not expected. \n"
+  spin_dependent_charge_interstitial: 3.5415656
+  spin_dependent_charge_mt_spheres: 24.4584344
+  spin_dependent_charge_total: 28.0
   sum_of_eigenvalues: -316.6406982605
-  unparsed: []
+  total_charge: 27.9999999876
   walltime: 4
   walltime_units: seconds
-  warnings:
-    debug: {}
-    error: {}
-    info: {}
-    warning: {}
