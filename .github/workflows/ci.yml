@@ -26,13 +26,13 @@ jobs:
           pip-docs-
 
     - name: Install python dependencies
-      run:
+      run: |
         pip install -e .[docs]
 
     - name: Build documentation
       env:
         READTHEDOCS: 'True'
-      run:
+      run: |
         SPHINXOPTS='-nW' make -C docs html
 
   pre-commit:
@@ -58,13 +58,13 @@ jobs:
         python-version: 3.7
 
     - name: Install python dependencies
-      run:
+      run: |
         pip install git+https://github.com/aiidateam/aiida-testing@export_cache
         pip install .[pre-commit,testing]
         pip freeze
 
     - name: Run pre-commit
-      run: 
+      run: |
         pre-commit run --all-files || (git status --short; git diff ; exit 1)
 
   tests:
@@ -118,9 +118,9 @@ jobs:
        # create fake codes for tests to work on ci
        cd ./tests/
        touch local_exe/inpgen && chmod +x local_exe/inpgen
-       touch local_exe/fleur && chmod +x local_exe/fleur 
+       touch local_exe/fleur && chmod +x local_exe/fleur
        ./run_all_cov.sh
-    
+
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1
       with:
