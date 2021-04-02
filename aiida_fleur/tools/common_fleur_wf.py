@@ -632,7 +632,7 @@ def find_last_submitted_calcjob(restart_wc):
     from aiida.common.exceptions import NotExistent
     from aiida.orm import CalcJobNode
     links = restart_wc.get_outgoing().all()
-    calls = list([x for x in links if isinstance(x.node, CalcJobNode)])
+    calls = [x for x in links if isinstance(x.node, CalcJobNode)]
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
@@ -648,7 +648,7 @@ def find_last_submitted_workchain(restart_wc):
     from aiida.common.exceptions import NotExistent
     from aiida.orm import WorkChainNode
     links = restart_wc.get_outgoing().all()
-    calls = list([x for x in links if isinstance(x.node, WorkChainNode)])
+    calls = [x for x in links if isinstance(x.node, WorkChainNode)]
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
