@@ -154,7 +154,7 @@ def test_get_nodes_from_group():
 
     w = get_nodes_from_group(group, return_format='uuid')
     assert len(w) == 3
-    assert all([isinstance(x, str) for x in w])
+    assert all(isinstance(x, str) for x in w)
 
     w = get_nodes_from_group(group, return_format='pk')
     assert len(w) == 3

@@ -66,25 +66,21 @@ def plot_fleur(*args, **kwargs):
                       save_plots = False, #True,
                       save_format = 'pdf'):
     '''
-    from masci_tools.vis.plot_methods import set_plot_defaults
+    from masci_tools.vis.plot_methods import set_mpl_plot_defaults
+    from masci_tools.vis.bokeh_plots import set_bokeh_plot_defaults
 
-    save = False
-    show_dict = False
-    show = True
-    backend = 'matplotlib'
-    for key, val in six.iteritems(kwargs):
-        if key == 'save':
-            save = val
-        if key == 'show_dict':
-            show_dict = val
-        if key == 'backend':
-            backend = val
-        if key == 'show':
-            show = val
+    save = kwargs.pop('save', False)
+    show_dict = kwargs.pop('show_dict', False)
+    show = kwargs.pop('show', True)
+    backend = kwargs.pop('backend', 'matplotlib')
+
     #    # the rest we ignore for know
     #Just call set plot defaults
     # TODO, or rather parse it onto plot functions...?
-    set_plot_defaults(**kwargs)
+    if backend == 'matplotlib':
+        set_mpl_plot_defaults(**kwargs)
+    elif backend == 'bokeh':
+        set_bokeh_plot_defaults(**kwargs)
 
     all_plots = []
     for arg in args:
@@ -235,9 +231,6 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     else:
         from masci_tools.vis.plot_methods import plot_convergence_results_m
 
-    if labels is None:
-        labels = []
-
     if isinstance(nodes, list):
         if len(nodes) >= 2:
             #return # TODO
@@ -247,6 +240,9 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     else:
         nodes = [nodes]  #[0]]
     #scf_wf = load_node(6513)
+
+    if labels is None:
+        labels = [node.pk for node in nodes]
 
     iterations = []
     distance_all_n = []
@@ -284,23 +280,13 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         total_energy_n.append(total_energy)
         modes.append(mode)
 
-    #plot_convergence_results(distance_all, total_energy, iteration)
-    if labels:
-        plt = plot_convergence_results_m(distance_all_n,
-                                         total_energy_n,
-                                         iterations,
-                                         plot_labels=labels,
-                                         nodes=nodes_pk,
-                                         modes=modes,
-                                         show=show)
-    else:
-        plt = plot_convergence_results_m(distance_all_n,
-                                         total_energy_n,
-                                         iterations,
-                                         nodes=nodes_pk,
-                                         modes=modes,
-                                         show=show)
-
+    plt = plot_convergence_results_m(iterations,
+                                     distance_all_n,
+                                     total_energy_n,
+                                     plot_label=labels,
+                                     nodes=nodes_pk,
+                                     modes=modes,
+                                     show=show)
     return plt
 
 
@@ -358,7 +344,7 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
                 scaling.append(outpara.get('scaling'))
                 plotlables.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
                 plotlables.append(r'fit results {}'.format(i))
-            plot_lattice_constant(Total_energy, scaling, multi=True, plotlables=plotlables, show=show)
+            plot_lattice_constant(scaling, Total_energy, multi=True, plot_label=plotlables, show=show)
             return  # TODO
         else:
             node = node[0]
@@ -374,7 +360,7 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
 
     #fit_y = []
     #fit_y = [parabola(scale2, fit[0], fit[1], fit[2]) for scale2 in scaling]
-    p1 = plot_lattice_constant(Total_energy, scaling, show=show)  #, fit_y)
+    p1 = plot_lattice_constant(scaling, Total_energy, show=show)  #, fit_y)
     return p1
 
 

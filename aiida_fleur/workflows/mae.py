@@ -475,7 +475,7 @@ class FleurMaeWorkChain(WorkChain):
 
             minenergy = min(t_energydict)
 
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_energydict = [HTR_TO_EV * (x - minenergy) for x in t_energydict]
             else:
                 t_energydict = [(x - minenergy) for x in t_energydict]

@@ -195,7 +195,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
         if 'relax' in inputs and 'distance_suggestion' not in inputs:
-            if 'eos' or 'eos_output' in inputs:
+            if 'eos' in inputs or 'eos_output' in inputs:
                 self.report('ERROR: relax wc input was given but distance_suggestion was not.')
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 

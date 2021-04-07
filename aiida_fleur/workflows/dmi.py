@@ -530,7 +530,7 @@ class FleurDMIWorkChain(WorkChain):
                 for k in six.moves.range(i, i + num_ang - 1, 1):
                     t_energydict[k] -= ref_enrg
 
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 for labels, energies in t_energydict.items():
                     t_energydict[labels] = energies * HTR_TO_EV
         except AttributeError:
