@@ -275,7 +275,7 @@ class FleurEosWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')

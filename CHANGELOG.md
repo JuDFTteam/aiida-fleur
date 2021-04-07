@@ -1,3 +1,9 @@
+## v.1.1.4
+### release compatible with AiiDA-core 1.3.0
+### still support of Fleur MaXR4 version with inpgen
+### Does not support yet Fleur MaXR5 and new inpgen
+- Fixed numpy dependency issue with aiida-common-workflows and quantum mobile
+
 ## v1.1.3
 ### release compatible with AiiDA-core 1.3.0
 - still support of Fleur MaXR4 version with inpgen
