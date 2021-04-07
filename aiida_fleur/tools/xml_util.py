@@ -1878,7 +1878,7 @@ def get_inpxml_file_structure():
         'epsdisp': '/fleurInput/calculationSetup/geometryOptimization',
         'epsforce': '/fleurInput/calculationSetup/geometryOptimization',
         'valenceElectrons': '/fleurInput/cell/bzIntegration',
-        'mode': '/fleurInput/cellcell/bzIntegration',
+        'mode': '/fleurInput/cell/bzIntegration',
         'fermiSmearingEnergy': '/fleurInput/cell/bzIntegration',
         'nx': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'ny': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
