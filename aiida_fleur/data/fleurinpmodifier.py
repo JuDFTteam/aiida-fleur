@@ -44,7 +44,11 @@ class FleurinpModifier(object):
         self._other_nodes = {}
 
     @staticmethod
-    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_dict, validate_changes=False):
+    def apply_modifications(fleurinp_tree_copy,
+                            nmmp_lines_copy,
+                            modification_tasks,
+                            schema_dict,
+                            validate_changes=False):
         """
         Applies given modifications to the fleurinp lxml tree.
         It also checks if a new lxml tree is validated against schema.

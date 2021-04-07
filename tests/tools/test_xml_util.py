@@ -498,7 +498,7 @@ class TestSetInpchanges:
         from aiida_fleur.tools.xml_util import set_inpchanges, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        if any([x in path for x in self.skip_paths]):
+        if any(x in path for x in self.skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
 
         if name == 'xcFunctional':
@@ -624,7 +624,7 @@ class TestShiftValue:
         from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        if any([x in path for x in self.skip_paths]):
+        if any(x in path for x in self.skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
 
         result_before = eval_xpath2(etree, path)
@@ -648,7 +648,7 @@ class TestShiftValue:
         from aiida_fleur.tools.xml_util import shift_value, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        if any([x in path for x in self.skip_paths]):
+        if any(x in path for x in self.skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
 
         result_before = eval_xpath2(etree, path)
@@ -789,7 +789,7 @@ class TestAddNumToAtt:
         from aiida_fleur.tools.xml_util import add_num_to_att, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        if any([x in path for x in self.skip_paths]):
+        if any(x in path for x in self.skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
 
         result_before = eval_xpath2(etree, path)
@@ -809,7 +809,7 @@ class TestAddNumToAtt:
         from aiida_fleur.tools.xml_util import add_num_to_att, eval_xpath2
         etree = inpxml_etree(TEST_INP_XML_PATH)
 
-        if any([x in path for x in self.skip_paths]):
+        if any(x in path for x in self.skip_paths):
             pytest.skip('This attribute is not tested for FePt/inp.xml')
 
         result_before = eval_xpath2(etree, path)

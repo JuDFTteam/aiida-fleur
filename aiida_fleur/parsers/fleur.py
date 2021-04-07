@@ -22,8 +22,6 @@ from __future__ import absolute_import
 import os
 import re
 import json
-import numpy as np
-from datetime import date
 from lxml import etree
 
 from aiida.parsers import Parser

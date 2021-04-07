@@ -88,7 +88,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, 
         ldau_index = None
         for index, ldau in enumerate(all_ldau):
             ldau_species = get_xml_attribute(ldau.getparent(), 'name')
-            ldau_orbital = evaluate_attribute(ldau,schema_dict,'l', contains='species')
+            ldau_orbital = evaluate_attribute(ldau, schema_dict, 'l', contains='species')
             if current_name == ldau_species and ldau_orbital == orbital:
                 ldau_index = index
 
@@ -183,7 +183,7 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines, schema_dict):
     #(no numbers outside the valid area and no nonsensical occupations)
     for ldau_index, ldau in enumerate(all_ldau):
 
-        orbital = evaluate_attribute(ldau,schema_dict,'l', contains='species')
+        orbital = evaluate_attribute(ldau, schema_dict, 'l', contains='species')
         species_name = get_xml_attribute(ldau.getparent(), 'name')
 
         for spin in range(nspins):
