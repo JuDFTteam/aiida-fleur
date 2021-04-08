@@ -1971,13 +1971,16 @@ def clear_xml(tree):
     #Remove comments outside the root element (Since they have no parents this would lead to a crash)
     root = cleared_tree.getroot()
     prev_sibling = root.getprevious()
-    next_sibling = root.getnext()
-    if prev_sibling is not None:
+    while prev_sibling is not None:
         root.append(prev_sibling)
         root.remove(prev_sibling)
-    if next_sibling is not None:
+        prev_sibling = root.getprevious()
+
+    next_sibling = root.getnext()
+    while next_sibling is not None:
         root.append(next_sibling)
         root.remove(next_sibling)
+        next_sibling = root.getnext()
 
     # replace XInclude parts to validate against schema
     cleared_tree.xinclude()
