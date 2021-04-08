@@ -904,7 +904,7 @@ def change_atomgr_att_label(fleurinp_tree_copy, schema_dict, attributedict, at_l
     to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
     can be done via::
 
-        'attributedict': {'nocoParams': [('beta', val)]}
+        'attributedict': {'nocoParams': {'beta': val}}
 
     ``force`` and ``nocoParams`` keys are supported.
     To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
@@ -961,7 +961,7 @@ def change_atomgr_att(fleurinp_tree_copy, schema_dict, attributedict, position=N
     to be set inside the certain specie. For example, if one wants to set a beta noco parameter it
     can be done via::
 
-        'attributedict': {'nocoParams': {'beta': val]}
+        'attributedict': {'nocoParams': {'beta': val}}
 
     ``force`` and ``nocoParams`` keys are supported.
     To find possible keys of the inner dictionary please refer to the FLEUR documentation flapw.de
