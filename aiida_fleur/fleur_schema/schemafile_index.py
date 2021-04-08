@@ -20,7 +20,7 @@ import os
 SCHEMA_FILE_PATHS = [
     './input/0.27/FleurInputSchema.xsd', './input/0.28/FleurInputSchema.xsd', './input/0.29/FleurInputSchema.xsd',
     './input/0.30/FleurInputSchema.xsd', './input/0.31/FleurInputSchema.xsd', './input/0.32/FleurInputSchema.xsd',
-    './input/0.33/FleurInputSchema.xsd', '.'
+    './input/0.33/FleurInputSchema.xsd', './input/0.34/FleurInputSchema.xsd', '.'
 ]
 
 PACKAGE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
