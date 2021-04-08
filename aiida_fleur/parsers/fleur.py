@@ -966,16 +966,13 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
                 write_simple_outnode(m_units, 'str', 'magnetic_moment_units', simple_data)
                 write_simple_outnode(m_units, 'str', 'orbital_magnetic_moment_units', simple_data)
 
-                moments = eval_xpath(iteration_node, magneticmoments_xpath)
+                moments = eval_xpath2(iteration_node, magneticmoments_xpath)
                 write_simple_outnode(moments, 'list_floats', 'magnetic_moments', simple_data)
 
-                spinup = eval_xpath(iteration_node, magneticmoments_spinupcharge_xpath)
+                spinup = eval_xpath2(iteration_node, magneticmoments_spinupcharge_xpath)
                 write_simple_outnode(spinup, 'list_floats', 'magnetic_spin_up_charges', simple_data)
 
-                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
-                write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
-
-                spindown = eval_xpath(iteration_node, magneticmoments_spindowncharge_xpath)
+                spindown = eval_xpath2(iteration_node, magneticmoments_spindowncharge_xpath)
                 write_simple_outnode(spindown, 'list_floats', 'magnetic_spin_down_charges', simple_data)
 
                 # Total charges, total magentic moment
@@ -1000,13 +997,13 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
                 write_simple_outnode(total_c, 'float', 'total_charge', simple_data)
 
                 # orbital magnetic moments
-                orbmoments = eval_xpath(iteration_node, orbmagneticmoments_xpath)
+                orbmoments = eval_xpath2(iteration_node, orbmagneticmoments_xpath)
                 write_simple_outnode(orbmoments, 'list_floats', 'orbital_magnetic_moments', simple_data)
 
-                orbspinup = eval_xpath(iteration_node, orbmagneticmoments_spinupcharge_xpath)
+                orbspinup = eval_xpath2(iteration_node, orbmagneticmoments_spinupcharge_xpath)
                 write_simple_outnode(orbspinup, 'list_floats', 'orbital_magnetic_spin_up_charges', simple_data)
 
-                orbspindown = eval_xpath(iteration_node, orbmagneticmoments_spindowncharge_xpath)
+                orbspindown = eval_xpath2(iteration_node, orbmagneticmoments_spindowncharge_xpath)
                 write_simple_outnode(orbspindown, 'list_floats', 'orbital_magnetic_spin_down_charges', simple_data)
 
             if ldaU:
