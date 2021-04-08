@@ -1968,6 +1968,17 @@ def clear_xml(tree):
 
     cleared_tree = copy.deepcopy(tree)
 
+    #Remove comments outside the root element (Since they have no parents this would lead to a crash)
+    root = cleared_tree.getroot()
+    prev_sibling = root.getprevious()
+    next_sibling = root.getnext()
+    if prev_sibling is not None:
+        root.append(prev_sibling)
+        root.remove(prev_sibling)
+    if next_sibling is not None:
+        root.append(next_sibling)
+        root.remove(next_sibling)
+
     # replace XInclude parts to validate against schema
     cleared_tree.xinclude()
 
@@ -1982,6 +1993,7 @@ def clear_xml(tree):
     comments = cleared_tree.xpath('//comment()')
     for comment in comments:
         com_parent = comment.getparent()
-        com_parent.remove(comment)
+        if com_parent is not None:
+            com_parent.remove(comment)
 
     return cleared_tree
