@@ -514,7 +514,7 @@ class FleurRelaxWorkChain(WorkChain):
                                           symbols=element,
                                           name=species_name)
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A),
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[2] * BOHR_A),
                                           symbols=element,
                                           name=species_name)
 

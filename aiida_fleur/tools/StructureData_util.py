@@ -1186,7 +1186,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     *_, layer_occupancies = get_layers(structure)
 
-    if replacements is not None:
+    if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
@@ -1295,7 +1295,12 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure = StructureData(cell=sorted_struc.cell)
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
-        magn_structure.append_kind(kind)
+        kind_append = kind
+        kind_append.name = kind.name.split('-')[0]
+        try:
+            magn_structure.append_kind(kind)
+        except ValueError:
+            pass
 
     done_layers = 0
     while True:
@@ -1325,6 +1330,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
 def get_layers(structure, decimals=10):
     """
     Extracts atom positions and their types belonging to the same layer
+    Removes any information related to kind specie.
 
     :param structure: ase lattice or StructureData which represents a slab
     :param number: the layer number. Note, that layers will be sorted according to z-position
@@ -1342,7 +1348,8 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [(list(x.position), x.kind_name) for x in sorted(structure.sites, key=lambda x: x.position[2])]
+        reformat = [(list(x.position), x.kind_name.split('-')[0])
+                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:

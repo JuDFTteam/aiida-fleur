@@ -819,11 +819,12 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
     xpath_core_occ = '{}/electronConfig/stateOccupation'.format(xpath_species)
     xpath_lda_u = '{}/ldaU'.format(xpath_species)
     xpath_soc_scale = '{}/special'.format(xpath_species)
+    xpath_modInitDen = '{}/modInitDen'.format(xpath_species)
 
     # can we get this out of schema file?
     species_seq = [
-        'mtSphere', 'atomicCutoffs', 'energyParameters', 'prodBasis', 'special', 'force', 'electronConfig',
-        'nocoParams', 'ldaU', 'lo'
+        'mtSphere', 'atomicCutoffs', 'electronConfig', 'energyParameters', 'prodBasis', 'special', 'force',
+        'nocoParams', 'modInitDen', 'ldaU', 'ldaHIA', 'greensfCalculation', 'torgueCalculation', 'lo'
     ]
 
     for key, val in six.iteritems(attributedict):
@@ -950,6 +951,14 @@ def set_species(fleurinp_tree_copy, species_name, attributedict, create=False):
                         tag_order=species_seq)
             for attrib, value in six.iteritems(val):
                 xml_set_all_attribv(fleurinp_tree_copy, xpath_soc_scale, attrib, value, create=create)
+        elif key == 'modInitDen':
+            eval_xpath3(fleurinp_tree_copy,
+                        xpath_modInitDen,
+                        create=True,
+                        place_index=species_seq.index('modInitDen'),
+                        tag_order=species_seq)
+            for attrib, value in six.iteritems(val):
+                xml_set_all_attribv(fleurinp_tree_copy, xpath_modInitDen, attrib, value, create=create)
         else:
             xml_set_all_attribv(fleurinp_tree_copy, xpath_species, key, val)
 
@@ -1228,9 +1237,7 @@ def set_inpchanges(fleurinp_tree_copy, change_dict):
             'nx': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
             'ny': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
             'nz': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
-            'count': '/fleurInput/calculationSetup/kPointCount',
-            'ellow': '/fleurInput/calculationSetup/energyParameterLimits',
-            'elup': '/fleurInput/calculationSetup',
+            'count': '/fleurInput/cell/bzIntegration/kPointLists/kPointList',
             'filename': '/fleurInput/cell/symmetryFile',
             'scale': '/fleurInput/cell/bulkLattice',
             'ndir': '/fleurInput/output/densityOfStates',
@@ -1746,10 +1753,10 @@ def get_inpxml_file_structure():
     all_switches_several = ('calculate', 'flipSpin', 'l_amf')
 
     int_attributes_once = ('numbands', 'itmax', 'maxIterBroyd', 'kcrel', 'jspins', 'gw', 'isec1', 'nx', 'ny', 'nz',
-                           'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'count', 'qfix')
+                           'ndir', 'layers', 'nstars', 'nstm', 'iplot', 'numkpt', 'nnne', 'lpr', 'qfix')
 
     float_attributes_once = ('Kmax', 'Gmax', 'GmaxXC', 'alpha', 'spinf', 'minDistance', 'theta', 'phi', 'epsdisp',
-                             'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'ellow', 'elup', 'scale', 'dTilda',
+                             'epsforce', 'valenceElectrons', 'fermiSmearingEnergy', 'scale', 'dTilda',
                              'dVac', 'minEnergy', 'maxEnergy', 'sigma', 'locx1', 'locy1', 'locx2', 'locy2', 'tworkf',
                              'minEigenval', 'maxEigenval', 'forcealpha', 'force_converged', 'mixParam')
 
@@ -1761,12 +1768,12 @@ def get_inpxml_file_structure():
     other_attributes_once1 = ('isec1', 'Kmax', 'Gmax', 'GmaxXC', 'numbands', 'itmax', 'maxIterBroyd', 'imix', 'alpha',
                               'spinf', 'minDistance', 'kcrel', 'jspins', 'theta', 'phi', 'gw', 'lpr', 'epsdisp',
                               'epsforce', 'valenceElectrons', 'mode', 'gauss', 'fermiSmearingEnergy', 'nx', 'ny', 'nz',
-                              'ellow', 'elup', 'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
+                              'filename', 'scale', 'dTilda', 'dVac', 'ndir', 'minEnergy', 'maxEnergy',
                               'sigma', 'layers', 'nstars', 'locx1', 'locy1', 'locx2', 'locy2', 'nstm', 'tworkf',
                               'numkpt', 'minEigenval', 'maxEigenval', 'nnne')
 
     int_attributes_several = ('atomicNumber', 'gridPoints', 'lmax', 'lnonsphr', 's', 'p', 'd', 'f', 'l', 'n', 'eDeriv',
-                              'coreStates')
+                              'coreStates', 'count')
     float_attributes_several = ('value', 'magMom', 'radius', 'logIncrement', 'U', 'J')
     string_attributes_several = ('name', 'element', 'coreStates', 'type', 'relaxXYZ')
     other_attributes_several = ('name', 'value', 'element', 'atomicNumber', 'coreStates', 'magMom', 'radius',
@@ -1802,8 +1809,8 @@ def get_inpxml_file_structure():
         'relPos': '/fleurInput/atomGroups/atomGroup/relPos',
         'filmPos': '/fleurInput/atomGroups/atomGroup/filmPos',
         'absPos': '/fleurInput/atomGroups/atomGroup/absPos',
-        'qss': '/fleurInput/calculationSetup/nocoParams/qss',
-        'l_ss': '/fleurInput/calculationSetup/nocoParams',
+        'qss': '/fleurInput/calculationSetup/magnetism/qss',
+        'l_ss': '/fleurInput/calculationSetup/magnetism',
         'row-1': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-2': '/fleurInput/cell/bulkLattice/bravaisMatrix',
         'row-3': '/fleurInput/cell/bulkLattice/bravaisMatrix',
@@ -1844,7 +1851,7 @@ def get_inpxml_file_structure():
         'form66': '/fleurInput/output/specialOutput',
         'eonly': '/fleurInput/output/specialOutput',
         'bmt': '/fleurInput/output/specialOutput',
-        'relativisticCorrections': '/fleurInput/xcFunctional',  # ALL_Switches_several
+        'relativisticCorrections': '/fleurInput/calculationSetup/xcFunctional',  # ALL_Switches_several
         'calculate': '/fleurInput/atomGroups/atomGroup/force',
         'flipSpin': '/fleurInput/atomSpecies/species',  # other_attributes_once
         'Kmax': '/fleurInput/calculationSetup/cutoffs',
@@ -1870,15 +1877,13 @@ def get_inpxml_file_structure():
         'qfix': '/fleurInput/calculationSetup/geometryOptimization',
         'epsdisp': '/fleurInput/calculationSetup/geometryOptimization',
         'epsforce': '/fleurInput/calculationSetup/geometryOptimization',
-        'valenceElectrons': '/fleurInput/calculationSetup/bzIntegration',
-        'mode': '/fleurInput/calculationSetup/bzIntegration',
-        'fermiSmearingEnergy': '/fleurInput/calculationSetup/bzIntegration',
+        'valenceElectrons': '/fleurInput/cell/bzIntegration',
+        'mode': '/fleurInput/cell/bzIntegration',
+        'fermiSmearingEnergy': '/fleurInput/cell/bzIntegration',
         'nx': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'ny': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'nz': '/fleurInput/calculationSetup/bzIntegration/kPointMesh',
         'count': '/ fleurInput/calculationSetup/bzIntegration/kPointList',
-        'ellow': '/fleurInput/calculationSetup/energyParameterLimits',
-        'elup': '/fleurInput/calculationSetup/energyParameterLimits',
         #'filename': '/fleurInput/cell/symmetryFile',
         'scale': '/fleurInput/cell/bulkLattice',
         # 'film_scale': '/fleurInput/cell/filmLattice',
@@ -1900,7 +1905,7 @@ def get_inpxml_file_structure():
         'nnne': '/fleurInput/output/chargeDensitySlicing',
         'dVac': '/fleurInput/cell/filmLattice',
         'dTilda': '/fleurInput/cell/filmLattice',
-        'xcFunctional': '/fleurInput/xcFunctional',  # other_attributes_more
+        'xcFunctional': '/fleurInput/calculationSetup/xcFunctional',  # other_attributes_more
         # 'name': {'/fleurInput/constantDefinitions', '/fleurInput/xcFunctional',
         #          '/fleurInput/atomSpecies/species'},
         # 'value': '/fleurInput/constantDefinitions',
