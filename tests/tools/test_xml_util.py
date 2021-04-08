@@ -238,7 +238,7 @@ class TestSetSpecies:
     paths = [
         'mtSphere/@radius', 'atomicCutoffs/@lmax', 'energyParameters/@s', 'electronConfig/coreConfig',
         'electronConfig/stateOccupation/@state', 'electronConfig/stateOccupation/@state', 'special/@socscale',
-        'ldaU/@U', 'ldaU/@U', 'lo/@n', 'lo/@n'
+        'ldaU/@U', 'ldaU/@U', 'lo/@n', 'lo/@n', 'modInitDen/@magMom'
     ]
 
     attdicts = [{
@@ -295,13 +295,18 @@ class TestSetSpecies:
         }, {
             'n': 33.0
         }]
+    }, {
+        'modInitDen': {
+            'magMom': 2.0
+        }
     }
+
                 #  'nocoParams': {'test_att' : 2, 'qss' : '123 123 123'},
                 ]
 
     results = [
         '3.333', '7.0', '3.0', 'test', 'state', ['state', 'state2'], '1.0', '2.0', ['2.0', '23.0'], '2.0',
-        ['2.0', '33.0']
+        ['2.0', '33.0'], '2.0'
     ]
 
     @staticmethod
