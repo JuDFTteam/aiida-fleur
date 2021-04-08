@@ -19,11 +19,11 @@ import io
 from lxml import etree
 import warnings
 
-from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
-
-from aiida_fleur.tools.xml_aiida_modifiers import FLEURINPMODIFIER_EXTRA_FUNCS
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.tools.xml_aiida_modifiers import FLEURINPMODIFIER_EXTRA_FUNCS
+
+from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 
 class FleurinpModifier(FleurXMLModifier):
     """
@@ -93,66 +93,164 @@ class FleurinpModifier(FleurXMLModifier):
         Deprecated method for setting attributes for occurrences on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_attrib_value_no_create' or"
-                      "'set_attrib_value' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_attrib_value_no_create' or"
+            "'set_attrib_value' method instead", DeprecationWarning)
 
-        self.xml_set_attrib_value_no_create(*args, **kwargs)
+        occ = kwargs.pop('occ', None)
+
+        self.xml_set_attrib_value_no_create(*args, **kwargs, occurrences=occ)
 
     def xml_set_first_attribv(self, *args, **kwargs):
         """
         Deprecated method for setting the first attribute on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_first_attrib_value_no_create' with 'occ=0' or"
-                      "'set_first_attrib_value' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_first_attrib_value_no_create' with 'occurrences=0' or"
+            "'set_first_attrib_value' method instead", DeprecationWarning)
 
-        self.xml_set_attrib_value_no_create(*args, occ=0, **kwargs)
+        self.xml_set_attrib_value_no_create(*args, occurrences=0, **kwargs)
 
     def xml_set_all_attribv(self, *args, **kwargs):
         """
         Deprecated method for setting all attributes on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_attrib_value_no_create' with occ='all' or"
-                      "'set_attrib_value' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_attrib_value_no_create' or"
+            "'set_attrib_value' method instead", DeprecationWarning)
 
-        self.xml_set_attrib_value_no_create(*args, occ='all', **kwargs)
+        self.xml_set_attrib_value_no_create(*args, **kwargs)
 
     def xml_set_text_occ(self, *args, **kwargs):
         """
         Deprecated method for setting texts for occurrences on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_text_no_create' or"
-                      "'set_text' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' or"
+            "'set_text' method instead", DeprecationWarning)
 
-        self.xml_set_text_no_create(*args, **kwargs)
+        occ = kwargs.pop('occ', None)
+
+        self.xml_set_text_no_create(*args, **kwargs, occurrences=occ)
 
     def xml_set_text(self, *args, **kwargs):
         """
         Deprecated method for setting attributes for occurrences on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_text_no_create' with 'occ=0' or"
-                      "'set_first_text' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' with 'occurrences=0' or"
+            "'set_first_text' method instead", DeprecationWarning)
 
-        self.xml_set_text_no_create(*args, occ=0, **kwargs)
+        self.xml_set_text_no_create(*args, occurrences=0, **kwargs)
 
     def xml_set_all_text(self, *args, **kwargs):
         """
         Deprecated method for setting attributes for occurrences on a specific xpath
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_set_text_no_create' with occ='all' or"
-                      "'set_text' method instead", DeprecationWarning)
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' or"
+            "'set_text' method instead", DeprecationWarning)
 
-        self.xml_set_text_no_create(*args, occ='all', **kwargs)
+        self.xml_set_text_no_create(*args, **kwargs)
+
+    def create_tag(self, *args, **kwargs):
+        """
+        Deprecation layer for create_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag_name: str of the tag to create
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param create_parents: bool optional (default False), if True and the given xpath has no results the
+                               the parent tags are created recursively
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+        """
+
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'create_tag' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_create_tag' method instead or only pass in the name of the tag, you want to use",
+                DeprecationWarning)
+
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_create_tag(xpath, *args, **kwargs)
+        else:
+            super().create_tag(*args, **kwargs)
+
+    def delete_tag(self, *args, **kwargs):
+        """
+        Deprecated method for deleting a tag at a specific xpath
+        """
+
+        warnings.warn('This modification method is deprecated.'
+                      "Use the 'xml_delete_tag' method instead", DeprecationWarning)
+
+        self.xml_delete_tag(*args, **kwargs)
+
+    def delete_att(self, *args, **kwargs):
+        """
+        Deprecated method for deleting a tag at a specific xpath
+        """
+
+        warnings.warn('This modification method is deprecated.'
+                      "Use the 'xml_delete_att' method instead", DeprecationWarning)
+
+        self.xml_delete_att(*args, **kwargs)
+
+    def replace_tag(self, *args, **kwargs):
+        """
+        Deprecated method for deleting a tag at a specific xpath
+        """
+
+        warnings.warn('This modification method is deprecated.'
+                      "Use the 'xml_replace_tag' method instead", DeprecationWarning)
+
+        self.xml_replace_tag(*args, **kwargs)
+
+    def add_num_to_att(self, *args, **kwargs):
+        """
+        Deprecated method for adding a number to a attribute at a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'add_number_to_attrib' or 'add_number_to_first_attrib' method instead", DeprecationWarning)
+
+        #Since the new method takes only an attribute we extract the xpath and pass it in as complex_xpath
+
+        if len(args) == 0:
+            xpath = kwargs.pop('xpathn')
+        else:
+            xpath, args = args[0], args[1:]
+
+        if 'occ' not in kwargs:
+            self.add_number_to_first_attrib(*args, **kwargs, complex_xpath=xpath)
+        else:
+            occ = kwargs.pop('occ')
+            self.add_number_to_attrib(*args, **kwargs, complex_xpath=xpath, occurrences=occ)
 
     def validate(self):
         """
@@ -197,7 +295,11 @@ class FleurinpModifier(FleurXMLModifier):
             except FileNotFoundError:
                 nmmplines = None
 
-            tree, nmmp = super().apply_modifications(tree, nmmplines, self._tasks, extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+            tree, nmmp = super().apply_modifications(tree,
+                                                     nmmplines,
+                                                     self._tasks,
+                                                     validate_changes=False,
+                                                     extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
 
         if display:
             xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)
@@ -227,7 +329,7 @@ class FleurinpModifier(FleurXMLModifier):
         return out
 
     #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
-    def modify_xmlfile(self, *args, **kwargs): #pylint: disable=missing-function-docstring
+    def modify_xmlfile(self, *args, **kwargs):  #pylint: disable=missing-function-docstring
         raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')
 
 
@@ -254,6 +356,11 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
     new_fleurinp = original.clone()
     modification_tasks = modifications.get_dict()['tasks']
+
+    #We need to rebuild the namedtuples since the serialization for the calcufunction inputs
+    #converts the namedtuples into lists
+    modification_tasks = [ModifierTask(*task) for task in modification_tasks]
+
 
     xmltree, schema_dict, included_tags = new_fleurinp.load_inpxml(remove_blank_text=True, return_included_tags=True)
 
@@ -295,4 +402,3 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
 
     return new_fleurinp
-

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 
@@ -49,5 +50,4 @@ def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
     return new_tree
 
 
-
-FLEURINPMODIFIER_EXTRA_FUNCS = {'basic':{'set_kpointsdata': set_kpointsdata_f}}
+FLEURINPMODIFIER_EXTRA_FUNCS = {'basic': {'set_kpointsdata': set_kpointsdata_f}}
