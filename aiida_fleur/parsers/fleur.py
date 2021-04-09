@@ -707,12 +707,12 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
         mae_force_theta_xpath = 'Forcetheorem_MAE/Angle/@theta'
         mae_force_phi_xpath = 'Forcetheorem_MAE/Angle/@phi'
         mae_force_evsum_xpath = 'Forcetheorem_MAE/Angle/@ev-sum'
-        mae_force_energ_units_xpath = 'Forcetheorem_Loop_MAE/sumValenceSingleParticleEnergies/@units'
+        mae_force_energ_units_xpath = 'Forcetheorem_Loop/sumValenceSingleParticleEnergies/@units'
 
         spst_force_xpath = 'Forcetheorem_SSDISP/@qvectors'
         spst_force_q_xpath = 'Forcetheorem_SSDISP/Entry/@q'
         spst_force_evsum_xpath = 'Forcetheorem_SSDISP/Entry/@ev-sum'
-        spst_force_energ_units_xpath = 'Forcetheorem_Loop_SSDISP/sumValenceSingleParticleEnergies/@units'
+        spst_force_energ_units_xpath = 'Forcetheorem_Loop/sumValenceSingleParticleEnergies/@units'
 
         dmi_force_xpath = 'Forcetheorem_DMI'
         dmi_force_q_xpath = 'Forcetheorem_DMI/Entry/@q'
@@ -721,7 +721,7 @@ def parse_xmlout_file(outxmlfile, outfile_version=None):
         dmi_force_evsum_xpath = 'Forcetheorem_DMI/Entry/@ev-sum'
         dmi_force_angles_xpath = 'Forcetheorem_DMI/@Angles'
         dmi_force_qs_xpath = 'Forcetheorem_DMI/@qPoints'
-        dmi_force_energ_units_xpath = 'Forcetheorem_Loop_DMI/sumValenceSingleParticleEnergies/@units'
+        dmi_force_energ_units_xpath = 'Forcetheorem_Loop/sumValenceSingleParticleEnergies/@units'
 
         spinupcharge_name = 'spinUpCharge'
         spindowncharge_name = 'spinDownCharge'
