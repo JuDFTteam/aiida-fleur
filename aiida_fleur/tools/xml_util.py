@@ -667,7 +667,7 @@ def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True, write_ids=True):
         atom_lmax = convert_to_int(eval_xpath(species, atom_lmax_xpath), suc_return=False)
         atom_lnosph = convert_to_int(eval_xpath(species, atom_lnosph_xpath), suc_return=False)
         #atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
-        atom_econfig = eval_xpath(species, atom_econfig_xpath)
+        #atom_econfig = eval_xpath(species, atom_econfig_xpath)
         atom_bmu = convert_to_float(eval_xpath(species, atom_bmu_xpath), suc_return=False)
         atom_lo = eval_xpath(species, atom_lo_xpath)
         atom_element = eval_xpath(species, atom_element_xpath)
@@ -685,7 +685,7 @@ def get_inpgen_para_from_xml(inpxmlfile, inpgen_ready=True, write_ids=True):
         if write_ids:
             if species_several[atom_z] > 1:
                 atom_dict = set_dict_or_not(atom_dict, 'id', atom_id)
-        atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
+        #atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
