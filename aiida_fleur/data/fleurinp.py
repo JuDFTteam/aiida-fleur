@@ -70,7 +70,7 @@ class FleurinpData(Data):
     # needs to be improved, schema file is often after new installation not found...
     # installation with pip should always lead to a schema file in the python path, or even specific place
 
-    __version__ = '0.4.0'
+    __version__ = '0.5.0'
 
     # ignore machine dependent attributes in hash
     _hash_ignored_attributes = []  #'_schema_file_path', '_search_paths']
@@ -319,9 +319,9 @@ class FleurinpData(Data):
 
         xmltree = self._include_files(xmltree)
 
-        parser_info = {'parser_warnings': []}
+        parser_info = {}
         try:
-            inpxml_dict = inpxml_parser(xmltree, version=self.inp_version, parser_info_out=parser_info)
+            inpxml_dict = inpxml_parser(xmltree, parser_info_out=parser_info)
         except (ValueError, FileNotFoundError) as exc:
             raise InputValidationError from exc
 
@@ -329,13 +329,37 @@ class FleurinpData(Data):
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
+    def load_inpxml(self, validate_xml_schema=True):
+        """
+        Returns the lxml etree and the schema dictionary corresponding to the version. If validate_xml_schema=True
+        the file will also be validated against the schema
+        """
+        from masci_tools.io.io_fleurxml import load_inpxml
+        from masci_tools.util.xml.common_xml_util import validate_xml
+        from lxml import etree
+
+        self._validate()
+
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            xmltree, schema_dict = load_inpxml(inpxmlfile)
+
+        xmltree = self._include_files(xmltree)
+
+        if validate_xml_schema:
+            try:
+                validate_xml(xmltree, schema_dict.xmlschema)
+            except etree.DocumentInvalid as err:
+                raise ValueError(err) from err
+
+        return xmltree, schema_dict
+
     def _include_files(self, xmltree):
         """
         Tries to insert all .xml, which are not inp.xml file into the etree since they are
         not naturally available for the parser (open vs self.open)
 
         Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
-        Then it is reparsed into a ElementTree and hte xi:include tags are executed
+        Then it is reparsed into a ElementTree and teh xi:include tags are executed
         """
         from masci_tools.util.xml.common_xml_util import clear_xml
         import tempfile

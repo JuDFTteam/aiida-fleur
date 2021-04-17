@@ -221,9 +221,9 @@ class FleurParser(Parser):
 
             with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile_opened:
                 success = True
-                parser_info = {'parser_warnings': []}
+                parser_info = {}
                 try:
-                    out_dict = outxml_parser(outxmlfile_opened, parser_info_out=parser_info, strict=True)
+                    out_dict = outxml_parser(outxmlfile_opened, parser_info_out=parser_info)
                 except (ValueError, FileNotFoundError, KeyError) as exc:
                     self.logger.error(f'XML output parsing failed: {str(exc)}')
                     success = False
