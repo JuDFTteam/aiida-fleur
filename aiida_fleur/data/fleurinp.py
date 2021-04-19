@@ -335,7 +335,7 @@ class FleurinpData(Data):
         the file will also be validated against the schema
         """
         from masci_tools.io.io_fleurxml import load_inpxml
-        from masci_tools.util.xml.common_xml_util import validate_xml
+        from masci_tools.util.xml.common_functions import validate_xml
         from lxml import etree
 
         self._validate()
@@ -361,7 +361,7 @@ class FleurinpData(Data):
         Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
         Then it is reparsed into a ElementTree and teh xi:include tags are executed
         """
-        from masci_tools.util.xml.common_xml_util import clear_xml
+        from masci_tools.util.xml.common_functions import clear_xml
         import tempfile
 
         xmltree_string = etree.tostring(xmltree)
