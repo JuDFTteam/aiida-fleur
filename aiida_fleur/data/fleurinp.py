@@ -336,7 +336,6 @@ class FleurinpData(Data):
         """
         from masci_tools.io.io_fleurxml import load_inpxml
         from masci_tools.util.xml.common_functions import validate_xml
-        from lxml import etree
 
         self._validate()
 

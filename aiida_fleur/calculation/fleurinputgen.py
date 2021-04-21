@@ -632,7 +632,7 @@ def _lowercase_dict(dic, dict_name):
 
 def write_inpgen_file_aiida_struct(structure, path, input_params=None, settings=None):
     """Wraps around masci_tools write inpgen_file, unpacks aiida structure"""
-    from masci_tools.io.io_fleur_inpgen import write_inpgen_file
+    from masci_tools.io.io_fleur_inpgen import write_inpgen_file # pylint: disable=import-error,no-name-in-module
 
     atoms_dict_list = []
     kind_list = []
