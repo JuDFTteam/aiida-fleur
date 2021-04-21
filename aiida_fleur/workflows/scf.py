@@ -563,7 +563,6 @@ class FleurScfWorkChain(WorkChain):
         """
         self.report('INFO: get results FLEUR')
 
-
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
