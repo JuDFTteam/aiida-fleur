@@ -423,10 +423,10 @@ def performance_extract_calcs(calcs):
         data_dict['n_iterations'].append(niter)
         data_dict['n_iterations_total'].append(res.number_of_iterations_total)
 
-        if u'charge_density' in res_keys:
-            data_dict['density_distance'].append(res.charge_density)
+        if u'density_convergence' in res_keys:
+            data_dict['density_distance'].append(res.density_convergence)
         else:  # magnetic, old
-            data_dict['density_distance'].append(res.overall_charge_density)
+            data_dict['density_distance'].append(res.overall_density_convergence)
 
         walltime = res.walltime
         if walltime <= 0:
