@@ -423,7 +423,7 @@ def performance_extract_calcs(calcs):
         data_dict['n_iterations'].append(niter)
         data_dict['n_iterations_total'].append(res.number_of_iterations_total)
 
-        if u'density_convergence' in res_keys:
+        if u'overall_density_convergence' not in res_keys:
             data_dict['density_distance'].append(res.density_convergence)
         else:  # magnetic, old
             data_dict['density_distance'].append(res.overall_density_convergence)
