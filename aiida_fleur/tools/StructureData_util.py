@@ -1348,8 +1348,9 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [(list(x.position), x.kind_name.split('-')[0])
-                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
+        reformat = [
+            (list(x.position), x.kind_name.split('-')[0]) for x in sorted(structure.sites, key=lambda x: x.position[2])
+        ]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:

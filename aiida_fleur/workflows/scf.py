@@ -578,8 +578,7 @@ class FleurScfWorkChain(WorkChain):
             walltime = last_base_wc.outputs.output_parameters.dict.walltime
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
-                                                      'r') as outxmlfile_opened:
+            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r') as outxmlfile_opened:
                 tree = etree.parse(outxmlfile_opened)
             root = tree.getroot()
 
