@@ -638,7 +638,7 @@ def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True, write_i
         atom_lnosph = evaluate_attribute(species, schema_dict, 'lnonsphr', constants)
         #atom_ncst = convert_to_int(eval_xpath(species, atom_ncst_xpath), suc_return=False)
         atom_econfig = eval_simple_xpath(species, schema_dict, 'electronConfig')
-        atom_bmu = evaluate_attribute(species, schema_dict, 'magMom', constants)
+        atom_bmu = evaluate_attribute(species, schema_dict, 'magMom', constants, optional=True)
         atom_lo = eval_simple_xpath(species, schema_dict, 'lo', list_return=True)
         atom_element = evaluate_attribute(species, schema_dict, 'element', constants)
         atom_name_2 = evaluate_attribute(species, schema_dict, 'name', constants)

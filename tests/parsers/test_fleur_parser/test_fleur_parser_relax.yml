@@ -16,16 +16,6 @@ output_parameters:
   fermi_energy: -0.373621053
   fermi_energy_units: Htr
   film: true
-  fleur_modes:
-    band: false
-    bz_integration: hist
-    dos: false
-    film: true
-    jspin: 1
-    ldau: false
-    noco: false
-    relax: true
-    soc: false
   force_atoms:
   - - 1
     - - 0.0
@@ -43,7 +33,15 @@ output_parameters:
   number_of_species: 1
   number_of_spin_components: 1
   number_of_symmetries: 16
-  parser_info: Masci-Tools Fleur out.xml Parser v0.4.0
+  parser_critical: []
+  parser_debug: []
+  parser_errors: []
+  parser_info:
+  - Masci-Tools Fleur out.xml Parser v0.5.0
+  - 'Found fleur out file with the versions out: 0.31; inp: 0.31'
+  - 'The following Fleur modes were found: {''jspin'': 1, ''relax'': True, ''ldau'':
+    False, ''soc'': False, ''noco'': False, ''film'': True, ''dos'': False, ''band'':
+    False, ''bz_integration'': ''hist''}'
   parser_warnings:
   - Ignoring '0.27' outputVersion for MaX4.0 release
   - "Output file does not validate against the schema: \nLine 15: Element 'inputData':\

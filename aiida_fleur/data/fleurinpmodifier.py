@@ -70,7 +70,7 @@ class FleurinpModifier(object):
         from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
         from aiida_fleur.tools.xml_util import shift_value_species_label
         from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
-        from masci_tools.util.xml.common_xml_util import clear_xml
+        from masci_tools.util.xml.common_functions import clear_xml
 
         def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
             if occ is None:
