@@ -655,7 +655,7 @@ def get_inpgen_para_from_xml(inpxmlfile, schema_dict, inpgen_ready=True, write_i
         if write_ids:
             if species_several[atom_z] > 1:
                 atom_dict = set_dict_or_not(atom_dict, 'id', atom_id)
-        atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
+        #atom_dict = set_dict_or_not(atom_dict, 'econfig', atom_econfig)
         atom_dict = set_dict_or_not(atom_dict, 'bmu', atom_bmu)
         if atom_lo is not None:
             atom_dict = set_dict_or_not(atom_dict, 'lo', convert_fleur_lo(atom_lo))
