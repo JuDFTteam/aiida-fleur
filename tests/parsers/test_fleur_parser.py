@@ -19,11 +19,13 @@ TEST_INP_XML_PATH1 = os.path.join(aiida_path, '../tests/parsers/fixtures/fleur/r
 def test_fleurparse_relax_file():
     """Test if parsing of a given relax.xml file is successfull"""
     from aiida_fleur.parsers.fleur import parse_relax_file
+    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
     from aiida.orm import Dict
 
+    schema_dict = InputSchemaDict.fromVersion('0.34')
     filename = os.path.abspath('./files/relaxxml/Fe_relax.xml')
     with open(filename, 'r') as relaxfile:
-        result = parse_relax_file(relaxfile)
+        result = parse_relax_file(relaxfile, schema_dict)
     assert isinstance(result, Dict)
     assert result.get_dict() != {}
 

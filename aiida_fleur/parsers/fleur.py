@@ -29,6 +29,7 @@ from aiida.orm import Dict, BandsData
 from aiida.common.exceptions import NotExistent
 
 from masci_tools.io.parsers.fleur import outxml_parser
+from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
 
 class FleurParser(Parser):
@@ -181,7 +182,8 @@ class FleurParser(Parser):
                     elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+', error_file_lines)[0].split()
                         with output_folder.open('relax.xml', 'r') as rlx:
-                            relax_dict = parse_relax_file(rlx)
+                            schema_dict = InputSchemaDict.fromVersion('0.34')
+                            relax_dict = parse_relax_file(rlx, schema_dict)
                             it_number = len(relax_dict['energies']) + 1  # relax.xml was not updated
                         error_params = {
                             'error_name': 'MT_OVERLAP_RELAX',
@@ -288,12 +290,14 @@ class FleurParser(Parser):
                 else:
                     old_relax_text = ''
 
+            inp_version = outxml_params.get_dict().get('input_file_version', '0.34')
+            schema_dict = InputSchemaDict.fromVersion(inp_version)
             # dummy comparison between old and new relax
             with output_folder.open(relax_name, 'r') as rlx:
                 new_relax_text = rlx.read()
                 if new_relax_text != old_relax_text:
                     try:
-                        relax_dict = parse_relax_file(rlx)
+                        relax_dict = parse_relax_file(rlx, schema_dict)
                     except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
@@ -347,53 +351,16 @@ def parse_bands_file(bands_lines):
     return fleur_bands
 
 
-def parse_relax_file(rlx):
+def parse_relax_file(relax_file, schema_dict):
     """
     This function parsers relax.xml output file and
     returns a Dict containing all the data given there.
     """
-    from aiida_fleur.tools.xml_util import eval_xpath2
+    from masci_tools.util.xml.xml_getters import get_relaxation_information
 
-    rlx.seek(0)
-    tree = etree.parse(rlx)
+    relax_file.seek(0)
+    tree = etree.parse(relax_file)
 
-    xpath_disp = '/relaxation/displacements/displace'
-    xpath_energy = '/relaxation/relaxation-history/step/@energy'
-    xpath_steps = '/relaxation/relaxation-history/step'
-
-    root = tree.getroot()
-
-    displacements = eval_xpath2(root, xpath_disp)
-    float_displ = []
-    for i in displacements:
-        temp = [convert_frac(x) for x in i.text.split()]
-        float_displ.append(temp)
-
-    energies = eval_xpath2(root, xpath_energy)
-    energies = [float(x) for x in energies]
-
-    float_posforces = []
-    iter_all = eval_xpath2(root, xpath_steps)
-    for posf in iter_all:
-        posforces = eval_xpath2(posf, 'posforce')
-        temp2 = []
-        for i in posforces:
-            temp = [convert_frac(x) for x in i.text.split()]
-            temp2.append(temp)
-        float_posforces.append(temp2)
-
-    out_dict = {}
-    out_dict['displacements'] = float_displ
-    out_dict['energies'] = energies
-    out_dict['posforces'] = float_posforces
+    out_dict = get_relaxation_information(tree, schema_dict)
 
     return Dict(dict=out_dict)
-
-
-def convert_frac(ratio):
-    """ Converts ratio strings into float, e.g. 1.0/2.0 -> 0.5 """
-    try:
-        return float(ratio)
-    except ValueError:
-        num, denom = ratio.split('/')
-        return float(num) / float(denom)

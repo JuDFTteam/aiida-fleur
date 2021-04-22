@@ -462,6 +462,19 @@ class FleurinpData(Data):
                     fleur_modes['ldau'] = True
         return fleur_modes
 
+    def get_nkpts(self):
+        """
+        This routine returns the number of kpoints used in the fleur calculation
+        defined in this input
+
+        :returns: int with the number of kPoints
+        """
+        from masci_tools.util.xml.xml_getters import get_nkpts
+
+        xmltree, schema_dict = self.load_inpxml()
+
+        return get_nkpts(xmltree, schema_dict)
+
     def get_structuredata_ncf(self):
         """
         This routine returns an AiiDA Structure Data type produced from the ``inp.xml``
