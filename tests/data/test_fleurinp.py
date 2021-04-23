@@ -147,6 +147,7 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
 def test_get_tag(create_fleurinp, inpxmlfilepath):
 
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
+    with pytest.deprecated_call():
+        tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
 
     assert tag != []
