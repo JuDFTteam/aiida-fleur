@@ -78,7 +78,10 @@ def test_fleurinp_kpointsdata_extraction(create_fleurinp, inpxmlfilepath):
     kptsd = fleurinp_tmp.get_kpointsdata_ncf()
 
     if kptsd is not None:
-        assert isinstance(kptsd, KpointsData)
+        assert isinstance(kptsd, (KpointsData, dict))
+
+        if isinstance(kptsd, dict):
+            assert all(isinstance(val, KpointsData) for val in kptsd.values())
     else:
         pass
         # What todo here, may test inpxml are with latnam definded, which does not work here.
