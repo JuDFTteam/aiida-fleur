@@ -304,20 +304,8 @@ class FleurinpData(Data):
         """
         from masci_tools.io.parsers.fleur import inpxml_parser
 
-        # read xmlinp file into an etree with autocomplition from schema
-        # we do not validate here because we want this to always succeed
-
-        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-        # dtd_validation=True
-        with self.open(path='inp.xml', mode='r') as inpxmlfile:
-            try:
-                xmltree = etree.parse(inpxmlfile, parser)
-            except etree.XMLSyntaxError as exc:
-                # prob inp.xml file broken
-                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
-                raise InputValidationError(err_msg) from exc
-
-        xmltree = self._include_files(xmltree)
+        #The schema_dict is not needed outside the inpxml_parser so we ignore it with the underscore
+        xmltree, _ = self.load_inpxml()
 
         parser_info = {}
         try:
@@ -329,10 +317,12 @@ class FleurinpData(Data):
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
-    def load_inpxml(self, validate_xml_schema=True):
+    def load_inpxml(self, validate_xml_schema=True, **kwargs):
         """
         Returns the lxml etree and the schema dictionary corresponding to the version. If validate_xml_schema=True
         the file will also be validated against the schema
+
+        Keyword arguments are passed on to the parser
         """
         from masci_tools.io.io_fleurxml import load_inpxml
         from masci_tools.util.xml.common_functions import validate_xml
@@ -340,13 +330,24 @@ class FleurinpData(Data):
         self._validate()
 
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
-            xmltree, schema_dict = load_inpxml(inpxmlfile)
+            try:
+                xmltree, schema_dict = load_inpxml(inpxmlfile, **kwargs)
+            except ValueError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg) from exc
+            except FileNotFoundError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not find corresponding input schema.')
+                raise InputValidationError(err_msg) from exc
 
         xmltree = self._include_files(xmltree)
 
         if validate_xml_schema:
             try:
-                validate_xml(xmltree, schema_dict.xmlschema)
+                validate_xml(xmltree,
+                             schema_dict.xmlschema,
+                             error_header='Input file is not validated against the schema')
             except etree.DocumentInvalid as err:
                 raise ValueError(err) from err
 
