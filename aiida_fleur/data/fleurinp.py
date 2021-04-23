@@ -350,7 +350,7 @@ class FleurinpData(Data):
                              schema_dict.xmlschema,
                              error_header='Input file is not validated against the schema')
             except etree.DocumentInvalid as err:
-                raise ValueError(err) from err
+                raise InputValidationError(err) from err
 
         return xmltree, schema_dict
 
