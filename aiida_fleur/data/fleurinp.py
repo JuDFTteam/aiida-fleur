@@ -28,6 +28,7 @@ import io
 import re
 import six
 from lxml import etree
+import warnings
 
 from aiida.orm import Data, Node, load_node, Int
 from aiida.common.exceptions import InputValidationError, ValidationError
@@ -905,39 +906,14 @@ class FleurinpData(Data):
         :param xpath: an xpath expression
         :returns: A node list retrived using given xpath
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
+        from masci_tools.util.xml.common_functions import eval_xpath
 
-        if 'inp.xml' in self.files:
-            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-            # dtd_validation=True
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                try:
-                    tree = etree.parse(inpxmlfile, parser)
-                except etree.XMLSyntaxError as exc:
-                    # prob inp.xml file broken
-                    err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
-                    raise InputValidationError(err_msg) from exc
+        warnings.warn(
+            'The get_tag method is deprecated. Instead you can use the load_inpxml method to access '
+            'the xmltree and schema of the stored inp.xml. Then the required information can be accessed '
+            'via the XML functions in masci-tools or directly', DeprecationWarning)
 
-            tree = self._include_files(tree)
+        xmltree, _ = self.load_inpxml()
+        root = xmltree.getroot()
 
-            if self.inp_version is not None:
-                schema_dict = InputSchemaDict.fromVersion(self.inp_version)
-                if not schema_dict.xmlschema.validate(tree):
-                    raise ValueError('Input file is not validated against the schema.')
-            else:
-                print('parsing inp.xml without XMLSchema')
-            root = tree.getroot()
-        else:
-            raise InputValidationError('No inp.xml file yet specified, to get a tag from')
-
-        try:
-            return_value = root.xpath(xpath)
-        except etree.XPathEvalError as exc:
-            raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
-                                       'not exist, or something is wrong with the expression.'
-                                       ''.format(xpath)) from exc
-
-        if len(return_value) == 1:
-            return return_value
-        else:
-            return return_value
+        return eval_xpath(root, xpath)
