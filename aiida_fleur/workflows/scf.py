@@ -619,7 +619,8 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'force':
             forces = self.ctx.all_forces
             if len(forces) >= 2:
-                self.ctx.forcediff = max([abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+                self.ctx.forcediff = max(
+                    [abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(2)])
         else:
             self.ctx.forcediff = 'can not be determined'
 
