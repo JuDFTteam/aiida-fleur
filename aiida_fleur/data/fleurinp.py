@@ -318,7 +318,7 @@ class FleurinpData(Data):
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
-    def load_inpxml(self, validate_xml_schema=True, **kwargs):
+    def load_inpxml(self, validate_xml_schema=True, return_included_tags=False, **kwargs):
         """
         Returns the lxml etree and the schema dictionary corresponding to the version. If validate_xml_schema=True
         the file will also be validated against the schema
@@ -342,7 +342,7 @@ class FleurinpData(Data):
                 err_msg = ('The inp.xml file is probably broken, could not find corresponding input schema.')
                 raise InputValidationError(err_msg) from exc
 
-        xmltree = self._include_files(xmltree)
+        xmltree, included_tags = self._include_files(xmltree)
 
         if validate_xml_schema:
             try:
@@ -352,7 +352,10 @@ class FleurinpData(Data):
             except etree.DocumentInvalid as err:
                 raise InputValidationError(err) from err
 
-        return xmltree, schema_dict
+        if return_included_tags:
+            return xmltree, schema_dict, included_tags
+        else:
+            return xmltree, schema_dict
 
     def _include_files(self, xmltree):
         """
@@ -387,13 +390,13 @@ class FleurinpData(Data):
         xmltree_with_includes = etree.fromstring(xmltree_string).getroottree()
 
         #Performs the inclusions and remove comments
-        cleared_tree = clear_xml(xmltree_with_includes)
+        cleared_tree, included_tags = clear_xml(xmltree_with_includes)
 
         #Remove temporary files
         for file in temp_files:
             os.remove(file)
 
-        return cleared_tree
+        return cleared_tree, included_tags
 
     # dict with inp paramters parsed from inp.xml
     @property

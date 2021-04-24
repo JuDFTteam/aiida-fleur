@@ -649,7 +649,6 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     :param kwargs: dict of other aiida nodes to be linked to the modifications
     :returns new_fleurinp: a modified FleurinpData that is stored in a database
     """
-
     # copy
     # get schema
     # read in inp.xml
@@ -657,25 +656,13 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # validate
     # save inp.xml
     # store new fleurinp (copy)
-    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
+    import tempfile
+    from masci_tools.util.xml.common_functions import reverse_xinclude
 
     new_fleurinp = original.clone()
     modification_tasks = modifications.get_dict()['tasks']
 
-    schema_dict = InputSchemaDict.fromVersion(new_fleurinp.inp_version)
-
-    parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-    with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
-        tree = etree.parse(inpxmlfile, parser)
-
-    tree = new_fleurinp._include_files(tree)
-
-    try:
-        schema_dict.xmlschema.assertValid(tree)
-    except etree.DocumentInvalid as exc:
-        msg = 'Input file is not validated against the schema'
-        #print(msg)
-        raise etree.DocumentInvalid(msg) from exc
+    xmltree, schema_dict, included_tags = new_fleurinp.load_inpxml(remove_blank_text=True, return_included_tags=True)
 
     try:
         with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -683,25 +670,30 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     except FileNotFoundError:
         nmmplines = None
 
-    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,\
+    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=xmltree,\
                                                                         nmmp_lines_copy=nmmplines,\
                                                                         modification_tasks=modification_tasks,
                                                                         schema_dict=schema_dict)
 
     # To include object store storage this prob has to be done differently
 
-    inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
-    inpxmlfile.close()
-
-    new_fleurtree.write(inpxmlfile_new, pretty_print=True)
+    inpxmltree, includedtrees = reverse_xinclude(new_fleurtree, schema_dict, included_tags)
 
     new_fleurinp.del_file('inp.xml')
-    new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
-    os.remove(inpxmlfile_new)
+    with tempfile.TemporaryDirectory() as td:
+        inpxml_path = os.path.join(td, 'inp.xml')
+        inpxmltree.write(inpxml_path, encoding='utf-8', pretty_print=True)
+        new_fleurinp.set_file(inpxml_path, 'inp.xml')
 
-    if new_nmmplines:
-        new_nmmp = bytes('\n'.join(new_nmmplines), 'utf-8')
-        new_fleurinp._add_path(io.BytesIO(new_nmmp), 'n_mmp_mat')
+        for file_name, tree in includedtrees.items():
+            file_path = os.path.join(td, file_name)
+            tree.write(file_path, encoding='utf-8', pretty_print=True)
+            new_fleurinp.set_file(file_path, file_name)
+
+        if new_nmmplines is not None:
+            n_mmp_path = os.path.join(td, 'n_mmp_mat')
+            with open(n_mmp_path, 'w') as n_mmp_file:
+                n_mmp_file.write('\n'.join(new_nmmplines))
 
     # default label and description
     new_fleurinp.label = 'mod_fleurinp'
