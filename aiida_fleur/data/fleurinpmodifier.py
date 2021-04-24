@@ -237,7 +237,8 @@ class FleurinpModifier(object):
 
         if validate_changes:
             try:
-                schema_dict.xmlschema.assertValid(clear_xml(workingtree))
+                cleared_tree, _ = clear_xml(workingtree)
+                schema_dict.xmlschema.assertValid(cleared_tree)
             except etree.DocumentInvalid as exc:
                 msg = 'Changes were not valid: {}'.format(modification_tasks)
                 #print(msg)
@@ -546,10 +547,8 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
-        with self._original.open(key='inp.xml') as inpxmlfile:
-            tree = etree.parse(inpxmlfile)
+        xmltree, schema_dict = self._original.load_inpxml(remove_blank_text=True)
 
         try:
             with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -557,12 +556,8 @@ class FleurinpModifier(object):
         except FileNotFoundError:
             nmmplines = None
 
-        schema_dict = InputSchemaDict.fromVersion(self._original.inp_version)
-
-        tree = self._original._include_files(tree)
-
-        tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_dict, validate_changes=True)
-        return tree
+        xmltree, nmmp = self.apply_modifications(xmltree, nmmplines, self._tasks, schema_dict, validate_changes=True)
+        return xmltree
 
     def show(self, display=True, validate=False):
         """
@@ -575,22 +570,17 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         if validate:
-            tree = self.validate()
+            xmltree = self.validate()
         else:
-            with self._original.open(path='inp.xml') as inpxmlfile:
-                parser = etree.XMLParser(remove_blank_text=True, remove_comments=True)
-                tree = etree.parse(inpxmlfile, parser)
-
-            schema_dict = InputSchemaDict.fromVersion(self._original.inp_version)
-            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks, schema_dict)
+            xmltree, schema_dict = self._original.load_inpxml(remove_blank_text=True)
+            xmltree, temp_nmmp = self.apply_modifications(xmltree, None, self._tasks, schema_dict)
 
         if display:
-            xmltreestring = etree.tostring(tree, encoding='unicode', pretty_print=True)
+            xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)
             print(xmltreestring)
-        return tree
+        return xmltree
 
     def changes(self):
         """
