@@ -578,15 +578,23 @@ class FleurScfWorkChain(WorkChain):
                                             iteration_to_parse='all',
                                             ignore_validation=True)
 
-            self.ctx.total_energy.extend(output_dict.get('energy_hartree', []))
+            energies = output_dict.get('energy_hartree', [])
+            if energies is not None:
+                self.ctx.total_energy.extend(energies)
 
             if 'overall_density_convergence' in output_dict:
-                self.ctx.distance.extend(output_dict['overall_density_convergence'])
+                distances = output_dict['overall_density_convergence']
             else:
-                self.ctx.distance.extend(output_dict.get('density_convergence', []))
+                distances = output_dict.get('density_convergence', [])
+
+            if distances is not None:
+                self.ctx.distance.extend(distances)
 
             if mode == 'force':
-                self.ctx.all_forces.extend(output_dict.get('force_atoms', []))
+                forces = output_dict.get('force_atoms', [])
+                if forces is not None:
+                    forces = [force for force_iter in forces for atom, force in force_iter]
+                    self.ctx.all_forces.extend(forces)
 
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
@@ -619,7 +627,11 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'force':
             forces = self.ctx.all_forces
             if len(forces) >= 2:
-                self.ctx.forcediff = max([abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+                self.ctx.forcediff = max([
+                    abs(force_now[i] - force_last[i])
+                    for force_now, force_last in zip(forces[-1], forces[-2])
+                    for i in range(3)
+                ])
         else:
             self.ctx.forcediff = 'can not be determined'
 
