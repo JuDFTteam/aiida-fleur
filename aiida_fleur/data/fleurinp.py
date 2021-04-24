@@ -534,7 +534,7 @@ class FleurinpData(Data):
                 err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
                 raise InputValidationError(err_msg) from exc
 
-        tree = self._include_files(tree)
+        tree, _ = self._include_files(tree)
 
         if self.inp_version is not None:
             schema_dict = InputSchemaDict.fromVersion(self.inp_version)
@@ -750,7 +750,7 @@ class FleurinpData(Data):
                 err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
                 raise InputValidationError(err_msg) from exc
 
-        tree = self._include_files(tree)
+        tree, _ = self._include_files(tree)
 
         if self.inp_version is not None:
             schema_dict = InputSchemaDict.fromVersion(self.inp_version)
