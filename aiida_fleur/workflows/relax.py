@@ -499,7 +499,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_atom_positions = atom_positions
         self.ctx.atomtype_info = atomtype_info
 
-        if film == 'True':
+        if film:
             self.ctx.pbc = (True, True, False)
         else:
             self.ctx.pbc = (True, True, True)
