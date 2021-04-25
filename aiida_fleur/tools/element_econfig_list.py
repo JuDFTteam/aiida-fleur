@@ -1644,9 +1644,8 @@ import aiida_fleur
 import os
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
-fn = open(EXP_BINDENERGIES_PATH, 'r')
-exp_bindingenergies = json.load(fn)
-fn.close()
+with open(EXP_BINDENERGIES_PATH, 'r') as fn:
+    exp_bindingenergies = json.load(fn)
 """
 exp_bindingenergies = {
  1 : {'binding_energy': {'1s1/2': []}, 'name': 'Hydrogen', 'symbol': 'H'},

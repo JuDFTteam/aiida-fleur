@@ -21,9 +21,8 @@ def test_write_results_to_file_interface():
     destination = './outputfiletest'
     write_results_to_file(inputhead, data, destination=destination)
     isfile_ = isfile(abspath('./outputfiletest'))
-    test_file = open(destination, 'r')
-    content = test_file.read()
-    test_file.close()
+    with open(destination, 'r') as test_file:
+        content = test_file.read()
 
     content_exp = 'head\n1.00000000  3.00000000\n2.00000000  4.00000000\n'
     remove(destination)
