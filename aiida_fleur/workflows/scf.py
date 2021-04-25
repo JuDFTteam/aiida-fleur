@@ -592,7 +592,9 @@ class FleurScfWorkChain(WorkChain):
 
             if mode == 'force':
                 forces = output_dict.get('force_atoms', [])
-                self.ctx.all_forces = forces
+                if forces is not None:
+                    for force_iter in forces:
+                        self.ctx.all_forces.append([force for atom, force in force_iter])
 
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
@@ -626,7 +628,7 @@ class FleurScfWorkChain(WorkChain):
             forces = self.ctx.all_forces
             if len(forces) >= 2:
                 self.ctx.forcediff = max(
-                    [abs(forces[-1][i][1][k] - forces[-2][i][1][k]) for i in range(len(forces[-1])) for k in range(2)])
+                    [abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(3)])
         else:
             self.ctx.forcediff = 'can not be determined'
 
