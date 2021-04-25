@@ -33,7 +33,7 @@
         "lxml>=3.6.4",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools>=0.4.5",
+        "masci-tools>=0.4.6",
         "future",
         "pyhull",
         "sqlalchemy<1.4"
