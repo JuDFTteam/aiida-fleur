@@ -593,8 +593,8 @@ class FleurScfWorkChain(WorkChain):
             if mode == 'force':
                 forces = output_dict.get('force_atoms', [])
                 if forces is not None:
-                    forces = [force for force_iter in forces for atom, force in force_iter]
-                    self.ctx.all_forces.extend(forces)
+                    forces = [force for atom, force in forces]
+                    self.ctx.all_forces.append(forces)
 
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
