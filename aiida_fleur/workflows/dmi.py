@@ -516,7 +516,7 @@ class FleurDMIWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.dmi_force_evSum
+            t_energydict = out_dict.dmi_force_evsum
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles

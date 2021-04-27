@@ -472,7 +472,7 @@ class FleurSSDispWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.spst_force_evSum
+            t_energydict = out_dict.spst_force_evsum
             e_u = out_dict.energy_units
 
             # Find a minimal value of SpSp and count it as 0

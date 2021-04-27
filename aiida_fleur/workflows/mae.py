@@ -468,7 +468,7 @@ class FleurMaeWorkChain(WorkChain):
             fleurout = calculation.outputs.output_parameters
             fleur_output_uuid = fleurout.uuid
             out_dict = fleurout.dict
-            t_energydict = out_dict.mae_force_evSum
+            t_energydict = out_dict.mae_force_evsum
             mae_thetas = out_dict.mae_force_theta
             mae_phis = out_dict.mae_force_phi
             e_u = out_dict.energy_units
