@@ -25,6 +25,7 @@ from aiida_fleur.tools.xml_aiida_modifiers import FLEURINPMODIFIER_EXTRA_FUNCS
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 
+
 class FleurinpModifier(FleurXMLModifier):
     """
     A class which represents changes to the :class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
@@ -53,7 +54,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         return {**outside_actions_fleurxml, **outside_actions_fleurinp}
 
-    def set_kpointsdata(self, kpointsdata_uuid):
+    def set_kpointsdata(self, kpointsdata_uuid, name=None):
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
@@ -66,7 +67,7 @@ class FleurinpModifier(FleurXMLModifier):
             kpointsdata_uuid = kpointsdata_uuid.uuid
         # Be more careful? Needs to be stored, otherwise we cannot load it
         self._other_nodes['kpoints'] = load_node(kpointsdata_uuid)
-        self._tasks.append(ModifierTask('set_kpointsdata', args=[kpointsdata_uuid], kwargs={}))
+        self._tasks.append(ModifierTask('set_kpointsdata', args=[kpointsdata_uuid], kwargs={'name': name}))
 
     #Modification functions that were renamed in masci-tools
 
@@ -269,7 +270,10 @@ class FleurinpModifier(FleurXMLModifier):
         except FileNotFoundError:
             nmmplines = None
 
-        xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks, extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+        xmltree, nmmp = super().apply_modifications(xmltree,
+                                                    nmmplines,
+                                                    self._tasks,
+                                                    extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
         return xmltree
 
     def show(self, display=True, validate=False):
@@ -288,18 +292,17 @@ class FleurinpModifier(FleurXMLModifier):
             xmltree = self.validate()
         else:
             xmltree, schema_dict = self._original.load_inpxml(remove_blank_text=True)
-            xmltree, temp_nmmp = self.apply_modifications(xmltree, None, self._tasks, schema_dict)
             try:
                 with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
                     nmmplines = n_mmp_file.read().split('\n')
             except FileNotFoundError:
                 nmmplines = None
 
-            tree, nmmp = super().apply_modifications(tree,
-                                                     nmmplines,
-                                                     self._tasks,
-                                                     validate_changes=False,
-                                                     extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+            xmltree, nmmp = super().apply_modifications(xmltree,
+                                                        nmmplines,
+                                                        self._tasks,
+                                                        validate_changes=False,
+                                                        extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
 
         if display:
             xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)
@@ -360,7 +363,6 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     #We need to rebuild the namedtuples since the serialization for the calcufunction inputs
     #converts the namedtuples into lists
     modification_tasks = [ModifierTask(*task) for task in modification_tasks]
-
 
     xmltree, schema_dict, included_tags = new_fleurinp.load_inpxml(remove_blank_text=True, return_included_tags=True)
 

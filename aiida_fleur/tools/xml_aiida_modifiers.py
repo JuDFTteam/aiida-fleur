@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
+"""
+This module defines XML modifying functions, that require an aiida node as input
+"""
 
 
-def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
+def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None):
     """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
     in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
     ``inp.xml`` file. Currently it is the users responsibility to provide a full
@@ -17,15 +19,8 @@ def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
     # support this.
     from aiida.orm import KpointsData, load_node
     from aiida.common.exceptions import InputValidationError
-    from aiida_fleur.tools.xml_util import replace_tag
+    from masci_tools.util.xml.xml_setters_names import set_kpointlist
 
-    # all hardcoded xpaths used and attributes names:
-    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-
-    # replace the kpoints tag.(delete old write new)
-    # <kPointList posScale="36.00000000" weightScale="324.00000000" count="324">
-    #    <kPoint weight="    1.000000">   17.000000     0.000000     0.000000</kPoint>
-    # add new inp.xml to fleurinpdata
     if not isinstance(kpointsdata_uuid, KpointsData):
         KpointsDataNode = load_node(kpointsdata_uuid)
     else:
@@ -34,20 +29,31 @@ def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
     if not isinstance(KpointsDataNode, KpointsData):
         raise InputValidationError('The node given is not a valid KpointsData node.')
 
-    kpoint_list = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
-    nkpts = len(kpoint_list[0])
-    totalw = 0
-    for weight in kpoint_list[1]:
-        totalw = totalw + weight
-    #weightscale = totalw
-    # fleur will re weight? renormalize?
-    new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
-    for i, kpos in enumerate(kpoint_list[0]):
-        new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
-        new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
-        new_kpo.append(new_k)
-    new_tree = replace_tag(fleurinp_tree_copy, kpointlist_xpath, new_kpo)
-    return new_tree
+    kpoints, weights = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
+
+    labels = KpointsDataNode.labels
+
+    labels_dict = None
+    if labels is not None:
+        labels_dict = dict(labels)
+
+    try:
+        KpointsDataNode.get_kpoints_mesh()
+        kpoint_type = 'mesh'
+    except AttributeError:
+        kpoint_type = 'path'
+
+    if schema_dict.inp_version <= (0, 31):
+        xmltree = set_kpointlist(xmltree, schema_dict, kpoints, weights)
+    else:
+        xmltree = set_kpointlist(xmltree,
+                                 schema_dict,
+                                 kpoints,
+                                 weights,
+                                 special_labels=labels_dict,
+                                 kpoint_type=kpoint_type)
+
+    return xmltree
 
 
-FLEURINPMODIFIER_EXTRA_FUNCS = {'basic': {'set_kpointsdata': set_kpointsdata_f}}
+FLEURINPMODIFIER_EXTRA_FUNCS = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
