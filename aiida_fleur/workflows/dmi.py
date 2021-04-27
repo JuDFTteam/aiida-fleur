@@ -321,7 +321,7 @@ class FleurDMIWorkChain(WorkChain):
             'itmax': 1,
             'l_noco': True,
             'ctail': False,
-            'l_spav': True,
+            'spav': True,
             # 'l_soc': True,
             'l_ss': True
         }
