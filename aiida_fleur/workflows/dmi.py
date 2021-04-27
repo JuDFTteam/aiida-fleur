@@ -330,7 +330,9 @@ class FleurDMIWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': {'beta': val}
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
