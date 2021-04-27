@@ -471,7 +471,7 @@ class FleurMaeWorkChain(WorkChain):
             t_energydict = out_dict.mae_force_evsum
             mae_thetas = out_dict.mae_force_theta
             mae_phis = out_dict.mae_force_phi
-            e_u = out_dict.energy_units
+            e_u = out_dict.mae_force_units
 
             minenergy = min(t_energydict)
 
