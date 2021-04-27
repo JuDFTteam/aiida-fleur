@@ -11,6 +11,9 @@ Structure Data util
 XML utility
 -----------
 
+.. automodule:: aiida_fleur.tools.xml_aiida_modifiers
+   :members:
+
 .. automodule:: aiida_fleur.tools.xml_util
    :members:
 

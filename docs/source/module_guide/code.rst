@@ -43,6 +43,8 @@ Fleurinp modifier
 
 .. automodule:: aiida_fleur.data.fleurinpmodifier
    :members:
+   :inherited-members:
+   :exclude-members: modify_xmlfile
 
 Workflows/Workchains
 ++++++++++++++++++++

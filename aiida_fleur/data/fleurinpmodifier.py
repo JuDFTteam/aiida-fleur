@@ -56,7 +56,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     def set_kpointsdata(self, kpointsdata_uuid, name=None):
         """
-        Appends a :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` to
+        Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
         :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.

@@ -53,6 +53,7 @@ todo_include_todos = True
 intersphinx_mapping = {
     #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
+    'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
 }
 
 nitpick_ignore = [('py:obj', 'module')]
