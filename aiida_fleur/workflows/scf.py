@@ -30,12 +30,13 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 from aiida_fleur.data.fleurinp import FleurinpData
+
+from masci_tools.io.parsers.fleur import outxml_parser
 
 
 class FleurScfWorkChain(WorkChain):
@@ -562,55 +563,39 @@ class FleurScfWorkChain(WorkChain):
         """
         self.report('INFO: get results FLEUR')
 
-        xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
-        xpath_iter = '/fleurOutput/scfLoop/iteration'
-        xpath_force = 'totalForcesOnRepresentativeAtoms/forceTotal'
-
-        # be aware of magnetism
-        xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance'
-        overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence/'
-                                      'overallChargeDensity/@distance')
-
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
             fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
             walltime = last_base_wc.outputs.output_parameters.dict.walltime
+
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
-                                                      'r') as outxmlfile_opened:
-                tree = etree.parse(outxmlfile_opened)
-            root = tree.getroot()
+            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                output_dict = outxml_parser(outxmlfile,
+                                            minimal_mode=True,
+                                            list_return=True,
+                                            iteration_to_parse='all',
+                                            ignore_validation=True)
 
-            energies = eval_xpath2(root, xpath_energy)
-            for energy in energies:
-                self.ctx.total_energy.append(float(energy))
+            energies = output_dict.get('energy_hartree', [])
+            if energies is not None:
+                self.ctx.total_energy.extend(energies)
 
-            overall_distances = eval_xpath2(root, overallchargedensity_xpath)
-            if not overall_distances:
-                distances = eval_xpath2(root, xpath_distance)
-                for distance in distances:
-                    self.ctx.distance.append(float(distance))
+            if 'overall_density_convergence' in output_dict:
+                distances = output_dict['overall_density_convergence']
             else:
-                for distance in overall_distances:
-                    self.ctx.distance.append(float(distance))
+                distances = output_dict.get('density_convergence', [])
+
+            if distances is not None:
+                self.ctx.distance.extend(distances)
 
             if mode == 'force':
-                iter_all = eval_xpath2(root, xpath_iter)
-                for iteration in iter_all:
-                    forces = eval_xpath2(iteration, xpath_force)
-                    forces_in_iter = []
-                    for force in forces:
-                        force_x = float(get_xml_attribute(force, 'F_x'))
-                        force_y = float(get_xml_attribute(force, 'F_y'))
-                        force_z = float(get_xml_attribute(force, 'F_z'))
+                forces = output_dict.get('force_atoms', [])
+                if forces is not None:
+                    for force_iter in forces:
+                        self.ctx.all_forces.append([force for atom, force in force_iter])
 
-                        forces_in_iter.append(force_x)
-                        forces_in_iter.append(force_y)
-                        forces_in_iter.append(force_z)
-
-                    self.ctx.all_forces.append(forces_in_iter)
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -642,7 +627,8 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'force':
             forces = self.ctx.all_forces
             if len(forces) >= 2:
-                self.ctx.forcediff = max([abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+                self.ctx.forcediff = max(
+                    [abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(3)])
         else:
             self.ctx.forcediff = 'can not be determined'
 

@@ -44,9 +44,8 @@ def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
     """
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
 
-    assert fleurinp_tmp._has_schema
-    assert fleurinp_tmp._schema_file_path is not None
     assert fleurinp_tmp.inp_dict != {}
+    assert fleurinp_tmp._parser_info['parser_warnings'] == []
     assert fleurinp_tmp._validate() is None  # if fails, _validate throws an error
 
 
@@ -148,6 +147,7 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
 def test_get_tag(create_fleurinp, inpxmlfilepath):
 
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
+    with pytest.deprecated_call():
+        tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
 
     assert tag != []

@@ -310,8 +310,13 @@ def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     path_to_dosfile = output_d.get('dosfile', None)
     print(path_to_dosfile)
     if path_to_dosfile:
-        plot_dos(path_to_dosfile, only_total=False, show=show)
-        p1 = None  # FIXME masci-tools should return something
+        data = np.loadtxt(path_to_dosfile, skiprows=0)
+
+        energy = data[..., 0]
+        dos_labels = ['Total', 'Interstitial', 'MT-Total']
+        dos_data = [data[:, 1], data[:, 2], data[:, 1] - data[:, 2]]
+
+        p1 = plot_dos(energy, dos_data, show=show, plot_labels=dos_labels)
     else:
         print('Could not retrieve dos file path from output node')
 
@@ -385,11 +390,15 @@ def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
     print(path_to_bands_file)
     kpath = output_d.get('kpath', {})  #r"$\Gamma$": 0.00000, r"$H$" : 1.04590,
     #    r"$N$" : 1.78546, r"$P$": 2.30841, r"$\Gamma1$" : 3.21419, r"$N1$" : 3.95375} )
-
     if path_to_bands_file:
-        plot_bands(path_to_bands_file, kpath)
+        data = np.loadtxt(path_to_bands_file, skiprows=0)
+        kdata = data[..., 0]
+        evdata = data[..., 1]
+        p1 = plot_bands(kdata, evdata, special_kpoints=kpath)
     else:
         print('Could not retrieve dos file path from output node')
+
+    return p1
 
 
 def plot_fleur_relax_wc(node, labels=None, save=False, show=True, **kwargs):

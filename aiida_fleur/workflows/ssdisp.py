@@ -223,7 +223,9 @@ class FleurSSDispWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -300,7 +302,9 @@ class FleurSSDispWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -468,8 +472,8 @@ class FleurSSDispWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.spst_force_evSum
-            e_u = out_dict.energy_units
+            t_energydict = out_dict.spst_force_evsum
+            e_u = out_dict.spst_force_units
 
             # Find a minimal value of SpSp and count it as 0
             minenergy = min(t_energydict)

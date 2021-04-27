@@ -232,7 +232,9 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.wf_dict['film_distance_relaxation']:
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att', {
                 'attributedict': {
-                    'force': [('relaxXYZ', 'FFT')]
+                    'force': {
+                        'relaxXYZ': 'FFT'
+                    }
                 },
                 'species': 'all'
             }))
@@ -240,14 +242,18 @@ class FleurRelaxWorkChain(WorkChain):
         for specie_off in self.ctx.wf_dict['atoms_off']:
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'force': [('relaxXYZ', 'FFF')]
+                    'force': {
+                        'relaxXYZ': 'FFF'
+                    }
                 },
                 'atom_label': specie_off
             }))
 
         scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
             'attributedict': {
-                'force': [('relaxXYZ', 'FFF')]
+                'force': {
+                    'relaxXYZ': 'FFF'
+                }
             },
             'atom_label': '49'
         }))
@@ -493,7 +499,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_atom_positions = atom_positions
         self.ctx.atomtype_info = atomtype_info
 
-        if film == 'True':
+        if film:
             self.ctx.pbc = (True, True, False)
         else:
             self.ctx.pbc = (True, True, True)

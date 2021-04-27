@@ -16,11 +16,23 @@ TEST_NMMPMAT_PATH = os.path.join(aiida_path, '../tests/files/n_mmp_mat/n_mmp_mat
 def test_set_nmmpmat_nofile(inpxml_etree, file_regression):
     """Test setting of nmmpmat with no initial nmmpmat file given"""
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat
-    etree = inpxml_etree(TEST_INP_XML_PATH)
+    etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
     nmmp_lines = None
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
 
     file_regression.check(prepare_for_file_dump(nmmp_lines))
 
@@ -28,13 +40,25 @@ def test_set_nmmpmat_nofile(inpxml_etree, file_regression):
 def test_set_nmmpmat_file(inpxml_etree, file_regression):
     """Test setting of nmmpmat with initial nmmpmat file given"""
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat
-    etree = inpxml_etree(TEST_INP_XML_PATH)
+    etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
     with open(TEST_NMMPMAT_PATH, mode='r') as nmmpfile:
         nmmp_lines = nmmpfile.read().split('\n')
 
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
 
     file_regression.check(prepare_for_file_dump(nmmp_lines))
 
@@ -42,12 +66,12 @@ def test_set_nmmpmat_file(inpxml_etree, file_regression):
 def test_set_nmmpmat_file_get_wigner_matrix(inpxml_etree, file_regression):
     """Test get_wigner_matrix by calling set_nmmpmat_file with theta, or phi != None"""
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat
-
-    etree = inpxml_etree(TEST_INP_XML_PATH)
+    etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
     nmmp_lines = None
     nmmp_lines = set_nmmpmat(etree,
                              nmmp_lines,
+                             schema_dict,
                              species_name='Ga-1',
                              orbital=1,
                              spin=1,
@@ -55,6 +79,7 @@ def test_set_nmmpmat_file_get_wigner_matrix(inpxml_etree, file_regression):
                              theta=np.pi / 2.0)
     nmmp_lines = set_nmmpmat(etree,
                              nmmp_lines,
+                             schema_dict,
                              'As-2',
                              orbital=1,
                              spin=1,
@@ -68,38 +93,50 @@ def test_set_nmmpmat_file_get_wigner_matrix(inpxml_etree, file_regression):
 def test_validate_nmmpmat(inpxml_etree):
     """Test validation method of nmmpmat file together with inp.xml file"""
     from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
-    etree = inpxml_etree(TEST_INP_XML_PATH)
+    etree, schema_dict = inpxml_etree(TEST_INP_XML_PATH, return_schema=True)
 
     with open(TEST_NMMPMAT_PATH, mode='r') as nmmpfile:
         nmmp_lines_orig = nmmpfile.read().split('\n')
 
-    validate_nmmpmat(etree, nmmp_lines_orig)  #should not raise
+    validate_nmmpmat(etree, nmmp_lines_orig, schema_dict)  #should not raise
 
     #Test number of lines error
-    nmmp_lines = nmmp_lines_orig
+    nmmp_lines = nmmp_lines_orig.copy()
     nmmp_lines.append('0.0')
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree, nmmp_lines)
+        validate_nmmpmat(etree, nmmp_lines, schema_dict)
     nmmp_lines.remove('0.0')
 
     #Test invalid diagonal element error
-    nmmp_lines = nmmp_lines_orig
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, species_name='Ga-1', orbital=2, spin=1, occStates=[1, 2, 3, 4, 5])
-    nmmp_lines = set_nmmpmat(etree, nmmp_lines, 'As-2', orbital=1, spin=1, denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
+    nmmp_lines = nmmp_lines_orig.copy()
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             species_name='Ga-1',
+                             orbital=2,
+                             spin=1,
+                             occStates=[1, 2, 3, 4, 5])
+    nmmp_lines = set_nmmpmat(etree,
+                             nmmp_lines,
+                             schema_dict,
+                             'As-2',
+                             orbital=1,
+                             spin=1,
+                             denmat=[[1, -2, 3], [4, -5, 6], [7, -8, 9]])
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree, nmmp_lines)
+        validate_nmmpmat(etree, nmmp_lines, schema_dict)
 
     #Test invalid outsied value error
-    nmmp_lines = nmmp_lines_orig
+    nmmp_lines = nmmp_lines_orig.copy()
     nmmp_lines[
         0] = '     0.0000000000000     9.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000     0.0000000000000'
 
     with pytest.raises(ValueError):
-        validate_nmmpmat(etree, nmmp_lines)
+        validate_nmmpmat(etree, nmmp_lines, schema_dict)
+
 
 def prepare_for_file_dump(file_lines):
     """
     Join lines together with linebreaks and remove negative zeros
     """
     return '\n'.join([line.replace('-0.0000000000000', ' 0.0000000000000') for line in file_lines])
-

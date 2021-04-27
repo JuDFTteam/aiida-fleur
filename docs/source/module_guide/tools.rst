@@ -1,10 +1,6 @@
 Fleur tools/utility
 +++++++++++++++++++
 
-Dealing with XML Schema files
------------------------------
-
-.. automodule:: aiida_fleur.fleur_schema.schemafile_index 
 
 Structure Data util
 -------------------

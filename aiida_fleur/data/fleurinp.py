@@ -28,13 +28,13 @@ import io
 import re
 import six
 from lxml import etree
+import warnings
 
 from aiida.orm import Data, Node, load_node, Int
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
 from aiida_fleur.tools.xml_util import replace_tag
-from aiida_fleur.fleur_schema.schemafile_index import get_internal_search_paths, get_schema_paths
 from aiida_fleur.common.constants import BOHR_A
 
 
@@ -71,7 +71,7 @@ class FleurinpData(Data):
     # needs to be improved, schema file is often after new installation not found...
     # installation with pip should always lead to a schema file in the python path, or even specific place
 
-    __version__ = '0.4.0'
+    __version__ = '0.5.0'
 
     # ignore machine dependent attributes in hash
     _hash_ignored_attributes = []  #'_schema_file_path', '_search_paths']
@@ -89,75 +89,25 @@ class FleurinpData(Data):
         node = kwargs.pop('node', None)
         super().__init__(**kwargs)
 
-        search_paths = self.get_search_paths()
-        self.set_extra('_has_schema', False)
-        self.set_extra('_schema_file_path', None)
-        self.set_extra('_search_paths', search_paths)
         if files:
             if node:
                 self.set_files(files, node=node)
             else:
                 self.set_files(files)
 
-    def get_search_paths(self):
-        """
-        return a lists of paths to search for schema files
-        """
-        search_paths = []
-        ifolders = get_internal_search_paths()
-        ischemas = get_schema_paths()
-        for path in ischemas:
-            search_paths.append(path)
-        for path in ifolders:
-            search_paths.append(path)
-        search_paths.append('./')
-
-        # Now add also python path maybe will be decaptivated
-        # if pythonpath is non existent catch error
-        try:
-            pythonpath = os.environ['PYTHONPATH'].split(':')
-        except KeyError:
-            pythonpath = []
-
-        for path in pythonpath[:]:
-            search_paths.append(path)
-
-        return search_paths
-
     @property
-    def _has_schema(self):
+    def _parser_info(self):
         """
-        Boolean property, which stores if a schema file is already known
+        Dict property, with the info and warnings from the inpxml_parser
         """
-        return self.get_extra('_has_schema', False)
+        return self.get_extra('_parser_info')
 
-    @property
-    def _schema_file_path(self):
-        """
-        A string, which stores the absolute path to the schemafile found
-        """
-        return self.get_extra('_schema_file_path', None)
-
-    @property
-    def _search_paths(self):
-        """
-        A string, which stores the paths to search for  schemafiles
-        """
-        return self.get_extra('_search_paths', [])
-
-    @_has_schema.setter
-    def _has_schema(self, boolean):
+    @_parser_info.setter
+    def _parser_info(self, info_dict):
         """
         Setter for has_schema
         """
-        self.set_extra('_has_schema', boolean)
-
-    @_schema_file_path.setter
-    def _schema_file_path(self, schemapath):
-        """
-        Setter for the schema file path
-        """
-        self.set_extra('_schema_file_path', schemapath)
+        self.set_extra('_parser_info', info_dict)
 
     # files
     @property
@@ -239,60 +189,6 @@ class FleurinpData(Data):
         # remove from sandbox folder
         if filename in self.list_object_names():  # get_folder_list():
             self.delete_object(filename)
-
-    def find_schema(self, inp_version_number):
-        """
-        Method which searches for a schema files (.xsd) which correspond
-        to the input xml file. (compares the version numbers)
-
-        :param inp_version_number: a version of ``inp.xml`` file schema to be found
-
-        :return: A two-element tuple:
-
-                     1. A list of paths where schema files are located
-                     2. A boolen which shows if the required version schema file was found
-
-        """
-        # user changed version number, or no file yet known.
-        # TODO test if this still does the right thing if user adds one
-        # inp.xml and then an inp.xml with different version.
-        # or after copying and read
-        schemafile_paths = []
-
-        for path in self._search_paths:  # paths:
-            for root, dirs, files in os.walk(path):
-                for file1 in files:
-                    if file1.endswith('.xsd'):
-                        if ('Fleur' in file1) or ('fleur' in file1):
-                            schemafile_path = os.path.join(root, file1)
-                            schemafile_paths.append(schemafile_path)
-                            i = 0
-                            imin = 0
-                            imax = 0
-                            schemafile = open(schemafile_path, 'r')
-                            for line in schemafile.readlines():
-                                i = i + 1
-                                # This kind of hardcoded
-                                if re.search('name="FleurVersionType"', line):
-                                    imax = i + 10  # maybe make larger or different
-                                    imin = i
-                                    schema_version_numbers = []
-                                if imin < i <= imax:
-                                    if re.search('enumeration value', line):
-                                        schema_version_number = re.findall(r'\d+.\d+', line)[0]
-                                    elif re.search('simpleType>', line):
-                                        break
-                            schema_version_numbers.append(schema_version_number)
-                            schemafile.close()
-                            # test if schemafiles works with multiple fleur versions
-                            for version_number in schema_version_numbers:
-                                if version_number == inp_version_number:
-                                    # we found the right schemafile for the current inp.xml
-                                    self.set_extra('_schema_file_path', schemafile_path)
-                                    self.set_extra('_has_schema', True)
-                                    return schemafile_paths, True
-
-        return schemafile_paths, False
 
     def _add_path(self, file1, dst_filename=None, node=None):
         """
@@ -393,122 +289,114 @@ class FleurinpData(Data):
                                            'Please check if this is a valid fleur input file. '
                                            'It can not be validated and I can not use it. '
                                            ''.format(file1, lines))
-            # search for Schema file with same version number
-            schemafile_paths, found = self.find_schema(inp_version_number)
 
-            if (not self._has_schema) and (self._schema_file_path is None):
-                err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                           'to the inp.xml file was found. I have looked here: {} '
-                           'and have found only these schema files for Fleur: {}. '
-                           'I need this file to validate your input and to know the structure '
-                           'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                        schemafile_paths))
-                raise InputValidationError(err_msg)
-            if self._schema_file_path is None:
-                schemafile_paths, found = self.find_schema(inp_version_number)
-                if not found:
-                    err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                               'to the inp.xml file was found. I have looked here: {} '
-                               'and have found only these schema files for Fleur: {}. '
-                               'I need this file to validate your input and to know the structure '
-                               'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                            schemafile_paths))
-                raise InputValidationError(err_msg)
-
+            self.set_attribute('inp_version', inp_version_number)
             # finally set inp dict of Fleurinpdata
             self._set_inp_dict()
-
-    def update_schema_path(self):
-        """
-        Search again for version number in inp.xml and for schema files matching it.
-        will update the keys in the extras
-        """
-        # get input file version number
-        inp_version_number = None
-        lines = self.get_content(filename='inp.xml').split('\n')
-        for line in lines:
-            if re.search('fleurInputVersion', str(line)):
-                inp_version_number = re.findall(r'\d+.\d+', str(line))[0]
-                break
-        schemafile_paths, found = self.find_schema(inp_version_number)
-        if not found:
-            err_msg = ('No XML schema file (.xsd) with matching version number {} '
-                       'to the inp.xml file was found. I have looked here: {} '
-                       'and have found only these schema files for Fleur: {}. '
-                       'I need this file to validate your input and to know the structure '
-                       'of the current inp.xml file, sorry.'.format(inp_version_number, self._search_paths,
-                                                                    schemafile_paths))
-            raise InputValidationError(err_msg)
 
     def _set_inp_dict(self):
         """
         Sets the inputxml_dict from the ``inp.xml`` file attached to FleurinpData
 
-        1. get ``inp.xml`` structure/layout
-        2. load ``inp.xml`` file
-        3. call inpxml_to_dict
+        1. load ``inp.xml`` file
+        2. insert all files to include into the etree
+        3. call masci-tools input file parser (Validation happens inside here)
         4. set inputxml_dict
         """
-        from aiida_fleur.tools.xml_util import get_inpxml_file_structure, inpxml_todict, clear_xml
-        import tempfile
-        # get inpxml structure
-        inpxmlstructure = get_inpxml_file_structure()
+        from masci_tools.io.parsers.fleur import inpxml_parser
 
-        # read xmlinp file into an etree with autocomplition from schema
-        # we do not validate here because we want this to always succeed
+        #The schema_dict is not needed outside the inpxml_parser so we ignore it with the underscore
+        xmltree, _ = self.load_inpxml()
 
-        xmlschema_doc = etree.parse(self._schema_file_path)
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-        # dtd_validation=True
+        parser_info = {}
+        try:
+            inpxml_dict = inpxml_parser(xmltree, parser_info_out=parser_info)
+        except (ValueError, FileNotFoundError) as exc:
+            raise InputValidationError from exc
+
+        self._parser_info = parser_info
+        # set inpxml_dict attribute
+        self.set_attribute('inp_dict', inpxml_dict)
+
+    def load_inpxml(self, validate_xml_schema=True, return_included_tags=False, **kwargs):
+        """
+        Returns the lxml etree and the schema dictionary corresponding to the version. If validate_xml_schema=True
+        the file will also be validated against the schema
+
+        Keyword arguments are passed on to the parser
+        """
+        from masci_tools.io.io_fleurxml import load_inpxml
+        from masci_tools.util.xml.common_functions import validate_xml
+
+        self._validate()
+
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
             try:
-                tree_x = etree.parse(inpxmlfile, parser)
-            except etree.XMLSyntaxError as exc:
+                xmltree, schema_dict = load_inpxml(inpxmlfile, **kwargs)
+            except ValueError as exc:
                 # prob inp.xml file broken
                 err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
                 raise InputValidationError(err_msg) from exc
-        # relax.xml should be available to be used in xinclude
-        # hence copy relax.xml from the retrieved node into the temp file
-        fo = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        try:
-            with self.open(path='relax.xml', mode='r') as relax_file:
-                relax_content = relax_file.read()
-        except FileNotFoundError:
-            relax_content = ''
-        fo.write(relax_content)
-        tempfile_name = fo.name
-        fo.close()
+            except FileNotFoundError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not find corresponding input schema.')
+                raise InputValidationError(err_msg) from exc
 
-        # replace relax.xml by the temp file path
-        tree_x_string = etree.tostring(tree_x)
-        tree_x_string = tree_x_string.replace(bytes('relax.xml', 'utf-8'), bytes(tempfile_name, 'utf-8'))
-        tree_x = etree.fromstring(tree_x_string).getroottree()
+        xmltree, included_tags = self._include_files(xmltree)
 
-        # replace XInclude parts to validate against schema
-        tree_x = clear_xml(tree_x)
-        os.remove(tempfile_name)
-
-        # check if it validates against the schema
-        if not xmlschema.validate(tree_x):
-            # get a more information on what does not validate
-            message = ''
-            parser_on_fly = etree.XMLParser(attribute_defaults=True, schema=xmlschema, encoding='utf-8')
-            inpxmlfile = etree.tostring(tree_x)
+        if validate_xml_schema:
             try:
-                tree_x = etree.fromstring(inpxmlfile, parser_on_fly)
-            except etree.XMLSyntaxError as msg:
-                message = msg
-                raise InputValidationError(
-                    'Input file does not validate against the schema: {}'.format(message)) from msg
+                validate_xml(xmltree,
+                             schema_dict.xmlschema,
+                             error_header='Input file is not validated against the schema')
+            except etree.DocumentInvalid as err:
+                raise InputValidationError(err) from err
 
-            raise InputValidationError('Input file is not validated against the schema.' 'Reason is unknown')
+        if return_included_tags:
+            return xmltree, schema_dict, included_tags
+        else:
+            return xmltree, schema_dict
 
-        # convert etree into python dictionary
-        root = tree_x.getroot()
-        inpxml_dict = inpxml_todict(root, inpxmlstructure)
-        # set inpxml_dict attribute
-        self.set_attribute('inp_dict', inpxml_dict)
+    def _include_files(self, xmltree):
+        """
+        Tries to insert all .xml, which are not inp.xml file into the etree since they are
+        not naturally available for the parser (open vs self.open)
+
+        Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
+        Then it is reparsed into a ElementTree and teh xi:include tags are executed
+        """
+        from masci_tools.util.xml.common_functions import clear_xml
+        import tempfile
+
+        xmltree_string = etree.tostring(xmltree)
+
+        temp_files = []
+        for file in self.files:
+            if file.endswith('.xml') and file != 'inp.xml':
+
+                #Get file content from node
+                include_content = ''
+                with self.open(path=file, mode='r') as include_file:
+                    include_content = include_file.read()
+
+                #Write content into temporary file
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
+                    fo.write(include_content)
+                    temp_files.append(fo.name)
+                    #If the include tag for the given file is not present nothing is replaced
+                    xmltree_string = xmltree_string.replace(bytes(file, 'utf-8'), bytes(fo.name, 'utf-8'))
+
+        #Regenerate the tree with tempfile names
+        xmltree_with_includes = etree.fromstring(xmltree_string).getroottree()
+
+        #Performs the inclusions and remove comments
+        cleared_tree, included_tags = clear_xml(xmltree_with_includes)
+
+        #Remove temporary files
+        for file in temp_files:
+            os.remove(file)
+
+        return cleared_tree, included_tags
 
     # dict with inp paramters parsed from inp.xml
     @property
@@ -518,6 +406,14 @@ class FleurinpData(Data):
         or is stored in the database.
         """
         return self.get_attribute('inp_dict', {})
+
+    # version of the inp.xml file
+    @property
+    def inp_version(self):
+        """
+        Returns the version string corresponding to the inp.xml file
+        """
+        return self.get_attribute('inp_version', None)
 
     # TODO better validation? other files, if has a schema
 
@@ -566,10 +462,23 @@ class FleurinpData(Data):
             except KeyError:
                 fleur_modes['gw'] = False
             fleur_modes['ldau'] = False
-            for species in self.inp_dict['atomSpecies']['species']:
+            for species in self.inp_dict['atomSpecies']:
                 if 'ldaU' in species:
                     fleur_modes['ldau'] = True
         return fleur_modes
+
+    def get_nkpts(self):
+        """
+        This routine returns the number of kpoints used in the fleur calculation
+        defined in this input
+
+        :returns: int with the number of kPoints
+        """
+        from masci_tools.util.xml.xml_getters import get_nkpts
+
+        xmltree, schema_dict = self.load_inpxml()
+
+        return get_nkpts(xmltree, schema_dict)
 
     def get_structuredata_ncf(self):
         """
@@ -581,6 +490,7 @@ class FleurinpData(Data):
         """
         from aiida.orm import StructureData
         from aiida_fleur.tools.StructureData_util import rel_to_abs, rel_to_abs_f
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         # StructureData = DataFactory(‘structure’)
         # Disclaimer: this routine needs some xpath expressions. these are hardcoded here,
@@ -614,30 +524,24 @@ class FleurinpData(Data):
 
         # read in inpxml
 
-        if self._schema_file_path:  # Schema there, parse with schema
-            xmlschema_doc = etree.parse(self._schema_file_path)
-            xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+        # dtd_validation=True
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            try:
                 tree = etree.parse(inpxmlfile, parser)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
-            if not xmlschema.validate(tree):
+            except etree.XMLSyntaxError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg) from exc
+
+        tree, _ = self._include_files(tree)
+
+        if self.inp_version is not None:
+            schema_dict = InputSchemaDict.fromVersion(self.inp_version)
+            if not schema_dict.xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
-        else:  # schema not there, parse without
+        else:
             print('parsing inp.xml without XMLSchema')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                tree = etree.parse(inpxmlfile)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
         root = tree.getroot()
 
         # Fleur uses atomic units, convert to Angstrom
@@ -778,20 +682,6 @@ class FleurinpData(Data):
         # return {label : struc}
         return struc
 
-    def clone(self):
-        """
-        Override clone method.
-        returns a new fleurinpdata object
-        """
-        new = super().clone()
-        search_paths = new.get_search_paths()
-        new.set_extra('_search_paths', search_paths)
-        schema = new._schema_file_path
-        if schema is None or not os.path.isfile(schema):
-            new.update_schema_path()
-
-        return new
-
     @cf
     def get_structuredata(self):
         """
@@ -813,6 +703,7 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.KpointsData` node
         """
         from aiida.orm import KpointsData
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
 
         # HINT, TODO:? in this routine, the 'cell' you might get in an other way
         # exp: StructureData.cell, but for this you have to make a structureData Node,
@@ -849,30 +740,25 @@ class FleurinpData(Data):
 
         # else read in inpxml
 
-        if self._schema_file_path:  # Schema there, parse with schema
-            xmlschema_doc = etree.parse(self._schema_file_path)
-            xmlschema = etree.XMLSchema(xmlschema_doc)
-            parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
+        parser = etree.XMLParser(attribute_defaults=True, encoding='utf-8')
+        # dtd_validation=True
+        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+            try:
                 tree = etree.parse(inpxmlfile, parser)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
-            if not xmlschema.validate(tree):
+            except etree.XMLSyntaxError as exc:
+                # prob inp.xml file broken
+                err_msg = ('The inp.xml file is probably broken, could not parse it to an xml etree.')
+                raise InputValidationError(err_msg) from exc
+
+        tree, _ = self._include_files(tree)
+
+        if self.inp_version is not None:
+            schema_dict = InputSchemaDict.fromVersion(self.inp_version)
+            if not schema_dict.xmlschema.validate(tree):
                 raise ValueError('Input file is not validated against the schema.')
-        else:  # schema not there, parse without
+        else:
             print('parsing inp.xml without XMLSchema')
-            with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                tree = etree.parse(inpxmlfile)
-            tree.xinclude()
-            # remove comments from inp.xml
-            comments = tree.xpath('//comment()')
-            for c in comments:
-                p = c.getparent()
-                p.remove(c)
+
         root = tree.getroot()
 
         # get cell matrix from inp.xml
@@ -989,14 +875,17 @@ class FleurinpData(Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
         from aiida_fleur.tools.xml_util import get_inpgen_paranode_from_xml
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
         if 'inp.xml' not in self.files:
             print('cannot get a StructureData because fleurinpdata has no inp.xml file yet')
             # TODO what to do in this case?
             return False
 
+        schema_dict = InputSchemaDict.fromVersion(self.inp_version)
         # read in inpxml
         with self.open(path='inp.xml', mode='r') as inpxmlfile:
             new_parameters = get_inpgen_paranode_from_xml(etree.parse(inpxmlfile),
+                                                          schema_dict,
                                                           inpgen_ready=inpgen_ready,
                                                           write_ids=write_ids)
         return new_parameters
@@ -1020,31 +909,14 @@ class FleurinpData(Data):
         :param xpath: an xpath expression
         :returns: A node list retrived using given xpath
         """
+        from masci_tools.util.xml.common_functions import eval_xpath
 
-        if 'inp.xml' in self.files:
-            # read in inpxml
-            if self._schema_file_path:  # Schema there, parse with schema
-                #xmlschema_doc = etree.parse(self._schema_file_path)
-                #xmlschema = etree.XMLSchema(xmlschema_doc)
-                #parser = etree.XMLParser(schema=xmlschema, attribute_defaults=True)
-                with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                    tree = etree.parse(inpxmlfile)  # , parser)
-            else:  # schema not there, parse without
-                print('parsing inp.xml without XMLSchema')
-                with self.open(path='inp.xml', mode='r') as inpxmlfile:
-                    tree = etree.parse(inpxmlfile)
-            root = tree.getroot()
-        else:
-            raise InputValidationError('No inp.xml file yet specified, to get a tag from')
+        warnings.warn(
+            'The get_tag method is deprecated. Instead you can use the load_inpxml method to access '
+            'the xmltree and schema of the stored inp.xml. Then the required information can be accessed '
+            'via the XML functions in masci-tools or directly', DeprecationWarning)
 
-        try:
-            return_value = root.xpath(xpath)
-        except etree.XPathEvalError as exc:
-            raise InputValidationError('There was a XpathEvalError on the xpath: {} \n Either it does '
-                                       'not exist, or something is wrong with the expression.'
-                                       ''.format(xpath)) from exc
+        xmltree, _ = self.load_inpxml()
+        root = xmltree.getroot()
 
-        if len(return_value) == 1:
-            return return_value
-        else:
-            return return_value
+        return eval_xpath(root, xpath)

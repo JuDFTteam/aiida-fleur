@@ -238,7 +238,9 @@ class FleurDMIWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -319,6 +321,7 @@ class FleurDMIWorkChain(WorkChain):
             'itmax': 1,
             'l_noco': True,
             'ctail': False,
+            'spav': True,
             # 'l_soc': True,
             'l_ss': True
         }
@@ -328,7 +331,9 @@ class FleurDMIWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -514,13 +519,13 @@ class FleurDMIWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.dmi_force_evSum
+            t_energydict = out_dict.dmi_force_evsum
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles
             num_q_vectors = out_dict.dmi_force_qs
             q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_q]
-            e_u = out_dict.energy_units
+            e_u = out_dict.dmi_force_units
 
             for i in six.moves.range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
                 ref_enrg = t_energydict.pop(i)

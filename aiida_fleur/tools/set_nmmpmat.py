@@ -16,10 +16,12 @@ for LDA+U via the FleurinpModifier
 from __future__ import absolute_import
 from __future__ import print_function
 import numpy as np
-from aiida_fleur.tools.xml_util import eval_xpath, eval_xpath2
-from aiida_fleur.tools.xml_util import get_xml_attribute, convert_to_int
+from aiida_fleur.tools.xml_util import eval_xpath2
+from aiida_fleur.tools.xml_util import get_xml_attribute
 
-def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin,\
+from masci_tools.util.schema_dict_util import get_tag_xpath, evaluate_attribute, eval_simple_xpath
+
+def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, schema_dict, species_name, orbital, spin,\
                 occStates=None, denmat=None, phi=None, theta=None):
     """Routine sets the block in the n_mmp_mat file specified by species_name, orbital and spin
     to the desired density matrix
@@ -38,28 +40,25 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
     :raises ValueError: If something in the input is wrong
     :raises KeyError: If no LDA+U procedure is found on a species
     """
-
     #All lda+U procedures have to be considered since we need to keep the order
-    ldau_xpath = '/fleurInput/atomSpecies/species/ldaU'
-    magnetism_xpath = '/fleurInput/calculationSetup/magnetism'
+    species_base_path = get_tag_xpath(schema_dict, 'species')
 
     if species_name == 'all':
-        species_xpath = '/fleurInput/atomSpecies/species'
+        species_xpath = species_base_path
     elif species_name[:4] == 'all-':  #format all-<string>
-        species_xpath = '/fleurInput/atomSpecies/species[contains(@name,"{}")]'.format(species_name[4:])
+        species_xpath = f'{species_base_path}[contains(@name,"{species_name[4:]}")]'
     else:
-        species_xpath = '/fleurInput/atomSpecies/species[@name = "{}"]'.format(species_name)
+        species_xpath = f'{species_base_path}[@name = "{species_name}"]'
 
     all_species = eval_xpath2(fleurinp_tree_copy, species_xpath)
 
     #Get number of spins (TODO for develop version also read l_mtnocoPot)
-    mag_elem = eval_xpath(fleurinp_tree_copy, magnetism_xpath)
-    nspins = convert_to_int(get_xml_attribute(mag_elem, 'jspins'), suc_return=False)
+    nspins = evaluate_attribute(fleurinp_tree_copy, schema_dict, 'jspins')
 
     if spin > nspins:
         raise ValueError(f'Invalid input: spin {spin} requested, but input has only {nspins} spins')
 
-    all_ldau = eval_xpath2(fleurinp_tree_copy, ldau_xpath)
+    all_ldau = eval_simple_xpath(fleurinp_tree_copy, schema_dict, 'ldaU', contains='species', list_return=True)
     numRows = nspins * 14 * len(all_ldau)
 
     #Check that numRows matches the number of lines in nmmp_lines_copy
@@ -89,7 +88,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
         ldau_index = None
         for index, ldau in enumerate(all_ldau):
             ldau_species = get_xml_attribute(ldau.getparent(), 'name')
-            ldau_orbital = convert_to_int(get_xml_attribute(ldau, 'l'), suc_return=False)
+            ldau_orbital = evaluate_attribute(ldau, schema_dict, 'l', contains='species')
             if current_name == ldau_species and ldau_orbital == orbital:
                 ldau_index = index
 
@@ -142,7 +141,7 @@ def set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital, spin
     return nmmp_lines_copy
 
 
-def validate_nmmpmat(fleurinp_tree, nmmp_lines):
+def validate_nmmpmat(fleurinp_tree, nmmp_lines, schema_dict):
     """
     Checks that the given nmmp_lines is valid with the given fleurinp_tree
 
@@ -158,15 +157,9 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
     :raises ValueError: if any of the above checks are violated.
     """
 
-    #First check the number of ldau procedures
-    ldau_xpath = '/fleurInput/atomSpecies/species/ldaU'
-    magnetism_xpath = '/fleurInput/calculationSetup/magnetism'
+    nspins = evaluate_attribute(fleurinp_tree, schema_dict, 'jspins')
 
-    #Get number of spins (TODO for develop version also read l_mtnocoPot)
-    mag_elem = eval_xpath(fleurinp_tree, magnetism_xpath)
-    nspins = convert_to_int(get_xml_attribute(mag_elem, 'jspins'), suc_return=False)
-
-    all_ldau = eval_xpath2(fleurinp_tree, ldau_xpath)
+    all_ldau = eval_simple_xpath(fleurinp_tree, schema_dict, 'ldaU', contains='species', list_return=True)
     numRows = nspins * 14 * len(all_ldau)
 
     tol = 0.01
@@ -190,7 +183,7 @@ def validate_nmmpmat(fleurinp_tree, nmmp_lines):
     #(no numbers outside the valid area and no nonsensical occupations)
     for ldau_index, ldau in enumerate(all_ldau):
 
-        orbital = convert_to_int(get_xml_attribute(ldau, 'l'), suc_return=False)
+        orbital = evaluate_attribute(ldau, schema_dict, 'l', contains='species')
         species_name = get_xml_attribute(ldau.getparent(), 'name')
 
         for spin in range(nspins):

@@ -423,10 +423,10 @@ def performance_extract_calcs(calcs):
         data_dict['n_iterations'].append(niter)
         data_dict['n_iterations_total'].append(res.number_of_iterations_total)
 
-        if u'charge_density' in res_keys:
-            data_dict['density_distance'].append(res.charge_density)
+        if u'overall_density_convergence' not in res_keys:
+            data_dict['density_distance'].append(res.density_convergence)
         else:  # magnetic, old
-            data_dict['density_distance'].append(res.overall_charge_density)
+            data_dict['density_distance'].append(res.overall_density_convergence)
 
         walltime = res.walltime
         if walltime <= 0:
@@ -546,24 +546,7 @@ def optimize_calc_options(nodes,
 
     cpus_per_node = mpi_per_node * omp_per_mpi
     if fleurinpData:
-        modes = fleurinpData.get_fleur_modes()
-
-        # fleur version < 32 # todo this is not nice
-        kpts = fleurinpData.attributes['inp_dict']['calculationSetup'].get('bzIntegration', None)
-        if kpts is None:
-            kpts = fleurinpData.attributes['inp_dict']['cell']['bzIntegration']
-        if modes['band'] or modes['gw']:
-            kpts = kpts['altKPointSet']['count']
-        else:
-            if 'kPointList' in kpts:
-                kpts = kpts['kPointList']['count']
-            elif 'kPointLists' in kpts:  # There can probably be others
-                # also it is not clear for which kpoint set to optimize the execution
-                # the one with the most kpoints? Find one which best for all?
-                kpts = kpts['kPointLists']['kPointList']['count']
-            else:
-                kpts = kpts['kPointCount']['count']
-        kpts = int(kpts)
+        kpts = fleurinpData.get_nkpts()
     elif not kpts:
         raise ValueError('You must specify either kpts of fleurinpData')
     divisors_kpts = divisors(kpts)
