@@ -51,7 +51,7 @@ def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
 
     assert fleurinp_tmp.inp_dict != {}
-    assert fleurinp_tmp._parser_info['parser_warnings'] == []
+    assert fleurinp_tmp.parser_info['parser_warnings'] == []
     assert fleurinp_tmp._validate() is None  # if fails, _validate throws an error
 
 

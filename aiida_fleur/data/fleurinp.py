@@ -96,14 +96,14 @@ class FleurinpData(Data):
                 self.set_files(files)
 
     @property
-    def _parser_info(self):
+    def parser_info(self):
         """
         Dict property, with the info and warnings from the inpxml_parser
         """
         return self.get_extra('_parser_info')
 
-    @_parser_info.setter
-    def _parser_info(self, info_dict):
+    @parser_info.setter
+    def parser_info(self, info_dict):
         """
         Setter for has_schema
         """
@@ -314,7 +314,7 @@ class FleurinpData(Data):
         except (ValueError, FileNotFoundError) as exc:
             raise InputValidationError from exc
 
-        self._parser_info = parser_info
+        self.parser_info = parser_info
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 
