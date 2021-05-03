@@ -21,7 +21,7 @@ import warnings
 
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.data.fleurinp import FleurinpData
-from aiida_fleur.tools.xml_aiida_modifiers import FLEURINPMODIFIER_EXTRA_FUNCS
+from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 
@@ -30,6 +30,8 @@ class FleurinpModifier(FleurXMLModifier):
     """
     A class which represents changes to the :class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     """
+
+    _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
     def __init__(self, original):
         """
@@ -48,6 +50,15 @@ class FleurinpModifier(FleurXMLModifier):
         """
         outside_actions_fleurinp = {
             'set_kpointsdata': self.set_kpointsdata,
+            'set_atomgr_att': self.set_atomgr_att,
+            'set_atomgr_att_label': self.set_atomgr_att_label,
+            'xml_set_attribv_occ': self.xml_set_attribv_occ,
+            'xml_set_first_attribv': self.xml_set_first_attribv,
+            'xml_set_all_attribv': self.xml_set_all_attribv,
+            'xml_set_text_occ': self.xml_set_text_occ,
+            'xml_set_text': self.xml_set_text,
+            'xml_set_all_text': self.xml_set_all_text,
+            'add_num_to_att': self.add_num_to_att
         }
 
         outside_actions_fleurxml = super().get_avail_actions().copy()
@@ -203,33 +214,109 @@ class FleurinpModifier(FleurXMLModifier):
 
     def delete_tag(self, *args, **kwargs):
         """
-        Deprecated method for deleting a tag at a specific xpath
+        Deprecation layer for delete_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the tag to delete
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_delete_tag' method instead", DeprecationWarning)
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_tag' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_tag' method instead or only pass in the name of the tag, you want to use",
+                DeprecationWarning)
 
-        self.xml_delete_tag(*args, **kwargs)
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_delete_tag(xpath, *args, **kwargs)
+        else:
+            super().delete_tag(*args, **kwargs)
 
     def delete_att(self, *args, **kwargs):
         """
-        Deprecated method for deleting a tag at a specific xpath
+        Deprecation layer for delete_att if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_att()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the attribute to delete
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a attribute.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param tag_name: str, name of the tag where the attribute should be parsed
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+            :param exclude: list of str, here specific types of attributes can be excluded
+                            valid values are: settable, settable_contains, other
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_delete_att' method instead", DeprecationWarning)
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_att' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
+                DeprecationWarning)
 
-        self.xml_delete_att(*args, **kwargs)
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_delete_att(xpath, *args, **kwargs)
+        else:
+            super().delete_att(*args, **kwargs)
 
     def replace_tag(self, *args, **kwargs):
         """
-        Deprecated method for deleting a tag at a specific xpath
+        Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.replace_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the tag to replace
+        :param newelement: a new tag
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to replace a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
         """
 
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'xml_replace_tag' method instead", DeprecationWarning)
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_att' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
+                DeprecationWarning)
 
-        self.xml_replace_tag(*args, **kwargs)
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_replace_tag(xpath, *args, **kwargs)
+        else:
+            super().replace_tag(*args, **kwargs)
 
     def add_num_to_att(self, *args, **kwargs):
         """
@@ -270,10 +357,7 @@ class FleurinpModifier(FleurXMLModifier):
         except FileNotFoundError:
             nmmplines = None
 
-        xmltree, nmmp = super().apply_modifications(xmltree,
-                                                    nmmplines,
-                                                    self._tasks,
-                                                    extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+        xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
         return xmltree
 
     def show(self, display=True, validate=False):
@@ -298,11 +382,7 @@ class FleurinpModifier(FleurXMLModifier):
             except FileNotFoundError:
                 nmmplines = None
 
-            xmltree, nmmp = super().apply_modifications(xmltree,
-                                                        nmmplines,
-                                                        self._tasks,
-                                                        validate_changes=False,
-                                                        extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks, validate_changes=False)
 
         if display:
             xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)
@@ -375,8 +455,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(xmltree=xmltree,\
                                                                         nmmp_lines=nmmplines,\
                                                                         modification_tasks=modification_tasks,
-                                                                        validate_changes=False,
-                                                                        extra_funcs=FLEURINPMODIFIER_EXTRA_FUNCS)
+                                                                        validate_changes=False)
 
     # To include object store storage this prob has to be done differently
 
