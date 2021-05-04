@@ -126,7 +126,49 @@ def test_fleurinp_modifier_regression(create_fleurinp, inpxml_etree, file_regres
 
     new_fleurinp = fm.freeze()
 
-    file_regression.check(new_fleurinp.get_content('inp.xml'))
+    file_regression.check(new_fleurinp.get_content('inp.xml'), extension='.xml')
+
+
+def test_fleurinp_modifier_included_files(create_fleurinp, inpxml_etree, file_regression):
+    """Tests if fleurinp_modifier with various other modifations methods,
+    the detailed tests for method functionality is tested elsewhere."""
+
+    TEST_FOLDER = os.path.dirname(os.path.abspath(__file__))
+    TEST_FOLDER = os.path.abspath(os.path.join(TEST_FOLDER, '../files/included_xml_files'))
+
+    INPXML_FILE = os.path.join(TEST_FOLDER, 'inp.xml')
+    KPTSXML_FILE = os.path.join(TEST_FOLDER, 'kpts.xml')
+    SYMXML_FILE = os.path.join(TEST_FOLDER, 'sym.xml')
+
+    fleurinp_tmp = create_fleurinp(INPXML_FILE, additional_files=[KPTSXML_FILE, SYMXML_FILE])
+
+    fm = FleurinpModifier(fleurinp_tmp)
+    #Modify main inp.xml file
+    fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+    fm.shift_value({'Kmax': 0.1}, 'rel')
+
+    #Modify included xml files
+    fm.delete_tag('symmetryOperations')
+    fm.create_tag('symmetryOperations')
+    fm.create_tag('kPointList')
+    fm.create_tag('kPoint', occurrences=0)
+    fm.set_attrib_value('name', 'TEST', contains='kPointList', occurrences=0)
+    fm.set_text('kPoint', [0.0, 0.0, 0.0],
+                complex_xpath="/fleurInput/cell/bzIntegration/kPointLists/kPointList[@name='TEST']/kPoint")
+
+    fm.show()
+
+    new_fleurinp = fm.freeze()
+
+    assert new_fleurinp.files == ['kpts.xml', 'sym.xml', 'inp.xml']
+
+    file_content = [
+        new_fleurinp.get_content('inp.xml'),
+        new_fleurinp.get_content('kpts.xml'),
+        new_fleurinp.get_content('sym.xml')
+    ]
+
+    file_regression.check('\n'.join(file_content), extension='.xml')
 
 
 #For this test we need a input file with defined LDA+U procedures
