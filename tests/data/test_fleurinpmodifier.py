@@ -72,25 +72,61 @@ def test_fleurinp_modifier2(create_fleurinp, inpxml_etree):
     assert isinstance(actions, dict)
 
     new_tag = eval_xpath(etree, '/fleurInput/calculationSetup/scfLoop')
-    fm.delete_tag('/fleurInput/calculationSetup/scfLoop')
-    fm.replace_tag('/fleurInput/calculationSetup/cutoffs', new_tag)
-    fm.delete_att('/fleurInput/calculationSetup/soc', 'theta')
-    fm.create_tag('/fleurInput/calculationSetup/soc', 'theta')
-    fm.xml_set_all_text('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
-    fm.xml_set_text_occ('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
-    fm.xml_set_text('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
-    fm.xml_set_all_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
-    fm.xml_set_first_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
-    fm.xml_set_attribv_occ('/fleurInput/calculationSetup/soc', 'theta', 12)
+    with pytest.deprecated_call():
+        fm.delete_tag('/fleurInput/calculationSetup/scfLoop')
+    with pytest.deprecated_call():
+        fm.replace_tag('/fleurInput/calculationSetup/cutoffs', new_tag)
+    with pytest.deprecated_call():
+        fm.delete_att('/fleurInput/calculationSetup/soc', 'theta')
+    with pytest.deprecated_call():
+        fm.create_tag('/fleurInput/calculationSetup/soc', 'theta')
+    with pytest.deprecated_call():
+        fm.xml_set_all_text('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
+    with pytest.deprecated_call():
+        fm.xml_set_text_occ('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
+    with pytest.deprecated_call():
+        fm.xml_set_text('/fleurInput/cell/symmetryOperations/symOp/row-1', 'test text')
+    with pytest.deprecated_call():
+        fm.xml_set_all_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
+    with pytest.deprecated_call():
+        fm.xml_set_first_attribv('/fleurInput/calculationSetup/soc', 'theta', 12)
+    with pytest.deprecated_call():
+        fm.xml_set_attribv_occ('/fleurInput/calculationSetup/soc', 'theta', 12)
     fm.set_species_label('                 222', {'mtSphere': {'radius': 3.333}})
-    fm.set_atomgr_att_label(attributedict={'force': {'relaxXYZ': 'FFF'}}, atom_label='                 222')
-    fm.set_atomgr_att(attributedict={'force': {'relaxXYZ': 'TFF'}}, species='Fe-1')
+    with pytest.deprecated_call():
+        fm.set_atomgr_att_label(attributedict={'force': {'relaxXYZ': 'FFF'}}, atom_label='                 222')
+    with pytest.deprecated_call():
+        fm.set_atomgr_att(attributedict={'force': {'relaxXYZ': 'TFF'}}, species='Fe-1')
 
     #fm.set_nkpts(500, gamma='T')
     #fm.set_kpath({'gamma': (0, 0, 0), 'L': (0.1, 0.1, 0.1)}, 300)
-    fm.add_num_to_att('/fleurInput/calculationSetup/scfLoop', 'minDistance', 4)
+    with pytest.deprecated_call():
+        fm.add_num_to_att('/fleurInput/calculationSetup/scfLoop', 'minDistance', 4)
     #fm.set_species1
     fm.show()
+
+
+def test_fleurinp_modifier_regression(create_fleurinp, inpxml_etree, file_regression):
+    """Tests if fleurinp_modifier with various other modifations methods,
+    the detailed tests for method functionality is tested elsewhere."""
+    fleurinp_tmp = create_fleurinp(inpxmlfilefolder)
+
+    fm = FleurinpModifier(fleurinp_tmp)
+    fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+    fm.shift_value({'Kmax': 0.1}, 'rel')
+    fm.shift_value_species_label('                 222', 'radius', 3, mode='abs')
+    fm.set_species('all', {'mtSphere': {'radius': 3.333}})
+
+    #fm.set_nkpts(500, gamma='T')
+    #fm.set_kpath({'gamma': (0, 0, 0), 'L': (0.1, 0.1, 0.1)}, 300)
+    with pytest.deprecated_call():
+        fm.add_num_to_att('/fleurInput/calculationSetup/scfLoop', 'minDistance', 4)
+    #fm.set_species1
+    fm.show()
+
+    new_fleurinp = fm.freeze()
+
+    file_regression.check(new_fleurinp.get_content('inp.xml'))
 
 
 #For this test we need a input file with defined LDA+U procedures

@@ -107,10 +107,6 @@ User Methods
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_parameterdata()` - A CalcFunction
       that extracts a :py:class:`~aiida.orm.Dict` node
       containing FLAPW parameters. This node can be used as an input for inpgen.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_kpointsdata()` -
-      A Function of fleurmodifier used to writes kpoints
-      of a :py:class:`~aiida.orm.KpointsData` node to the
-      inp.xml file. It replaces old kpoints.
 
 .. _setting_labels:
 

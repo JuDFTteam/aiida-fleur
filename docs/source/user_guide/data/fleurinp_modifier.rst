@@ -115,6 +115,10 @@ On the other hand, there are shortcut methods that already know some paths:
       method to set a kpoint path for bandstructures **(Only for Max4 and earlier)**
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_kpointlist()`: Specific
       method to set the used kpoints via a array of coordinates and weights
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_kpointsdata()` -
+      User-friendly method used to writes kpoints
+      of a :py:class:`~aiida.orm.KpointsData` node to the
+      inp.xml file. It replaces old kpoints for MaX4 versions and older. for MaX5 and later the kpoints are entered as a new kpoint list
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.switch_kpointset()`: Specific
       method to switch the used kpoint set. **(Only for Max5 and later)**
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_attrib_value()`: user-friendly method for setting attributes in the xml file by specifying their name
