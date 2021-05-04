@@ -68,6 +68,7 @@ _______________
       returns a new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.changes()`: Displays the
       current list of changes.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.undo()`: Remove the last registered change or all registered changes
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.show()`:  Applies
       the modifications and displays/prints the resulting ``inp.xml`` file. Does not generate a new
       :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
@@ -160,7 +161,7 @@ The figure below shows a comparison between the use of XML and shortcut methods.
 
 .. warning:: Passing XML Elements to modification functions
 
-    Some of the low-level implementations of the XML modification functions accept explicit XML elements as arguments for replacing/inserting. However, these can only be used within limits in the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` at the moment. The reason for this is that there is currently no support for serializing these objects for the input of the Aiida calcfunction. The following functions are effected by this:
+    Some of the low-level implementations of the XML modification functions accept explicit XML elements as arguments for replacing/inserting. However, these can only be used within limits in the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` at the moment. The reason for this is that there is currently no support for serializing these objects for the input of the Aiida calcfunction. The following functions are affected by this:
 
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()` (Only usable with show and validate)
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()` (Only usable with show and validate)
