@@ -80,38 +80,28 @@ The registration methods can be separated into two groups. First of all,
 there are XML methods that require deeper knowledge about the structure of an ``inp.xml`` file.
 All of them require an xpath input:
 
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_attribv_occ()`: Set an
-      attribute of a specific occurrence of xml elements
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_first_attribv()`: Set
-      an attribute of first occurrence of xml element
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_attribv()`: Set
-      attributes of all occurrences of the xml element
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text()`: Set the text
-      of first occurrence of xml element
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text_occ()`: Set
-      an attribute of a specific occurrence of xml elements
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_text()`: Set
-      the text of all occurrences of the xml element
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`: Insert
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_attrib_value_no_create()`: Set an
+      attribute on the specified xml elements to the specified value(s). The ``occurrences`` argument can be used to select, which occurences to modify
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text_no_create()`: Set the
+      text on the specified xml elements to the specified value(s). The ``occurrences`` argument can be used to select, which occurences to modify
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_create_tag()`: Insert
       an xml element in the xml tree.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_att()`: Delete
-      an attribute for xml elements from the xpath evaluation.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_tag()`: Delete
-      an xml element.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()`: Replace
-      an xml element.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_num_to_att()`: Adds
-      a value or multiplies on it given attribute.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()`: Replace
+      an xml element in the xml tree.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_delete_tag()`: Delete
+      an xml element in the xml tree.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_delete_att()`: Delete an attribute on
+      a xml element in the xml tree.
 
 On the other hand, there are shortcut methods that already know some paths:
 
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_species()`: Specific
       user-friendly method to change species parameters.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att()`:  Specific
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup()`:  Specific
       method to change atom group parameters.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_species_label()`: Specific
       user-friendly method to change a specie of an atom with a certain label.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att_label()`:  Specific
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup_label()`:  Specific
       method to change atom group parameters of an atom with a certain label.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_inpchanges()`: Specific
       user-friendly method for easy changes of attribute key value type.
@@ -120,15 +110,49 @@ On the other hand, there are shortcut methods that already know some paths:
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.shift_value_species_label()`: Specific
       user-friendly method to shift value of an attribute of an atom with a certain label.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nkpts()`: Specific
-      method to set the number of kpoints.
+      method to set the number of kpoints. **(Only for Max4 and earlier)**
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_kpath()`: Specific
+      method to set a kpoint path for bandstructures **(Only for Max4 and earlier)**
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_kpointlist()`: Specific
+      method to set the used kpoints via a array of coordinates and weights
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.switch_kpointset()`: Specific
+      method to switch the used kpoint set. **(Only for Max5 and later)**
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_attrib_value()`: user-friendly method for setting attributes in the xml file by specifying their name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_first_attrib_value()`: user-friendly method for setting the first occurrence of an attribute in the xml file by specifying its name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_attrib()`: user-friendly method for adding to or multiplying values of attributes in the xml file by specifying their name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_first_attrib()`: user-friendly method for adding to or multiplying values of the first occurrence of the attribute in the xml file by specifying their name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_text()`: user-friendly method for setting text on xml elements in the xml file by specifying their name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_first_text()`: user-friendly method for setting the text on the first occurrence of an xml element in the xml file by specifying its name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_simple_tag()`: user-friendly method for creating and setting attributes on simple xml elements (only attributes) in the xml file by specifying its name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_complex_tag()`: user-friendly method for creating complex tags in the xml file by specifying its name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`: User-friendly method for inserting a tag in the right place by specifying it's name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_tag()`: User-friendly method for delete a tag by specifying it's name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_att()`: User-friendly method for deleting an attribute from a tag by specifying it's name
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()`: User-friendly method for replacing a tag by another by specifying its name
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nmmpmat()`: Specific 
       method for initializing or modifying the density matrix file for a LDA+U calculation (details see below)
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.rotate_nmmpmat()`: Specific 
+      method for rotating a block of the density matrix file for a LDA+U calculation (details see below) in real space
 
 The figure below shows a comparison between the use of XML and shortcut methods.
 
 .. image:: images/registration_methods.png
     :width: 100%
     :align: center
+
+.. warning:: Deprecated XML modification methods
+
+    After the `aiida-fleur` release ``1.1.4`` the FleurinpModifier was restructured to enhance it's capabilities and to make it more robust. During this process several modification functions were renamed or deprecated. Even though all the old usage is still supported it is encouraged to switch to the new method names and behaviours:
+
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_attribv_occ()`, :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_attribv()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_first_attribv()` are unified in the method :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_attrib_value_no_create()`. However, these functions **can no longer create missing subtags**
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text_occ()`, :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_all_text()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text()` are unified in the method :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_set_text_no_create()`. However, these functions **can no longer create missing subtags**
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()` is now a higher-level function. The old function requiring an xpath is now called :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_create_tag()`
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()` is now a higher-level function. The old function requiring an xpath is now called :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()`
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_tag()` is now a higher-level function. The old function requiring an xpath is now called :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_delete_tag()`
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.delete_att()` is now a higher-level function. The old function requiring an xpath is now called :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_delete_att()`
+      an xml element in the xml tree.
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_num_to_att()` was renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_attrib()` or :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_first_attrib()`. However, these are also higher-level functions now longer requiring a concrete xpath
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att_label()` were renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup_label()`. These functions now also take the changes in the form ``attributedict={'nocoParams':{'beta': val}}`` instead of ``attributedict={'nocoParams':[('beta': val)]}``
 
 Modifying the density matrix for LDA+U calculations
 ---------------------------------------------------
