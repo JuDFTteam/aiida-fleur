@@ -15,7 +15,6 @@ In this module is the FleurinpModifier class, which is used to manipulate
 FleurinpData objects in a way which keeps the provernance.
 """
 import os
-import io
 from lxml import etree
 import warnings
 
@@ -176,6 +175,31 @@ class FleurinpModifier(FleurXMLModifier):
 
         self.xml_set_text_no_create(*args, **kwargs)
 
+    def xml_create_tag(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param xpath: a path where to place a new tag
+        :param element: a tag name or etree Element to be created
+        :param place_index: defines the place where to put a created tag
+        :param tag_order: defines a tag order
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+        """
+        self._validate_signature('xml_create_tag', *args, **kwargs)
+
+        if 'element' in kwargs:
+            element = kwargs
+        else:
+            element = args[1]
+
+        if etree.iselement(element):
+            warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                          'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+        super().xml_create_tag(*args, **kwargs)
+
     def create_tag(self, *args, **kwargs):
         """
         Deprecation layer for create_tag if there are slashes in the first positional argument or xpath is is in kwargs.
@@ -184,7 +208,7 @@ class FleurinpModifier(FleurXMLModifier):
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
         the list of tasks that will be done on the xmltree.
 
-        :param tag_name: str of the tag to create
+        :param tag: str of the tag to create
         :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
         :param create_parents: bool optional (default False), if True and the given xpath has no results the
                                the parent tags are created recursively
@@ -210,6 +234,14 @@ class FleurinpModifier(FleurXMLModifier):
 
             self.xml_create_tag(xpath, *args, **kwargs)
         else:
+            tag = kwargs.get('tag')
+            if tag is None:
+                tag = args[0]
+
+            if etree.iselement(tag):
+                warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                              'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
             super().create_tag(*args, **kwargs)
 
     def delete_tag(self, *args, **kwargs):
@@ -283,6 +315,23 @@ class FleurinpModifier(FleurXMLModifier):
         else:
             super().delete_att(*args, **kwargs)
 
+    def xml_replace_tag(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param xpath: a path to the tag to be replaced
+        :param newelement: a new tag
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+        """
+        self._validate_signature('xml_replace_tag', *args, **kwargs)
+
+        warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+        super().xml_replace_tag(*args, **kwargs)
+
     def replace_tag(self, *args, **kwargs):
         """
         Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
@@ -301,6 +350,9 @@ class FleurinpModifier(FleurXMLModifier):
             :param contains: str, this string has to be in the final path
             :param not_contains: str, this string has to NOT be in the final path
         """
+
+        warnings.warn('Replacing a tag with a given etree Element is only supported via the show()'
+                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
 
         if 'xpath' in kwargs or '/' in args[0]:
             warnings.warn(

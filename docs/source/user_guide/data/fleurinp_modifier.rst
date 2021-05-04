@@ -158,6 +158,15 @@ The figure below shows a comparison between the use of XML and shortcut methods.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_num_to_att()` was renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_attrib()` or :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_first_attrib()`. However, these are also higher-level functions now longer requiring a concrete xpath
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att_label()` were renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup_label()`. These functions now also take the changes in the form ``attributedict={'nocoParams':{'beta': val}}`` instead of ``attributedict={'nocoParams':[('beta': val)]}``
 
+.. warning:: Passing XML Elements to modification functions
+
+    Some of the low-level implementations of the XML modification functions accept explicit XML elements as arguments for replacing/inserting. However, these can only be used within limits in the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` at the moment. The reason for this is that there is currently no support for serializing these objects for the input of the Aiida calcfunction. The following functions are effected by this:
+
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()` (Only usable with show and validate)
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()` (Only usable with show and validate)
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_create_tag()` (Can only be used with string names of tags)
+    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`  (Can only be used with string names of tags)
+
 Modifying the density matrix for LDA+U calculations
 ---------------------------------------------------
 
