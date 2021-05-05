@@ -376,8 +376,15 @@ def _handle_time_limits(self, calculation):
 
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
-        self.ctx.inputs.parent_folder = remote
+
         if 'fleurinpdata' in self.ctx.inputs:
-            del self.ctx.inputs.fleurinpdata
+            modes = self.ctx.inputs.fleurinpdata.get_fleur_modes()
+            if not (modes['force_theorem'] or modes['dos'] or modes['band'] or modes['gw']):
+                # in modes listed above it makes no sense copying cdn.hdf
+                self.ctx.inputs.parent_folder = remote
+                del self.ctx.inputs.fleurinpdata
+        else:
+            # it is harder to extract modes in this case - simply try to reuse cdn.hdf and hope it works
+            self.ctx.inputs.parent_folder = remote
 
         return ErrorHandlerReport(True, True)
