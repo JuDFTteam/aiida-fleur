@@ -249,7 +249,7 @@ class FleurBandDosWorkChain(WorkChain):
                                   options,
                                   label,
                                   description,
-                                  add_comp_para=self.ctx.wf_para['add_comp_para'])
+                                  add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs)
         self.ctx.calcs.append(future)
 

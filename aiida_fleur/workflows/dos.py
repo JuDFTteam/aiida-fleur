@@ -166,7 +166,7 @@ class fleur_dos_wc(WorkChain):
 
         options = self.ctx.options
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, add_comp_para=self.ctx.wf_para['add_comp_para'])
+        inputs = get_inputs_fleur(code, remote, fleurin, options, add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future)  # calcs.append(future),

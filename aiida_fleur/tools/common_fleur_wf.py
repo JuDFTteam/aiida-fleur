@@ -120,7 +120,6 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     else:
         options['withmpi'] = True
 
-    add_comp_para.pop('serial')
     inputs['add_comp_para'] = Dict(dict=add_comp_para)
 
     custom_commands = options.get('custom_scheduler_commands', '')
