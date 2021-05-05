@@ -172,7 +172,7 @@ class fleur_initial_cls_wc(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
-        self.ctx.add_para_calc = wf_dict.get('add_para_calc', default.get('add_para_calc'))
+        self.ctx.add_comp_para = wf_dict.get('add_para_calc', default.get('add_para_calc'))
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
