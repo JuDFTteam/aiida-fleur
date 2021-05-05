@@ -27,7 +27,8 @@ from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
-from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
+from masci_tools.util.xml.converters import convert_to_fortran_bool
+from masci_tools.io.common_functions import convert_to_fortran_string
 from aiida_fleur.common.constants import BOHR_A
 
 

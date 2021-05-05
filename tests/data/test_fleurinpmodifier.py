@@ -59,10 +59,9 @@ def test_fleurinp_modifier1(create_fleurinp):
     assert changes == []
 
 
-def test_fleurinp_modifier2(create_fleurinp, inpxml_etree):
+def test_fleurinp_modifier2(create_fleurinp, inpxml_etree, eval_xpath):
     """Tests if fleurinp_modifier with various other modifations methods,
     the detailed tests for method functionality is tested elsewhere."""
-    from aiida_fleur.tools.xml_util import eval_xpath
     fleurinp_tmp = create_fleurinp(inpxmlfilefolder)
     etree = inpxml_etree(inpxmlfilefolder)
 
