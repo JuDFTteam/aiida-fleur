@@ -167,7 +167,7 @@ class FleurParser(Parser):
                     try:
                         time_avail_sec = self.node.attributes['last_job_info']['requested_wallclock_time_seconds']
                         time_calculated = self.node.attributes['last_job_info']['wallclock_time_seconds']
-                        if 0.97 * time_avail_sec <  time_calculated:
+                        if 0.97 * time_avail_sec < time_calculated:
                             return self.exit_codes.ERROR_TIME_LIMIT
                     except KeyError:
                         pass

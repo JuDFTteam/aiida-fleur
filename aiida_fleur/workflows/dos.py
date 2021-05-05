@@ -54,7 +54,19 @@ class fleur_dos_wc(WorkChain):
         'import_sys_environment': False,
         'environment_variables': {}
     }
-    _default_wf_para = {'tria': True, 'nkpts': 800, 'sigma': 0.005, 'emin': -0.30, 'emax': 0.80}
+    _default_wf_para = {
+        'tria': True,
+        'nkpts': 800,
+        'sigma': 0.005,
+        'emin': -0.30,
+        'emax': 0.80,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
+    }
 
     @classmethod
     def define(cls, spec):
@@ -154,7 +166,7 @@ class fleur_dos_wc(WorkChain):
 
         options = self.ctx.options
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, serial=self.ctx.serial)
+        inputs = get_inputs_fleur(code, remote, fleurin, options, add_comp_para=self.ctx.wf_para['add_comp_para'])
         future = submit(FleurCalculation, **inputs)
 
         return ToContext(last_calc=future)  # calcs.append(future),
