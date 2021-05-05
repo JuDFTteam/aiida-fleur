@@ -246,8 +246,10 @@ def create_fleurinp():
     from aiida.plugins import DataFactory
     fleurinp = DataFactory('fleur.fleurinp')
 
-    def _make_fleurinp(inpxmlfilepath):
-        return fleurinp(files=[inpxmlfilepath])
+    def _make_fleurinp(inpxmlfilepath, additional_files=None):
+        if additional_files is None:
+            additional_files = []
+        return fleurinp(files=[inpxmlfilepath] + additional_files)
 
     return _make_fleurinp
 
