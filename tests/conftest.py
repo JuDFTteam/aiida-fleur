@@ -272,16 +272,17 @@ def inpxml_etree():
 
     return _get_etree
 
+
 @pytest.fixture
 def eval_xpath():
     """Return the eval_xpath function"""
+
     def _eval_xpath(node, xpath, list_return=False):
         from masci_tools.util.xml.common_functions import eval_xpath
 
         return eval_xpath(node, xpath, list_return=list_return)
 
     return _eval_xpath
-
 
 
 @pytest.fixture
