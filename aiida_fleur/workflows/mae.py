@@ -186,7 +186,7 @@ class FleurMaeWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # Check if user gave an input setup making any sense
-        if inputs.scf:
+        if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the FT'
