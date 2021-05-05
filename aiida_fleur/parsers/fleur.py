@@ -167,7 +167,7 @@ class FleurParser(Parser):
                     try:
                         time_avail_sec = self.node.attributes['last_job_info']['requested_wallclock_time_seconds']
                         time_calculated = self.node.attributes['last_job_info']['wallclock_time_seconds']
-                        if time_avail_sec < 1.01 * time_calculated:
+                        if 0.97 * time_avail_sec <  time_calculated:
                             return self.exit_codes.ERROR_TIME_LIMIT
                     except KeyError:
                         pass
@@ -175,6 +175,8 @@ class FleurParser(Parser):
                     if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
                             'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
+                    elif 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
+                        return self.exit_codes.ERROR_TIME_LIMIT
                     elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
                     elif 'Error checking M.T. radii' in error_file_lines:

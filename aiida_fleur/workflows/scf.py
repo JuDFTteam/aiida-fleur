@@ -160,7 +160,6 @@ class FleurScfWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
         fleur = self.inputs.fleur
         fleur_extras = fleur.extras
         inpgen_extras = None
