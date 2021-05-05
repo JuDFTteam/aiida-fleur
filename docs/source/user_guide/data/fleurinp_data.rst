@@ -81,10 +81,10 @@ Properties
 
     * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_version`: Returns the version of the stored ``inp.xml``
 
-    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.parser_info`: Returns errors, warnings and information encountered while constructung the :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_dict` from the ``inp.xml``
+    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.parser_info`: Returns errors, warnings and information encountered while constructing the :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_dict` from the ``inp.xml``
 
 .. note::
-  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will use the ``masci-tools`` library to parse the ``inp.xml``. This library contains the schema files for the fleur input and output XML files for many of the fleur releases starting from version ``0.27``. If a version is encountered that is not yet stored in the ``masci-tools`` library, the latest available version is used.
+  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will use the ``masci-tools`` library to parse the ``inp.xml``. This library contains the schema files for the fleur input and output XML files for many of the fleur releases starting from version ``0.27``. If a version is encountered that is not yet stored in the installed version of the ``masci-tools`` library, the latest available version is used.
 
 User Methods
 ------------
