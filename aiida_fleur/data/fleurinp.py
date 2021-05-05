@@ -30,12 +30,9 @@ import six
 from lxml import etree
 import warnings
 
-from aiida.orm import Data, Node, load_node, Int
+from aiida.orm import Data, Node, load_node
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
-
-from aiida_fleur.tools.xml_util import replace_tag
-from aiida_fleur.common.constants import BOHR_A
 
 
 class FleurinpData(Data):
@@ -497,11 +494,16 @@ class FleurinpData(Data):
         """
         return self.get_structuredata_ncf()
 
-    def get_kpointsdata_ncf(self, name=None):
+    def get_kpointsdata_ncf(self, name=None, index=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
         This is NOT a calcfunction and does not keep the provenance!
+
+        :param name: str, optional, if given only the kpoint set with the given name
+                     is returned
+        :param index: int, optional, if given only the kpoint set with the given index
+                      is returned
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
@@ -514,17 +516,12 @@ class FleurinpData(Data):
         # then just parsing the cell from the inp.xml
         # as in the routine get_structureData
 
-        # Disclaimer: this routine needs some xpath expressions.
-        # these are hardcoded here, therefore maintainance might be needed,
-        # if you want to circumvent this, you have
-        # to get all the paths from somewhere.
-
         xmltree, schema_dict = self.load_inpxml()
 
-        if name is None:
+        if name is None and index is None:
             kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict)
         else:
-            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, name=name)
+            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, name=name, index=index)
 
         if isinstance(kpoints, dict):
             kpoints_data = {}
@@ -547,7 +544,7 @@ class FleurinpData(Data):
         return kpoints_data
 
     @cf
-    def get_kpointsdata(self, name=None):
+    def get_kpointsdata(self, name=None, index=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
@@ -555,7 +552,7 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
-        return self.get_kpointsdata_ncf(name=name)
+        return self.get_kpointsdata_ncf(name=name, index=index)
 
     def get_parameterdata_ncf(self, inpgen_ready=True, write_ids=True):
         """
