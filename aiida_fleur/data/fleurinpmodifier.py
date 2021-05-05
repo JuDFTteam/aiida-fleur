@@ -110,6 +110,7 @@ class FleurinpModifier(FleurXMLModifier):
             "'set_attrib_value' method instead", DeprecationWarning)
 
         occ = kwargs.pop('occ', None)
+        kwargs.pop('create', None)
 
         self.xml_set_attrib_value_no_create(*args, **kwargs, occurrences=occ)
 
@@ -123,6 +124,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_first_attrib_value_no_create' with 'occurrences=0' or"
             "'set_first_attrib_value' method instead", DeprecationWarning)
 
+        kwargs.pop('create', None)
+
         self.xml_set_attrib_value_no_create(*args, occurrences=0, **kwargs)
 
     def xml_set_all_attribv(self, *args, **kwargs):
@@ -134,6 +137,8 @@ class FleurinpModifier(FleurXMLModifier):
             'This modification method is deprecated.'
             "Use the 'xml_set_attrib_value_no_create' or"
             "'set_attrib_value' method instead", DeprecationWarning)
+
+        kwargs.pop('create', None)
 
         self.xml_set_attrib_value_no_create(*args, **kwargs)
 
@@ -148,6 +153,9 @@ class FleurinpModifier(FleurXMLModifier):
             "'set_text' method instead", DeprecationWarning)
 
         occ = kwargs.pop('occ', None)
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
 
         self.xml_set_text_no_create(*args, **kwargs, occurrences=occ)
 
@@ -161,6 +169,10 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_text_no_create' with 'occurrences=0' or"
             "'set_first_text' method instead", DeprecationWarning)
 
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
+
         self.xml_set_text_no_create(*args, occurrences=0, **kwargs)
 
     def xml_set_all_text(self, *args, **kwargs):
@@ -172,6 +184,10 @@ class FleurinpModifier(FleurXMLModifier):
             'This modification method is deprecated.'
             "Use the 'xml_set_text_no_create' or"
             "'set_text' method instead", DeprecationWarning)
+
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
 
         self.xml_set_text_no_create(*args, **kwargs)
 
@@ -232,7 +248,12 @@ class FleurinpModifier(FleurXMLModifier):
             else:
                 xpath, args = args[0], args[1:]
 
-            self.xml_create_tag(xpath, *args, **kwargs)
+            if 'newelement' in kwargs:
+                element = kwargs.pop('newelement')
+            else:
+                element, args = args[0], args[1:]
+
+            self.xml_create_tag(xpath, element, *args, **kwargs)
         else:
             tag = kwargs.get('tag')
             if tag is None:
