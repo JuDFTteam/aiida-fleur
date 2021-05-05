@@ -189,8 +189,6 @@ class FleurCalculation(CalcJob):
         'additional_retrieve_list', 'remove_from_retrieve_list', 'additional_remotecopy_list',
         'remove_from_remotecopy_list', 'cmdline'
     ]
-    # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldau']
 
     @classmethod
     def define(cls, spec):
@@ -403,7 +401,7 @@ class FleurCalculation(CalcJob):
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
-            if modes['forces']:
+            if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:

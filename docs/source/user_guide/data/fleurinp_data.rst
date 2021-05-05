@@ -79,16 +79,12 @@ Properties
       which were added to FleurinpData. Note that all of these
       files will be copied to the folder where FLEUR will be run.
 
-    .. * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData._schema_file_path`: Returns the absolute
-    ..   path of the xml schema file used for the current inp.xml file.
+    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_version`: Returns the version of the stored ``inp.xml``
+
+    * :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.parser_info`: Returns errors, warnings and information encountered while constructing the :py:exc:`~aiida_fleur.data.fleurinp.FleurinpData.inp_dict` from the ``inp.xml``
 
 .. note::
-  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will first look in the ``aiida_fleur/fleur_schema/input/`` for matching Fleur
-  xml schema files to the ``inp.xml`` files.
-  If it does not find a match there, it will recursively search in your PYTHONPATH
-  and the current directory.
-  If you installed the package with pip there should be no problem, as long the package versions
-  is new enough for the version of the Fleur code you are deploying.
+  :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will use the ``masci-tools`` library to parse the ``inp.xml``. This library contains the schema files for the fleur input and output XML files for many of the fleur releases starting from version ``0.27``. If a version is encountered that is not yet stored in the installed version of the ``masci-tools`` library, the latest available version is used.
 
 User Methods
 ------------
@@ -99,22 +95,18 @@ User Methods
       to :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_files()` - Adds several files from a
       folder node to :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance.
-    * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_fleur_modes()` - Analyses inp.xml and
-      get a corresponding calculation mode.
+    * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_fleur_modes()` - Analyses the inp.xml and
+      get a  dictionary with the corresponding calculation modes (Noco, SOC, ...)
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_structuredata()` - A CalcFunction which
       returns an AiiDA :py:class:`~aiida.orm.StructureData`
       type extracted from the inp.xml file.
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_kpointsdata()` - A CalcFunction which
       returns an AiiDA :py:class:`~aiida.orm.KpointsData`
-      type produced from the inp.xml
+      type produced from the inp.xml. If multiple k-point sets are defined (Fleur release MaX5 or later) a dictionary of :py:class:`~aiida.orm.KpointsData` types is returned
       file. This only works if the kpoints are listed in the in inp.xml.
     * :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.get_parameterdata()` - A CalcFunction
       that extracts a :py:class:`~aiida.orm.Dict` node
       containing FLAPW parameters. This node can be used as an input for inpgen.
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` -
-      A Function of fleurmodifier used to writes kpoints
-      of a :py:class:`~aiida.orm.KpointsData` node to the
-      inp.xml file. It replaces old kpoints.
 
 .. _setting_labels:
 
