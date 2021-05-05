@@ -60,15 +60,7 @@ def is_code(code):
         return None
 
 
-def get_inputs_fleur(code,
-                     remote,
-                     fleurinp,
-                     options,
-                     label='',
-                     description='',
-                     settings=None,
-                     serial=False,
-                     only_even_MPI=False):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -92,10 +84,14 @@ def get_inputs_fleur(code,
     '''
     Dict = DataFactory('dict')
     inputs = {}
-    if isinstance(only_even_MPI, Bool):
-        inputs['only_even_MPI'] = only_even_MPI
-    else:
-        inputs['only_even_MPI'] = Bool(only_even_MPI)
+
+    if add_comp_para is None:
+        add_comp_para = {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
 
     if remote:
         inputs['parent_folder'] = remote
@@ -113,7 +109,7 @@ def get_inputs_fleur(code,
     else:
         inputs['label'] = ''
     # TODO check  if code is parallel version?
-    if serial:
+    if add_comp_para['serial']:
         if not options:
             options = {}
         options['withmpi'] = False  # for now
@@ -123,6 +119,9 @@ def get_inputs_fleur(code,
         options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     else:
         options['withmpi'] = True
+
+    add_comp_para.pop('serial')
+    inputs['add_comp_para'] = Dict(dict=add_comp_para)
 
     custom_commands = options.get('custom_scheduler_commands', '')
     options['custom_scheduler_commands'] = custom_commands

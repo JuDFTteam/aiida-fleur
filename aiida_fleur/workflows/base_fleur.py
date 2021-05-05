@@ -59,11 +59,20 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                    non_db=True,
                    help='Calculation description.')
         spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
-        spec.input('only_even_MPI',
-                   valid_type=orm.Bool,
-                   default=lambda: orm.Bool(False),
-                   help='Set to true if you want to suppress odd number of MPI processes in parallelisation.'
-                   'This might speedup a calculation for machines having even number of sockets per node.')
+        spec.input(
+            'add_comp_para',
+            valid_type=orm.Dict,
+            default=lambda: orm.Dict(dict={
+                'only_even_MPI': False,
+                'max_queue_nodes': 20,
+                'max_queue_wallclock_sec': 86400
+            }),
+            help='Gives additional control over computational parameters'
+            'only_even_MPI: set to true if you want to suppress odd number of MPI processes in parallelisation.'
+            'This might speedup a calculation for machines having even number of sockets per node.'
+            'max_queue_nodes: maximal number of nodes allowed on the remote machine. Used only to automatically solve some FLEUR failures.'
+            'max_queue_wallclock_sec: maximal wallclock time allowed on the remote machine. Used only to automatically solve some FLEUR failures.'
+        )
 
         spec.outline(
             cls.setup,
@@ -109,6 +118,9 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             'fleurinpdata': self.inputs.fleurinpdata,
             'metadata': AttributeDict()
         })
+
+        self.ctx.max_queue_nodes = self.inputs.add_comp_para['max_queue_nodes']
+        self.ctx.max_queue_wallclock_sec = self.inputs.add_comp_para['max_queue_wallclock_sec']
 
         input_options = self.inputs.options.get_dict()
         self.ctx.optimize_resources = input_options.pop('optimize_resources', False)
@@ -171,15 +183,15 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         machines = self.ctx.num_machines
         mpi_proc = self.ctx.num_mpiprocs_per_machine
         omp_per_mpi = self.ctx.num_cores_per_mpiproc
+        only_even_MPI = self.inputs.add_comp_para['only_even_MPI']
         try:
-            adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(
-                machines,
-                mpi_proc,
-                omp_per_mpi,
-                self.ctx.use_omp,
-                self.ctx.suggest_mpi_omp_ratio,
-                fleurinp,
-                only_even_MPI=self.inputs.only_even_MPI)
+            adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(machines,
+                                                                                       mpi_proc,
+                                                                                       omp_per_mpi,
+                                                                                       self.ctx.use_omp,
+                                                                                       self.ctx.suggest_mpi_omp_ratio,
+                                                                                       fleurinp,
+                                                                                       only_even_MPI=only_even_MPI)
         except ValueError as exc:
             raise Warning('Not optimal computational resources, load less than 60%') from exc
 
@@ -332,20 +344,37 @@ def _handle_time_limits(self, calculation):
     """
     If calculation fails due to time limits, we simply resubmit it.
     """
+    from aiida.common.exceptions import NotExistent
 
     if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
 
+        # if previous calculation failed for the same reason, do not restart
+        try:
+            prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
+            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].exit_status
+            if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
+                self.ctx.is_finished = True
+                return ErrorHandlerReport(True, True)
+        except NotExistent:
+            pass
+
         self.report('FleurCalculation failed due to time limits, I restart it from where it ended')
+
+        # increase wallclock time
+        propose_wallclock = self.ctx.inputs.metadata.options['resources']['max_wallclock_seconds'] * 2
+        if propose_wallclock > self.ctx.max_queue_wallclock_sec:
+            propose_wallclock = self.ctx.max_queue_wallclock_sec
+        self.ctx.inputs.metadata.options['resources']['max_wallclock_seconds'] = propose_wallclock
+
+        # increase number of nodes
+        propose_nodes = self.ctx.num_machines * 2
+        if propose_nodes > self.ctx.max_queue_nodes:
+            propose_nodes = self.ctx.max_queue_nodes
+        self.ctx.num_machines = self.ctx.num_machines * 2
 
         remote = calculation.get_outgoing().get_node_by_label('remote_folder')
 
-        # if previous calculation failed for the same reason, do not restart
-        prev_calculation_status = remote.get_incoming().all()[-1].exit_status
-        if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
-            self.ctx.is_finished = True
-            return ErrorHandlerReport(True, True)
-
-        # however, if it is the first time, resubmit profiding inp.xml and cdn from the remote folder
+        # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
         self.ctx.inputs.parent_folder = remote
         if 'fleurinpdata' in self.ctx.inputs:

@@ -59,8 +59,12 @@ class FleurDMIWorkChain(WorkChain):
     }
 
     _default_wf_para = {
-        'serial': False,
-        'only_even_MPI': False,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
         'beta': {
             'all': 1.57079
         },
@@ -453,8 +457,7 @@ class FleurDMIWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -489,8 +492,7 @@ class FleurDMIWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 

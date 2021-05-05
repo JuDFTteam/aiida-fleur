@@ -72,8 +72,12 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_odd': False,
         'kpoints_force_false': False,
         'mode': 'density',  # 'density', 'energy' or 'force'
-        'serial': False,
-        'only_even_MPI': False,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
         'itmax_per_run': 30,
         'force_dict': {
             'qfix': 2,
@@ -522,8 +526,7 @@ class FleurScfWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.serial,
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
