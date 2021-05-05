@@ -54,8 +54,12 @@ def test_get_inputs_fleur():
         'settings': {
             'test': 1
         },
-        'serial': False,
-        'only_even_MPI': True
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     results = get_inputs_fleur(**inputs)
@@ -68,7 +72,9 @@ def test_get_inputs_fleur():
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'
-    assert results['only_even_MPI'] == Bool(True)
+    assert results['add_comp_para']['only_even_MPI'] is False
+    assert results['add_comp_para']['max_queue_nodes'] == 20
+    assert results['add_comp_para']['max_queue_wallclock_sec'] == 86400
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 
@@ -79,7 +85,12 @@ def test_get_inputs_fleur():
         'options': {
             'custom_scheduler_commands': 'test_command'
         },
-        'serial': True
+        'add_comp_para': {
+            'serial': True,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     results = get_inputs_fleur(**inputs)

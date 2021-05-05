@@ -140,7 +140,12 @@ class fleur_corehole_wc(WorkChain):
         #'relax_para' : None, # parameter dict for the relaxation
         'scf_para': None,  # wf parameter dict for the scfs
         'same_para': True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
-        'serial': True,  # run fleur in serial, or parallel?
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },  # run fleur in serial, or parallel?
         #'job_limit' : 100          # enforce the workflow not to spawn more scfs wcs then this number(which is roughly the number of fleur jobs)
         'magnetic': True
     }
@@ -222,7 +227,7 @@ class fleur_corehole_wc(WorkChain):
         wf_dict = inputs.wf_parameters.get_dict()
         self.ctx.method = wf_dict.get('method', 'valence')
         self.ctx.joblimit = wf_dict.get('joblimit')
-        self.ctx.serial = wf_dict.get('serial')
+        self.ctx.add_comp_para = wf_dict['add_comp_para']
         self.ctx.same_para = wf_dict.get('same_para')
         self.ctx.scf_para = wf_dict.get('scf_para', {})
         self.ctx.be_to_calc = wf_dict.get('corelevel')
@@ -629,7 +634,7 @@ class fleur_corehole_wc(WorkChain):
             else:
                 wf_parameter = para
             #print(wf_parameter)
-            wf_parameter['serial'] = self.ctx.serial
+            wf_parameter['add_comp_para'] = self.ctx.add_comp_para
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
             wf_parameters = Dict(dict=wf_parameter)
@@ -676,7 +681,7 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         wf_parameters = Dict(dict=wf_parameter)
         options = Dict(dict=self.ctx.options)
         '''
@@ -820,7 +825,7 @@ class fleur_corehole_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['queue_name'] = self.ctx.queue
         #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
         wf_parameters = Dict(dict=wf_parameter)

@@ -80,7 +80,12 @@ class FleurDMIWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_inputs(FleurScfWorkChain,
+                           namespace_options={
+                               'required': False,
+                               'populate_defaults': False
+                           },
+                           namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('remote', valid_type=RemoteData, required=False)
@@ -183,7 +188,7 @@ class FleurDMIWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # Check if user gave an input setup making any sense
-        if inputs.scf:
+        if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the FT'

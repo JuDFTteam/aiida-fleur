@@ -79,7 +79,12 @@ class fleur_initial_cls_wc(WorkChain):
         'relax_para': 'default',
         'scf_para': 'default',
         'same_para': True,
-        'serial': False
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     _default_options = {
@@ -167,7 +172,7 @@ class fleur_initial_cls_wc(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
-        self.ctx.serial = wf_dict.get('serial', default.get('serial'))
+        self.ctx.add_comp_para = wf_dict.get('add_para_calc', default.get('add_para_calc'))
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
@@ -402,7 +407,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
         resall = {}
@@ -531,7 +536,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         # TODO maybe use less resources, or default of one machine
         #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)

@@ -68,7 +68,13 @@ class FleurBandDosWorkChain(WorkChain):
         # 'nkpts' : 800,
         'sigma': 0.005,
         'emin': -0.50,
-        'emax': 0.90
+        'emax': 0.90,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     @classmethod
@@ -132,8 +138,6 @@ class FleurBandDosWorkChain(WorkChain):
         for key, val in six.iteritems(wf_default):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
-        # if MPI in code name, execute parallel
-        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
 
         defaultoptions = self._default_options
         if 'options' in inputs:
@@ -239,7 +243,13 @@ class FleurBandDosWorkChain(WorkChain):
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
+        inputs = get_inputs_fleur(code,
+                                  remote,
+                                  fleurin,
+                                  options,
+                                  label,
+                                  description,
+                                  add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs)
         self.ctx.calcs.append(future)
 
