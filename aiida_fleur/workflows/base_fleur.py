@@ -319,7 +319,13 @@ def _handle_not_enough_memory(self, calculation):
             self.ctx.is_finished = False
             self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
                         ' amount of computational nodes and smaller MPI/OMP ratio')
-            self.ctx.num_machines = self.ctx.num_machines * 2
+
+            # increase number of nodes
+            propose_nodes = self.ctx.num_machines * 2
+            if propose_nodes > self.ctx.max_queue_nodes:
+                propose_nodes = self.ctx.max_queue_nodes
+            self.ctx.num_machines = propose_nodes
+
             self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
             self.check_kpts()
 
@@ -370,7 +376,7 @@ def _handle_time_limits(self, calculation):
         propose_nodes = self.ctx.num_machines * 2
         if propose_nodes > self.ctx.max_queue_nodes:
             propose_nodes = self.ctx.max_queue_nodes
-        self.ctx.num_machines = self.ctx.num_machines * 2
+        self.ctx.num_machines = propose_nodes
 
         remote = calculation.get_outgoing().get_node_by_label('remote_folder')
 
@@ -379,7 +385,7 @@ def _handle_time_limits(self, calculation):
 
         if 'fleurinpdata' in self.ctx.inputs:
             modes = self.ctx.inputs.fleurinpdata.get_fleur_modes()
-            if not (modes['force_theorem'] or modes['dos'] or modes['band'] or modes['gw']):
+            if not (modes['force_theorem'] or modes['dos'] or modes['band']):
                 # in modes listed above it makes no sense copying cdn.hdf
                 self.ctx.inputs.parent_folder = remote
                 del self.ctx.inputs.fleurinpdata
