@@ -81,6 +81,46 @@ class FleurinpModifier(FleurXMLModifier):
 
     #Modification functions that were renamed in masci-tools
 
+    def shift_value_species_label(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.shift_value_species_label()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param atom_label: string, a label of the atom which specie will be changed. 'all' if set up all species
+        :param attributename: name of the attribute to change
+        :param value_given: value to add or to multiply by
+        :param mode: 'rel' for multiplication or 'abs' for addition
+
+        Kwargs if the attributename does not correspond to a unique path:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+
+        """
+        if 'label' in kwargs:
+            warnings.warn('The argument label is deprecated.' "Use the 'atom_label' instead", DeprecationWarning)
+            kwargs['atom_label'] = kwargs.pop('label')
+
+        if 'att_name' in kwargs:
+            warnings.warn('The argument att_name is deprecated.' "Use the 'attributename' instead", DeprecationWarning)
+            kwargs['attributename'] = kwargs.pop('att_name')
+
+        super().shift_value_species_label(*args, **kwargs)
+
+    def set_species_label(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.set_species_label()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param atom_label: string, a label of the atom which specie will be changed. 'all' to change all the species
+        :param attributedict: a python dict specifying what you want to change.
+
+        """
+        if 'at_label' in kwargs:
+            warnings.warn('The argument at_label is deprecated.' "Use the 'atom_label' instead", DeprecationWarning)
+            kwargs['atom_label'] = kwargs.pop('at_label')
+
+        super().set_species_label(*args, **kwargs)
+
     def set_atomgr_att(self, *args, **kwargs):
         """
         Deprecated method for setting attributes on atomgroups
@@ -97,6 +137,12 @@ class FleurinpModifier(FleurXMLModifier):
         warnings.warn('This modification method is deprecated.'
                       "Use the 'set_atomgroup_label' method instead", DeprecationWarning)
 
+        if 'atom_label' not in kwargs:
+            if len(args) == 2:
+                kwargs['atom_label'], args = args[1], args[:1]
+            elif len(args) > 2:
+                kwargs['atom_label'], args = args[1], args[:1] + args[2:]
+
         self.set_atomgroup_label(*args, **kwargs)
 
     def xml_set_attribv_occ(self, *args, **kwargs):
@@ -108,6 +154,9 @@ class FleurinpModifier(FleurXMLModifier):
             'This modification method is deprecated.'
             "Use the 'xml_set_attrib_value_no_create' or"
             "'set_attrib_value' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
 
         occ = kwargs.pop('occ', None)
         kwargs.pop('create', None)
@@ -124,6 +173,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_first_attrib_value_no_create' with 'occurrences=0' or"
             "'set_first_attrib_value' method instead", DeprecationWarning)
 
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
         kwargs.pop('create', None)
 
         self.xml_set_attrib_value_no_create(*args, occurrences=0, **kwargs)
@@ -138,6 +189,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_attrib_value_no_create' or"
             "'set_attrib_value' method instead", DeprecationWarning)
 
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
         kwargs.pop('create', None)
 
         self.xml_set_attrib_value_no_create(*args, **kwargs)
@@ -152,6 +205,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_text_no_create' or"
             "'set_text' method instead", DeprecationWarning)
 
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
         occ = kwargs.pop('occ', None)
         kwargs.pop('create', None)
         kwargs.pop('place_index', None)
@@ -169,6 +224,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_text_no_create' with 'occurrences=0' or"
             "'set_first_text' method instead", DeprecationWarning)
 
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
         kwargs.pop('create', None)
         kwargs.pop('place_index', None)
         kwargs.pop('tag_order', None)
@@ -185,6 +242,8 @@ class FleurinpModifier(FleurXMLModifier):
             "Use the 'xml_set_text_no_create' or"
             "'set_text' method instead", DeprecationWarning)
 
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
         kwargs.pop('create', None)
         kwargs.pop('place_index', None)
         kwargs.pop('tag_order', None)
