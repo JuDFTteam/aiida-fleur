@@ -4,8 +4,12 @@
 'energy_converged': 0.002,           # Total energy convergence criterion
 'force_converged': 0.002,            # Largest force convergence criterion
 'mode': 'density',                   # Parameter to converge: 'density', 'force' or 'energy'
-'serial': False,                     # Execute fleur with mpi or without
-'only_even_MPI': False,              # True if suppress parallelisation having odd number of MPI
+'add_comp_para': {
+    'serial': False,                 # False if use MPI version for the FT calc
+    'only_even_MPI': False,          # True if suppress parallelisation having odd number of MPI
+    'max_queue_nodes': 20,           # Max number of nodes allowed (used by automatic error fix)
+    'max_queue_wallclock_sec': 86400 # Max number of walltime allowed (used by automatic error fix)
+    },
 'itmax_per_run': 30,                 # Maximum iterations run for one FleurCalculation
 'force_dict': {'qfix': 2,            # parameters required for the 'force' mode
                'forcealpha': 0.5,
