@@ -97,11 +97,11 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'label' in kwargs:
-            warnings.warn('The argument label is deprecated.' "Use the 'atom_label' instead", DeprecationWarning)
+            warnings.warn('The argument label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('label')
 
         if 'att_name' in kwargs:
-            warnings.warn('The argument att_name is deprecated.' "Use the 'attributename' instead", DeprecationWarning)
+            warnings.warn('The argument att_name is deprecated.' "Use'attributename' instead", DeprecationWarning)
             kwargs['attributename'] = kwargs.pop('att_name')
 
         super().shift_value_species_label(*args, **kwargs)
@@ -116,7 +116,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'at_label' in kwargs:
-            warnings.warn('The argument at_label is deprecated.' "Use the 'atom_label' instead", DeprecationWarning)
+            warnings.warn('The argument at_label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('at_label')
 
         super().set_species_label(*args, **kwargs)
@@ -471,6 +471,27 @@ class FleurinpModifier(FleurXMLModifier):
         else:
             occ = kwargs.pop('occ')
             self.add_number_to_attrib(*args, **kwargs, complex_xpath=xpath, occurrences=occ)
+
+    def set_nmmpmat(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_nmmpmat.set_nmmpmat()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param species_name: string, name of the species you want to change
+        :param orbital: integer, orbital quantum number of the LDA+U procedure to be modified
+        :param spin: integer, specifies which spin block should be modified
+        :param state_occupations: list, sets the diagonal elements of the density matrix and everything
+                          else to zero
+        :param denmat: matrix, specify the density matrix explicitely
+        :param phi: float, optional angle (radian), by which to rotate the density matrix before writing it
+        :param theta: float, optional angle (radian), by which to rotate the density matrix before writing it
+        """
+
+        if 'occStates' in kwargs:
+            warnings.warn('The argument occStates is deprecated.' "Use 'state_occupations' instead", DeprecationWarning)
+            kwargs['state_occupations'] = kwargs.pop('occStates')
+
+        super().set_nmmpmat(*args, **kwargs)
 
     def validate(self):
         """
