@@ -13,9 +13,6 @@
     In this module you find the workflow 'FleurOrbControlWorkChain' for finding the groundstate
     in a DFT+U calculation.
 """
-from __future__ import absolute_import
-import copy
-
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import Dict, load_node, Code, CalcJobNode, RemoteData
@@ -457,7 +454,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 return self.exit_codes.ERROR_SCF_NOLDAU_FAILED
 
             try:
-                noldau_outdict = self.ctx.scf_no_ldau.outputs.output_scf_wc_para
+                self.ctx.scf_no_ldau.outputs.output_scf_wc_para
             except KeyError:
                 message = ('ERROR: SCF workflow without LDA+U failed, no scf output node')
                 self.ctx.errors.append(message)
@@ -569,7 +566,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 continue
 
             try:
-                fixed_outdict = fixed_calc.outputs.output_parameters
+                fixed_calc.outputs.output_parameters
             except KeyError:
                 message = ('One Base workflow (fixed nmmpmat) failed, no output node: {}.'
                            ' I skip this one.'.format(index))
@@ -633,7 +630,7 @@ class FleurOrbControlWorkChain(WorkChain):
         non_converged_configs = []
         configs_list = []
         outnodedict = {}
-        htr_to_ev = 27.21138602
+
         e_u = 'htr'
         dis_u = 'me/bohr^3'
         for index, config in enumerate(self.ctx.fixed_configurations):

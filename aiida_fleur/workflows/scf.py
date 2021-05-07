@@ -587,7 +587,6 @@ class FleurScfWorkChain(WorkChain):
                 if nmmp_distances is not None:
                     self.ctx.nmmp_distance.extend(nmmp_distances)
 
-
             if mode == 'force':
                 forces = output_dict.get('force_atoms', [])
                 if forces is not None:

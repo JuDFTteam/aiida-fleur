@@ -96,10 +96,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        message='FLEUR calculation failed because an atom spilled to the'
                        'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
-        spec.exit_code(315,
-                       'ERROR_INVALID_ELEMENTS_MMPMAT',
-                       message='The LDA+U density matrix contains invalid elements.'
-                       ' Consider a less aggresive mixing scheme')
         spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
         spec.exit_code(399,
@@ -282,29 +278,6 @@ def _handle_mt_relax_error(self, calculation):
         self.report('FLEUR calculation failed due to MT overlap.' ' Can be fixed via RelaxBaseWorkChain')
         self.results()
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
-
-
-@register_error_handler(FleurBaseWorkChain, 51)
-def _handle_invalid_elements_mmpmat(self, calculation):
-    """
-    Calculation failed due to invalid elements in the LDA+U density matrix.
-    Mixing history is reset.
-    TODO: HOw to handle consecutive errors
-    """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_INVALID_ELEMENTS_MMPMAT']):
-        self.ctx.restart_calc = None
-        self.ctx.is_finished = False
-        self.report('FLEUR calculation failed due to invalid elements in mmpmat. Resetting mixing_history')
-
-        if 'settings' not in self.ctx.inputs:
-            self.ctx.inputs.settings = {}
-        else:
-            self.ctx.inputs.settings = self.inputs.settings.get_dict()
-        self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
-        #The charge density is not yet damaged, when the error is called so we reuse it
-        self.ctx.inputs.parent_folder = self.ctx.calculations[self.ctx.iteration - 1].outputs.remote_folder
-
-        return ErrorHandlerReport(True, True)
 
 
 @register_error_handler(FleurBaseWorkChain, 50)
