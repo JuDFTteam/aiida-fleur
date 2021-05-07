@@ -97,7 +97,7 @@ class FleurinpData(Data):
         """
         Dict property, with the info and warnings from the inpxml_parser
         """
-        return self.get_extra('_parser_info')
+        return self.get_extra('_parser_info', {})
 
     @parser_info.setter
     def parser_info(self, info_dict):
@@ -309,9 +309,11 @@ class FleurinpData(Data):
         try:
             inpxml_dict = inpxml_parser(xmltree, parser_info_out=parser_info)
         except (ValueError, FileNotFoundError) as exc:
-            raise InputValidationError from exc
+            raise InputValidationError(f'inp.xml parser failed: {exc}') from exc
+        finally:
+            #Always try to provide the error/warning information
+            self.parser_info = parser_info
 
-        self.parser_info = parser_info
         # set inpxml_dict attribute
         self.set_attribute('inp_dict', inpxml_dict)
 

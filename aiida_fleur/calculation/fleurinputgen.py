@@ -137,8 +137,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
         spec.exit_code(308,
                        'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
-                       message=('During parsing: FleurinpData could not be initialized, see log. '
-                                'Maybe no Schemafile was found or the Fleurinput is not valid.'))
+                       message=('During parsing: FleurinpData could not be initialized, see log. '))
         spec.exit_code(309, 'ERROR_FLEURINPDATA_NOT_VALID', message='During parsing: FleurinpData failed validation.')
 
     def prepare_for_submission(self, folder):
