@@ -27,6 +27,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.orm import WorkChainNode
 from aiida.orm import Node
+from aiida_fleur.common.constants import HTR_TO_EV
 
 ###########################
 ## general plot routine  ##
@@ -434,6 +435,54 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     # TODO: implement
 
 
+def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs):
+    """
+    This methods takes AiiDA output parameter nodes from a orbcontrol
+    workchain and plots the energy of the individual configurations.
+    """
+    from masci_tools.vis.plot_methods import multiple_scatterplots
+
+    if labels is None:
+        labels = []
+
+    if isinstance(node, list):
+        if len(node) >= 2:
+            return  # TODO
+        else:
+            node = node[0]
+
+    output_d = node.get_dict()
+
+    total_energy = output_d['total_energy']
+
+    #Divide into converged and non converged
+    converged_energy = np.array(
+        [total_energy[i] for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']])
+    converged_configs = [i for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']]
+    non_converged_energy = np.array([total_energy[i] for i in output_d['non_converged_configs']])
+
+    #Convert to relative eV
+    refE = min(converged_energy)
+    converged_energy -= refE
+    non_converged_energy -= refE
+
+    converged_energy *= HTR_TO_EV
+    non_converged_energy *= HTR_TO_EV
+
+    p1 = multiple_scatterplots([converged_energy, non_converged_energy],
+                               [converged_configs, output_d['non_converged_configs']],
+                               xlabel='nConfig',
+                               ylabel=r'$E_{rel}$ [eV]',
+                               title='Results for orbcontrol node',
+                               plot_labels=['converged', 'not converged'],
+                               linestyle='',
+                               colors=['darkblue', 'darkred'],
+                               markersize=[10.0, 10.0],
+                               legend=True,
+                               legend_option={'bbox_to_anchor': (0.6, 0.97)})
+    return p1
+
+
 FUNCTIONS_DICT = {
     'fleur_scf_wc': plot_fleur_scf_wc,  #support of < 1.0 release
     'fleur_eos_wc': plot_fleur_eos_wc,  #support of < 1.0 release
@@ -446,6 +495,7 @@ FUNCTIONS_DICT = {
     #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc,  #support of < 1.5 release
     #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,
     #'FleurCoreholeWorkChain' :  plot_fleur_corehole_wc,
+    'FleurOrbControlWorkChain': plot_fleur_orbcontrol_wc,
 }
 
 
