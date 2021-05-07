@@ -101,8 +101,12 @@ class FleurinpModifier(FleurXMLModifier):
             kwargs['atom_label'] = kwargs.pop('label')
 
         if 'att_name' in kwargs:
-            warnings.warn('The argument att_name is deprecated.' "Use'attributename' instead", DeprecationWarning)
+            warnings.warn('The argument att_name is deprecated.' "Use 'attributename' instead", DeprecationWarning)
             kwargs['attributename'] = kwargs.pop('att_name')
+
+        if 'value' in kwargs:
+            warnings.warn('The argument value is deprecated.' "Use 'value_given' instead", DeprecationWarning)
+            kwargs['value_given'] = kwargs.pop('value')
 
         super().shift_value_species_label(*args, **kwargs)
 
