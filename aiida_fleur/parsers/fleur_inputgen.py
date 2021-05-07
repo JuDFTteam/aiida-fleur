@@ -24,6 +24,7 @@ from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
 import pprint
 
+
 class Fleur_inputgenParser(Parser):
     """
     This class is the implementation of the Parser class for the FLEUR inpgen.
