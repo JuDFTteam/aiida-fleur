@@ -187,7 +187,7 @@ class FleurinpData(Data):
         """
         self._add_path(filename, dst_filename=dst_filename, node=node)
 
-    def open(self, path='inp.xml', mode='r', key=None):
+    def open(self, path='inp.xml', mode='r', key=None):  #pylint: disable=arguments-differ
         """
         Returns an open file handle to the content of this data node.
 
@@ -199,7 +199,7 @@ class FleurinpData(Data):
         if key is not None:
             path = key
 
-        return self._repository.open(path, mode=mode)
+        return super().open(path, mode=mode)
 
     def get_content(self, filename='inp.xml'):
         """
@@ -304,7 +304,10 @@ class FleurinpData(Data):
                 pass
 
         if is_filelike:
-            self.put_object_from_filelike(file1, key, mode='wb')
+            try:
+                self.put_object_from_filelike(file1, key, mode='wb')
+            except TypeError:
+                self.put_object_from_filelike(file1, key)
         else:
             self.put_object_from_file(file1, key)
 
@@ -370,7 +373,7 @@ class FleurinpData(Data):
 
         self._validate()
 
-        with self.open(path='inp.xml', mode='r') as inpxmlfile:
+        with self.open(path='inp.xml', mode='rb') as inpxmlfile:
             try:
                 xmltree, schema_dict = load_inpxml(inpxmlfile, **kwargs)
             except ValueError as exc:

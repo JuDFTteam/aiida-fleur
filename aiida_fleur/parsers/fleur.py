@@ -224,7 +224,7 @@ class FleurParser(Parser):
         if has_xml_outfile:
             # open output file
 
-            with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile_opened:
+            with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile_opened:
                 success = True
                 parser_info = {}
                 try:
@@ -296,7 +296,7 @@ class FleurParser(Parser):
             inp_version = outxml_params.get_dict().get('input_file_version', '0.34')
             schema_dict = InputSchemaDict.fromVersion(inp_version)
             # dummy comparison between old and new relax
-            with output_folder.open(relax_name, 'r') as rlx:
+            with output_folder.open(relax_name, 'rb') as rlx:
                 new_relax_text = rlx.read()
                 if new_relax_text != old_relax_text:
                     try:
