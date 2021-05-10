@@ -165,3 +165,59 @@ def test_get_tag(create_fleurinp, inpxmlfilepath):
         tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
 
     assert tag != []
+
+
+folderlist = [
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/Fe_1l_SOCXML/files')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/FePt')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/included_xml_files')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../parsers/fixtures/fleur/default')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../parsers/fixtures/fleur/relax'))
+]
+
+expected_files_list = [{'inp.xml'}, {'inp.xml'}, {'inp.xml', 'kpts.xml', 'sym.xml'}, {'inp.xml'},
+                       {'inp.xml', 'relax.xml'}]
+
+
+@pytest.mark.parametrize('folderpath,expected_files', zip(folderlist, expected_files_list))
+def test_get_fleurinp_from_folder_data(folderpath, expected_files):
+    from aiida import orm
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_folder_data
+
+    folder = orm.FolderData()
+    folder.put_object_from_tree(folderpath)
+
+    fleurinp = get_fleurinp_from_folder_data(folder)
+
+    assert set(fleurinp.files) == expected_files
+
+
+test_names = ['default', 'relax']
+fleur_expected_files = [{'inp.xml'}, {'inp.xml', 'relax.xml'}]
+
+
+@pytest.mark.parametrize('parser_test_name,expected_files', zip(test_names, fleur_expected_files))
+def test_get_fleurinp_from_remote_data_fleur(fixture_localhost, generate_calc_job_node, parser_test_name,
+                                             expected_files):
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
+
+    entry_point_calc_job = 'fleur.fleur'
+
+    node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, parser_test_name, store=True)
+
+    fleurinp = get_fleurinp_from_remote_data(node.outputs.remote_folder)
+
+    assert set(fleurinp.files) == expected_files
+
+
+def test_get_fleurinp_from_remote_data_inpgen(fixture_localhost, generate_calc_job_node):
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
+
+    name = 'default'
+    entry_point_calc_job = 'fleur.inpgen'
+
+    node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, name, store=True)
+
+    fleurinp = get_fleurinp_from_remote_data(node.outputs.remote_folder)
+
+    assert set(fleurinp.files) == {'inp.xml'}

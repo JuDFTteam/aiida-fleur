@@ -30,9 +30,50 @@ import six
 from lxml import etree
 import warnings
 
-from aiida.orm import Data, Node, load_node
+from aiida.orm import Data, Node, load_node, CalcJobNode
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
+
+
+def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=None):
+    """
+    Create FleurinpData object from the given RemoteData object
+
+    :param remote_node: RemoteData to use for the generation of the FleurinpData
+    :param store: bool, if True the FleurinpData object will be stored after generation
+
+    :returns: FleurinpData object with the input xml files from the retrieved folder
+              of the calculation associated RemoteData
+    """
+    if additional_files is None:
+        additional_files = []
+
+    input_xml_files = [file for file in folder_node.list_object_names() if file.endswith('.xml') and 'out' not in file]
+
+    fleurinp = FleurinpData(files=input_xml_files + additional_files, node=folder_node)
+    if store:
+        fleurinp.store()
+
+    return fleurinp
+
+
+def get_fleurinp_from_remote_data(remote_node, store=False, additional_files=None):
+    """
+    Create FleurinpData object from the given RemoteData object
+
+    :param remote_node: RemoteData to use for the generation of the FleurinpData
+    :param store: bool, if True the FleurinpData object will be stored after generation
+
+    :returns: FleurinpData object with the input xml files from the retrieved folder
+              of the calculation associated RemoteData
+    """
+
+    for link in remote_node.get_incoming().all():
+        if isinstance(link.node, CalcJobNode):
+            parent_calc_node = link.node
+    retrieved = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
+
+    return get_fleurinp_from_folder_data(retrieved, store=store, additional_files=additional_files)
 
 
 class FleurinpData(Data):
