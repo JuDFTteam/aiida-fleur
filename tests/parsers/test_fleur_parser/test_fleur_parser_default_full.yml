@@ -27,9 +27,9 @@ output_parameters:
     plot: false
     relax: false
     soc: false
-  gmax: '11.00000000'
+  gmax: 11.0
   input_file_version: '0.31'
-  kmax: '3.50000000'
+  kmax: 3.5
   number_of_atom_types: 1
   number_of_atoms: 2
   number_of_iterations: 11

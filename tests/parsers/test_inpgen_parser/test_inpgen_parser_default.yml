@@ -5,19 +5,19 @@ fleurinpData:
       relaxXYZ: TTT
     labels:
       '                   1':
-      - '.0000000000'
-      - '.0000000000'
-      - '.0000000000'
+      - 0.0
+      - 0.0
+      - 0.0
     nocoParams:
-      alpha: '.00000000'
-      b_cons_x: '.00000000'
-      b_cons_y: '.00000000'
-      beta: '.00000000'
+      alpha: 0.0
+      b_cons_x: 0.0
+      b_cons_y: 0.0
+      beta: 0.0
       l_relax: false
     relPos:
-    - - '.0000000000'
-      - '.0000000000'
-      - '.0000000000'
+    - - 0.0
+      - 0.0
+      - 0.0
     species: W-1
   atomSpecies:
   - atomicCutoffs:
@@ -33,11 +33,11 @@ fleurinpData:
       - (4f5/2)
       - (4f7/2)
       stateOccupation:
-      - spinDown: '.00000000'
-        spinUp: '2.00000000'
+      - spinDown: 0.0
+        spinUp: 2.0
         state: (5d3/2)
-      - spinDown: '.00000000'
-        spinUp: '2.00000000'
+      - spinDown: 0.0
+        spinUp: 2.0
         state: (5d5/2)
       valenceConfig:
       - (5s1/2)
@@ -62,11 +62,11 @@ fleurinpData:
       l: 1
       n: 5
       type: SCLO
-    magMom: '.00000000'
+    magMom: 0.0
     mtSphere:
       gridPoints: 981
-      logIncrement: '.01600000'
-      radius: '2.10000000'
+      logIncrement: 0.016
+      radius: 2.1
     name: W-1
     prodBasis:
       lcutm: 4
@@ -79,7 +79,7 @@ fleurinpData:
           count: 240
           gamma: false
         purpose: bands
-      fermiSmearingEnergy: '.00050000'
+      fermiSmearingEnergy: 0.0005
       kPointList:
         count: 4
         kPoint:
@@ -97,33 +97,33 @@ fleurinpData:
           - 0.0
         posScale: '1.00000000'
         weight:
-        - '    0.296296'
-        - '    0.222222'
-        - '    0.444444'
-        - '    0.037037'
+        - 0.296296
+        - 0.222222
+        - 0.444444
+        - 0.037037
         weightScale: '1.00000000'
       mode: hist
-      valenceElectrons: '14.00000000'
+      valenceElectrons: 14.0
     coreElectrons:
       coretail_lmax: 0
       ctail: true
       frcor: false
       kcrel: 0
     cutoffs:
-      Gmax: '15.00000000'
-      GmaxXC: '12.50000000'
-      Kmax: '5.00000000'
+      Gmax: 15.0
+      GmaxXC: 12.5
+      Kmax: 5.0
       numbands: 0
     energyParameterLimits:
-      ellow: '-1.80000000'
-      elup: '1.00000000'
+      ellow: -1.8
+      elup: 1.0
     expertModes:
       gw: 0
       secvar: false
     geometryOptimization:
-      epsdisp: '.00001000'
-      epsforce: '.00001000'
-      forcealpha: '1.00000000'
+      epsdisp: 1.0e-05
+      epsforce: 1.0e-05
+      forcealpha: 1.0
       forcemix: BFGS
       l_f: false
     ldaU:
@@ -151,35 +151,35 @@ fleurinpData:
       lexp: 16
       tolerance: 0.0001
     scfLoop:
-      alpha: '.05000000'
+      alpha: 0.05
       imix: Anderson
       itmax: 15
       maxIterBroyd: 99
-      minDistance: '.00001000'
-      precondParam: '0.0'
+      minDistance: 1.0e-05
+      precondParam: 0.0
       spinf: 2.0
     soc:
       l_soc: false
-      phi: '.00000000'
+      phi: 0.0
       spav: false
-      theta: '.00000000'
+      theta: 0.0
   cell:
     bulkLattice:
       bravaisMatrix:
         row-1:
-        - '-3.013812060000000'
-        - '3.013812060000000'
-        - '3.013812060000000'
+        - -3.01381206
+        - 3.01381206
+        - 3.01381206
         row-2:
-        - '3.013812060000000'
-        - '-3.013812060000000'
-        - '3.013812060000000'
+        - 3.01381206
+        - -3.01381206
+        - 3.01381206
         row-3:
-        - '3.013812060000000'
-        - '3.013812060000000'
-        - '-3.013812060000000'
+        - 3.01381206
+        - 3.01381206
+        - -3.01381206
       latnam: any
-      scale: '1.0000000000'
+      scale: 1.0
     symmetryOperations:
     - row-1:
       - 1.0
@@ -906,8 +906,8 @@ fleurinpData:
   output:
     band: false
     chargeDensitySlicing:
-      maxEigenval: '.00000000'
-      minEigenval: '.00000000'
+      maxEigenval: 0.0
+      minEigenval: 0.0
       nnne: 0
       numkpt: 0
       pallst: false
@@ -915,10 +915,10 @@ fleurinpData:
       cdinf: false
       vchk: false
     densityOfStates:
-      maxEnergy: '.50000000'
-      minEnergy: -.50000000
+      maxEnergy: 0.5
+      minEnergy: -0.5
       ndir: 0
-      sigma: '.01500000'
+      sigma: 0.015
     dos: false
     magneticCircularDichroism:
       energyLo: -10.0
@@ -941,14 +941,14 @@ fleurinpData:
     vacuumDOS:
       integ: false
       layers: 0
-      locx1: '.00000'
-      locx2: '.00000'
-      locy1: '.00000'
-      locy2: '.00000'
+      locx1: 0.0
+      locx2: 0.0
+      locy1: 0.0
+      locy2: 0.0
       nstars: 0
       nstm: 0
       star: false
-      tworkf: '.00000'
+      tworkf: 0.0
   xcFunctional:
     name: pbe
     relativisticCorrections: false

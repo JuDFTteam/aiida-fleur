@@ -37,9 +37,9 @@ output_parameters:
       - 0.02082935
   force_largest_component: 0.02082935
   force_units: Htr/bohr
-  gmax: '25.10000000'
+  gmax: 25.1
   input_file_version: '0.31'
-  kmax: '5.00000000'
+  kmax: 5.0
   number_of_atom_types: 1
   number_of_atoms: 2
   number_of_iterations: 42
@@ -71,22 +71,22 @@ output_parameters:
     \ \nLine 172: Element 'spinDependentCharge': This element is not expected. Expected\
     \ is ( iteration ). \n"
   relax_atom_positions:
-  - - '.0000000000'
-    - '.0000000000'
-    - -.7416991710
-  - - '.0000000000'
-    - '.0000000000'
-    - '.7416991710'
+  - - 0.0
+    - 0.0
+    - -0.741699171
+  - - 0.0
+    - 0.0
+    - 0.741699171
   relax_brav_vectors:
-  - - '28.345891875000000'
-    - '.000000000000000'
-    - '.000000000000000'
-  - - '.000000000000000'
-    - '28.345891875000000'
-    - '.000000000000000'
-  - - '.000000000000000'
-    - '.000000000000000'
-    - '4.630000000000000'
+  - - 28.345891875
+    - 0.0
+    - 0.0
+  - - 0.0
+    - 28.345891875
+    - 0.0
+  - - 0.0
+    - 0.0
+    - 4.63
   spin_dependent_charge_interstitial: 1.3187829
   spin_dependent_charge_mt_spheres: 0.5077481
   spin_dependent_charge_total: 2.0000006
