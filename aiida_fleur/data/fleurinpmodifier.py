@@ -535,7 +535,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     def set_file(self, filename, dst_filename=None, node=None):
         """
-        Appends a :py:func:`~aiida_fleur.data.fleurinp.Fleurinpdata.set_file()` to
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_file()` to
         the list of tasks that will be done on the FleurinpData instance.
 
         :param filename: absolute path to the file or a filename of node is specified
@@ -563,7 +563,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     def del_file(self, filename):
         """
-        Appends a :py:func:`~aiida_fleur.data.fleurinp.Fleurinpdata.del_file()` to
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.del_file()` to
         the list of tasks that will be done on the FleurinpData instance.
 
         :param filename: name of the file to be removed from FleurinpData instance
