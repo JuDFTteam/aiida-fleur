@@ -43,6 +43,36 @@ class FleurinpModifier(FleurXMLModifier):
 
         super().__init__()
 
+    @classmethod
+    def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
+        """
+        Apply the modifications working directly on the cloned
+        FleurinpData instance. The functions will warn the user if one of the methods
+        executed here are after XML modifications in the task list, since this method will implictly
+        reorder the order of the execution
+
+        .. warning::
+            These should be performed BEFORE the XML Modification methods
+            in any of the functions doing modifcations (:py:meth:`FleurinpModifier.show()`,
+            :py:meth:`FleurinpModifier.validate()`, :py:meth:`FleurinpModifier.freeze()`).
+
+        :param new_fleurinp: The Fleurinpdata instance cloned from the original
+        :param modification_tasks: a list of modification tuples
+        """
+        #These functions from the FleurinpData are supported
+        fleurinp_mod_functions = {'set_file': new_fleurinp.set_file, 'del_file': new_fleurinp.del_file}
+
+        warned = False
+        for task in modification_tasks:
+            if task.name in fleurinp_mod_functions:
+                modification_tasks.remove(task)
+                action = fleurinp_mod_functions[task.name]
+                action(*task.args, **task.kwargs)
+            elif not warned:
+                warned = True
+                warnings.warn('The modification methods operating directly adding/removing files'
+                              'are performed before any XML modification methods')
+
     def get_avail_actions(self):
         """
         Returns the allowed functions from FleurinpModifier
@@ -57,7 +87,9 @@ class FleurinpModifier(FleurXMLModifier):
             'xml_set_text_occ': self.xml_set_text_occ,
             'xml_set_text': self.xml_set_text,
             'xml_set_all_text': self.xml_set_all_text,
-            'add_num_to_att': self.add_num_to_att
+            'add_num_to_att': self.add_num_to_att,
+            'set_file': self.set_file,
+            'del_file': self.del_file
         }
 
         outside_actions_fleurxml = super().get_avail_actions().copy()
@@ -76,8 +108,12 @@ class FleurinpModifier(FleurXMLModifier):
         if isinstance(kpointsdata_uuid, KpointsData):
             kpointsdata_uuid = kpointsdata_uuid.uuid
         # Be more careful? Needs to be stored, otherwise we cannot load it
-        self._other_nodes['kpoints'] = load_node(kpointsdata_uuid)
-        self._tasks.append(ModifierTask('set_kpointsdata', args=[kpointsdata_uuid], kwargs={'name': name}))
+
+        num_nodes = sum('kpoints' in label for label in self._other_nodes) + 1
+        node_label = f'kpoints_{num_nodes}'
+
+        self._other_nodes[node_label] = load_node(kpointsdata_uuid)
+        self._tasks.append(ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={'name': name}))
 
     #Modification functions that were renamed in masci-tools
 
@@ -497,6 +533,43 @@ class FleurinpModifier(FleurXMLModifier):
 
         super().set_nmmpmat(*args, **kwargs)
 
+    def set_file(self, filename, dst_filename=None, node=None):
+        """
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.Fleurinpdata.set_file()` to
+        the list of tasks that will be done on the FleurinpData instance.
+
+        :param filename: absolute path to the file or a filename of node is specified
+        :param dst_filename: str of the filename, which should be used instead of the real filename
+                             to store it
+        :param node: a :class:`~aiida.orm.FolderData` node containing the file
+        """
+        from aiida.orm import FolderData, load_node
+
+        node_uuid = None
+        if node is not None:
+            if isinstance(node, FolderData):
+                node_uuid = node.uuid
+
+            num_nodes = sum('folder' in label for label in self._other_nodes) + 1
+            node_label = f'folder_{num_nodes}'
+            # Be more careful? Needs to be stored, otherwise we cannot load it
+            self._other_nodes[node_label] = load_node(node_uuid)
+
+        self._tasks.append(
+            ModifierTask('set_file', args=(filename,), kwargs={
+                'dst_filename': dst_filename,
+                'node': node_uuid
+            }))
+
+    def del_file(self, filename):
+        """
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.Fleurinpdata.del_file()` to
+        the list of tasks that will be done on the FleurinpData instance.
+
+        :param filename: name of the file to be removed from FleurinpData instance
+        """
+        self._tasks.append(ModifierTask('del_file', args=(filename,), kwargs={}))
+
     def validate(self):
         """
         Extracts the schema-file.
@@ -506,10 +579,13 @@ class FleurinpModifier(FleurXMLModifier):
         :return: a lxml tree representing inp.xml with applied changes
         """
 
-        xmltree, schema_dict = self._original.load_inpxml(remove_blank_text=True)
+        new_fleurinp = self._original.clone()
+        self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+
+        xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
 
         try:
-            with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+            with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
                 nmmplines = n_mmp_file.read().split('\n')
         except FileNotFoundError:
             nmmplines = None
@@ -532,9 +608,12 @@ class FleurinpModifier(FleurXMLModifier):
         if validate:
             xmltree = self.validate()
         else:
-            xmltree, schema_dict = self._original.load_inpxml(remove_blank_text=True)
+            new_fleurinp = self._original.clone()
+            self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+
+            xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
             try:
-                with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+                with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
                     nmmplines = n_mmp_file.read().split('\n')
             except FileNotFoundError:
                 nmmplines = None
@@ -595,11 +674,14 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     from masci_tools.util.xml.common_functions import reverse_xinclude
 
     new_fleurinp = original.clone()
+
     modification_tasks = modifications.get_dict()['tasks']
 
     #We need to rebuild the namedtuples since the serialization for the calcufunction inputs
     #converts the namedtuples into lists
     modification_tasks = [ModifierTask(*task) for task in modification_tasks]
+
+    FleurinpModifier.apply_fleurinp_modifications(new_fleurinp, modification_tasks)
 
     xmltree, schema_dict, included_tags = new_fleurinp.load_inpxml(remove_blank_text=True, return_included_tags=True)
 

@@ -77,7 +77,7 @@ _______________
 
 Modification registration methods
 _________________________________
-The registration methods can be separated into two groups. First of all,
+The registration methods can be separated into three groups. First of all,
 there are XML methods that require deeper knowledge about the structure of an ``inp.xml`` file.
 All of them require an xpath input:
 
@@ -138,6 +138,11 @@ On the other hand, there are shortcut methods that already know some paths:
       method for initializing or modifying the density matrix file for a LDA+U calculation (details see below)
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.rotate_nmmpmat()`: Specific 
       method for rotating a block of the density matrix file for a LDA+U calculation (details see below) in real space
+
+In addition there are methods for manipulating the stored files on the :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instance directly:
+
+  * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_file()`: Set a file on the Fleurinpdata instance
+  * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.del_file()`: Delete a file on the Fleurinpdata instance
 
 The figure below shows a comparison between the use of XML and shortcut methods.
 

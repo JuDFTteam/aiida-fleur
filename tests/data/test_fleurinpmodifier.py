@@ -194,6 +194,48 @@ def test_fleurinp_modifier_set_nmmpmat(create_fleurinp):
     assert 'n_mmp_mat' in new_fleurinp.files
 
 
+def test_fleurinp_modifier_instance_modifications(create_fleurinp):
+    """Tests if set_nmmpmat works on fleurinp modifier works, with right interface"""
+    fleurinp_tmp = create_fleurinp(inpxmlfilefolder2)
+
+    n_mmp_mat_file = os.path.dirname(os.path.abspath(__file__))
+    n_mmp_mat_file = os.path.abspath(os.path.join(n_mmp_mat_file, '../files/n_mmp_mat/n_mmp_mat_GaAsMultiForceXML'))
+
+    fm = FleurinpModifier(fleurinp_tmp)
+    fm.set_file(n_mmp_mat_file, dst_filename='n_mmp_mat')
+
+    new_fleurinp = fm.freeze()
+    assert 'n_mmp_mat' in new_fleurinp.files
+
+    fm = FleurinpModifier(new_fleurinp)
+    fm.del_file('n_mmp_mat')
+    new_fleurinp = fm.freeze()
+    assert 'n_mmp_mat' not in new_fleurinp.files
+
+
+def test_fleurinp_modifier_instance_modifications_node(create_fleurinp):
+    """Tests if set_nmmpmat works on fleurinp modifier works, with right interface"""
+    from aiida.orm import FolderData
+    fleurinp_tmp = create_fleurinp(inpxmlfilefolder2)
+
+    n_mmp_mat_folder = os.path.dirname(os.path.abspath(__file__))
+    n_mmp_mat_folder = os.path.abspath(os.path.join(n_mmp_mat_folder, '../files/n_mmp_mat'))
+
+    n_mmp_mat_folder = FolderData(tree=n_mmp_mat_folder)
+    n_mmp_mat_folder.store()
+
+    fm = FleurinpModifier(fleurinp_tmp)
+    fm.set_file('n_mmp_mat_GaAsMultiForceXML', dst_filename='n_mmp_mat', node=n_mmp_mat_folder)
+
+    new_fleurinp = fm.freeze()
+    assert 'n_mmp_mat' in new_fleurinp.files
+
+    fm = FleurinpModifier(new_fleurinp)
+    fm.del_file('n_mmp_mat')
+    new_fleurinp = fm.freeze()
+    assert 'n_mmp_mat' not in new_fleurinp.files
+
+
 def test_fleurinp_modifier_set_kpointsdata(create_fleurinp):
     """Test if setting a kpoints list to a fleurinp data node works"""
     from aiida.orm import KpointsData
