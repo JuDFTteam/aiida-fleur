@@ -23,7 +23,7 @@ from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import Code, load_node
 from aiida.orm import RemoteData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -32,7 +32,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 from aiida_fleur.common.constants import HTR_TO_EV
 
 
@@ -271,12 +271,7 @@ class FleurMaeWorkChain(WorkChain):
             else:
                 # In this case only remote is given
                 # fleurinp data has to be generated from the remote inp.xml file
-                remote_node = self.inputs.remote
-                for link in remote_node.get_incoming().all():
-                    if isinstance(link.node, CalcJobNode):
-                        parent_calc_node = link.node
-                retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
 
         # copy default changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
