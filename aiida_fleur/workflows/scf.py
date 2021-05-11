@@ -19,9 +19,8 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from __future__ import absolute_import
 from lxml import etree
-import six
 
-from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict, Bool, Float
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
@@ -34,7 +33,7 @@ from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 from masci_tools.io.parsers.fleur import outxml_parser
 
@@ -156,7 +155,7 @@ class FleurScfWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -189,7 +188,7 @@ class FleurScfWorkChain(WorkChain):
         # and queue does not matter in case of direct scheduler
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -398,21 +397,8 @@ class FleurScfWorkChain(WorkChain):
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
-            remote_node = self.inputs.remote_data
-            for link in remote_node.get_incoming().all():
-                if isinstance(link.node, CalcJobNode):
-                    parent_calc_node = link.node
-            retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-            try:
-                if self.ctx.wf_dict['use_relax_xml']:
-                    fleurin = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
-                    self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
-                else:
-                    raise ValueError
-            except ValueError:
-                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
-                self.report('INFO: generated FleurinpData from inp.xml')
-            fleurin.store()
+            fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
+            self.report(f'INFO: generated FleurinpData from files {fleurin}')
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
@@ -441,31 +427,15 @@ class FleurScfWorkChain(WorkChain):
             dist = 0.0
             fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist})
 
-        avail_ac_dict = fleurmode.get_avail_actions()
-
         # apply further user dependend changes
         if fchanges:
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    try:
-                        method(**para)
-                    except ValueError as vale:
-                        error = ('ERROR: Changing the inp.xml file failed. Tried to apply {}'
-                                 ', which failed with {}. I abort, good luck next time!'
-                                 ''.format(change, vale))
-                        self.control_end_wc(error)
-                        return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # validate?
         try:
@@ -762,7 +732,7 @@ class FleurScfWorkChain(WorkChain):
             outdict['last_fleur_calc_output'] = last_calc_out
 
         #outdict['output_scf_wc_para'] = outputnode
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
         if not self.ctx.reached_conv:
@@ -789,7 +759,7 @@ def create_scf_result_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'outpara':  # should be always there
             outpara = val
     outdict = {}
