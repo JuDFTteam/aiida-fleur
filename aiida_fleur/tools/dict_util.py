@@ -118,3 +118,26 @@ def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any])
     merged.update(right)
 
     return merged
+
+def clear_dict_empty_lists(to_clear_dict):
+    """
+    Removes entries from a nested dictionary which are empty lists.
+
+    param to_clear_dict dict: python dictionary which should be 'compressed'
+    return new_dict dict: compressed python dict version of to_clear_dict
+
+    Hints: recursive
+    """
+    new_dict = {}
+    if not to_clear_dict:
+        return new_dict
+
+    if not isinstance(to_clear_dict, dict):
+        return to_clear_dict
+
+    for key, value in six.iteritems(to_clear_dict):
+        if value:
+            new_value = clear_dict_empty_lists(value)
+            if new_value:
+                new_dict[key] = new_value
+    return new_dict

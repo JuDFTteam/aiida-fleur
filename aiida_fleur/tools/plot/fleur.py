@@ -26,7 +26,8 @@ import numpy as np
 from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.orm import WorkChainNode
-from aiida.orm import Node
+from aiida.orm import Node, Dict
+from aiida.common.exceptions import UniquenessError
 from aiida_fleur.common.constants import HTR_TO_EV
 
 ###########################
@@ -52,20 +53,6 @@ def plot_fleur(*args, **kwargs):
     returns a list of plot objects for further modification or handling
     this might be used for a quick dashboard build.
     """
-    '''
-    def set_plot_defaults(title_fontsize = 16,
-                      linewidth = 2.0,
-                      markersize = 4.0,
-                      labelfonstsize = 15,
-                      ticklabelsize = 14,
-                      tick_params = {'size' : 4.0, 'width' : 1.0,
-                                     'labelsize' : ticklabelsize_g,
-                                     'length' : 5},
-                      save_plots = False, #True,
-                      save_format = 'pdf'):
-    '''
-    from masci_tools.vis.plot_methods import set_mpl_plot_defaults
-    from masci_tools.vis.bokeh_plots import set_bokeh_plot_defaults
 
     save = kwargs.pop('save', False)
     show_dict = kwargs.pop('show_dict', False)
@@ -75,80 +62,47 @@ def plot_fleur(*args, **kwargs):
     #    # the rest we ignore for know
     #Just call set plot defaults
     # TODO, or rather parse it onto plot functions...?
-    if backend == 'matplotlib':
-        set_mpl_plot_defaults(**kwargs)
-    elif backend == 'bokeh':
-        set_bokeh_plot_defaults(**kwargs)
+    # if backend == 'matplotlib':
+    #     set_mpl_plot_defaults(**kwargs)
+    # elif backend == 'bokeh':
+    #     set_bokeh_plot_defaults(**kwargs)
 
     all_plots = []
     for arg in args:
         if isinstance(arg, list):
             # try plot together
-            p1 = plot_fleur_mn(arg, save=save, show=show, backend=backend)
+            p1 = plot_fleur_mn(arg, save=save, show=show, backend=backend, **kwargs)
         else:
             #print(arg)
             # plot alone
-            p1 = plot_fleur_sn(arg, show_dict=show_dict, show=show, save=save, backend=backend)
+            p1 = plot_fleur_sn(arg, show_dict=show_dict, show=show, save=save, backend=backend, **kwargs)
         all_plots.append(p1)
 
     return all_plots
 
 
-def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh'):
+def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh', **kwargs):
     """
     This methods takes any single AiiDA node and starts the standard visualization for
     if it finds one
     """
-    #show_dic = show_dic
-    ParameterData = DataFactory('dict')
-    if isinstance(node, int):  #pk
-        node = load_node(node)
 
-    if isinstance(node, str):  #, six.text_type)):  #uuid
-        node = load_node(node)  #try
+    plot_nodes, workflow_name, _ = classify_node(node)
 
-    if isinstance(node, Node):
-        if isinstance(node, WorkChainNode):
-            output_list = node.get_outgoing().all()
-            found = False
-            for out_link in output_list:
-                if 'output_' in out_link.link_label:
-                    if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
-                        if 'para' in out_link.link_label:  # We are just looking for parameter
-                            #nodes, structures, bands, dos and so on we tread different
-                            node = out_link.node  # we only visualize last output node
-                            found = True
-            if not found:
-                print('Sorry, I do not know how to visualize this WorkChainNode {}, which contains'
-                      ' the following outgoing links {}. Maybe it is not (yet) finished successful.'
-                      ''.format(node, [link.link_label for link in output_list]))
-                return
-        if isinstance(node, ParameterData):
-            p_dict = node.get_dict()
-            workflow_name = p_dict.get('workflow_name', None)
-            try:
-                plotf = FUNCTIONS_DICT[workflow_name]
-            except KeyError:
-                print(('Sorry, I do not know how to visualize this workflow: {}, node {}.'
-                       'Please implement me in plot_fleur_aiida!'.format(workflow_name, node)))
-                if show_dict:
-                    pprint(p_dict)
-                return
-            p1 = plotf(node, save=save, show=show, backend=backend)
-        else:
-            print('I do not know how to visualize this node: {}, type {}'.format(node, type(node)))
-    else:
-        print(('The node provided: {}, type {} is not an AiiDA object'.format(node, type(node))))
-    # check if AiiDa node
-    #check what type of node
-    # if calcfunction, get certain output node
-    #if parameterData, output node check if workflow name tag
-    # if routine known plot,
-    #else say I do not know
-    return p1
+    if show_dict:
+        pprint(plot_nodes[0])
+
+    try:
+        plotf = FUNCTIONS_DICT[workflow_name]
+    except KeyError as exc:
+        raise ValueError('Sorry, I do not know how to visualize' f' this node in plot_fleur: {workflow_name} {node}') from exc
+
+    plot_result = plotf(*plot_nodes, save=save, show=show, backend=backend, **kwargs)
+
+    return plot_result
 
 
-def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
+def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh', **kwargs):
     """
     This methods takes any amount of AiiDA node as a list and starts
     the standard visualisation for it, if it finds one.
@@ -159,59 +113,94 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
     param: save showed the plots be saved automatically
 
     """
+    from collections import defaultdict
     ###
     # Things to plot together
-    all_nodes = {}
+    all_nodes = defaultdict(list)
+    node_labels = defaultdict(list)
     ###
-    ParameterData = DataFactory('dict')
 
     if not isinstance(nodelist, list):
-        print(('The nodelist provided: {}, type {} is not a list. ' 'I abort'.format(nodelist, type(nodelist))))
-        return None
+        raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list. ')
 
     node_labels = []
     for node in nodelist:
-        # first find out what we have then how to visualize
-        if isinstance(node, int):  #pk
-            node = load_node(node)
-        if isinstance(node, str):  #, six.text_type)):  #uuid
-            node = load_node(node)  #try
-
-        if isinstance(node, Node):
-            node_labels.append(node.label)
-            if isinstance(node, WorkChainNode):
-                output_list = node.get_outgoing().all()
-                for out_link in output_list:
-                    if 'output_' in out_link.link_label:
-                        if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
-                            if 'para' in out_link.link_label:  # We are just looking for parameter
-                                #nodes, structures, bands, dos and so on we tread different
-                                node = out_link.node  # we only visualize last output node
-            if isinstance(node, ParameterData):
-                p_dict = node.get_dict()
-                workflow_name = p_dict.get('workflow_name', None)
-                cur_list = all_nodes.get(workflow_name, [])
-                cur_list.append(node)
-                all_nodes[workflow_name] = cur_list
-            else:
-                print(('I do not know how to visualize this node: {}, '
-                       'type {} from the nodelist length {}'.format(node, type(node), len(nodelist))))
-        else:
-            print(('The node provided: {} of type {} in the nodelist length {}'
-                   ' is not an AiiDA object'.format(node, type(node), len(nodelist))))
-
-    #print(all_nodes)
-    all_plot_res = []
-    for node_key, nodelist1 in all_nodes.items():
         try:
-            plotf = FUNCTIONS_DICT[node_key]
-        except KeyError:
-            print(('Sorry, I do not know how to visualize'
-                   ' these nodes (multiplot): {} {}'.format(node_key, nodelist1)))
+            plot_nodes, workflow_name, label = classify_node(node)
+        except ValueError as exc:
+            print(f'Failed to classify node {node}: {exc}' 'Skipping this one')
             continue
-        plot_res = plotf(nodelist1, labels=node_labels, save=save, show=show, backend=backend)
+
+        all_nodes[workflow_name].append(plot_nodes)
+        node_labels[workflow_name].append(label)
+
+    all_plot_res = []
+    for workflow_name, plot_nodes in all_nodes.items():
+        try:
+            plotf = FUNCTIONS_DICT[workflow_name]
+        except KeyError:
+            print('Sorry, I do not know how to visualize'
+                  f' these nodes in plot_fleur (mulitplot): {workflow_name} {plot_nodes}')
+            continue
+
+        #Convert to tuple of lists
+        plot_nodes = zip(*plot_nodes)
+
+        plot_res = plotf(*plot_nodes, labels=node_labels, save=save, show=show, backend=backend, **kwargs)
         all_plot_res.append(plot_res)
+
     return all_plot_res
+
+
+def classify_node(node):
+    """
+    Classify the given node and select, which nodes should be passed to the visualization
+    function for the node.
+
+    :param node: Aiida node or integer of the pk or str of the uuid
+
+    :returns: tuple of nodes to pass to the corresponding visualization function,
+              name of the workflow and label of the node
+    """
+
+    #Define any additional node hat should be passed to the plotting function
+    ADDITIONAL_OUTPUTS = {'FleurBandDosWorkChain': ('last_calc_retrieved',)}
+
+    if isinstance(node, (int, str)):
+        node = load_node(node)
+
+    if not isinstance(node, Node):
+        raise ValueError(f'Given node {node} is not an AiiDA object')
+
+    label = node.label
+
+    params = None
+    if isinstance(node, WorkChainNode):
+        output_list = node.get_outgoing().all()
+        for out_link in output_list:
+            if 'output_' in out_link.link_label:
+                if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
+                    if 'para' in out_link.link_label:  # We are just looking for parameter
+                        #nodes, structures, bands, dos and so on we tread different
+                        params = out_link.node  # we only visualize last output node
+    elif isinstance(node, Dict):
+        params = node
+        workflow = params.get_incoming(node_class=WorkChainNode).all()
+        n_parents = len(node)
+        if n_parents != 1:
+            raise UniquenessError(f'Parameter node {params} has no unique WorkChainNode parent')
+        node = workflow[0].node
+
+    if isinstance(params, Dict):
+        parameter_dict = node.get_dict()
+        workflow_name = parameter_dict.get('workflow_name', None)
+    else:
+        raise ValueError(f'I do not know how to visualize this node: {node}')
+
+    outputs = (parameter_dict,) + tuple(node.get_outgoing().get_node_by_label(out_label)
+                                        for out_label in ADDITIONAL_OUTPUTS.get(workflow_name, tuple()))
+
+    return outputs, workflow_name, label
 
 
 ###########################
@@ -219,7 +208,7 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
 ###########################
 
 
-def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'):
+def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh', **kwargs):
     """
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
@@ -229,15 +218,8 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     else:
         from masci_tools.vis.plot_methods import plot_convergence_results_m
 
-    if isinstance(nodes, list):
-        if len(nodes) >= 2:
-            #return # TODO
-            pass
-        else:
-            nodes = [nodes[0]]
-    else:
-        nodes = [nodes]  #[0]]
-    #scf_wf = load_node(6513)
+    if not isinstance(nodes, list):
+        nodes = [nodes]
 
     if labels is None:
         labels = [node.pk for node in nodes]
@@ -278,14 +260,15 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         total_energy_n.append(total_energy)
         modes.append(mode)
 
-    plt = plot_convergence_results_m(iterations,
-                                     distance_all_n,
-                                     total_energy_n,
-                                     plot_label=labels,
-                                     nodes=nodes_pk,
-                                     modes=modes,
-                                     show=show)
-    return plt
+    plot_res = plot_convergence_results_m(iterations,
+                                          distance_all_n,
+                                          total_energy_n,
+                                          plot_label=labels,
+                                          nodes=nodes_pk,
+                                          modes=modes,
+                                          show=show,
+                                          **kwargs)
+    return plot_res
 
 
 def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
@@ -407,8 +390,7 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, **kwargs):
     if labels is None:
         labels = []
 
-    # TODO: implement
-    #plot_relaxation_results
+    raise NotImplementedError
 
 
 def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
@@ -420,7 +402,7 @@ def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
     if labels is None:
         labels = []
 
-    # TODO: implement
+    raise NotImplementedError
 
 
 def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwargs):
@@ -432,7 +414,7 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     if labels is None:
         labels = []
 
-    # TODO: implement
+    raise NotImplementedError
 
 
 def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs):
@@ -497,27 +479,3 @@ FUNCTIONS_DICT = {
     #'FleurCoreholeWorkChain' :  plot_fleur_corehole_wc,
     'FleurOrbControlWorkChain': plot_fleur_orbcontrol_wc,
 }
-
-
-def clear_dict_empty_lists(to_clear_dict):
-    """
-    Removes entries from a nested dictionary which are empty lists.
-
-    param to_clear_dict dict: python dictionary which should be 'compressed'
-    return new_dict dict: compressed python dict version of to_clear_dict
-
-    Hints: recursive
-    """
-    new_dict = {}
-    if not to_clear_dict:
-        return new_dict
-
-    if not isinstance(to_clear_dict, dict):
-        return to_clear_dict
-
-    for key, value in to_clear_dict.items():
-        if value:
-            new_value = clear_dict_empty_lists(value)
-            if new_value:
-                new_dict[key] = new_value
-    return new_dict
