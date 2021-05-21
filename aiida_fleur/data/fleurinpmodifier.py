@@ -62,16 +62,17 @@ class FleurinpModifier(FleurXMLModifier):
         #These functions from the FleurinpData are supported
         fleurinp_mod_functions = {'set_file': new_fleurinp.set_file, 'del_file': new_fleurinp.del_file}
 
-        warned = False
+        warn = False
         for task in modification_tasks:
             if task.name in fleurinp_mod_functions:
                 modification_tasks.remove(task)
                 action = fleurinp_mod_functions[task.name]
                 action(*task.args, **task.kwargs)
-            elif not warned:
-                warned = True
-                warnings.warn('The modification methods operating directly adding/removing files'
-                              'are performed before any XML modification methods')
+                if warn:
+                    warnings.warn('The modification methods operating directly adding/removing files '
+                                  'are performed before any XML modification methods')
+            else:
+                warn = True
 
     def get_avail_actions(self):
         """
