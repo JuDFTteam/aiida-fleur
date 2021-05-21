@@ -97,7 +97,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         return {**outside_actions_fleurxml, **outside_actions_fleurinp}
 
-    def set_kpointsdata(self, kpointsdata_uuid, name=None):
+    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
@@ -114,7 +114,11 @@ class FleurinpModifier(FleurXMLModifier):
         node_label = f'kpoints_{num_nodes}'
 
         self._other_nodes[node_label] = load_node(kpointsdata_uuid)
-        self._tasks.append(ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={'name': name}))
+        self._tasks.append(
+            ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={
+                'name': name,
+                'switch': switch
+            }))
 
     #Modification functions that were renamed in masci-tools
 

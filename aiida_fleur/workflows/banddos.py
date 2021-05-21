@@ -16,13 +16,16 @@ electron bandstructure.
 # TODO alow certain kpoint path, or kpoint node, so far auto
 import copy
 from lxml import etree
+from ase.dft.kpoints import bandpath
+import numpy as np
 
-from aiida.orm import Code, Dict, RemoteData
+from aiida.orm import Code, Dict, RemoteData, KpointsData
 from aiida.orm import load_node, CalcJobNode, FolderData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 from aiida.common import AttributeDict
+from aiida.tools.data.array.kpoints import get_explicit_kpoints_path
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -56,10 +59,13 @@ class FleurBandDosWorkChain(WorkChain):
         'environment_variables': {}
     }
     _default_wf_para = {
-        'kpath': 'auto',
-        'klistname': 'path-2',
+        'kpath': 'auto',  #seek (aiida), fleur (only Max4) or string to pass to ase
         'mode': 'band',
-        'nkpts': 800,
+        'klistname': None,
+        'kpoints_number': None,
+        'kpoints_distance': None,
+        'kpoints_explicit': None,  #dictionary containing a list of kpoints, weights
+        #and additional arguments to pass to set_kpointlist
         'sigma': 0.005,
         'emin': -0.50,
         'emax': 0.90,
@@ -85,6 +91,7 @@ class FleurBandDosWorkChain(WorkChain):
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('remote', valid_type=RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('kpoints', valid_type=KpointsData, required=False)
         spec.input('options', valid_type=Dict, required=False)
 
         spec.outline(cls.start,
@@ -196,19 +203,94 @@ class FleurBandDosWorkChain(WorkChain):
 
         fleurmode.add_task_list(wf_dict.get('inpxml_changes', []))
 
-        sigma = wf_dict.get('sigma', 0.005)
-        emin = wf_dict.get('emin', -0.30)
-        emax = wf_dict.get('emax', 0.80)
-        nkpts = wf_dict.get('nkpts', 500)
+        kpath = wf_dict['kpath']
+        explicit = wf_dict['kpoints_explicit']
+        distance = wf_dict['kpoints_distance']
+        nkpts = wf_dict['kpoints_number']
+        listname = wf_dict['klistname']
+
+        if nkpts is not None and distance is not None:
+            raise ValueError('Only provide either the distance or number for the kpoints')
+
+        if explicit is not None:
+            fleurmode.set_kpointlist(**explicit)
+
+        if listname is None:
+            listname = 'path-2'
+
+        if nkpts is None and distance is None:
+            nkpts = 500
+
+        if 'kpoints' in self.inputs:
+            fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
+
+        if kpath == 'auto':
+            if fleurin.inp_version >= '0.32':
+                fleurmode.switch_kpointset(listname)
+        elif isinstance(kpath, dict):
+            if fleurin.inp_version < '0.32':
+                if distance is not None:
+                    raise ValueError('set_kpath only supports specifying the number of points for the kpoints')
+                fleurmode.set_kpath(kpath, nkpts)
+            else:
+                raise ValueError('set_kpath is only supported for inputs up to Max4')
+        elif kpath == 'seek':
+
+            #Use aiida functionality
+            struc = fleurin.get_structuredata()
+
+            if distance is not None:
+                output = get_explicit_kpoints_path(struc, reference_distance=distance)
+            else:
+                output = get_explicit_kpoints_path(struc)
+            primitive_struc = output['primitive_structure']
+
+            #check if primitive_structure and input structure are identical:
+            maxdiff_cell = sum(abs(np.array(primitive_struc.cell) - np.array(struc.cell))).max()
+
+            if maxdiff_cell > 3e-9:
+                self.report(f'Error in cell : {maxdiff_cell}')
+                self.report(
+                    'WARNING: The structure data from the fleurinp is not the primitive structure type, which is mandatory in some cases'
+                )
+
+            output['explicit_kpoints'].store()
+
+            fleurmode.set_kpointsdata(output['explicit_kpoints'], switch=True)
+
+        elif kpath == 'skip':
+            return
+        else:
+            #Use ase
+            struc = fleurin.get_structuredata()
+
+            path = bandpath(kpath, cell=struc.cell, npoints=nkpts, density=distance)
+
+            special_points = path.special_points
+
+            labels = []
+            for label, special_kpoint in special_points.items():
+                for index, kpoint in enumerate(path.kpts):
+                    if sum(abs(np.array(special_kpoint) - np.array(kpoint))).max() < 1e-12:
+                        labels.append((index, label))
+            labels = sorted(labels, key=lambda x: x[0])
+
+            kpts = KpointsData()
+            kpts.set_cell(struc.cell)
+            kpts.pbc = struc.pbc
+            weights = np.ones(len(path.kpts)) / len(path.kpts)
+            kpts.set_kpoints(kpoints=path.kpts, cartesian=False, weights=weights, labels=labels)
+
+            kpts.store()
+            fleurmode.set_kpointsdata(kpts, switch=True)
+
+        sigma = wf_dict['sigma']
+        emin = wf_dict['emin']
+        emax = wf_dict['emax']
 
         if fleurin.inp_version < '0.32':
             if wf_dict.get('mode') == 'dos':
                 fleurmode.set_inpchanges({'ndir': -1})
-
-            if wf_dict.get('kpath') != 'auto':
-                fleurmode.set_kpath(wf_dict.get('kpath'), nkpts)
-        else:
-            fleurmode.switch_kpointset(wf_dict.get('klistname', 'path-2'))
 
         if wf_dict.get('mode') == 'dos':
             change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
@@ -421,6 +503,7 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['last_calc_pk'] = self.ctx.banddos_calc.pk
+        outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band
         outputnode_dict['fermi_energy_scf'] = efermi_scf
