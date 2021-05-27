@@ -365,10 +365,10 @@ def _handle_time_limits(self, calculation):
         self.report('FleurCalculation failed due to time limits, I restart it from where it ended')
 
         # increase wallclock time
-        propose_wallclock = self.ctx.inputs.metadata.options['resources']['max_wallclock_seconds'] * 2
+        propose_wallclock = self.ctx.inputs.metadata.options['max_wallclock_seconds'] * 2
         if propose_wallclock > self.ctx.max_queue_wallclock_sec:
             propose_wallclock = self.ctx.max_queue_wallclock_sec
-        self.ctx.inputs.metadata.options['resources']['max_wallclock_seconds'] = propose_wallclock
+        self.ctx.inputs.metadata.options['max_wallclock_seconds'] = propose_wallclock
 
         # increase number of nodes
         propose_nodes = self.ctx.num_machines * 2
