@@ -1474,7 +1474,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
         else:
             rebuilt_structure.append_atom(symbols=atom[1],
                                           position=(atom[0][0], atom[0][1], -atom[0][2]),
-                                          name=atom[1] + '49')
+                                          name=atom[1] + '49999')
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):
@@ -1493,7 +1493,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             # a = Site(kind_name=atom[1], position=atom[0])
             # rebuilt_structure.append_site(a)
             if i < hold_layers - 1:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49')
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49999')
             else:
                 rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
 
