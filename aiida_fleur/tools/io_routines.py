@@ -127,7 +127,8 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
 
 
     """
-    from aiida_fleur.tools.xml_util import delete_tag, eval_xpath2
+    from masci_tools.util.xml.common_functions import eval_xpath
+    from masci_tools.util.xml.xml_setters_basic import xml_delete_tag
     from lxml import etree
 
     xpath_eig = '/fleurOutput/scfLoop/iteration/eigenvalues'
@@ -158,12 +159,12 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
 
     # delete eigenvalues (all)
     if delete_eig:
-        new_etree = delete_tag(tree, xpath_eig)
+        new_etree = xml_delete_tag(tree, xpath_eig)
 
     # delete certain iterations
     if iterations_to_keep is not None:
         root = new_etree.getroot()
-        iteration_nodes = eval_xpath2(root, xpath_iter)
+        iteration_nodes = eval_xpath(root, xpath_iter, list_return=True)
         n_iters = len(iteration_nodes)
         print(n_iters)
         if iterations_to_keep < 0:
@@ -178,7 +179,7 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
                   ' in the given out.xml file, I keep all.')
         else:
             print(delete_xpath)
-            new_etree = delete_tag(new_etree, delete_xpath)
+            new_etree = xml_delete_tag(new_etree, delete_xpath)
 
     if dest_file_path is None:
         dest_file_path = outxmlfilepath  # overwrite file

@@ -52,11 +52,6 @@ StructureData utility
 .. automodule:: aiida.tools.codespecific.fleur.StructureData_util
    :members:
 
-XML utility
-+++++++++++
-
-.. automodule:: aiida.tools.codespecific.fleur.xml_util
-   :members:
 
 ParameterData utility
 +++++++++++++++++++++
