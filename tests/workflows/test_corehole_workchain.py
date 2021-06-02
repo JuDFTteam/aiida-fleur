@@ -9,7 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-'''Contains tests for the Fleur_corehole_wc'''
+'''Contains tests for the FleurCoreholeWorkChain'''
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -17,16 +17,16 @@ import pytest
 import aiida_fleur
 import os
 from aiida.orm import Code, load_node, Dict, StructureData
-from aiida_fleur.workflows.corehole import fleur_corehole_wc
+from aiida_fleur.workflows.corehole import FleurCoreholeWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
-class Test_fleur_corehole_wc():
+class Test_FleurCoreholeWorkChain():
     """
-    Regression tests for the fleur_corehole_wc
+    Regression tests for the FleurCoreholeWorkChain
     """
 
     @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
@@ -37,7 +37,7 @@ class Test_fleur_corehole_wc():
             fleur_local_code,
             generate_structure_W):  #, clear_spec):
         """
-        full example using fleur_corehole_wc on W.
+        full example using FleurCoreholeWorkChain on W.
         Several fleur runs needed, calculation of all only certain coreholes
         """
         from aiida.engine import run_get_node
@@ -98,8 +98,8 @@ class Test_fleur_corehole_wc():
         # create process builder to set parameters
         inputs = {
             #'metadata' : {
-            #    'description' : 'Simple fleur_corehole_wc test with W bulk',
-            #    'label' : 'fleur_corehole_wc_test_W_bulk'},
+            #    'description' : 'Simple FleurCoreholeWorkChain test with W bulk',
+            #    'label' : 'FleurCoreholeWorkChain_test_W_bulk'},
             'options': options,
             'fleur': FleurCode,
             'inpgen': InpgenCode,
@@ -109,8 +109,8 @@ class Test_fleur_corehole_wc():
         }
 
         # now run calculation
-        #out, node = run_with_cache(inputs, process_class=fleur_corehole_wc)
-        out, node = run_get_node(fleur_corehole_wc, **inputs)
+        #out, node = run_with_cache(inputs, process_class=FleurCoreholeWorkChain)
+        out, node = run_get_node(FleurCoreholeWorkChain, **inputs)
 
         # check general run
         assert node.is_finished_ok
@@ -134,7 +134,7 @@ class Test_fleur_corehole_wc():
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_corehole_structure_Si_one(self, run_with_cache, mock_code_factory):
         """
-        Full regression test of fleur_corehole_wc starting with a crystal structure and parameters,
+        Full regression test of FleurCoreholeWorkChain starting with a crystal structure and parameters,
         one corehole
         """
         assert False
@@ -143,7 +143,7 @@ class Test_fleur_corehole_wc():
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_corehole_structure_Si_all(self, run_with_cache, mock_code_factory):
         """
-        Full regression test of fleur_corehole_wc starting from a structure, calculating all possible
+        Full regression test of FleurCoreholeWorkChain starting from a structure, calculating all possible
         coreholes
         """
         assert False
@@ -152,7 +152,7 @@ class Test_fleur_corehole_wc():
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_corehole_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
         """
-        Test the validation behavior of fleur_corehole_wc if wrong input is provided it should throw
+        Test the validation behavior of FleurCoreholeWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
         """
         assert False

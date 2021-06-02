@@ -92,17 +92,17 @@ class TestFleurEntrypoints:
     # this entry point has currently a problem...
     def test_fleur_initial_cls_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+        from aiida_fleur.workflows.initial_cls import FleurInitialCLSWorkChain
 
         workflow = WorkflowFactory('fleur.init_cls')
-        assert workflow == fleur_initial_cls_wc
+        assert workflow == FleurInitialCLSWorkChain
 
     def test_fleur_corehole_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.corehole import fleur_corehole_wc
+        from aiida_fleur.workflows.corehole import FleurCoreholeWorkChain
 
         workflow = WorkflowFactory('fleur.corehole')
-        assert workflow == fleur_corehole_wc
+        assert workflow == FleurCoreholeWorkChain
 
     def test_fleur_mae_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory

@@ -128,10 +128,10 @@ def extract_structure_info(keys, structures=None):
             eos = input_of_workcal('fleur_eos_wc', struc)
             structure_dict['eos'] = eos
         if 'init_cls' in keys:
-            init_cls = input_of_workcal('fleur_initial_cls_wc', struc)
+            init_cls = input_of_workcal('FleurInitialCLSWorkChain', struc)
             structure_dict['init_cls'] = init_cls
         if 'corehole' in keys:
-            corehole = input_of_workcal('fleur_corehole_wc', struc)
+            corehole = input_of_workcal('', struc)
             structure_dict['corehole'] = corehole
         if 'calcfunctions' in keys:
             calcfunctions_uuid, calcfunctions_name = input_of_calcfunctions(struc)

@@ -313,7 +313,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         if not formenergy:  # test if 0 case ok
             if isinstance(n, WorkChain):  # TODO: untested for aiida > 1.0
                 plabel = n.get_attr('_process_label')
-                if plabel == 'fleur_initial_cls_wc':
+                if plabel == 'FleurInitialCLSWorkChain':
                     try:
                         ouputnode = n.out.output_initial_cls_wc_para.get_dict()
                     except AttributeError:

@@ -9,7 +9,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-''' Contains tests for the fleur_initial_cls_wc. '''
+''' Contains tests for the FleurInitialCLSWorkChain. '''
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -19,22 +19,22 @@ import aiida_fleur
 import os
 from aiida.orm import load_node
 from aiida.engine import run_get_node
-from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+from aiida_fleur.workflows.initial_cls import FleurInitialCLSWorkChain
 
 
 # tests
 @pytest.mark.skip
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
-class Test_fleur_initial_cls_wc():
+class Test_FleurInitialCLSWorkChain():
     """
-    Regression tests for the fleur_initial_cls_wc
+    Regression tests for the FleurInitialCLSWorkChain
     """
 
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
                                  export_cache, load_cache, clear_spec):
         """
-        full example using fleur_initial_cls_wc with just elemental W as input
+        full example using FleurInitialCLSWorkChain with just elemental W as input
         (W, onw atoms per unit cell)
         uses the same structure as reference.
         """
@@ -88,8 +88,8 @@ class Test_fleur_initial_cls_wc():
         # create process builder to set parameters
         inputs = {
             'metadata': {
-                'description': 'Simple fleur_initial_cls_wc test with W bulk',
-                'label': 'fleur_initial_cls_wc_test_W_bulk'
+                'description': 'Simple FleurInitialCLSWorkChain test with W bulk',
+                'label': 'FleurInitialCLSWorkChain test_W_bulk'
             },
             'options': Dict(dict=options),
             'fleur': FleurCode,
@@ -100,7 +100,7 @@ class Test_fleur_initial_cls_wc():
         }
 
         # now run calculation
-        out, node = run_with_cache(inputs, process_class=fleur_initial_cls_wc)
+        out, node = run_with_cache(inputs, process_class=FleurInitialCLSWorkChain)
 
         # check general run
         assert node.is_finished_ok
@@ -123,7 +123,7 @@ class Test_fleur_initial_cls_wc():
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_wc_binary_with_given_ref(self, run_with_cache, mock_code_factory):
         """
-        Full regression test of fleur_initial_cls_wc starting with a crystal structure and parameters
+        Full regression test of FleurInitialCLSWorkChain starting with a crystal structure and parameters
         """
         assert False
 
@@ -131,7 +131,7 @@ class Test_fleur_initial_cls_wc():
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_wc_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
         """
-        Test the validation behavior of fleur_initial_cls_wc if wrong input is provided it should throw
+        Test the validation behavior of FleurInitialCLSWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
         """
         assert False

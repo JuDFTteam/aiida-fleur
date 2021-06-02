@@ -19,10 +19,7 @@ masci-tools which use matplotlib or bokeh as backend.
 # INFO: AiiDAlab has implemented an extendable viewer class for data structures,
 # which might be some point moved to aiida-core and extensible over entrypoints.
 
-from __future__ import absolute_import
-from __future__ import print_function
 from pprint import pprint
-import six
 import numpy as np
 #import matplotlib.pyplot as pp
 #from masci_tools.vis.plot_methods import *
@@ -98,7 +95,7 @@ def plot_fleur(*args, **kwargs):
 
 def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh'):
     """
-    This methods takes any single AiiDA node and starts the standard visualisation for
+    This methods takes any single AiiDA node and starts the standard visualization for
     if it finds one
     """
     #show_dic = show_dic
@@ -106,7 +103,7 @@ def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh')
     if isinstance(node, int):  #pk
         node = load_node(node)
 
-    if isinstance(node, (str, six.text_type)):  #uuid
+    if isinstance(node, str):  #, six.text_type)):  #uuid
         node = load_node(node)  #try
 
     if isinstance(node, Node):
@@ -176,7 +173,7 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
         # first find out what we have then how to visualize
         if isinstance(node, int):  #pk
             node = load_node(node)
-        if isinstance(node, (str, six.text_type)):  #uuid
+        if isinstance(node, str):  #, six.text_type)):  #uuid
             node = load_node(node)  #try
 
         if isinstance(node, Node):
@@ -204,7 +201,7 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh'):
 
     #print(all_nodes)
     all_plot_res = []
-    for node_key, nodelist1 in six.iteritems(all_nodes):
+    for node_key, nodelist1 in all_nodes.items():
         try:
             plotf = FUNCTIONS_DICT[node_key]
         except KeyError:
@@ -427,7 +424,7 @@ def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
 
 def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwargs):
     """
-    This methods takes AiiDA output parameter nodes from a initial_cls
+    This methods takes AiiDA output parameter nodes from a FleurInitialCLSWorkChain
     workchain and plots some information about corelevel shifts.
     (Spectra)
     """
@@ -445,8 +442,10 @@ FUNCTIONS_DICT = {
     'fleur_dos_wc': plot_fleur_dos_wc,
     'fleur_band_wc': plot_fleur_band_wc,
     'FleurBandWorkChain': plot_fleur_band_wc,
-    #'fleur_corehole_wc' : plot_fleur_corehole_wc,
-    #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc
+    #'fleur_corehole_wc' : plot_fleur_corehole_wc,  #support of < 1.5 release
+    #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc,  #support of < 1.5 release
+    #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,
+    #'FleurCoreholeWorkChain' :  plot_fleur_corehole_wc,
 }
 
 
@@ -466,7 +465,7 @@ def clear_dict_empty_lists(to_clear_dict):
     if not isinstance(to_clear_dict, dict):
         return to_clear_dict
 
-    for key, value in six.iteritems(to_clear_dict):
+    for key, value in to_clear_dict.items():
         if value:
             new_value = clear_dict_empty_lists(value)
             if new_value:
