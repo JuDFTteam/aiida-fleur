@@ -100,6 +100,9 @@ class FleurCalculation(CalcJob):
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
+    #files for greensfunctions
+    _GREENSF_HDF5_FILE_NAME = 'greensf.hdf'
+
     # files for hybrid functionals
     _COULOMB1_FILE_NAME = 'coulomb1'
     _MIXBAS_FILE_NAME = 'mixbas'
@@ -409,6 +412,9 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
                     mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+            if modes['greensf']:
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
