@@ -17,7 +17,6 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: make smarter, ggf delete mixing_history or restart with more or less iterations
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
-from __future__ import absolute_import
 from lxml import etree
 
 from aiida.orm import Code, load_node
@@ -284,8 +283,8 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
-        if mode not in ['force', 'density', 'energy']:
-            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density' or 'energy' was expected.")
+        if mode not in ['force', 'density', 'energy', 'gw']:
+            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density', 'energy' or 'gw' was expected.")
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
@@ -426,6 +425,18 @@ class FleurScfWorkChain(WorkChain):
         elif converge_mode == 'energy':
             dist = 0.0
             fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist})
+
+        elif converge_mode == 'gw':
+            dist = 0.0
+            fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax, 'minDistance': dist, 'gw': 1})
+            if 'settings' in self.inputs:
+                self.inputs.settings.append({'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore']})
+                self.inputs.settings.append({'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']})
+            else:
+                self.inputs.settings = {
+                    'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore'],
+                    'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']
+                }
 
         # apply further user dependend changes
         if fchanges:
@@ -607,7 +618,7 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'density':
             if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
                 return False
-        elif mode == 'energy':
+        elif mode in ('energy', 'gw'):
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 return False
         elif mode == 'force':
