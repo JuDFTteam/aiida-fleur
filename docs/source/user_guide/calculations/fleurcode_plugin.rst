@@ -93,7 +93,7 @@ All the outputs can be found in ``calculation.outputs``.
 ..           The 'simple' output node will evolve. A draft of a second complex output node which
 ..           contains informations of all iterations and atomtypes exists, but a dictionary is not
 ..           the optimal structure for this. For now this is postponed. In any case if you want to
-..           parse something from the out.xml checkout the methods in xml_util.
+..           parse something from the out.xml checkout the methods in the `masci-tools` libary.
 
 Errors
 ''''''

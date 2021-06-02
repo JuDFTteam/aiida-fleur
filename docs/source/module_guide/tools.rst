@@ -14,15 +14,6 @@ XML utility
 .. automodule:: aiida_fleur.tools.xml_aiida_modifiers
    :members:
 
-.. automodule:: aiida_fleur.tools.xml_util
-   :members:
-
-Utility for LDA+U density matrix files
---------------------------------------
-
-.. automodule:: aiida_fleur.tools.set_nmmpmat
-   :members:
-
 
 Parameter utility
 -----------------
