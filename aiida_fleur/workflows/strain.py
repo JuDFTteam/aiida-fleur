@@ -9,7 +9,6 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-
 """
 In this module you find the workflow 'FleurStrainWorkChain' for the calculation of
 of deformation potential
@@ -20,7 +19,6 @@ from __future__ import print_function
 import numpy as np
 
 import six
-from six.moves import range
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
@@ -56,16 +54,18 @@ class FleurStrainWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = "0.3.5"
+    _workflowversion = '0.3.5'
 
     _default_options = {
-        'resources': {"num_machines": 1},
+        'resources': {
+            'num_machines': 1
+        },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
         'custom_scheduler_commands': '',
         'import_sys_environment': False,
         'environment_variables': {}
-        }
+    }
 
     _wf_default = {
         'fleur_runmax': 4,
@@ -76,40 +76,36 @@ class FleurStrainWorkChain(WorkChain):
         'points': 3,
         'step': 0.02,
         'guess': 1.00
-        }
+    }
 
     _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
         super(FleurStrainWorkChain, cls).define(spec)
-        spec.input("wf_parameters", valid_type=Dict, required=False)
-        spec.input("structure", valid_type=StructureData, required=True)
-        spec.input("calc_parameters", valid_type=Dict, required=False)
-        spec.input("inpgen", valid_type=Code, required=True)
-        spec.input("fleur", valid_type=Code, required=True)
-        spec.input("options", valid_type=Dict, required=False)
-        spec.input("settings", valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('structure', valid_type=StructureData, required=True)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
+        spec.input('inpgen', valid_type=Code, required=True)
+        spec.input('fleur', valid_type=Code, required=True)
+        spec.input('options', valid_type=Dict, required=False)
+        spec.input('settings', valid_type=Dict, required=False)
 
-        spec.outline(
-            cls.start,
-            cls.structures,
-            cls.converge_scf,
-            cls.return_results
-        )
+        spec.outline(cls.start, cls.structures, cls.converge_scf, cls.return_results)
 
         spec.output('output_strain_wc_para', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(331, 'ERROR_INVALID_CODE_PROVIDED',
-                       message="Invalid code node specified, check inpgen and fleur code nodes.")
+        spec.exit_code(331,
+                       'ERROR_INVALID_CODE_PROVIDED',
+                       message='Invalid code node specified, check inpgen and fleur code nodes.')
 
     def start(self):
         """
         check parameters, what conditions? complete?
         check input nodes
         """
-        self.report("Started strain workflow version {}".format(self._workflowversion))
+        self.report('Started strain workflow version {}'.format(self._workflowversion))
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -164,8 +160,7 @@ class FleurStrainWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for inpgen of FLEUR does not "
-                         "use the plugin fleur.inpgen")
+                error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
@@ -173,8 +168,7 @@ class FleurStrainWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ("The code you provided for FLEUR does not "
-                         "use the plugin fleur.fleur")
+                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
@@ -257,7 +251,7 @@ class FleurStrainWorkChain(WorkChain):
         t_energylist = []
         t_energylist_peratom = []
         bandgaplist = []
-        calc_uuids=[]
+        calc_uuids = []
         vol_peratom_success = []
         natoms = len(self.inputs.structure.sites)
         htr_to_ev = 27.21138602
@@ -274,9 +268,7 @@ class FleurStrainWorkChain(WorkChain):
             try:
                 _ = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = (
-                    'One SCF workflow failed, no scf output node: {}.'
-                    ' I skip this one.'.format(label))
+                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
@@ -285,7 +277,7 @@ class FleurStrainWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
-            if e_u == 'Htr' or 'htr':
+            if e_u in ('Htr', 'htr'):
                 t_e = t_e * htr_to_ev
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units')
@@ -300,7 +292,7 @@ class FleurStrainWorkChain(WorkChain):
         en_array = np.array(t_energylist_peratom)
         vol_array = np.array(vol_peratom_success)
         eg_array = np.array(bandgaplist)
-        vol_unitcell_array = vol_array*natoms
+        vol_unitcell_array = vol_array * natoms
 
         if len(en_array):
             volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(en_array, vol_array)
@@ -326,46 +318,44 @@ class FleurStrainWorkChain(WorkChain):
         #     local_name=self.inputs.structure.get_extra('local_name')
         # else:
         #     local_name=''
-            
-        
-        outputnode_dict={}
-        outputnode_dict['workflow_name']= self.__class__.__name__,
-        outputnode_dict['workflow_version']= self._workflowversion,
-        outputnode_dict['material'] = self.inputs.structure.get_formula(),
-        outputnode_dict['kind_names'] = self.inputs.structure.get_kind_names(),
-        # outputnode_dict['local_name'] = local_name,
-        outputnode_dict['deformation_potential']= dprime,
-        outputnode_dict['scaling'] = self.ctx.scalelist,
-        outputnode_dict['scaling_gs'] = gs_scale,
-        outputnode_dict['initial_structure']= self.inputs.structure.uuid,
-        outputnode_dict['volume_gs']= volume * natoms,
-        outputnode_dict['volumes']= volumes,
-        outputnode_dict['volume_units']= 'A^3',
-        outputnode_dict['natoms']= natoms,
-        outputnode_dict['total_energy']= t_energylist,
-        outputnode_dict['total_energy_units']= e_u,
-        outputnode_dict['bandgaps']=bandgaplist,
-        outputnode_dict['structures']= self.ctx.structurs_uuids,
-        outputnode_dict['calculations']=calc_uuids,
-        outputnode_dict['distance_charge']= distancelist,
-        outputnode_dict['distance_charge_units']= dis_u,
-        outputnode_dict['nsteps']= self.ctx.points,
+
+        outputnode_dict = {}
+        outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
+        outputnode_dict['material'] = self.inputs.structure.get_formula()
+        outputnode_dict['kind_names'] = self.inputs.structure.get_kind_names()
+        # outputnode_dict['local_name'] = local_name
+        outputnode_dict['deformation_potential'] = dprime
+        outputnode_dict['scaling'] = self.ctx.scalelist
+        outputnode_dict['scaling_gs'] = gs_scale
+        outputnode_dict['initial_structure'] = self.inputs.structure.uuid
+        outputnode_dict['volume_gs'] = volume * natoms
+        outputnode_dict['volumes'] = volumes
+        outputnode_dict['volume_units'] = 'A^3'
+        outputnode_dict['natoms'] = natoms
+        outputnode_dict['total_energy'] = t_energylist
+        outputnode_dict['total_energy_units'] = e_u
+        outputnode_dict['bandgaps'] = bandgaplist
+        outputnode_dict['structures'] = self.ctx.structurs_uuids
+        outputnode_dict['calculations'] = calc_uuids
+        outputnode_dict['distance_charge'] = distancelist
+        outputnode_dict['distance_charge_units'] = dis_u
+        outputnode_dict['nsteps'] = self.ctx.points
         # outputnode_dict['guess']= self.ctx.guess,
-        outputnode_dict['stepsize']= self.ctx.step,
-        outputnode_dict['residuals']= residuals,
-        outputnode_dict['bulk_deriv']= bulk_deriv,
-        outputnode_dict['bulk_modulus']= bulk_modulus * 160.217733,  # * echarge * 1.0e21,#GPa
-        outputnode_dict['bulk_modulus_units']= 'GPa',
-        outputnode_dict['info']= self.ctx.info,
-        outputnode_dict['warnings']= self.ctx.warnings,
-        outputnode_dict['errors']= self.ctx.errors
+        outputnode_dict['stepsize'] = self.ctx.step
+        outputnode_dict['residuals'] = residuals
+        outputnode_dict['bulk_deriv'] = bulk_deriv
+        outputnode_dict['bulk_modulus'] = bulk_modulus * 160.217733  # * echarge * 1.0e21,#GPa
+        outputnode_dict['bulk_modulus_units'] = 'GPa'
+        outputnode_dict['info'] = self.ctx.info
+        outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['errors'] = self.ctx.errors
 
         if self.ctx.successful:
             self.report('Done, Strain calculation complete')
         else:
-            self.report(
-                'Done, but something went wrong.... Probably some individual calculation failed or'
-                ' a scf-cycle did not reach the desired distance.')
+            self.report('Done, but something went wrong.... Probably some individual calculation failed or'
+                        ' a scf-cycle did not reach the desired distance.')
 
         outputnode_t = Dict(dict=outputnode_dict)
         outdict = create_strain_result_node(outpara=outputnode_t)
@@ -384,7 +374,6 @@ class FleurStrainWorkChain(WorkChain):
         self.ctx.errors.append(errormsg)
         self.return_results()
 
-        return
 
 @cf
 def create_strain_result_node(**kwargs):
@@ -394,7 +383,7 @@ def create_strain_result_node(**kwargs):
     It also connects the output_node to all nodes the information comes from.
     """
     for key, val in six.iteritems(kwargs):
-        if key == 'outpara': 
+        if key == 'outpara':
             outpara = val
     outdict = {}
     outputnode = outpara.clone()
@@ -428,6 +417,7 @@ def strain_structures(inp_structure, scalelist):
 
     return re_structures
 
+
 # pylint: disable=invalid-name
 def birch_murnaghan_fit(energies, volumes):
     """
@@ -459,19 +449,19 @@ def birch_murnaghan_fit(energies, volumes):
 
     if volume0 == 0:
         print('Error: No minimum could be found')
-        exit()
+        return None
 
     derivV2 = 4. / 9. * x**5. * deriv2(x)
-    derivV3 = (-20. / 9. * x**(13. / 2.) * deriv2(x) -
-               8. / 27. * x**(15. / 2.) * deriv3(x))
+    derivV3 = (-20. / 9. * x**(13. / 2.) * deriv2(x) - 8. / 27. * x**(15. / 2.) * deriv3(x))
     bulk_modulus0 = derivV2 / x**(3. / 2.)
     bulk_deriv0 = -1 - x**(-3. / 2.) * derivV3 / derivV2
 
     return volume0, bulk_modulus0, bulk_deriv0, residuals0
 
 
-def deformation_potential(volume,bandgap):
-    xs=np.log(volume)
-    ys=bandgap
-    dprime = (((np.mean(xs)*np.mean(ys)) - np.mean(xs*ys)) / ((np.mean(xs)**2) - np.mean(xs**2)))
+def deformation_potential(volume, bandgap):
+    """Calculate the deformation potential"""
+    xs = np.log(volume)
+    ys = bandgap
+    dprime = (((np.mean(xs) * np.mean(ys)) - np.mean(xs * ys)) / ((np.mean(xs)**2) - np.mean(xs**2)))
     return dprime
