@@ -1,7 +1,20 @@
+## v.1.2.0
+### release compatible with AiiDA-core 1.3.0+
+possibly ready for aiida-core 2.0.0
+- supports Fleur MaXR4 and MaXR5 versions with new inpgen 
+MaXR4 requires providing versions in the code nodes
+- Some features relying on the id in the inpgen files, 
+may be broken by the new inpgen interface change when using MaXR5.1
+- Added support for GW calculations with Spex, and the Strain workchain
+- Major code refactoring, moving all xml tools to masci-tools (therefore requires masci-tools >=0.4.8)
+- Also all file parsers are overworked and moved to masci-tools
+- Work over of the BanddosWorkChain.
+
+
 ## v.1.1.4
 ### release compatible with AiiDA-core 1.3.0
-### still support of Fleur MaXR4 version with inpgen
-### Does not support yet Fleur MaXR5 and new inpgen
+- still support of Fleur MaXR4 version with inpgen
+- Does not support yet Fleur MaXR5 and new inpgen
 - Fixed numpy dependency issue with aiida-common-workflows and quantum mobile
 
 ## v1.1.3

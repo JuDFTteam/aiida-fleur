@@ -1,5 +1,5 @@
 {
-    "version": "1.1.4",
+    "version": "1.2.0",
     "name": "aiida-fleur",
     "url": "https://github.com/JuDFTteam/aiida-fleur",
     "license": "MIT License, see LICENSE.txt file.",
@@ -77,7 +77,8 @@
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.banddos = aiida_fleur.workflows.banddos:FleurBandDosWorkChain",
-            "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
+            "fleur.strain = aiida_fleur.workflows.strain:FleurStrainWorkChain",
+	    "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain",
             "fleur.corehole = aiida_fleur.workflows.corehole:FleurCoreholeWorkChain",
             "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",
