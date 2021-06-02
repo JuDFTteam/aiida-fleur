@@ -216,7 +216,8 @@ class FleurBandDosWorkChain(WorkChain):
             fleurmode.set_kpointlist(**explicit)
 
         if listname is None:
-            listname = 'path-2'
+            if wf_dict.get('mode') == 'band':
+                listname = 'path-2'
 
         if nkpts is None and distance is None:
             nkpts = 500
@@ -225,9 +226,11 @@ class FleurBandDosWorkChain(WorkChain):
             fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
 
         if kpath == 'auto':
-            if fleurin.inp_version >= '0.32':
+            if fleurin.inp_version >= '0.32' and listname is not None:
                 fleurmode.switch_kpointset(listname)
         elif isinstance(kpath, dict):
+            if wf_dict.get('mode') == 'dos':
+                raise ValueError('specifying a kpath is not valid for DOS calculations')
             if fleurin.inp_version < '0.32':
                 if distance is not None:
                     raise ValueError('set_kpath only supports specifying the number of points for the kpoints')
@@ -235,7 +238,8 @@ class FleurBandDosWorkChain(WorkChain):
             else:
                 raise ValueError('set_kpath is only supported for inputs up to Max4')
         elif kpath == 'seek':
-
+            if wf_dict.get('mode') == 'dos':
+                raise ValueError('specifying a kpath is not valid for DOS calculations')
             #Use aiida functionality
             struc = fleurin.get_structuredata()
 
@@ -261,6 +265,8 @@ class FleurBandDosWorkChain(WorkChain):
         elif kpath == 'skip':
             return
         else:
+            if wf_dict.get('mode') == 'dos':
+                raise ValueError('specifying a kpath is not valid for DOS calculations')
             #Use ase
             struc = fleurin.get_structuredata()
 
