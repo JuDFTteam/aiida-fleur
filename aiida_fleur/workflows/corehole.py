@@ -22,9 +22,7 @@ energies and corelevel shifts with different methods.
 # TODO corelevel workflow, rename species of 0,0,0 position in inp.xml
 
 #import os.path
-from __future__ import absolute_import
-from __future__ import print_function
-import six
+
 import re
 import numpy as np
 from pprint import pprint
@@ -49,7 +47,7 @@ from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 from aiida_fleur.data.fleurinp import FleurinpData
 
 
-class fleur_corehole_wc(WorkChain):
+class FleurCoreholeWorkChain(WorkChain):
     """
     Turn key solution for a corehole calculation with the FLEUR code.
     Has different protocols for different core-hole types (valence, charge).
@@ -114,7 +112,7 @@ class fleur_corehole_wc(WorkChain):
     # Hints:
     # 1. This workflow does not work with local codes!
 
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.0'
     _default_options = {
         'resources': {
             'num_machines': 1,
@@ -205,7 +203,7 @@ class fleur_corehole_wc(WorkChain):
         Do some input checks. Further input checks are done in further workflow steps
         """
         # TODO: document parameters
-        self.report('started fleur_corehole_wc version {} '
+        self.report('started FleurCoreholeWorkChain version {} '
                     'Workchain node identifiers: '  #{}"
                     ''.format(self._workflowversion))  #, ProcessRegistry().current_calc_node))
 
@@ -244,7 +242,7 @@ class fleur_corehole_wc(WorkChain):
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -319,7 +317,7 @@ class fleur_corehole_wc(WorkChain):
         # overwrite label and description of new structure
         supercell_s.label = '{}x{}x{} of {}'.format(supercell_base[0], supercell_base[1], supercell_base[2],
                                                     self.ctx.base_structure_relax.uuid)
-        supercell_s.description = supercell_s.description + ' created in a fleur_corehole_wc'
+        supercell_s.description = supercell_s.description + ' created in a FleurCoreholeWorkChain'
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
         if calc_para is None:
@@ -347,7 +345,8 @@ class fleur_corehole_wc(WorkChain):
 
         # TODO if this becomes to long split
         """
-        self.report('INFO: In create_coreholes of fleur_corehole_wc. ' 'Preparing everything for calculation launches.')
+        self.report('INFO: In create_coreholes of FleurCoreholeWorkChain. '
+                    'Preparing everything for calculation launches.')
 
         ########### init variables ##############
 
@@ -401,7 +400,7 @@ class fleur_corehole_wc(WorkChain):
         # 1. Find out what atoms to put coreholes on
         self.report('Atoms to calculate : {}'.format(atoms_toc))
         for atom_info in atoms_toc:
-            if isinstance(atom_info, (str, six.text_type)):  #basestring):
+            if isinstance(atom_info, str):  # , six.text_type)):  #basestring):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
                     #coreholes_atoms = base_atoms_sites
@@ -458,7 +457,7 @@ class fleur_corehole_wc(WorkChain):
         # 2. now check what type of corelevel shall we create on those atoms
         self.report('Corelevels to calculate : {}'.format(corelevels_toc))
         for corel in corelevels_toc:
-            if isinstance(corel, (str, six.text_type)):  #basestring):
+            if isinstance(corel, str):  # , six.text_type)):  #basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split('[, ;:-]', corel)
                 #print(elm_cl)
@@ -674,8 +673,8 @@ class fleur_corehole_wc(WorkChain):
         """
 
         # TODO: idea instead of a list, just use a dictionary...
-        self.report('INFO: In run_ref_scf fleur_corehole_wc')
-        print('INFO: In run_ref_scf fleur_corehole_wc')
+        self.report('INFO: In run_ref_scf FleurCoreholeWorkChain')
+        print('INFO: In run_ref_scf FleurCoreholeWorkChain')
         para = self.ctx.scf_para
         if para is None:
             wf_parameter = {}
@@ -719,8 +718,8 @@ class fleur_corehole_wc(WorkChain):
         '''
         #res_all = []
         calcs = {}
-        scf_label = 'corehole_wc ref cell'
-        scf_desc = '|corehole_wc|'
+        scf_label = 'FleurCoreholeWorkChain ref cell'
+        scf_desc = '|FleurCoreholeWorkChain|'
         i = 0
         for node in self.ctx.calcs_ref_torun:  # usually just 1, but we leave the default.
             #print node
@@ -796,7 +795,7 @@ class fleur_corehole_wc(WorkChain):
         If the structures should be relaxed, check if their Forces are below a certain
         threshold, otherwise throw them in the relaxation wf.
         """
-        self.report('In relaxation fleur_corehole_wc')
+        self.report('In relaxation FleurCoreholeWorkChain')
         if self.ctx.relax:
             # TODO check all forces of calculations
             forces_fine = True
@@ -808,7 +807,7 @@ class fleur_corehole_wc(WorkChain):
         """
         Do structural relaxation for certain structures.
         """
-        self.report('In relax fleur_corehole_wc workflow')
+        self.report('In relax FleurCoreholeWorkChain workflow')
         self.ctx.base_structure_relax = self.ctx.base_structure
         #for calc in self.ctx.dos_to_calc:
         #    pass
@@ -818,8 +817,8 @@ class fleur_corehole_wc(WorkChain):
         """
         Run a scf for the all corehole calculations in parallel super cell
         """
-        self.report('INFO: In run_scfs fleur_corehole_wc')
-        print('INFO: In run_scfs fleur_corehole_wc')
+        self.report('INFO: In run_scfs FleurCoreholeWorkChain')
+        print('INFO: In run_scfs FleurCoreholeWorkChain')
         para = self.ctx.scf_para
         if para is None:
             wf_parameter = {}
@@ -832,8 +831,8 @@ class fleur_corehole_wc(WorkChain):
         options = Dict(dict=self.ctx.options)
         #res_all = []
         calcs = {}
-        scf_label = 'corehole_wc cell'
-        scf_desc = '|corehole_wc|'
+        scf_label = 'FleurCoreholeWorkChain cell'
+        scf_desc = '|FleurCoreholeWorkChain|'
         # now in parallel
         #print self.ctx.ref_calcs_torun
         i = 0  #
@@ -902,7 +901,7 @@ class fleur_corehole_wc(WorkChain):
 
         # TODO: what about partial collection?
         # if some calc failed do not abort, but collect the others.
-        message = ('INFO: Collecting results of fleur_corehole_wc workflow')
+        message = ('INFO: Collecting results of FleurCoreholeWorkChain workflow')
         self.report(message)
 
         all_CLS = {}
@@ -1036,9 +1035,9 @@ class fleur_corehole_wc(WorkChain):
         #outdict = {}
         #outdict['output_eos_wc_para'] = ouputnode
 
-        for k, v in six.iteritems(outdict):
+        for k, v in outdict.items():
             self.out(k, v)
-        msg = ('INFO: fleur_corehole_wc workflow Done')
+        msg = ('INFO: FleurCoreholeWorkChain workflow Done')
         self.report(msg)
 
     def control_end_wc(self, errormsg):
