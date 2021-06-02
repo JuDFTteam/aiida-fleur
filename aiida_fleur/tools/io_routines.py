@@ -14,10 +14,6 @@ Here we collect IO routines and their utility, for writting certain things to fi
 For example collection of data or database evaluations, for other people.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-import six
-
 
 def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
     """
@@ -38,7 +34,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
         for item in datat:
             itemstring = ''
             for value in item:
-                if isinstance(value, (six.string_types, str)):
+                if isinstance(value, str):
                     itemstring = itemstring + '{}{}'.format(value, seperator)
                 else:
                     itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)

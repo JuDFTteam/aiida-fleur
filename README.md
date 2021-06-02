@@ -222,5 +222,5 @@ Besides the Forschungszentrum Juelich, this work is supported by the European Ma
 For this work essential is AiiDA, which itself is supported by the [MARVEL National Centre for Competency in Research](<http://nccr-marvel.ch>) funded by the [Swiss National Science Foundation](<http://www.snf.ch/en>).
 
 
-<img src="docs/source/images/MaX-orizz.png" alt="MaX" width="200"/>
+<img src="docs/source/images/MAX-orizz.png" alt="MaX" width="200"/>
 <img src="docs/source/images/Logo-JLVMD.png" alt="JLVMD" width="200"/>
