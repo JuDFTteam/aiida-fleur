@@ -150,3 +150,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.create_magnetic_film import FleurCreateMagneticWorkChain
 
         builder = FleurCreateMagneticWorkChain.get_builder()
+
+    def test_fleur_strain_wc_init(self):
+        """
+        Test the interface of the dmi workchain
+        """
+        from aiida_fleur.workflows.strain import FleurStrainWorkChain
+
+        builder = FleurStrainWorkChain.get_builder()

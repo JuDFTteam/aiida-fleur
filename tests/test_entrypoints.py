@@ -159,3 +159,10 @@ class TestFleurEntrypoints:
 
         workflow = WorkflowFactory('fleur.create_magnetic')
         assert workflow == FleurCreateMagneticWorkChain
+
+    def test_fleur_strain_wc_entry_point(self):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.strain import FleurStrainWorkChain
+
+        workflow = WorkflowFactory('fleur.strain')
+        assert workflow == FleurStrainWorkChain
