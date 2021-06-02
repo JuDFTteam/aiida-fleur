@@ -59,17 +59,17 @@ class TestFleurWorkchainInterfaces:
         """
         Test the interface of the corehole workchain
         """
-        from aiida_fleur.workflows.corehole import fleur_corehole_wc
+        from aiida_fleur.workflows.corehole import FleurCoreholeWorkChain
 
-        builder = fleur_corehole_wc.get_builder()
+        builder = FleurCoreholeWorkChain.get_builder()
 
     def test_fleur_initial_cls_wc_init(self):
         """
         Test the interface of the scf workchain
         """
-        from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+        from aiida_fleur.workflows.initial_cls import FleurInitialCLSWorkChain
 
-        builder = fleur_initial_cls_wc.get_builder()
+        builder = FleurInitialCLSWorkChain.get_builder()
 
     def test_fleur_relax_wc_init(self):
         """

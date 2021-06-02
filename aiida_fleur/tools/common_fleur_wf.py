@@ -22,53 +22,44 @@ import six
 from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
+# def is_code(code):
+#     """
+#     Test if the given input is a Code node, by object, id, uuid, or pk
+#     if yes returns a Code node in all cases
+#     if no returns None
+#     """
+#     from aiida.orm import Code
+#     from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
 
-def is_code(code):
-    """
-    Test if the given input is a Code node, by object, id, uuid, or pk
-    if yes returns a Code node in all cases
-    if no returns None
-    """
-    from aiida.orm import Code
-    from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
+#     if isinstance(code, Code):
+#         return code
 
-    if isinstance(code, Code):
-        return code
+#     try:
+#         pk = int(code)
+#     except ValueError:
+#         codestring = str(code)
+#         try:
+#             code = Code.get_from_string(codestring)
+#         except NotExistent:
+#             try:
+#                 code = load_node(codestring)
+#             except NotExistent:
+#                 code = None
+#         except (InputValidationError, MultipleObjectsError):
+#             code = None
+#     else:
+#         try:
+#             code = load_node(pk)
+#         except NotExistent:
+#             code = None
 
-    try:
-        pk = int(code)
-    except ValueError:
-        codestring = str(code)
-        try:
-            code = Code.get_from_string(codestring)
-        except NotExistent:
-            try:
-                code = load_node(codestring)
-            except NotExistent:
-                code = None
-        except (InputValidationError, MultipleObjectsError):
-            code = None
-    else:
-        try:
-            code = load_node(pk)
-        except NotExistent:
-            code = None
-
-    if isinstance(code, Code):
-        return code
-    else:
-        return None
+#     if isinstance(code, Code):
+#         return code
+#     else:
+#         return None
 
 
-def get_inputs_fleur(code,
-                     remote,
-                     fleurinp,
-                     options,
-                     label='',
-                     description='',
-                     settings=None,
-                     serial=False,
-                     only_even_MPI=False):
+def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
     correct input types, it is the work of FleurCalculation to check it.
@@ -92,10 +83,14 @@ def get_inputs_fleur(code,
     '''
     Dict = DataFactory('dict')
     inputs = {}
-    if isinstance(only_even_MPI, Bool):
-        inputs['only_even_MPI'] = only_even_MPI
-    else:
-        inputs['only_even_MPI'] = Bool(only_even_MPI)
+
+    if add_comp_para is None:
+        add_comp_para = {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
 
     if remote:
         inputs['parent_folder'] = remote
@@ -113,7 +108,7 @@ def get_inputs_fleur(code,
     else:
         inputs['label'] = ''
     # TODO check  if code is parallel version?
-    if serial:
+    if add_comp_para['serial']:
         if not options:
             options = {}
         options['withmpi'] = False  # for now
@@ -123,6 +118,8 @@ def get_inputs_fleur(code,
         options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     else:
         options['withmpi'] = True
+
+    inputs['add_comp_para'] = Dict(dict=add_comp_para)
 
     custom_commands = options.get('custom_scheduler_commands', '')
     options['custom_scheduler_commands'] = custom_commands
@@ -223,7 +220,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = ['{}@{}'.format(c.label, c.computer.name) for [c] in qb.all()]
+        valid_code_labels = ['{}@{}'.format(c.label, c.computer.label) for [c] in qb.all()]
 
         if valid_code_labels:
             msg = ('Given Code node is not of expected code type.\n'
@@ -316,7 +313,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
         if not formenergy:  # test if 0 case ok
             if isinstance(n, WorkChain):  # TODO: untested for aiida > 1.0
                 plabel = n.get_attr('_process_label')
-                if plabel == 'fleur_initial_cls_wc':
+                if plabel == 'FleurInitialCLSWorkChain':
                     try:
                         ouputnode = n.out.output_initial_cls_wc_para.get_dict()
                     except AttributeError:
@@ -423,10 +420,10 @@ def performance_extract_calcs(calcs):
         data_dict['n_iterations'].append(niter)
         data_dict['n_iterations_total'].append(res.number_of_iterations_total)
 
-        if u'charge_density' in res_keys:
-            data_dict['density_distance'].append(res.charge_density)
+        if u'overall_density_convergence' not in res_keys:
+            data_dict['density_distance'].append(res.density_convergence)
         else:  # magnetic, old
-            data_dict['density_distance'].append(res.overall_charge_density)
+            data_dict['density_distance'].append(res.overall_density_convergence)
 
         walltime = res.walltime
         if walltime <= 0:
@@ -440,7 +437,7 @@ def performance_extract_calcs(calcs):
         data_dict['walltime_sec'].append(walltime)
         data_dict['walltime_sec_cor'].append(walltime_new)
         data_dict['walltime_sec_per_it'].append(walltime_periteration)
-        cname = calc.computer.name
+        cname = calc.computer.label
         data_dict['computer'].append(cname)
         natom = res.number_of_atoms
         data_dict['n_atoms'].append(natom)
@@ -546,24 +543,7 @@ def optimize_calc_options(nodes,
 
     cpus_per_node = mpi_per_node * omp_per_mpi
     if fleurinpData:
-        modes = fleurinpData.get_fleur_modes()
-
-        # fleur version < 32 # todo this is not nice
-        kpts = fleurinpData.attributes['inp_dict']['calculationSetup'].get('bzIntegration', None)
-        if kpts is None:
-            kpts = fleurinpData.attributes['inp_dict']['cell']['bzIntegration']
-        if modes['band']:
-            kpts = kpts['altKPointSet']['count']
-        else:
-            if 'kPointList' in kpts:
-                kpts = kpts['kPointList']['count']
-            elif 'kPointLists' in kpts:  # There can probably be others
-                # also it is not clear for which kpoint set to optimize the execution
-                # the one with the most kpoints? Find one which best for all?
-                kpts = kpts['kPointLists']['kPointList']['count']
-            else:
-                kpts = kpts['kPointCount']['count']
-        kpts = int(kpts)
+        kpts = fleurinpData.get_nkpts()
     elif not kpts:
         raise ValueError('You must specify either kpts of fleurinpData')
     divisors_kpts = divisors(kpts)
@@ -640,7 +620,7 @@ def find_last_submitted_calcjob(restart_wc):
     from aiida.common.exceptions import NotExistent
     from aiida.orm import CalcJobNode
     links = restart_wc.get_outgoing().all()
-    calls = list([x for x in links if isinstance(x.node, CalcJobNode)])
+    calls = [x for x in links if isinstance(x.node, CalcJobNode)]
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
@@ -656,7 +636,7 @@ def find_last_submitted_workchain(restart_wc):
     from aiida.common.exceptions import NotExistent
     from aiida.orm import WorkChainNode
     links = restart_wc.get_outgoing().all()
-    calls = list([x for x in links if isinstance(x.node, WorkChainNode)])
+    calls = [x for x in links if isinstance(x.node, WorkChainNode)]
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid

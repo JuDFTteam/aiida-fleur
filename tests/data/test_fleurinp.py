@@ -36,6 +36,12 @@ for subdir, dirs, files in os.walk(inpxmlfilefolder_non_valid):
         if file.endswith('.xml'):
             inpxmlfilelist2.append(os.path.join(subdir, file))
 
+INPXML_LATNAM_DEFINITION = [
+    'Fe_bct_SOCXML', 'CuBulkXML', 'CuBandXML', 'Bi2Te3XML', 'PTO-SOCXML', 'Fe_bctXML', 'Fe_1lXML', 'Fe_1l_SOCXML',
+    'Fe_bct_LOXML', 'NiO_ldauXML', 'CuDOSXML', 'PTOXML'
+]
+INPXML_NO_KPOINTLISTS = ['GaAsMultiForceXML']
+
 
 @pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
 def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
@@ -44,9 +50,8 @@ def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
     """
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
 
-    assert fleurinp_tmp._has_schema
-    assert fleurinp_tmp._schema_file_path is not None
     assert fleurinp_tmp.inp_dict != {}
+    assert fleurinp_tmp.parser_info['parser_warnings'] == []
     assert fleurinp_tmp._validate() is None  # if fails, _validate throws an error
 
 
@@ -76,14 +81,20 @@ def test_fleurinp_kpointsdata_extraction(create_fleurinp, inpxmlfilepath):
     from aiida.orm import KpointsData
 
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    kptsd = fleurinp_tmp.get_kpointsdata_ncf()
 
-    if kptsd is not None:
-        assert isinstance(kptsd, KpointsData)
+    if any(folder in inpxmlfilepath for folder in INPXML_LATNAM_DEFINITION):
+        with pytest.raises(ValueError, match='Could not extract Bravais matrix out of inp.xml.'):
+            fleurinp_tmp.get_kpointsdata_ncf()
+    elif any(folder in inpxmlfilepath for folder in INPXML_NO_KPOINTLISTS):
+        with pytest.raises(ValueError, match='No Kpoint lists found in the given inp.xml'):
+            fleurinp_tmp.get_kpointsdata_ncf()
     else:
-        pass
-        # What todo here, may test inpxml are with latnam definded, which does not work here.
-        # or without a kpoint list. Therefore this test might let two much through
+        kptsd = fleurinp_tmp.get_kpointsdata_ncf()
+
+        assert isinstance(kptsd, (KpointsData, dict))
+
+        if isinstance(kptsd, dict):
+            assert all(isinstance(val, KpointsData) for val in kptsd.values())
 
 
 @pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
@@ -111,12 +122,14 @@ def test_fleurinp_structuredata_extraction(create_fleurinp, inpxmlfilepath):
     from aiida.orm import StructureData
 
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    struc = fleurinp_tmp.get_structuredata_ncf()
-
-    if struc is not None:
-        assert isinstance(struc, StructureData)
+    if any(folder in inpxmlfilepath for folder in INPXML_LATNAM_DEFINITION):
+        with pytest.raises(ValueError, match='Could not extract Bravais matrix out of inp.xml.'):
+            fleurinp_tmp.get_structuredata_ncf()
     else:
-        pass
+        struc = fleurinp_tmp.get_structuredata_ncf()
+
+        assert isinstance(struc, StructureData)
+
     #    # What todo here, may test inpxml are with latnam definded,
     #    # which does not work here.
     #    # But if something else fails also None return. T
@@ -148,6 +161,63 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
 def test_get_tag(create_fleurinp, inpxmlfilepath):
 
     fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
+    with pytest.deprecated_call():
+        tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
 
     assert tag != []
+
+
+folderlist = [
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/Fe_1l_SOCXML/files')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/FePt')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../files/included_xml_files')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../parsers/fixtures/fleur/default')),
+    os.path.abspath(os.path.join(inpxmlfilefolder, '../parsers/fixtures/fleur/relax'))
+]
+
+expected_files_list = [{'inp.xml'}, {'inp.xml'}, {'inp.xml', 'kpts.xml', 'sym.xml'}, {'inp.xml'},
+                       {'inp.xml', 'relax.xml'}]
+
+
+@pytest.mark.parametrize('folderpath,expected_files', zip(folderlist, expected_files_list))
+def test_get_fleurinp_from_folder_data(folderpath, expected_files):
+    from aiida import orm
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_folder_data
+
+    folder = orm.FolderData()
+    folder.put_object_from_tree(folderpath)
+
+    fleurinp = get_fleurinp_from_folder_data(folder)
+
+    assert set(fleurinp.files) == expected_files
+
+
+test_names = ['default', 'relax']
+fleur_expected_files = [{'inp.xml'}, {'inp.xml', 'relax.xml'}]
+
+
+@pytest.mark.parametrize('parser_test_name,expected_files', zip(test_names, fleur_expected_files))
+def test_get_fleurinp_from_remote_data_fleur(fixture_localhost, generate_calc_job_node, parser_test_name,
+                                             expected_files):
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
+
+    entry_point_calc_job = 'fleur.fleur'
+
+    node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, parser_test_name, store=True)
+
+    fleurinp = get_fleurinp_from_remote_data(node.outputs.remote_folder)
+
+    assert set(fleurinp.files) == expected_files
+
+
+def test_get_fleurinp_from_remote_data_inpgen(fixture_localhost, generate_calc_job_node):
+    from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
+
+    name = 'default'
+    entry_point_calc_job = 'fleur.inpgen'
+
+    node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, name, store=True)
+
+    fleurinp = get_fleurinp_from_remote_data(node.outputs.remote_folder)
+
+    assert set(fleurinp.files) == {'inp.xml'}

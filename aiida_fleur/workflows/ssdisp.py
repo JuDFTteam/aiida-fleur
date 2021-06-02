@@ -23,7 +23,7 @@ from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import Code, load_node
 from aiida.orm import RemoteData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -34,7 +34,7 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.common.constants import HTR_TO_EV
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 
 class FleurSSDispWorkChain(WorkChain):
@@ -63,15 +63,24 @@ class FleurSSDispWorkChain(WorkChain):
         'prop_dir': [1.0, 0.0, 0.0],
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
-        'serial': False,
-        'only_even_MPI': False,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
         'inpxml_changes': []
     }
 
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_inputs(FleurScfWorkChain,
+                           namespace_options={
+                               'required': False,
+                               'populate_defaults': False
+                           },
+                           namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('remote', valid_type=RemoteData, required=False)
@@ -162,7 +171,7 @@ class FleurSSDispWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # Check if user gave an input setup making any sense
-        if inputs.scf:
+        if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the FT'
@@ -223,7 +232,9 @@ class FleurSSDispWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -262,12 +273,7 @@ class FleurSSDispWorkChain(WorkChain):
             if 'fleurinp' in self.inputs:  # use the given fleurinp
                 fleurin = self.inputs.fleurinp
             else:  # or generate a new one from inp.xml located in the remote folder
-                remote_node = self.inputs.remote
-                for link in remote_node.get_incoming().all():
-                    if isinstance(link.node, CalcJobNode):
-                        parent_calc_node = link.node
-                retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
 
         # copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -300,7 +306,9 @@ class FleurSSDispWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             fchanges.append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -408,8 +416,7 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -444,8 +451,7 @@ class FleurSSDispWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -468,13 +474,13 @@ class FleurSSDispWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.spst_force_evSum
-            e_u = out_dict.energy_units
+            t_energydict = out_dict.spst_force_evsum
+            e_u = out_dict.spst_force_units
 
             # Find a minimal value of SpSp and count it as 0
             minenergy = min(t_energydict)
 
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_energydict = [HTR_TO_EV * (x - minenergy) for x in t_energydict]
             else:
                 t_energydict = [(x - minenergy) for x in t_energydict]

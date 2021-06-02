@@ -22,6 +22,8 @@ from aiida.common.exceptions import NotExistent, InputValidationError, Validatio
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
+import pprint
+
 
 class Fleur_inputgenParser(Parser):
     """
@@ -87,14 +89,19 @@ class Fleur_inputgenParser(Parser):
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                self.logger.error("'{}' file not found in retrived folder, it was probably "
+                self.logger.error("'{}' file not found in retrieved folder, it was probably "
                                   'not created by inpgen'.format(file1))
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:
-            fleurinp = FleurinpData(files=[inpxml_file], node=output_folder)
+            fleurinp = FleurinpData(files=[])
+            fleurinp.set_file(inpxml_file, node=output_folder)
         except InputValidationError as ex:
             self.logger.error('FleurinpData initialization failed: {}'.format(str(ex)))
+            if fleurinp.parser_info == {}:
+                self.logger.error('Parser output: No Output produced')
+            else:
+                self.logger.error(f'Parser output: {pprint.pformat(fleurinp.parser_info)}')
             return self.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID
         except ValidationError as ex:
             self.logger.error('FleurinpData validation failed: {}'.format(str(ex)))

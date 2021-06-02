@@ -184,7 +184,8 @@ class FleurEosWorkChain(WorkChain):
         first_scf = self.ctx[label]
         if not first_scf.is_finished_ok:
             self.report('Initial sub process did not finish successful so aborting the workchain.')
-            return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
+            # return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
+            return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
         fleurinp = first_scf.outputs.fleurinp
         self.ctx.first_calc_parameters = fleurinp.get_parameterdata()
@@ -275,7 +276,7 @@ class FleurEosWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')

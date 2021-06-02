@@ -246,8 +246,10 @@ def create_fleurinp():
     from aiida.plugins import DataFactory
     fleurinp = DataFactory('fleur.fleurinp')
 
-    def _make_fleurinp(inpxmlfilepath):
-        return fleurinp(files=[inpxmlfilepath])
+    def _make_fleurinp(inpxmlfilepath, additional_files=None):
+        if additional_files is None:
+            additional_files = []
+        return fleurinp(files=[inpxmlfilepath] + additional_files)
 
     return _make_fleurinp
 
@@ -256,13 +258,31 @@ def create_fleurinp():
 def inpxml_etree():
     """Returns the etree generator"""
 
-    def _get_etree(path):
+    def _get_etree(path, return_schema=False):
         from lxml import etree
+        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
         with open(path, 'r') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
-        return tree
+            version = tree.getroot().attrib['fleurInputVersion']
+            schema_dict = InputSchemaDict.fromVersion(version)
+        if return_schema:
+            return tree, schema_dict
+        else:
+            return tree
 
     return _get_etree
+
+
+@pytest.fixture
+def eval_xpath():
+    """Return the eval_xpath function"""
+
+    def _eval_xpath(node, xpath, list_return=False):
+        from masci_tools.util.xml.common_functions import eval_xpath
+
+        return eval_xpath(node, xpath, list_return=list_return)
+
+    return _eval_xpath
 
 
 @pytest.fixture

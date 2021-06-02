@@ -45,7 +45,7 @@ class FleurRelaxWorkChain(WorkChain):
         'run_final_scf': False,  # Run a final scf on the final relaxed structure
         'break_symmetry': False,  # Break the symmetry for the relaxation each atom own type
         'change_mixing_criterion': 0.025,  # After the force is smaller switch mixing scheme
-        'atoms_off': [],  # Species to be switched off, '49' is reserved
+        'atoms_off': [],  # Species to be switched off, '49999' is reserved
         'relaxation_type': 'atoms'  # others include None and maybe in the future volume
         # None would run an scf only
     }
@@ -136,8 +136,8 @@ class FleurRelaxWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        if '49' in wf_dict['atoms_off']:
-            error = '"49" label for atoms_off is reserved for internal use'
+        if '49999' in wf_dict['atoms_off']:
+            error = '"49999" label for atoms_off is reserved for internal use'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -232,7 +232,9 @@ class FleurRelaxWorkChain(WorkChain):
         if self.ctx.wf_dict['film_distance_relaxation']:
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att', {
                 'attributedict': {
-                    'force': [('relaxXYZ', 'FFT')]
+                    'force': {
+                        'relaxXYZ': 'FFT'
+                    }
                 },
                 'species': 'all'
             }))
@@ -240,16 +242,20 @@ class FleurRelaxWorkChain(WorkChain):
         for specie_off in self.ctx.wf_dict['atoms_off']:
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'force': [('relaxXYZ', 'FFF')]
+                    'force': {
+                        'relaxXYZ': 'FFF'
+                    }
                 },
                 'atom_label': specie_off
             }))
 
         scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
             'attributedict': {
-                'force': [('relaxXYZ', 'FFF')]
+                'force': {
+                    'relaxXYZ': 'FFF'
+                }
             },
-            'atom_label': '49'
+            'atom_label': '49999'
         }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
@@ -493,7 +499,7 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.final_atom_positions = atom_positions
         self.ctx.atomtype_info = atomtype_info
 
-        if film == 'True':
+        if film:
             self.ctx.pbc = (True, True, False)
         else:
             self.ctx.pbc = (True, True, True)
@@ -514,7 +520,7 @@ class FleurRelaxWorkChain(WorkChain):
                                           symbols=element,
                                           name=species_name)
                 else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[3] * BOHR_A),
+                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[2] * BOHR_A),
                                           symbols=element,
                                           name=species_name)
 

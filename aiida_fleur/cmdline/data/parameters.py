@@ -47,7 +47,7 @@ def cmd_param_import(filename, dry_run, fleurinp, show):
     if not fleurinp or dry_run:
         parameters = fleurinpd.get_parameterdata_ncf()
     else:
-        parameters = fleurinpd.get_parameterdata(fleurinpd)
+        parameters = fleurinpd.get_parameterdata()
 
     if dry_run:
         echo.echo_success('parsed FLAPW parameters')

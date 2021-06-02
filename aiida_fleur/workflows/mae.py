@@ -23,7 +23,7 @@ from lxml import etree
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import Code, load_node
 from aiida.orm import RemoteData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -32,7 +32,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 from aiida_fleur.common.constants import HTR_TO_EV
 
 
@@ -60,8 +60,12 @@ class FleurMaeWorkChain(WorkChain):
         'use_soc_ref': False,
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
-        'serial': False,
-        'only_even_MPI': False,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
         'soc_off': [],
         'inpxml_changes': [],
     }
@@ -69,7 +73,12 @@ class FleurMaeWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_inputs(FleurScfWorkChain,
+                           namespace_options={
+                               'required': False,
+                               'populate_defaults': False
+                           },
+                           namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('remote', valid_type=RemoteData, required=False)
@@ -177,7 +186,7 @@ class FleurMaeWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # Check if user gave an input setup making any sense
-        if inputs.scf:
+        if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the FT'
@@ -262,12 +271,7 @@ class FleurMaeWorkChain(WorkChain):
             else:
                 # In this case only remote is given
                 # fleurinp data has to be generated from the remote inp.xml file
-                remote_node = self.inputs.remote
-                for link in remote_node.get_incoming().all():
-                    if isinstance(link.node, CalcJobNode):
-                        parent_calc_node = link.node
-                retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
 
         # copy default changes
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
@@ -402,8 +406,7 @@ class FleurMaeWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -438,8 +441,7 @@ class FleurMaeWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.wf_dict['serial'],
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
@@ -468,14 +470,14 @@ class FleurMaeWorkChain(WorkChain):
             fleurout = calculation.outputs.output_parameters
             fleur_output_uuid = fleurout.uuid
             out_dict = fleurout.dict
-            t_energydict = out_dict.mae_force_evSum
+            t_energydict = out_dict.mae_force_evsum
             mae_thetas = out_dict.mae_force_theta
             mae_phis = out_dict.mae_force_phi
-            e_u = out_dict.energy_units
+            e_u = out_dict.mae_force_units
 
             minenergy = min(t_energydict)
 
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_energydict = [HTR_TO_EV * (x - minenergy) for x in t_energydict]
             else:
                 t_energydict = [(x - minenergy) for x in t_energydict]

@@ -19,9 +19,8 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from __future__ import absolute_import
 from lxml import etree
-import six
 
-from aiida.orm import Code, load_node, CalcJobNode
+from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict, Bool, Float
 from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
@@ -30,12 +29,13 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.xml_util import eval_xpath2, get_xml_attribute
 from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+
+from masci_tools.io.parsers.fleur import outxml_parser
 
 
 class FleurScfWorkChain(WorkChain):
@@ -71,8 +71,12 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_odd': False,
         'kpoints_force_false': False,
         'mode': 'density',  # 'density', 'energy' or 'force'
-        'serial': False,
-        'only_even_MPI': False,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
         'itmax_per_run': 30,
         'force_dict': {
             'qfix': 2,
@@ -151,11 +155,10 @@ class FleurScfWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
         fleur = self.inputs.fleur
         fleur_extras = fleur.extras
         inpgen_extras = None
@@ -185,7 +188,7 @@ class FleurScfWorkChain(WorkChain):
         # and queue does not matter in case of direct scheduler
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -394,21 +397,8 @@ class FleurScfWorkChain(WorkChain):
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
-            remote_node = self.inputs.remote_data
-            for link in remote_node.get_incoming().all():
-                if isinstance(link.node, CalcJobNode):
-                    parent_calc_node = link.node
-            retrieved_node = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
-            try:
-                if self.ctx.wf_dict['use_relax_xml']:
-                    fleurin = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
-                    self.report('INFO: generated FleurinpData from inp.xml and relax.xml')
-                else:
-                    raise ValueError
-            except ValueError:
-                fleurin = FleurinpData(files=['inp.xml'], node=retrieved_node)
-                self.report('INFO: generated FleurinpData from inp.xml')
-            fleurin.store()
+            fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
+            self.report(f'INFO: generated FleurinpData from files {fleurin}')
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
@@ -448,31 +438,15 @@ class FleurScfWorkChain(WorkChain):
                 self.inputs.settings = {'additional_retrieve_list':['basis.hdf','pot.hdf','ecore'],
                                         'additional_remotecopy_list':['basis.hdf','pot.hdf','ecore']}                
 
-        avail_ac_dict = fleurmode.get_avail_actions()
-
         # apply further user dependend changes
         if fchanges:
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    try:
-                        method(**para)
-                    except ValueError as vale:
-                        error = ('ERROR: Changing the inp.xml file failed. Tried to apply {}'
-                                 ', which failed with {}. I abort, good luck next time!'
-                                 ''.format(change, vale))
-                        self.control_end_wc(error)
-                        return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # validate?
         try:
@@ -532,8 +506,7 @@ class FleurScfWorkChain(WorkChain):
                                           label,
                                           description,
                                           settings,
-                                          serial=self.ctx.serial,
-                                          only_even_MPI=self.ctx.wf_dict['only_even_MPI'])
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
         self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
@@ -573,55 +546,39 @@ class FleurScfWorkChain(WorkChain):
         """
         self.report('INFO: get results FLEUR')
 
-        xpath_energy = '/fleurOutput/scfLoop/iteration/totalEnergy/@value'
-        xpath_iter = '/fleurOutput/scfLoop/iteration'
-        xpath_force = 'totalForcesOnRepresentativeAtoms/forceTotal'
-
-        # be aware of magnetism
-        xpath_distance = '/fleurOutput/scfLoop/iteration/densityConvergence/chargeDensity/@distance'
-        overallchargedensity_xpath = ('/fleurOutput/scfLoop/iteration/densityConvergence/'
-                                      'overallChargeDensity/@distance')
-
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
             fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
             walltime = last_base_wc.outputs.output_parameters.dict.walltime
+
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
-                                                      'r') as outxmlfile_opened:
-                tree = etree.parse(outxmlfile_opened)
-            root = tree.getroot()
+            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                output_dict = outxml_parser(outxmlfile,
+                                            minimal_mode=True,
+                                            list_return=True,
+                                            iteration_to_parse='all',
+                                            ignore_validation=True)
 
-            energies = eval_xpath2(root, xpath_energy)
-            for energy in energies:
-                self.ctx.total_energy.append(float(energy))
+            energies = output_dict.get('energy_hartree', [])
+            if energies is not None:
+                self.ctx.total_energy.extend(energies)
 
-            overall_distances = eval_xpath2(root, overallchargedensity_xpath)
-            if not overall_distances:
-                distances = eval_xpath2(root, xpath_distance)
-                for distance in distances:
-                    self.ctx.distance.append(float(distance))
+            if 'overall_density_convergence' in output_dict:
+                distances = output_dict['overall_density_convergence']
             else:
-                for distance in overall_distances:
-                    self.ctx.distance.append(float(distance))
+                distances = output_dict.get('density_convergence', [])
+
+            if distances is not None:
+                self.ctx.distance.extend(distances)
 
             if mode == 'force':
-                iter_all = eval_xpath2(root, xpath_iter)
-                for iteration in iter_all:
-                    forces = eval_xpath2(iteration, xpath_force)
-                    forces_in_iter = []
-                    for force in forces:
-                        force_x = float(get_xml_attribute(force, 'F_x'))
-                        force_y = float(get_xml_attribute(force, 'F_y'))
-                        force_z = float(get_xml_attribute(force, 'F_z'))
+                forces = output_dict.get('force_atoms', [])
+                if forces is not None:
+                    for force_iter in forces:
+                        self.ctx.all_forces.append([force for atom, force in force_iter])
 
-                        forces_in_iter.append(force_x)
-                        forces_in_iter.append(force_y)
-                        forces_in_iter.append(force_z)
-
-                    self.ctx.all_forces.append(forces_in_iter)
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -653,7 +610,8 @@ class FleurScfWorkChain(WorkChain):
         if mode == 'force':
             forces = self.ctx.all_forces
             if len(forces) >= 2:
-                self.ctx.forcediff = max([abs(forces[-1][i] - forces[-2][i]) for i in range(len(forces[-1]))])
+                self.ctx.forcediff = max(
+                    [abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(3)])
         else:
             self.ctx.forcediff = 'can not be determined'
 
@@ -785,7 +743,7 @@ class FleurScfWorkChain(WorkChain):
             outdict['last_fleur_calc_output'] = last_calc_out
 
         #outdict['output_scf_wc_para'] = outputnode
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
         if not self.ctx.reached_conv:
@@ -812,7 +770,7 @@ def create_scf_result_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'outpara':  # should be always there
             outpara = val
     outdict = {}

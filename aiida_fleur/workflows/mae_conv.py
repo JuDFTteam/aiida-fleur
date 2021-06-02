@@ -182,7 +182,7 @@ class FleurMaeConvWorkChain(WorkChain):
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_e = t_e * HTR_TO_EV
             t_energydict[label] = t_e
 

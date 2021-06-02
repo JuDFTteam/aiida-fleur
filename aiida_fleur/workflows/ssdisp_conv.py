@@ -138,7 +138,9 @@ class FleurSSDispConvWorkChain(WorkChain):
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
             scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
                 'attributedict': {
-                    'nocoParams': [('beta', val)]
+                    'nocoParams': {
+                        'beta': val
+                    }
                 },
                 'atom_label': key
             }))
@@ -185,7 +187,7 @@ class FleurSSDispConvWorkChain(WorkChain):
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
-            if e_u == 'Htr' or 'htr':
+            if e_u in ['Htr', 'htr']:
                 t_e = t_e * htr_to_eV
             t_energydict[label] = t_e
 

@@ -14,24 +14,23 @@
 In this module is the FleurinpModifier class, which is used to manipulate
 FleurinpData objects in a way which keeps the provernance.
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
-import io
-
 from lxml import etree
+import warnings
 
-from aiida.plugins import DataFactory
-from aiida import orm
 from aiida.engine.processes.functions import calcfunction as cf
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
+
+from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 
 
-class FleurinpModifier(object):
+class FleurinpModifier(FleurXMLModifier):
     """
     A class which represents changes to the :class:`~aiida_fleur.data.fleurinp.FleurinpData` object.
     """
+
+    _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
     def __init__(self, original):
         """
@@ -40,435 +39,67 @@ class FleurinpModifier(object):
         assert isinstance(original, FleurinpData), 'Wrong AiiDA data type'
 
         self._original = original
-        self._tasks = []
         self._other_nodes = {}
 
-    @staticmethod
-    def apply_modifications(fleurinp_tree_copy, nmmp_lines_copy, modification_tasks, schema_tree=None):
-        """
-        Applies given modifications to the fleurinp lxml tree.
-        It also checks if a new lxml tree is validated against schema.
-        Does not rise an error if inp.xml is not validated, simple prints a message about it.
+        super().__init__()
 
-        :param fleurinp_tree_copy: a fleurinp lxml tree to be modified
-        :param n_mmp_lines_copy: a n_mmp_mat file to be modified
+    @classmethod
+    def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
+        """
+        Apply the modifications working directly on the cloned
+        FleurinpData instance. The functions will warn the user if one of the methods
+        executed here are after XML modifications in the task list, since this method will implictly
+        reorder the order of the execution
+
+        .. warning::
+            These should be performed BEFORE the XML Modification methods
+            in any of the functions doing modifcations (:py:meth:`FleurinpModifier.show()`,
+            :py:meth:`FleurinpModifier.validate()`, :py:meth:`FleurinpModifier.freeze()`).
+
+        :param new_fleurinp: The Fleurinpdata instance cloned from the original
         :param modification_tasks: a list of modification tuples
-
-        :returns: a modified fleurinp lxml tree and a modified n_mmp_mat file
         """
-        from aiida_fleur.tools.xml_util import xml_set_attribv_occ, xml_set_first_attribv
-        from aiida_fleur.tools.xml_util import xml_set_all_attribv, xml_set_text
-        from aiida_fleur.tools.xml_util import xml_set_text_occ, xml_set_all_text
-        from aiida_fleur.tools.xml_util import create_tag, replace_tag, delete_tag
-        from aiida_fleur.tools.xml_util import delete_att, set_species
-        from aiida_fleur.tools.xml_util import change_atomgr_att, add_num_to_att
-        from aiida_fleur.tools.xml_util import change_atomgr_att_label, set_species_label
-        from aiida_fleur.tools.xml_util import set_inpchanges, set_nkpts, set_kpath, shift_value
-        from aiida_fleur.tools.xml_util import shift_value_species_label
-        from aiida_fleur.tools.xml_util import clear_xml
-        from aiida_fleur.tools.set_nmmpmat import set_nmmpmat, validate_nmmpmat
+        #These functions from the FleurinpData are supported
+        fleurinp_mod_functions = {'set_file': new_fleurinp.set_file, 'del_file': new_fleurinp.del_file}
 
-        def xml_set_attribv_occ1(fleurinp_tree_copy, xpathn, attributename, attribv, occ=None, create=False):
-            if occ is None:
-                occ = [0]
-            xml_set_attribv_occ(fleurinp_tree_copy, xpathn, attributename, attribv, occ=occ, create=create)
-            return fleurinp_tree_copy
-
-        def xml_set_first_attribv1(fleurinp_tree_copy, xpathn, attributename, attribv, create=False):
-            xml_set_first_attribv(fleurinp_tree_copy, xpathn, attributename, attribv, create=create)
-            return fleurinp_tree_copy
-
-        def xml_set_all_attribv1(fleurinp_tree_copy, xpathn, attributename, attribv, create=False):
-            xml_set_all_attribv(fleurinp_tree_copy, xpathn, attributename, attribv, create=create)
-            return fleurinp_tree_copy
-
-        def xml_set_text1(fleurinp_tree_copy, xpathn, text, create=False):
-            xml_set_text(fleurinp_tree_copy, xpathn, text, create=create)
-            return fleurinp_tree_copy
-
-        def xml_set_text_occ1(fleurinp_tree_copy, xpathn, text, create=False, occ=0):
-            xml_set_text_occ(fleurinp_tree_copy, xpathn, text, create=create, occ=occ)
-            return fleurinp_tree_copy
-
-        def xml_set_all_text1(fleurinp_tree_copy, xpathn, text, create=False):
-            xml_set_all_text(fleurinp_tree_copy, xpathn, text, create=create)
-            return fleurinp_tree_copy
-
-        def create_tag1(fleurinp_tree_copy, xpath, newelement, create=False):
-            fleurinp_tree_copy = create_tag(fleurinp_tree_copy, xpath, newelement, create=create)
-            return fleurinp_tree_copy
-
-        def delete_att1(fleurinp_tree_copy, xpath, attrib):
-            fleurinp_tree_copy = delete_att(fleurinp_tree_copy, xpath, attrib)
-            return fleurinp_tree_copy
-
-        def delete_tag1(fleurinp_tree_copy, xpath):
-            fleurinp_tree_copy = delete_tag(fleurinp_tree_copy, xpath)
-            return fleurinp_tree_copy
-
-        def replace_tag1(fleurinp_tree_copy, xpath, newelement):
-            fleurinp_tree_copy = replace_tag(fleurinp_tree_copy, xpath, newelement)
-            return fleurinp_tree_copy
-
-        def set_species1(fleurinp_tree_copy, species_name, attributedict, create=False):
-            fleurinp_tree_copy = set_species(fleurinp_tree_copy, species_name, attributedict, create=create)
-            return fleurinp_tree_copy
-
-        def set_species2(fleurinp_tree_copy, at_label, attributedict, create=False):
-            fleurinp_tree_copy = set_species_label(fleurinp_tree_copy, at_label, attributedict, create=create)
-            return fleurinp_tree_copy
-
-        def change_atomgr_att1(fleurinp_tree_copy, attributedict, position=None, species=None, create=False):
-            fleurinp_tree_copy = change_atomgr_att(fleurinp_tree_copy,
-                                                   attributedict,
-                                                   position=position,
-                                                   species=species)
-            return fleurinp_tree_copy
-
-        def change_atomgr_att2(fleurinp_tree_copy, attributedict, atom_label, create=False):
-            fleurinp_tree_copy = change_atomgr_att_label(fleurinp_tree_copy, attributedict, at_label=atom_label)
-            return fleurinp_tree_copy
-
-        def add_num_to_att1(fleurinp_tree_copy, xpathn, attributename, set_val, mode='abs', occ=None):
-            if occ is None:
-                occ = [0]
-            fleurinp_tree_copy = add_num_to_att(fleurinp_tree_copy, xpathn, attributename, set_val, mode=mode, occ=occ)
-            return fleurinp_tree_copy
-
-        def set_inpchanges1(fleurinp_tree_copy, change_dict):
-            fleurinp_tree_copy = set_inpchanges(fleurinp_tree_copy, change_dict)
-            return fleurinp_tree_copy
-
-        def shift_value1(fleurinp_tree_copy, change_dict, mode):
-            fleurinp_tree_copy = shift_value(fleurinp_tree_copy, change_dict, mode)
-            return fleurinp_tree_copy
-
-        def shift_value_species_label1(fleurinp_tree_copy, label, att_name, value, mode):
-            fleurinp_tree_copy = shift_value_species_label(fleurinp_tree_copy, label, att_name, value, mode)
-            return fleurinp_tree_copy
-
-        def set_nkpts1(fleurinp_tree_copy, count, gamma):
-            fleurinp_tree_copy = set_nkpts(fleurinp_tree_copy, count, gamma)
-            return fleurinp_tree_copy
-
-        def set_kpath1(fleurinp_tree_copy, kpath, count, gamma):
-            fleurinp_tree_copy = set_kpath(fleurinp_tree_copy, kpath, count, gamma)
-            return fleurinp_tree_copy
-
-        def set_kpointsdata1(fleurinp_tree_copy, kpointsdata_uuid):
-            fleurinp_tree_copy = set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid)
-            return fleurinp_tree_copy
-
-        def set_nmmpmat1(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
-                         spin, occStates, denmat, phi, theta):
-            nmmp_lines_copy = set_nmmpmat(fleurinp_tree_copy, nmmp_lines_copy, species_name, orbital,\
-                                          spin, occStates, denmat, phi, theta)
-            return nmmp_lines_copy
-
-        actions = {
-            'xml_set_attribv_occ': xml_set_attribv_occ1,
-            'xml_set_first_attribv': xml_set_first_attribv1,
-            'xml_set_all_attribv': xml_set_all_attribv1,
-            'xml_set_text': xml_set_text1,
-            'xml_set_text_occ': xml_set_text_occ1,
-            'xml_set_all_text': xml_set_all_text1,
-            'create_tag': create_tag1,
-            'replace_tag': replace_tag1,
-            'delete_tag': delete_tag1,
-            'delete_att': delete_att1,
-            'set_species': set_species1,
-            'set_species_label': set_species2,
-            'set_atomgr_att': change_atomgr_att1,
-            'set_atomgr_att_label': change_atomgr_att2,
-            'set_inpchanges': set_inpchanges1,
-            'shift_value': shift_value1,
-            'shift_value_species_label': shift_value_species_label1,
-            'set_nkpts': set_nkpts1,
-            'set_kpath': set_kpath1,
-            'set_kpointsdata': set_kpointsdata1,
-            'add_num_to_att': add_num_to_att1,
-            'set_nmmpmat': set_nmmpmat1
-        }
-
-        workingtree = fleurinp_tree_copy
-        workingnmmp = nmmp_lines_copy
-        if schema_tree:
-            #xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-            xmlschema = etree.XMLSchema(schema_tree)
-
+        warn = False
         for task in modification_tasks:
-            try:
-                action = actions[task[0]]
-            except KeyError as exc:
-                raise ValueError('Unknown task {}'.format(task[0])) from exc
-
-            if task[0] == 'set_nmmpmat':
-                workingnmmp = action(workingtree, workingnmmp, *task[1:])
+            if task.name in fleurinp_mod_functions:
+                modification_tasks.remove(task)
+                action = fleurinp_mod_functions[task.name]
+                action(*task.args, **task.kwargs)
+                if warn:
+                    warnings.warn('The modification methods operating directly adding/removing files '
+                                  'are performed before any XML modification methods')
             else:
-                workingtree = action(workingtree, *task[1:])
-
-        if schema_tree:
-            try:
-                xmlschema.assertValid(clear_xml(workingtree))
-            except etree.DocumentInvalid as exc:
-                msg = 'Changes were not valid: {}'.format(modification_tasks)
-                #print(msg)
-                raise etree.DocumentInvalid(msg) from exc
-            try:
-                validate_nmmpmat(workingtree, workingnmmp)
-            except ValueError as exc:
-                msg = 'Changes were not valid (n_mmp_mat file is not compatible): {}'.format(modification_tasks)
-                #print(msg)
-                raise ValueError(msg) from exc
-
-        return workingtree, workingnmmp
+                warn = True
 
     def get_avail_actions(self):
         """
         Returns the allowed functions from FleurinpModifier
         """
-        outside_actions = {
+        outside_actions_fleurinp = {
+            'set_kpointsdata': self.set_kpointsdata,
+            'set_atomgr_att': self.set_atomgr_att,
+            'set_atomgr_att_label': self.set_atomgr_att_label,
             'xml_set_attribv_occ': self.xml_set_attribv_occ,
             'xml_set_first_attribv': self.xml_set_first_attribv,
             'xml_set_all_attribv': self.xml_set_all_attribv,
-            'xml_set_text': self.xml_set_text,
             'xml_set_text_occ': self.xml_set_text_occ,
+            'xml_set_text': self.xml_set_text,
             'xml_set_all_text': self.xml_set_all_text,
-            'create_tag': self.create_tag,
-            'replace_tag': self.replace_tag,
-            'delete_tag': self.delete_tag,
-            'delete_att': self.delete_att,
-            'set_species': self.set_species,
-            'set_species_label': self.set_species_label,
-            'set_atomgr_att': self.set_atomgr_att,
-            'set_atomgr_att_label': self.set_atomgr_att_label,
-            'set_inpchanges': self.set_inpchanges,
-            'shift_value': self.shift_value,
-            'shift_value_species_label': self.shift_value_species_label,
-            'set_nkpts': self.set_nkpts,
-            'set_kpath': self.set_kpath,
-            'set_kpointsdata': self.set_kpointsdata,
             'add_num_to_att': self.add_num_to_att,
-            'set_nmmpmat': self.set_nmmpmat
+            'set_file': self.set_file,
+            'del_file': self.del_file
         }
-        return outside_actions
 
-    def xml_set_attribv_occ(self, xpathn, attributename, attribv, occ=None, create=False):
+        outside_actions_fleurxml = super().get_avail_actions().copy()
+
+        return {**outside_actions_fleurxml, **outside_actions_fleurinp}
+
+    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False):
         """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_attribv_occ()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param attributename: an attribute name
-        :param attribv: an attribute value which will be set
-        :param occ: a list of integers specifying number of occurrence to be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        if occ is None:
-            occ = [0]
-        self._tasks.append(('xml_set_attribv_occ', xpathn, attributename, attribv, occ, create))
-
-    def xml_set_first_attribv(self, xpathn, attributename, attribv, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_first_attribv()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param attributename: an attribute name
-        :param attribv: an attribute value which will be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        self._tasks.append(('xml_set_first_attribv', xpathn, attributename, attribv, create))
-
-    def xml_set_all_attribv(self, xpathn, attributename, attribv, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_all_attribv()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param attributename: an attribute name
-        :param attribv: an attribute value which will be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        self._tasks.append(('xml_set_all_attribv', xpathn, attributename, attribv, create))
-
-    def xml_set_text(self, xpathn, text, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_text()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param text: text to be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        self._tasks.append(('xml_set_text', xpathn, text, create))
-
-    def xml_set_text_occ(self, xpathn, text, create=False, occ=0):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_text_occ()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param text: text to be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        :param occ: an integer specifying number of occurrence to be set
-        """
-        self._tasks.append(('xml_set_text_occ', xpathn, text, create, occ))
-
-    def xml_set_all_text(self, xpathn, text, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.xml_set_all_text()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute
-        :param text: text to be set
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        self._tasks.append(('xml_set_all_text', xpathn, text, create))
-
-    def create_tag(self, xpath, newelement, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.create_tag()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path where to place a new tag
-        :param newelement: a tag name to be created
-        :param create: if True and there is no given xpath in the FleurinpData, creates it
-        """
-        self._tasks.append(('create_tag', xpath, newelement, create))
-
-    def delete_att(self, xpath, attrib):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.delete_att()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the attribute to be deleted
-        :param attrib: the name of an attribute
-        """
-        self._tasks.append(('delete_att', xpath, attrib))
-
-    def delete_tag(self, xpath):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.delete_tag()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the tag to be deleted
-        """
-        self._tasks.append(('delete_tag', xpath))
-
-    def replace_tag(self, xpath, newelement):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.replace_tag()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param xpathn: a path to the tag to be replaced
-        :param newelement: a new tag
-        """
-        self._tasks.append(('replace_tag', xpath, newelement))
-
-    def set_species(self, species_name, attributedict, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.set_species()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param species_name: a path to the tag to be replaced
-        :param attributedict: attribute dictionary to be set into the specie
-        :param create: if True and there is no given specie in the FleurinpData, creates it
-        """
-        self._tasks.append(('set_species', species_name, attributedict, create))
-
-    def set_species_label(self, at_label, attributedict, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.set_species_label()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param at_label: Atom label which specie will be set
-        :param attributedict: attribute dictionary to be set into the specie
-        :param create: if True and there is no given specie in the FleurinpData, creates it
-        """
-        self._tasks.append(('set_species_label', at_label, attributedict, create))
-
-    def set_atomgr_att(self, attributedict, position=None, species=None, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.change_atomgr_att()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param species_name: a path to the tag to be replaced
-        :param attributedict: attribute dictionary to be set into the atom group
-        :param create: if True and there is no given atom group in the FleurinpData, creates it
-        """
-        self._tasks.append(('set_atomgr_att', attributedict, position, species, create))
-
-    def set_atomgr_att_label(self, attributedict, atom_label, create=False):
-        """
-        Appends a :func:`~aiida_fleur.tools.xml_util.change_atomgr_att_label()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param attributedict: a new tag
-        :param atom_label: Atom label which atom group will be set
-        :param create: if True and there is no given atom group in the FleurinpData, creates it
-        """
-        self._tasks.append(('set_atomgr_att_label', attributedict, atom_label, create))
-
-    def set_inpchanges(self, change_dict):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_inpchanges()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param change_dict: a dictionary with changes
-
-        An example of change_dict::
-
-            change_dict = {'itmax' : 1,
-                           'l_noco': True,
-                           'ctail': False,
-                           'l_ss': True}
-        """
-        self._tasks.append(('set_inpchanges', change_dict))
-
-    def shift_value(self, change_dict, mode='abs'):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.shift_value()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param change_dict: a dictionary with changes
-        :param mode: 'abs' if change given is absolute, 'rel' if relative
-
-        An example of change_dict::
-
-            change_dict = {'itmax' : 1, dVac = -2}
-        """
-        self._tasks.append(('shift_value', change_dict, mode))
-
-    def shift_value_species_label(self, label, att_name, value, mode='abs'):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.shift_value_species_label()` to
-        the list of tasks that will be done on the FleurinpData.
-
-        :param label: a label of an atom
-        :param att_name: attrubute name of a specie
-        :param value: value to set
-        :param mode: 'abs' if change given is absolute, 'rel' if relative
-        """
-        self._tasks.append(('shift_value_species_label', label, att_name, value, mode))
-
-    def set_nkpts(self, count, gamma='F'):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_nkpts()` to
-        the list of tasks that will be done on the FleurinpData.
-        """
-        self._tasks.append(('set_nkpts', count, gamma))
-
-    def set_kpath(self, kpath, count, gamma='F'):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.set_kpath()` to
-        the list of tasks that will be done on the FleurinpData.
-        """
-        self._tasks.append(('set_kpath', kpath, count, gamma))
-
-    def set_kpointsdata(self, kpointsdata_uuid):
-        """
-        Appends a :py:func:`~aiida_fleur.data.fleurinpmodifier.set_kpointsdata_f()` to
+        Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
         :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.
@@ -478,37 +109,471 @@ class FleurinpModifier(object):
         if isinstance(kpointsdata_uuid, KpointsData):
             kpointsdata_uuid = kpointsdata_uuid.uuid
         # Be more careful? Needs to be stored, otherwise we cannot load it
-        self._other_nodes['kpoints'] = load_node(kpointsdata_uuid)
-        self._tasks.append(('set_kpointsdata', kpointsdata_uuid))
 
-    def add_num_to_att(self, xpathn, attributename, set_val, mode='abs', occ=None):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.xml_util.add_num_to_att()` to
-        the list of tasks that will be done on the FleurinpData.
+        num_nodes = sum('kpoints' in label for label in self._other_nodes) + 1
+        node_label = f'kpoints_{num_nodes}'
 
-        :param xpathn: an xml path to the attribute to change
-        :param attributename: a name of the attribute to change
-        :param set_val: a value to be added/multiplied to the previous value
-        :param mode: 'abs' if to add set_val, 'rel' if multiply
-        :param occ: a list of integers specifying number of occurrence to be set
-        """
-        if occ is None:
-            occ = [0]
-        self._tasks.append(('add_num_to_att', xpathn, attributename, set_val, mode, occ))
+        self._other_nodes[node_label] = load_node(kpointsdata_uuid)
+        self._tasks.append(
+            ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={
+                'name': name,
+                'switch': switch
+            }))
 
-    def set_nmmpmat(self, species_name, orbital, spin, occStates=None, denmat=None, phi=None, theta=None):
-        """
-        Appends a :py:func:`~aiida_fleur.tools.set_nmmpmat.set_nmmpmat()` to
-        the list of tasks that will be done on the FleurinpData.
+    #Modification functions that were renamed in masci-tools
 
-        :param species_name: species on which the density matrix should be set
-        :param orbital: orbital on which the density matrix should be set
-        :param occStates: list which specifies the diagonal elements of the density matrix
-        :param denmat: matrix, which specifies the density matrix
-        :param phi: optional angle to rotate density matrix
-        :param theta: optional angle to rotate density matrix
+    def shift_value_species_label(self, *args, **kwargs):
         """
-        self._tasks.append(('set_nmmpmat', species_name, orbital, spin, occStates, denmat, phi, theta))
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.shift_value_species_label()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param atom_label: string, a label of the atom which specie will be changed. 'all' if set up all species
+        :param attributename: name of the attribute to change
+        :param value_given: value to add or to multiply by
+        :param mode: 'rel' for multiplication or 'abs' for addition
+
+        Kwargs if the attributename does not correspond to a unique path:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+
+        """
+        if 'label' in kwargs:
+            warnings.warn('The argument label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            kwargs['atom_label'] = kwargs.pop('label')
+
+        if 'att_name' in kwargs:
+            warnings.warn('The argument att_name is deprecated.' "Use 'attributename' instead", DeprecationWarning)
+            kwargs['attributename'] = kwargs.pop('att_name')
+
+        if 'value' in kwargs:
+            warnings.warn('The argument value is deprecated.' "Use 'value_given' instead", DeprecationWarning)
+            kwargs['value_given'] = kwargs.pop('value')
+
+        super().shift_value_species_label(*args, **kwargs)
+
+    def set_species_label(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.set_species_label()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param atom_label: string, a label of the atom which specie will be changed. 'all' to change all the species
+        :param attributedict: a python dict specifying what you want to change.
+
+        """
+        if 'at_label' in kwargs:
+            warnings.warn('The argument at_label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            kwargs['atom_label'] = kwargs.pop('at_label')
+
+        super().set_species_label(*args, **kwargs)
+
+    def set_atomgr_att(self, *args, **kwargs):
+        """
+        Deprecated method for setting attributes on atomgroups
+        """
+        warnings.warn('This modification method is deprecated.'
+                      "Use the 'set_atomgroup' method instead", DeprecationWarning)
+
+        self.set_atomgroup(*args, **kwargs)
+
+    def set_atomgr_att_label(self, *args, **kwargs):
+        """
+        Deprecated method for setting attributes on atomgroups identified by an atom label
+        """
+        warnings.warn('This modification method is deprecated.'
+                      "Use the 'set_atomgroup_label' method instead", DeprecationWarning)
+
+        if 'atom_label' not in kwargs:
+            if len(args) == 2:
+                kwargs['atom_label'], args = args[1], args[:1]
+            elif len(args) > 2:
+                kwargs['atom_label'], args = args[1], args[:1] + args[2:]
+
+        self.set_atomgroup_label(*args, **kwargs)
+
+    def xml_set_attribv_occ(self, *args, **kwargs):
+        """
+        Deprecated method for setting attributes for occurrences on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_attrib_value_no_create' or"
+            "'set_attrib_value' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+
+        occ = kwargs.pop('occ', None)
+        kwargs.pop('create', None)
+
+        self.xml_set_attrib_value_no_create(*args, **kwargs, occurrences=occ)
+
+    def xml_set_first_attribv(self, *args, **kwargs):
+        """
+        Deprecated method for setting the first attribute on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_first_attrib_value_no_create' with 'occurrences=0' or"
+            "'set_first_attrib_value' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+        kwargs.pop('create', None)
+
+        self.xml_set_attrib_value_no_create(*args, occurrences=0, **kwargs)
+
+    def xml_set_all_attribv(self, *args, **kwargs):
+        """
+        Deprecated method for setting all attributes on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_attrib_value_no_create' or"
+            "'set_attrib_value' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+        kwargs.pop('create', None)
+
+        self.xml_set_attrib_value_no_create(*args, **kwargs)
+
+    def xml_set_text_occ(self, *args, **kwargs):
+        """
+        Deprecated method for setting texts for occurrences on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' or"
+            "'set_text' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+        occ = kwargs.pop('occ', None)
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
+
+        self.xml_set_text_no_create(*args, **kwargs, occurrences=occ)
+
+    def xml_set_text(self, *args, **kwargs):
+        """
+        Deprecated method for setting attributes for occurrences on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' with 'occurrences=0' or"
+            "'set_first_text' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
+
+        self.xml_set_text_no_create(*args, occurrences=0, **kwargs)
+
+    def xml_set_all_text(self, *args, **kwargs):
+        """
+        Deprecated method for setting attributes for occurrences on a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'xml_set_text_no_create' or"
+            "'set_text' method instead", DeprecationWarning)
+
+        if 'xpathn' in kwargs:
+            kwargs['xpath'] = kwargs.pop('xpathn')
+        kwargs.pop('create', None)
+        kwargs.pop('place_index', None)
+        kwargs.pop('tag_order', None)
+
+        self.xml_set_text_no_create(*args, **kwargs)
+
+    def xml_create_tag(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param xpath: a path where to place a new tag
+        :param element: a tag name or etree Element to be created
+        :param place_index: defines the place where to put a created tag
+        :param tag_order: defines a tag order
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+        """
+        self._validate_signature('xml_create_tag', *args, **kwargs)
+
+        if 'element' in kwargs:
+            element = kwargs
+        else:
+            element = args[1]
+
+        if etree.iselement(element):
+            warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                          'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+        super().xml_create_tag(*args, **kwargs)
+
+    def create_tag(self, *args, **kwargs):
+        """
+        Deprecation layer for create_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the tag to create
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param create_parents: bool optional (default False), if True and the given xpath has no results the
+                               the parent tags are created recursively
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+        """
+
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'create_tag' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_create_tag' method instead or only pass in the name of the tag, you want to use",
+                DeprecationWarning)
+
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            if 'newelement' in kwargs:
+                element = kwargs.pop('newelement')
+            else:
+                element, args = args[0], args[1:]
+
+            self.xml_create_tag(xpath, element, *args, **kwargs)
+        else:
+            tag = kwargs.get('tag')
+            if tag is None:
+                tag = args[0]
+
+            if etree.iselement(tag):
+                warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                              'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+            super().create_tag(*args, **kwargs)
+
+    def delete_tag(self, *args, **kwargs):
+        """
+        Deprecation layer for delete_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the tag to delete
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+        """
+
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_tag' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_tag' method instead or only pass in the name of the tag, you want to use",
+                DeprecationWarning)
+
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_delete_tag(xpath, *args, **kwargs)
+        else:
+            super().delete_tag(*args, **kwargs)
+
+    def delete_att(self, *args, **kwargs):
+        """
+        Deprecation layer for delete_att if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_att()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the attribute to delete
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a attribute.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param tag_name: str, name of the tag where the attribute should be parsed
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+            :param exclude: list of str, here specific types of attributes can be excluded
+                            valid values are: settable, settable_contains, other
+        """
+
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_att' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
+                DeprecationWarning)
+
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_delete_att(xpath, *args, **kwargs)
+        else:
+            super().delete_att(*args, **kwargs)
+
+    def xml_replace_tag(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param xpath: a path to the tag to be replaced
+        :param newelement: a new tag
+        :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
+                            By default all nodes are used.
+        """
+        self._validate_signature('xml_replace_tag', *args, **kwargs)
+
+        warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
+                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+        super().xml_replace_tag(*args, **kwargs)
+
+    def replace_tag(self, *args, **kwargs):
+        """
+        Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
+        We know that it is the old usage.
+
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.replace_tag()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param tag: str of the tag to replace
+        :param newelement: a new tag
+        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
+        :param occurrences: int or list of int. Which occurence of the parent nodes to replace a tag.
+                            By default all nodes are used.
+
+        Kwargs:
+            :param contains: str, this string has to be in the final path
+            :param not_contains: str, this string has to NOT be in the final path
+        """
+
+        warnings.warn('Replacing a tag with a given etree Element is only supported via the show()'
+                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+
+        if 'xpath' in kwargs or '/' in args[0]:
+            warnings.warn(
+                "The 'delete_att' method no longer requires an explicit xpath. "
+                'This Usage is deprecated. '
+                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
+                DeprecationWarning)
+
+            if 'xpath' in kwargs:
+                xpath = kwargs.pop('xpath')
+            else:
+                xpath, args = args[0], args[1:]
+
+            self.xml_replace_tag(xpath, *args, **kwargs)
+        else:
+            super().replace_tag(*args, **kwargs)
+
+    def add_num_to_att(self, *args, **kwargs):
+        """
+        Deprecated method for adding a number to a attribute at a specific xpath
+        """
+
+        warnings.warn(
+            'This modification method is deprecated.'
+            "Use the 'add_number_to_attrib' or 'add_number_to_first_attrib' method instead", DeprecationWarning)
+
+        #Since the new method takes only an attribute we extract the xpath and pass it in as complex_xpath
+
+        if len(args) == 0:
+            xpath = kwargs.pop('xpathn')
+        else:
+            xpath, args = args[0], args[1:]
+
+        if 'occ' not in kwargs:
+            self.add_number_to_first_attrib(*args, **kwargs, complex_xpath=xpath)
+        else:
+            occ = kwargs.pop('occ')
+            self.add_number_to_attrib(*args, **kwargs, complex_xpath=xpath, occurrences=occ)
+
+    def set_nmmpmat(self, *args, **kwargs):
+        """
+        Appends a :py:func:`~masci_tools.util.xml.xml_setters_nmmpmat.set_nmmpmat()` to
+        the list of tasks that will be done on the xmltree.
+
+        :param species_name: string, name of the species you want to change
+        :param orbital: integer, orbital quantum number of the LDA+U procedure to be modified
+        :param spin: integer, specifies which spin block should be modified
+        :param state_occupations: list, sets the diagonal elements of the density matrix and everything
+                          else to zero
+        :param denmat: matrix, specify the density matrix explicitely
+        :param phi: float, optional angle (radian), by which to rotate the density matrix before writing it
+        :param theta: float, optional angle (radian), by which to rotate the density matrix before writing it
+        """
+
+        if 'occStates' in kwargs:
+            warnings.warn('The argument occStates is deprecated.' "Use 'state_occupations' instead", DeprecationWarning)
+            kwargs['state_occupations'] = kwargs.pop('occStates')
+
+        super().set_nmmpmat(*args, **kwargs)
+
+    def set_file(self, filename, dst_filename=None, node=None):
+        """
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_file()` to
+        the list of tasks that will be done on the FleurinpData instance.
+
+        :param filename: absolute path to the file or a filename of node is specified
+        :param dst_filename: str of the filename, which should be used instead of the real filename
+                             to store it
+        :param node: a :class:`~aiida.orm.FolderData` node containing the file
+        """
+        from aiida.orm import FolderData, load_node
+
+        node_uuid = None
+        if node is not None:
+            if isinstance(node, FolderData):
+                node_uuid = node.uuid
+
+            num_nodes = sum('folder' in label for label in self._other_nodes) + 1
+            node_label = f'folder_{num_nodes}'
+            # Be more careful? Needs to be stored, otherwise we cannot load it
+            self._other_nodes[node_label] = load_node(node_uuid)
+
+        self._tasks.append(
+            ModifierTask('set_file', args=(filename,), kwargs={
+                'dst_filename': dst_filename,
+                'node': node_uuid
+            }))
+
+    def del_file(self, filename):
+        """
+        Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.del_file()` to
+        the list of tasks that will be done on the FleurinpData instance.
+
+        :param filename: name of the file to be removed from FleurinpData instance
+        """
+        self._tasks.append(ModifierTask('del_file', args=(filename,), kwargs={}))
 
     def validate(self):
         """
@@ -518,32 +583,20 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
-        with self._original.open(key='inp.xml') as inpxmlfile:
-            tree = etree.parse(inpxmlfile)
+
+        new_fleurinp = self._original.clone()
+        self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+
+        xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
 
         try:
-            with self._original.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+            with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
                 nmmplines = n_mmp_file.read().split('\n')
         except FileNotFoundError:
             nmmplines = None
 
-        schema = self._original._schema_file_path
-        if schema is None or not os.path.isfile(schema):
-            search_paths = self._original.get_search_paths()
-            self._original.set_extra('_search_paths', search_paths)
-            self._original.update_schema_path()
-        schema = self._original._schema_file_path
-
-        try:  # could be not found or on another computer...
-            xmlschema_tree = etree.parse(schema)
-            with_schema = True
-        except BaseException:
-            with_schema = False
-            print('No schema file found')
-            return
-        if with_schema:
-            tree, nmmp = self.apply_modifications(tree, nmmplines, self._tasks, schema_tree=xmlschema_tree)
-        return tree
+        xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+        return xmltree
 
     def show(self, display=True, validate=False):
         """
@@ -556,27 +609,26 @@ class FleurinpModifier(object):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
+
         if validate:
-            tree = self.validate()
+            xmltree = self.validate()
         else:
-            with self._original.open(path='inp.xml') as inpxmlfile:
-                parser = etree.XMLParser(remove_blank_text=True, remove_comments=True)
-                tree = etree.parse(inpxmlfile, parser)
-            tree, temp_nmmp = self.apply_modifications(tree, None, self._tasks)
+            new_fleurinp = self._original.clone()
+            self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+
+            xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
+            try:
+                with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
+                    nmmplines = n_mmp_file.read().split('\n')
+            except FileNotFoundError:
+                nmmplines = None
+
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks, validate_changes=False)
 
         if display:
-            xmltreestring = etree.tostring(tree, encoding='unicode', pretty_print=True)
+            xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)
             print(xmltreestring)
-        return tree
-
-    def changes(self):
-        """
-        Prints out all changes given in a
-        :class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` instance.
-        """
-        from pprint import pprint
-        pprint(self._tasks)
-        return self._tasks
+        return xmltree
 
     def freeze(self):
         """
@@ -585,7 +637,8 @@ class FleurinpModifier(object):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
-        modifications = orm.Dict(dict={'tasks': self._tasks})
+        from aiida.orm import Dict
+        modifications = Dict(dict={'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
@@ -599,20 +652,9 @@ class FleurinpModifier(object):
         out = modify_fleurinpdata(**inputs)
         return out
 
-    def undo(self, revert_all=False):
-        """
-        Cancels the last change or all of them
-
-        :param revert_all: set True if need to cancel all the changes, False if the last one.
-        """
-        if revert_all:
-            self._tasks = []
-        else:
-            if self._tasks:
-                task = self._tasks.pop()
-                #TODO delete nodes from other nodes
-                #del self._tasks[-1]
-        return self._tasks
+    #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
+    def modify_xmlfile(self, *args, **kwargs):  #pylint: disable=missing-function-docstring
+        raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')
 
 
 @cf
@@ -626,7 +668,6 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     :param kwargs: dict of other aiida nodes to be linked to the modifications
     :returns new_fleurinp: a modified FleurinpData that is stored in a database
     """
-
     # copy
     # get schema
     # read in inp.xml
@@ -634,23 +675,20 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # validate
     # save inp.xml
     # store new fleurinp (copy)
-    from aiida_fleur.tools.xml_util import clear_xml
+    import tempfile
+    from masci_tools.util.xml.common_functions import reverse_xinclude
 
     new_fleurinp = original.clone()
-    modification_tasks = modifications.get_dict()['tasks']
-    #
-    xmlschema_doc = etree.parse(new_fleurinp._schema_file_path)
-    xmlschema = etree.XMLSchema(xmlschema_doc)
-    parser = etree.XMLParser(attribute_defaults=True, remove_blank_text=True)
-    with new_fleurinp.open(path='inp.xml', mode='r') as inpxmlfile:
-        tree = etree.parse(inpxmlfile, parser)
 
-    try:
-        xmlschema.assertValid(clear_xml(tree))
-    except etree.DocumentInvalid as exc:
-        msg = 'Input file is not validated against the schema'
-        #print(msg)
-        raise etree.DocumentInvalid(msg) from exc
+    modification_tasks = modifications.get_dict()['tasks']
+
+    #We need to rebuild the namedtuples since the serialization for the calcufunction inputs
+    #converts the namedtuples into lists
+    modification_tasks = [ModifierTask(*task) for task in modification_tasks]
+
+    FleurinpModifier.apply_fleurinp_modifications(new_fleurinp, modification_tasks)
+
+    xmltree, schema_dict, included_tags = new_fleurinp.load_inpxml(remove_blank_text=True, return_included_tags=True)
 
     try:
         with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -658,75 +696,34 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     except FileNotFoundError:
         nmmplines = None
 
-    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(fleurinp_tree_copy=tree,\
-                                                                        nmmp_lines_copy=nmmplines,\
-                                                                        modification_tasks=modification_tasks)
+    new_fleurtree, new_nmmplines = FleurinpModifier.apply_modifications(xmltree=xmltree,\
+                                                                        nmmp_lines=nmmplines,\
+                                                                        modification_tasks=modification_tasks,
+                                                                        validate_changes=False)
 
     # To include object store storage this prob has to be done differently
 
-    inpxmlfile_new = inpxmlfile.name.replace('inp.xml', 'temp_inp.xml')
-    inpxmlfile.close()
-
-    new_fleurtree.write(inpxmlfile_new, pretty_print=True)
+    inpxmltree, includedtrees = reverse_xinclude(new_fleurtree, schema_dict, included_tags)
 
     new_fleurinp.del_file('inp.xml')
-    new_fleurinp._add_path(str(inpxmlfile_new), 'inp.xml')
-    os.remove(inpxmlfile_new)
+    with tempfile.TemporaryDirectory() as td:
+        inpxml_path = os.path.join(td, 'inp.xml')
+        inpxmltree.write(inpxml_path, encoding='utf-8', pretty_print=True)
+        new_fleurinp.set_file(inpxml_path, 'inp.xml')
 
-    if new_nmmplines:
-        new_nmmp = bytes('\n'.join(new_nmmplines), 'utf-8')
-        new_fleurinp._add_path(io.BytesIO(new_nmmp), 'n_mmp_mat')
+        for file_name, tree in includedtrees.items():
+            file_path = os.path.join(td, file_name)
+            tree.write(file_path, encoding='utf-8', pretty_print=True)
+            new_fleurinp.set_file(file_path, file_name)
+
+        if new_nmmplines is not None:
+            n_mmp_path = os.path.join(td, 'n_mmp_mat')
+            with open(n_mmp_path, 'w') as n_mmp_file:
+                n_mmp_file.write('\n'.join(new_nmmplines))
+            new_fleurinp.set_file(n_mmp_path, 'n_mmp_mat')
 
     # default label and description
     new_fleurinp.label = 'mod_fleurinp'
     new_fleurinp.description = 'Fleurinpdata with modifications (see inputs of modify_fleurinpdata)'
 
     return new_fleurinp
-
-
-def set_kpointsdata_f(fleurinp_tree_copy, kpointsdata_uuid):
-    """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
-    in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
-    ``inp.xml`` file. Currently it is the users responsibility to provide a full
-    :class:`~aiida.orm.KpointsData` node with weights.
-
-    :param fleurinp_tree_copy: fleurinp_tree_copy
-    :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
-    :return: modified xml tree
-    """
-    # TODO: check on weights,
-    # also fleur allows for several kpoint sets, lists, paths and meshes,
-    # support this.
-    from aiida.orm import KpointsData, load_node
-    from aiida.common.exceptions import InputValidationError
-    from aiida_fleur.tools.xml_util import replace_tag
-
-    # all hardcoded xpaths used and attributes names:
-    kpointlist_xpath = '/fleurInput/calculationSetup/bzIntegration/kPointList'
-
-    # replace the kpoints tag.(delete old write new)
-    # <kPointList posScale="36.00000000" weightScale="324.00000000" count="324">
-    #    <kPoint weight="    1.000000">   17.000000     0.000000     0.000000</kPoint>
-    # add new inp.xml to fleurinpdata
-    if not isinstance(kpointsdata_uuid, KpointsData):
-        KpointsDataNode = load_node(kpointsdata_uuid)
-    else:
-        KpointsDataNode = kpointsdata_uuid
-
-    if not isinstance(KpointsDataNode, KpointsData):
-        raise InputValidationError('The node given is not a valid KpointsData node.')
-
-    kpoint_list = KpointsDataNode.get_kpoints(also_weights=True, cartesian=False)
-    nkpts = len(kpoint_list[0])
-    totalw = 0
-    for weight in kpoint_list[1]:
-        totalw = totalw + weight
-    #weightscale = totalw
-    # fleur will re weight? renormalize?
-    new_kpo = etree.Element('kPointList', posScale='1.000', weightScale='1.0', count='{}'.format(nkpts))
-    for i, kpos in enumerate(kpoint_list[0]):
-        new_k = etree.Element('kPoint', weight='{}'.format(kpoint_list[1][i]))
-        new_k.text = '{} {} {}'.format(kpos[0], kpos[1], kpos[2])
-        new_kpo.append(new_k)
-    new_tree = replace_tag(fleurinp_tree_copy, kpointlist_xpath, new_kpo)
-    return new_tree

@@ -1,10 +1,6 @@
 Fleur tools/utility
 +++++++++++++++++++
 
-Dealing with XML Schema files
------------------------------
-
-.. automodule:: aiida_fleur.fleur_schema.schemafile_index 
 
 Structure Data util
 -------------------
@@ -15,13 +11,7 @@ Structure Data util
 XML utility
 -----------
 
-.. automodule:: aiida_fleur.tools.xml_util
-   :members:
-
-Utility for LDA+U density matrix files
---------------------------------------
-
-.. automodule:: aiida_fleur.tools.set_nmmpmat
+.. automodule:: aiida_fleur.tools.xml_aiida_modifiers
    :members:
 
 

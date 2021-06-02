@@ -14,27 +14,25 @@ This is the worklfow 'band' for the Fleur code, which calculates a
 electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
-# TODO alternative parse a structure and run scf
-from __future__ import absolute_import
-from __future__ import print_function
-import os.path
 import copy
-import six
+from lxml import etree
+from ase.dft.kpoints import bandpath
+import numpy as np
 
-from aiida.plugins import DataFactory
-from aiida.orm import Code, StructureData, Dict, RemoteData
+from aiida.orm import Code, Dict, RemoteData, KpointsData
 from aiida.orm import load_node, CalcJobNode, FolderData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 from aiida.common import AttributeDict
+from aiida.tools.data.array.kpoints import get_explicit_kpoints_path
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
-from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, is_code
-from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 
 class FleurBandDosWorkChain(WorkChain):
@@ -47,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.3.7'
+    _workflowversion = '0.4.0'
 
     _default_options = {
         'resources': {
@@ -61,36 +59,48 @@ class FleurBandDosWorkChain(WorkChain):
         'environment_variables': {}
     }
     _default_wf_para = {
-        'fleur_runmax': 4,
-        'kpath': 'auto',
-        'klistname': 'path-2',
+        'kpath': 'auto',  #seek (aiida), fleur (only Max4) or string to pass to ase
         'mode': 'band',
-        # 'nkpts' : 800,
+        'klistname': None,
+        'kpoints_number': None,
+        'kpoints_distance': None,
+        'kpoints_explicit': None,  #dictionary containing a list of kpoints, weights
+        #and additional arguments to pass to set_kpointlist
         'sigma': 0.005,
         'emin': -0.50,
-        'emax': 0.90
+        'emax': 0.90,
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
+        'inpxml_changes': [],
     }
 
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        # spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_inputs(FleurScfWorkChain,
+                           namespace_options={
+                               'required': False,
+                               'populate_defaults': False
+                           },
+                           namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
-        spec.input('remote', valid_type=RemoteData, required=True)
+        spec.input('remote', valid_type=RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('kpoints', valid_type=KpointsData, required=False)
         spec.input('options', valid_type=Dict, required=False)
 
-        spec.outline(
-            cls.start,
-            if_(cls.scf_needed)(
-                cls.converge_scf,
-                cls.create_new_fleurinp,
-                cls.run_fleur,
-            ).else_(
-                cls.create_new_fleurinp,
-                cls.run_fleur,
-            ), cls.return_results)
+        spec.outline(cls.start,
+                     if_(cls.scf_needed)(
+                         cls.converge_scf,
+                         cls.banddos_after_scf,
+                     ).else_(
+                         cls.banddos_wo_scf,
+                     ), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
         spec.output('last_calc_retrieved', valid_type=FolderData)
@@ -99,6 +109,8 @@ class FleurBandDosWorkChain(WorkChain):
                        'ERROR_INVALID_CODE_PROVIDED',
                        message='Invalid code node specified, check inpgen and fleur code nodes.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
+        spec.exit_code(337, 'ERROR_SCF_CALCULATION_FAILED', message='SCF calculation failed.')
+        spec.exit_code(335, 'ERROR_SCF_CALCULATION_NOREMOTE', message='Found no SCF calculation remote repository.')
 
     def start(self):
         '''
@@ -111,15 +123,12 @@ class FleurBandDosWorkChain(WorkChain):
         #print("Workchain node identifiers: ")#'{}'
         #"".format(ProcessRegistry().current_calc_node))
 
-        self.ctx.fleurinp_scf = None
         self.ctx.scf_needed = False
-        self.ctx.fleurinp_banddos = None
-        self.ctx.last_calc = None
+        self.ctx.banddos_calc = None
         self.ctx.successful = False
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        self.ctx.calcs = []
 
         inputs = self.inputs
 
@@ -129,11 +138,9 @@ class FleurBandDosWorkChain(WorkChain):
         else:
             wf_dict = wf_default
 
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
-        # if MPI in code name, execute parallel
-        self.ctx.serial = self.ctx.wf_dict.get('serial', False)
 
         defaultoptions = self._default_options
         if 'options' in inputs:
@@ -142,73 +149,162 @@ class FleurBandDosWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # set values, or defaults
-        self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
+        if 'fleur' in inputs:
+            try:
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+            except ValueError:
+                error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
-        # if 'scf' in self.inputs:
-        #     self.ctx.scf_needed = True
-        #     if 'remote' in self.inputs.scf:
-        #       error = "ERROR: you gave SCF input + remote"
-        #       self.control_end_wc(error)
-        #       return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        #     if 'structure' and 'fleurinp' in self.inputs.scf:
-        #       error = "ERROR: you gave SCF input structure and fleurinp"
-        #       self.control_end_wc(error)
-        #       return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        #     if 'structure' in self.inputs.scf:
-        #       if 'inpgen' not in self.inputs:
-        #         error = "ERROR: you gave SCF input structure and not inpgen"
-        #         self.control_end_wc(error)
-        #         return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        # elif 'remote' not in self.inputs:
-        #     error = "ERROR: you gave neither SCF input nor remote"
-        #     self.control_end_wc(error)
-        #     return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        # else:
-        #     self.ctx.scf_needed = False
+        if 'scf' in inputs:
+            self.ctx.scf_needed = True
+            if 'remote' in inputs:
+                error = 'ERROR: you gave SCF input + remote for the BandDOS calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'fleurinp' in inputs:
+                error = 'ERROR: you gave SCF input + fleurinp for the BandDOS calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'remote' not in inputs:
+            error = 'ERROR: you gave neither SCF input nor remote'
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        else:
+            self.ctx.scf_needed = False
 
-    def create_new_fleurinp(self):
+    def change_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
         """
         # TODO allow change of kpoint mesh?, tria?
         wf_dict = self.ctx.wf_dict
 
-        if 'fleurinp' not in self.inputs:
-            for i in self.inputs.remote.get_incoming():
-                if isinstance(i.node, CalcJobNode):
-                    self.ctx.fleurinp_scf = load_node(i.node.pk).get_incoming().get_node_by_label('fleurinpdata')
+        if self.ctx.scf_needed:
+            try:
+                fleurin = self.ctx.scf.outputs.fleurinp
+            except NotExistent:
+                error = 'Fleurinp generated in the SCF calculation is not found.'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
         else:
-            self.ctx.fleurinp_scf = self.inputs.fleurinp
+            if 'fleurinp' not in self.inputs:
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
+            else:
+                fleurin = self.inputs.fleurinp
 
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
-        fleurmode = FleurinpModifier(self.ctx.fleurinp_scf)
+        fleurmode = FleurinpModifier(fleurin)
 
-        nkpts = wf_dict.get('nkpts', 500)
-        sigma = wf_dict.get('sigma', 0.005)
-        emin = wf_dict.get('emin', -0.30)
-        emax = wf_dict.get('emax', 0.80)
-        listname = wf_dict.get('klistname', 'path-2')
-        if wf_dict.get('mode') == 'dos':
-            #change_dict = {'dos': True, 'ndir': -1, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-            change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
+        fleurmode.add_task_list(wf_dict.get('inpxml_changes', []))
+
+        kpath = wf_dict['kpath']
+        explicit = wf_dict['kpoints_explicit']
+        distance = wf_dict['kpoints_distance']
+        nkpts = wf_dict['kpoints_number']
+        listname = wf_dict['klistname']
+
+        if nkpts is not None and distance is not None:
+            raise ValueError('Only provide either the distance or number for the kpoints')
+
+        if explicit is not None:
+            fleurmode.set_kpointlist(**explicit)
+
+        if listname is None:
+            listname = 'path-2'
+
+        if nkpts is None and distance is None:
+            nkpts = 500
+
+        if 'kpoints' in self.inputs:
+            fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
+
+        if kpath == 'auto':
+            if fleurin.inp_version >= '0.32':
+                fleurmode.switch_kpointset(listname)
+        elif isinstance(kpath, dict):
+            if fleurin.inp_version < '0.32':
+                if distance is not None:
+                    raise ValueError('set_kpath only supports specifying the number of points for the kpoints')
+                fleurmode.set_kpath(kpath, nkpts)
+            else:
+                raise ValueError('set_kpath is only supported for inputs up to Max4')
+        elif kpath == 'seek':
+
+            #Use aiida functionality
+            struc = fleurin.get_structuredata()
+
+            if distance is not None:
+                output = get_explicit_kpoints_path(struc, reference_distance=distance)
+            else:
+                output = get_explicit_kpoints_path(struc)
+            primitive_struc = output['primitive_structure']
+
+            #check if primitive_structure and input structure are identical:
+            maxdiff_cell = sum(abs(np.array(primitive_struc.cell) - np.array(struc.cell))).max()
+
+            if maxdiff_cell > 3e-9:
+                self.report(f'Error in cell : {maxdiff_cell}')
+                self.report(
+                    'WARNING: The structure data from the fleurinp is not the primitive structure type, which is mandatory in some cases'
+                )
+
+            output['explicit_kpoints'].store()
+
+            fleurmode.set_kpointsdata(output['explicit_kpoints'], switch=True)
+
+        elif kpath == 'skip':
+            return
         else:
-            #change_dict = {'band': True, 'ndir': 0, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
-            change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma, 'listName': listname}
+            #Use ase
+            struc = fleurin.get_structuredata()
+
+            path = bandpath(kpath, cell=struc.cell, npoints=nkpts, density=distance)
+
+            special_points = path.special_points
+
+            labels = []
+            for label, special_kpoint in special_points.items():
+                for index, kpoint in enumerate(path.kpts):
+                    if sum(abs(np.array(special_kpoint) - np.array(kpoint))).max() < 1e-12:
+                        labels.append((index, label))
+            labels = sorted(labels, key=lambda x: x[0])
+
+            kpts = KpointsData()
+            kpts.set_cell(struc.cell)
+            kpts.pbc = struc.pbc
+            weights = np.ones(len(path.kpts)) / len(path.kpts)
+            kpts.set_kpoints(kpoints=path.kpts, cartesian=False, weights=weights, labels=labels)
+
+            kpts.store()
+            fleurmode.set_kpointsdata(kpts, switch=True)
+
+        sigma = wf_dict['sigma']
+        emin = wf_dict['emin']
+        emax = wf_dict['emax']
+
+        if fleurin.inp_version < '0.32':
+            if wf_dict.get('mode') == 'dos':
+                fleurmode.set_inpchanges({'ndir': -1})
+
+        if wf_dict.get('mode') == 'dos':
+            change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
+        else:
+            change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         fleurmode.set_inpchanges(change_dict)
 
-        if wf_dict.get('kpath') != 'auto':
-            fleurmode.set_kpath(wf_dict.get('kpath'), nkpts)
+        try:
+            fleurmode.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, user wanted inp.xml changes did not validate')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_FILE
 
-        # if nkpts:
-        # fleurmode.set_nkpts(count=nkpts)
-        #fleurinp_new.replace_tag()
-
-        fleurmode.show(validate=True, display=False)  # needed?
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp_banddos = fleurinp_new
 
@@ -222,28 +318,112 @@ class FleurBandDosWorkChain(WorkChain):
         """
         Converge charge density.
         """
-        # TODO: implement
-        return 0
+        inputs = self.get_inputs_scf()
+        res = self.submit(FleurScfWorkChain, **inputs)
+        return ToContext(scf=res)
 
-    def run_fleur(self):
+    def banddos_after_scf(self):
         """
-        run a FLEUR calculation
+        This method submits the BandDOS calculation after the initial SCF calculation
         """
-        self.report('INFO: run FLEUR')
-        # inputs = self.get_inputs_scf()
+        calc = self.ctx.scf
+
+        if not calc.is_finished_ok:
+            message = ('The SCF calculation was not successful.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+
+        try:
+            outpara_node = calc.outputs.output_scf_wc_para
+        except NotExistent:
+            message = ('The SCF calculation failed, no scf output node.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+
+        outpara = outpara_node.get_dict()
+
+        if 'total_energy' not in outpara:
+            message = ('Did not manage to extract float total energy from the SCF calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+
+        self.report('INFO: run BandDOS calculation')
+
+        status = self.change_fleurinp()
+        if status:
+            return status
+
         fleurin = self.ctx.fleurinp_banddos
-        remote = self.inputs.remote
-        code = self.inputs.fleur
-        options = self.ctx.options.copy()
+
+        # Do not copy mixing_history* files from the parent
+        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
+
+        # Retrieve remote folder of the reference calculation
+        pk_last = 0
+        scf_ref_node = load_node(calc.pk)
+        for i in scf_ref_node.called:
+            if i.node_type == 'process.workflow.workchain.WorkChainNode.':
+                if i.process_class is FleurBaseWorkChain:
+                    if pk_last < i.pk:
+                        pk_last = i.pk
+        try:
+            remote = load_node(pk_last).outputs.remote_folder
+        except AttributeError:
+            message = ('Found no remote folder of the reference scf calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_SCF_CALCULATION_NOREMOTE
 
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
 
-        inputs = get_inputs_fleur(code, remote, fleurin, options, label, description, serial=self.ctx.serial)
-        future = self.submit(FleurBaseWorkChain, **inputs)
-        self.ctx.calcs.append(future)
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
 
-        return ToContext(last_calc=future)
+        inputs_builder = get_inputs_fleur(code,
+                                          remote,
+                                          fleurin,
+                                          options,
+                                          label,
+                                          description,
+                                          settings,
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(banddos_calc=future)
+
+    def banddos_wo_scf(self):
+        """
+        This method submits the BandDOS calculation without a previous SCF calculation
+        """
+        self.report('INFO: run BandDOS calculation')
+
+        status = self.change_fleurinp()
+        if status:
+            return status
+
+        fleurin = self.ctx.fleurinp_banddos
+
+        # Do not copy mixing_history* files from the parent
+        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
+
+        # Retrieve remote folder from the inputs
+        remote = self.inputs.remote
+
+        label = 'bansddos_calculation'
+        description = 'Bandstructure or DOS is calculated for the given structure'
+
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+
+        inputs_builder = get_inputs_fleur(code,
+                                          remote,
+                                          fleurin,
+                                          options,
+                                          label,
+                                          description,
+                                          settings,
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(banddos_calc=future)
 
     def get_inputs_scf(self):
         """
@@ -251,8 +431,6 @@ class FleurBandDosWorkChain(WorkChain):
         wf_param, options, calculation parameters, codes, structure
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        input_scf.fleurinp = self.ctx.fleurinp_banddos
-
         return input_scf
 
     def return_results(self):
@@ -260,22 +438,22 @@ class FleurBandDosWorkChain(WorkChain):
         return the results of the calculations
         '''
         # TODO more here
-        self.report('Band workflow Done')
-        self.report('A bandstructure was calculated for fleurinpdata {} and is found under pk={}, '
-                    'calculation {}'.format(self.ctx.fleurinp_scf, self.ctx.last_calc.pk, self.ctx.last_calc))
+        self.report('BandDOS workflow Done')
+        self.report(f'A bandstructure was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
+                    f'calculation {self.ctx.banddos_calc}')
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
-        if self.ctx.last_calc:
+        if self.ctx.banddos_calc:
             try:
-                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_calc)
+                last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
             except NotExistent:
                 last_calc_uuid = None
         else:
             last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.last_calc.outputs.output_parameters
-            retrieved = self.ctx.last_calc.outputs.retrieved
+            last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
+            retrieved = self.ctx.banddos_calc.outputs.retrieved
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None
@@ -294,7 +472,6 @@ class FleurBandDosWorkChain(WorkChain):
             if name in bandfile_res:
                 self.ctx.successful = True
         if not self.ctx.successful:
-            bandfile = None
             self.report('!NO bandstructure file was found, something went wrong!')
 
         # # get efermi from last calculation
@@ -325,7 +502,8 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
-        outputnode_dict['last_calc_pk'] = self.ctx.last_calc.pk
+        outputnode_dict['last_calc_pk'] = self.ctx.banddos_calc.pk
+        outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band
         outputnode_dict['fermi_energy_scf'] = efermi_scf
@@ -334,7 +512,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['diff_bandgap'] = diff_bandgap
         outputnode_dict['bandgap_units'] = 'eV'
         outputnode_dict['fermi_energy_units'] = 'Htr'
-        # outputnode_dict['bandfile']           = bandfile
 
         outputnode_t = Dict(dict=outputnode_dict)
         if last_calc_out:
@@ -370,7 +547,7 @@ def create_band_result_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'outpara':  # should be always there
             outpara = val
     outdict = {}

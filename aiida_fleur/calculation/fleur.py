@@ -189,8 +189,6 @@ class FleurCalculation(CalcJob):
         'additional_retrieve_list', 'remove_from_retrieve_list', 'additional_remotecopy_list',
         'remove_from_remotecopy_list', 'cmdline'
     ]
-    # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldau']
 
     @classmethod
     def define(cls, spec):
@@ -403,7 +401,7 @@ class FleurCalculation(CalcJob):
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
-            if modes['forces']:
+            if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
@@ -519,7 +517,13 @@ class FleurCalculation(CalcJob):
         # Retrieve by default the output file and the xml file
         retrieve_list = []
         retrieve_list.append(self._OUTXML_FILE_NAME)
-        retrieve_list.append(self._INPXML_FILE_NAME)
+        if has_fleurinp:
+            allfiles = fleurinp.files
+            for file1 in allfiles:
+                if file1.endswith('.xml'):
+                    retrieve_list.append(file1)
+        else:
+            retrieve_list.append(self._INPXML_FILE_NAME)
         retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
         retrieve_list.append(self._USAGE_FILE_NAME)
@@ -531,7 +535,8 @@ class FleurCalculation(CalcJob):
             retrieve_list.append(self._CDN1_FILE_NAME)
 
         for mode_file in mode_retrieved_filelist:
-            retrieve_list.append(mode_file)
+            if mode_file not in retrieve_list:
+                retrieve_list.append(mode_file)
         self.logger.info('retrieve_list: %s', str(retrieve_list))
 
         # user specific retrieve

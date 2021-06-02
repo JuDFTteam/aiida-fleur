@@ -16,13 +16,9 @@ out.xml file of FLEUR.
 # TODO clean up
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
 # or rather throw exception on lowest level and catch at higher levels?
-
-from __future__ import absolute_import
-from __future__ import print_function
-import six
 from lxml import etree  #, objectify
 
-from aiida_fleur.tools.xml_util import get_xml_attribute, eval_xpath, eval_xpath2
+from masci_tools.util.xml.common_functions import eval_xpath, get_xml_attribute
 #convert_to_float
 
 #import time
@@ -161,7 +157,7 @@ def extract_corelevels(outxmlfile, options=None):
     # 2. get all species from input
     # get element, name, coreStates
     # TODO why can this not be eval_xpath2?
-    species_nodes = eval_xpath(root, species_xpath, parser_info)
+    species_nodes = eval_xpath(root, species_xpath)
     species_atts = {}
     species_names = []
     for species in species_nodes:
@@ -171,9 +167,9 @@ def extract_corelevels(outxmlfile, options=None):
         species_atomicnumber = species.get('atomicNumber')
         species_magMom = species.get('magMom')
         #TODO sometimes not in inp.xml... what if it is not there
-        coreconfig = eval_xpath(species, coreconfig_xpath, parser_info)
-        valenceconfig = eval_xpath(species, valenceconfig_xpath, parser_info)
-        state_occ = eval_xpath2(species, state_occ_xpath, parser_info)
+        coreconfig = eval_xpath(species, coreconfig_xpath)
+        valenceconfig = eval_xpath(species, valenceconfig_xpath)
+        state_occ = eval_xpath(species, state_occ_xpath, list_return=True)
 
         #parse state occ
         state_results = []
@@ -198,7 +194,7 @@ def extract_corelevels(outxmlfile, options=None):
 
     #3. get number of atom types and their species from input
     atomtypes = []
-    atomgroup_nodes = eval_xpath(root, atomgroup_xpath, parser_info)  #/fleurinp/
+    atomgroup_nodes = eval_xpath(root, atomgroup_xpath)  #/fleurinp/
     # always a list?
     for atomgroup in atomgroup_nodes:
         types_dict = {}
@@ -210,9 +206,9 @@ def extract_corelevels(outxmlfile, options=None):
             coreconf = species_atts[group_species]['coreconfig']
             valenceconf = species_atts[group_species]['valenceconfig']
             stateocc = species_atts[group_species]['stateOccupation']
-            a = eval_xpath2(atomgroup, relpos_xpath,
-                            parser_info) + eval_xpath2(atomgroup, abspos_xpath, parser_info) + eval_xpath2(
-                                atomgroup, filmpos_xpath, parser_info)  # always list
+            a =   eval_xpath(atomgroup, relpos_xpath, list_return=True) \
+                + eval_xpath(atomgroup, abspos_xpath, list_return=True) \
+                + eval_xpath(atomgroup, filmpos_xpath, list_return=True)  # always list
             natoms = len(a)
             types_dict = {
                 'species': group_species,
@@ -233,12 +229,12 @@ def extract_corelevels(outxmlfile, options=None):
     #5 init saving arrays:
     #6 parse corelevels:
 
-    iteration_nodes = eval_xpath2(root, iteration_xpath, parser_info)
+    iteration_nodes = eval_xpath(root, iteration_xpath, list_return=True)
     nIteration = len(iteration_nodes)
     if nIteration >= 1:
         iteration_to_parse = iteration_nodes[-1]  #TODO:Optional all or other
         #print iteration_to_parse
-        corestatescards = eval_xpath2(iteration_to_parse, relcoreStates_xpath, parser_info)
+        corestatescards = eval_xpath(iteration_to_parse, relcoreStates_xpath, list_return=True)
         # maybe does not return a list...
         for atype in atomtypes:  # spin=2 is already in there
             corelevels.append([])
@@ -294,14 +290,14 @@ def parse_state_card(corestateNode, iteration_node, parser_info=None):
     if parser_info is None:
         parser_info = {'parser_warnings': []}
 
-    atomtype = get_xml_attribute(corestateNode, atomtype_name, parser_info)
+    atomtype = get_xml_attribute(corestateNode, atomtype_name)
 
-    kinEnergy = get_xml_attribute(corestateNode, kinEnergy_name, parser_info)
-    vE2, suc = convert_to_float(kinEnergy, parser_info)
-    eigenvalueSum = get_xml_attribute(corestateNode, eigenvalueSum_name, parser_info)
-    vE2, suc = convert_to_float(eigenvalueSum, parser_info)
+    kinEnergy = get_xml_attribute(corestateNode, kinEnergy_name)
+    vE2, suc = convert_to_float(kinEnergy)
+    eigenvalueSum = get_xml_attribute(corestateNode, eigenvalueSum_name)
+    vE2, suc = convert_to_float(eigenvalueSum)
 
-    spin = get_xml_attribute(corestateNode, spin_name, parser_info)
+    spin = get_xml_attribute(corestateNode, spin_name)
     #print('spin {}'.format(spin))
     #states = corestateNode.xpath(
     #for state in states:
@@ -313,15 +309,15 @@ def parse_state_card(corestateNode, iteration_node, parser_info=None):
     # some only the first interation, then get all state tags of the corestate tag (atom depended)
     # parse each core state #Attention to spin
     states = []
-    corestates = eval_xpath2(corestateNode, state_xpath)  #, parser_info)
+    corestates = eval_xpath(corestateNode, state_xpath, list_return=True)  #, parser_info)
 
     for corestate in corestates:  # be careful that corestates is a list
         state_dict = {}
-        n_state = get_xml_attribute(corestate, n_name, parser_info)
-        l_state = get_xml_attribute(corestate, l_name, parser_info)
-        j_state = get_xml_attribute(corestate, j_name, parser_info)
-        energy, suc = convert_to_float(get_xml_attribute(corestate, energy_name, parser_info), parser_info)
-        weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name, parser_info), parser_info)
+        n_state = get_xml_attribute(corestate, n_name)
+        l_state = get_xml_attribute(corestate, l_name)
+        j_state = get_xml_attribute(corestate, j_name)
+        energy, suc = convert_to_float(get_xml_attribute(corestate, energy_name))
+        weight, suc = convert_to_float(get_xml_attribute(corestate, weight_name))
         state_dict = {'n': n_state, 'l': l_state, 'j': j_state, 'energy': energy, 'weight': weight}
         states.append(state_dict)
 
@@ -411,7 +407,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
 
     return_corelevel_dict = {}
 
-    for elem, corelevel_dict in six.iteritems(coreleveldict):
+    for elem, corelevel_dict in coreleveldict.items():
         ref_el = reference_dict.get(elem, {})
 
         if not ref_el:  # no refernce for that element given
@@ -420,7 +416,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             continue
 
         return_corelevel_dict[elem] = {}
-        for corelevel_name, corelevel_list in six.iteritems(corelevel_dict):
+        for corelevel_name, corelevel_list in corelevel_dict.items():
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl:  # no reference corelevel given for that element
                 if warn:
