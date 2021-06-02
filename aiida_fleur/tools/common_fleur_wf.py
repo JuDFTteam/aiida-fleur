@@ -22,42 +22,41 @@ import six
 from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
+# def is_code(code):
+#     """
+#     Test if the given input is a Code node, by object, id, uuid, or pk
+#     if yes returns a Code node in all cases
+#     if no returns None
+#     """
+#     from aiida.orm import Code
+#     from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
 
-def is_code(code):
-    """
-    Test if the given input is a Code node, by object, id, uuid, or pk
-    if yes returns a Code node in all cases
-    if no returns None
-    """
-    from aiida.orm import Code
-    from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
+#     if isinstance(code, Code):
+#         return code
 
-    if isinstance(code, Code):
-        return code
+#     try:
+#         pk = int(code)
+#     except ValueError:
+#         codestring = str(code)
+#         try:
+#             code = Code.get_from_string(codestring)
+#         except NotExistent:
+#             try:
+#                 code = load_node(codestring)
+#             except NotExistent:
+#                 code = None
+#         except (InputValidationError, MultipleObjectsError):
+#             code = None
+#     else:
+#         try:
+#             code = load_node(pk)
+#         except NotExistent:
+#             code = None
 
-    try:
-        pk = int(code)
-    except ValueError:
-        codestring = str(code)
-        try:
-            code = Code.get_from_string(codestring)
-        except NotExistent:
-            try:
-                code = load_node(codestring)
-            except NotExistent:
-                code = None
-        except (InputValidationError, MultipleObjectsError):
-            code = None
-    else:
-        try:
-            code = load_node(pk)
-        except NotExistent:
-            code = None
-
-    if isinstance(code, Code):
-        return code
-    else:
-        return None
+#     if isinstance(code, Code):
+#         return code
+#     else:
+#         return None
 
 
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
@@ -221,7 +220,7 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = ['{}@{}'.format(c.label, c.computer.name) for [c] in qb.all()]
+        valid_code_labels = ['{}@{}'.format(c.label, c.computer.label) for [c] in qb.all()]
 
         if valid_code_labels:
             msg = ('Given Code node is not of expected code type.\n'
@@ -438,7 +437,7 @@ def performance_extract_calcs(calcs):
         data_dict['walltime_sec'].append(walltime)
         data_dict['walltime_sec_cor'].append(walltime_new)
         data_dict['walltime_sec_per_it'].append(walltime_periteration)
-        cname = calc.computer.name
+        cname = calc.computer.label
         data_dict['computer'].append(cname)
         natom = res.number_of_atoms
         data_dict['n_atoms'].append(natom)

@@ -14,23 +14,22 @@ from __future__ import absolute_import
 import pytest
 import os
 
-
 # is_code
-def test_is_code_interface(fixture_code):
-    """Test if is_code interface can take all inputs types without failure"""
-    from aiida_fleur.tools.common_fleur_wf import is_code
+# def test_is_code_interface(fixture_code):
+#     """Test if is_code interface can take all inputs types without failure"""
+#     from aiida_fleur.tools.common_fleur_wf import is_code
 
-    assert is_code('random_string') is None
-    assert is_code('fleur.inpGUT') is None
-    assert is_code(99999) is None
+#     assert is_code('random_string') is None
+#     assert is_code('fleur.inpGUT') is None
+#     assert is_code(99999) is None
 
-    code = fixture_code('fleur.inpgen')
-    code.store()
+#     code = fixture_code('fleur.inpgen')
+#     code.store()
 
-    assert is_code(code.uuid)
-    assert is_code(code.pk)
-    assert is_code('@'.join([code.label, code.get_computer_name()]))
-    assert is_code(code)
+#     assert is_code(code.uuid)
+#     assert is_code(code.pk)
+#     assert is_code('@'.join([code.label, code.get_computer_name()]))
+#     assert is_code(code)
 
 
 def test_get_inputs_fleur():
