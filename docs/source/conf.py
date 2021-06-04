@@ -135,7 +135,7 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
-suppress_warnings = ['aiida']
+#suppress_warnings = []
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -426,14 +426,10 @@ epub_copyright = copyright
 
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance
-nitpick_ignore = []
-
-for line in open('nitpick-exceptions'):
-    if line.strip() == '' or line.startswith('#'):
-        continue
-    dtype, target = line.split(None, 1)
-    target = target.strip()
-    nitpick_ignore.append((dtype, target))
+with open('nitpick-exceptions', 'r') as handle:
+    nitpick_ignore = [
+        tuple(line.strip().split(None, 1)) for line in handle.readlines() if line.strip() and not line.startswith('#')
+    ]
 
 html_static_path = ['_static']
 

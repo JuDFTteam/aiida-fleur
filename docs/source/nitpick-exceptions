@@ -133,27 +133,6 @@ py:class  logging.Logger
 
 py:class  paramiko.proxy.ProxyCommand
 
-py:class  plumpy.processes.Process
-py:class  plumpy.process_comms.ProcessLauncher
-py:class  plumpy.process_spec.ProcessSpec
-py:class  plumpy.Process
-py:class  plumpy.Communicator
-py:class  plumpy.Bundle
-py:class  plumpy.workchains.WorkChainSpec
-py:class  plumpy.persistence.Persister
-py:class  plumpy.ports.Port
-py:class  plumpy.ports.InputPort
-py:class  plumpy.ports.PortNamespace
-py:class  plumpy.utils.AttributesDict
-py:class  plumpy.loaders.DefaultObjectLoader
-py:class  plumpy.ObjectLoader
-py:exc    plumpy.TaskRejected
-py:meth   plumpy.process_spec.ProcessSpec.expose_inputs
-py:meth   plumpy.process_spec.ProcessSpec.expose_outputs
-
-py:class  kiwipy.futures.Future
-py:class  kiwipy.communications.TimeoutError
-
 py:class  tornado.concurrent.Future
 
 py:class  IPython.core.magic.Magics
@@ -197,6 +176,49 @@ py:class  collections.abc.MutableSequence
 py:class  aiida.orm.node.Node
 # This comes from ABCMeta
 py:meth   aiida.orm.group.Group.get_from_string
+
+# issues with order of object processing and type hinting
+py:class aiida.engine.runners.ResultAndNode
+py:class aiida.engine.runners.ResultAndPk
+py:class aiida.engine.processes.workchains.workchain.WorkChainSpec
+py:class aiida.manage.manager.Manager
+py:class aiida.orm.nodes.node.WarnWhenNotEntered
+py:class aiida.orm.utils.links.LinkQuadruple
+py:class aiida.tools.importexport.dbexport.ExportReport
+py:class aiida.tools.importexport.dbexport.ArchiveData
+py:class aiida.tools.groups.paths.WalkNodeResult
+
+py:class Backend
+py:class BackendEntity
+py:class BackendNode
+py:class AuthInfo
+py:class CalcJob
+py:class CalcJobNode
+py:class Data
+py:class ExitCode
+py:class File
+py:class FolderData
+py:class JobInfo
+py:class JobState
+py:class Node
+py:class Parser
+py:class PersistenceError
+py:class Process
+py:class ProcessBuilder
+py:class ProcessNode
+py:class ProcessSpec
+py:class Port
+py:class PortNamespace
+py:class Repository
+py:class Runner
+py:class Transport
+py:class TransportQueue
+py:class WorkChainSpec
+
+py:class kiwipy.communications.Communicator
+py:class plumpy.process_states.State
+py:class plumpy.workchains._If
+py:class plumpy.workchains._While
 
 py:mod    click
 py:class  click.Choice
