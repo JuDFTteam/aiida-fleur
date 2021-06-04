@@ -14,8 +14,9 @@ Module for the command line interface of AiiDA-FLEUR
 '''
 import click
 import click_completion
+import difflib
 
-import aiida_fleur
+from aiida_fleur import __version__
 from aiida.cmdline.params import options, types
 from .launch import cmd_launch
 from .data import cmd_data
@@ -32,20 +33,52 @@ click_completion.init()
 # less material science specific
 
 
-@click.group('aiida-fleur',
-             context_settings={'help_option_names': ['-h', '--help']},
-             help="""CLI for the `aiida-fleur` plugin package version {}.""".format(aiida_fleur.__version__))
+class MostSimilarCommandGroup(click.Group):
+    """
+    Overloads the get_command to display a list of possible command
+    candidates if the command could not be found with an exact match.
+    """
+
+    def get_command(self, ctx, cmd_name):
+        """
+        Override the default click.Group get_command with one giving the user
+        a selection of possible commands if the exact command name could not be found.
+        """
+        cmd = click.Group.get_command(self, ctx, cmd_name)
+
+        # return the exact match
+        if cmd is not None:
+            return cmd
+
+        matches = difflib.get_close_matches(cmd_name, self.list_commands(ctx), cutoff=0.5)
+
+        if not matches:
+            # single letters are sometimes not matched, try with a simple startswith
+            matches = [c for c in sorted(self.list_commands(ctx)) if c.startswith(cmd_name)][:3]
+
+        if matches:
+            ctx.fail("'{cmd}' is not a aiida-fleur command.\n\n"
+                     'The most similar commands are: \n'
+                     '{matches}'.format(cmd=cmd_name, matches='\n'.join('\t{}'.format(m) for m in sorted(matches))))
+        else:
+            ctx.fail(f"'{cmd_name}' is not a aiida-fleur command.\n\nNo similar commands found.")
+
+        return None
+
+
+@click.command(cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
-#@options_af.VERSION()
-def cmd_root(profile, version):  # pylint: disable=unused-argument
+# Note, __version__ should always be passed explicitly here,
+# because click does not retrieve a dynamic version when installed in editable mode
+@click.version_option(__version__, '-v', '--version', message='AiiDA-FLEUR version %(version)s')
+def cmd_root(profile):  # pylint: disable=unused-argument
     """CLI for the `aiida-fleur` plugin."""
-    #if version:
-    #    click.echo(aiida_fleur.__version__)
-    #    return
 
 
 # To avoid circular imports all commands are not yet connected to the root
-# but they have to be here because of bash completion
+# but they have to be here because of bash completion on the other hand, this
+# makes them not work with the difflib...
+# see how aiida-core does it.
 
 cmd_root.add_command(cmd_launch)
 cmd_root.add_command(cmd_data)

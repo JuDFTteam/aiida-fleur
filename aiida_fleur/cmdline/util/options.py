@@ -157,10 +157,3 @@ SHOW = OverridableOption('--show/--no-show',
                          default=True,
                          show_default=True,
                          help='Show the main output of the command.')
-
-VERSION = OverridableOption('-v',
-                            '--version',
-                            is_flag=True,
-                            default=False,
-                            show_default=True,
-                            help='Display the version and exit.')
