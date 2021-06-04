@@ -2,7 +2,8 @@ Getting started
 ===============
 
 Installation of AiiDA-FLEUR
----------------------------
++++++++++++++++++++++++++++
+
 .. _downloading: https://github.com/JuDFTteam/aiida-fleur
 .. _AiiDA: https://aiida.readthedocs.io/projects/aiida-core/en/latest/
 .. _tutorial: https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/installation.html#aiida-profile-setup
@@ -15,7 +16,8 @@ description of all required steps can be found in the `AiiDA`_ documentation.
 However, a small guide presented below shows an example of installation of AiiDA-FLEUR.
 
 Installation of python packages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
+
 First of all, make sure that you have all required libraries that are `needed`_ for AiiDA.
 
 .. note::
@@ -74,12 +76,14 @@ from GitHub without package reinstallation. AiiDA-FLEUR can be installed the sam
 
 
 AiiDA setup
-----------------
++++++++++++
+
 Once AiiDA-FLEUR is installed, it it necessary to setup a profile, computers and
 codes.
 
 Profile setup
-^^^^^^^^^^^^^
+-------------
+
 First, to set up a profile with a database, use:
 
 .. code-block:: bash
@@ -112,7 +116,8 @@ something like
 your AiiDA is set up properly and you can continue with next section.
 
 Computers setup
-^^^^^^^^^^^^^^^^^
+---------------
+
 AiiDA needs to know how to access the computer that you want to use for FLEUR calculations.
 Therefore you need to set up a computer - this procedure will create a representation (node) of
 computational computer in the database which will be used later. It can be done by:
@@ -188,12 +193,14 @@ If you are using aiida-fleur inside FZ Jülich, you can find additional helpful 
 setting up the connection to JURECA (or other machine) on `iffwiki`_.
 
 FLEUR and inpgen setup
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------
+
 AiiDA-FLEUR uses two codes: FLEUR itself and an input generator called inpgen. Thus, two codes have
 to be set up independently.
 
-input generator
-~~~~~~~~~~~~~~~
+Input generator
+^^^^^^^^^^^^^^^
+
 I recommend running input generator on your local machine because it runs fast and one usually
 spends
 more time waiting for the input to be uploaded to the remote machine. You need to install inpgen
@@ -220,6 +227,11 @@ after that, a vim editor pops out and you need to specify prepend and append tex
 add required imports and commands for you system. Particularly in my case, I need to
 set proper library paths. Hence my prepend text looks like:
 
+.. note::
+    The default expected Input generator version is >=32 i.e >=MaX5.1. 
+    If you want to install older version of the input generator you *must* specify a 'version' key 
+    under the 'extras' of the code node i.e for example code.set_extra('version', 31). 
+
 .. code-block:: bash
 
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/intel/mkl/lib:/usr/local/intel/compilers_and_libraries_2019.3.199/mac/compiler/lib/
@@ -227,7 +239,7 @@ set proper library paths. Hence my prepend text looks like:
 Now inpgen code is ready to be used.
 
 FLEUR code
-~~~~~~~~~~
+^^^^^^^^^^
 
 FLEUR code can be set up the same way as the input generator. However, there is an important note
 that has to be mentioned.
@@ -248,7 +260,7 @@ that has to be mentioned.
             Remote absolute path: /scratch/user/codes/fleur_MPI
 
 Installation test
-^^^^^^^^^^^^^^^^^
+-----------------
 
 To test if the aiida-fleur installation was successful use:
 

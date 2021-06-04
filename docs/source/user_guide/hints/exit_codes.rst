@@ -1,7 +1,7 @@
 .. _exit_codes:
 
-Exit codes
-**********
+Reference of Exit codes
+=======================
 
 .. _documentation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/processes.html#exit-codes
 

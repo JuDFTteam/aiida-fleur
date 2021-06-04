@@ -6,7 +6,7 @@ Fleur core-hole workflow
 Class name, import from:
   ::
 
-    from aiida_fleur.workflows.corehole import fleur_corehole_wc
+    from aiida_fleur.workflows.corehole import FleurCoreholeWorkChain
     #or
     WorkflowFactory('fleur.corehole')
 

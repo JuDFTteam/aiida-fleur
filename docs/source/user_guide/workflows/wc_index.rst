@@ -2,12 +2,12 @@ AiiDA-FLEUR WorkChains
 ======================
 
 General design
---------------
+++++++++++++++
 
 All of the WorkChains have a similar interface and they share several common input nodes.
 
 Inputs
-''''''
+------
 
 There is always a ``wf_parameters``:
 :py:class:`~aiida.orm.Dict` node for controlling the workflow behavior.
@@ -47,7 +47,7 @@ Input for the nested workchains has to be specified via a corresponding namespac
 refer to the documentation of a particular workchain to see the details.
 
 Outputs
-'''''''
+-------
 Most of the workchains return a workflow specific *ParameterData*
 (:py:class:`~aiida.orm.Dict`) node named ``output_name_wc_para`` or simple ``out``
 which contains the main results and some information about the workchain.
@@ -57,7 +57,7 @@ documentation of a particular workchain that you are interested in.
 
 
 Workchain classification
-------------------------
+++++++++++++++++++++++++
 
 .. image:: images/workchains2.png
     :width: 100%
@@ -77,7 +77,7 @@ and their self-consistent analogs in the scientific workchains group.
     Inputs are *uuid*, *pk*, *workchain* nodes or *ParameterData* (workchain output) nodes.
 
 Basic (Technical) Workchains
-''''''''''''''''''''''''''''
+++++++++++++++++++++++++++++
 
 .. toctree::
    :maxdepth: 2
@@ -90,32 +90,47 @@ Basic (Technical) Workchains
    ./dos_band_wc
 
 More advanced (Scientific) Workchains
-'''''''''''''''''''''''''''''''''''''
++++++++++++++++++++++++++++++++++++++
+
+Advanced workchains can be divided into categories according to subject.
+
+XPS workchains:
 
 .. toctree::
    :maxdepth: 2
 
    ./initial_cls_wc
    ./corehole_wc
-   ./create_magnetic_wc
 
-Magnetic workchains
-...................
 
-Force-theorem subgroup
-,,,,,,,,,,,,,,,,,,,,,,
+Magnetic workchains:
+
+Magnetic workchains can be divided into two subgroups the Force-theorem subgroup and the self-consistent sub-group.
+
+The Force-theorem subgroup contains:
+
+- ssdisp_wc
+- dmi_wc
+- mae_wc
+
+The self-consistent sub-group contains:
+
+- ssdisp_conv_wc
+- mae_conv_wc
+
 .. toctree::
    :maxdepth: 2
 
    ./ssdisp_wc
    ./dmi_wc
    ./mae_wc
+   ./ssdisp_conv_wc
+   ./mae_conv_wc
 
 
-Self-consistent sub-group
-,,,,,,,,,,,,,,,,,,,,,,,,,
+And other workflows like the  create_magnetic_wc.
+
 .. toctree::
    :maxdepth: 2
 
-   ./ssdisp_conv_wc
-   ./mae_conv_wc
+   ./create_magnetic_wc
