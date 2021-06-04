@@ -1,3 +1,5 @@
+.. _aiidafleur_tools:
+
 Fleur tools/utility
 +++++++++++++++++++
 
@@ -19,13 +21,13 @@ Parameter utility
 -----------------
 
 General Parameter
-_________________
+^^^^^^^^^^^^^^^^^
 
 .. automodule:: aiida_fleur.tools.dict_util
    :members:
 
 Merge Parameter
-_______________
+^^^^^^^^^^^^^^^
 
 .. automodule:: aiida_fleur.tools.merge_parameter
    :members:
