@@ -66,7 +66,7 @@ class MostSimilarCommandGroup(click.Group):
         return None
 
 
-@click.command(cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
+@click.command('aiida-fleur', cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
 # Note, __version__ should always be passed explicitly here,
 # because click does not retrieve a dynamic version when installed in editable mode
