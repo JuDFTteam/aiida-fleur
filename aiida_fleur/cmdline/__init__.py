@@ -66,7 +66,9 @@ class MostSimilarCommandGroup(click.Group):
         return None
 
 
-@click.command('aiida-fleur', cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
+# Uncomment this for now, has problems with sphinx-click
+#@click.command('aiida-fleur', cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
+@click.group('aiida-fleur', context_settings={'help_option_names': ['-h', '--help']})
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
 # Note, __version__ should always be passed explicitly here,
 # because click does not retrieve a dynamic version when installed in editable mode
