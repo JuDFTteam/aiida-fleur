@@ -93,7 +93,7 @@ copyright = u'{}, {}. All rights reserved'.format(copyright_year_string, copyrig
 
 release = aiida_fleur.__version__
 # The short X.Y version.
-version = '.'.join(release.split('.')[:2])
+version = '.'.join(release.split('.')[:3])
 
 author = 'The AiiDA-FLEUR team.'
 

@@ -157,7 +157,9 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
     launch_process(builder, daemon)
 
 
-@click.command('scf')
+@click.command('scf',
+               help="""Launch a SCF workchain, (FleurScfWorkChain  version {})""".format(
+                   WorkflowFactory('fleur.scf')._workflowversion))
 @options.STRUCTURE_OR_FILE(default=defaults.get_si_bulk_structure, show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()

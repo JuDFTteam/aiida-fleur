@@ -15,11 +15,13 @@ Module for the command line interface of AiiDA-FLEUR
 import click
 import click_completion
 
+import aiida_fleur
 from aiida.cmdline.params import options, types
 from .launch import cmd_launch
 from .data import cmd_data
 from .workflows import cmd_workflow
 from .visualization import cmd_plot
+from .util import options as options_af
 
 # Activate the completion of parameter types provided by the click_completion package
 # for bash: eval "$(_AIIDA_FLEUR_COMPLETE=source aiida-fleur)"
@@ -30,10 +32,16 @@ click_completion.init()
 # less material science specific
 
 
-@click.group('aiida-fleur', context_settings={'help_option_names': ['-h', '--help']})
+@click.group('aiida-fleur',
+             context_settings={'help_option_names': ['-h', '--help']},
+             help="""CLI for the `aiida-fleur` plugin package version {}.""".format(aiida_fleur.__version__))
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
-def cmd_root(profile):  # pylint: disable=unused-argument
+#@options_af.VERSION()
+def cmd_root(profile, version):  # pylint: disable=unused-argument
     """CLI for the `aiida-fleur` plugin."""
+    #if version:
+    #    click.echo(aiida_fleur.__version__)
+    #    return
 
 
 # To avoid circular imports all commands are not yet connected to the root
