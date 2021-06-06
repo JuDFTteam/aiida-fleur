@@ -46,7 +46,7 @@
             "Sphinx",
             "docutils",
             "sphinx_rtd_theme",
-	    "sphinx-click"
+            "sphinx-click"
         ],
         "pre-commit": [
             "pre-commit>=2.6.0",

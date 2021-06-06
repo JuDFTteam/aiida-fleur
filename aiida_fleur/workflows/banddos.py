@@ -45,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.4.1'
 
     _default_options = {
         'resources': {
@@ -105,11 +105,14 @@ class FleurBandDosWorkChain(WorkChain):
         spec.output('output_banddos_wc_para', valid_type=Dict)
         spec.output('last_calc_retrieved', valid_type=FolderData)
 
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
         spec.exit_code(233,
                        'ERROR_INVALID_CODE_PROVIDED',
                        message='Invalid code node specified, check inpgen and fleur code nodes.')
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
-        spec.exit_code(337, 'ERROR_SCF_CALCULATION_FAILED', message='SCF calculation failed.')
+        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
+        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
+        spec.exit_code(334, 'ERROR_SCF_CALCULATION_FAILED', message='SCF calculation failed.')
         spec.exit_code(335, 'ERROR_SCF_CALCULATION_NOREMOTE', message='Found no SCF calculation remote repository.')
 
     def start(self):
@@ -178,6 +181,16 @@ class FleurBandDosWorkChain(WorkChain):
         else:
             self.ctx.scf_needed = False
 
+        if wf_dict['mode'] == 'dos' and wf_dict['kpath'] not in ('auto', 'skip'):
+            error = 'ERROR: you specified the DOS mode but provided a non default kpath argument'
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+        if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_number'] is not None:
+            error = 'ERROR: Only provide either the distance or number for the kpoints'
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
     def change_fleurinp(self):
         """
         create a new fleurinp from the old with certain parameters
@@ -201,7 +214,16 @@ class FleurBandDosWorkChain(WorkChain):
         # how can the user say he want to use the given kpoint mesh, ZZ nkpts : False/0
         fleurmode = FleurinpModifier(fleurin)
 
-        fleurmode.add_task_list(wf_dict.get('inpxml_changes', []))
+        fchanges = wf_dict.get('inpxml_changes', [])
+        # apply further user dependend changes
+        if fchanges:
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         kpath = wf_dict['kpath']
         explicit = wf_dict['kpoints_explicit']
@@ -209,11 +231,14 @@ class FleurBandDosWorkChain(WorkChain):
         nkpts = wf_dict['kpoints_number']
         listname = wf_dict['klistname']
 
-        if nkpts is not None and distance is not None:
-            raise ValueError('Only provide either the distance or number for the kpoints')
-
         if explicit is not None:
-            fleurmode.set_kpointlist(**explicit)
+            try:
+                fleurmode.set_kpointlist(**explicit)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply kpoints_explicit'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         if listname is None:
             if wf_dict.get('mode') == 'band':
@@ -229,8 +254,6 @@ class FleurBandDosWorkChain(WorkChain):
             if fleurin.inp_version >= '0.32' and listname is not None:
                 fleurmode.switch_kpointset(listname)
         elif isinstance(kpath, dict):
-            if wf_dict.get('mode') == 'dos':
-                raise ValueError('specifying a kpath is not valid for DOS calculations')
             if fleurin.inp_version < '0.32':
                 if distance is not None:
                     raise ValueError('set_kpath only supports specifying the number of points for the kpoints')
@@ -238,8 +261,6 @@ class FleurBandDosWorkChain(WorkChain):
             else:
                 raise ValueError('set_kpath is only supported for inputs up to Max4')
         elif kpath == 'seek':
-            if wf_dict.get('mode') == 'dos':
-                raise ValueError('specifying a kpath is not valid for DOS calculations')
             #Use aiida functionality
             struc = fleurin.get_structuredata()
 
@@ -265,8 +286,6 @@ class FleurBandDosWorkChain(WorkChain):
         elif kpath == 'skip':
             return
         else:
-            if wf_dict.get('mode') == 'dos':
-                raise ValueError('specifying a kpath is not valid for DOS calculations')
             #Use ase
             struc = fleurin.get_structuredata()
 
@@ -310,6 +329,11 @@ class FleurBandDosWorkChain(WorkChain):
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         fleurinp_new = fleurmode.freeze()
         self.ctx.fleurinp_banddos = fleurinp_new

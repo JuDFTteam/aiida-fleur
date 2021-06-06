@@ -455,6 +455,11 @@ class FleurScfWorkChain(WorkChain):
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # apply
         out = fleurmode.freeze()
