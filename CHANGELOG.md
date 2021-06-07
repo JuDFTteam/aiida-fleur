@@ -9,6 +9,8 @@ may be broken by the new inpgen interface change when using MaXR5.1
 - Major code refactoring, moving all xml tools to masci-tools (therefore requires masci-tools >=0.4.8)
 - Also all file parsers are overworked and moved to masci-tools
 - Work over of the BanddosWorkChain.
+- FleurinpData now consistently supports more included xml files (kpts.xml, sym.xml, ...)
+- Added new modification functions to the FleurinpModifier for kpoint manipulation for Max5
 
 
 ## v.1.1.4
