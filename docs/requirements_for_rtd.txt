@@ -6,3 +6,4 @@ masci-tools
 ase
 pymatgen
 sphinx_click
+docutils<0.17
