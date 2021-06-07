@@ -87,7 +87,7 @@ Features, Illustrations, Usage examples:
 
 .. topic:: Example 2, Material screening:
 
-    Fleur SCF convergence of 1362 different screened Binary systems managed by the scf workchain
+    Fleur SCF convergence of over 4000 different screened binary systems managed by the scf workchain
 
     .. figure:: images/convergence_all_MP_metals.png
         :width: 100 %
