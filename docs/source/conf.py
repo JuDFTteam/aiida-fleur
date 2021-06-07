@@ -304,6 +304,9 @@ else:
     configuration.IN_RT_DOC_MODE = True
     configuration.BACKEND = 'django'
     configuration.AIIDADB_PROFILE = 'default'
+    #Perform reentry scan
+    from reentry import manager
+    manager.scan()
 
 
 '''
