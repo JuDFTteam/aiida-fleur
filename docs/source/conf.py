@@ -55,6 +55,7 @@ intersphinx_mapping = {
     #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
     'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
+    'ase': ('https://wiki.fysik.dtu.dk/ase/', None)
 }
 
 nitpick_ignore = [('py:obj', 'module')]
