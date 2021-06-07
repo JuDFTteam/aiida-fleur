@@ -1,7 +1,7 @@
 .. _exit_codes:
 
-Exit codes
-**********
+Reference of Exit codes
+=======================
 
 .. _documentation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/processes.html#exit-codes
 
@@ -48,6 +48,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 230       | Invalid workchain parameters                            | SSDisp Conv            |
 +-----------+---------------------------------------------------------+------------------------+
+| 230       | Invalid workchain parameters                            | BandDos                |
++-----------+---------------------------------------------------------+------------------------+
 | 231       | Invalid input configuration                             | CreateMagnetic         |
 +-----------+---------------------------------------------------------+------------------------+
 | 231       | Invalid input configuration                             | DMI                    |
@@ -58,6 +60,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 231       | Invalid input configuration                             | SSDisp                 |
 +-----------+---------------------------------------------------------+------------------------+
+| 231       | Invalid input configuration                             | BandDos                |
++-----------+---------------------------------------------------------+------------------------+
 | 233       | Input codes do not correspond to                        | DMI                    |
 |           | fleur or inpgen codes respectively.                     |                        |
 +-----------+---------------------------------------------------------+------------------------+
@@ -65,6 +69,9 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 |           | fleur or inpgen codes respectively.                     |                        |
 +-----------+---------------------------------------------------------+------------------------+
 | 233       | Input codes do not correspond to                        | SSDisp                 |
+|           | fleur or inpgen codes respectively.                     |                        |
++-----------+---------------------------------------------------------+------------------------+
+| 233       | Input codes do not correspond to                        | BandDos                |
 |           | fleur or inpgen codes respectively.                     |                        |
 +-----------+---------------------------------------------------------+------------------------+
 | 235       | Input file modification failed.                         | DMI                    |
@@ -75,6 +82,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 235       | Input file modification failed.                         | SSDisp                 |
 +-----------+---------------------------------------------------------+------------------------+
+| 235       | Input file modification failed.                         | BandDos                |
++-----------+---------------------------------------------------------+------------------------+
 | 236       | Input file was corrupted after modifications            | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 236       | Input file was corrupted after modifications            | MAE                    |
@@ -82,6 +91,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 | 236       | Input file was corrupted after modifications            | SCF                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 236       | Input file was corrupted after modifications            | SSDisp                 |
++-----------+---------------------------------------------------------+------------------------+
+| 236       | Input file was corrupted after modifications            | BandDos                |
 +-----------+---------------------------------------------------------+------------------------+
 | 300       | No retrieved folder found                               | FleurCalculation       |
 +-----------+---------------------------------------------------------+------------------------+
@@ -138,11 +149,15 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | SSDisp                 |
 +-----------+---------------------------------------------------------+------------------------+
+| 334       | SCF calculation failed.                                 | BandDos                |
++-----------+---------------------------------------------------------+------------------------+
 | 335       | Found no reference calculation remote repository.       | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 335       | Found no reference calculation remote repository.       | MAE                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 335       | Found no reference calculation remote repository.       | SSDisp                 |
++-----------+---------------------------------------------------------+------------------------+
+| 335       | Found no SCF calculation remote repository.             | BandDos                |
 +-----------+---------------------------------------------------------+------------------------+
 | 336       | Force theorem calculation failed.                       | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+

@@ -10,7 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
-This is the worklfow 'initial_cls' using the Fleur code calculating
+This is the worklfow FleurInitialCLSWorkChain 'initial_cls' using the Fleur code calculating
 corelevel shifts with different methods.
 """
 #TODO parsing of eigenvalues of LOS!
@@ -22,7 +22,6 @@ corelevel shifts with different methods.
 # TODO: maybe launch all scfs at the same time
 # TODO: gives only a warning currently if ref not found.
 # but should lead to error if no ref is found for what should be calculated
-from __future__ import absolute_import
 from string import digits
 from aiida.engine import submit
 from aiida.engine import ToContext, WorkChain, if_
@@ -37,10 +36,9 @@ from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import get_natoms_element
 from aiida_fleur.data.fleurinp import FleurinpData
-import six
 
 
-class fleur_initial_cls_wc(WorkChain):
+class FleurInitialCLSWorkChain(WorkChain):
     """
     Turn key solution for the calculation of core level shift
     """
@@ -71,7 +69,7 @@ class fleur_initial_cls_wc(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.0'
     _default_wf_para = {
         'references': {},
         'relax': True,
@@ -79,7 +77,12 @@ class fleur_initial_cls_wc(WorkChain):
         'relax_para': 'default',
         'scf_para': 'default',
         'same_para': True,
-        'serial': False
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     _default_options = {
@@ -167,7 +170,7 @@ class fleur_initial_cls_wc(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
-        self.ctx.serial = wf_dict.get('serial', default.get('serial'))
+        self.ctx.add_comp_para = wf_dict.get('add_para_calc', default.get('add_para_calc'))
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
@@ -179,7 +182,7 @@ class fleur_initial_cls_wc(WorkChain):
             options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -402,7 +405,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
         resall = {}
@@ -508,7 +511,7 @@ class fleur_initial_cls_wc(WorkChain):
         #self.ctx.ref_calcs_torun.append(ref_el)
 
         # for entry in ref[elem] find parameter node
-        for elm, struc in six.iteritems(self.ctx.ref):
+        for elm, struc in self.ctx.ref.items():
             #print(elm, struc)
             #self.ctx.ref_calcs_torun.append(ref_el)
             pass
@@ -531,7 +534,7 @@ class fleur_initial_cls_wc(WorkChain):
             wf_parameter = {}
         else:
             wf_parameter = para
-        wf_parameter['serial'] = self.ctx.serial
+        wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         # TODO maybe use less resources, or default of one machine
         #wf_parameter['options'] = self.ctx.options
         wf_parameters = Dict(dict=wf_parameter)
@@ -682,7 +685,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         #first substract efermi from corelevel of reference structures
         # TODO check if both values, corelevel and efermi are in eV
-        for compound, atomtypes_list in six.iteritems(ref_atomtypes):
+        for compound, atomtypes_list in ref_atomtypes.items():
             # atomtype_list contains a list of dicts of all atomtypes from compound x
             # get corelevels of compound x
             cls_all_atomtyps = ref_all_corelevel[compound]
@@ -702,7 +705,7 @@ class fleur_initial_cls_wc(WorkChain):
 
         #now substract efermi from corelevel of compound structure
         #and calculate core level shifts
-        for compound, cls_atomtypes_list in six.iteritems(all_corelevel):
+        for compound, cls_atomtypes_list in all_corelevel.items():
             #init, otherwise other types will override
             for i, atomtype in enumerate(atomtypes[compound]):
                 elm = atomtype.get('element', None)
@@ -740,13 +743,13 @@ class fleur_initial_cls_wc(WorkChain):
         # have been calculated.
         # convert total_en dict to list, why?
         total_en_list = []
-        for key, val in six.iteritems(total_en):
+        for key, val in total_en.items():
             total_en_list.append([key, val])
         if self.ctx.calculate_formation_energy:
             # the reference total energy is for the whole structure with several atoms,
             # we need it per atom
             ref_total_en_norm = {}
-            for key, val in six.iteritems(ref_total_en):
+            for key, val in ref_total_en.items():
                 elm_dict = get_natoms_element(key)
                 ref_total_en_norm[list(elm_dict.keys())[0]] = 1.0 * val / list(elm_dict.values())[0]
             #print(ref_total_en_norm)
@@ -841,7 +844,7 @@ class fleur_initial_cls_wc(WorkChain):
         #outdict = {}
         #outdict['output_initial_cls_wc_para'] = outputnode
         #print outdict
-        for k, v in six.iteritems(outdict):
+        for k, v in outdict.items():
             self.out(k, v)
         msg = ('INFO: Initial_state_CLS workflow Done')
         self.report(msg)
@@ -1177,10 +1180,10 @@ def clshifts_to_be(coreleveldict, reference_dict):
     """
 
     return_corelevel_dict = {}
-    for elem, corelevel_dict in six.iteritems(coreleveldict):
+    for elem, corelevel_dict in coreleveldict.items():
         ref_el = reference_dict.get(elem, {})
         return_corelevel_dict[elem] = {}
-        for corelevel_name, corelevel_list in six.iteritems(corelevel_dict):
+        for corelevel_name, corelevel_list in corelevel_dict.items():
             ref_cl = ref_el.get(corelevel_name, [])
             be_all = []
             nref = len(ref_cl)

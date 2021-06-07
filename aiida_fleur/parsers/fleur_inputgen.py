@@ -22,6 +22,8 @@ from aiida.common.exceptions import NotExistent, InputValidationError, Validatio
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
+import pprint
+
 
 class Fleur_inputgenParser(Parser):
     """
@@ -69,10 +71,16 @@ class Fleur_inputgenParser(Parser):
             except IOError:
                 self.logger.error('Failed to open error file: {}.'.format(errorfile))
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
-            # if not empty, has_error equals True, parse error.
+            # if not empty, has_error equals True, prior fleur 32
             if error_file_lines:
-                self.logger.error("The following was written to the error file {} : \n '{}'"
-                                  ''.format(errorfile, error_file_lines))
+                if isinstance(error_file_lines, type(b'')):
+                    error_file_lines = error_file_lines.replace(b'\x00', b' ')
+                else:
+                    error_file_lines = error_file_lines.replace('\x00', ' ')
+                if 'Run finished successfully' not in error_file_lines:
+                    self.logger.warning('The following was written into std error and piped to {}'
+                                        ' : \n {}'.format(errorfile, error_file_lines))
+                    self.logger.error('Inpgen calculation did not finish' ' successfully.')
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
@@ -81,14 +89,19 @@ class Fleur_inputgenParser(Parser):
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                self.logger.error("'{}' file not found in retrived folder, it was probably "
+                self.logger.error("'{}' file not found in retrieved folder, it was probably "
                                   'not created by inpgen'.format(file1))
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:
-            fleurinp = FleurinpData(files=[inpxml_file], node=output_folder)
+            fleurinp = FleurinpData(files=[])
+            fleurinp.set_file(inpxml_file, node=output_folder)
         except InputValidationError as ex:
             self.logger.error('FleurinpData initialization failed: {}'.format(str(ex)))
+            if fleurinp.parser_info == {}:
+                self.logger.error('Parser output: No Output produced')
+            else:
+                self.logger.error(f'Parser output: {pprint.pformat(fleurinp.parser_info)}')
             return self.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID
         except ValidationError as ex:
             self.logger.error('FleurinpData validation failed: {}'.format(str(ex)))

@@ -204,3 +204,59 @@ class Test_FleurEosWorkChain:
         assert node.is_finished
         assert not node.is_finished_ok
         assert node.exit_status == 230
+
+
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
+def test_birch_murnaghan_fit():
+    """Test the birch murnaghan fit in of the eos workchain
+
+    """
+    import numpy as np
+    from aiida_fleur.workflows.eos import birch_murnaghan_fit
+
+    # ignore numerical differences
+    dezi = 8
+    should_vol = round(50.15185277312836, dezi)
+    should_bulk_mod = round(30.630869193205523, dezi)
+    should_bulk_deriv = round(-6.120875695109946, dezi)
+    should_residuals = [round(0.05862235697619352, dezi)]
+    energies = np.array([-1, -2, -3, -4, -3.2, -2.1, -1])
+    base = 50.0
+    scales = np.array([0.94, 0.96, 0.98, 1.0, 1.02, 1.04, 1.06])
+    volumes = scales * base
+    volume, bulk_modulus, bulk_deriv, residuals = birch_murnaghan_fit(energies, volumes)
+
+    # print(volume, bulk_modulus, bulk_deriv, residuals)
+    assert round(volume, dezi) == should_vol
+    assert round(bulk_modulus, dezi) == should_bulk_mod
+    assert round(bulk_deriv, dezi) == should_bulk_deriv
+    assert [round(res, dezi) for res in residuals] == should_residuals
+
+
+@pytest.mark.usefixtures('aiida_profile', 'clear_database')
+def test_birch_murnaghan():
+    """Test the eval birch_murnaghan
+
+    """
+    import numpy as np
+    from aiida_fleur.workflows.eos import birch_murnaghan
+
+    should_ev = [
+        0.00034115814926603393, 4.2469082027066444e-05, 1.2542478545309484e-06, 0.0, -1.1198946045507376e-06,
+        -3.386445023825032e-05, -0.00024303823850147386
+    ]
+    should_vp = [
+        3.169784634427714, 2.0773219926762585, 1.019704802686063, 0.0, -0.9797734383823876, -1.9184258091168582,
+        -2.8154206900859817
+    ]
+
+    energies = np.array([-1, -2, -3, -4, -3.2, -2.1, -1])
+    base = 50.00
+    scales = np.array([0.94, 0.96, 0.98, 1.0, 1.02, 1.04, 1.06])
+    volumes = base * scales
+    bulk_modulus0 = 50
+    bulk_deriv0 = 1
+    ev, vp = birch_murnaghan(volumes, base, bulk_modulus0, bulk_deriv0)
+
+    assert ev == should_ev
+    assert vp == should_vp

@@ -21,9 +21,8 @@ def test_write_results_to_file_interface():
     destination = './outputfiletest'
     write_results_to_file(inputhead, data, destination=destination)
     isfile_ = isfile(abspath('./outputfiletest'))
-    test_file = open(destination, 'r')
-    content = test_file.read()
-    test_file.close()
+    with open(destination, 'r') as test_file:
+        content = test_file.read()
 
     content_exp = 'head\n1.00000000  3.00000000\n2.00000000  4.00000000\n'
     remove(destination)
@@ -46,7 +45,7 @@ def test_write_xps_spectra_datafile_interface():
     assert False
 
 
-def test_compress_fleuroutxml():
+def test_compress_fleuroutxml(eval_xpath):
     """
     test the compress_fleuroutxml function, checks if right number of iterations is kept, or deleted.
     Further checks if new file is written and if eigenvalues are deleted.
@@ -55,7 +54,6 @@ def test_compress_fleuroutxml():
     from os.path import abspath, isfile
     from os import remove
     from lxml import etree
-    from aiida_fleur.tools.xml_util import eval_xpath2
     from aiida_fleur.tools.io_routines import compress_fleuroutxml
 
     testfilepath = abspath('./files/outxml/BeTi_out.xml')
@@ -73,7 +71,7 @@ def test_compress_fleuroutxml():
         parser = etree.XMLParser(recover=False)
         tree = etree.parse(filepath, parser)
 
-        return len(eval_xpath2(tree.getroot(), xpath))
+        return len(eval_xpath(tree.getroot(), xpath, list_return=True))
 
     # test new file exists, and right number of iteration, eig del
     compress_fleuroutxml(testfilepath, dest_file_path=dest_path, iterations_to_keep=15)

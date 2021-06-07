@@ -197,3 +197,72 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
     print((res['remote_folder'].list_objects()))
     print((res['retrieved'].list_objects()))
     assert bool(node.is_finished_ok)
+
+
+def test_x_and_bunchatom_input(
+    aiida_profile,
+    fixture_sandbox,
+    generate_calc_job,
+    fixture_code,
+):
+    """Test that plugin can deal (ignores) with other StructureData features
+
+    Currently we assume atoms, deal with vacancies, i.e we leave them out
+    ignore the x element. This is important for interoperability with kkr
+
+    # TODO often we do natoms= len(n.sites), which would be false in the case of vacancies.
+    """
+    from aiida.orm import StructureData
+
+    struc_Fe7Nb = StructureData()
+    struc_Fe7Nb.cell = [[3.3168796764431, 0.0, 0.0], [1.6584398382215, 2.3453881115923, 0.0],
+                        [0.0, 0.0, 13.349076054836]]
+    struc_Fe7Nb.pbc = (True, True, False)
+    elements = ['X', 'X', 'X', 'Fe', 'Nb', 'Nb']
+    positions = [[0.0, 0.0, 1.1726940557829], [1.6584398382215, 0.0, 3.5180821673487], [0.0, 0.0, 5.8634702789145],
+                 [1.6584398382215, 0.0, 8.2088583904803], [0.0, 0.0, 10.096376717551],
+                 [1.6584398382215, 0.0, 12.46832205832]]
+    for el, pos in zip(elements, positions):
+        struc_Fe7Nb.append_atom(symbols=[el], position=pos)
+
+    entry_point_name = 'fleur.inpgen'
+
+    parameters = {}
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': struc_Fe7Nb,
+        'metadata': {
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
+        }
+    }
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+    codes_info = calc_info.codes_info
+    cmdline_params = ['+all', '-explicit', '-f', 'aiida.in']
+    local_copy_list = []
+    retrieve_list = ['inp.xml', 'out', 'shell.out', 'out.error', 'struct.xsf', 'aiida.in']
+    retrieve_temporary_list = []
+
+    # Check the attributes of the returned `CalcInfo`
+    assert isinstance(calc_info, datastructures.CalcInfo)
+    assert sorted(calc_info.retrieve_list) == sorted(retrieve_list)
+
+    with fixture_sandbox.open('aiida.in') as handle:
+        input_written = handle.read()
+
+    print(input_written)
+    assert '   3\n' in input_written  # test for natoms
+
+    # Test not none of the vacany elements was written into the input file
+    for line in input_written.split('\n'):
+        assert 'X' not in line
+        assert ' 0 ' not in line
+
+    # todo weights, an molecules on site

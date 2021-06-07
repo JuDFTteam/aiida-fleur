@@ -14,23 +14,22 @@ from __future__ import absolute_import
 import pytest
 import os
 
-
 # is_code
-def test_is_code_interface(fixture_code):
-    """Test if is_code interface can take all inputs types without failure"""
-    from aiida_fleur.tools.common_fleur_wf import is_code
+# def test_is_code_interface(fixture_code):
+#     """Test if is_code interface can take all inputs types without failure"""
+#     from aiida_fleur.tools.common_fleur_wf import is_code
 
-    assert is_code('random_string') is None
-    assert is_code('fleur.inpGUT') is None
-    assert is_code(99999) is None
+#     assert is_code('random_string') is None
+#     assert is_code('fleur.inpGUT') is None
+#     assert is_code(99999) is None
 
-    code = fixture_code('fleur.inpgen')
-    code.store()
+#     code = fixture_code('fleur.inpgen')
+#     code.store()
 
-    assert is_code(code.uuid)
-    assert is_code(code.pk)
-    assert is_code('@'.join([code.label, code.get_computer_name()]))
-    assert is_code(code)
+#     assert is_code(code.uuid)
+#     assert is_code(code.pk)
+#     assert is_code('@'.join([code.label, code.get_computer_name()]))
+#     assert is_code(code)
 
 
 def test_get_inputs_fleur():
@@ -54,8 +53,12 @@ def test_get_inputs_fleur():
         'settings': {
             'test': 1
         },
-        'serial': False,
-        'only_even_MPI': True
+        'add_comp_para': {
+            'serial': False,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     results = get_inputs_fleur(**inputs)
@@ -68,7 +71,9 @@ def test_get_inputs_fleur():
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'
-    assert results['only_even_MPI'] == Bool(True)
+    assert results['add_comp_para']['only_even_MPI'] is False
+    assert results['add_comp_para']['max_queue_nodes'] == 20
+    assert results['add_comp_para']['max_queue_wallclock_sec'] == 86400
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 
@@ -79,7 +84,12 @@ def test_get_inputs_fleur():
         'options': {
             'custom_scheduler_commands': 'test_command'
         },
-        'serial': True
+        'add_comp_para': {
+            'serial': True,
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }
     }
 
     results = get_inputs_fleur(**inputs)
@@ -273,13 +283,12 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
             'energy_units': 'eV',
             'kmax': 4.2,
             'fermi_energy': 0.0605833326,
-            'spin_density': 0.0792504665,
+            'spin_density_convergence': 0.0792504665,
             'bandgap_units': 'eV',
             'force_largest': 0.0,
             'energy_hartree': -5090.8728101494,
             'walltime_units': 'seconds',
-            'charge_density1': 0.0577674505,
-            'charge_density2': 0.0461840944,
+            'density_convergence': [0.0577674505, 0.0461840944],
             'number_of_atoms': 4,
             'parser_warnings': [],
             'magnetic_moments': [3.3720063737, 3.3719345944, 3.3719329177, 3.3719329162],
@@ -294,7 +303,7 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
             'number_of_symmetries': 8,
             'energy_core_electrons': -2901.8120489845,
             'magnetic_moment_units': 'muBohr',
-            'overall_charge_density': 0.0682602474,
+            'overall_density_convergence': 0.0682602474,
             'creator_target_structure': ' ',
             'energy_valence_electrons': -71.6009296831,
             'magnetic_spin_up_charges': [9.1494766577, 9.1494806151, 9.1494806833, 9.1494806834],

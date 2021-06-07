@@ -7,47 +7,69 @@
 Welcome to the `AiiDA-FLEUR`_'s documentation!
 ##############################################
 
-
-.. figure:: images/fleur.png
-    :width: 25 %
-    :align: center
-.. figure:: images/MAX-orizz.eps
+.. |logo1| image:: images/AiiDA_transparent_logo.png
+    :width: 80 %
+    :align: middle
+.. |logo2| image:: images/fleur.png
     :width: 50 %
-    :align: center
-.. figure:: images/AiiDA_transparent_logo.png
-    :width: 50 %
-    :align: center
+    :align: middle
+.. |logo3| image:: images/MAX-orizz.png
+    :width: 80 %
+.. |logo4| image:: images/Logo-JLVMD.png
+    :width: 80 %
 
-.. _AiiDA: http://www.aiida.net
-.. _FLEUR: http://www.flapw.de
++---------+---------+
+| |logo1| | |logo2| |
++---------+---------+
+| |logo3| | |logo4| |
++---------+---------+
+
+.. _AiiDA: https://www.aiida.net
+.. _FLEUR: https://www.flapw.de
 .. _AIIDA-FLEUR: https://github.com/broeder-j/aiida-fleur
 .. _registry: https://aiidateam.github.io/aiida-registry
 .. _OQMD: http://oqmd.org
+.. _JuDFT: https://judft.de
+.. _MaX EU Center of Excellence: https://www.max-center.eu
+.. _Joint Lab Virtual Materials Design (JLVMD): https://www.fz-juelich.de/pgi/pgi-1/EN/Forschung/Joint-Lab-VMD/_node.html
 
 The AiiDA-FLEUR python package enables the use of the all-electron Density Functional Theory (DFT)
-code FLEUR (http://www.flapw.de) with the `AiiDA`_ framework (http://www.aiida.net).
+code `FLEUR`_ with the `AiiDA`_ framework.
 
-It is open source under the MIT license and is available under
-(https://github.com/JuDFTteam/aiida-fleur).
-The package is developed within the MaX EU Center of Excellence (www.max-center.eu) at
-Forschungszentrum Jülich GmbH (http://www.fz-juelich.de/pgi/pgi-1/DE/Home/home_node.html),
-(IAS-1/PGI-1), Germany.
+It is open source under the MIT license and available on `github <https://github.com/JuDFTteam/aiida-fleur>`_.
+The package is developed mainly at the Forschungszentrum Jülich GmbH,
+`(IAS-1/PGI-1) <https://www.fz-juelich.de/pgi/pgi-1/DE/Home/home_node.html>`_, Germany.
 Check out the AiiDA `registry`_ to find out more about what other packages for AiiDA exists,
-that might be helpful for you.
+that might be helpful for you and checkout `JuDFT`_  for further information on other IAS-1 made simulation software.
 
+****************
+Acknowledgments:
+****************
+
+We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the
+Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598). 
+We also acknowledge support by the `Joint Lab Virtual Materials Design (JLVMD)`_ of the Forschungszentrum Jülich.
+We thank the AiiDA team for their help and work. Also the vial exchange with developers of AiiDA
+packages for other codes was inspiring.
 
 If you use this package please cite:
 
 * The plugin and workflows: 
   
-  J. Broeder, D. Wortmann, and S. Blügel, 
+  J. Bröder, D. Wortmann, and S. Blügel, 
   Using the AiiDA-FLEUR package for all-electron ab initio electronic structure 
   data generation and processing in materials science, 
-  In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48
+  `In Extreme Data Workshop 2018 Proceedings, 2019, vol 40, p 43-48 <https://juser.fz-juelich.de/record/873744>`_
   
 
-
 * The FLEUR code: http:/www.flapw.de
+
+************
+User support
+************
+You can post any questions in the Fleur user `forum <http://fleur.xobor.de/>`_
+
+For bugs, feature requests and further issues please use the issue tracker on github of the aiida-fleur repository.
 
 ****************************************
 Features, Illustrations, Usage examples:
@@ -65,7 +87,7 @@ Features, Illustrations, Usage examples:
 
 .. topic:: Example 2, Material screening:
 
-    Fleur SCF convergence of 1362 different screened Binary systems managed by the scf workchain
+    Fleur SCF convergence of over 4000 different screened binary systems managed by the scf workchain
 
     .. figure:: images/convergence_all_MP_metals.png
         :width: 100 %
@@ -161,13 +183,6 @@ The package also contains AiiDA dependent tools around the workflows and plugins
 All tools independent on aiida-core are moved to the masci-tools repository,
 to be available to other non AiiDA related projects and tools.
 
-Acknowledgments:
-================
-
-We acknowledge partial support from the EU Centre of Excellence “MaX – Materials Design at the
-Exascale” (http://www.max-centre.eu). (Horizon 2020 EINFRA-5, Grant No. 676598).
-We thank the AiiDA team for their help and work. Also the vial exchange with developers of AiiDA
-packages for other codes was inspiring.
 
 ************
 User's Guide

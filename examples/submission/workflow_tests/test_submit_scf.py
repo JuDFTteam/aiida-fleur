@@ -10,7 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
-Here we run the FleurScfWorkChain for Si or some other material
+Here we run the FleurScfWorkChain
 """
 # pylint: disable=invalid-name
 from __future__ import absolute_import

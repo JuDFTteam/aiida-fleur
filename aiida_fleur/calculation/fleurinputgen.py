@@ -27,8 +27,10 @@ from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.StructureData_util import abs_to_rel_f, abs_to_rel
-from aiida_fleur.tools.xml_util import convert_to_fortran_bool, convert_to_fortran_string
 from aiida_fleur.common.constants import BOHR_A
+
+from masci_tools.util.xml.converters import convert_to_fortran_bool
+from masci_tools.io.common_functions import convert_to_fortran_string
 
 
 class FleurinputgenCalculation(CalcJob):
@@ -137,8 +139,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.exit_code(307, 'ERROR_MISSING_RETRIEVED_FILES', message='Some required files were not retrieved.')
         spec.exit_code(308,
                        'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
-                       message=('During parsing: FleurinpData could not be initialized, see log. '
-                                'Maybe no Schemafile was found or the Fleurinput is not valid.'))
+                       message=('During parsing: FleurinpData could not be initialized, see log. '))
         spec.exit_code(309, 'ERROR_FLEURINPDATA_NOT_VALID', message='During parsing: FleurinpData failed validation.')
 
     def prepare_for_submission(self, folder):
@@ -346,6 +347,9 @@ class FleurinputgenCalculation(CalcJob):
                 site_symbol = kind.symbols[0]
                 atomic_number = _atomic_numbers[site_symbol]
                 atomic_number_name = atomic_number
+                if atomic_number == 0:  # 'X' element for vacancies
+                    natoms = natoms - 1
+                    continue
 
                 # per default we use relative coordinates in Fleur
                 # we have to scale back to atomic units from angstrom
@@ -484,8 +488,15 @@ class FleurinputgenCalculation(CalcJob):
 
         codeinfo = CodeInfo()
         # , "-electronConfig"] # TODO? let the user decide -electronconfig?
-        #cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
-        cmdline_params = ['-explicit']
+
+        # We support different inpgen and fleur version via reading the version from the code node extras
+        code_extras = code.extras
+        code_version = code_extras.get('version', 32)
+        if int(code_version) < 32:
+            # run old inpgen
+            cmdline_params = ['-explicit']
+        else:
+            cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -618,3 +629,27 @@ def _lowercase_dict(dic, dict_name):
         return new_dict
     else:
         raise TypeError('_lowercase_dict accepts only dictionaries as argument')
+
+
+def write_inpgen_file_aiida_struct(structure, path, input_params=None, settings=None):
+    """Wraps around masci_tools write inpgen_file, unpacks aiida structure"""
+    from masci_tools.io.io_fleur_inpgen import write_inpgen_file  # pylint: disable=import-error,no-name-in-module
+
+    atoms_dict_list = []
+    kind_list = []
+
+    for kind in structure.kinds:
+        kind_list.append(kind.get_raw())
+
+    for site in structure.sites:
+        atoms_dict_list.append(site.get_raw())
+
+    report = write_inpgen_file(structure.cell,
+                               atoms_dict_list,
+                               kind_list,
+                               path=path,
+                               pbc=structure.pbc,
+                               input_params=input_params,
+                               settings=settings)
+
+    return report

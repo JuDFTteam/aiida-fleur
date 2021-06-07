@@ -13,9 +13,9 @@
 """Command line utilities to create and inspect `Dict` nodes with FLAPW parameters."""
 import click
 
-from aiida.cmdline.params import options
+from aiida.cmdline.params import options as aiida_options
 from aiida.cmdline.utils import decorators, echo
-
+from ..util import options as fleur_options
 from . import cmd_data
 
 
@@ -31,7 +31,7 @@ def cmd_parameter():
               show_default=True,
               help='Store also the fleurinp and the extractor calcfunction in the db.')
 @click.option('--show/--no-show', default=True, show_default=True, help='Print the contents from the extracted dict.')
-@options.DRY_RUN()
+@aiida_options.DRY_RUN()
 @decorators.with_dbenv()
 def cmd_param_import(filename, dry_run, fleurinp, show):
     """
@@ -47,7 +47,7 @@ def cmd_param_import(filename, dry_run, fleurinp, show):
     if not fleurinp or dry_run:
         parameters = fleurinpd.get_parameterdata_ncf()
     else:
-        parameters = fleurinpd.get_parameterdata(fleurinpd)
+        parameters = fleurinpd.get_parameterdata()
 
     if dry_run:
         echo.echo_success('parsed FLAPW parameters')
@@ -64,3 +64,42 @@ def cmd_param_import(filename, dry_run, fleurinp, show):
 # Example show me all for Si
 # query for options nodes
 # command to split and merge parameters nodes together based on elements.
+@cmd_data.group('options')
+def cmd_options():
+    """Commands to create and inspect `Dict` nodes containing options."""
+
+
+@cmd_options.command('create')
+@fleur_options.MAX_NUM_MACHINES()
+@fleur_options.NUM_MPIPROCS_PER_MACHINE()
+@fleur_options.MAX_WALLCLOCK_SECONDS()
+@fleur_options.QUEUE_NAME()
+@aiida_options.DRY_RUN()
+@click.option('--show/--no-show', default=True, show_default=True, help='Print the contents from the options dict.')
+@decorators.with_dbenv()
+def cmd_option_create(max_num_machines, num_mpiprocs_per_machine, queue, max_wallclock_seconds, dry_run, show):
+    """
+    Command to create options dict nodes
+    """
+    from aiida_fleur.common.node_generators import generate_wf_option_node
+
+    optiondict = {}
+    optiondict = {
+        'resources': {
+            'num_machines': max_num_machines,
+            'num_mpiprocs_per_machine': num_mpiprocs_per_machine
+        },
+        'max_wallclock_seconds': max_wallclock_seconds,
+        'queue_name': queue
+    }
+
+    options = generate_wf_option_node(**optiondict)
+
+    if dry_run:
+        echo.echo_success('Created option node.')
+    else:
+        options.store()
+        echo.echo_success(f'Created and stored Options node <{options.pk}>  <{options.uuid}>')
+
+    if show:
+        echo.echo_dictionary(options.get_dict())

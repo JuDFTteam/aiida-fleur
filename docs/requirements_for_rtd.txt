@@ -1,7 +1,9 @@
 pip>=18.0
 setuptools>34
 lxml>=3.6.4
-aiida-core>=1.0.1,<2.0.0
+aiida-core>=1.0.1
 masci-tools
 ase
 pymatgen
+sphinx_click
+docutils<0.17

@@ -9,7 +9,7 @@ Fleur initial core-level shifts workflow
 Class name, import from:
   ::
 
-    from aiida_fleur.workflows.initial_cls import fleur_initial_cls_wc
+    from aiida_fleur.workflows.initial_cls import FleurInitialCLSWorkChain
     #or
     WorkflowFactory('fleur.init_cls')
 

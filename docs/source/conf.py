@@ -46,13 +46,16 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              'sphinx_click.ext']
 
 todo_include_todos = True
 
 intersphinx_mapping = {
     #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
+    'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
+    'ase': ('https://wiki.fysik.dtu.dk/ase/', None)
 }
 
 nitpick_ignore = [('py:obj', 'module')]
@@ -91,7 +94,7 @@ copyright = u'{}, {}. All rights reserved'.format(copyright_year_string, copyrig
 
 release = aiida_fleur.__version__
 # The short X.Y version.
-version = '.'.join(release.split('.')[:2])
+version = '.'.join(release.split('.')[:3])
 
 author = 'The AiiDA-FLEUR team.'
 
@@ -133,6 +136,7 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+#suppress_warnings = []
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -300,6 +304,9 @@ else:
     configuration.IN_RT_DOC_MODE = True
     configuration.BACKEND = 'django'
     configuration.AIIDADB_PROFILE = 'default'
+    #Perform reentry scan
+    from reentry import manager
+    manager.scan()
 
 
 '''
@@ -423,14 +430,10 @@ epub_copyright = copyright
 
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance
-nitpick_ignore = []
-
-for line in open('nitpick-exceptions'):
-    if line.strip() == '' or line.startswith('#'):
-        continue
-    dtype, target = line.split(None, 1)
-    target = target.strip()
-    nitpick_ignore.append((dtype, target))
+with open('nitpick-exceptions', 'r') as handle:
+    nitpick_ignore = [
+        tuple(line.strip().split(None, 1)) for line in handle.readlines() if line.strip() and not line.startswith('#')
+    ]
 
 html_static_path = ['_static']
 

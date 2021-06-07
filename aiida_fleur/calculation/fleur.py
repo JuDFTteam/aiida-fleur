@@ -78,6 +78,7 @@ class FleurCalculation(CalcJob):
     _DOSINP_FILE_NAME = 'dosinp'
     _BAND_GNU_FILE_NAME = 'band.gnu'
     _BAND_FILE_NAME = 'bands.*'
+    _BANDDOS_FILE_NAME = 'banddos.hdf'
 
     # helper files
     _FLEUR_WARN_ONLY_INFO_FILE_NAME = 'FLEUR_WARN_ONLY'
@@ -98,6 +99,9 @@ class FleurCalculation(CalcJob):
     # files for lda+U
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
+
+    #files for greensfunctions
+    _GREENSF_HDF5_FILE_NAME = 'greensf.hdf'
 
     # files for hybrid functionals
     _COULOMB1_FILE_NAME = 'coulomb1'
@@ -188,8 +192,6 @@ class FleurCalculation(CalcJob):
         'additional_retrieve_list', 'remove_from_retrieve_list', 'additional_remotecopy_list',
         'remove_from_remotecopy_list', 'cmdline'
     ]
-    # possible modes?
-    _fleur_modes = ['band', 'dos', 'forces', 'chargeDen', 'latticeCo', 'scf', 'force_theorem', 'gw', 'ldau']
 
     @classmethod
     def define(cls, spec):
@@ -396,9 +398,13 @@ class FleurCalculation(CalcJob):
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
                 mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
-            if modes['forces']:
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+            if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
@@ -406,6 +412,9 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
                     mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+            if modes['greensf']:
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['force_theorem']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
@@ -514,7 +523,13 @@ class FleurCalculation(CalcJob):
         # Retrieve by default the output file and the xml file
         retrieve_list = []
         retrieve_list.append(self._OUTXML_FILE_NAME)
-        retrieve_list.append(self._INPXML_FILE_NAME)
+        if has_fleurinp:
+            allfiles = fleurinp.files
+            for file1 in allfiles:
+                if file1.endswith('.xml'):
+                    retrieve_list.append(file1)
+        else:
+            retrieve_list.append(self._INPXML_FILE_NAME)
         retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
         retrieve_list.append(self._ERROR_FILE_NAME)
         retrieve_list.append(self._USAGE_FILE_NAME)
@@ -526,7 +541,8 @@ class FleurCalculation(CalcJob):
             retrieve_list.append(self._CDN1_FILE_NAME)
 
         for mode_file in mode_retrieved_filelist:
-            retrieve_list.append(mode_file)
+            if mode_file not in retrieve_list:
+                retrieve_list.append(mode_file)
         self.logger.info('retrieve_list: %s', str(retrieve_list))
 
         # user specific retrieve

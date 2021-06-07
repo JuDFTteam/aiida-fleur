@@ -11,10 +11,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
 
     - name: Cache python dependencies
       id: cache-pip
@@ -26,13 +26,14 @@ jobs:
           pip-docs-
 
     - name: Install python dependencies
-      run:
+      run: |
         pip install -e .[docs]
+        reentry scan
 
     - name: Build documentation
       env:
         READTHEDOCS: 'True'
-      run:
+      run: |
         SPHINXOPTS='-nW' make -C docs html
 
   pre-commit:
@@ -63,7 +64,7 @@ jobs:
         pip freeze
 
     - name: Run pre-commit
-      run:
+      run: |
         pre-commit run --all-files || (git status --short; git diff ; exit 1)
 
   tests:

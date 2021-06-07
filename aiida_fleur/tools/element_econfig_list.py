@@ -27,6 +27,11 @@ atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTab
 # because the starting point matters, especially in the magnetic case.
 
 econfiguration = {
+    0: {  # This is for empty spheres etc.
+        'mass': 1.00000,
+        'name': 'Unknown',
+        'symbol': 'X'
+    },
     1: {
         'mass': 1.00794,
         'name': 'Hydrogen',
@@ -1639,9 +1644,8 @@ import aiida_fleur
 import os
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
-fn = open(EXP_BINDENERGIES_PATH, 'r')
-exp_bindingenergies = json.load(fn)
-fn.close()
+with open(EXP_BINDENERGIES_PATH, 'r') as fn:
+    exp_bindingenergies = json.load(fn)
 """
 exp_bindingenergies = {
  1 : {'binding_energy': {'1s1/2': []}, 'name': 'Hydrogen', 'symbol': 'H'},

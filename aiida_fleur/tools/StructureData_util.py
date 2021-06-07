@@ -1186,7 +1186,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     *_, layer_occupancies = get_layers(structure)
 
-    if replacements is not None:
+    if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
         if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
@@ -1295,7 +1295,12 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure = StructureData(cell=sorted_struc.cell)
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
-        magn_structure.append_kind(kind)
+        kind_append = kind
+        kind_append.name = kind.name.split('-')[0]
+        try:
+            magn_structure.append_kind(kind)
+        except ValueError:
+            pass
 
     done_layers = 0
     while True:
@@ -1308,7 +1313,10 @@ def magnetic_slab_from_relaxed(relaxed_structure,
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
             layer, pos_z, _ = get_layers(orig_structure)
-            add_distance = abs(pos_z[k] - pos_z[k - 1])
+            if k == 0:
+                add_distance = abs(pos_z[0] + orig_structure.cell[2][2] - pos_z[-1])
+            else:
+                add_distance = abs(pos_z[k] - pos_z[k - 1])
             prev_layer_z = magn_structure.sites[-1].position[2]
             for atom in layer[k]:
                 atom[0][2] = prev_layer_z + add_distance
@@ -1325,6 +1333,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
 def get_layers(structure, decimals=10):
     """
     Extracts atom positions and their types belonging to the same layer
+    Removes any information related to kind specie.
 
     :param structure: ase lattice or StructureData which represents a slab
     :param number: the layer number. Note, that layers will be sorted according to z-position
@@ -1342,7 +1351,9 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [(list(x.position), x.kind_name) for x in sorted(structure.sites, key=lambda x: x.position[2])]
+        reformat = [
+            (list(x.position), x.kind_name.split('-')[0]) for x in sorted(structure.sites, key=lambda x: x.position[2])
+        ]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:
@@ -1463,7 +1474,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
         else:
             rebuilt_structure.append_atom(symbols=atom[1],
                                           position=(atom[0][0], atom[0][1], -atom[0][2]),
-                                          name=atom[1] + '49')
+                                          name=atom[1] + '49999')
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):
@@ -1482,7 +1493,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             # a = Site(kind_name=atom[1], position=atom[0])
             # rebuilt_structure.append_site(a)
             if i < hold_layers - 1:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49')
+                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49999')
             else:
                 rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
 

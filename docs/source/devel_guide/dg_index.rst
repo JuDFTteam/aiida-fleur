@@ -259,6 +259,40 @@ The package name has to be reserved/registerd in the AiiDA registry, because ent
 The right handside has the form 'module_path:class_name'.
 
 
+Documentation
++++++++++++++
+
+Since a lot of the documentation is auto generated it is important that you give every module, class and function
+proper doc strings.
+
+
+For the documentation we use `sphinx <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`, which is based on restructured text, `also see <https://sublime-and-sphinx-guide.readthedocs.io/en/latest/index.html>`.
+And we build and upload the documentation to `readthedocs <https://docs.readthedocs.io/en/stable/index.html>`
+Also in restructured text headings are marked with some underlining, while the order is arbitrary and sphinx determines it on occurrence.
+To make the whole documentation consistent it is important that you stay to the conventions of underlying.
+
++---------------+----------------+------------------+
+| Heading level | underline with | Comment          |
++---------------+----------------+------------------+
+| 0             | #              |                  |
++---------------+----------------+------------------+
+| 1             | ``*``          |                  |
++---------------+----------------+------------------+
+| 2             | =              | usual start here |
++---------------+----------------+------------------+
+| 3             | ``+``          |                  |
++---------------+----------------+------------------+
+| 4             | ``-``          |                  |
++---------------+----------------+------------------+
+| 5             | ^              |                  |
++---------------+----------------+------------------+
+| 6             | '              |                  |
++---------------+----------------+------------------+
+| 7             | ,              |                  |
++---------------+----------------+------------------+
+| 8             | .              |                  |
++---------------+----------------+------------------+
+
 Other information
 +++++++++++++++++
 

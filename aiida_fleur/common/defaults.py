@@ -21,7 +21,7 @@ default_options = {
     },
     'max_wallclock_seconds': 6 * 60 * 60,
     'queue_name': '',
-    'custom_scheduler_commands': '',
-    'import_sys_environment': False,
-    'environment_variables': {}
+    #'custom_scheduler_commands': '',
+    #'import_sys_environment': False,
+    #'environment_variables': {}
 }

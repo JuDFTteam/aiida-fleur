@@ -1,9 +1,9 @@
-Hints
-=====
+Hints/FAQ
+=========
 
 
 For Users
----------
++++++++++
 
 .. topic:: Common Errors, Traps:
 
@@ -23,6 +23,6 @@ For Users
 
 
 FAQ
----
++++
 
 to come

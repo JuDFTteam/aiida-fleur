@@ -30,7 +30,9 @@ from aiida.plugins import CalculationFactory
 @options.CALC_PARAMETERS()
 @options.SETTINGS()
 @options.DAEMON()
-def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
+@options.OPTION_NODE()
+@options.QUEUE_NAME()
+def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon, option_node, queue):
     """
     Launch an inpgen calcjob on given input
 
@@ -41,6 +43,20 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
     Default structure is Si bulk.
     """
 
+    options_d = {
+        'withmpi': False,
+        'max_wallclock_seconds': 6000,
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'queue_name': queue
+    }
+    if option_node:
+        opt_dict = option_node.get_dict()
+        for key, val in opt_dict.items():
+            options_d[key] = val
+
     process_class = CalculationFactory('fleur.inpgen')
     inputs = {
         'code': inpgen,
@@ -48,16 +64,10 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
         'parameters': calc_parameters,
         'settings': settings,
         'metadata': {
-            'options': {
-                'withmpi': False,
-                'max_wallclock_seconds': 6000,
-                'resources': {
-                    'num_machines': 1,
-                    'num_mpiprocs_per_machine': 1,
-                }
-            }
+            'options': options_d
         }
     }
+
     inputs = clean_nones(inputs)
     builder = process_class.get_builder()
     builder.update(inputs)
@@ -75,6 +85,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
 @options.NUM_MPIPROCS_PER_MACHINE()
 @options.OPTION_NODE()
 @options.WITH_MPI()
+@options.QUEUE_NAME()
 @click.option('--launch_base/--no-launch_base',
               is_flag=True,
               default=True,
@@ -82,7 +93,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon):
               help=('Run the base_fleur workchain, which also handles errors instead '
                     'of a single fleur calcjob.'))
 def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machines, max_wallclock_seconds,
-                 num_mpiprocs_per_machine, option_node, with_mpi, launch_base):
+                 num_mpiprocs_per_machine, option_node, with_mpi, launch_base, queue):
     """
     Launch a base_fleur workchain.
     If launch_base is False launch a single fleur calcjob instead.
@@ -92,20 +103,27 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
     process_class = CalculationFactory('fleur.fleur')
     workchain_class = WorkflowFactory('fleur.base')
 
+    options_d = {
+        'withmpi': with_mpi,
+        'queue_name': queue,
+        'max_wallclock_seconds': max_wallclock_seconds,
+        'resources': {
+            'num_machines': max_num_machines,
+            'num_mpiprocs_per_machine': num_mpiprocs_per_machine,
+        }
+    }
+    if option_node:
+        opt_dict = option_node.get_dict()
+        for key, val in opt_dict.items():
+            options_d[key] = val
+
     inputs = {
         'code': fleur,
         'fleurinpdata': fleurinp,
         'parent_folder': parent_folder,
         'settings': settings,
         'metadata': {
-            'options': {
-                'withmpi': with_mpi,
-                'max_wallclock_seconds': max_wallclock_seconds,
-                'resources': {
-                    'num_machines': max_num_machines,
-                    'num_mpiprocs_per_machine': num_mpiprocs_per_machine,
-                }
-            }
+            'options': options_d
         }
     }
 

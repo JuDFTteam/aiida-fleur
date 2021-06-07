@@ -55,7 +55,7 @@ def generate_wf_option_dict(computer=None, protocol_file=None, **kwargs):
     # and this function should read them
     from aiida_fleur.common.defaults import default_options
 
-    default_wf_dict = default_options.deepcopy()
+    default_wf_dict = default_options.copy()
     #todo better rekursive merge?
     default_wf_dict.update(kwargs)
 

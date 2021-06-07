@@ -109,10 +109,17 @@ MAX_WALLCLOCK_SECONDS = OverridableOption('-W',
                                           show_default=True,
                                           help='The maximum wallclock time in seconds to set for the calculations.')
 
+QUEUE_NAME = OverridableOption('-q',
+                               '--queue',
+                               type=click.STRING,
+                               default='',
+                               show_default=True,
+                               help='The queue name to submit to.')
+
 NUM_MPIPROCS_PER_MACHINE = OverridableOption('-M',
                                              '--num-mpiprocs-per-machine',
                                              type=click.INT,
-                                             default=12,
+                                             default=2,
                                              show_default=True,
                                              help='Run the simulation with so many num-mpi-procs-per-machine.')
 

@@ -43,6 +43,8 @@ Fleurinp modifier
 
 .. automodule:: aiida_fleur.data.fleurinpmodifier
    :members:
+   :inherited-members:
+   :exclude-members: modify_xmlfile
 
 Workflows/Workchains
 ++++++++++++++++++++
@@ -124,3 +126,12 @@ DMI: Force-theorem calculation of Dzjaloshinskii-Moriya interaction energy dispe
 
 .. automodule:: aiida_fleur.workflows.dmi
    :members:
+
+
+Commandline interface (CLI)
++++++++++++++++++++++++++++
+.. _aiidafleur_cmdline:
+
+.. click:: aiida_fleur.cmdline:cmd_root
+    :prog: aiida-fleur
+    :show-nested:
