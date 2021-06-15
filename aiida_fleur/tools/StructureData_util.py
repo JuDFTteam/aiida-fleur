@@ -1426,10 +1426,11 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
                 pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
     def suggest_distance_to_previous(num_layer):
+        layers_supercell, *_ = get_layers(supercell_ncf(structure, 2, 2, 1))
         z_distances = []
-        for atom_prev in layers[num_layer - 1]:
+        for atom_prev in layers_supercell[num_layer - 1]:
             pos_prev = np.array(atom_prev[0])[0:2]
-            for atom_this in layers[num_layer]:
+            for atom_this in layers_supercell[num_layer]:
                 pos_this = np.array(atom_this[0])[0:2]
                 xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
                 if scale_as:
@@ -1444,9 +1445,9 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
         # find suggestion for distance to 2nd layer back
         z_distances2 = []
         if num_layer != 1:
-            for atom_prev in layers[num_layer - 2]:
+            for atom_prev in layers_supercell[num_layer - 2]:
                 pos_prev = np.array(atom_prev[0])[0:2]
-                for atom_this in layers[num_layer]:
+                for atom_this in layers_supercell[num_layer]:
                     pos_this = np.array(atom_this[0])[0:2]
                     xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
                     if scale_as:
