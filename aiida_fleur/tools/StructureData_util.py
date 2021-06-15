@@ -1143,6 +1143,7 @@ def sort_atoms_z_value(structure):
 
 def create_manual_slab_ase(lattice='fcc',
                            miller=None,
+                           directions=None,
                            host_symbol='Fe',
                            latticeconstant=4.0,
                            size=(1, 1, 5),
@@ -1154,7 +1155,8 @@ def create_manual_slab_ase(lattice='fcc',
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
     :param lattice: 'fcc' and 'bcc' are supported. Set the host lattice of a slab.
-    :param miller: a list of directions of lattice vectors
+    :param miller: a list of directions of planes forming the primitive unit cell
+    :param directions: a list of directions of lattice vectors
     :param symbol: a string specifying the atom type
     :param latticeconstant: the lattice constant of a structure
     :param size: a 3-element tuple that sets supercell size. For instance, use (1,1,5) to set
@@ -1166,8 +1168,6 @@ def create_manual_slab_ase(lattice='fcc',
     :return structure: an ase-lattice representing a slab with replaced atoms
 
     """
-    if miller is None:
-        miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
     if lattice == 'fcc':
         from ase.lattice.cubic import FaceCenteredCubic
@@ -1179,6 +1179,7 @@ def create_manual_slab_ase(lattice='fcc',
         raise ValueError('The given lattice {} is not supported'.format(lattice))
 
     structure = structure_factory(miller=miller,
+                                  directions=directions,
                                   symbol=host_symbol,
                                   pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant,

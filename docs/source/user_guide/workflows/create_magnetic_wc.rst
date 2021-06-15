@@ -25,7 +25,8 @@ The workchain constructs a relaxed film structure which is ready-to-use in the s
 magnetic workchains, such as :ref:`DMI<dmi_wc>`, :ref:`MAE<mae_wc>` or :ref:`SSDisp<ssdisp_wc>`
 workchains.
 
-The main inputs include information about the substrate (structure type, miller indices, element)
+The main inputs include information about the substrate (structure type, miller indices of surfaces or vectors
+forming the primitive unit cell, chemical elements)
 and deposited material. The main logic of the workchain is depicted on the figure below:
 
 .. image:: images/create_magnetic_scheme.png

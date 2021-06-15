@@ -130,7 +130,7 @@ def test_launch_mae_base(run_cli_process_launch_command, fixture_code):
 
     wf_para = {
         'lattice': 'fcc',
-        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+        'directions': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,
         'size': (1, 1, 5),
@@ -204,22 +204,6 @@ def test_launch_ssdisp_base(run_cli_process_launch_command, fixture_code):
 
     inpgen = fixture_code('fleur.inpgen').store()
     fleur = fixture_code('fleur.fleur').store()
-
-    wf_para = {
-        'lattice': 'fcc',
-        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
-        'host_symbol': 'Pt',
-        'latticeconstant': 4.0,
-        'size': (1, 1, 5),
-        'replacements': {
-            0: 'Fe',
-            -1: 'Fe'
-        },
-        'decimals': 10,
-        'pop_last_layers': 1,
-        'total_number_layers': 8,
-        'num_relaxed_layers': 3
-    }
 
     wf_para = {
         'beta': {

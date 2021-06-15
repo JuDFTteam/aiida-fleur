@@ -50,7 +50,7 @@ class Test_FleurCreateMagneticWorkChain:
         ###
         wf_para = {
             'lattice': 'fcc',
-            'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+            'directions': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
             'host_symbol': 'Pt',
             'latticeconstant': 4.0,
             'size': (1, 1, 5),

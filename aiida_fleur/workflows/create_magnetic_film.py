@@ -36,7 +36,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
     _default_wf_para = {
         'lattice': 'fcc',
-        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+        'miller': None,
+        'directions': None,
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,  # if equals to 0, use distance_suggestion
         'size': (1, 1, 5),
@@ -363,11 +364,11 @@ def create_substrate_bulk(wf_dict_node):
     else:
         return ExitCode(380, 'ERROR_NOT_SUPPORTED_LATTICE', message='Specified substrate has to be bcc or fcc.')
 
-    miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    directions = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     host_symbol = str(wf_dict['host_symbol'])
     latticeconstant = float(wf_dict['latticeconstant'])
     size = (1, 1, 1)
-    structure = structure_factory(miller=miller,
+    structure = structure_factory(directions=directions,
                                   symbol=host_symbol,
                                   pbc=(1, 1, 1),
                                   latticeconstant=latticeconstant,
@@ -388,6 +389,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     scaling_parameter = float(scaling_parameter)
 
     miller = wf_dict['miller']
+    directions = wf_dict['directions']
     host_symbol = wf_dict['host_symbol']
     latticeconstant = float(wf_dict['latticeconstant'] * scaling_parameter**(1 / 3.0))
     size = wf_dict['size']
@@ -399,6 +401,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
+                                       directions=directions,
                                        host_symbol=host_symbol,
                                        latticeconstant=latticeconstant,
                                        size=size,
@@ -411,6 +414,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     # substrate needs to be reversed
     substrate = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
+                                       directions=directions,
                                        host_symbol=host_symbol,
                                        latticeconstant=latticeconstant,
                                        size=(1, 1, 1),
@@ -420,6 +424,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     tmp_substrate = create_manual_slab_ase(lattice=lattice,
                                            miller=miller,
+                                           directions=directions,
                                            host_symbol=host_symbol,
                                            latticeconstant=latticeconstant,
                                            size=(2, 2, 2),

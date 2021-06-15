@@ -9,7 +9,7 @@ inpgen_code = load_node(INPGEN_PK)
 
 wf_para = {
     'lattice': 'fcc',
-    'miller': [[-1, 1, 0],
+    'directions': [[-1, 1, 0],
                [0, 0, 1],
                [1, 1, 0]],
     'host_symbol': 'Pt',
