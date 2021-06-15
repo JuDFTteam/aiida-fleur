@@ -1169,9 +1169,9 @@ def create_manual_slab_ase(lattice='fcc',
 
     """
 
-    if miller == None:
+    if miller is None:
         miller = [None, None, None]
-    if directions == None:
+    if directions is None:
         directions = [None, None, None]
 
     if lattice == 'fcc':
