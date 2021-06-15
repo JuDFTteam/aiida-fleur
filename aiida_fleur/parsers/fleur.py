@@ -202,10 +202,10 @@ class FleurParser(Parser):
                     elif 'Invalid elements in mmpmat' in error_file_lines:
                         invalid_mmpmat = True
                     elif 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
-                        if 'fleurinpdata' in calc.inputs and 'relax.xml' in calc.inputs.fleurinpdata.files:
-                            return self.exit_codes.ERROR_DROP_CDN
-                        else:
-                            return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+                        if 'fleurinpdata' in calc.inputs:
+                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                                return self.exit_codes.ERROR_DROP_CDN
+                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
