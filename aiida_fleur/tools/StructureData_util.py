@@ -1169,6 +1169,11 @@ def create_manual_slab_ase(lattice='fcc',
 
     """
 
+    if miller == None:
+        miller=[None, None, None]
+    if directions == None:
+        directions = [None, None, None]
+
     if lattice == 'fcc':
         from ase.lattice.cubic import FaceCenteredCubic
         structure_factory = FaceCenteredCubic
