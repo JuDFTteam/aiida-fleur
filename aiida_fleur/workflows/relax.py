@@ -485,7 +485,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         try:
             cell = relax_out['relax_brav_vectors']
-            atom_positions = relax_out['relax_atom_positions']
+            atom_positions = [x[1] for x in relax_out['abspos_atoms']]
             film = relax_out['film']
             total_energy = relax_out['energy']
             total_energy_units = relax_out['energy_units']
@@ -513,16 +513,18 @@ class FleurRelaxWorkChain(WorkChain):
             for i, atom in enumerate(self.ctx.final_atom_positions):
                 species_name = atomtype_info[i][0]
                 element = atomtype_info[i][1]
-                np_pos = np.array(atom)
-                pos_abs = np_pos @ np_cell
-                if self.ctx.pbc == (True, True, True):
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
-                                          symbols=element,
-                                          name=species_name)
-                else:  # assume z-direction is orthogonal to xy
-                    structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[2] * BOHR_A),
-                                          symbols=element,
-                                          name=species_name)
+                pos_abs = [x * BOHR_A for x in atom]
+                structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
+                                      symbols=element,
+                                      name=species_name)
+                # if self.ctx.pbc == (True, True, True):
+                #     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
+                #                           symbols=element,
+                #                           name=species_name)
+                # else:  # assume z-direction is orthogonal to xy
+                #     structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[2] * BOHR_A),
+                #                           symbols=element,
+                #                           name=species_name)
 
             structure.pbc = self.ctx.pbc
             self.ctx.final_structure = structure
