@@ -1302,7 +1302,10 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
         kind_append = kind
-        kind_append.name = kind.name.split('-')[0]
+        if "(" in kind.name:
+            kind_append.name = kind.name[kind.name.find("(")+1:kind.name.find(")")]
+        else:
+            kind_append.name = kind.name.split('-')[0]
         try:
             magn_structure.append_kind(kind)
         except ValueError:
