@@ -1302,10 +1302,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
         kind_append = kind
-        if '(' in kind.name:
-            kind_append.name = kind.name[kind.name.find('(') + 1:kind.name.find(')')]
-        else:
-            kind_append.name = kind.name.split('-')[0]
+        kind_append.name = simplify_kind_name(kind.name)
         try:
             magn_structure.append_kind(kind)
         except ValueError:
@@ -1361,7 +1358,7 @@ def get_layers(structure, decimals=10):
 
     if isinstance(structure, StructureData):
         reformat = [
-            (list(x.position), x.kind_name.split('-')[0]) for x in sorted(structure.sites, key=lambda x: x.position[2])
+            (list(x.position), simplify_kind_name(x.kind_name)) for x in sorted(structure.sites, key=lambda x: x.position[2])
         ]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
@@ -1609,6 +1606,14 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
 
     return Dict(dict=bond_data)
 
+def simplify_kind_name(kind_name):
+    '''
+    Simplifies the kind name string. Example: "W-1" -> "W", "Iron (Fe)" -> "Fe"
+    '''
+    if '(' in kind_name:
+        return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
+    else:
+        return kind_name.split('-')[0]
 
 '''
 def estimate_mt_radii(structure, stepsize=0.05):
