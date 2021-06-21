@@ -1377,7 +1377,7 @@ def get_layers(structure, decimals=10):
     return layers, layer_z_positions, layer_occupancies
 
 
-def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3):
+def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3, last_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     This function only works if USER_API_KEY was set.
@@ -1405,6 +1405,8 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     :param hold_layers: this parameters sets the number of layers that will be marked via the
                         certain label. The label is reserved for future use in the relaxation WC:
                         all the atoms marked with the label will not be relaxed.
+    :param last_layer_factor: a float factor to which interlayer distance between last and second last layers
+                              is multiplied
     """
     from aiida.orm import StructureData
     from copy import deepcopy
@@ -1491,7 +1493,7 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
         if i == len(layers) - 2:
-            prev_distance = prev_distance * 0.85  # last layer should be closer
+            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
         prev_layer_z = rebuilt_structure.sites[-1].position[2]

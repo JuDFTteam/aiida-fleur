@@ -13,6 +13,7 @@
 'pop_last_layers': 1,         # number of bottom layers to be removed before relaxation
 'hold_n_first_layers': 5,     # number of bottom layers to be held during the relaxation
                               # (relaxXYZ = 'FFF')
-
+'last_layer_factor': 0.85,    # factor by interlayer distance between two last layers
+                              # will be multiplied
 'total_number_layers': 4,     # use this total number of layers
 'num_relaxed_layers': 2,      # use this number of relaxed interlayer distances

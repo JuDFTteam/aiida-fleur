@@ -46,6 +46,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             -1: 'Fe'
         },
         'hold_n_first_layers': 3,
+        'last_layer_factor': 0.85,
         'decimals': 10,
         'pop_last_layers': 1,
         'total_number_layers': 4,
@@ -398,6 +399,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     decimals = wf_dict['decimals']
     lattice = wf_dict['lattice']
     hold_layers = wf_dict['hold_n_first_layers']
+    last_layer_factor = wf_dict['last_layer_factor']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
@@ -436,7 +438,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     suggestion = suggestion_node.get_dict()
 
     # structure will be reversed here
-    structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, hold_layers)
+    structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, hold_layers, last_layer_factor)
 
     centered_structure = center_film(structure)
 
