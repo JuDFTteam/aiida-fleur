@@ -201,12 +201,16 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_MT_RADII_RELAX
                     elif 'Invalid elements in mmpmat' in error_file_lines:
                         invalid_mmpmat = True
-                    elif 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
-                        if 'fleurinpdata' in calc.inputs:
-                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
-                                return self.exit_codes.ERROR_DROP_CDN
-                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
                     else:
+                        if 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
+                            if 'fleurinpdata' in calc.inputs:
+                                if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                                    return self.exit_codes.ERROR_DROP_CDN
+                        if 'fleurinpdata' in calc.inputs:  # preconditioner might not work for films
+                            if 'filmPos' in calc.inputs.fleurinpdata.inp_dict['atomGroups'][
+                                    0] and calc.inputs.fleurinpdata.inp_dict['calculationSetup']['scfLoop'][
+                                        'precondParam']:
+                                return self.exit_code.FILM_AND_PRECONDITIONER_FAILED
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
         if FleurCalculation._DOS_FILE_NAME in list_of_files:
