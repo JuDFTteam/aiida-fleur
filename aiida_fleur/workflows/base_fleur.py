@@ -257,33 +257,6 @@ def _handle_dirac_equation(self, calculation):
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
 
-@register_error_handler(FleurBaseWorkChain, 43)
-def _handle_film_preconditioner(self, calculation):
-    """
-    Sometimes relaxation calculation fails with Diraq problem which is usually caused by
-    problems with reusing charge density. In this case we resubmit the calculation, dropping the input cdn.
-    """
-    from aiida.orm import Dict
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['FILM_AND_PRECONDITIONER_FAILED']):
-
-        # set preconditioner to 0
-        if 'wf_parameters' in self.ctx.inputs:
-            wf_para_dict = self.ctx.inputs.wf_parameters.get_dict()
-        else:
-            wf_para_dict = []
-
-        inpxml_changes = wf_para_dict.get('inpxml_changes', [])
-        inpxml_changes.append(('set_inpchanges', {'change_dict': {'precondParam': 0.0}}))
-        wf_para_dict['inpxml_changes'] = inpxml_changes
-
-        self.ctx.restart_calc = None
-        self.ctx.is_finished = False
-
-        self.report('Set precondParam to 0 for the failed film calculation.')
-        self.results()
-        return ErrorHandlerReport(True, True)
-
-
 @register_error_handler(FleurBaseWorkChain, 52)
 def _handle_vacuum_spill_error(self, calculation):
     """
