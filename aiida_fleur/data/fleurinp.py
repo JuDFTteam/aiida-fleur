@@ -386,14 +386,20 @@ class FleurinpData(Data):
                 raise InputValidationError(err_msg) from exc
 
         xmltree, included_tags = self._include_files(xmltree)
+        develop_version = self.inp_version != schema_dict['inp_version']
 
-        if validate_xml_schema:
+        if validate_xml_schema and not develop_version:
             try:
                 validate_xml(xmltree,
                              schema_dict.xmlschema,
                              error_header='Input file is not validated against the schema')
             except etree.DocumentInvalid as err:
                 raise InputValidationError(err) from err
+        elif develop_version:
+            self.logger.warning(f'You are using a Fleur input file with file version {self.inp_version}.\n'
+                                'This version has no corresponding XML Schema stored in masci-tools.\n'
+                                'Unexpected Errors can occur. If that is the case you can try to add the '
+                                'XML Schema for this file version to masci-tools')
 
         if return_included_tags:
             return xmltree, schema_dict, included_tags
