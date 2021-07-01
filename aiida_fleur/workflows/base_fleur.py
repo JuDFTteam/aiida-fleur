@@ -201,7 +201,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
         if self.ctx.use_omp:
             self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if self.ctx.inputs.metadata.options['environment_variables']:
+            if 'environment_variables' in self.ctx.inputs.metadata.options:
                 self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
             else:
                 self.ctx.inputs.metadata.options['environment_variables'] = {}
