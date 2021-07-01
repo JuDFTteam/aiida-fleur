@@ -123,7 +123,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.max_queue_wallclock_sec = self.inputs.add_comp_para['max_queue_wallclock_sec']
 
         input_options = self.inputs.options.get_dict()
-        self.ctx.optimize_resources = input_options.pop('optimize_resources', False)
+        self.ctx.optimize_resources = input_options.pop('optimize_resources', True)
         self.ctx.inputs.metadata.options = input_options
 
         if 'parent_folder' in self.inputs:
