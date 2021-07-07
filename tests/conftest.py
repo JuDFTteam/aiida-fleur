@@ -20,7 +20,7 @@ try:
     from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
-    run_regression_tests = False
+    run_regression_tests = True
 
 if run_regression_tests:
     pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name

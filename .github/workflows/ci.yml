@@ -115,7 +115,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        # pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install .[testing]
         reentry scan
 
