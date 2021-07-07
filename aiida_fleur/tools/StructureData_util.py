@@ -1357,9 +1357,8 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [
-            (list(x.position), simplify_kind_name(x.kind_name)) for x in sorted(structure.sites, key=lambda x: x.position[2])
-        ]
+        reformat = [(list(x.position), simplify_kind_name(x.kind_name))
+                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:
@@ -1377,7 +1376,12 @@ def get_layers(structure, decimals=10):
     return layers, layer_z_positions, layer_occupancies
 
 
-def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3, last_layer_factor=0.85):
+def adjust_film_relaxation(structure,
+                           suggestion,
+                           scale_as=None,
+                           bond_length=None,
+                           hold_layers=3,
+                           last_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     This function only works if USER_API_KEY was set.
@@ -1608,6 +1612,7 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
 
     return Dict(dict=bond_data)
 
+
 def simplify_kind_name(kind_name):
     '''
     Simplifies the kind name string. Example: "W-1" -> "W", "Iron (Fe)" -> "Fe"
@@ -1616,6 +1621,7 @@ def simplify_kind_name(kind_name):
         return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
     else:
         return kind_name.split('-')[0]
+
 
 '''
 def estimate_mt_radii(structure, stepsize=0.05):
