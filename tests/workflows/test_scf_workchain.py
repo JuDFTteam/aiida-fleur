@@ -84,7 +84,7 @@ def test_fleur_scf_fleurinp_Si(
     print(get_calcjob_report(load_node(n['last_calc_uuid'])))
 
     #print(n)
-    assert abs(n.get('distance_charge') - 9.8993e-06) < 10**-9
+    assert abs(n.get('distance_charge') - 9.8993e-06) < 2.0e-6
     assert n.get('errors') == []
     #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
 
@@ -162,7 +162,7 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     n = out['output_scf_wc_para']
     n = n.get_dict()
     print(n)
-    assert abs(n.get('distance_charge') - 8.0987e-06) < 10**-9
+    assert abs(n.get('distance_charge') - 8.0987e-06) < 2.0e-6
     assert n.get('errors') == []
 
 
@@ -311,7 +311,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
 
     print(n)
     #get kmax and minDistance
-    assert abs(n.get('distance_charge') - 0.0001671267) < 10**-9
+    assert abs(n.get('distance_charge') - 0.0001671267) < 2.0e-6
     assert n.get('errors') == []
     assert lasto['kmax'] == 3.8
 
