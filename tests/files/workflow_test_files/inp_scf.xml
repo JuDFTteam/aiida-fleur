@@ -4,15 +4,21 @@
       alpha Si                                                                                            
    </comment>
    <calculationSetup>
-      <cutoffs Kmax="3.70000000" Gmax="11.10000000" GmaxXC="11.10000000" numbands="0"/>
-      <scfLoop itmax="15" minDistance=".00001000" maxIterBroyd="15" imix="Anderson" alpha=".05000000" precondParam="0.0" spinf="2.00000000"/>
+      <cutoffs Kmax="3.50000000" Gmax="11.50000000" GmaxXC="9.20000000" numbands="0"/>
+      <scfLoop itmax="15" minDistance=".0001000" maxIterBroyd="15" imix="Anderson" alpha=".05000000" precondParam="0.0" spinf="2.00000000"/>
       <coreElectrons ctail="T" frcor="F" kcrel="0" coretail_lmax="0"/>
       <xcFunctional name="pbe" relativisticCorrections="F"/>
-      <magnetism jspins="1"/>
+      <magnetism jspins="1" l_noco="F" l_ss="F">
+         <qss>.0000000000 .0000000000 .0000000000</qss>
+         <mtNocoParams l_mperp="F" l_mtNocoPot="F" l_relaxSQA="F" mag_mixing_scheme="0" mix_RelaxWeightOffD="1.00000000" l_constrained="F" mix_constr="1.00000000"/>
+         <sourceFreeMag l_sourceFree="F" l_scaleMag="F" mag_scale="1.00000000"/>
+      </magnetism>
       <soc l_soc="F" theta=".00000000" phi=".00000000" spav="F"/>
+      <prodBasis gcutm="3.20000000" tolerance=".00010000" ewaldlambda="3" lexp="16" bands="0" fftcut="1.00000000"/>
       <expertModes spex="0" secvar="F"/>
       <geometryOptimization l_f="F" forcealpha="1.00000000" forcemix="BFGS" epsdisp=".00001000" epsforce=".00001000"/>
       <ldaU l_linMix="F" mixParam=".050000" spinf="1.000000"/>
+      <ldaHIA itmaxHubbard1="5" minoccDistance=".010000" minmatDistance=".001000" beta="100.0" dftspinpol="F"/>
    </calculationSetup>
    <cell>
       <bzIntegration valenceElectrons="8.00000000" mode="hist" fermiSmearingEnergy=".00100000">
@@ -585,6 +591,8 @@
             <stateOccupation state="(3p3/2)" spinUp=".66666667" spinDown=".66666667"/>
          </electronConfig>
          <energyParameters s="3" p="3" d="3" f="4"/>
+         <prodBasis lcutm="4" lcutwf="8" select="4 0 4 2"/>
+         <modInitDen flipSpinPhi=".00000000" flipSpinTheta=".00000000" flipSpinScale="F"/>
       </species>
    </atomSpecies>
    <atomGroups>
@@ -592,6 +600,7 @@
          <relPos label="                   1">1.000/8.000 1.000/8.000 1.000/8.000</relPos>
          <relPos label="                   2">-1.000/8.000 -1.000/8.000 -1.000/8.000</relPos>
          <force calculate="T" relaxXYZ="TTT"/>
+         <nocoParams  alpha=".00000000" beta=".00000000"/>
       </atomGroup>
    </atomGroups>
    <output dos="F" band="F" slice="F">
