@@ -17,6 +17,7 @@ import pytest
 import os
 from aiida.orm import Code, load_node, Dict, StructureData
 from aiida.engine import run_get_node
+from aiida.cmdline.utils.common import get_workchain_report
 import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -71,6 +72,8 @@ def test_fleur_scf_fleurinp_Si(
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
 
     assert node.is_finished_ok
     # check output
@@ -146,6 +149,7 @@ def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code
     #out, node = run_get_node(builder)
     print(out)
     print(node)
+    print(get_workchain_report(node, 'REPORT'))
 
     assert node.is_finished_ok
     # check output
@@ -214,6 +218,7 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
     out, node = run_with_cache(builder)
     print(out)
     print(node)
+    print(get_workchain_report(node, 'REPORT'))
     assert not node.is_finished_ok
     assert node.exit_status == 362
 
@@ -284,6 +289,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
         out, node = run_get_node(builder)
     print(out)
     #print(node)
+    print(get_workchain_report(node, 'REPORT'))
     assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']

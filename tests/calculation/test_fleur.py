@@ -8,6 +8,7 @@ from aiida import orm
 from aiida.plugins import CalculationFactory
 from aiida.engine import run_get_node
 from aiida.common import datastructures
+from aiida.cmdline.utils.common import get_calcjob_report
 import aiida_fleur
 from aiida_fleur.calculation.fleur import FleurCalculation
 from ..conftest import run_regression_tests
@@ -111,7 +112,8 @@ def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurin
 
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
-    print((res['remote_folder'].list_objects()))
-    print((res['retrieved'].list_objects()))
+    print(get_calcjob_report(node))
+    print((res['remote_folder'].list_object_names()))
+    print((res['retrieved'].list_object_names()))
     assert node.is_finished_ok
     #assert False
