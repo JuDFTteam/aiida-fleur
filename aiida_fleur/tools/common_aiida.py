@@ -61,7 +61,8 @@ def export_extras(nodes, filename='node_extras.txt'):
         extras_dict = node.extras
         outdict[uuid] = extras_dict
 
-    json.dump(outdict, open(filename, 'w'), sort_keys=True, indent=4, separators=(',', ': '))
+    with open(filename, 'w') as file:
+        json.dump(outdict, file, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def import_extras(filename):

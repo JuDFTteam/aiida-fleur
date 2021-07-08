@@ -104,7 +104,7 @@ def test_import_extras(temp_dir, capsys):
     assert captured.out == 'node with uuid not_existent_uuid does not exist in DB\n'
 
     empty_file = os.path.join(temp_dir, 'empty_file')
-    open(empty_file, 'w').close()
+    open(empty_file, 'w').close()  #pylint: ignore=consider-using-with
     import_extras(empty_file)
 
     captured = capsys.readouterr()

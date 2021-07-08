@@ -484,7 +484,7 @@ def create_or_fake_local_code(aiida_local_code_factory):
         # if path is non existent, we create a dummy executable
         # if all caches are there, it should run, like on a CI server
         if not os.path.exists(_exe_path):
-            open(_exe_path, 'a').close()
+            open(_exe_path, 'a').close()  #pylint: ignore=consider-using-with
 
         # make sure code is found in PATH
         os.environ['PATH'] += ':' + _exe_path
