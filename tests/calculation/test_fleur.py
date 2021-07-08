@@ -110,6 +110,9 @@ def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurin
     }
     #calc = CalculationFactory(CALC_ENTRY_POINT, code=mock_code, **inputs)
 
+    print(mock_code.get_remote_exec_path())
+    print(mock_code.get_prepend_text())
+
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
     print(get_calcjob_report(node))
