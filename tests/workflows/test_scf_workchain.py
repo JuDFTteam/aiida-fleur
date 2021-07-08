@@ -91,7 +91,7 @@ def test_fleur_scf_fleurinp_Si(
 
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
+def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
                                 generate_structure2, clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
@@ -149,8 +149,10 @@ def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code
     print(builder)
 
     # now run scf with cache fixture
-    out, node = run_with_cache(builder)
-    #out, node = run_get_node(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_scf_structure_Si.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+
     print(out)
     print(node)
     print(get_workchain_report(node, 'REPORT'))
