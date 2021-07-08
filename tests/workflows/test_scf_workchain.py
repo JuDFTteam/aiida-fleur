@@ -76,17 +76,13 @@ def test_fleur_scf_fleurinp_Si(
 
     print(get_workchain_report(node, 'REPORT'))
 
-    links = node.get_outgoing().all()
-    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
-    if calcs:
-        for indx, calc in enumerate(calcs):
-            print(f'Calculation {indx}')
-            print(get_calcjob_report(calc))
-
-    assert node.is_finished_ok
+    #assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
+
+    print(get_calcjob_report(load_node(n['last_calc_uuid'])))
+
     #print(n)
     assert abs(n.get('distance_charge') - 9.8993e-06) < 10**-9
     assert n.get('errors') == []
@@ -158,13 +154,6 @@ def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code
     print(out)
     print(node)
     print(get_workchain_report(node, 'REPORT'))
-
-    links = node.get_outgoing().all()
-    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
-    if calcs:
-        for indx, calc in enumerate(calcs):
-            print(f'Calculation {indx}')
-            print(get_calcjob_report(calc))
 
     assert node.is_finished_ok
     # check output
@@ -307,13 +296,6 @@ def test_fleur_scf_fleurinp_Si_modifications(
     print(out)
     #print(node)
     print(get_workchain_report(node, 'REPORT'))
-
-    links = node.get_outgoing().all()
-    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
-    if calcs:
-        for indx, calc in enumerate(calcs):
-            print(f'Calculation {indx}')
-            print(get_calcjob_report(calc))
 
     assert node.is_finished_ok
     # check output

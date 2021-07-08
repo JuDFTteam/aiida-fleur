@@ -104,22 +104,17 @@ def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurin
                     'tot_num_mpiprocs': 1
                 },
                 'max_wallclock_seconds': int(600),
-                'withmpi': True
+                'withmpi': False
             }
         }
     }
     #calc = CalculationFactory(CALC_ENTRY_POINT, code=mock_code, **inputs)
-
-    print(mock_code.get_remote_exec_path())
-    print(mock_code.get_prepend_text())
 
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
 
     print(get_calcjob_report(node))
     print((res['remote_folder'].list_object_names()))
     print((res['retrieved'].list_object_names()))
-    if 'out.error' in res['retrieved'].list_object_names():
-        with res['retrieved'].open('out.error', 'r') as efile:
-            print(f'Error Output: \n {efile.read()}')
+
     assert node.is_finished_ok
     #assert False
