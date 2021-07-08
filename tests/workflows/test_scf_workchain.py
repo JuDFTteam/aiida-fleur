@@ -17,7 +17,8 @@ import pytest
 import os
 from aiida.orm import Code, load_node, Dict, StructureData
 from aiida.engine import run_get_node
-from aiida.cmdline.utils.common import get_workchain_report
+from aiida.orm import CalcJobNode
+from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -74,6 +75,13 @@ def test_fleur_scf_fleurinp_Si(
     #print(node)
 
     print(get_workchain_report(node, 'REPORT'))
+
+    links = node.get_outgoing().all()
+    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
+    if calcs:
+        for indx, calc in enumerate(calcs):
+            print(f'Calculation {indx}')
+            print(get_calcjob_report(calc))
 
     assert node.is_finished_ok
     # check output
@@ -150,6 +158,13 @@ def test_fleur_scf_structure_Si(run_with_cache, clear_database, fleur_local_code
     print(out)
     print(node)
     print(get_workchain_report(node, 'REPORT'))
+
+    links = node.get_outgoing().all()
+    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
+    if calcs:
+        for indx, calc in enumerate(calcs):
+            print(f'Calculation {indx}')
+            print(get_calcjob_report(calc))
 
     assert node.is_finished_ok
     # check output
@@ -292,6 +307,14 @@ def test_fleur_scf_fleurinp_Si_modifications(
     print(out)
     #print(node)
     print(get_workchain_report(node, 'REPORT'))
+
+    links = node.get_outgoing().all()
+    calcs = [x.node for x in links if isinstance(x.node, CalcJobNode)]
+    if calcs:
+        for indx, calc in enumerate(calcs):
+            print(f'Calculation {indx}')
+            print(get_calcjob_report(calc))
+
     assert node.is_finished_ok
     # check output
     n = out['output_scf_wc_para']
