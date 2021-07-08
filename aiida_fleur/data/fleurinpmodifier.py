@@ -588,6 +588,7 @@ class FleurinpModifier(FleurXMLModifier):
         self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
 
         xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
+        develop_version = new_fleurinp.inp_version != schema_dict['inp_version']
 
         try:
             with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -595,7 +596,14 @@ class FleurinpModifier(FleurXMLModifier):
         except FileNotFoundError:
             nmmplines = None
 
-        xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+        try:
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+        except etree.DocumentInvalid as exc:
+            if not develop_version:
+                raise
+            else:
+                new_fleurinp.logger.warning(f'Ignoring validation errors for modifications of develop version: \n{exc}')
+
         return xmltree
 
     def show(self, display=True, validate=False):
