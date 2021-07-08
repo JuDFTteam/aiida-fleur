@@ -584,7 +584,7 @@ class FleurCalculation(CalcJob):
         # + ["<", self._INPXML_FILE_NAME,
         # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
         codeinfo.code_uuid = code.uuid
-        codeinfo.withmpi = self.node.get_attribute('max_wallclock_seconds')
+        codeinfo.withmpi = self.node.get_attribute('withmpi')
         codeinfo.stdin_name = None  # self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUTPUT_FILE_NAME
         #codeinfo.join_files = True
