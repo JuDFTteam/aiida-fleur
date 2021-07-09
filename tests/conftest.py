@@ -286,6 +286,80 @@ def eval_xpath():
 
 
 @pytest.fixture
+def generate_inputs_base(fixture_code, create_fleurinp, generate_kpoints_mesh):
+    """Generate default inputs for a `PwCalculation."""
+
+    def _generate_inputs_base():
+        """Generate default inputs for a `PwCalculation."""
+        from aiida_fleur.common.defaults import default_options
+
+        TEST_INPXML_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files/inpxml/Si/inp.xml'))
+
+        inputs = {
+            'code': fixture_code('fleur'),
+            'fleurinpdata': create_fleurinp(TEST_INPXML_PATH),
+            'options': Dict(dict=default_options)
+        }
+
+        return inputs
+
+    return _generate_inputs_base
+
+
+@pytest.fixture
+def generate_workchain_base(generate_workchain, generate_inputs_base, generate_calc_job_node):
+    """Generate an instance of a `FleurBaseWorkChain`."""
+
+    def _generate_workchain_base(exit_code=None, inputs=None, return_inputs=False):
+        from plumpy import ProcessState
+
+        entry_point = 'fleur.base'
+
+        if inputs is None:
+            inputs = generate_inputs_base()
+
+        if return_inputs:
+            return inputs
+
+        process = generate_workchain(entry_point, inputs)
+
+        if exit_code is not None:
+            node = generate_calc_job_node('fleur.fleur', inputs={'parameters': Dict()})
+            node.set_process_state(ProcessState.FINISHED)
+            node.set_exit_status(exit_code.status)
+
+            process.ctx.iteration = 1
+            process.ctx.calculations = [node]
+
+        return process
+
+    return _generate_workchain_base
+
+
+@pytest.fixture
+def generate_workchain():
+    """Generate an instance of a `WorkChain`."""
+
+    def _generate_workchain(entry_point, inputs):
+        """Generate an instance of a `WorkChain` with the given entry point and inputs.
+        :param entry_point: entry point name of the work chain subclass.
+        :param inputs: inputs to be passed to process construction.
+        :return: a `WorkChain` instance.
+        """
+        from aiida.engine.utils import instantiate_process
+        from aiida.manage.manager import get_manager
+        from aiida.plugins import WorkflowFactory
+
+        process_class = WorkflowFactory(entry_point)
+        runner = get_manager().get_runner()
+        process = instantiate_process(runner, process_class, **inputs)
+
+        return process
+
+    return _generate_workchain
+
+
+@pytest.fixture
 def generate_work_chain_node():
     """Fixture to generate a mock `WorkChainNode` for testing parsers."""
 
