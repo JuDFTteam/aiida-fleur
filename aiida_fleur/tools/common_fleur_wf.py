@@ -85,11 +85,11 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     inputs = {}
 
     add_comp_para_default = {
-            'serial': False,
-            'only_even_MPI': False,
-            'max_queue_nodes': 20,
-            'max_queue_wallclock_sec': 86400
-        }
+        'serial': False,
+        'only_even_MPI': False,
+        'max_queue_nodes': 20,
+        'max_queue_wallclock_sec': 86400
+    }
     if add_comp_para is not None:
         add_comp_para = {**add_comp_para_default, **add_comp_para}
 

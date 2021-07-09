@@ -54,7 +54,7 @@ def test_fleurinp_valid_inpxml(create_fleurinp, inpxmlfilepath):
 
     parser_warnings = fleurinp_tmp.parser_info['parser_warnings'].copy()
 
-    if any("Schema available for version" in warning for warning in parser_warnings):
+    if any('Schema available for version' in warning for warning in parser_warnings):
         for warning in parser_warnings.copy():
             if 'Input file does not validate against the schema' in warning:
                 parser_warnings.remove(warning)
