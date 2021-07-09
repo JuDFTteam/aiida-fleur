@@ -85,7 +85,7 @@ jobs:
             allowed-to-fail: true
 
     name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
-    continue_on_error: ${{ matrix.allowed-to-fail }}
+    continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
       postgres:
