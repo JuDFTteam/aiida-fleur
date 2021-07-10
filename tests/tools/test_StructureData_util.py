@@ -779,9 +779,9 @@ def test_center_film_wf(generate_film_structure, generate_structure):
     structure_film = move_atoms_incell(structure_film, [0.0, 0.0, 1.1242])
 
     centered_film = center_film_wf(structure_film)
-    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.2286013139),
-                                                         (1.4026317384, 1.9836207747, -0.1740305094),
-                                                         (0.0, 0.0, 1.2286013138)]
+    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.22860131),
+                                                         (1.40263174, 1.98362077, -0.17403051),
+                                                         (0.0, 0.0, 1.22860131)]
 
     with pytest.raises(TypeError):
         center_film(structure_bulk)
@@ -794,14 +794,14 @@ def test_get_layers(generate_film_structure):
 
     assert get_layers(structure) == ([[([0.0, 0.0, -1.05457080454278], 'Fe')],
                                       [([1.402631738400183, 1.9836207746838, 0.0], 'Pt')],
-                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708045, 0.0,
-                                                                                 1.4026318232], [1, 1, 1])
+                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708, 0.0,
+                                                                                 1.40263182], [1, 1, 1])
 
     structure.append_atom(position=(1.0, 0., -1.99285 * BOHR_A), symbols='Fe')
     assert get_layers(structure) == ([[([0.0, 0.0, -1.05457080454278], 'Fe'), ([1.0, 0.0, -1.05457080454278], 'Fe')],
                                       [([1.402631738400183, 1.9836207746838, 0.0], 'Pt')],
-                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708045, 0.0,
-                                                                                 1.4026318232], [2, 1, 1])
+                                      [([0.0, 0.0, 1.402631823174372], 'Pt')]], [-1.0545708, 0.0,
+                                                                                 1.40263182], [2, 1, 1])
 
 
 create_slab_inputs = [{
@@ -812,7 +812,7 @@ create_slab_inputs = [{
     'size': (1, 1, 3),
     'replacements': {
         -1: 'Pt',
-        1: 'U'
+        2: 'U'
     },
     'decimals': 10,
     'pop_last_layers': 0
@@ -823,7 +823,7 @@ create_slab_inputs = [{
     'latticeconstant': 4.0,
     'size': (1, 1, 3),
     'replacements': {
-        0: 'Pt'
+        1: 'Pt'
     },
     'decimals': 10,
     'pop_last_layers': 1
@@ -834,7 +834,7 @@ create_slab_inputs = [{
     'latticeconstant': 4.0,
     'size': (1, 1, 3),
     'replacements': {
-        0: 'Pt'
+        1: 'Pt'
     },
     'decimals': 10,
     'pop_last_layers': 1
@@ -913,7 +913,7 @@ def test_magnetic_slab_from_relaxed(generate_film_structure):
     result = magnetic_slab_from_relaxed(relaxed_structure, structure2, 5, 2)
 
     names = ['Fe', 'Pt', 'Pt', 'Pt', 'Pt']
-    z_positions = [-2.648605745990961, -1.5940349412090389, -0.1798213788090388, 1.2343921835909613, 2.648605745990961]
+    z_positions = [-2.64860575, -1.59403494, -0.17982138, 1.23439218, 2.64860575]
     for site, correct_name, correct_position in zip(result.sites, names, z_positions):
         assert site.kind_name == correct_name
         assert math.isclose(site.position[2], correct_position)
@@ -949,10 +949,6 @@ def test_adjust_film_relaxation(generate_film_structure):
     import os
     from aiida_fleur.tools.StructureData_util import adjust_film_relaxation
 
-    user_api_key = os.getenv('USER_API_KEY')
-    if not user_api_key:
-        pytest.skip('No USER_API_KEY given, skip the test')
-
     suggestion = {
         'Fe': {
             'Fe': 2.4651768430600254,
@@ -965,18 +961,72 @@ def test_adjust_film_relaxation(generate_film_structure):
     }
 
     structure = generate_film_structure()
-    result = adjust_film_relaxation(structure, suggestion, hold_layers=0)
-    print(structure.sites)
-    print(result.sites)
-    assert result.sites[0].position[2] == -1.1957065898
-    assert result.sites[1].position[2] == 0.1782640794
-    assert result.sites[2].position[2] == 1.1957065898
+    result = adjust_film_relaxation(structure, suggestion, last_layer_factor=0.85, first_layer_factor=1.0)
+
+    assert result.sites[0].position[2] == -1.19570659
+    assert result.sites[1].position[2] == -0.17826408
+    assert result.sites[2].position[2] == 1.19570659
 
     result = adjust_film_relaxation(structure, suggestion, 'Pt', 2.77)
-    assert result.sites[0].position[2] == -1.1709859694
-    assert result.sites[1].position[2] == 0.2602185234
-    assert result.sites[2].position[2] == 1.1709859694
+    assert result.sites[0].position[2] == -1.16073984
+    assert result.sites[1].position[2] == -0.38658751
+    assert result.sites[2].position[2] == 1.16073984
 
+def test_adjust_sym_film_relaxation(generate_sym_film_structure):
+    """Test interface of adjust film relaxation, requires mp_api_key"""
+    # Todo mock the mp query, since result could change overtime, also that the CI can run this
+    import os
+    from aiida_fleur.tools.StructureData_util import adjust_sym_film_relaxation
+
+    suggestion = {
+        'Fe': {
+            'Fe': 2.4651768430600254,
+            'Pt': 2.633878591723135
+        },
+        'Pt': {
+            'Fe': 2.633878591723135,
+            'Pt': 2.8120017054377606
+        }
+    }
+
+    structure = generate_sym_film_structure()
+    result = adjust_sym_film_relaxation(structure, suggestion, last_layer_factor=0.85)
+    print(result.sites)
+
+    assert result.sites[0].position[2] == -1.04770016
+    assert result.sites[1].position[2] == 0.0
+    assert result.sites[2].position[2] == 1.04770016
+
+    result = adjust_sym_film_relaxation(structure, suggestion, 'Pt', 2.77)
+    assert result.sites[0].position[2] == -1.03205109
+    assert result.sites[1].position[2] == 0.0
+    assert result.sites[2].position[2] == 1.03205109
+
+def test_has_z_reflection(generate_sym_film_structure, generate_film_structure):
+    """Tests has_z_reflection"""
+    from aiida_fleur.tools.StructureData_util import has_z_reflection
+
+    structure = generate_film_structure()
+    structure_sym  = generate_sym_film_structure()
+
+    assert has_z_reflection(structure_sym)
+    assert not has_z_reflection(structure)
+
+def test_mark_fixed_atoms(generate_film_structure):
+    """Tests has_z_reflection"""
+    from aiida_fleur.tools.StructureData_util import mark_fixed_atoms
+
+    structure = generate_film_structure()
+
+    structure_res = mark_fixed_atoms(structure, [1, 3])
+
+    assert structure_res.sites[0].kind_name[-5:] == '49999'
+    assert structure_res.sites[2].kind_name[-5:] == '49999'
+
+    structure_res = mark_fixed_atoms(structure, [-1, -2])
+
+    assert structure_res.sites[1].kind_name[-5:] == '49999'
+    assert structure_res.sites[2].kind_name[-5:] == '49999'
 
 def test_create_slap(generate_structure):
     """Test if create_slap"""

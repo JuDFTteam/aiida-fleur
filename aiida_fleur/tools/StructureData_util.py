@@ -910,7 +910,7 @@ def move_atoms_incell(structure, vector):
 
     for site in sites:
         pos = site.position
-        new_pos = np.around(np.array(pos) + np.array(vector), decimals=10)
+        new_pos = np.around(np.array(pos) + np.array(vector), decimals=8)
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
         new_structure.label = structure.label
@@ -1148,9 +1148,8 @@ def create_manual_slab_ase(lattice='fcc',
                            latticeconstant=4.0,
                            size=(1, 1, 5),
                            replacements=None,
-                           decimals=10,
-                           pop_last_layers=0,
-                           inverse=False):
+                           decimals=8,
+                           pop_last_layers=0):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
@@ -1161,10 +1160,13 @@ def create_manual_slab_ase(lattice='fcc',
     :param latticeconstant: the lattice constant of a structure
     :param size: a 3-element tuple that sets supercell size. For instance, use (1,1,5) to set
                  5 layers of a slab.
+    :param replacements: a dict of type {INT: STRING}, where INT is the layer number to be replaced
+                         (counting from lowest z-coordinate layers, INT=1 for the first layer
+                         INT=-1 for the last one) and STRING is the element name.
     :param decimals: sets the rounding of atom positions. See numpy.around.
-    :param pop_last_layers: specifies how many bottom layers to remove. Sometimes one does not want
+    :param pop_last_layers: specifies how many layers to remove. Sometimes one does not want
                             to use the integer number of unit cells along z, extra layers can be
-                            removed.
+                            removed. Layers are removed in order from highest to lowest z-coordinate.
     :return structure: an ase-lattice representing a slab with replaced atoms
 
     """
@@ -1190,7 +1192,20 @@ def create_manual_slab_ase(lattice='fcc',
                                   latticeconstant=latticeconstant,
                                   size=size)
 
-    *_, layer_occupancies = get_layers(structure)
+    # sort atoms according to z coordinate
+    current_symbols = structure.get_chemical_symbols()
+    positions = structure.positions
+
+    zipped = zip(positions, current_symbols)
+    zipped = sorted(zipped, key=lambda x: x[0][2])
+
+    positions = [x[0] for x in zipped]
+    current_symbols = [x[1] for x in zipped]
+    structure.set_chemical_symbols(current_symbols)
+    structure.set_positions(positions)
+
+    # pop layers having the highest z coordinate
+    layer_occupancies = get_layers(structure)[2]
 
     if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
@@ -1205,34 +1220,21 @@ def create_manual_slab_ase(lattice='fcc',
     for i in range(atoms_to_pop[pop_last_layers]):
         structure.pop()
 
+    # incorporate replacements
     current_symbols = structure.get_chemical_symbols()
-    positions = structure.positions
-
-    zipped = zip(positions, current_symbols)
-    zipped = sorted(zipped, key=lambda x: x[0][2])
-
-    positions = [x for x, _ in zipped]
-    current_symbols = [x for _, x in zipped]
-    structure.set_chemical_symbols(current_symbols)
-    structure.set_positions(positions)
-
-    *_, layer_occupancies = get_layers(structure)
+    layer_occupancies = get_layers(structure)[2]
     layer_occupancies.insert(0, 0)
     for i, at_type in replacements.items():
         if isinstance(i, str):
             i = int(i)
-        if i < 0:
-            i = i - 1
+        if i != 0:
+            i = i - 1 # if i positive: makes layers count from 1; if negative: makes count from -1
+        else:
+            raise ValueError('replacement layer should not be equal to 0')
         atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
         for k in range(layer_occupancies[i + 1]):
             current_symbols[k + atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
-
-    if inverse:
-        structure.positions[:, 2] = -structure.positions[:, 2]
-        structure.positions = np.around(structure.positions, decimals=decimals)
-    else:
-        structure.positions = np.around(structure.positions, decimals=decimals)
 
     return structure
 
@@ -1241,7 +1243,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               tolerance_decimals=10):
+                               tolerance_decimals=8):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -1336,7 +1338,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     return magn_structure
 
 
-def get_layers(structure, decimals=10):
+def get_layers(structure, decimals=8):
     """
     Extracts atom positions and their types belonging to the same layer
     Removes any information related to kind specie.
@@ -1377,21 +1379,128 @@ def get_layers(structure, decimals=10):
 
 
 def adjust_film_relaxation(structure,
-                           suggestion,
-                           scale_as=None,
-                           bond_length=None,
-                           hold_layers=3,
-                           last_layer_factor=0.85):
+                                 suggestion,
+                                 scale_as=None,
+                                 bond_length=None,
+                                 last_layer_factor=0.85,
+                                 first_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
-    This function only works if USER_API_KEY was set.
+    Works only for films having no z-reflection symmetry, for other films check out the adjust_sym_film_relaxation
 
-    For now only binary structures are analysed to ensure the closest contact between two
-    elements of the interest. In case of trinary systems (like ABC) I can not not guarantee that
-    A and C will be the nearest neighbours.
+    .. warning:
 
-    The same is true for interlayer distances of the same element. To ensure the nearest-neighbour
-    condition I use unary compounds.
+        This should work ony for metallic bonding since bond length can drastically
+        depend on the atom hybridisation.
+
+    :param structure: ase film structure which will be adjusted
+    :param suggestion: dictionary containing average bond length between different elements,
+                       is is basically the result of
+                       :py:func:`~aiida_fleur.tools.StructureData_util.request_average_bond_length()`
+    :param scale_as: an element name, for which the El-El bond length will be enforced. It is
+                     can be helpful to enforce the same interlayer distance in the substrate,
+                     i.e. adjust deposited film interlayer distances only.
+    :param bond_length: a float that sets the bond length for scale_as element
+    :param hold_layers: this parameters sets the number of layers that will be marked via the
+                        certain label. The label is reserved for future use in the relaxation WC:
+                        all the atoms marked with the label will not be relaxed.
+    :param last_layer_factor: a float factor to which interlayer distance between last and second last layers
+                              is multiplied
+    :param first_layer_factor: a float factor to which interlayer distance between first and second layers
+                              is multiplied
+    """
+    from aiida.orm import StructureData
+    from copy import deepcopy
+    from itertools import product
+
+    if scale_as and not bond_length:
+        raise ValueError('bond_length is required when scale_as was provided')
+
+    structure = sort_atoms_z_value(structure)
+    layers = get_layers(structure)[0]
+
+    suggestion = deepcopy(suggestion)
+    if scale_as:
+        norm = suggestion[scale_as][scale_as]
+        for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
+            try:
+                suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
+            except KeyError:
+                pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
+
+    layers_supercell = get_layers(supercell_ncf(structure, 2, 2, 1))[0]
+
+    def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
+        pos_prev = np.array(atom_prev[0])[0:2]
+        z_dist = [0]
+        for atom_this in layers_supercell[num_layer]:
+            pos_this = np.array(atom_this[0])[0:2]
+            xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
+            if scale_as:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+            else:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+            if xy_dist_sq < bond_length_sq:
+                z_dist.append((bond_length_sq - xy_dist_sq)**(0.5))
+        return z_dist
+
+    def suggest_distance_to_previous(num_layer):
+        z_distances = []
+        for atom_prev in layers_supercell[num_layer - 1]:
+            z_distances.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+
+        # find suggestion for distance to 2nd layer
+        z_distances2 = []
+        if num_layer != 1:
+            for atom_prev in layers_supercell[num_layer - 2]:
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+
+        if not z_distances:
+            z_distances = [0]
+
+        if not z_distances2:
+            z_distances2 = [0]
+
+        return max(z_distances), max(z_distances2)
+
+    # take relaxed interlayers
+    rebuilt_structure = StructureData(cell=structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+
+    for atom in layers[0]:
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
+
+    prev_distance = 0
+    for i, layer in enumerate(layers[1:]):
+        add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
+        add_distance2 = add_distance2 - prev_distance
+        if add_distance1 <= 0 and add_distance2 <= 0:
+            raise ValueError('error not implemented')
+        prev_distance = max(add_distance1, add_distance2)
+        if i == len(layers) - 2:
+            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
+        if i == 0 and first_layer_factor:
+            prev_distance = prev_distance * first_layer_factor
+
+        layer_copy = deepcopy(layer)
+        prev_layer_z = rebuilt_structure.sites[-1].position[2]
+        for atom in layer_copy:
+            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
+            # a = Site(kind_name=atom[1], position=atom[0])
+            # rebuilt_structure.append_site(a)
+            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+
+    rebuilt_structure = center_film(rebuilt_structure)
+    return rebuilt_structure
+
+def adjust_sym_film_relaxation(structure,
+                               suggestion,
+                               scale_as=None,
+                               bond_length=None,
+                               last_layer_factor=0.85):
+    """
+    Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
+    Works only for films having z-reflection symmetry, for other films check out the adjust_film_relaxation
 
     .. warning:
 
@@ -1419,8 +1528,8 @@ def adjust_film_relaxation(structure,
     if scale_as and not bond_length:
         raise ValueError('bond_length is required when scale_as was provided')
 
+    structure = center_film(structure)
     structure = sort_atoms_z_value(structure)
-    layers, z_positions, occupancies = get_layers(structure)
 
     suggestion = deepcopy(suggestion)
     if scale_as:
@@ -1431,39 +1540,40 @@ def adjust_film_relaxation(structure,
             except KeyError:
                 pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
+    # sort layers from central to surface atoms
+    sorted_layers = sorted(get_layers(structure)[0], key= lambda x: abs(x[0][0][2]))
+    sorted_layers = [x for x in sorted_layers if x[0][0][2] >= 0]
+
+    layers_supercell = sorted(get_layers(supercell_ncf(structure, 2, 2, 1))[0], key= lambda x: abs(x[0][0][2]))
+    layers_supercell = [x for x in layers_supercell if x[0][0][2] >= 0]
+
+    def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
+        pos_prev = np.array(atom_prev[0])[0:2]
+        z_dist = [0]
+        for atom_this in layers_supercell[num_layer]:
+            pos_this = np.array(atom_this[0])[0:2]
+            xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
+            if scale_as:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+            else:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+            if xy_dist_sq < bond_length_sq:
+                z_dist.append((bond_length_sq - xy_dist_sq)**(0.5))
+        return z_dist
+
     def suggest_distance_to_previous(num_layer):
-        layers_supercell, *_ = get_layers(supercell_ncf(structure, 2, 2, 1))
         z_distances = []
         for atom_prev in layers_supercell[num_layer - 1]:
-            pos_prev = np.array(atom_prev[0])[0:2]
-            for atom_this in layers_supercell[num_layer]:
-                pos_this = np.array(atom_this[0])[0:2]
-                xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
-                if scale_as:
-                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
-                else:
-                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
-                if xy_dist_sq > bond_length_sq:
-                    pass
-                else:
-                    z_distances.append((bond_length_sq - xy_dist_sq)**(0.5))
+            z_distances.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
 
-        # find suggestion for distance to 2nd layer back
+        # find suggestion for distance to 2nd previous layer
         z_distances2 = []
         if num_layer != 1:
             for atom_prev in layers_supercell[num_layer - 2]:
-                pos_prev = np.array(atom_prev[0])[0:2]
-                for atom_this in layers_supercell[num_layer]:
-                    pos_this = np.array(atom_this[0])[0:2]
-                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
-                    if scale_as:
-                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
-                    else:
-                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
-                    if xy_dist_sq > bond_length_sq:
-                        pass
-                    else:
-                        z_distances2.append((bond_length_sq - xy_dist_sq)**(0.5))
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+        elif layers_supercell[0][0][0][2] == 0: # if it is the second layer and the first one is in the center
+            for atom_prev in layers_supercell[num_layer]: # we should consider the mirror image too
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
 
         if not z_distances:
             z_distances = [0]
@@ -1473,46 +1583,86 @@ def adjust_film_relaxation(structure,
 
         return max(z_distances), max(z_distances2)
 
-    # take relaxed interlayers
     rebuilt_structure = StructureData(cell=structure.cell)
     rebuilt_structure.pbc = (True, True, False)
-    # for kind in structure.kinds:
-    #     rebuilt_structure.append_kind(kind)
 
-    for atom in layers[0]:
-        # a = Site(kind_name=atom[1], position=atom[0])
-        # minus because I build from bottom (inversed structure)
-        if hold_layers < 1:
-            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -atom[0][2]), name=atom[1])
-        else:
-            rebuilt_structure.append_atom(symbols=atom[1],
-                                          position=(atom[0][0], atom[0][1], -atom[0][2]),
-                                          name=atom[1] + '49999')
+    for atom in sorted_layers[0]:
+        if atom[0][2] != 0: # no layers in the center, calculate distance to the mirror image
+            z_distances2 = []
+            for atom_prev in layers_supercell[0]:
+                z_distances2.extend(calculate_distance_to_previous(0, atom_prev, layers_supercell))
+            z_first = max(z_distances2) / 2
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], z_first), name=atom[1])
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -z_first), name=atom[1])
+        else: # if the first layer is in the center we can simply add it
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
-    for i, layer in enumerate(layers[1:]):
+
+    for i, layer in enumerate(sorted_layers[1:]):
         add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
-        add_distance2 = add_distance2 - prev_distance
+        if i == 0: # the 2nd distance is the distance to the mirror image in films with no central layer
+            # for a film with central layer add_distance2 == 0
+            add_distance2 = add_distance2 / 2
+        else:
+            add_distance2 = add_distance2 - prev_distance
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(layers) - 2:
+        if i == len(sorted_layers) - 2:
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
-        prev_layer_z = rebuilt_structure.sites[-1].position[2]
+        prev_layer_z = max([x.position[2] for x in rebuilt_structure.sites])
+
         for atom in layer_copy:
-            atom[0][2] = prev_layer_z - prev_distance  # minus because I build from bottom (inverse)
-            # a = Site(kind_name=atom[1], position=atom[0])
-            # rebuilt_structure.append_site(a)
-            if i < hold_layers - 1:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49999')
-            else:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
+            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])
 
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
+def mark_fixed_atoms(structure, hold_layers=None):
+    '''
+    Marks atom in layers, that should be fixed in the relaxation. Uses reserved 49999 label
+    '''
+    from aiida.orm import StructureData
+
+    if hold_layers is None or not hold_layers:
+        return structure
+
+    rebuilt_structure = StructureData(cell=structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+
+    layers = get_layers(structure)[0]
+
+    for i, layer in enumerate(layers):
+        if i + 1 in hold_layers or (-len(layers) + i) in hold_layers:
+            addition = '49999'
+        else:
+            addition = ''
+        for atom in layer:
+            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + addition)
+
+    return rebuilt_structure
+
+def has_z_reflection(structure):
+    '''
+    Checks if a structure has z-reflection symmetry
+    '''
+    structure = center_film(structure)
+    structure = sort_atoms_z_value(structure)
+    layers = get_layers(structure)[0]
+
+    for i, layer in enumerate(layers):
+        for atom in layer:
+            atom_symmetrical = [x for x in layers[-1-i]]
+            atom_check = ([atom[0][0], atom[0][1], -atom[0][2]], atom[1])
+
+            if atom_check not in atom_symmetrical:
+                return False
+    return True
 
 def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
     """

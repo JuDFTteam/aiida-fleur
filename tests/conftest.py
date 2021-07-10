@@ -438,6 +438,26 @@ def generate_film_structure():
 
     return _generate_film_structure
 
+@pytest.fixture
+def generate_sym_film_structure():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_film_structure():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+        from aiida_fleur.common.constants import BOHR_A
+        a = 7.497 * BOHR_A
+        cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., -1.99285 * BOHR_A), symbols='Fe')
+        structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+        structure.append_atom(position=(0., 0., 1.99285 * BOHR_A), symbols='Fe')
+        structure.pbc = (True, True, False)
+
+        return structure
+
+    return _generate_film_structure
+
 
 @pytest.fixture(scope='function', autouse=True)
 def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name

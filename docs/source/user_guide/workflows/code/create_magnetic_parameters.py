@@ -11,7 +11,7 @@
 
 'decimals': 10,               # set the accuracy of writing atom positions
 'pop_last_layers': 1,         # number of bottom layers to be removed before relaxation
-'hold_n_first_layers': 5,     # number of bottom layers to be held during the relaxation
+'hold_layers': None,          # a list of layer numbers to be held during the relaxation
                               # (relaxXYZ = 'FFF')
 'last_layer_factor': 0.85,    # factor by interlayer distance between two last layers
                               # will be multiplied

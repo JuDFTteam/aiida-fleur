@@ -45,8 +45,9 @@ class FleurCreateMagneticWorkChain(WorkChain):
             0: 'Fe',
             -1: 'Fe'
         },
-        'hold_n_first_layers': 3,
+        'hold__layers': None,
         'last_layer_factor': 0.85,
+        'first_layer_factor': 0.0,
         'decimals': 10,
         'pop_last_layers': 1,
         'total_number_layers': 4,
@@ -383,7 +384,9 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     """
     Create a film structure those interlayers will be relaxed.
     """
-    from aiida_fleur.tools.StructureData_util import create_manual_slab_ase, center_film, adjust_film_relaxation
+    from aiida_fleur.tools.StructureData_util import create_manual_slab_ase, center_film
+    from aiida_fleur.tools.StructureData_util import adjust_film_relaxation, adjust_sym_film_relaxation
+    from aiida_fleur.tools.StructureData_util import mark_fixed_atoms, has_z_reflection
 
     # scaling_parameter = eos_output.get_dict()['scaling_gs']
     wf_dict = wf_dict_node.get_dict()
@@ -398,8 +401,9 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     pop_last_layers = wf_dict['pop_last_layers']
     decimals = wf_dict['decimals']
     lattice = wf_dict['lattice']
-    hold_layers = wf_dict['hold_n_first_layers']
+    hold_layers = wf_dict['hold_layers']
     last_layer_factor = wf_dict['last_layer_factor']
+    first_layer_factor = wf_dict['first_layer_factor']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
@@ -421,8 +425,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                        latticeconstant=latticeconstant,
                                        size=(1, 1, 1),
                                        replacements=None,
-                                       decimals=decimals,
-                                       inverse=True)
+                                       decimals=decimals)
 
     tmp_substrate = create_manual_slab_ase(lattice=lattice,
                                            miller=miller,
@@ -433,19 +436,23 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                            replacements=None,
                                            decimals=decimals)
 
-    bond_length = find_min_distance_unary_struct(tmp_substrate)
+    bond_length = find_min_distance_unary_structure(tmp_substrate)
 
     suggestion = suggestion_node.get_dict()
 
-    # structure will be reversed here
-    structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, hold_layers, last_layer_factor)
+    if has_z_reflection(structure):
+        structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
+    else:
+        structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor, first_layer_factor)
+
+    structure = mark_fixed_atoms(structure, hold_layers)
 
     centered_structure = center_film(structure)
 
     return {'structure': centered_structure, 'substrate': StructureData(ase=substrate)}
 
 
-def find_min_distance_unary_struct(tmp_substrate):
+def find_min_distance_unary_structure(tmp_substrate):
     """
     Finds a minimal distance beteween atoms in a unary structure.
 
