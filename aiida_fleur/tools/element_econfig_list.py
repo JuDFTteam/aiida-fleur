@@ -17,6 +17,7 @@ from __future__ import print_function
 from aiida.common.constants import elements as PeriodicTableElements
 import six
 import json
+
 atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTableElements)}
 
 # TODO
@@ -1642,6 +1643,7 @@ def get_state_occ(econfigstr, corehole='', valence='', ch_occ=1.0):
 # export to json, read in here.
 import aiida_fleur
 import os
+
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
 with open(EXP_BINDENERGIES_PATH, 'r') as fn:

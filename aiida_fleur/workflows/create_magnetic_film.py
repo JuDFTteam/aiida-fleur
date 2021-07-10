@@ -443,7 +443,8 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     if has_z_reflection(structure):
         structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
     else:
-        structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor, first_layer_factor)
+        structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
+                                           first_layer_factor)
 
     structure = mark_fixed_atoms(structure, hold_layers)
 

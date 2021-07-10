@@ -21,6 +21,7 @@ from aiida.cmdline.params.types import DataParamType
 from aiida.plugins import DataFactory
 #from aiida_fleur.data.fleurinp import FleurinpData
 from . import cmd_data
+
 FleurinpData = DataFactory('fleur.fleurinp')
 
 

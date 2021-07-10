@@ -1228,7 +1228,7 @@ def create_manual_slab_ase(lattice='fcc',
         if isinstance(i, str):
             i = int(i)
         if i != 0:
-            i = i - 1 # if i positive: makes layers count from 1; if negative: makes count from -1
+            i = i - 1  # if i positive: makes layers count from 1; if negative: makes count from -1
         else:
             raise ValueError('replacement layer should not be equal to 0')
         atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
@@ -1379,11 +1379,11 @@ def get_layers(structure, decimals=8):
 
 
 def adjust_film_relaxation(structure,
-                                 suggestion,
-                                 scale_as=None,
-                                 bond_length=None,
-                                 last_layer_factor=0.85,
-                                 first_layer_factor=0.85):
+                           suggestion,
+                           scale_as=None,
+                           bond_length=None,
+                           last_layer_factor=0.85,
+                           first_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     Works only for films having no z-reflection symmetry, for other films check out the adjust_sym_film_relaxation
@@ -1468,7 +1468,7 @@ def adjust_film_relaxation(structure,
     rebuilt_structure.pbc = (True, True, False)
 
     for atom in layers[0]:
-            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
+        rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):
@@ -1493,11 +1493,8 @@ def adjust_film_relaxation(structure,
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
-def adjust_sym_film_relaxation(structure,
-                               suggestion,
-                               scale_as=None,
-                               bond_length=None,
-                               last_layer_factor=0.85):
+
+def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, last_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     Works only for films having z-reflection symmetry, for other films check out the adjust_film_relaxation
@@ -1541,10 +1538,10 @@ def adjust_sym_film_relaxation(structure,
                 pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
     # sort layers from central to surface atoms
-    sorted_layers = sorted(get_layers(structure)[0], key= lambda x: abs(x[0][0][2]))
+    sorted_layers = sorted(get_layers(structure)[0], key=lambda x: abs(x[0][0][2]))
     sorted_layers = [x for x in sorted_layers if x[0][0][2] >= 0]
 
-    layers_supercell = sorted(get_layers(supercell_ncf(structure, 2, 2, 1))[0], key= lambda x: abs(x[0][0][2]))
+    layers_supercell = sorted(get_layers(supercell_ncf(structure, 2, 2, 1))[0], key=lambda x: abs(x[0][0][2]))
     layers_supercell = [x for x in layers_supercell if x[0][0][2] >= 0]
 
     def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
@@ -1571,8 +1568,8 @@ def adjust_sym_film_relaxation(structure,
         if num_layer != 1:
             for atom_prev in layers_supercell[num_layer - 2]:
                 z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
-        elif layers_supercell[0][0][0][2] == 0: # if it is the second layer and the first one is in the center
-            for atom_prev in layers_supercell[num_layer]: # we should consider the mirror image too
+        elif layers_supercell[0][0][0][2] == 0:  # if it is the second layer and the first one is in the center
+            for atom_prev in layers_supercell[num_layer]:  # we should consider the mirror image too
                 z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
 
         if not z_distances:
@@ -1587,21 +1584,21 @@ def adjust_sym_film_relaxation(structure,
     rebuilt_structure.pbc = (True, True, False)
 
     for atom in sorted_layers[0]:
-        if atom[0][2] != 0: # no layers in the center, calculate distance to the mirror image
+        if atom[0][2] != 0:  # no layers in the center, calculate distance to the mirror image
             z_distances2 = []
             for atom_prev in layers_supercell[0]:
                 z_distances2.extend(calculate_distance_to_previous(0, atom_prev, layers_supercell))
             z_first = max(z_distances2) / 2
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], z_first), name=atom[1])
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -z_first), name=atom[1])
-        else: # if the first layer is in the center we can simply add it
+        else:  # if the first layer is in the center we can simply add it
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
 
     for i, layer in enumerate(sorted_layers[1:]):
         add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
-        if i == 0: # the 2nd distance is the distance to the mirror image in films with no central layer
+        if i == 0:  # the 2nd distance is the distance to the mirror image in films with no central layer
             # for a film with central layer add_distance2 == 0
             add_distance2 = add_distance2 / 2
         else:
@@ -1622,6 +1619,7 @@ def adjust_sym_film_relaxation(structure,
 
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
+
 
 def mark_fixed_atoms(structure, hold_layers=None):
     '''
@@ -1647,6 +1645,7 @@ def mark_fixed_atoms(structure, hold_layers=None):
 
     return rebuilt_structure
 
+
 def has_z_reflection(structure):
     '''
     Checks if a structure has z-reflection symmetry
@@ -1657,12 +1656,13 @@ def has_z_reflection(structure):
 
     for i, layer in enumerate(layers):
         for atom in layer:
-            atom_symmetrical = [x for x in layers[-1-i]]
+            atom_symmetrical = [x for x in layers[-1 - i]]
             atom_check = ([atom[0][0], atom[0][1], -atom[0][2]], atom[1])
 
             if atom_check not in atom_symmetrical:
                 return False
     return True
+
 
 def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
     """
