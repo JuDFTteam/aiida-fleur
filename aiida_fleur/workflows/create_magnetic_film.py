@@ -32,7 +32,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
     """
         This workflow creates relaxed magnetic film on a substrate.
     """
-    _workflowversion = '0.1.2'
+    _workflowversion = '0.2.0'
 
     _default_wf_para = {
         'lattice': 'fcc',

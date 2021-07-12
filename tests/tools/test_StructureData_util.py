@@ -779,8 +779,7 @@ def test_center_film_wf(generate_film_structure, generate_structure):
     structure_film = move_atoms_incell(structure_film, [0.0, 0.0, 1.1242])
 
     centered_film = center_film_wf(structure_film)
-    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.22860131),
-                                                         (1.40263174, 1.98362077, -0.17403051),
+    assert [x.position for x in centered_film.sites] == [(0.0, 0.0, -1.22860131), (1.40263174, 1.98362077, -0.17403051),
                                                          (0.0, 0.0, 1.22860131)]
 
     with pytest.raises(TypeError):
@@ -972,6 +971,7 @@ def test_adjust_film_relaxation(generate_film_structure):
     assert result.sites[1].position[2] == -0.38658751
     assert result.sites[2].position[2] == 1.16073984
 
+
 def test_adjust_sym_film_relaxation(generate_sym_film_structure):
     """Test interface of adjust film relaxation, requires mp_api_key"""
     # Todo mock the mp query, since result could change overtime, also that the CI can run this
@@ -1002,12 +1002,13 @@ def test_adjust_sym_film_relaxation(generate_sym_film_structure):
     assert result.sites[1].position[2] == 0.0
     assert result.sites[2].position[2] == 1.03205109
 
+
 def test_has_z_reflection(generate_sym_film_structure, generate_film_structure):
     """Tests has_z_reflection"""
     from aiida_fleur.tools.StructureData_util import has_z_reflection
 
     structure = generate_film_structure()
-    structure_sym  = generate_sym_film_structure()
+    structure_sym = generate_sym_film_structure()
 
     assert has_z_reflection(structure_sym)
     assert not has_z_reflection(structure)
@@ -1027,6 +1028,7 @@ def test_mark_fixed_atoms(generate_film_structure):
 
     assert structure_res.sites[1].kind_name[-5:] == '49999'
     assert structure_res.sites[2].kind_name[-5:] == '49999'
+
 
 def test_create_slap(generate_structure):
     """Test if create_slap"""

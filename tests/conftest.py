@@ -438,6 +438,7 @@ def generate_film_structure():
 
     return _generate_film_structure
 
+
 @pytest.fixture
 def generate_sym_film_structure():
     """Return a `StructureData` representing bulk silicon."""
