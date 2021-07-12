@@ -355,7 +355,7 @@ def _handle_time_limits(self, calculation):
         # if previous calculation failed for the same reason, do not restart
         try:
             prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
-            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].exit_status
+            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].node.exit_status
             if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
                 return ErrorHandlerReport(True, True)
