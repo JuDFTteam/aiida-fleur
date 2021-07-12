@@ -45,7 +45,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             0: 'Fe',
             -1: 'Fe'
         },
-        'hold__layers': None,
+        'hold_layers': None,
         'last_layer_factor': 0.85,
         'first_layer_factor': 0.0,
         'decimals': 10,

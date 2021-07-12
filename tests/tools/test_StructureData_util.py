@@ -1013,6 +1013,7 @@ def test_has_z_reflection(generate_sym_film_structure, generate_film_structure):
     assert has_z_reflection(structure_sym)
     assert not has_z_reflection(structure)
 
+
 def test_mark_fixed_atoms(generate_film_structure):
     """Tests has_z_reflection"""
     from aiida_fleur.tools.StructureData_util import mark_fixed_atoms
