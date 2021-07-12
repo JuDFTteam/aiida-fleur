@@ -1664,33 +1664,39 @@ def has_z_reflection(structure):
     return True
 
 
-def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
+def request_average_bond_length_store(first_bin, second_bin, user_api_key, ignore_second_bin=False):
     """
     Requests MaterialsProject to estimate thermal average bond length between given elements.
     Also requests information about lattice constants of fcc and bcc structures.
     Stores the result in the Database. Notice that this is not a calcfunction!
     Therefore, the inputs are not stored and the result node is unconnected.
 
-    :param main_elements: element list to calculate the average bond length
-                          only combinations of AB, AA and BB are calculated, where
-                          A belongs to main_elements, B belongs to sub_elements.
-    :param sub_elements: element list, see main_elements
+    :param first_bin: element list to calculate the average bond length
+                      only combinations of AB, AA and BB are calculated, where
+                      A belongs to first_bin, B belongs to second_bin.
+    :param second_bin: element list, see main_elements
+    :param user_api_key: user API key from materialsproject
+    :param ignore_second_bin: if True, the second bin is ignored and all possible combinations from the first one are
+                              constructed.
     :return: bond_data, a dict containing obtained lattice constants.
     """
-    result = request_average_bond_length(main_elements, sub_elements, user_api_key)
+    result = request_average_bond_length(first_bin, second_bin, user_api_key)
     result.store()
     return result
 
 
-def request_average_bond_length(main_elements, sub_elements, user_api_key):
+def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_second_bin=False):
     """
     Requests MaterialsProject to estimate thermal average bond length between given elements.
     Also requests information about lattice constants of fcc and bcc structures.
 
-    :param main_elements: element list to calculate the average bond length
-                          only combinations of AB, AA and BB are calculated, where
-                          A belongs to main_elements, B belongs to sub_elements.
-    :param sub_elements: element list, see main_elements
+    :param first_bin: element list to calculate the average bond length
+                      only combinations of AB are calculated, where
+                      A belongs to first_bin, B belongs to second_bin.
+    :param second_bin: element list, see main_elements
+    :param user_api_key: user API key from materialsproject
+    :param ignore_second_bin: if True, the second bin is ignored and all possible combinations from the first one are
+                              constructed.
     :return: bond_data, a dict containing obtained lattice constants.
     """
     from itertools import product, combinations
@@ -1701,7 +1707,12 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
     from copy import deepcopy
 
     bond_data = defaultdict(lambda: defaultdict(lambda: 0.0))
-    symbols = main_elements + sub_elements
+    if ignore_second_bin:
+        symbols = first_bin
+        second_bin_calculate = first_bin
+    else:
+        symbols = first_bin + second_bin
+        second_bin_calculate = second_bin
 
     for sym in symbols:
         distance = 0
@@ -1733,7 +1744,9 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
         bond_data[sym][sym] = distance
         print('Request completed for {symst} {symst} pair'.format(symst=sym))
 
-    for sym1, sym2 in product(main_elements, sub_elements):
+    for sym1, sym2 in product(first_bin, second_bin_calculate):
+        if sym1 == sym2:
+            continue
         distance = 0
         partition_function = 0
         with MPRester(user_api_key) as mat_project:
