@@ -1656,7 +1656,7 @@ def has_z_reflection(structure):
 
     for i, layer in enumerate(layers):
         for atom in layer:
-            atom_symmetrical = [x for x in layers[-1 - i]]
+            atom_symmetrical = list(layers[-1 - i])
             atom_check = ([atom[0][0], atom[0][1], -atom[0][2]], atom[1])
 
             if atom_check not in atom_symmetrical:
