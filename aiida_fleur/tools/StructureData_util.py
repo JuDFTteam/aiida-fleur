@@ -1477,9 +1477,9 @@ def adjust_film_relaxation(structure,
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(layers) - 2:
+        if i == len(layers) - 2 and last_layer_factor:
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
-        if i == 0 and first_layer_factor:
+        elif i == 0 and first_layer_factor:
             prev_distance = prev_distance * first_layer_factor
 
         layer_copy = deepcopy(layer)
@@ -1606,7 +1606,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(sorted_layers) - 2:
+        if i == len(sorted_layers) - 2 and last_layer_factor:
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
