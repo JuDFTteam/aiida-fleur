@@ -45,10 +45,9 @@ in the input. For now only single-element layer replacements are possible i.e. e
 can be made of a single element. It is not possible to create e.g. B-N monolayer using this
 workchain.
 
-Finally, using the result of the
-relaxation workchain, a magnetic structure having no z-reflection symmetry is
+Finally, using the result of the relaxation workchain, a magnetic structure having no z-reflection symmetry is
 constructed. For this the workchain takes first ``num_relaxed_layers`` layers from the relaxed structure and attaches
-so many substrate layers so there are ``total_number_layers` layers. The final structure is z-centralised.
+so many substrate layers so there are ``total_number_layers`` layers. The final structure is z-centralised.
 
 .. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
 
