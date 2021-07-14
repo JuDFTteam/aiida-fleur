@@ -1279,7 +1279,10 @@ def magnetic_slab_from_relaxed(relaxed_structure,
 
     layers = {np.around(atom.position[2], decimals=tolerance_decimals) for atom in sites}
     num_layers = len(layers)
-    max_layers_to_extract = num_layers // 2 + num_layers % 2
+    if has_z_reflection(sorted_struc):
+        max_layers_to_extract = num_layers // 2 + num_layers % 2
+    else:
+        max_layers_to_extract = num_layers
 
     if isinstance(orig_structure, StructureData):
         positions = orig_structure.get_ase().positions
