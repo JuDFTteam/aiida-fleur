@@ -1306,7 +1306,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
         kind_append = kind
         kind_append.name = simplify_kind_name(kind.name)
         try:
-            magn_structure.append_kind(kind)
+            magn_structure.append_kind(kind_append)
         except ValueError:
             pass
 
