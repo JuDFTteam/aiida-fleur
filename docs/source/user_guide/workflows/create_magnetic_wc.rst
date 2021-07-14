@@ -3,7 +3,7 @@
 Fleur Create Magnetic Film workchain
 --------------------------------------
 
-* **Current version**: 0.1.1
+* **Current version**: 0.2.0
 * **Class**: FleurCreateMagneticWorkChain
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.create_magnetic``
 * **Workflow type**: Scientific workchain
@@ -21,11 +21,10 @@ Import Example:
 
 Description/Purpose
 ^^^^^^^^^^^^^^^^^^^
-The workchain constructs a relaxed film structure which is ready-to-use in the subsequent
-magnetic workchains, such as :ref:`DMI<dmi_wc>`, :ref:`MAE<mae_wc>` or :ref:`SSDisp<ssdisp_wc>`
-workchains.
+The workchain constructs a relaxed film structure which is ready-to-use in following
+magnetic workchains: :ref:`DMI<dmi_wc>`, :ref:`MAE<mae_wc>` or :ref:`SSDisp<ssdisp_wc>`.
 
-The main inputs include information about the substrate (structure type, miller indices of surfaces or vectors
+The inputs include information about the substrate (structure type, miller indices of surfaces or vectors
 forming the primitive unit cell, chemical elements)
 and deposited material. The main logic of the workchain is depicted on the figure below:
 
@@ -34,41 +33,22 @@ and deposited material. The main logic of the workchain is depicted on the figur
     :align: center
 
 First, the workchain uses :ref:`EOS workchain<eos_wc>` to find the equilibrium lattice parameters for
-the substrate. For now only bcc and fcc substrate lattices are supported. Note, the algorithm always
+the substrate. For now only bcc and fcc lattices are supported. Note, the algorithm always
 uses conventional unit cells e.g. one gets 4 atoms in the unit cell for fcc lattice (see the figure
 above).
 
-After that, the workchain constructs a film which will be used for interlayer distance
+After the EOS step the workchain constructs a film which will be used for interlayer distance
 relaxation via the :ref:`relaxation workchain<relax_wc>`. The algorithm creates a film using given
 miller indices and the ground state lattice constant and replaces some layers with another
 elements given
 in the input. For now only single-element layer replacements are possible i.e. each resulting layer
 can be made of a single element. It is not possible to create e.g. B-N monolayer using this
-workchain. If
-we refer to the figure above, in ideal case one constructs a structure with an inversion or
-z-reflection symmetry to calculate interlayer distances 1-4. However, the workchain does not
-ensure an inversion or z-reflection symmetry, that is user responsibility to make it. For
-instance, if you want to achieve one of these symmetries you should pass positive and negative
-numbers of layer in the replacements dictionary of the wf parameters, see an example in
-:ref:`defaults<defaults_para_create>`.
-
-.. note::
-
-    z-reflection or inversion symmetries are not ensured by the workchain even if you
-    specify symmetric replacements. Sometimes you need to remove a few layers before replacements.
-    For example, consider the case of fcc (110) film: if ``size`` is equal to (1, 1, 4) there are
-    will
-    be 8 layers in the template before the replacements since there are 2 layers in the unit cell.
-    That means the x,y positions of the first atom
-    are equal to (0.0, 0.0) when the 8th atom coordinates are equal to  (0.5, 0.5).
-    Thus, to achieve
-    z-reflection symmetry one needs to remove the 8th layer by specifying ``'pop_last_layers' : 1``
-    in the wf parameters.
+workchain.
 
 Finally, using the result of the
 relaxation workchain, a magnetic structure having no z-reflection symmetry is
-created. For this the workchain takes first N layers from the relaxed structure and attaches M
-substrate layers to the bottom. The final structure is z-centralised.
+constructed. For this the workchain takes first ``num_relaxed_layers`` layers from the relaxed structure and attaches
+so many substrate layers so there are ``total_number_layers` layers. The final structure is z-centralised.
 
 .. _exposed: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains-expose-inputs-outputs
 
@@ -97,7 +77,7 @@ since corresponding input structures are created within the CreateMagnetic workc
 | optimized_structure | :py:class:`~aiida.orm.StructureData`| relaxed film structure                                                               | no       |
 +---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
 | distance_suggestion | :py:class:`~aiida.orm.Dict`         | interatomic distance suggestion, output of                                           | no       |
-|                     |                                     | py:func:`~aiida_fleur.tools.StructureData_util.request_average_bond_length_store()`  |          |
+|                     |                                     | the ``request_average_bond_length_store()``                                          |          |
 +---------------------+-------------------------------------+--------------------------------------------------------------------------------------+----------+
 
 Similarly to other workchains,
@@ -118,6 +98,45 @@ keys and their defaults are listed below:
 
 .. literalinclude:: code/create_magnetic_parameters.py
 
+.. _ase: https://wiki.fysik.dtu.dk/ase/ase/lattice.html#general-crystal-structures-and-surfaces
+
+Some of the parameters, which can be set in the workchain parameter dictionary, control how the structure will
+be created for the relaxation step. The following procedure is used to construct a film for relaxation:
+
+  1. Create a slab using ASE methods. For this following parameters are used: ``lattice``, ``miller`` or ``directions``,
+     ``host_symbol``, ``size`` and ``latticeconstant`` (or lattice constant from ``distance_suggestion`` input node).
+     For more details refer to `ase`_ documentation.
+
+  2. Remove pop_last_layers last layers. This step can help one to ensure symmetrical film.
+
+  .. note::
+
+      z-reflection or inversion symmetries are not ensured by the workchain even if you
+      specify symmetric replacements. Sometimes you need to remove a few layers before replacements.
+      For example, consider the case of fcc (110) film: if ``size`` is equal to (1, 1, 4) there are
+      will
+      be 8 layers in the slab since there are 2 layers in the unit cell.
+      That means the x,y positions of the atom in the first layer
+      are equal to (0.0, 0.0) and the 8th layer coordinates are equal to (0.5, 0.5).
+      Thus, to achieve
+      z-reflection symmetry one needs to remove the 8th layer by specifying ``'pop_last_layers' : 1``
+      in the wf parameters.
+
+
+  3. Replace atom layers according to ``replacements`` dictionary. The dictionary should consist of INT: STRING pairs,
+     where INT defines the layer number to be replaced (counting from the lowest layers, INT=1 for the first layer
+     and INT=-1 for the last) and STRING defines the element name.
+
+  4. Adjust interlayer distances using ``distance_suggestion``, ``first_layer_factor`` and ``last_layer_factor``. if
+     the input structure has z-reflection symmetry, then ``first_layer_factor`` is ignored and the ``last_layer_factor``
+     controls both surface layers.
+
+  5. Mark fixed layers according to ``hold_layers``. ``hold_layers`` is a list of layer number to be marked as fixed
+     during the relaxation step. Similarly to replacements, the 1st layer corresponds to number 1 and the last to -1.
+
+After the structure is relaxed, the final magnetic non-symmetrical structure is constructed. For this
+``total_number_layers`` and ``num_relaxed_layers`` setting the total number of layers of the number of layers extracted
+from the relaxed structure respectively.
 
 Output nodes
 ^^^^^^^^^^^^^
