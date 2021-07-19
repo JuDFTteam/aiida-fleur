@@ -36,6 +36,7 @@
         "masci-tools >= 0.4.8",
         "future",
         "pyhull",
+        "more_itertools",
         "sqlalchemy<1.4"
     ],
     "extras_require": {
@@ -78,6 +79,7 @@
             "fleur.scf = aiida_fleur.workflows.scf:FleurScfWorkChain",
             "fleur.dos = aiida_fleur.workflows.dos:fleur_dos_wc",
             "fleur.banddos = aiida_fleur.workflows.banddos:FleurBandDosWorkChain",
+            "fleur.orbcontrol = aiida_fleur.workflows.orbcontrol:FleurOrbControlWorkChain",
             "fleur.strain = aiida_fleur.workflows.strain:FleurStrainWorkChain",
 	        "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain",

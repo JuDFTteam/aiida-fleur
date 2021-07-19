@@ -301,6 +301,9 @@ def _handle_invalid_elements_mmpmat(self, calculation):
         else:
             self.ctx.inputs.settings = self.inputs.settings.get_dict()
         self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
+        #The charge density is not yet damaged, when the error is called so we reuse it
+        self.ctx.inputs.parent_folder = self.ctx.calculations[self.ctx.iteration - 1].outputs.remote_folder
+
         return ErrorHandlerReport(True, True)
 
 

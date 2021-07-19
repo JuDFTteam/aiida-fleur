@@ -643,8 +643,6 @@ class FleurScfWorkChain(WorkChain):
                 if not ldau_notconverged:
                     return False
         elif mode in ('energy', 'gw'):
-                if not ldau_notconverged:
-                    return False
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 if not ldau_notconverged:
                     return False
