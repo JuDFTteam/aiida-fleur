@@ -48,6 +48,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'hold_layers': None,
         'last_layer_factor': 0.85,
         'first_layer_factor': 0.0,
+        'adjustment_needed': True,
         'decimals': 10,
         'pop_last_layers': 1,
         'total_number_layers': 4,
@@ -404,6 +405,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     hold_layers = wf_dict['hold_layers']
     last_layer_factor = wf_dict['last_layer_factor']
     first_layer_factor = wf_dict['first_layer_factor']
+    adjustment_needed = wf_dict['adjustment_needed']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
@@ -440,11 +442,12 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     suggestion = suggestion_node.get_dict()
 
-    if has_z_reflection(structure):
-        structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
-    else:
-        structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
-                                           first_layer_factor)
+    if adjustment_needed:
+        if has_z_reflection(structure):
+            structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
+        else:
+            structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
+                                            first_layer_factor)
 
     structure = mark_fixed_atoms(structure, hold_layers)
 
