@@ -340,7 +340,11 @@ class FleurinpModifier(FleurXMLModifier):
             :param not_contains: str, this string has to NOT be in the final path
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'create_tag' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -387,7 +391,11 @@ class FleurinpModifier(FleurXMLModifier):
             :param not_contains: str, this string has to NOT be in the final path
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_tag' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -424,7 +432,11 @@ class FleurinpModifier(FleurXMLModifier):
                             valid values are: settable, settable_contains, other
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_att' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -479,7 +491,11 @@ class FleurinpModifier(FleurXMLModifier):
         warnings.warn('Replacing a tag with a given etree Element is only supported via the show()'
                       'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_att' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
