@@ -242,6 +242,8 @@ def _handle_mt_overlap(self, calculation):
     """
     Calculation failed because MT overlapped during calculation.
     """
+    from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
+    from aiida_fleur.data.fleurinpmodifier import modify_fleurinpdata
     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
         if 'remote_data' in self.ctx.inputs.scf:
             inputs = find_inputs_relax(self.ctx.inputs.scf.remote_data)
@@ -266,7 +268,21 @@ def _handle_mt_overlap(self, calculation):
         self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
-        if value < -0.2 and error_params['iteration_number'] >= 3:
+        relax_wc = load_node(find_last_submitted_workchain(self))
+        scf_wc = load_node(find_last_submitted_workchain(relax_wc))
+        mixing = ''
+        for link in scf_wc.get_outgoing().all():
+            if link.node.process_class is modify_fleurinpdata:
+                tasks = link.node.inputs.modifications.get_dict()['tasks']
+                for task in tasks:
+                    try:
+                        mixing = task[1]['forcemix']
+                        continue
+                    except (IndexError, KeyError):
+                        pass
+
+
+        if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
             wf_para_dict['force_dict']['forcemix'] = 'straight'
 
@@ -275,7 +291,7 @@ def _handle_mt_overlap(self, calculation):
             self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
-        elif value < -0.1 and error_params['iteration_number'] == 2:
+        elif error_params['iteration_number'] == 2:
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
             self.report('forcealpha might be too large.')
         else:  # reduce MT radii
