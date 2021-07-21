@@ -169,12 +169,12 @@ class FleurRelaxWorkChain(WorkChain):
                 self.report('Error: Wrong input: inpgen missing for final scf.')
                 return self.exit_codes.ERROR_INPGEN_MISSING
 
-            # initialize contents to avoid access failures
-            self.ctx.total_energy_last = None  #total_energy
-            self.ctx.total_energy_units = None  #total_energy_units
-            self.ctx.final_cell = None
-            self.ctx.final_atom_positions = None  #atom_positions
-            self.ctx.atomtype_info = None
+        # initialize contents to avoid access failures
+        self.ctx.total_energy_last = None  #total_energy
+        self.ctx.total_energy_units = None  #total_energy_units
+        self.ctx.final_cell = None
+        self.ctx.final_atom_positions = None  #atom_positions
+        self.ctx.atomtype_info = None
 
     def should_relax(self):
         """
