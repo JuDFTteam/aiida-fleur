@@ -54,6 +54,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
             cls.setup,
             cls.validate_inputs,
             while_(cls.should_run_calculation)(
+                cls.set_pop_shift,
                 cls.run_calculation,
                 cls.inspect_calculation,
                 cls.pop_non_stacking_inpxml_changes,
@@ -85,10 +86,21 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         else:
             self.ctx.inputs.metadata.label = ''
 
+    def set_pop_shift(self):
+        """
+        Sets pop_shift_methods to True.
+        Whenever this function is entered it means that shift_value changes were already performed
+        """
+        self.ctx.pop_shift_methods = True
+
     def pop_non_stacking_inpxml_changes(self):
         """
         pops some inpxml_changes that do not stack, for example shift_value.
         """
+
+        if not self.ctx.pop_shift_methods: # do not drop shift_methods
+            return
+
         if 'wf_parameters' in self.ctx.inputs.scf:
             wf_param = self.ctx.inputs.scf.wf_parameters.get_dict()
         else:
@@ -221,6 +233,7 @@ def _handle_vacuum_spill(self, calculation):
         inpxml_changes.append(('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}}))
         wf_para_dict['inpxml_changes'] = inpxml_changes
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+        self.ctx.pop_shift_methods = False
         return ErrorHandlerReport(True, True)
 
 
@@ -283,6 +296,7 @@ def _handle_mt_overlap(self, calculation):
             wf_para_dict['inpxml_changes'] = inpxml_changes
 
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+        self.ctx.pop_shift_methods = False
         return ErrorHandlerReport(True, True)
 
 
