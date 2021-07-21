@@ -268,18 +268,21 @@ def _handle_mt_overlap(self, calculation):
         self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
-        relax_wc = load_node(find_last_submitted_workchain(self))
+        relax_wc = load_node(find_last_submitted_workchain(self.node))
         scf_wc = load_node(find_last_submitted_workchain(relax_wc))
         mixing = ''
         for link in scf_wc.get_outgoing().all():
-            if link.node.process_class is modify_fleurinpdata:
-                tasks = link.node.inputs.modifications.get_dict()['tasks']
-                for task in tasks:
-                    try:
-                        mixing = task[1]['forcemix']
-                        continue
-                    except (IndexError, KeyError):
-                        pass
+            try:
+                if link.node.process_class is modify_fleurinpdata:
+                    tasks = link.node.inputs.modifications.get_dict()['tasks']
+                    for task in tasks:
+                        try:
+                            mixing = task[1]['forcemix']
+                            break
+                        except (IndexError, KeyError):
+                            pass
+            except AttributeError:
+                pass
 
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
