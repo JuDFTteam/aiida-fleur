@@ -277,7 +277,7 @@ def _handle_mt_overlap(self, calculation):
                     tasks = link.node.inputs.modifications.get_dict()['tasks']
                     for task in tasks:
                         try:
-                            mixing = task[1]['forcemix']
+                            mixing = task[1][0]['forcemix']
                             break
                         except (IndexError, KeyError):
                             pass
