@@ -17,6 +17,7 @@ allows to add scenarios to restart a calculation in an
 automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
+from aiida.common.exceptions import ValidationError
 import six
 
 from aiida.common import AttributeDict
@@ -88,34 +89,44 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
     def set_pop_shift(self):
         """
-        Sets pop_shift_methods to True.
-        Whenever this function is entered it means that shift_value changes were already performed
+        Sets use_stashed_shift_methods to False.
+        Whenever this function is entered it means that shift_value changes were already set
         """
-        self.ctx.pop_shift_methods = True
+        self.ctx.use_stashed_shift_methods = False
+        self.ctx.fixing_methods = []
 
     def pop_non_stacking_inpxml_changes(self):
         """
         pops some inpxml_changes that do not stack, for example shift_value.
         """
 
-        if not self.ctx.pop_shift_methods: # do not drop shift_methods
-            return
-
         if 'wf_parameters' in self.ctx.inputs.scf:
             wf_param = self.ctx.inputs.scf.wf_parameters.get_dict()
         else:
             wf_param = {}
 
-        if 'inpxml_changes' not in wf_param:
-            return
-
-        self.report('Removing shift_value methods from subsequent Relax submissions')
-
-        old_changes = wf_param['inpxml_changes']
+        old_changes = wf_param.get('inpxml_changes', [])
         new_changes = []
-        for change in old_changes:
-            if 'shift_value' not in change[0]:
-                new_changes.append(change)
+        stashed_changes = []
+
+        if self.ctx.use_stashed_shift_methods:  # if calculation is restarted from scratch, re-apply all shift methods
+            self.report('INFO: Returning all shift_value methods')
+            new_changes.extend(old_changes)
+            if 'shift_value_methods_stash' in self.ctx:
+                new_changes.extend(self.ctx.shift_value_methods_stash)
+            new_changes.extend(self.ctx.fixing_methods)
+            self.ctx.fixing_methods = []
+        elif not self.ctx.fixing_methods:  # if fixing_methods are not empty, we should use them
+            self.report('INFO: Removing shift_value methods from subsequent Relax submissions')
+            for change in old_changes:
+                if 'shift_value' not in change[0]:
+                    new_changes.append(change)
+                else:
+                    stashed_changes.append(change)
+            self.ctx.shift_value_methods_stash = stashed_changes
+        else:
+            raise ValidationError('Stashed methods are not used and fixing_methods is not empty')
+
         wf_param['inpxml_changes'] = new_changes
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
 
@@ -228,12 +239,10 @@ def _handle_vacuum_spill(self, calculation):
 
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum ' 'parameter')
-        wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
-        inpxml_changes = wf_para_dict.get('inpxml_changes', [])
-        inpxml_changes.append(('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}}))
-        wf_para_dict['inpxml_changes'] = inpxml_changes
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
-        self.ctx.pop_shift_methods = False
+
+        self.ctx.use_stashed_shift_methods = True
+        self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
+
         return ErrorHandlerReport(True, True)
 
 
@@ -278,12 +287,10 @@ def _handle_mt_overlap(self, calculation):
                     for task in tasks:
                         try:
                             mixing = task[1][0]['forcemix']
-                            break
                         except (IndexError, KeyError):
                             pass
             except AttributeError:
                 pass
-
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
@@ -292,30 +299,32 @@ def _handle_mt_overlap(self, calculation):
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
             self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.25
             self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
+            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
         elif error_params['iteration_number'] == 2:
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
+            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
             self.report('forcealpha might be too large.')
         else:  # reduce MT radii
             self.report('MT radii might be too large.')
-            inpxml_changes = wf_para_dict.get('inpxml_changes', [])
-            inpxml_changes.append(('shift_value_species_label', {
+
+            self.ctx.fixing_methods = [('shift_value_species_label', {
                 'label': '{: >20}'.format(label1),
                 'att_name': 'radius',
                 'value': value,
                 'mode': 'abs'
-            }))
-            inpxml_changes.append(('shift_value_species_label', {
+            })]
+
+            self.ctx.fixing_methods.append(('shift_value_species_label', {
                 'label': '{: >20}'.format(label2),
                 'att_name': 'radius',
                 'value': value,
                 'mode': 'abs'
             }))
-            wf_para_dict['inpxml_changes'] = inpxml_changes
 
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
-        self.ctx.pop_shift_methods = False
+        self.ctx.use_stashed_shift_methods = True  # even if we set mixing only, calculation should restart from scratch
+
         return ErrorHandlerReport(True, True)
 
 
