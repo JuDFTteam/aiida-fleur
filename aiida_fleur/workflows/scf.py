@@ -627,12 +627,21 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 return False
         elif mode == 'force':
-            try:
-                _ = self.ctx.last_base_wc.outputs.relax_parameters
-            except NotExistent:
-                pass
-            else:
-                return False
+            if self.ctx.last_charge_density is None:
+                try:
+                    _ = self.ctx.last_base_wc.outputs.relax_parameters
+                except NotExistent:
+                    pass
+                else:
+                    return False
+
+            elif self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
+                try:
+                    _ = self.ctx.last_base_wc.outputs.relax_parameters
+                except NotExistent:
+                    pass
+                else:
+                    return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False
