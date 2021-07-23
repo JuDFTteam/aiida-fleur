@@ -131,37 +131,37 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
 
 
-@register_error_handler(FleurBaseRelaxWorkChain, 50)
-def _handle_not_conv_error(self, calculation):
-    """
-    Calculation failed for unknown reason.
-    """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_RELAX']):
-        self.ctx.is_finished = False
-        self.report('Relax WC did not lead to convergence, submit next RelaxWC')
-        last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
-        last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
-        last_fleur_calc = load_node(last_fleur_calc)
-        remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
-        if 'wf_parameters' in self.ctx.inputs:
-            parameters = self.ctx.inputs.wf_parameters
-            run_final = parameters.get_dict().get('run_final_scf', False)
-        else:
-            run_final = False
+# @register_error_handler(FleurBaseRelaxWorkChain, 50)
+# def _handle_not_conv_error(self, calculation):
+#     """
+#     Calculation failed for unknown reason.
+#     """
+#     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_RELAX']):
+#         self.ctx.is_finished = False
+#         self.report('Relax WC did not lead to convergence, submit next RelaxWC')
+#         last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
+#         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+#         last_fleur_calc = load_node(last_fleur_calc)
+#         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+#         if 'wf_parameters' in self.ctx.inputs:
+#             parameters = self.ctx.inputs.wf_parameters
+#             run_final = parameters.get_dict().get('run_final_scf', False)
+#         else:
+#             run_final = False
 
-        self.ctx.inputs.scf.remote_data = remote
-        if 'structure' in self.ctx.inputs.scf:
-            del self.ctx.inputs.scf.structure
-        if 'inpgen' in self.ctx.inputs.scf:
-            if run_final:
-                self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
-            del self.ctx.inputs.scf.inpgen
-        if 'calc_parameters' in self.ctx.inputs.scf:
-            if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
-                self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
-            del self.ctx.inputs.scf.calc_parameters
+#         self.ctx.inputs.scf.remote_data = remote
+#         if 'structure' in self.ctx.inputs.scf:
+#             del self.ctx.inputs.scf.structure
+#         if 'inpgen' in self.ctx.inputs.scf:
+#             if run_final:
+#                 self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
+#             del self.ctx.inputs.scf.inpgen
+#         if 'calc_parameters' in self.ctx.inputs.scf:
+#             if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
+#                 self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
+#             del self.ctx.inputs.scf.calc_parameters
 
-        return ErrorHandlerReport(True, True)
+#         return ErrorHandlerReport(True, True)
 
 
 @register_error_handler(FleurBaseRelaxWorkChain, 49)
