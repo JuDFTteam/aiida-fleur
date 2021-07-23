@@ -17,10 +17,10 @@ allows to add scenarios to restart a calculation in an
 automatic way if an expected failure occurred.
 """
 from __future__ import absolute_import
-from aiida.common.exceptions import ValidationError
 import six
 
 from aiida.common import AttributeDict
+from aiida.common.exceptions import ValidationError
 from aiida.engine import while_
 from aiida.orm import load_node, Dict
 from aiida.plugins import WorkflowFactory, DataFactory
@@ -86,6 +86,8 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.metadata.label = self.inputs.label
         else:
             self.ctx.inputs.metadata.label = ''
+
+        self.ctx.initial_mixing = self.ctx.inputs.scf.wf_parameters.get_dict()['force_dict']['forcemix']
 
     def set_pop_shift(self):
         """
@@ -236,14 +238,19 @@ def _handle_vacuum_spill(self, calculation):
                 self.ctx.inputs.scf.inpgen = inputs[1]
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
+        else:
+            return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum ' 'parameter')
 
+        wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
+        if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
+            wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
+            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+
         self.ctx.use_stashed_shift_methods = True
         self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
-
-        return ErrorHandlerReport(True, True)
 
 
 @register_error_handler(FleurBaseRelaxWorkChain, 101)
@@ -264,6 +271,8 @@ def _handle_mt_overlap(self, calculation):
                 self.ctx.inputs.scf.inpgen = inputs[1]
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
+        else:
+            return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
         last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
         last_scf = load_node(last_scf_wc_uuid)
@@ -294,20 +303,18 @@ def _handle_mt_overlap(self, calculation):
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
-            wf_para_dict['force_dict']['forcemix'] = 'straight'
+            self.ctx.initial_mixing = 'straight'
 
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
             self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.25
             self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
         elif error_params['iteration_number'] == 2:
             wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] / 2
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
             self.report('forcealpha might be too large.')
         else:  # reduce MT radii
-            self.report('MT radii might be too large.')
+            self.report('MT radii might be too large. I reduce them.')
 
             self.ctx.fixing_methods = [('shift_value_species_label', {
                 'label': '{: >20}'.format(label1),
@@ -324,6 +331,10 @@ def _handle_mt_overlap(self, calculation):
             }))
 
         self.ctx.use_stashed_shift_methods = True  # even if we set mixing only, calculation should restart from scratch
+
+        if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
+            wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
+            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
 
         return ErrorHandlerReport(True, True)
 
