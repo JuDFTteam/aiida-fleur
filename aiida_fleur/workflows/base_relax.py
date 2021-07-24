@@ -210,8 +210,10 @@ def _handle_general_error(self, calculation):
     """
     Calculation failed for a reason that can not be fixed automatically.
     """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(
-        ['ERROR_INVALID_INPUT_PARAM', 'ERROR_SCF_FAILED', 'ERROR_NO_RELAX_OUTPUT', 'ERROR_NO_SCF_OUTPUT']):
+    if calculation.exit_status in RelaxProcess.get_exit_statuses([
+            'ERROR_INVALID_INPUT_PARAM', 'ERROR_SCF_FAILED', 'ERROR_NO_RELAX_OUTPUT', 'ERROR_NO_SCF_OUTPUT',
+            'ERROR_DID_NOT_RELAX'
+    ]):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be fixed automatically')
