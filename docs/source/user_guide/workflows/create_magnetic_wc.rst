@@ -130,6 +130,12 @@ be created for the relaxation step. The following procedure is used to construct
      the input structure has z-reflection symmetry, then ``first_layer_factor`` is ignored and the ``last_layer_factor``
      controls both surface layers.
 
+  .. warning::
+
+      Adjusting of interlayer distances for non-symmetric films work well only if substrate is positioned above magnetic
+      elements (z-coordinate of substrate atoms are higher than magnetic ones). This can be achieved by using
+      ``replacements: {1: 'Fe'}`` instead of ``replacements: {-1: 'Fe'}``.
+
   5. Mark fixed layers according to ``hold_layers``. ``hold_layers`` is a list of layer number to be marked as fixed
      during the relaxation step. Similarly to replacements, the 1st layer corresponds to number 1 and the last to -1.
 

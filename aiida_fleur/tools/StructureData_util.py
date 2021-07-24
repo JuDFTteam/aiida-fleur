@@ -1396,6 +1396,14 @@ def adjust_film_relaxation(structure,
         This should work ony for metallic bonding since bond length can drastically
         depend on the atom hybridisation.
 
+    .. warning:
+
+        The algorithm builds structure from the highest z-coordinates to the lowest
+        z-coordinates. If your system is a film deposited on substrate, make sure that
+        the substrate is located above magnetic elements i.e. the substrate has the most positive z-coordinates.
+        If you use create_manual_slab_ase, it can be achieved by replacing substrate for magnetic elements from the
+        bottom, using for example {1: 'Fe'} instead of {-1: 'Fe'}.
+
     :param structure: ase film structure which will be adjusted
     :param suggestion: dictionary containing average bond length between different elements,
                        is is basically the result of
@@ -1420,7 +1428,7 @@ def adjust_film_relaxation(structure,
         raise ValueError('bond_length is required when scale_as was provided')
 
     structure = sort_atoms_z_value(structure)
-    layers = get_layers(structure)[0]
+    layers = get_layers(structure)[0][::-1]  # inverse the structure to start building from substrate
 
     suggestion = deepcopy(suggestion)
     if scale_as:
@@ -1431,7 +1439,7 @@ def adjust_film_relaxation(structure,
             except KeyError:
                 pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
-    layers_supercell = get_layers(supercell_ncf(structure, 2, 2, 1))[0]
+    layers_supercell = get_layers(supercell_ncf(structure, 2, 2, 1))[0][::-1]
 
     def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
         pos_prev = np.array(atom_prev[0])[0:2]
@@ -1471,7 +1479,8 @@ def adjust_film_relaxation(structure,
     rebuilt_structure.pbc = (True, True, False)
 
     for atom in layers[0]:
-        rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
+        rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -atom[0][2]),
+                                      name=atom[1])  # minus inverses back
 
     prev_distance = 0
     for i, layer in enumerate(layers[1:]):
@@ -1486,11 +1495,9 @@ def adjust_film_relaxation(structure,
             prev_distance = prev_distance * first_layer_factor
 
         layer_copy = deepcopy(layer)
-        prev_layer_z = rebuilt_structure.sites[-1].position[2]
+        prev_layer_z = -rebuilt_structure.sites[-1].position[2]  # minus to pretend that we built inverted structure
         for atom in layer_copy:
-            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
-            # a = Site(kind_name=atom[1], position=atom[0])
-            # rebuilt_structure.append_site(a)
+            atom[0][2] = -(prev_layer_z + prev_distance)  # minus inverses back
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
 
     rebuilt_structure = center_film(rebuilt_structure)
