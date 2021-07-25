@@ -304,11 +304,10 @@ def _handle_mt_overlap(self, calculation):
                 pass
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
-            wf_para_dict['force_dict']['forcealpha'] = wf_para_dict['force_dict']['forcealpha'] * 1.5
             self.ctx.initial_mixing = 'straight'
 
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
-            self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.25
+            self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.4
             self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
