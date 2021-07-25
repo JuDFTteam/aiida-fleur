@@ -475,14 +475,7 @@ class FleurCalculation(CalcJob):
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
             if copy_remotely:  # on same computer.
-                # from fleurmodes
-                if modes['dos']:
-                    pass
-                elif modes['band']:
-                    pass
-                else:
-                    filelist_tocopy_remote = filelist_tocopy_remote + \
-                        self._copy_filelist_scf_remote
+                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 # from settings, user specified
                 # TODO: check if list?
                 for file1 in settings_dict.get('additional_remotecopy_list', []):
