@@ -1690,7 +1690,7 @@ def request_average_bond_length_store(first_bin, second_bin, user_api_key, ignor
                               constructed.
     :return: bond_data, a dict containing obtained lattice constants.
     """
-    result = request_average_bond_length(first_bin, second_bin, user_api_key)
+    result = request_average_bond_length(first_bin, second_bin, user_api_key, ignore_second_bin)
     result.store()
     return result
 
@@ -1794,6 +1794,213 @@ def simplify_kind_name(kind_name):
         return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
     else:
         return kind_name.split('-')[0]
+
+
+def define_AFM_structures(structure,
+                          lattice,
+                          directions,
+                          host_symbol,
+                          replacements,
+                          latticeconstant,
+                          size,
+                          decimals=8,
+                          pop_last_layers=0,
+                          AFM_name='FM',
+                          magnetic_layers=1,
+                          sym_film=False):
+    """
+    Create
+    """
+    from aiida.orm import StructureData
+    if magnetic_layers not in [1, 2]:
+        raise ValueError('magnetic_layers should be equal to 1 or 2, other options are not supported')
+
+    size_z = size[2]
+
+    if lattice == 'fcc':
+
+        if directions == [[-1, 1, 0], [0, 0, 1], [1, 1, 0]]:
+            if AFM_name == 'FM':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=directions,
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    return True
+
+            elif AFM_name == 'AFM_x':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(2, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_y':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 2, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_xy':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[-1, 1, 2], [1, -1, 2], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][2], 10) > 0:  # 2nd layer only
+                        if round(atom[0][0], 10) == 0 and round(atom[0][1], 10) != 0 or round(
+                                atom[0][0], 10) != 0 and round(atom[0][1], 10) == 0:
+                            return False
+                    else:  # first layer only
+                        if round(atom[0][0], 10) != 0 and round(atom[0][1], 10) != 0:
+                            return False
+                    return True
+
+            else:
+                raise ValueError("Only 'FM', 'AFM_x', 'AFM_y' amd 'AFM_xy' are known for fcc lattice")
+
+    elif lattice == 'bcc':
+
+        if directions == [[1, -1, 1], [1, -1, -1], [1, 1, 0]]:
+            if AFM_name == 'FM':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=directions,
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    return True
+
+            elif AFM_name == 'AFM_x':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_y':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_xy':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(2, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            else:
+                raise ValueError("Only 'FM', 'AFM_x', 'AFM_y' amd 'AFM_xy' are known for bcc lattice")
+
+    init_layers = get_layers(structure)[1]
+    rebuilt_structure = StructureData(cell=output_structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+
+    output_layers = get_layers(output_structure)[0]
+
+    for i, layer in enumerate(get_layers(output_structure)[0]):
+        for atom in layer:
+            if i < magnetic_layers or sym_film and i >= len(output_layers) - magnetic_layers:
+                if spin_up(atom):
+                    addition = '49990'
+                else:
+                    addition = '49991'
+            else:
+                addition = ''
+            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], init_layers[i]),
+                                          symbols=atom[1],
+                                          name=atom[1] + addition)
+
+    return rebuilt_structure
 
 
 '''

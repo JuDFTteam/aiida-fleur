@@ -51,6 +51,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'adjustment_needed': True,
         'decimals': 10,
         'pop_last_layers': 1,
+        'AFM_name': 'FM',
+        'magnetic_layers': 1,
         'total_number_layers': 4,
         'num_relaxed_layers': 2
     }
@@ -388,6 +390,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     from aiida_fleur.tools.StructureData_util import create_manual_slab_ase, center_film
     from aiida_fleur.tools.StructureData_util import adjust_film_relaxation, adjust_sym_film_relaxation
     from aiida_fleur.tools.StructureData_util import mark_fixed_atoms, has_z_reflection
+    from aiida_fleur.tools.StructureData_util import define_AFM_structures
 
     # scaling_parameter = eos_output.get_dict()['scaling_gs']
     wf_dict = wf_dict_node.get_dict()
@@ -406,6 +409,8 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     last_layer_factor = wf_dict['last_layer_factor']
     first_layer_factor = wf_dict['first_layer_factor']
     adjustment_needed = wf_dict['adjustment_needed']
+    AFM_name = wf_dict['AFM_name']
+    magnetic_layers = wf_dict['magnetic_layers']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
@@ -445,9 +450,33 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     if adjustment_needed:
         if has_z_reflection(structure):
             structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
+            structure = define_AFM_structures(structure,
+                                              lattice,
+                                              directions,
+                                              host_symbol,
+                                              replacements,
+                                              latticeconstant,
+                                              size,
+                                              decimals,
+                                              pop_last_layers,
+                                              AFM_name,
+                                              magnetic_layers,
+                                              sym_film=False)
         else:
             structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
                                                first_layer_factor)
+            structure = define_AFM_structures(structure,
+                                              lattice,
+                                              directions,
+                                              host_symbol,
+                                              replacements,
+                                              latticeconstant,
+                                              size,
+                                              decimals,
+                                              pop_last_layers,
+                                              AFM_name,
+                                              magnetic_layers,
+                                              sym_film=False)
 
     structure = mark_fixed_atoms(structure, hold_layers)
 
