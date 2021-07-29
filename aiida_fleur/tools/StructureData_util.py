@@ -1893,12 +1893,14 @@ def define_AFM_structures(structure,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
 
+                last_layer_z = get_layers(output_structure)[1][-1]
+
                 def spin_up(atom):
-                    if round(atom[0][2], 10) > 0:  # 2nd layer only
+                    if round(atom[0][2], 10) > 0 and round(atom[0][2], decimals) != last_layer_z:  # 2nd first and last layers only
                         if round(atom[0][0], 10) == 0 and round(atom[0][1], 10) != 0 or round(
                                 atom[0][0], 10) != 0 and round(atom[0][1], 10) == 0:
                             return False
-                    else:  # first layer only
+                    else:  # first and last layers only
                         if round(atom[0][0], 10) != 0 and round(atom[0][1], 10) != 0:
                             return False
                     return True
