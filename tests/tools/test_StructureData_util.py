@@ -962,14 +962,14 @@ def test_adjust_film_relaxation(generate_film_structure):
     structure = generate_film_structure()
     result = adjust_film_relaxation(structure, suggestion, last_layer_factor=0.85, first_layer_factor=1.0)
 
-    assert result.sites[0].position[2] == -1.19570659
-    assert result.sites[1].position[2] == -0.17826408
-    assert result.sites[2].position[2] == 1.19570659
+    assert result.sites[0].position[2] == -1.22560291
+    assert result.sites[1].position[2] == -0.19045726
+    assert result.sites[2].position[2] == 1.22560291
 
     result = adjust_film_relaxation(structure, suggestion, 'Pt', 2.77)
-    assert result.sites[0].position[2] == -1.16073984
-    assert result.sites[1].position[2] == -0.38658751
-    assert result.sites[2].position[2] == 1.16073984
+    assert result.sites[0].position[2] == -1.18751078
+    assert result.sites[1].position[2] == 0.05641248
+    assert result.sites[2].position[2] == 1.18751078
 
 
 def test_adjust_sym_film_relaxation(generate_sym_film_structure):
