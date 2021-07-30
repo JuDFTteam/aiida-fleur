@@ -274,6 +274,8 @@ of layers of the AFM structure and ``magnetic_layers`` is correctly initialised.
 
 Figures below illustrates known AFM structures for FCC(110) and BCC(110) structures. The number on each atoms
 shows to which layer atom belongs (first or second) and the color corresponds to spin orientation (up or down).
+Note that the input computational unit cell will be changed (shown on the figures),
+hence you might want to adjust the k-mesh correspondingly.
 
 .. image:: images/create_magnetic_AFM_fcc110.png
     :width: 100%
