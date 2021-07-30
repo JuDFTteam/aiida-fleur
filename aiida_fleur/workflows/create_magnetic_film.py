@@ -458,7 +458,6 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                                first_layer_factor)
             sym_film = False
 
-
     try:
         if AFM_layer_positions:  # in this case use given layer positions, not adjusted ones (for AFM if FM is done)
             AFM_structure = AFM_layer_positions
@@ -476,7 +475,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                           AFM_name,
                                           magnetic_layers,
                                           sym_film=sym_film)
-    except ValueError as err: # do not mark spin-up spin-down atoms, something went wrong
+    except ValueError as err:  # do not mark spin-up spin-down atoms, something went wrong
         if AFM_name != 'FM':
             raise ValueError('Could not mark spin-up and spin-down atoms') from err
 

@@ -128,7 +128,10 @@ be created for the relaxation step. The following procedure is used to construct
 
   4. Adjust interlayer distances using ``distance_suggestion``, ``first_layer_factor`` and ``last_layer_factor``. if
      the input structure has z-reflection symmetry, then ``first_layer_factor`` is ignored and the ``last_layer_factor``
-     controls both surface layers.
+     controls both surface layers. If ``AFM_layer_positions`` is given and AFM structures are known for the input
+     lattice and directions, then the
+     adjusting procedure will not do it automatically, but simply enforce z-coordinates from ``AFM_layer_positions``.
+     Read more in the section :ref:`structures_AFM`.
 
   .. warning::
 
@@ -136,7 +139,7 @@ be created for the relaxation step. The following procedure is used to construct
       elements (z-coordinate of substrate atoms are higher than magnetic ones). This can be achieved by using
       ``replacements: {1: 'Fe'}`` instead of ``replacements: {-1: 'Fe'}``.
 
-  5. Mark fixed layers according to ``hold_layers``. ``hold_layers`` is a list of layer number to be marked as fixed
+  1. Mark fixed layers according to ``hold_layers``. ``hold_layers`` is a list of layer number to be marked as fixed
      during the relaxation step. Similarly to replacements, the 1st layer corresponds to number 1 and the last to -1.
 
 After the structure is relaxed, the final magnetic non-symmetrical structure is constructed. For this
@@ -208,6 +211,77 @@ A list of implemented :ref:`exit codes<exit_codes>`:
 +------+------------------------------------------------------------------------------------------+
 | 383  | EOS WorkChain failed.                                                                    |
 +------+------------------------------------------------------------------------------------------+
+
+.. _structures_AFM:
+
+Structures with known AFM structures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. warning::
+
+    The workchain uses ``define_AFM_structures`` method to mark spin-up and spin-down atoms. It does not actually set
+    initial moment, a user is responsible for adding ``inpxml_changes`` changing the initial spin. For instance,
+    for MaX4 FLEUR one can use following ``inpxml_changes`` to set initial moments for AFM structure:
+
+    .. code-block:: python
+
+        'inpxml_changes': [('set_species_label', {'at_label': '49990',
+                                                  'attributedict': {'magMom': 4.0},
+                                                  'create': True}),
+                           ('set_species_label', {'at_label': '49991',
+                                                  'attributedict': {'magMom': -4.0},
+                                                  'create': True})]}
+
+    Spin-up atoms are marked by label ``'49990'`` and spin-down atoms are marked by ``'49991'``. Please make sure that
+    these labels are not overwritten, for example by fixing atoms label.
+
+1. FCC(110) surfaces, 1 or 2 magnetic layers. In this case one must use following parameters in the ``wf_parameters``:
+
+    .. code::
+
+        'lattice': 'fcc'
+        'directions': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]]
+        'magnetic_layers': 1 or 2
+        'AFM_name': 'FM', 'AFM_x', 'AFM_y' or 'AFM_xy'
+
+Note that for ``'AFM_xy'`` structure unit vectors forming a computational cell are changed to
+``[[-1, 1, 2], [1, -1, 2], [1, 1, 0]]``.
+
+2. BCC(110) surfaces, 1 or 2 magnetic layers. In this case one must use following parameters in the ``wf_parameters``:
+
+    .. code::
+
+        'lattice': 'bcc'
+        'directions': [[1, -1, 1], [1, -1, -1], [1, 1, 0]]
+        'magnetic_layers': 1 or 2
+        'AFM_name': 'FM', 'AFM_x', 'AFM_y' or 'AFM_xy'
+
+Note that for ``'AFM_x'`` and ``'AFM_y'`` structure unit vectors forming a computational cell are changed to
+``[[0, 0, 1], [1, -1, 0], [1, 1, 0]]``.
+
+    .. warning::
+
+        The check of input lattice vector directions is hardcoded,
+        which means that the code will not recognize ``'bcc'`` and
+        ``'[[-1, 1, -1], [-1, 1, 1], [1, 1, 0]]'`` despite it produces the same structure. In this case the workchain
+        will be excepted.
+
+There is a possibility to enforce layer z-coordinates for generating AFM structures. This allows one to reuse the
+relaxed FM structured for following AFM calculation to save computational resources because it is expected that the FM
+relaxed structure is a better initial guess for an AFM one rather than a structure, proposed by automatic adjusting
+function. To do this, one should make sure that the length of ``AFM_layer_positions`` is the same as the total number
+of layers of the AFM structure and ``magnetic_layers`` is correctly initialised.
+
+Figures below illustrates known AFM structures for FCC(110) and BCC(110) structures. The number on each atoms
+shows to which layer atom belongs (first or second) and the color corresponds to spin orientation (up or down).
+
+.. image:: images/create_magnetic_AFM_fcc110.png
+    :width: 100%
+    :align: center
+
+.. image:: images/create_magnetic_AFM_bcc110.png
+    :width: 100%
+    :align: center
 
 .. _example_use_create_magnetic:
 

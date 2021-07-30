@@ -12,6 +12,9 @@
 'decimals': 10,               # set the accuracy of writing atom positions
 'pop_last_layers': 1,         # number of bottom layers to be removed before relaxation
 'hold_layers': None,          # a list of layer numbers to be held during the relaxation
+'AFM_name': 'FM',             # a name of hardcoded AFM structure: FM, AFM_x, AFM_y, AFM_xy
+'magnetic_layers': 1,         # the total number of magnetic layers (for symmetric films devide by 2)
+'AFM_layer_positions': None,  # a suggestion of initial layer z coordinates, used if AFM structures are known
                               # (relaxXYZ = 'FFF')
 'last_layer_factor': 0.85,    # factor by which interlayer distance between two last layers
                               # will be multiplied
