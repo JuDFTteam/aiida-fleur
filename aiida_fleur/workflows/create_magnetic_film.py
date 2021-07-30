@@ -458,21 +458,22 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                                first_layer_factor)
             sym_film = False
 
-    if AFM_layer_positions:  # in this case use given layer positions, not adjusted ones (for AFM if FM is done)
-        structure = AFM_layer_positions
 
-    structure = define_AFM_structures(structure,
-                                      lattice,
-                                      directions,
-                                      host_symbol,
-                                      replacements,
-                                      latticeconstant,
-                                      size,
-                                      decimals,
-                                      pop_last_layers,
-                                      AFM_name,
-                                      magnetic_layers,
-                                      sym_film=sym_film)
+    if AFM_name != 'FM':
+        if AFM_layer_positions:  # in this case use given layer positions, not adjusted ones (for AFM if FM is done)
+            structure = AFM_layer_positions
+        structure = define_AFM_structures(structure,
+                                          lattice,
+                                          directions,
+                                          host_symbol,
+                                          replacements,
+                                          latticeconstant,
+                                          size,
+                                          decimals,
+                                          pop_last_layers,
+                                          AFM_name,
+                                          magnetic_layers,
+                                          sym_film=sym_film)
 
     structure = mark_fixed_atoms(structure, hold_layers)
 
