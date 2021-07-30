@@ -90,7 +90,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         if 'wf_parameters' in self.ctx.inputs.scf:
             self.ctx.initial_mixing = self.ctx.inputs.scf.wf_parameters.get_dict()['force_dict']['forcemix']
         else:
-            self.ctx.initial_mixing = 'straight'
+            self.ctx.initial_mixing = 'BFGS'
 
     def set_pop_shift(self):
         """
