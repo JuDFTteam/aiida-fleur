@@ -53,7 +53,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'pop_last_layers': 1,
         'AFM_name': 'FM',
         'magnetic_layers': 1,
-        'AFM_layers_positions': None,
+        'AFM_layer_positions': None,
         'total_number_layers': 4,
         'num_relaxed_layers': 2
     }
