@@ -1896,7 +1896,8 @@ def define_AFM_structures(structure,
                 last_layer_z = get_layers(output_structure)[1][-1]
 
                 def spin_up(atom):
-                    if round(atom[0][2], 10) > 0 and round(atom[0][2], decimals) != last_layer_z:  # 2nd first and last layers only
+                    if round(atom[0][2], 10) > 0 and round(atom[0][2],
+                                                           decimals) != last_layer_z:  # 2nd first and last layers only
                         if round(atom[0][0], 10) == 0 and round(atom[0][1], 10) != 0 or round(
                                 atom[0][0], 10) != 0 and round(atom[0][1], 10) == 0:
                             return False
@@ -1983,11 +1984,18 @@ def define_AFM_structures(structure,
             else:
                 raise ValueError("Only 'FM', 'AFM_x', 'AFM_y' amd 'AFM_xy' are known for bcc lattice")
 
-    init_layers = get_layers(structure)[1]
+    if isinstance(structure, StructureData):
+        init_layers = get_layers(structure)[1]
+    else:
+        init_layers = structure
+
     rebuilt_structure = StructureData(cell=output_structure.cell)
     rebuilt_structure.pbc = (True, True, False)
 
     output_layers = get_layers(output_structure)[0]
+
+    if len(init_layers) != len(output_layers):
+        raise ValueError('input and output structure have different number of layers')
 
     for i, layer in enumerate(get_layers(output_structure)[0]):
         for atom in layer:

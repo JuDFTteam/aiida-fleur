@@ -53,6 +53,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'pop_last_layers': 1,
         'AFM_name': 'FM',
         'magnetic_layers': 1,
+        'AFM_layers_positions': None,
         'total_number_layers': 4,
         'num_relaxed_layers': 2
     }
@@ -411,6 +412,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     adjustment_needed = wf_dict['adjustment_needed']
     AFM_name = wf_dict['AFM_name']
     magnetic_layers = wf_dict['magnetic_layers']
+    AFM_layer_positions = wf_dict['AFM_layer_positions']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
@@ -450,33 +452,27 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     if adjustment_needed:
         if has_z_reflection(structure):
             structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
-            structure = define_AFM_structures(structure,
-                                              lattice,
-                                              directions,
-                                              host_symbol,
-                                              replacements,
-                                              latticeconstant,
-                                              size,
-                                              decimals,
-                                              pop_last_layers,
-                                              AFM_name,
-                                              magnetic_layers,
-                                              sym_film=True)
+            sym_film = True
         else:
             structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
                                                first_layer_factor)
-            structure = define_AFM_structures(structure,
-                                              lattice,
-                                              directions,
-                                              host_symbol,
-                                              replacements,
-                                              latticeconstant,
-                                              size,
-                                              decimals,
-                                              pop_last_layers,
-                                              AFM_name,
-                                              magnetic_layers,
-                                              sym_film=False)
+            sym_film = False
+
+    if AFM_layer_positions:  # in this case use given layer positions, not adjusted ones (for AFM if FM is done)
+        structure = AFM_layer_positions
+
+    structure = define_AFM_structures(structure,
+                                      lattice,
+                                      directions,
+                                      host_symbol,
+                                      replacements,
+                                      latticeconstant,
+                                      size,
+                                      decimals,
+                                      pop_last_layers,
+                                      AFM_name,
+                                      magnetic_layers,
+                                      sym_film=sym_film)
 
     structure = mark_fixed_atoms(structure, hold_layers)
 
