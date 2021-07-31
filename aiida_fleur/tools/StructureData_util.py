@@ -1906,9 +1906,6 @@ def define_AFM_structures(structure,
                             return False
                     return True
 
-            else:
-                raise ValueError("Only 'FM', 'AFM_x', 'AFM_y' amd 'AFM_xy' are known for fcc lattice")
-
     elif lattice == 'bcc':
 
         if directions == [[1, -1, 1], [1, -1, -1], [1, 1, 0]]:
@@ -1981,16 +1978,16 @@ def define_AFM_structures(structure,
                         return False
                     return True
 
-            else:
-                raise ValueError("Only 'FM', 'AFM_x', 'AFM_y' amd 'AFM_xy' are known for bcc lattice")
-
     if isinstance(structure, StructureData):
         init_layers = get_layers(structure)[1]
     else:
         init_layers = structure
 
-    rebuilt_structure = StructureData(cell=output_structure.cell)
-    rebuilt_structure.pbc = (True, True, False)
+    try:
+        rebuilt_structure = StructureData(cell=output_structure.cell)
+        rebuilt_structure.pbc = (True, True, False)
+    except UnboundLocalError as err:
+        raise ValueError("Please check the lattice and directions input, I do now know given values") from err
 
     output_layers = get_layers(output_structure)[0]
 
