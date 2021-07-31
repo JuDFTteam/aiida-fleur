@@ -235,7 +235,9 @@ Structures with known AFM structures
     Spin-up atoms are marked by label ``'49990'`` and spin-down atoms are marked by ``'49991'``. Please make sure that
     these labels are not overwritten, for example by fixing atoms label.
 
-1. FCC(110) surfaces, 1 or 2 magnetic layers. In this case one must use following parameters in the ``wf_parameters``:
+1. FCC(110) surfaces, 1 or 2 magnetic layers.
+
+    In this case one must use following parameters in the ``wf_parameters``:
 
     .. code::
 
@@ -244,10 +246,12 @@ Structures with known AFM structures
         'magnetic_layers': 1 or 2
         'AFM_name': 'FM', 'AFM_x', 'AFM_y' or 'AFM_xy'
 
-Note that for ``'AFM_xy'`` structure unit vectors forming a computational cell are changed to
-``[[-1, 1, 2], [1, -1, 2], [1, 1, 0]]``.
+    Note that for ``'AFM_xy'`` structure unit vectors forming a computational cell are changed to
+    ``[[-1, 1, 2], [1, -1, 2], [1, 1, 0]]``.
 
-2. BCC(110) surfaces, 1 or 2 magnetic layers. In this case one must use following parameters in the ``wf_parameters``:
+1. BCC(110) surfaces, 1 or 2 magnetic layers.
+
+    In this case one must use following parameters in the ``wf_parameters``:
 
     .. code::
 
@@ -256,8 +260,8 @@ Note that for ``'AFM_xy'`` structure unit vectors forming a computational cell a
         'magnetic_layers': 1 or 2
         'AFM_name': 'FM', 'AFM_x', 'AFM_y' or 'AFM_xy'
 
-Note that for ``'AFM_x'`` and ``'AFM_y'`` structure unit vectors forming a computational cell are changed to
-``[[0, 0, 1], [1, -1, 0], [1, 1, 0]]``.
+    Note that for ``'AFM_x'`` and ``'AFM_y'`` structure unit vectors forming a computational cell are changed to
+    ``[[0, 0, 1], [1, -1, 0], [1, 1, 0]]``.
 
     .. warning::
 
@@ -272,7 +276,7 @@ relaxed structure is a better initial guess for an AFM one rather than a structu
 function. To do this, one should make sure that the length of ``AFM_layer_positions`` is the same as the total number
 of layers of the AFM structure and ``magnetic_layers`` is correctly initialised.
 
-Figures below illustrates known AFM structures for FCC(110) and BCC(110) structures. The number on each atoms
+Figures below illustrate known AFM structures for FCC(110) and BCC(110) structures. The number on each atoms
 shows to which layer atom belongs (first or second) and the color corresponds to spin orientation (up or down).
 Note that the input computational unit cell will be changed (shown on the figures),
 hence you might want to adjust the k-mesh correspondingly.
