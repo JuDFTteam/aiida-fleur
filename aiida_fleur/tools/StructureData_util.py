@@ -1651,7 +1651,11 @@ def mark_fixed_atoms(structure, hold_layers=None):
         else:
             addition = ''
         for atom in layer:
-            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + addition)
+            element = atom[1].rstrip('0123456789')
+            old_addition = atom[1][len(element):]
+            if old_addition != '' and addition == '':
+                addition = old_addition
+            rebuilt_structure.append_atom(position=atom[0], symbols=element, name=element + addition)
 
     return rebuilt_structure
 
@@ -1987,7 +1991,7 @@ def define_AFM_structures(structure,
         rebuilt_structure = StructureData(cell=output_structure.cell)
         rebuilt_structure.pbc = (True, True, False)
     except UnboundLocalError as err:
-        raise ValueError("Please check the lattice and directions input, I do now know given values") from err
+        raise ValueError('Please check the lattice and directions input, I do now know given values') from err
 
     output_layers = get_layers(output_structure)[0]
 
