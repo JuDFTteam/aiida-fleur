@@ -245,7 +245,7 @@ def _handle_vacuum_spill(self, calculation):
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
 
         self.ctx.is_finished = False
-        self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum ' 'parameter')
+        self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum parameter')
 
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
         if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
@@ -254,6 +254,8 @@ def _handle_vacuum_spill(self, calculation):
 
         self.ctx.use_stashed_shift_methods = True
         self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
+
+        return ErrorHandlerReport(True, True)
 
 
 @register_error_handler(FleurBaseRelaxWorkChain, 101)
