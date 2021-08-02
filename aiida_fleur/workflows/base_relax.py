@@ -243,8 +243,6 @@ def _handle_vacuum_spill(self, calculation):
                 self.ctx.inputs.scf.inpgen = inputs[1]
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
-        else:
-            return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum ' 'parameter')
@@ -276,8 +274,6 @@ def _handle_mt_overlap(self, calculation):
                 self.ctx.inputs.scf.inpgen = inputs[1]
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
-        else:
-            return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
         last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
         last_scf = load_node(last_scf_wc_uuid)
