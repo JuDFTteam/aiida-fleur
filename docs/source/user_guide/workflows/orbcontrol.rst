@@ -198,6 +198,6 @@ Plot_fleur visualization
 
     plot_fleur(50816)
 
-  .. figure:: /images/plot_fleur_orbcontrol.png
+  .. figure:: images/plot_fleur_orbcontrol.png
     :width: 60 %
     :align: center
