@@ -149,6 +149,7 @@ class FleurOrbControlWorkChain(WorkChain):
     _wf_default = {
         'iterations_fixed': 30,
         'ldau_dict': None,
+        'use_orbital_occupation': False,
         'fixed_occupations': None,
         'fixed_configurations': None,
     }
@@ -522,10 +523,16 @@ class FleurOrbControlWorkChain(WorkChain):
             orbital = config_index.split('-')[-1]
             atom_species = '-'.join(config_index.split('-')[:-1])
             for spin, config_spin in enumerate(config_species):
-                fm.set_nmmpmat(species_name=atom_species,
-                               orbital=int(orbital),
-                               spin=spin + 1,
-                               state_occupations=config_spin)
+                if self.ctx.wf_dict['use_orbital_occupation']:
+                    fm.set_nmmpmat(species_name=atom_species,
+                                   orbital=int(orbital),
+                                   spin=spin + 1,
+                                   orbital_occupations=config_spin)
+                else:
+                    fm.set_nmmpmat(species_name=atom_species,
+                                   orbital=int(orbital),
+                                   spin=spin + 1,
+                                   state_occupations=config_spin)
 
         try:
             fm.show(display=False, validate=True)
