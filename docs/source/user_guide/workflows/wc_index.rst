@@ -88,6 +88,7 @@ Basic (Technical) Workchains
    ./base_relax_wc
    ./relax_wc
    ./dos_band_wc
+   ./orbcontrol_wc
 
 More advanced (Scientific) Workchains
 +++++++++++++++++++++++++++++++++++++
