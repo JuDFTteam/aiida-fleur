@@ -10,6 +10,7 @@
                               # in the last layer
 
 'decimals': 10,               # set the accuracy of writing atom positions
+'z_coordinate_window': 2,     # set how z-coordinates will be rounded before grouping in layers
 'pop_last_layers': 1,         # number of bottom layers to be removed before relaxation
 'hold_layers': None,          # a list of layer numbers to be held during the relaxation
 'AFM_name': 'FM',             # a name of hardcoded AFM structure: FM, AFM_x, AFM_y, AFM_xy

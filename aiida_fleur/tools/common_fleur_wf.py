@@ -644,16 +644,17 @@ def find_last_submitted_workchain(restart_wc):
     else:
         raise NotExistent
 
+
 def find_nested_process(wc_node, p_class):
     '''
     This function finds all nested child processes of p_class
     '''
-    child_fleurcalcs = []
+    child_process = []
     lower = wc_node.get_outgoing().all()
     for i in lower:
         if 'CALL' in i.link_label:
             if i.node.process_class is p_class:
-                child_fleurcalcs.append(i.node)
+                child_process.append(i.node)
             else:
-                child_fleurcalcs.extend(find_nested_process(i.node, p_class))
-    return child_fleurcalcs
+                child_process.extend(find_nested_process(i.node, p_class))
+    return child_process

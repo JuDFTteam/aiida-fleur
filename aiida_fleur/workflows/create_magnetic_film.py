@@ -50,6 +50,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         'first_layer_factor': 0.0,
         'adjustment_needed': True,
         'decimals': 10,
+        'z_coordinate_window': 2,
         'pop_last_layers': 1,
         'AFM_name': 'FM',
         'magnetic_layers': 1,
@@ -305,7 +306,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         para_dict = {
             'total_number_layers': self.ctx.wf_dict['total_number_layers'],
-            'num_relaxed_layers': self.ctx.wf_dict['num_relaxed_layers']
+            'num_relaxed_layers': self.ctx.wf_dict['num_relaxed_layers'],
+            'z_coordinate_window': self.ctx.wf_dict['z_coordinate_window']
         }
 
         if not self.ctx.substrate:  # workchain was stated from remote->Relax or optimized_structure

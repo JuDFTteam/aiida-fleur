@@ -1243,7 +1243,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               tolerance_decimals=8):
+                               z_coordinate_window=3):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -1277,7 +1277,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     sorted_struc = sort_atoms_z_value(relaxed_structure)
     sites = sorted_struc.sites
 
-    layers = {np.around(atom.position[2], decimals=tolerance_decimals) for atom in sites}
+    layers = {np.around(atom.position[2], decimals=z_coordinate_window) for atom in sites}
     num_layers = len(layers)
     if has_z_reflection(sorted_struc):
         max_layers_to_extract = num_layers // 2 + num_layers % 2
@@ -1289,7 +1289,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     else:
         positions = orig_structure.positions
 
-    num_layers_org = len({np.around(x[2], decimals=tolerance_decimals) for x in positions})
+    num_layers_org = len({np.around(x[2], decimals=z_coordinate_window) for x in positions})
 
     if num_layers_org > num_layers:
         raise ValueError('Your original structure contains more layers than given in relaxed '
@@ -1316,14 +1316,14 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     done_layers = 0
     while True:
         if done_layers < num_relaxed_layers:
-            layer, *_ = get_layers(sorted_struc)
+            layer, *_ = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)
             for atom in layer[done_layers]:
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
-            layer, pos_z, _ = get_layers(orig_structure)
+            layer, pos_z, _ = get_layers(orig_structure, z_coordinate_window=z_coordinate_window)
             if k == 0:
                 add_distance = abs(pos_z[0] + orig_structure.cell[2][2] - pos_z[-1])
             else:
@@ -1341,14 +1341,17 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     return magn_structure
 
 
-def get_layers(structure, decimals=8):
+def get_layers(structure, z_coordinate_window=8):
     """
     Extracts atom positions and their types belonging to the same layer
     Removes any information related to kind specie.
 
     :param structure: ase lattice or StructureData which represents a slab
     :param number: the layer number. Note, that layers will be sorted according to z-position
-    :param decimals: sets the tolerance of atom positions determination. See more in numpy.around.
+    :param z_coordinate_window: sets the maximal difference between 2 atoms that will be considered in the same layer.
+                                it is an interger, which sets how z-coordinates will be rounded. For instance,
+                                z_coordinate_window = 2 means that first z-coordinates will be rounded up to 2 digits
+                                after the dot and than grouped.
     :return layer, layer_z_positions: layer is a list of tuples, the first element of which is
                                       atom positions and the second one is atom type.
                                       layer_z_position is a sorted list of all layer positions
@@ -1372,7 +1375,7 @@ def get_layers(structure, decimals=8):
     layer_z_positions = []
     layer_occupancies = []
     layers = []
-    for val, e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
+    for val, e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=z_coordinate_window)):
         layer_z_positions.append(val)
         layer_content = list(e)
         layers.append(layer_content)
