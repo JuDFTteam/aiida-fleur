@@ -27,8 +27,10 @@ from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
+from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
+from aiida_fleur.tools.common_fleur_wf import find_nested_process
 
 
 class FleurRelaxWorkChain(WorkChain):
@@ -478,15 +480,14 @@ class FleurRelaxWorkChain(WorkChain):
 
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            last_fleur = find_nested_process(self.ctx.scf_res, FleurCalc)[-1]
+            retrieved_node = last_fleur.outputs.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
         relax_out = relax_out.get_dict()
 
         try:
-            cell = relax_out['relax_brav_vectors']
-            atom_positions = [x[1] for x in relax_out['abspos_atoms']]
-            film = relax_out['film']
             total_energy = relax_out['energy']
             total_energy_units = relax_out['energy_units']
             atomtype_info = relax_out['relax_atomtype_info']
@@ -495,37 +496,12 @@ class FleurRelaxWorkChain(WorkChain):
 
         self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
-        self.ctx.final_cell = cell
-        self.ctx.final_atom_positions = atom_positions
         self.ctx.atomtype_info = atomtype_info
 
-        if film:
-            self.ctx.pbc = (True, True, False)
-        else:
-            self.ctx.pbc = (True, True, True)
+        fleurinp = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
+        structure = fleurinp.get_structuredata_ncf()
 
-        # we build the structure here, that way we can run an scf afterwards
-        # construct it in a way which preserves the species information from the initial input structure
-        if self.ctx.final_cell is not None:
-            np_cell = np.array(self.ctx.final_cell) * BOHR_A
-            structure = StructureData(cell=np_cell.tolist())
-            #self.report('############ {}'.format(atomtype_info))
-            for i, atom in enumerate(self.ctx.final_atom_positions):
-                species_name = atomtype_info[i][0]
-                element = atomtype_info[i][1]
-                pos_abs = [x * BOHR_A for x in atom]
-                structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]), symbols=element, name=species_name)
-                # if self.ctx.pbc == (True, True, True):
-                #     structure.append_atom(position=(pos_abs[0], pos_abs[1], pos_abs[2]),
-                #                           symbols=element,
-                #                           name=species_name)
-                # else:  # assume z-direction is orthogonal to xy
-                #     structure.append_atom(position=(pos_abs[0], pos_abs[1], atom[2] * BOHR_A),
-                #                           symbols=element,
-                #                           name=species_name)
-
-            structure.pbc = self.ctx.pbc
-            self.ctx.final_structure = structure
+        self.ctx.final_structure = structure
 
     def get_results_final_scf(self):
         """
