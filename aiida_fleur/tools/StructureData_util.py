@@ -1316,20 +1316,20 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     done_layers = 0
     while True:
         if done_layers < num_relaxed_layers:
-            layer, *_ = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)
+            layer = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)[0]
             for atom in layer[done_layers]:
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
-            layer, pos_z, _ = get_layers(orig_structure, z_coordinate_window=z_coordinate_window)
-            if k == 0:
-                add_distance = abs(pos_z[0] + orig_structure.cell[2][2] - pos_z[-1])
-            else:
-                add_distance = abs(pos_z[k] - pos_z[k - 1])
+            layer = get_layers(orig_structure, z_coordinate_window=z_coordinate_window)[0]
             prev_layer_z = magn_structure.sites[-1].position[2]
             for atom in layer[k]:
+                if k == 0:
+                    add_distance = abs(atom[0][2] + orig_structure.cell[2][2] - layer[k - 1][0][0][2])
+                else:
+                    add_distance = abs(atom[0][2] - layer[k - 1][0][0][2])
                 atom[0][2] = prev_layer_z + add_distance
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
