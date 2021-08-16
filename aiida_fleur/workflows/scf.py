@@ -59,7 +59,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.4.3'
+    _workflowversion = '0.4.4'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -69,6 +69,7 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_parity': False,
         'kpoints_force_odd': False,
         'kpoints_force_false': False,
+        'nmmp_converged': 0.002,
         'mode': 'density',  # 'density', 'energy' or 'force'
         'add_comp_para': {
             'serial': False,
@@ -202,9 +203,11 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.distance = []
         self.ctx.all_forces = []
         self.ctx.total_energy = []
+        self.ctx.nmmp_distance = []
         self.ctx.energydiff = 10000
         self.ctx.forcediff = 10000
         self.ctx.last_charge_density = 10000
+        self.ctx.last_nmmp_distance = -10000
         self.ctx.warnings = []
         # "debug": {},
         self.ctx.errors = []
@@ -578,6 +581,12 @@ class FleurScfWorkChain(WorkChain):
             if distances is not None:
                 self.ctx.distance.extend(distances)
 
+            if 'ldau_info' in output_dict:
+                nmmp_distances = output_dict['ldau_info'].get('nmmp_distances', [])
+
+                if nmmp_distances is not None:
+                    self.ctx.nmmp_distance.extend(nmmp_distances)
+
             if mode == 'force':
                 forces = output_dict.get('force_atoms', [])
                 if forces is not None:
@@ -601,12 +610,16 @@ class FleurScfWorkChain(WorkChain):
         else:
             self.ctx.last_charge_density = self.ctx.distance[-1]
 
+        if self.ctx.nmmp_distance:
+            self.ctx.last_nmmp_distance = max(self.ctx.nmmp_distance[-1])
+
     def condition(self):
         """
         check convergence condition
         """
         self.report('INFO: checking condition FLEUR')
         mode = self.ctx.wf_dict.get('mode')
+        ldau_notconverged = False
 
         energy = self.ctx.total_energy
         if len(energy) >= 2:
@@ -620,12 +633,18 @@ class FleurScfWorkChain(WorkChain):
         else:
             self.ctx.forcediff = 'can not be determined'
 
+        if self.ctx.last_nmmp_distance > 0.0 and \
+           self.ctx.last_nmmp_distance >= self.ctx.wf_dict.get('nmmp_converged'):
+            ldau_notconverged = True
+
         if mode == 'density':
             if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
-                return False
+                if not ldau_notconverged:
+                    return False
         elif mode in ('energy', 'gw'):
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
-                return False
+                if not ldau_notconverged:
+                    return False
         elif mode == 'force':
             if self.ctx.last_charge_density is None:
                 try:
@@ -633,7 +652,8 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    return False
+                    if not ldau_notconverged:
+                        return False
 
             elif self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
                 try:
@@ -641,7 +661,8 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    return False
+                    if not ldau_notconverged:
+                        return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False
@@ -672,6 +693,10 @@ class FleurScfWorkChain(WorkChain):
             last_calc_out_dict = {}
             retrieved = None
 
+        last_nmmp_distance = None
+        if self.ctx.last_nmmp_distance > 0.0:
+            last_nmmp_distance = self.ctx.last_nmmp_distance
+
         outputnode_dict = {}
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
@@ -687,6 +712,8 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['force_largest'] = last_calc_out_dict.get('force_largest', None)
         outputnode_dict['distance_charge_units'] = 'me/bohr^3'
         outputnode_dict['total_energy_units'] = 'Htr'
+        outputnode_dict['nmmp_distance'] = last_nmmp_distance
+        outputnode_dict['nmmp_distance_all'] = self.ctx.nmmp_distance
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
         outputnode_dict['total_wall_time_units'] = 's'
@@ -704,6 +731,9 @@ class FleurScfWorkChain(WorkChain):
                             'between two last iterations, probably converged in a single iteration'
                             ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total', None),
                                       self.ctx.total_wall_time, outputnode_dict['distance_charge']))
+                if self.ctx.last_nmmp_distance > 0.0:
+                    self.report('INFO: The LDA+U density matrix is converged to {} change '
+                                'of all matrix elements'.format(self.ctx.last_nmmp_distance))
             else:
                 self.report('STATUS: Done, the convergence criteria are reached.\n'
                             'INFO: The charge density of the FLEUR calculation '
@@ -714,6 +744,9 @@ class FleurScfWorkChain(WorkChain):
                             ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total',
                                                                                   None), self.ctx.total_wall_time,
                                       outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff))
+                if self.ctx.last_nmmp_distance > 0.0:
+                    self.report('INFO: The LDA+U density matrix is converged to {} change '
+                                'of all matrix elements'.format(self.ctx.last_nmmp_distance))
         elif self.ctx.successful and not self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
                 self.report('STATUS/WARNING: Done, the maximum number of runs '
@@ -736,6 +769,9 @@ class FleurScfWorkChain(WorkChain):
                             ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total',
                                                                                   None), self.ctx.total_wall_time,
                                       outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff))
+            if self.ctx.last_nmmp_distance > 0.0:
+                self.report('INFO: The LDA+U density matrix is converged to {} change '
+                            'of all matrix elements'.format(self.ctx.last_nmmp_distance))
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and ' 'errors/warning/hints in output_scf_wc_para')
