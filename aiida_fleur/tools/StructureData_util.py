@@ -1837,6 +1837,14 @@ def define_AFM_structures(structure,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
 
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=directions,
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
                 def spin_up(atom):
                     return True
 
@@ -1850,6 +1858,15 @@ def define_AFM_structures(structure,
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(2, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
                 else:
                     output_structure = create_manual_slab_ase(lattice=lattice,
                                                               directions=directions,
@@ -1859,6 +1876,14 @@ def define_AFM_structures(structure,
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
 
                 def spin_up(atom):
                     if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
@@ -1875,15 +1900,31 @@ def define_AFM_structures(structure,
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 2, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
                 else:
                     output_structure = create_manual_slab_ase(lattice=lattice,
                                                               directions=directions,
                                                               host_symbol=host_symbol,
                                                               latticeconstant=latticeconstant,
-                                                              size=(1, 1, size_z),
+                                                              size=(1, 1, 1),
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
 
                 def spin_up(atom):
                     if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
@@ -1899,6 +1940,14 @@ def define_AFM_structures(structure,
                                                           replacements=replacements,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[-1, 1, 2], [1, -1, 2], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
 
                 last_layer_z = get_layers(output_structure)[1][-1]
 
@@ -1926,6 +1975,14 @@ def define_AFM_structures(structure,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
 
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=directions,
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
                 def spin_up(atom):
                     return True
 
@@ -1934,10 +1991,18 @@ def define_AFM_structures(structure,
                                                           directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
                                                           host_symbol=host_symbol,
                                                           latticeconstant=latticeconstant,
-                                                          size=(1, 1, size_z),
+                                                          size=(1, 1, 1),
                                                           replacements=replacements,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
 
                 def spin_up(atom):
                     if round(atom[0][0], 10) != 0:
@@ -1953,6 +2018,14 @@ def define_AFM_structures(structure,
                                                           replacements=replacements,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
 
                 def spin_up(atom):
                     if round(atom[0][1], 10) != 0:
@@ -1970,6 +2043,14 @@ def define_AFM_structures(structure,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
 
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(2, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
                 else:
                     output_structure = create_manual_slab_ase(lattice=lattice,
                                                               directions=directions,
@@ -1979,6 +2060,14 @@ def define_AFM_structures(structure,
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
 
                 def spin_up(atom):
                     if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
@@ -2014,7 +2103,7 @@ def define_AFM_structures(structure,
                                           symbols=atom[1],
                                           name=atom[1] + addition)
 
-    return rebuilt_structure
+    return rebuilt_structure, substrate
 
 
 '''

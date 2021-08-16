@@ -428,7 +428,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     structure = StructureData(ase=structure)
 
-    # substrate needs to be reversed
+    # define substrate in case of unknown surface, will be rewritten for known ones
     substrate = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
                                        directions=directions,
@@ -465,18 +465,18 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
             AFM_structure = AFM_layer_positions
         else:
             AFM_structure = structure
-        structure = define_AFM_structures(AFM_structure,
-                                          lattice,
-                                          directions,
-                                          host_symbol,
-                                          replacements,
-                                          latticeconstant,
-                                          size,
-                                          decimals,
-                                          pop_last_layers,
-                                          AFM_name,
-                                          magnetic_layers,
-                                          sym_film=sym_film)
+        structure, substrate = define_AFM_structures(AFM_structure,
+                                                     lattice,
+                                                     directions,
+                                                     host_symbol,
+                                                     replacements,
+                                                     latticeconstant,
+                                                     size,
+                                                     decimals,
+                                                     pop_last_layers,
+                                                     AFM_name,
+                                                     magnetic_layers,
+                                                     sym_film=sym_film)
     except ValueError as err:  # do not mark spin-up spin-down atoms, something went wrong
         if AFM_name != 'FM':
             raise ValueError('Could not mark spin-up and spin-down atoms') from err
