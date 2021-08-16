@@ -496,14 +496,12 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return {}, self.exit_codes.ERROR_SCF_NOLDAU_FAILED
         else:
+            remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
-                fleurinp = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
+                fleurinp = get_fleurinp_from_remote_data(remote_data, store=True)
                 self.report(f'INFO: generated FleurinpData from {fleurinp.files}')
             else:
                 fleurinp = self.inputs.fleurinp
-
-            if 'remote_data' in self.inputs:
-                remote_data = self.input.remote_data
 
         inputs = self.inputs
 
