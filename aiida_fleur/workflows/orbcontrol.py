@@ -380,7 +380,7 @@ class FleurOrbControlWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
-            remote = inputs.remote_data
+            remote = inputs.remote
             if 'fleurinp' in inputs:
                 fleurinp = inputs.fleurinp
 
