@@ -156,7 +156,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurOrbControlWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
