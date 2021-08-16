@@ -358,8 +358,15 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
+        fleurinp = None
+        remote = None
         if 'scf_no_ldau' in inputs:
+            input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_no_ldau'))
             self.ctx.scf_no_ldau_needed = True
+            if 'fleurinp' in input_scf:
+                fleurinp = input_scf.fleurinp
+            if 'remote_data' in input_scf:
+                remote = input_scf.remote_data
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the Orbcontrol calculation'
                 self.control_end_wc(error)
@@ -373,28 +380,29 @@ class FleurOrbControlWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
-            self.ctx.scf_no_ldau_needed = False
+            remote = inputs.remote_data
+            if 'fleurinp' in inputs:
+                fleurinp = inputs.fleurinp
 
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_no_ldau'))
-
-        if 'fleurinp' in input_scf:
-            modes = input_scf.fleurinp.get_fleur_modes()
+        if fleurinp is not None:
+            modes = fleurinp.get_fleur_modes()
             if modes['ldau']:
-                error = 'ERROR: Wrong input: fleurinp already contains LDA+U'
+                error = f"ERROR: Wrong input: fleurinp {'in scf_no_ldau' if 'scf_no_ldau' in inputs else ''} already contains LDA+U"
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        if 'remote_data' in input_scf:
-            parent_calcs = input_scf.remote_data.get_incoming(node_class=CalcJob).all()
+        if remote is not None:
+            parent_calcs = remote.get_incoming(node_class=CalcJob).all()
             parent_calc = parent_calcs[0].node
 
             retrieved_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
 
             if self._NMMPMAT_FILE_NAME in retrieved_filenames or \
                self._NMMPMAT_HDF5_FILE_NAME in retrieved_filenames:
-                error = 'ERROR: Wrong input: remote_data already contains LDA+U'
+                error = f"ERROR: Wrong input: remote_data {'in scf_no_ldau' if 'scf_no_ldau' in inputs else ''} already contains LDA+U"
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
 
     def scf_no_ldau_needed(self):
         """
