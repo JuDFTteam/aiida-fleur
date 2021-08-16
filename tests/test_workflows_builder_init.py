@@ -158,3 +158,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.strain import FleurStrainWorkChain
 
         builder = FleurStrainWorkChain.get_builder()
+
+    def test_fleur_orbcontrol_wc_init(self):
+        """
+        Test the interface of the orbcontrol workchain
+        """
+        from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
+
+        builder = FleurOrbControlWorkChain.get_builder()

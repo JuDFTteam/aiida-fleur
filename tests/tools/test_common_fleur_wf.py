@@ -147,7 +147,11 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    assert get_inputs_inpgen(**inputs) == returns
+    res = get_inputs_inpgen(**inputs)
+    #Remove keys that are not necessary for comparison
+    res['metadata']['options'].pop('stash', None)
+
+    assert res == returns
 
     # repeat without a label and description
     inputs = {'structure': structure, 'inpgencode': code, 'options': {}, 'params': params}
@@ -168,7 +172,11 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    assert get_inputs_inpgen(**inputs) == returns
+    res = get_inputs_inpgen(**inputs)
+    #Remove keys that are not necessary for comparison
+    res['metadata']['options'].pop('stash', None)
+
+    assert res == returns
 
 
 # test_and_get_codenode

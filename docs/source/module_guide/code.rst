@@ -127,6 +127,13 @@ DMI: Force-theorem calculation of Dzjaloshinskii-Moriya interaction energy dispe
 .. automodule:: aiida_fleur.workflows.dmi
    :members:
 
+OrbControl: Self-consistent calculation of groundstate density matrix with LDA+U
+----------------------------------------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.orbcontrol
+   :members:
+
+
 
 Commandline interface (CLI)
 +++++++++++++++++++++++++++
