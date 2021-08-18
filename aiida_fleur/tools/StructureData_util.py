@@ -1991,7 +1991,7 @@ def define_AFM_structures(structure,
                                                           directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
                                                           host_symbol=host_symbol,
                                                           latticeconstant=latticeconstant,
-                                                          size=(1, 1, 1),
+                                                          size=(1, 1, size_z),
                                                           replacements=replacements,
                                                           decimals=decimals,
                                                           pop_last_layers=pop_last_layers)
