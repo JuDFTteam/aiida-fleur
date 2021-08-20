@@ -239,7 +239,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 try:
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
-                    return self.ctx.ERROR_EOS_FAILED
+                    return self.exit_codes.ERROR_EOS_FAILED
 
             self.ctx.scaling_param = eos_output.get_dict()['scaling_gs']
 
@@ -272,7 +272,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 try:
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
-                    return self.ctx.ERROR_EOS_FAILED
+                    return self.exit_codes.ERROR_EOS_FAILED
             # print(eos_output.get_dict())
             scaling_param = eos_output.get_dict()['scaling_gs']
 

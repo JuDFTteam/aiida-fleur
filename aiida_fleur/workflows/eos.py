@@ -183,7 +183,7 @@ class FleurEosWorkChain(WorkChain):
         label = self.ctx.labels[0]
         first_scf = self.ctx[label]
         if not first_scf.is_finished_ok:
-            self.report('Initial sub process did not finish successful so aborting the workchain.')
+            self.report('Initial sub process did not finish successfully; aborting the workchain.')
             # return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
