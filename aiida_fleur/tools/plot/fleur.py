@@ -469,17 +469,17 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
 
-    p1 = multiple_scatterplots([converged_energy, non_converged_energy],
-                               [converged_configs, output_d['non_converged_configs']],
-                               xlabel='nConfig',
+    p1 = multiple_scatterplots([converged_configs, output_d['non_converged_configs']],
+                               [converged_energy, non_converged_energy],
+                               xlabel='Configurations',
                                ylabel=r'$E_{rel}$ [eV]',
                                title='Results for orbcontrol node',
                                plot_labels=['converged', 'not converged'],
                                linestyle='',
                                colors=['darkblue', 'darkred'],
-                               markersize=[10.0, 10.0],
+                               markersize=10.0,
                                legend=True,
-                               legend_option={'bbox_to_anchor': (0.6, 0.97)})
+                               legend_option={'loc': 'upper right'})
     return p1
 
 
