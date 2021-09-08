@@ -100,6 +100,9 @@ class FleurCalculation(CalcJob):
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
+    #files for crystal field calculations
+    _CFDATA_HDF5_FILE_NAME = 'CFdata.hdf'
+
     #files for greensfunctions
     _GREENSF_HDF5_FILE_NAME = 'greensf.hdf'
 
@@ -415,7 +418,13 @@ class FleurCalculation(CalcJob):
             if modes['greensf']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
-            if modes['force_theorem']:
+            if modes['cf_coeff']:
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
+                else:
+                    self.logger.warning('CF calculation without HDF5 not supported '
+                                        'for automatic file retrieval.')
+            if modes['force_theorem'] or modes['cf_coeff']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
                 if with_hdf5:
@@ -439,7 +448,7 @@ class FleurCalculation(CalcJob):
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
                     if 'n_mmp_mat' in fleurinp.files:
-                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp. '
+                        self.logger.warning('Ignoring n_mmp_mat from fleurinp. '
                                             'There is already an n_mmp_mat file '
                                             'for the parent calculation')
                         local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
