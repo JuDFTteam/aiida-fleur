@@ -15,12 +15,13 @@ electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 import copy
+from aiida.orm.nodes.data.array.xy import XyData
 from lxml import etree
 from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, CalcJobNode, FolderData
+from aiida.orm import load_node, CalcJobNode, FolderData, BandsData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -45,7 +46,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.4.1'
+    _workflowversion = '0.5.0'
 
     _default_options = {
         'resources': {
@@ -104,6 +105,8 @@ class FleurBandDosWorkChain(WorkChain):
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
         spec.output('last_calc_retrieved', valid_type=FolderData)
+        spec.output('output_banddos_wc_bands', valid_type=BandsData, required=False)
+        spec.output('output_banddos_wc_dos', valid_type=XyData, required=False)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -484,11 +487,16 @@ class FleurBandDosWorkChain(WorkChain):
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
             retrieved = self.ctx.banddos_calc.outputs.retrieved
+            if 'fleurinpData' in self.ctx.banddos_calc.inputs:
+                fleurinp = self.ctx.banddos_calc.inputs.fleurinpData
+            else:
+                fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.remote)
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None
             last_calc_out_dict = {}
             retrieved = None
+            fleurinp = None
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -548,6 +556,17 @@ class FleurBandDosWorkChain(WorkChain):
             outdict = create_band_result_node(outpara=outputnode_t,
                                               last_calc_out=last_calc_out,
                                               last_calc_retrieved=retrieved)
+
+            if self.ctx.wf_dict.get('mode') == 'band' and fleurinp is not None and retrieved is not None:
+                bands = create_aiida_bands_data(fleurinp=fleurinp,
+                                                retrieved=retrieved) 
+                if bands is not None:
+                    outdict['output_banddos_wc_bands'] = bands
+            elif self.ctx.wf_dict.get('mode') == 'dos' and retrieved is not None:
+                dos = create_aiida_dos_data(retrieved=retrieved) 
+                if dos is not None:
+                    outdict['output_banddos_wc_dos'] = dos
+
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 
@@ -588,3 +607,83 @@ def create_band_result_node(**kwargs):
     outdict['output_banddos_wc_para'] = outputnode
 
     return outdict
+
+@cf
+def create_aiida_bands_data(fleurinp, retrieved):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader
+    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands #no projections only eigenvalues for now
+
+
+    try:
+        kpoints = fleurinp.get_kpointsdata_ncf(only_used=True)
+    except ValueError:
+        kpoints = None
+
+    if 'banddos.hdf' in retrieved.list_object_names():
+        #TODO: Which errors can occur here??
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, attributes = reader.read(recipe=FleurSimpleBands)
+    else:
+        data, attributes = None, None
+
+    bands = None
+    if all(x is not None for x in (kpoints, data, attributes)):
+        bands = BandsData()
+        bands.set_kpointsdata(kpoints)
+
+        nkpts, nbands = attributes['nkpts'], attributes['nbands']
+
+        eigenvalues = data['eigenvalues_up'].reshape((nkpts,nbands))
+        if 'eigenvalues_down' in data:
+            eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts,nbands))
+            eigenvalues = [eigenvalues, eigenvalues_dn]
+
+        bands.set_bands(eigenvalues, units='eV')
+
+        bands.label = 'output_banddos_wc_bands'
+        bands.description = ('Contains BandsData for the bandstructure calculation')
+
+    return bands
+
+@cf
+def create_aiida_dos_data(retrieved):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS #only standard DOS for now
+
+    if 'banddos.hdf' in retrieved.list_object_names():
+        #TODO: Which errors can occur here??
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, attributes = reader.read(recipe=FleurDOS)
+    else:
+        data, attributes = None, None
+
+    dos = None
+    if all(x is not None for x in (data, attributes)):
+        dos = XyData()
+        dos.set_x(data['energy_grid'], 'energy', 'eV')
+
+        for key, entry in data.items():
+            if key != 'energy_grid':
+                dos.set_y(entry, key, '1/eV')
+
+        dos.label = 'output_banddos_wc_dos'
+        dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
+
+    return dos
+
