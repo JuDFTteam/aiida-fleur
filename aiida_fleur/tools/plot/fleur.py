@@ -59,14 +59,6 @@ def plot_fleur(*args, **kwargs):
     show = kwargs.pop('show', True)
     backend = kwargs.pop('backend', 'matplotlib')
 
-    #    # the rest we ignore for know
-    #Just call set plot defaults
-    # TODO, or rather parse it onto plot functions...?
-    # if backend == 'matplotlib':
-    #     set_mpl_plot_defaults(**kwargs)
-    # elif backend == 'bokeh':
-    #     set_bokeh_plot_defaults(**kwargs)
-
     all_plots = []
     for arg in args:
         if isinstance(arg, list):
@@ -81,7 +73,7 @@ def plot_fleur(*args, **kwargs):
     return all_plots
 
 
-def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh', **kwargs):
+def plot_fleur_sn(node, show_dict=False, **kwargs):
     """
     This methods takes any single AiiDA node and starts the standard visualization for
     if it finds one
@@ -95,14 +87,15 @@ def plot_fleur_sn(node, show_dict=False, save=False, show=True, backend='bokeh',
     try:
         plotf = FUNCTIONS_DICT[workflow_name]
     except KeyError as exc:
-        raise ValueError('Sorry, I do not know how to visualize' f' this node in plot_fleur: {workflow_name} {node}') from exc
+        raise ValueError('Sorry, I do not know how to visualize'
+                         f' this node in plot_fleur: {workflow_name} {node}') from exc
 
-    plot_result = plotf(*plot_nodes, save=save, show=show, backend=backend, **kwargs)
+    plot_result = plotf(*plot_nodes, **kwargs)
 
     return plot_result
 
 
-def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh', **kwargs):
+def plot_fleur_mn(nodelist, **kwargs):
     """
     This methods takes any amount of AiiDA node as a list and starts
     the standard visualisation for it, if it finds one.
@@ -146,7 +139,7 @@ def plot_fleur_mn(nodelist, save=False, show=True, backend='bokeh', **kwargs):
         #Convert to tuple of lists
         plot_nodes = zip(*plot_nodes)
 
-        plot_res = plotf(*plot_nodes, labels=node_labels, save=save, show=show, backend=backend, **kwargs)
+        plot_res = plotf(*plot_nodes, labels=node_labels, **kwargs)
         all_plot_res.append(plot_res)
 
     return all_plot_res
@@ -330,7 +323,7 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
                 scaling.append(outpara.get('scaling'))
                 plotlables.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
                 plotlables.append(r'fit results {}'.format(i))
-            plot_lattice_constant(scaling, Total_energy, multi=True, plot_label=plotlables, show=show)
+            plot_lattice_constant(scaling, Total_energy, multi=True, plot_label=plotlables, show=show, **kwargs)
             return  # TODO
         else:
             node = node[0]
@@ -346,7 +339,7 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
 
     #fit_y = []
     #fit_y = [parabola(scale2, fit[0], fit[1], fit[2]) for scale2 in scaling]
-    p1 = plot_lattice_constant(scaling, Total_energy, show=show)  #, fit_y)
+    p1 = plot_lattice_constant(scaling, Total_energy, show=show, **kwargs)  #, fit_y)
     return p1
 
 
@@ -380,6 +373,56 @@ def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
         print('Could not retrieve dos file path from output node')
 
     return p1
+
+
+def plot_fleur_banddos_wc(param_node,
+                          file_node,
+                          labels=None,
+                          save=False,
+                          show=True,
+                          backend='bokeh',
+                          hdf_recipe=None,
+                          **kwargs):
+    """
+    This methods takes an AiiDA output parameter node and retrieved files from a banddos
+    workchain and plots the bandstructure/DOS
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS, FleurBands
+    from masci_tools.vis.fleur import plot_fleur_bands, plot_fleur_dos
+
+    if isinstance(param_node, list):
+        if len(param_node) > 2:
+            return  # TODO
+        else:
+            param_node = param_node[0]
+            file_node = file_node[0]
+
+    output_d = param_node.get_dict()
+    mode = output_d.get('mode')
+
+    if mode is None:
+        raise ValueError('Could not retrieve mode from output node')
+
+    if hdf_recipe is None:
+        if mode == 'dos':
+            hdf_recipe = FleurDOS
+        else:
+            hdf_recipe = FleurBands
+
+    if 'banddos.hdf' not in file_node.list_object_names():
+        raise ValueError('No banddos.hdf file found')
+
+    with file_node.open('banddos.hdf', mode='rb') as hdf_file:
+        with HDF5Reader(hdf_file) as h5reader:
+            data, attributes = h5reader.read(recipe=hdf_recipe)
+
+    if mode == 'dos':
+        plot_res = plot_fleur_dos(data, attributes, backend=backend, save=save, show=show, **kwargs)
+    else:
+        plot_res = plot_fleur_bands(data, attributes, backend=backend, save=save, show=show, **kwargs)
+
+    return plot_res
 
 
 def plot_fleur_relax_wc(node, labels=None, save=False, show=True, **kwargs):
@@ -422,7 +465,7 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
     """
-    from masci_tools.vis.plot_methods import multiple_scatterplots
+    from masci_tools.vis.common import scatter
 
     if labels is None:
         labels = []
@@ -451,17 +494,23 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
 
-    p1 = multiple_scatterplots([converged_configs, output_d['non_converged_configs']],
-                               [converged_energy, non_converged_energy],
-                               xlabel='Configurations',
-                               ylabel=r'$E_{rel}$ [eV]',
-                               title='Results for orbcontrol node',
-                               plot_labels=['converged', 'not converged'],
-                               linestyle='',
-                               colors=['darkblue', 'darkred'],
-                               markersize=10.0,
-                               legend=True,
-                               legend_option={'loc': 'upper right'})
+    if kwargs.get('backend', 'matplotlib'):
+        if 'plot_label' not in kwargs:
+            kwargs['plot_label'] = ['converged', 'not converged']
+    else:
+        if 'legend_label' not in kwargs:
+            kwargs['legend_label'] = ['converged', 'not converged']
+
+    p1 = scatter([converged_configs, output_d['non_converged_configs']], [converged_energy, non_converged_energy],
+                 xlabel='Configurations',
+                 ylabel=r'$E_{rel}$ [eV]',
+                 title='Results for orbcontrol node',
+                 linestyle='',
+                 colors=['darkblue', 'darkred'],
+                 markersize=10.0,
+                 legend=True,
+                 legend_option={'loc': 'upper right'},
+                 **kwargs)
     return p1
 
 
@@ -473,6 +522,7 @@ FUNCTIONS_DICT = {
     'fleur_dos_wc': plot_fleur_dos_wc,
     'fleur_band_wc': plot_fleur_band_wc,
     'FleurBandWorkChain': plot_fleur_band_wc,
+    'FleurBandDosWorkChain': plot_fleur_banddos_wc,
     #'fleur_corehole_wc' : plot_fleur_corehole_wc,  #support of < 1.5 release
     #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc,  #support of < 1.5 release
     #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,
