@@ -521,12 +521,12 @@ class FleurinpData(Data):
 
         xmltree, schema_dict = self.load_inpxml()
 
-        atoms, cell, pbc = get_structure_data(xmltree, schema_dict)
+        atoms, cell, pbc = get_structure_data(xmltree, schema_dict, site_namedtuple=True)
 
         struc = StructureData(cell=cell, pbc=pbc)
 
-        for pos, symbol in atoms:
-            struc.append_atom(position=pos, symbols=symbol)
+        for atom in atoms:
+            struc.append_atom(position=atom.position, symbols=atom.symbol, name=atom.kind)
 
         # TODO DATA-DATA links are not wanted, you might want to use a cf instead
         #struc.add_link_from(self, label='self.structure', link_type=LinkType.CREATE)
