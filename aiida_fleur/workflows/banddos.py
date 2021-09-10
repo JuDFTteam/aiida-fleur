@@ -15,13 +15,12 @@ electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 import copy
-from aiida.orm.nodes.data.array.xy import XyData
 from lxml import etree
 from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, CalcJobNode, FolderData, BandsData
+from aiida.orm import load_node, CalcJobNode, FolderData, BandsData, XyData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -487,10 +486,10 @@ class FleurBandDosWorkChain(WorkChain):
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
             retrieved = self.ctx.banddos_calc.outputs.retrieved
-            if 'fleurinpData' in self.ctx.banddos_calc.inputs:
-                fleurinp = self.ctx.banddos_calc.inputs.fleurinpData
+            if 'fleurinpdata' in self.ctx.banddos_calc.inputs:
+                fleurinp = self.ctx.banddos_calc.inputs.fleurinpdata
             else:
-                fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.remote)
+                fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.parent_folder)
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None
@@ -560,11 +559,11 @@ class FleurBandDosWorkChain(WorkChain):
             if self.ctx.wf_dict.get('mode') == 'band' and fleurinp is not None and retrieved is not None:
                 bands = create_aiida_bands_data(fleurinp=fleurinp,
                                                 retrieved=retrieved) 
-                if bands is not None:
+                if isinstance(bands, BandsData):
                     outdict['output_banddos_wc_bands'] = bands
             elif self.ctx.wf_dict.get('mode') == 'dos' and retrieved is not None:
                 dos = create_aiida_dos_data(retrieved=retrieved) 
-                if dos is not None:
+                if isinstance(dos, XyData):
                     outdict['output_banddos_wc_dos'] = dos
 
         else:
@@ -611,79 +610,89 @@ def create_band_result_node(**kwargs):
 @cf
 def create_aiida_bands_data(fleurinp, retrieved):
     """
-    This is a pseudo wf, to create the right graph structure of AiiDA.
-    This wokfunction will create the output node in the database.
-    It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy
-    to put most of the code overworked from return_results in here.
-    """
-    from masci_tools.io.parsers.hdf5 import HDF5Reader
-    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands #no projections only eigenvalues for now
+    Creates :py:class:`aiida.orm.BandsData` object containing the kpoints and eigenvalues
+    from the `banddos.hdf` file of the calculation
 
+    :param fleurinp: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` for the calculation
+    :param retrieved: :py:class:`aiida.orm.FolderData` for the bandstructure calculation
+
+    :returns: :py:class:`aiida.orm.BandsData` for the bandstructure calculation
+
+    :raises: ExitCode 300, banddos.hdf file is missing
+    :raises: ExitCode 310, banddos.hdf reading failed
+    :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands #no projections only eigenvalues for now
+    from aiida.engine import ExitCode
 
     try:
         kpoints = fleurinp.get_kpointsdata_ncf(only_used=True)
-    except ValueError:
-        kpoints = None
+    except ValueError as exc:
+        return ExitCode(320, message=f'Retrieving kpoints data from fleurinp failed with: {exc}')
 
     if 'banddos.hdf' in retrieved.list_object_names():
-        #TODO: Which errors can occur here??
-        with retrieved.open('banddos.hdf', 'rb') as f:
-            with HDF5Reader(f) as reader:
-                data, attributes = reader.read(recipe=FleurSimpleBands)
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, attributes = reader.read(recipe=FleurSimpleBands)
+        except (HDF5TransformationError, ValueError) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        data, attributes = None, None
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+   
+    bands = BandsData()
+    bands.set_kpointsdata(kpoints)
 
-    bands = None
-    if all(x is not None for x in (kpoints, data, attributes)):
-        bands = BandsData()
-        bands.set_kpointsdata(kpoints)
+    nkpts, nbands = attributes['nkpts'], attributes['nbands']
+    eigenvalues = data['eigenvalues_up'].reshape((nkpts,nbands))
+    if 'eigenvalues_down' in data:
+        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts,nbands))
+        eigenvalues = [eigenvalues, eigenvalues_dn]
 
-        nkpts, nbands = attributes['nkpts'], attributes['nbands']
+    bands.set_bands(eigenvalues, units='eV')
 
-        eigenvalues = data['eigenvalues_up'].reshape((nkpts,nbands))
-        if 'eigenvalues_down' in data:
-            eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts,nbands))
-            eigenvalues = [eigenvalues, eigenvalues_dn]
-
-        bands.set_bands(eigenvalues, units='eV')
-
-        bands.label = 'output_banddos_wc_bands'
-        bands.description = ('Contains BandsData for the bandstructure calculation')
+    bands.label = 'output_banddos_wc_bands'
+    bands.description = ('Contains BandsData for the bandstructure calculation')
 
     return bands
 
 @cf
 def create_aiida_dos_data(retrieved):
     """
-    This is a pseudo wf, to create the right graph structure of AiiDA.
-    This wokfunction will create the output node in the database.
-    It also connects the output_node to all nodes the information commes from.
-    So far it is just also parsed in as argument, because so far we are to lazy
-    to put most of the code overworked from return_results in here.
+    Creates :py:class:`aiida.orm.XyData` object containing the standard DOS components
+    from the `banddos.hdf` file of the calculation
+
+    :param retrieved: :py:class:`aiida.orm.FolderData` for the DOS calculation
+
+    :returns: :py:class:`aiida.orm.XyData` containing all standard DOS components
+
+    :raises: ExitCode 300, banddos.hdf file is missing
+    :raises: ExitCode 310, banddos.hdf reading failed
     """
-    from masci_tools.io.parsers.hdf5 import HDF5Reader
+    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS #only standard DOS for now
+    from aiida.engine import ExitCode
 
     if 'banddos.hdf' in retrieved.list_object_names():
-        #TODO: Which errors can occur here??
-        with retrieved.open('banddos.hdf', 'rb') as f:
-            with HDF5Reader(f) as reader:
-                data, attributes = reader.read(recipe=FleurDOS)
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, attributes = reader.read(recipe=FleurDOS)
+        except (HDF5TransformationError, ValueError) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        data, attributes = None, None
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
 
-    dos = None
-    if all(x is not None for x in (data, attributes)):
-        dos = XyData()
-        dos.set_x(data['energy_grid'], 'energy', 'eV')
+    dos = XyData()
+    dos.set_x(data['energy_grid'], 'energy', units='eV')
 
-        for key, entry in data.items():
-            if key != 'energy_grid':
-                dos.set_y(entry, key, '1/eV')
+    for key, entry in data.items():
+        if key != 'energy_grid':
+            dos.set_y(entry, key, units='1/eV')
 
-        dos.label = 'output_banddos_wc_dos'
-        dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
+    dos.label = 'output_banddos_wc_dos'
+    dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
 
     return dos
 
