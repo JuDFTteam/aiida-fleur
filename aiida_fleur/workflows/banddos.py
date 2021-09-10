@@ -685,11 +685,11 @@ def create_aiida_dos_data(retrieved):
         return ExitCode(300, message='banddos.hdf file not in the retrieved files')
 
     dos = XyData()
-    dos.set_x(data['energy_grid'], 'energy', units='eV')
+    dos.set_x(data['energy_grid'], 'energy', x_units='eV')
 
     for key, entry in data.items():
         if key != 'energy_grid':
-            dos.set_y(entry, key, units='1/eV')
+            dos.set_y(entry, key, y_units='1/eV')
 
     dos.label = 'output_banddos_wc_dos'
     dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
