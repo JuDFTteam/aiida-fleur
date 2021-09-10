@@ -27,7 +27,7 @@ from aiida.plugins import DataFactory
 from aiida.orm import load_node
 from aiida.orm import WorkChainNode
 from aiida.orm import Node, Dict
-from aiida.common.exceptions import UniquenessError
+from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida_fleur.common.constants import HTR_TO_EV
 
 ###########################
@@ -116,7 +116,6 @@ def plot_fleur_mn(nodelist, **kwargs):
     if not isinstance(nodelist, list):
         raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list. ')
 
-    node_labels = []
     for node in nodelist:
         try:
             plot_nodes, workflow_name, label = classify_node(node)
@@ -138,8 +137,9 @@ def plot_fleur_mn(nodelist, **kwargs):
 
         #Convert to tuple of lists
         plot_nodes = zip(*plot_nodes)
+        labels = node_labels[workflow_name]
 
-        plot_res = plotf(*plot_nodes, labels=node_labels, **kwargs)
+        plot_res = plotf(*plot_nodes, labels=labels, **kwargs)
         all_plot_res.append(plot_res)
 
     return all_plot_res
@@ -167,31 +167,42 @@ def classify_node(node):
 
     label = node.label
 
-    params = None
+    parameter_node = None
+    workchain_node = None
     if isinstance(node, WorkChainNode):
-        output_list = node.get_outgoing().all()
+        workchain_node = node
+        output_list = workchain_node.get_outgoing().all()
         for out_link in output_list:
             if 'output_' in out_link.link_label:
                 if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
                     if 'para' in out_link.link_label:  # We are just looking for parameter
                         #nodes, structures, bands, dos and so on we tread different
-                        params = out_link.node  # we only visualize last output node
+                        parameter_node = out_link.node  # we only visualize last output node
     elif isinstance(node, Dict):
-        params = node
-        workflow = params.get_incoming(node_class=WorkChainNode).all()
-        n_parents = len(workflow)
-        if n_parents != 1:
-            raise UniquenessError(f'Parameter node {params} has no unique WorkChainNode parent')
-        node = workflow[0].node
+        parameter_node = node
+        
 
-    if isinstance(params, Dict):
-        parameter_dict = params.get_dict()
+    if isinstance(parameter_node, Dict):
+        parameter_dict = parameter_node.get_dict()
         workflow_name = parameter_dict.get('workflow_name', None)
     else:
         raise ValueError(f'I do not know how to visualize this node: {node}')
 
-    outputs = (parameter_dict,) + tuple(node.get_outgoing().get_node_by_label(out_label)
-                                        for out_label in ADDITIONAL_OUTPUTS.get(workflow_name, tuple()))
+    add_outputs = ADDITIONAL_OUTPUTS.get(workflow_name, tuple())
+    add_nodes = tuple()
+    if add_outputs:
+        if workchain_node is None:
+            incoming = parameter_node.get_incoming(node_class=WorkChainNode).all()
+            n_parents = len(incoming)
+            if n_parents > 1:
+                raise UniquenessError(f'Parameter node {parameter_node} has no unique WorkChainNode parent')
+            if n_parents == 0:
+                raise NotExistent(f'Parameter node {parameter_node} has no WorkChainNode parent')
+            workchain_node = incoming[0].node
+
+        add_nodes = tuple(workchain_node.get_outgoing().get_node_by_label(out_label) for out_label in add_outputs)
+
+    outputs = (parameter_dict,) + add_nodes
 
     return outputs, workflow_name, label
 
