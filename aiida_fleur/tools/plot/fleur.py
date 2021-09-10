@@ -202,7 +202,7 @@ def classify_node(node):
 
         add_nodes = tuple(workchain_node.get_outgoing().get_node_by_label(out_label) for out_label in add_outputs)
 
-    outputs = (parameter_dict,) + add_nodes
+    outputs = (parameter_node,) + add_nodes
 
     return outputs, workflow_name, label
 
