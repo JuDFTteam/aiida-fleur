@@ -21,43 +21,39 @@ masci-tools which use matplotlib or bokeh as backend.
 
 from pprint import pprint
 import numpy as np
-#import matplotlib.pyplot as pp
-#from masci_tools.vis.plot_methods import *
-from aiida.plugins import DataFactory
-from aiida.orm import load_node
-from aiida.orm import WorkChainNode
-from aiida.orm import Node, Dict
+
+from aiida.orm import load_node, Node, WorkChainNode, Dict
 from aiida.common.exceptions import UniquenessError, NotExistent
-from aiida_fleur.common.constants import HTR_TO_EV
 
-###########################
-## general plot routine  ##
-###########################
+from masci_tools.util.constants import HTR_TO_EV
+from masci_tools.vis.common import set_defaults, set_default_backend, show_defaults, save_defaults, load_defaults, reset_defaults
 
+__all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults', 'save_defaults', 'load_defaults', 'reset_defaults')
 
-def plot_fleur(*args, **kwargs):
+def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwargs):
     """
-    This methods takes any amount of AiiDA node and starts
-    the standard visualisation either as single or together visualisation.
-    (if they are provided as list)
-    i.e plot_fleur(123, [124,125], uuid, save=False, backend='bokeh')
+    Plot single or multiple Fleur WorkChainNodes. Can be started from the Workchain or output parameters (Dict) node.
+    The following WorkChains are supported:
 
-    Some general parameters of plot methods can be given as
-    keyword arguments.
-    reservedd keywords are:
+        - `FleurSCFWorkChain`: Plots the convergence of energy and distance for the calculation
+        - `FleurEOSWorkChain`: Plots the total energy vs. volume for the calculated scalings
+        - `FleurBandDosWorkChain`: Plot the bandstructure/DOS calculated
+        - `FleurOrbControlWorkChain`: Plot the distribution of total energies for all run calculations
+ 
+    This method takes any amount of AiiDA nodes as positional arguments and starts
+    the standard visualisation either as single or multiple nodes in one visualisation (if supported and nodes provided in a list).
+    i.e ``plot_fleur(123, [124,125], uuid)``
 
-    save: bool, should the plots be saved automatically
-    backend: str, 'bokeh' or else matplotlib
-    show_dict: bool, print the output dictionaries of the given nodes
+    :param save: bool if True the produced plots are saved to file   
+    :param show: bool if True the produced plots are immediately shown
+    :param show_dict: bool if True the parameter/Dict node of the WorkChain is printed 9for single visualizations)
+    :param backend: str, 'bokeh' or else 'matplotlib'/'mpl' (default None uses default in masci-tools routines)
 
-    returns a list of plot objects for further modification or handling
-    this might be used for a quick dashboard build.
+    Kwargs are passed on to the plotting functions for each WorkChainNode
+
+    :returns: a list of plot objects produced by the used plotting library for further modification or handling
+              this might be used for a quick dashboard build.
     """
-
-    save = kwargs.pop('save', False)
-    show_dict = kwargs.pop('show_dict', False)
-    show = kwargs.pop('show', True)
-    backend = kwargs.pop('backend', 'matplotlib')
 
     all_plots = []
     for arg in args:
