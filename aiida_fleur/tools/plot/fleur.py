@@ -179,13 +179,13 @@ def classify_node(node):
     elif isinstance(node, Dict):
         params = node
         workflow = params.get_incoming(node_class=WorkChainNode).all()
-        n_parents = len(node)
+        n_parents = len(workflow)
         if n_parents != 1:
             raise UniquenessError(f'Parameter node {params} has no unique WorkChainNode parent')
         node = workflow[0].node
 
     if isinstance(params, Dict):
-        parameter_dict = node.get_dict()
+        parameter_dict = params.get_dict()
         workflow_name = parameter_dict.get('workflow_name', None)
     else:
         raise ValueError(f'I do not know how to visualize this node: {node}')
@@ -510,6 +510,8 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
                  markersize=10.0,
                  legend=True,
                  legend_option={'loc': 'upper right'},
+                 save=save,
+                 show=show,
                  **kwargs)
     return p1
 
