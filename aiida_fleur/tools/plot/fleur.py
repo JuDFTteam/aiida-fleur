@@ -308,7 +308,7 @@ def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     return p1
 
 
-def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
+def plot_fleur_eos_wc(node, labels=None, save=False, show=True, backend='matplotlib', **kwargs):
     """
     This methods takes an AiiDA output parameter node from a density of states
     workchain and plots a simple density of states
@@ -317,6 +317,9 @@ def plot_fleur_eos_wc(node, labels=None, save=False, show=True, **kwargs):
 
     if labels is None:
         labels = []
+
+    if backend == 'bokeh':
+        raise ValueError('Bokeh plot of Equation of states not yet implemented')
 
     if isinstance(node, list):
         if len(node) > 2:
