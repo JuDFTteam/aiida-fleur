@@ -573,7 +573,11 @@ class FleurinpData(Data):
         if name is None and index is None:
             kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, only_used=only_used)
         else:
-            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, name=name, index=index, only_used=only_used)
+            kpoints, weights, cell, pbc = get_kpoints_data(xmltree,
+                                                           schema_dict,
+                                                           name=name,
+                                                           index=index,
+                                                           only_used=only_used)
 
         if isinstance(kpoints, dict):
             kpoints_data = {}

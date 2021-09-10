@@ -557,12 +557,11 @@ class FleurBandDosWorkChain(WorkChain):
                                               last_calc_retrieved=retrieved)
 
             if self.ctx.wf_dict.get('mode') == 'band' and fleurinp is not None and retrieved is not None:
-                bands = create_aiida_bands_data(fleurinp=fleurinp,
-                                                retrieved=retrieved) 
+                bands = create_aiida_bands_data(fleurinp=fleurinp, retrieved=retrieved)
                 if isinstance(bands, BandsData):
                     outdict['output_banddos_wc_bands'] = bands
             elif self.ctx.wf_dict.get('mode') == 'dos' and retrieved is not None:
-                dos = create_aiida_dos_data(retrieved=retrieved) 
+                dos = create_aiida_dos_data(retrieved=retrieved)
                 if isinstance(dos, XyData):
                     outdict['output_banddos_wc_dos'] = dos
 
@@ -607,6 +606,7 @@ def create_band_result_node(**kwargs):
 
     return outdict
 
+
 @cf
 def create_aiida_bands_data(fleurinp, retrieved):
     """
@@ -623,7 +623,7 @@ def create_aiida_bands_data(fleurinp, retrieved):
     :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
     """
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
-    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands #no projections only eigenvalues for now
+    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
 
     try:
@@ -640,14 +640,14 @@ def create_aiida_bands_data(fleurinp, retrieved):
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
         return ExitCode(300, message='banddos.hdf file not in the retrieved files')
-   
+
     bands = BandsData()
     bands.set_kpointsdata(kpoints)
 
     nkpts, nbands = attributes['nkpts'], attributes['nbands']
-    eigenvalues = data['eigenvalues_up'].reshape((nkpts,nbands))
+    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
     if 'eigenvalues_down' in data:
-        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts,nbands))
+        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
         eigenvalues = [eigenvalues, eigenvalues_dn]
 
     bands.set_bands(eigenvalues, units='eV')
@@ -656,6 +656,7 @@ def create_aiida_bands_data(fleurinp, retrieved):
     bands.description = ('Contains BandsData for the bandstructure calculation')
 
     return bands
+
 
 @cf
 def create_aiida_dos_data(retrieved):
@@ -671,7 +672,7 @@ def create_aiida_dos_data(retrieved):
     :raises: ExitCode 310, banddos.hdf reading failed
     """
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
-    from masci_tools.io.parsers.hdf5.recipes import FleurDOS #only standard DOS for now
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
     if 'banddos.hdf' in retrieved.list_object_names():
@@ -693,7 +694,7 @@ def create_aiida_dos_data(retrieved):
     dos.set_y(arrays, names, y_units=units)
 
     dos.label = 'output_banddos_wc_dos'
-    dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
+    dos.description = (
+        'Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
 
     return dos
-

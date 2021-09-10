@@ -403,7 +403,6 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-
     def scf_no_ldau_needed(self):
         """
         Returns whether to run an additional scf workchain before adding LDA+U
