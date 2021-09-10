@@ -132,11 +132,12 @@ def plot_fleur_mn(nodelist, **kwargs):
             plotf = FUNCTIONS_DICT[workflow_name]
         except KeyError:
             print('Sorry, I do not know how to visualize'
-                  f' these nodes in plot_fleur (mulitplot): {workflow_name} {plot_nodes}')
+                  f' these nodes in plot_fleur (multiplot): {workflow_name} {plot_nodes}')
             continue
 
         #Convert to tuple of lists
         plot_nodes = zip(*plot_nodes)
+        plot_nodes = tuple(list(nodes) for nodes in plot_nodes)
         labels = node_labels[workflow_name]
 
         plot_res = plotf(*plot_nodes, labels=labels, **kwargs)
@@ -180,7 +181,6 @@ def classify_node(node):
                         parameter_node = out_link.node  # we only visualize last output node
     elif isinstance(node, Dict):
         parameter_node = node
-        
 
     if isinstance(parameter_node, Dict):
         parameter_dict = parameter_node.get_dict()

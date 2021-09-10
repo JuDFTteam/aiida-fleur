@@ -33,10 +33,8 @@ def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
     out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
     fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
-    p_calc = plot_fleur(fleur_outputnode, show=False)
-
-    assert isinstance(p_calc, list)
-    assert p_calc[0] is None  # isinstance(p_scf[0], plt.figure)
+    with pytest.raises(ValueError, match=r'Sorry, I do not know how to visualize'):
+        plot_fleur(fleur_outputnode, show=False)
 
     scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
     p_scf = plot_fleur(scf_output, show=False)
