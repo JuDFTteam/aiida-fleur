@@ -687,9 +687,10 @@ def create_aiida_dos_data(retrieved):
     dos = XyData()
     dos.set_x(data['energy_grid'], 'energy', x_units='eV')
 
-    for key, entry in data.items():
-        if key != 'energy_grid':
-            dos.set_y(entry, key, y_units='1/eV')
+    names = [key for key in data if key != 'energy_grid']
+    arrays = [entry for key, entry in data.items() if key != 'energy_grid']
+    units = ['1/eV'] * len(names)
+    dos.set_y(arrays, names, y_units=units)
 
     dos.label = 'output_banddos_wc_dos'
     dos.description = ('Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
