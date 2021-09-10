@@ -546,7 +546,7 @@ class FleurinpData(Data):
         """
         return self.get_structuredata_ncf()
 
-    def get_kpointsdata_ncf(self, name=None, index=None):
+    def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
@@ -571,9 +571,13 @@ class FleurinpData(Data):
         xmltree, schema_dict = self.load_inpxml()
 
         if name is None and index is None:
-            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict)
+            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, only_used=only_used)
         else:
-            kpoints, weights, cell, pbc = get_kpoints_data(xmltree, schema_dict, name=name, index=index)
+            kpoints, weights, cell, pbc = get_kpoints_data(xmltree,
+                                                           schema_dict,
+                                                           name=name,
+                                                           index=index,
+                                                           only_used=only_used)
 
         if isinstance(kpoints, dict):
             kpoints_data = {}

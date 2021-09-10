@@ -20,7 +20,7 @@ from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, CalcJobNode, FolderData
+from aiida.orm import load_node, CalcJobNode, FolderData, BandsData, XyData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -45,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.4.1'
+    _workflowversion = '0.5.0'
 
     _default_options = {
         'resources': {
@@ -104,6 +104,8 @@ class FleurBandDosWorkChain(WorkChain):
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
         spec.output('last_calc_retrieved', valid_type=FolderData)
+        spec.output('output_banddos_wc_bands', valid_type=BandsData, required=False)
+        spec.output('output_banddos_wc_dos', valid_type=XyData, required=False)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -484,11 +486,16 @@ class FleurBandDosWorkChain(WorkChain):
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
             retrieved = self.ctx.banddos_calc.outputs.retrieved
+            if 'fleurinpdata' in self.ctx.banddos_calc.inputs:
+                fleurinp = self.ctx.banddos_calc.inputs.fleurinpdata
+            else:
+                fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.parent_folder)
             last_calc_out_dict = last_calc_out.get_dict()
         except (NotExistent, AttributeError):
             last_calc_out = None
             last_calc_out_dict = {}
             retrieved = None
+            fleurinp = None
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
@@ -548,6 +555,16 @@ class FleurBandDosWorkChain(WorkChain):
             outdict = create_band_result_node(outpara=outputnode_t,
                                               last_calc_out=last_calc_out,
                                               last_calc_retrieved=retrieved)
+
+            if self.ctx.wf_dict.get('mode') == 'band' and fleurinp is not None and retrieved is not None:
+                bands = create_aiida_bands_data(fleurinp=fleurinp, retrieved=retrieved)
+                if isinstance(bands, BandsData):
+                    outdict['output_banddos_wc_bands'] = bands
+            elif self.ctx.wf_dict.get('mode') == 'dos' and retrieved is not None:
+                dos = create_aiida_dos_data(retrieved=retrieved)
+                if isinstance(dos, XyData):
+                    outdict['output_banddos_wc_dos'] = dos
+
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 
@@ -588,3 +605,96 @@ def create_band_result_node(**kwargs):
     outdict['output_banddos_wc_para'] = outputnode
 
     return outdict
+
+
+@cf
+def create_aiida_bands_data(fleurinp, retrieved):
+    """
+    Creates :py:class:`aiida.orm.BandsData` object containing the kpoints and eigenvalues
+    from the `banddos.hdf` file of the calculation
+
+    :param fleurinp: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` for the calculation
+    :param retrieved: :py:class:`aiida.orm.FolderData` for the bandstructure calculation
+
+    :returns: :py:class:`aiida.orm.BandsData` for the bandstructure calculation
+
+    :raises: ExitCode 300, banddos.hdf file is missing
+    :raises: ExitCode 310, banddos.hdf reading failed
+    :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
+    from aiida.engine import ExitCode
+
+    try:
+        kpoints = fleurinp.get_kpointsdata_ncf(only_used=True)
+    except ValueError as exc:
+        return ExitCode(320, message=f'Retrieving kpoints data from fleurinp failed with: {exc}')
+
+    if 'banddos.hdf' in retrieved.list_object_names():
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, attributes = reader.read(recipe=FleurSimpleBands)
+        except (HDF5TransformationError, ValueError) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
+    else:
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    bands = BandsData()
+    bands.set_kpointsdata(kpoints)
+
+    nkpts, nbands = attributes['nkpts'], attributes['nbands']
+    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
+    if 'eigenvalues_down' in data:
+        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
+        eigenvalues = [eigenvalues, eigenvalues_dn]
+
+    bands.set_bands(eigenvalues, units='eV')
+
+    bands.label = 'output_banddos_wc_bands'
+    bands.description = ('Contains BandsData for the bandstructure calculation')
+
+    return bands
+
+
+@cf
+def create_aiida_dos_data(retrieved):
+    """
+    Creates :py:class:`aiida.orm.XyData` object containing the standard DOS components
+    from the `banddos.hdf` file of the calculation
+
+    :param retrieved: :py:class:`aiida.orm.FolderData` for the DOS calculation
+
+    :returns: :py:class:`aiida.orm.XyData` containing all standard DOS components
+
+    :raises: ExitCode 300, banddos.hdf file is missing
+    :raises: ExitCode 310, banddos.hdf reading failed
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
+    from aiida.engine import ExitCode
+
+    if 'banddos.hdf' in retrieved.list_object_names():
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, attributes = reader.read(recipe=FleurDOS)
+        except (HDF5TransformationError, ValueError) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
+    else:
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    dos = XyData()
+    dos.set_x(data['energy_grid'], 'energy', x_units='eV')
+
+    names = [key for key in data if key != 'energy_grid']
+    arrays = [entry for key, entry in data.items() if key != 'energy_grid']
+    units = ['1/eV'] * len(names)
+    dos.set_y(arrays, names, y_units=units)
+
+    dos.label = 'output_banddos_wc_dos'
+    dos.description = (
+        'Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
+
+    return dos
