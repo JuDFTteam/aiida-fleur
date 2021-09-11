@@ -20,6 +20,7 @@ masci-tools which use matplotlib or bokeh as backend.
 # which might be some point moved to aiida-core and extensible over entrypoints.
 
 from pprint import pprint
+import warnings
 import numpy as np
 
 from aiida.orm import load_node, Node, WorkChainNode, Dict
@@ -28,7 +29,9 @@ from aiida.common.exceptions import UniquenessError, NotExistent
 from masci_tools.util.constants import HTR_TO_EV
 from masci_tools.vis.common import set_defaults, set_default_backend, show_defaults, save_defaults, load_defaults, reset_defaults
 
-__all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults', 'save_defaults', 'load_defaults', 'reset_defaults')
+__all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults', 'save_defaults', 'load_defaults',
+           'reset_defaults')
+
 
 def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwargs):
     """
@@ -39,12 +42,12 @@ def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwa
         - `FleurEOSWorkChain`: Plots the total energy vs. volume for the calculated scalings
         - `FleurBandDosWorkChain`: Plot the bandstructure/DOS calculated
         - `FleurOrbControlWorkChain`: Plot the distribution of total energies for all run calculations
- 
+
     This method takes any amount of AiiDA nodes as positional arguments and starts
     the standard visualisation either as single or multiple nodes in one visualisation (if supported and nodes provided in a list).
     i.e ``plot_fleur(123, [124,125], uuid)``
 
-    :param save: bool if True the produced plots are saved to file   
+    :param save: bool if True the produced plots are saved to file
     :param show: bool if True the produced plots are immediately shown
     :param show_dict: bool if True the parameter/Dict node of the WorkChain is printed 9for single visualizations)
     :param backend: str, 'bokeh' or else 'matplotlib'/'mpl' (default None uses default in masci-tools routines)
@@ -113,10 +116,11 @@ def plot_fleur_mn(nodelist, **kwargs):
         raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list. ')
 
     for node in nodelist:
+
         try:
             plot_nodes, workflow_name, label = classify_node(node)
         except ValueError as exc:
-            print(f'Failed to classify node {node}: {exc}' 'Skipping this one')
+            warnings.warn(f'Failed to classify node {node}: {exc}' 'Skipping this one')
             continue
 
         all_nodes[workflow_name].append(plot_nodes)
@@ -127,8 +131,8 @@ def plot_fleur_mn(nodelist, **kwargs):
         try:
             plotf = FUNCTIONS_DICT[workflow_name]
         except KeyError:
-            print('Sorry, I do not know how to visualize'
-                  f' these nodes in plot_fleur (multiplot): {workflow_name} {plot_nodes}')
+            warnings.warn('Sorry, I do not know how to visualize'
+                          f' these nodes in plot_fleur (multiplot): {workflow_name} {plot_nodes}')
             continue
 
         #Convert to tuple of lists

@@ -58,6 +58,7 @@
             "pytest>=2.9",
             "pytest-timeout",
             "pytest-cov>= 2.5.0",
+            "pytest-mpl>=0.12",
             "pgtest",
             "pytest-regressions>=1.0"
         ]

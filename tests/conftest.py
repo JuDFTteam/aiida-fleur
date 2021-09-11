@@ -23,9 +23,12 @@ except ImportError:
     run_regression_tests = False
 
 if run_regression_tests:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name
+    pytest_plugins = [
+        'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
+        'masci_tools.testing.bokeh'
+    ]  # pylint: disable=invalid-name
 else:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures']
+    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
 
 @pytest.fixture(scope='function')

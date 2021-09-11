@@ -3,7 +3,7 @@ export AIIDA_PATH='.';
 mkdir -p '.aiida';
 #pytest -sv
 #pytest -v
-pytest --cov-report=xml --cov=aiida_fleur --cov=tests
+pytest --mpl --cov-report=xml --cov=aiida_fleur --cov=tests
 #pytest --cov-report=html --cov=aiida_fleur
 #pytest --cov-report=html --cov=aiida_fleur -vv -rXxs -x
 
