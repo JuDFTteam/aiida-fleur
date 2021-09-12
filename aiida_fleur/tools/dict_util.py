@@ -119,6 +119,7 @@ def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any])
 
     return merged
 
+
 def clear_dict_empty_lists(to_clear_dict):
     """
     Removes entries from a nested dictionary which are empty lists.
@@ -135,7 +136,7 @@ def clear_dict_empty_lists(to_clear_dict):
     if not isinstance(to_clear_dict, dict):
         return to_clear_dict
 
-    for key, value in six.iteritems(to_clear_dict):
+    for key, value in to_clear_dict.items():
         if value:
             new_value = clear_dict_empty_lists(value)
             if new_value:

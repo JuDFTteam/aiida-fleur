@@ -48,7 +48,7 @@ def test_plot_fleur_single_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     Test of visualization of single SCF workchain with bokeh
     """
     pytest.importorskip('bokeh')
-    from bokeh.layouts import gridplot
+    from bokeh.layouts import gridplot  # pylint: disable=import-error
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
@@ -89,7 +89,7 @@ def test_plot_fleur_multiple_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot)
     Test of visualization of single SCF workchain with bokeh
     """
     pytest.importorskip('bokeh')
-    from bokeh.layouts import gridplot
+    from bokeh.layouts import gridplot  # pylint: disable=import-error
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
