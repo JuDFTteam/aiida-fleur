@@ -501,7 +501,7 @@ class FleurCalculation(CalcJob):
                 self.logger.info('remote copy file list %s', str(remote_copy_list))
 
         # create a JUDFT_WARN_ONLY file in the calculation folder
-        with io.StringIO(u'/n') as handle:
+        with io.StringIO('/n') as handle:
             warn_only_filename = self._JUDFT_WARN_ONLY_INFO_FILE_NAME
             folder.create_file_from_filelike(handle, filename=warn_only_filename, mode='w')
 

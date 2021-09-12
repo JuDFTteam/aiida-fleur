@@ -302,7 +302,7 @@ class FleurCoreholeWorkChain(WorkChain):
         """
 
         supercell_base = self.ctx.supercell_size
-        description = (u'WF, Creates a supercell of a crystal structure x({},{},{}).'
+        description = ('WF, Creates a supercell of a crystal structure x({},{},{}).'
                        ''.format(supercell_base[0], supercell_base[0], supercell_base[2]))
 
         supercell_s = supercell(self.ctx.base_structure_relax,
@@ -310,7 +310,7 @@ class FleurCoreholeWorkChain(WorkChain):
                                 Int(supercell_base[1]),
                                 Int(supercell_base[2]),
                                 metadata={
-                                    'label': u'supercell_wf',
+                                    'label': 'supercell_wf',
                                     'description': description
                                 })
 

@@ -333,7 +333,7 @@ def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     for i, nd in enumerate(nodes):
         outpara = nd.get_dict()
         volume_gs = outpara.get('volume_gs')
-        scale_gs = outpara.get(u'scaling_gs')
+        scale_gs = outpara.get('scaling_gs')
         total_e = outpara.get('total_energy')
         if len(nodes) >= 2:
             total_e_norm = np.array(total_e) - total_e[0]

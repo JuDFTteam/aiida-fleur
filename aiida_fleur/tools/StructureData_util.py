@@ -548,7 +548,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
                 new_alst = atomlst.copy()
                 new_alst['id'] = should_id
                 if write_new_kind_names:
-                    new_alst[u'name'] = kind_name
+                    new_alst['name'] = kind_name
                 atomlistname = 'atom{}'.format(j)
                 param_new_dict[atomlistname] = new_alst
                 j = j + 1
@@ -1717,7 +1717,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
     :return: bond_data, a dict containing obtained lattice constants.
     """
     from itertools import product, combinations
-    from math import exp
+    from math import exp  # pylint: disable=no-name-in-module
     from aiida.orm import Dict
     from pymatgen.ext.matproj import MPRester
     from collections import defaultdict

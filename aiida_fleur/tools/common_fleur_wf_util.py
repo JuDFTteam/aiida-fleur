@@ -17,7 +17,7 @@ Util that does depend on AiiDA classes should go somewhere else.
 
 from __future__ import absolute_import
 from __future__ import print_function
-from math import gcd
+from math import gcd  # pylint: disable=no-name-in-module
 import six
 
 from sympy import Symbol
