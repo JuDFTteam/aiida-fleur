@@ -43,12 +43,12 @@ def test_plot_fleur_single_scf_wc_matplotlib(read_dict_from_file):
     return plt.gcf()
 
 
-@pytest.mark.skip('Does not yet work due to a bug in masci-tools<=0.6.1')
 def test_plot_fleur_single_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     """
     Test of visualization of single SCF workchain with bokeh
     """
     pytest.importorskip('bokeh')
+    from bokeh.layouts import gridplot
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
@@ -58,7 +58,9 @@ def test_plot_fleur_single_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     p_scf = plot_fleur(scf_output, show=False, backend='bokeh')
     assert isinstance(p_scf, list)
 
-    check_bokeh_plot(p_scf[0])
+    grid = gridplot(p_scf[0], ncols=1)
+
+    check_bokeh_plot(grid)
 
 
 @pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
@@ -74,18 +76,20 @@ def test_plot_fleur_multiple_scf_wc_matplotlib(read_dict_from_file):
 
     scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
 
-    p_scf = plot_fleur([scf_output, scf_output], show=False)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    p_scf = plot_fleur([scf_output, scf_output], show=False, axis_energy=ax1, axis_distance=ax2)
     assert isinstance(p_scf, list)
 
-    return plt.gcf()
+    return fig
 
 
-@pytest.mark.skip('Does not yet work due to a bug in masci-tools<=0.6.1')
 def test_plot_fleur_multiple_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     """
     Test of visualization of single SCF workchain with bokeh
     """
     pytest.importorskip('bokeh')
+    from bokeh.layouts import gridplot
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
@@ -95,7 +99,9 @@ def test_plot_fleur_multiple_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot)
     p_scf = plot_fleur([scf_output, scf_output], show=False, backend='bokeh')
     assert isinstance(p_scf, list)
 
-    check_bokeh_plot(p_scf[0])
+    grid = gridplot(p_scf[0], ncols=1)
+
+    check_bokeh_plot(grid)
 
 
 @pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
@@ -118,7 +124,6 @@ def test_plot_fleur_single_eos_wc_matplotlib(read_dict_from_file):
     return plt.gcf()
 
 
-@pytest.mark.skip('EOS visualization not available for bokeh in masci-tools<=0.6.1')
 def test_plot_fleur_single_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     """
     Test of visualization of single SCF workchain with bokeh
@@ -126,9 +131,9 @@ def test_plot_fleur_single_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     pytest.importorskip('bokeh')
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
-    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
-    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_scf_wc_para')
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
 
     p_eos = plot_fleur(eos_output, show=False, backend='bokeh')
     assert isinstance(p_eos, list)
@@ -155,7 +160,6 @@ def test_plot_fleur_multiple_eos_wc_matplotlib(read_dict_from_file):
     return plt.gcf()
 
 
-@pytest.mark.skip('EOS visualization not available for bokeh in masci-tools<=0.6.1')
 def test_plot_fleur_multiple_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot):
     """
     Test of visualization of single SCF workchain with bokeh
@@ -163,12 +167,14 @@ def test_plot_fleur_multiple_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot)
     pytest.importorskip('bokeh')
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
-    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
-    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_scf_wc_para')
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
 
     p_eos = plot_fleur([eos_output, eos_output], show=False, backend='bokeh')
     assert isinstance(p_eos, list)
+
+    check_bokeh_plot(p_eos[0])
 
 
 def test_plot_fleur_single_invalid_node(read_dict_from_file):

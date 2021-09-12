@@ -63,6 +63,8 @@ def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwa
         if isinstance(arg, list):
             # try plot together
             p1 = plot_fleur_mn(arg, save=save, show=show, backend=backend, **kwargs)
+            if len(p1) == 1:
+                p1 = p1[0]
         else:
             #print(arg)
             # plot alone
@@ -106,6 +108,7 @@ def plot_fleur_mn(nodelist, **kwargs):
 
     """
     from collections import defaultdict
+    from collections.abc import Iterable
     ###
     # Things to plot together
     all_nodes = defaultdict(list)
@@ -141,7 +144,10 @@ def plot_fleur_mn(nodelist, **kwargs):
         labels = node_labels[workflow_name]
 
         plot_res = plotf(*plot_nodes, labels=labels, **kwargs)
-        all_plot_res.append(plot_res)
+        if isinstance(plot_res, Iterable):
+            all_plot_res.extend(plot_res)
+        else:
+            all_plot_res.append(plot_res)
 
     return all_plot_res
 
@@ -217,10 +223,7 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
     """
-    if backend == 'bokeh':
-        from masci_tools.vis.bokeh_plots import plot_convergence_results_m
-    else:
-        from masci_tools.vis.plot_methods import plot_convergence_results_m
+    from masci_tools.vis.common import convergence_plot
 
     if not isinstance(nodes, list):
         nodes = [nodes]
@@ -228,50 +231,55 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     if labels is None:
         labels = [node.pk for node in nodes]
 
-    iterations = []
-    distance_all_n = []
-    total_energy_n = []
+    all_energies = []
+    all_distances = []
+    all_iterations = []
     modes = []
-    nodes_pk = []
 
     for node in nodes:
         iteration = []
         output_d = node.get_dict()
         total_energy = output_d.get('total_energy_all')
         if not total_energy:
-            print('No total energy data found, skip this node: {}'.format(node))
+            warnings.warn('No total energy data found, skip this node: {}'.format(node))
             continue
-        distance_all = output_d.get('distance_charge_all')
-        iteration_total = output_d.get('iterations_total')
-        if not distance_all:
-            print('No distance_charge_all data found, skip this node: {}'.format(node))
+
+        distance = output_d.get('distance_charge_all')
+        num_iterations = output_d.get('iterations_total')
+        if not distance:
+            warnings.warn('No distance_charge_all data found, skip this node: {}'.format(node))
             continue
-        if not iteration_total:
-            print('No iteration_total data found, skip this node: {}'.format(node))
+        if not num_iterations:
+            warnings.warn('No iteration_total data found, skip this node: {}'.format(node))
             continue
 
         mode = output_d.get('conv_mode')
-        nodes_pk.append(node.pk)
         for i in range(1, len(total_energy) + 1):
-            iteration.append(iteration_total - len(total_energy) + i)
+            iteration.append(num_iterations - len(total_energy) + i)
 
-        if len(distance_all) == 2 * len(total_energy):  # not sure if this is best solution
+        if len(distance) == 2 * len(total_energy):  # not sure if this is best solution
             # magnetic calculation, we plot only spin 1 for now.
-            distance_all = [distance_all[j] for j in range(0, len(distance_all), 2)]
+            distance = [distance[j] for j in range(0, len(distance), 2)]
 
-        iterations.append(iteration)
-        distance_all_n.append(distance_all)
-        total_energy_n.append(total_energy)
+        all_energies.append(total_energy)
+        all_iterations.append(iteration)
+        all_distances.append(distance)
         modes.append(mode)
 
-    plot_res = plot_convergence_results_m(iterations,
-                                          distance_all_n,
-                                          total_energy_n,
-                                          plot_label=labels,
-                                          nodes=nodes_pk,
-                                          modes=modes,
-                                          show=show,
-                                          **kwargs)
+    add_args = {}
+    if backend == 'bokeh':
+        add_args['legend_label'] = labels
+    else:
+        add_args['plot_label'] = labels
+
+    plot_res = convergence_plot(all_iterations,
+                                all_distances,
+                                all_energies,
+                                show=show,
+                                save_plots=save,
+                                drop_last_iteration=any(mode == 'force' for mode in modes),
+                                backend=backend,
+                                **kwargs)
     return plot_res
 
 
@@ -308,53 +316,44 @@ def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
     return p1
 
 
-def plot_fleur_eos_wc(node, labels=None, save=False, show=True, backend='matplotlib', **kwargs):
+def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh', **kwargs):
     """
-    This methods takes an AiiDA output parameter node from a density of states
-    workchain and plots a simple density of states
+    This methods takes an AiiDA output parameter node from a equation of states
+    workchain and plots a simple scaling vs volume plot
     """
-    from masci_tools.vis.plot_methods import plot_lattice_constant
+    from masci_tools.vis.common import eos_plot
 
-    if labels is None:
-        labels = []
+    if not isinstance(nodes, list):
+        nodes = [nodes]
 
-    if backend == 'bokeh':
-        raise ValueError('Bokeh plot of Equation of states not yet implemented')
+    energy = []
+    scaling = []
+    default_labels = []
 
-    if isinstance(node, list):
-        if len(node) > 2:
-            Total_energy = []
-            scaling = []
-            plotlables = []
-
-            for i, nd in enumerate(node):
-                outpara = nd.get_dict()
-                volume_gs = outpara.get('volume_gs')
-                scale_gs = outpara.get(u'scaling_gs')
-                total_e = outpara.get('total_energy')
-                total_e_norm = np.array(total_e) - total_e[0]
-                Total_energy.append(total_e_norm)
-                scaling.append(outpara.get('scaling'))
-                plotlables.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
-                plotlables.append(r'fit results {}'.format(i))
-            plot_lattice_constant(scaling, Total_energy, multi=True, plot_label=plotlables, show=show, **kwargs)
-            return  # TODO
+    for i, nd in enumerate(nodes):
+        outpara = nd.get_dict()
+        volume_gs = outpara.get('volume_gs')
+        scale_gs = outpara.get(u'scaling_gs')
+        total_e = outpara.get('total_energy')
+        if len(nodes) >= 2:
+            total_e_norm = np.array(total_e) - total_e[0]
+            energy.append(total_e_norm)
         else:
-            node = node[0]
+            energy.append(total_e)
+        scaling.append(outpara.get('scaling'))
+        default_labels.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
 
-    outpara = node.get_dict()
-    Total_energy = outpara.get('total_energy')
-    scaling = outpara.get('scaling')
-    #fit = outpara.get('fitresults')
-    #fit = outpara.get('fit')
+    labels = default_labels
 
-    #def parabola(x, a, b, c):
-    #    return a*x**2 + b*x + c
+    add_args = {}
+    if backend == 'bokeh':
+        add_args['legend_label'] = labels
+    else:
+        add_args['plot_label'] = labels
 
-    #fit_y = []
-    #fit_y = [parabola(scale2, fit[0], fit[1], fit[2]) for scale2 in scaling]
-    p1 = plot_lattice_constant(scaling, Total_energy, show=show, **kwargs)  #, fit_y)
-    return p1
+    plot_res = eos_plot(scaling, energy, show=show, save_plots=save, backend=backend, **add_args, **kwargs)
+
+    return plot_res
 
 
 def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
