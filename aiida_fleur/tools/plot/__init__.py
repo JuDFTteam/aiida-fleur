@@ -12,3 +12,4 @@
 '''
 FLEUR plug-in
 '''
+from .fleur import *

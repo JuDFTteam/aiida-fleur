@@ -81,7 +81,7 @@ def list_fleurinp(raw, past_days, groups, all_users, strucinfo, uuid, ctime, ext
         fleurinps = query(FleurinpData, project2, past_days, group_pks, all_users)
         list_project_headers.append('Formula')
     counter = 0
-    fleurinp_list_data = list()
+    fleurinp_list_data = []
 
     # , 'Formula', 'Symmetry'
     # It is fastest for list commands to only display content from a query
@@ -91,7 +91,7 @@ def list_fleurinp(raw, past_days, groups, all_users, strucinfo, uuid, ctime, ext
         #print(entry)
         for i, value in enumerate(entry):
             if isinstance(value, list):
-                new_entry = list()
+                new_entry = []
                 for elm in value:
                     if elm is None:
                         new_entry.append('')

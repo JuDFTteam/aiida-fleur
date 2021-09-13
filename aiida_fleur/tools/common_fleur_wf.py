@@ -353,30 +353,30 @@ def performance_extract_calcs(calcs):
     Note: Is not the fastest for many calculations > 1000.
     """
     data_dict = {
-        u'n_symmetries': [],
-        u'n_spin_components': [],
-        u'n_kpoints': [],
-        u'n_iterations': [],
-        u'walltime_sec': [],
-        u'walltime_sec_per_it': [],
-        u'n_iterations_total': [],
-        u'density_distance': [],
-        u'computer': [],
-        u'n_atoms': [],
-        u'kmax': [],
-        u'cost': [],
-        u'costkonstant': [],
-        u'walltime_sec_cor': [],
-        u'total_cost': [],
-        u'fermi_energy': [],
-        u'bandgap': [],
-        u'energy': [],
-        u'force_largest': [],
-        u'ncores': [],
-        u'pk': [],
-        u'uuid': [],
-        u'serial': [],
-        u'resources': []
+        'n_symmetries': [],
+        'n_spin_components': [],
+        'n_kpoints': [],
+        'n_iterations': [],
+        'walltime_sec': [],
+        'walltime_sec_per_it': [],
+        'n_iterations_total': [],
+        'density_distance': [],
+        'computer': [],
+        'n_atoms': [],
+        'kmax': [],
+        'cost': [],
+        'costkonstant': [],
+        'walltime_sec_cor': [],
+        'total_cost': [],
+        'fermi_energy': [],
+        'bandgap': [],
+        'energy': [],
+        'force_largest': [],
+        'ncores': [],
+        'pk': [],
+        'uuid': [],
+        'serial': [],
+        'resources': []
     }
     count = 0
     for calc in calcs:
@@ -422,7 +422,7 @@ def performance_extract_calcs(calcs):
         data_dict['n_iterations'].append(niter)
         data_dict['n_iterations_total'].append(res.number_of_iterations_total)
 
-        if u'overall_density_convergence' not in res_keys:
+        if 'overall_density_convergence' not in res_keys:
             data_dict['density_distance'].append(res.density_convergence)
         else:  # magnetic, old
             data_dict['density_distance'].append(res.overall_density_convergence)

@@ -33,7 +33,7 @@
         "lxml>=3.6.4",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools >= 0.6.0",
+        "masci-tools >= 0.6.2",
         "future",
         "pyhull",
         "more_itertools",
@@ -58,6 +58,7 @@
             "pytest>=2.9",
             "pytest-timeout",
             "pytest-cov>= 2.5.0",
+            "pytest-mpl>=0.12",
             "pgtest",
             "pytest-regressions>=1.0"
         ]
