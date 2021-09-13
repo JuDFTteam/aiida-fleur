@@ -22,6 +22,7 @@ from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
 
+
 class FleurinputgenCalculation(CalcJob):
     """
     JobCalculationClass for the inpgen, which is a preprocessor for a FLEUR calculation.
@@ -148,10 +149,7 @@ class FleurinputgenCalculation(CalcJob):
         #### WRITE ALL CARDS IN INPUT FILE ####
 
         with folder.open(self._INPUT_FILE_NAME, 'w') as input_file:
-            write_inpgen_file_aiida_struct(structure,
-                                           input_file,
-                                           input_params=parameters_dict,
-                                           settings=settings_dict)
+            write_inpgen_file_aiida_struct(structure, input_file, input_params=parameters_dict, settings=settings_dict)
 
         calcinfo = CalcInfo()
 
