@@ -30,7 +30,7 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
-from masci_tools.tools.cf_calculation import CFcalculation
+from masci_tools.tools.cf_calculation import CFCalculation
 import tempfile
 import h5py
 
