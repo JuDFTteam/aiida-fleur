@@ -164,3 +164,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
         builder = FleurOrbControlWorkChain.get_builder()
+
+    def test_fleur_cfcoeff_wc_init(self):
+        """
+        Test the interface of the cfcoeff workchain
+        """
+        from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
+
+        builder = FleurCFCoeffWorkChain.get_builder()

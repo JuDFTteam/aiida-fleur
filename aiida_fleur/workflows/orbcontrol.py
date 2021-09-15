@@ -744,7 +744,6 @@ class FleurOrbControlWorkChain(WorkChain):
         non_converged_configs = []
         configs_list = []
         outnodedict = {}
-
         e_u = 'htr'
         dis_u = 'me/bohr^3'
         for index, config in enumerate(self.ctx.fixed_configurations):
