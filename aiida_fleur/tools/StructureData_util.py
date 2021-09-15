@@ -1795,6 +1795,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
 
     return Dict(dict=bond_data)
 
+
 @cf
 def replace_element(inp_structure, replace_dict, replace_all=None):
     """
@@ -1867,6 +1868,7 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
                     new_structures[label] = StructureData(ase=struc)
 
     return new_structures
+
 
 def simplify_kind_name(kind_name):
     '''

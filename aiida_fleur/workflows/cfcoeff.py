@@ -84,7 +84,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         """
         init context and some parameters
         """
-        self.report('INFO: started crystal field coefficient workflow version {}' ''.format(self._workflowversion))
+        self.report(f'INFO: started crystal field coefficient workflow version {self._workflowversion}')
 
         ####### init    #######
 
@@ -112,7 +112,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             if key not in self._wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for CFCoeff contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for CFCoeff contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -417,7 +417,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 'chargeDensity': True,
                 'potential': False
             }},
-                              species=f'all-{element}')
+                             species=f'all-{element}')
         else:
             #Both potential and charge density
             fm.set_atomgroup(attributedict={'cFCoeffs': {
@@ -425,7 +425,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 'potential': True,
                 'remove4f': True
             }},
-                              species=f'all-{element}')
+                             species=f'all-{element}')
         fleurinp_cf = fm.freeze()
 
         inputs_rareearth = get_inputs_fleur(inputs.fleur,
@@ -454,14 +454,14 @@ class FleurCFCoeffWorkChain(WorkChain):
             if calc_name in self.ctx:
                 calc = self.ctx[calc_name]
             else:
-                message = ('One CF calculation was not run because the scf workflow failed: {}'.format(calc_name))
+                message = f'One CF calculation was not run because the scf workflow failed: {calc_name}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 skip_calculation = True
                 continue
 
             if not calc.is_finished_ok:
-                message = ('One CF calculation was not successful: {}'.format(calc_name))
+                message = f'One CF calculation was not successful: {calc_name}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 skip_calculation = True
@@ -470,13 +470,13 @@ class FleurCFCoeffWorkChain(WorkChain):
             try:
                 outputnode_calc = calc.outputs.output_parameters
             except KeyError:
-                message = ('One CF calculation failed, no output node: {}.' ' I skip this one.'.format(calc_name))
+                message = f'One CF calculation failed, no output node: {calc_name}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
 
             if 'CFdata.hdf' not in calc.outputs.retrieved.list_object_names():
-                message = ('One CF calculation did not produce a CFdata.hdf file: {}'.format(calc_name))
+                message = f'One CF calculation did not produce a CFdata.hdf file: {calc_name}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 skip_calculation = True
