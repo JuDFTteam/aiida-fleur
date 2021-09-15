@@ -13,10 +13,7 @@
     In this module you find the workflow 'FleurCFCoeffWorkChain' for calculating
     the 4f crystal field coefficients
 """
-from __future__ import absolute_import
-import copy
-
-from aiida.engine import CalcJob, WorkChain, ToContext
+from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
 from aiida.orm import Dict, load_node, Bool
@@ -31,7 +28,6 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
 from masci_tools.tools.cf_calculation import CFCalculation
-import tempfile
 import h5py
 
 

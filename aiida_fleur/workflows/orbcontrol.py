@@ -161,7 +161,8 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
-                               'populate_defaults': False
+                               'populate_defaults': False,
+                               'help': 'Inputs for SCF Workchain before adding LDA+U'
                            },
                            namespace='scf_no_ldau')
         spec.input('remote', valid_type=RemoteData, required=False)
@@ -171,7 +172,8 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
-                               'populate_defaults': False
+                               'populate_defaults': False,
+                               'help': 'Inputs for SCF Workchain after the LDA+U matrix was fixed'
                            },
                            exclude=('structure', 'fleurinp', 'remote_data'),
                            namespace='scf_with_ldau')
