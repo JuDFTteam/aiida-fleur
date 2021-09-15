@@ -1059,3 +1059,21 @@ def test_create_all_slabs(generate_structure):
                                         (2, 0, -1), (2, -1, -1)]
     for key, film_struc in film_strucs.items():
         assert isinstance(film_struc, StructureData)
+
+
+def test_replace_element(generate_structure):
+    from aiida_fleur.tools.StructureData_util import replace_element
+    from aiida.orm import Bool, Dict
+
+    structure = generate_structure()
+
+    result = replace_element(structure, Dict(dict={'Si': 'Y'}))
+
+    assert result['replaced_all'].kinds[0].symbols[0] == 'Y'
+
+    result = replace_element(structure, Dict(dict={'Si': 'Y'}), replace_all=Bool(False))
+
+    assert result['replaced_Si_Y_site_0'].kinds[0].symbols[0] == 'Y'
+    assert result['replaced_Si_Y_site_0'].kinds[1].symbols[0] == 'Si'
+    assert result['replaced_Si_Y_site_1'].kinds[0].symbols[0] == 'Si'
+    assert result['replaced_Si_Y_site_1'].kinds[1].symbols[0] == 'Y'

@@ -23,7 +23,7 @@ from pymatgen.core.surface import SlabGenerator
 import numpy as np
 
 from aiida.plugins import DataFactory
-from aiida.orm import load_node
+from aiida.orm import load_node, Bool
 from aiida.orm.nodes.data.structure import Site, Kind
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -1795,6 +1795,78 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
 
     return Dict(dict=bond_data)
 
+@cf
+def replace_element(inp_structure, replace_dict, replace_all=None):
+    """
+    Replaces the given element with the element_replacement, but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    Keeps the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: Dict with new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+
+    Example usage:
+        This example replaces all Neodymium atoms with Yttrium
+        replace_element(structure,Dict(dict={'Nd':'Y'}),replace_all=Bool(True))
+    """
+
+    return replace_elementf(inp_structure, replace_dict, replace_all)
+
+
+def replace_elementf(inp_structure, replace_dict, replace_all):
+    """
+    Replaces the site according to replace_dict (symbols), but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    DOES NOT keep the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: New StructureData node or list of new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+    """
+
+    if replace_all is None:
+        replace_all = Bool(True)
+
+    # test if structure:
+    structure = is_structure(inp_structure)
+    if not structure:
+        # TODO: log something
+        return None
+
+    StructureData = DataFactory('structure')
+
+    replace_dict = replace_dict.get_dict()
+
+    new_structures = {}
+
+    ase_struc = structure.get_ase()
+    if replace_all:
+        for replace_symbol, new_symbol in replace_dict.items():
+            ase_struc.symbols[ase_struc.symbols == replace_symbol] = new_symbol
+        new_structures['replaced_all'] = StructureData(ase=ase_struc)
+    else:
+        for replace_symbol, new_symbol in replace_dict.items():
+            for index, symbol in enumerate(ase_struc.symbols):
+                if symbol == replace_symbol:
+                    struc = ase_struc.copy()
+                    struc.symbols[index] = new_symbol
+                    label = f'replaced_{replace_symbol}_{new_symbol}_site_{index}'
+                    new_structures[label] = StructureData(ase=struc)
+
+    return new_structures
 
 def simplify_kind_name(kind_name):
     '''
