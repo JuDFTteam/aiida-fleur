@@ -57,6 +57,7 @@ def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=
                                  weights,
                                  special_labels=labels_dict,
                                  kpoint_type=kpoint_type,
+                                 name=name,
                                  switch=switch)
 
     return xmltree
