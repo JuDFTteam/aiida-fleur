@@ -21,7 +21,7 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
-
+import io
 
 class FleurinputgenCalculation(CalcJob):
     """
@@ -42,6 +42,7 @@ class FleurinputgenCalculation(CalcJob):
     _OUTPUT_FILE_NAME = 'out'
     _ERROR_FILE_NAME = 'out.error'
     _STRUCT_FILE_NAME = 'struct.xsf'
+    _JUDFT_WARN_ONLY_INFO_FILE_NAME = 'JUDFT_WARN_ONLY'
 
     _settings_keys = [
         'additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline', 'significant_figures_cell',
@@ -150,6 +151,11 @@ class FleurinputgenCalculation(CalcJob):
 
         with folder.open(self._INPUT_FILE_NAME, 'w') as input_file:
             write_inpgen_file_aiida_struct(structure, input_file, input_params=parameters_dict, settings=settings_dict)
+
+        # create a JUDFT_WARN_ONLY file in the calculation folder
+        with io.StringIO('/n') as handle:
+            warn_only_filename = self._JUDFT_WARN_ONLY_INFO_FILE_NAME
+            folder.create_file_from_filelike(handle, filename=warn_only_filename, mode='w')
 
         calcinfo = CalcInfo()
 
