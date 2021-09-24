@@ -65,7 +65,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
       2\n         14       0.0000000000       0.0000000000       0.0000000000
          14       0.2500000000       0.2500000000       0.2500000000\n"""
     # Checks on the files written to the sandbox folder as raw input
-    assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
@@ -135,7 +135,7 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
   div1=17   div2=17   div3=17   tkb=0.0005 /
 """
     # Checks on the files written to the sandbox folder as raw input
-    assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
