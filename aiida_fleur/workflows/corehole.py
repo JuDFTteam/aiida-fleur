@@ -366,7 +366,7 @@ class FleurCoreholeWorkChain(WorkChain):
         if self.ctx.be_to_calc[0] == 'all':
             corelevels_toc_new = []
             for element in valid_elements:
-                corelevels_toc_new.append('{}-all'.format(element))
+                corelevels_toc_new.append(f'{element}-all')
         else:
             corelevels_toc_new = self.ctx.be_to_calc
 
@@ -398,7 +398,7 @@ class FleurCoreholeWorkChain(WorkChain):
 
         ##########
         # 1. Find out what atoms to put coreholes on
-        self.report('Atoms to calculate : {}'.format(atoms_toc))
+        self.report(f'Atoms to calculate : {atoms_toc}')
         for atom_info in atoms_toc:
             if isinstance(atom_info, str):  # , six.text_type)):  #basestring):
                 if atom_info == 'all':
@@ -430,7 +430,7 @@ class FleurCoreholeWorkChain(WorkChain):
                             coreholes_atoms.append(site)
                 else:
                     # wrong tuple length this is not a  position
-                    self.report('WARNING: strange position/coordinates given: {}'.format(atom_info))
+                    self.report(f'WARNING: strange position/coordinates given: {atom_info}')
                     #
             elif isinstance(atom_info, int):  # index for sites
                 to_append = None
@@ -445,7 +445,7 @@ class FleurCoreholeWorkChain(WorkChain):
                 if to_append:
                     coreholes_atoms.append(to_append)
             else:
-                self.report("WARNING: input: {} of 'atoms' not recongized".format(atom_info))
+                self.report(f"WARNING: input: {atom_info} of 'atoms' not recongized")
 
         # TODO: remove doubles in coreholes_atoms?
         #print(coreholes_atoms)
@@ -455,7 +455,7 @@ class FleurCoreholeWorkChain(WorkChain):
 
         #########
         # 2. now check what type of corelevel shall we create on those atoms
-        self.report('Corelevels to calculate : {}'.format(corelevels_toc))
+        self.report(f'Corelevels to calculate : {corelevels_toc}')
         for corel in corelevels_toc:
             if isinstance(corel, str):  # , six.text_type)):  #basestring):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
@@ -482,7 +482,7 @@ class FleurCoreholeWorkChain(WorkChain):
                         para = self.ctx.ref_para
                         if para is not None:
                             para_dict = para.get_dict()
-                            self.report('INFO para is here: {}'.format(para_dict))
+                            self.report(f'INFO para is here: {para_dict}')
                             element_para = extract_elementpara(para_dict, elm_cl[0])
                             valid_coreconfig = element_para.get('econfig', get_coreconfig(elm_cl[0], full=True))
                         else:
@@ -760,13 +760,13 @@ class FleurCoreholeWorkChain(WorkChain):
                                           'description': scf_desc
                                       })  #
                 else:
-                    self.report('WARNING: a tuple in run_ref_scf which I do not reconise: {}'.format(node))
+                    self.report(f'WARNING: a tuple in run_ref_scf which I do not reconise: {node}')
             else:
-                self.report('WARNING: something in run_ref_scf which I do not reconise: {}'.format(node))
+                self.report(f'WARNING: something in run_ref_scf which I do not reconise: {node}')
                 continue
 
             #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
-            label = str('calc_ref{}'.format(i))
+            label = str(f'calc_ref{i}')
             self.ctx.labels.append(label)
             calcs[label] = res
             #res_all.append(res)
@@ -787,8 +787,8 @@ class FleurCoreholeWorkChain(WorkChain):
             print('collect results ...')
             print(calc)
             if not calc.is_finished_ok:
-                self.report('SCF workchain {} failed'.format(calc))
-                print('SCF workchain {} failed'.format(calc))
+                self.report(f'SCF workchain {calc} failed')
+                print(f'SCF workchain {calc} failed')
 
     def relaxation_needed(self):
         """
@@ -836,7 +836,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # now in parallel
         #print self.ctx.ref_calcs_torun
         i = 0  #
-        self.report('Calculations to launch : {}'.format(self.ctx.calcs_torun))
+        self.report(f'Calculations to launch : {self.ctx.calcs_torun}')
         for node in self.ctx.calcs_torun:
             #print node
             i = i + 1
@@ -877,9 +877,9 @@ class FleurCoreholeWorkChain(WorkChain):
                                               'description': scf_desc
                                           })  #
             else:
-                self.report('ERROR: Something in run_scfs which I do not recognize: {}'.format(node))
+                self.report(f'ERROR: Something in run_scfs which I do not recognize: {node}')
                 continue
-            label = str('calc{}'.format(i))
+            label = str(f'calc{i}')
             #print(label)
             #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
             self.ctx.labels.append(label)

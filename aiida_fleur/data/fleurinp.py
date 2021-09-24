@@ -273,7 +273,7 @@ class FleurinpData(Data):
                 #raise ValueError("Pass an absolute path for file1: {}".format(file1))
 
             if not os.path.isfile(file1):
-                raise ValueError('file1 must exist and must be a single file: {}'.format(file1))
+                raise ValueError(f'file1 must exist and must be a single file: {file1}')
 
             if dst_filename is None:
                 final_filename = os.path.split(file1)[1]

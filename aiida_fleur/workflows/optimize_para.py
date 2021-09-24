@@ -82,7 +82,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
+        self.report(f'started fleur_optimize_parameter workflow version {self._workflowversion}')
         self.report('Workchain node identifiers: ')  #{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
@@ -131,7 +131,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
+        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
 
         inpgencode = self.inputs.inpgen
         if 'calc_parameters' in self.inputs:

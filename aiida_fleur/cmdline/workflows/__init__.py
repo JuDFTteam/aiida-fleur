@@ -61,11 +61,11 @@ def workchain_res(process, info, label, show, keys, fmt):
             try:
                 result = {k: re_dict[k] for k in keys}
             except KeyError as exc:
-                echo.echo_critical("key '{}' was not found in the results dictionary".format(exc.args[0]))
+                echo.echo_critical(f"key '{exc.args[0]}' was not found in the results dictionary")
         else:
             result = re_dict
         if info:
-            echo.echo('# Info: {} {} dict:'.format(returned_dicts_info[i].link_label, returned_dicts_info[i].node))
+            echo.echo(f'# Info: {returned_dicts_info[i].link_label} {returned_dicts_info[i].node} dict:')
         echo.echo_dictionary(result, fmt=fmt)
 
 
@@ -103,11 +103,11 @@ def workchain_inputdict(process, info, label, show, keys, fmt):
             try:
                 result = {k: re_dict[k] for k in keys}
             except KeyError as exc:
-                echo.echo_critical("key '{}' was not found in the results dictionary".format(exc.args[0]))
+                echo.echo_critical(f"key '{exc.args[0]}' was not found in the results dictionary")
         else:
             result = re_dict
         if info:
-            echo.echo('# Info: {} {} dict:'.format(returned_dicts_info[i].link_label, returned_dicts_info[i].node))
+            echo.echo(f'# Info: {returned_dicts_info[i].link_label} {returned_dicts_info[i].node} dict:')
         if show:
             echo.echo_dictionary(result, fmt=fmt)
 

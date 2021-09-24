@@ -71,7 +71,7 @@ def register_error_handler(cls, priority):
         def error_handler(self, calculation):
             """Wrapped error handler to add a log to the report if the handler is called and verbosity is turned on."""
             if hasattr(cls, '_verbose') and cls._verbose:  # pylint: disable=protected-access
-                self.report('({}){}'.format(priority, handler.__name__))
+                self.report(f'({priority}){handler.__name__}')
             return handler(self, calculation)
 
         setattr(cls, handler.__name__, error_handler)

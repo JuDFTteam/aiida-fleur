@@ -204,7 +204,7 @@ class FleurOrbControlWorkChain(WorkChain):
         """
         init context and some parameters
         """
-        self.report('INFO: started orbital occupation control workflow version {}' ''.format(self._workflowversion))
+        self.report(f'INFO: started orbital occupation control workflow version {self._workflowversion}')
 
         ####### init    #######
 
@@ -248,7 +248,7 @@ class FleurOrbControlWorkChain(WorkChain):
             if key not in self._wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Orbcontrol contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Orbcontrol contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -573,15 +573,14 @@ class FleurOrbControlWorkChain(WorkChain):
             fixed_calc = self.ctx[f'Fixed_{index}']
 
             if not fixed_calc.is_finished_ok:
-                message = ('One Base workflow (fixed nmmpmat) failed: {}'.format(index))
+                message = f'One Base workflow (fixed nmmpmat) failed: {index}'
                 self.ctx.warnings.append(message)
                 continue
 
             try:
                 fixed_calc.outputs.output_parameters
             except KeyError:
-                message = ('One Base workflow (fixed nmmpmat) failed, no output node: {}.'
-                           ' I skip this one.'.format(index))
+                message = f'One Base workflow (fixed nmmpmat) failed, no output node: {index}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue
 
@@ -649,15 +648,14 @@ class FleurOrbControlWorkChain(WorkChain):
             if f'Relaxed_{index}' in self.ctx:
                 calc = self.ctx[f'Relaxed_{index}']
             else:
-                message = (
-                    'One SCF workflow was not run because the fixed calculation failed: {}'.format(f'Relaxed_{index}'))
+                message = (f'One SCF workflow was not run because the fixed calculation failed: Relaxed_{index}')
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
                 continue
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(f'Relaxed_{index}'))
+                message = f'One SCF workflow was not successful: Relaxed_{index}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 #We dont skip simply non-converged calculations
@@ -670,8 +668,7 @@ class FleurOrbControlWorkChain(WorkChain):
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.'
-                           ' I skip this one.'.format(f'Relaxed_{index}'))
+                message = f'One SCF workflow failed, no scf output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
@@ -680,8 +677,7 @@ class FleurOrbControlWorkChain(WorkChain):
             try:
                 fleurinp_scf = calc.outputs.fleurinp
             except KeyError:
-                message = ('One SCF workflow failed, no fleurinp output node: {}.'
-                           ' I skip this one.'.format(f'Relaxed_{index}'))
+                message = f'One SCF workflow failed, no fleurinp output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)

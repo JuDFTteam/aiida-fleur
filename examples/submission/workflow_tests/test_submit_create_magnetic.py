@@ -220,7 +220,7 @@ print('##################### TEST fleur_create_magnetic_wc #####################
 if submit_wc:
     res = submit(FleurCreateMagneticWorkChain, **inputs)
     print('##################### Submitted fleur_create_magnetic_wc #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print((res.pk))
     print('##################### Finished submiting fleur_create_magnetic_wc #####################')
 

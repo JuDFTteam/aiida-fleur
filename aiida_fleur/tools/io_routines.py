@@ -35,9 +35,9 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
             itemstring = ''
             for value in item:
                 if isinstance(value, str):
-                    itemstring = itemstring + '{}{}'.format(value, seperator)
+                    itemstring = itemstring + f'{value}{seperator}'
                 else:
-                    itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
+                    itemstring = itemstring + f'{float(value):0.8f}{seperator:s}'
             datastring = datastring + itemstring.strip() + '\n'
         thefile.write(datastring)
     #thefile.close()
@@ -82,12 +82,11 @@ def write_xps_spectra_datafile(nodes,
     tempst1 = ''
     for label in xdatalabel:
         tempst1 = tempst1 + ' | ' + label
-    tempst2 = (
-        '#####################  Data  ######################\n# Energy [eV] | Total intensity {}\n'.format(tempst1))
+    tempst2 = (f'#####################  Data  ######################\n# Energy [eV] | Total intensity {tempst1}\n')
 
     headstring = headstring + tempst + tempst2
 
-    print(('Writting theoretical XPS data to file: {}'.format(destination)))
+    print(f'Writting theoretical XPS data to file: {destination}')
     write_results_to_file(headstring, data, destination=destination, seperator='  ')
 
 
@@ -166,9 +165,9 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
         if iterations_to_keep < 0:
             # the first element has 1 (not 0) in xpath expresions
             position_keep = n_iters + iterations_to_keep + 1
-            delete_xpath = xpath_iter + '[position()<{}]'.format(int(position_keep))
+            delete_xpath = xpath_iter + f'[position()<{int(position_keep)}]'
         else:
-            delete_xpath = xpath_iter + '[position()>{}]'.format(int(iterations_to_keep))
+            delete_xpath = xpath_iter + f'[position()>{int(iterations_to_keep)}]'
 
         if abs(iterations_to_keep) > n_iters:
             print('Warning: iterations_to_keep is larger then the number of iterations'

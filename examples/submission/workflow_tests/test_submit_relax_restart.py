@@ -147,7 +147,7 @@ print('##################### TEST fleur_relax_wc #####################')
 if submit_wc:
     res = submit(FleurBaseRelaxWorkChain, **inputs)
     print('##################### Submited fleur_relax_wc #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print((res.pk))
     print('##################### Finished submiting fleur_relax_wc #####################')
 

@@ -126,8 +126,7 @@ class BaseRestartWorkChain(WorkChain):
         inputs = prepare_process_inputs(self._calculation_class, unwrapped_inputs)
         calculation = self.submit(self._calculation_class, **inputs)
 
-        self.report('launching {}<{}> iteration #{}'.format(
-            self.ctx.calc_name, calculation.pk, self.ctx.iteration))
+        self.report(f'launching {self.ctx.calc_name}<{calculation.pk}> iteration #{self.ctx.iteration}')
 
         return ToContext(calculations=append_(calculation))
 
@@ -157,7 +156,7 @@ class BaseRestartWorkChain(WorkChain):
                     self.ctx.calc_name, calculation.pk))
                 return
 
-            self.report('{}<{}> completed successfully'.format(self.ctx.calc_name, calculation.pk))
+            self.report(f'{self.ctx.calc_name}<{calculation.pk}> completed successfully')
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
             return
@@ -182,7 +181,7 @@ class BaseRestartWorkChain(WorkChain):
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
-        self.report('work chain completed after {} iterations'.format(self.ctx.iteration))
+        self.report(f'work chain completed after {self.ctx.iteration} iterations')
 
         for name, port in self.spec().outputs.items():
 
@@ -195,8 +194,7 @@ class BaseRestartWorkChain(WorkChain):
             else:
                 self.out(name, node)
                 if self._verbose:
-                    self.report("attaching the node {}<{}> as '{}'".format(
-                        node.__class__.__name__, node.pk, name))
+                    self.report(f"attaching the node {node.__class__.__name__}<{node.pk}> as '{name}'")
 
     def on_terminated(self):
         """Clean the working directories of all child calculations if `clean_workdir=True` in the inputs."""
@@ -217,7 +215,7 @@ class BaseRestartWorkChain(WorkChain):
                     pass
 
         if cleaned_calcs:
-            self.report('cleaned remote folders of calculations: {}'.format(' '.join(cleaned_calcs)))
+            self.report(f"cleaned remote folders of calculations: {' '.join(cleaned_calcs)}")
 
     def _handle_calculation_sanity_checks(self, calculation):
         """Perform a sanity check of a calculation that finished ok.
@@ -287,7 +285,7 @@ class BaseRestartWorkChain(WorkChain):
         :return: `ExitCode` if this is the second consecutive unexpected failure
         """
         if exception:
-            self.report('{}'.format(exception))
+            self.report(f'{exception}')
 
         if self.ctx.unexpected_failure:
             self.report('failure of {}<{}> could not be handled for the second consecutive time'.format(
@@ -295,5 +293,4 @@ class BaseRestartWorkChain(WorkChain):
             return self.exit_codes.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE
 
         self.ctx.unexpected_failure = True
-        self.report('failure of {}<{}> could not be handled, restarting once more'.format(
-            self.ctx.calc_name, calculation.pk))
+        self.report(f'failure of {self.ctx.calc_name}<{calculation.pk}> could not be handled, restarting once more')

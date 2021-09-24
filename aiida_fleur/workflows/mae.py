@@ -113,8 +113,7 @@ class FleurMaeWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
-                    ''.format(self._workflowversion))
+        self.report(f'INFO: started Magnetic Anisotropy Energy calculation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -136,7 +135,7 @@ class FleurMaeWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for MAE contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for MAE contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -483,7 +482,7 @@ class FleurMaeWorkChain(WorkChain):
                 t_energydict = [(x - minenergy) for x in t_energydict]
 
         except AttributeError as e_message:
-            message = ('Did not manage to read evSum or energy units after FT calculation. {}'.format(e_message))
+            message = f'Did not manage to read evSum or energy units after FT calculation. {e_message}'
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 

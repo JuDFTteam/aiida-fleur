@@ -105,7 +105,7 @@ class FleurStrainWorkChain(WorkChain):
         check parameters, what conditions? complete?
         check input nodes
         """
-        self.report('Started strain workflow version {}'.format(self._workflowversion))
+        self.report(f'Started strain workflow version {self._workflowversion}')
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -184,7 +184,7 @@ class FleurStrainWorkChain(WorkChain):
         for point in range(points):
             self.ctx.scalelist.append(startscale + point * step)
 
-        self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
+        self.report(f'scaling factors which will be calculated:{self.ctx.scalelist}')
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
         self.ctx.structurs = strain_structures(self.inputs.structure, self.ctx.scalelist)
 
@@ -200,7 +200,7 @@ class FleurStrainWorkChain(WorkChain):
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i])
             label_c = '|strain| fleur_scf_wc'
-            description = '|FleurStrainWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
+            description = f'|FleurStrainWorkChain|fleur_scf_wc|scale {label}, {i}'
             # inputs['label'] = label_c
             # inputs['description'] = description
 
@@ -260,7 +260,7 @@ class FleurStrainWorkChain(WorkChain):
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(label))
+                message = f'One SCF workflow was not successful: {label}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 continue
@@ -268,7 +268,7 @@ class FleurStrainWorkChain(WorkChain):
             try:
                 _ = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
+                message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
@@ -302,7 +302,7 @@ class FleurStrainWorkChain(WorkChain):
             gs_scale = volume * natoms / self.ctx.org_volume
             if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
                 warn = ('Groundstate volume was not in the scaling range.')
-                hint = ('Consider rerunning around point {}'.format(gs_scale))
+                hint = f'Consider rerunning around point {gs_scale}'
                 self.ctx.info.append(hint)
                 self.ctx.warnings.append(warn)
         else:
