@@ -83,7 +83,6 @@ class FleurParser(Parser):
         has_dos_file = False
         has_bands_file = False
         has_relax_file = False
-        invalid_mmpmat = False
 
         dos_file = None
         band_file = None
@@ -199,13 +198,11 @@ class FleurParser(Parser):
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
-                    elif 'Invalid elements in mmpmat' in error_file_lines:
-                        invalid_mmpmat = True
                     elif 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
-                        if 'fleurinpdata' in calc.inputs and 'relax.xml' in calc.inputs.fleurinpdata.files:
-                            return self.exit_codes.ERROR_DROP_CDN
-                        else:
-                            return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+                        if 'fleurinpdata' in calc.inputs:
+                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                                return self.exit_codes.ERROR_DROP_CDN
+                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
@@ -304,9 +301,6 @@ class FleurParser(Parser):
                     except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
-
-        if invalid_mmpmat:
-            return self.exit_codes.ERROR_INVALID_ELEMENTS_MMPMAT
 
 
 def parse_dos_file(dos_lines):  # , number_of_atom_types):

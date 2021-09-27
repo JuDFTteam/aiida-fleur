@@ -32,11 +32,12 @@ class FleurCreateMagneticWorkChain(WorkChain):
     """
         This workflow creates relaxed magnetic film on a substrate.
     """
-    _workflowversion = '0.1.2'
+    _workflowversion = '0.2.0'
 
     _default_wf_para = {
         'lattice': 'fcc',
-        'miller': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
+        'miller': None,
+        'directions': None,
         'host_symbol': 'Pt',
         'latticeconstant': 4.0,  # if equals to 0, use distance_suggestion
         'size': (1, 1, 5),
@@ -44,9 +45,16 @@ class FleurCreateMagneticWorkChain(WorkChain):
             0: 'Fe',
             -1: 'Fe'
         },
-        'hold_n_first_layers': 3,
+        'hold_layers': None,
+        'last_layer_factor': 0.85,
+        'first_layer_factor': 0.0,
+        'adjustment_needed': True,
         'decimals': 10,
+        'z_coordinate_window': 2,
         'pop_last_layers': 1,
+        'AFM_name': 'FM',
+        'magnetic_layers': 1,
+        'AFM_layer_positions': None,
         'total_number_layers': 4,
         'num_relaxed_layers': 2
     }
@@ -231,7 +239,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 try:
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
-                    return self.ctx.ERROR_EOS_FAILED
+                    return self.exit_codes.ERROR_EOS_FAILED
 
             self.ctx.scaling_param = eos_output.get_dict()['scaling_gs']
 
@@ -264,7 +272,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
                 try:
                     eos_output = self.ctx.eos_wc.outputs.output_eos_wc_para
                 except NotExistent:
-                    return self.ctx.ERROR_EOS_FAILED
+                    return self.exit_codes.ERROR_EOS_FAILED
             # print(eos_output.get_dict())
             scaling_param = eos_output.get_dict()['scaling_gs']
 
@@ -298,7 +306,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
         para_dict = {
             'total_number_layers': self.ctx.wf_dict['total_number_layers'],
-            'num_relaxed_layers': self.ctx.wf_dict['num_relaxed_layers']
+            'num_relaxed_layers': self.ctx.wf_dict['num_relaxed_layers'],
+            'z_coordinate_window': self.ctx.wf_dict['z_coordinate_window']
         }
 
         if not self.ctx.substrate:  # workchain was stated from remote->Relax or optimized_structure
@@ -363,11 +372,11 @@ def create_substrate_bulk(wf_dict_node):
     else:
         return ExitCode(380, 'ERROR_NOT_SUPPORTED_LATTICE', message='Specified substrate has to be bcc or fcc.')
 
-    miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    directions = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     host_symbol = str(wf_dict['host_symbol'])
     latticeconstant = float(wf_dict['latticeconstant'])
     size = (1, 1, 1)
-    structure = structure_factory(miller=miller,
+    structure = structure_factory(directions=directions,
                                   symbol=host_symbol,
                                   pbc=(1, 1, 1),
                                   latticeconstant=latticeconstant,
@@ -381,13 +390,17 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     """
     Create a film structure those interlayers will be relaxed.
     """
-    from aiida_fleur.tools.StructureData_util import create_manual_slab_ase, center_film, adjust_film_relaxation
+    from aiida_fleur.tools.StructureData_util import create_manual_slab_ase, center_film
+    from aiida_fleur.tools.StructureData_util import adjust_film_relaxation, adjust_sym_film_relaxation
+    from aiida_fleur.tools.StructureData_util import mark_fixed_atoms, has_z_reflection
+    from aiida_fleur.tools.StructureData_util import define_AFM_structures
 
     # scaling_parameter = eos_output.get_dict()['scaling_gs']
     wf_dict = wf_dict_node.get_dict()
     scaling_parameter = float(scaling_parameter)
 
     miller = wf_dict['miller']
+    directions = wf_dict['directions']
     host_symbol = wf_dict['host_symbol']
     latticeconstant = float(wf_dict['latticeconstant'] * scaling_parameter**(1 / 3.0))
     size = wf_dict['size']
@@ -395,10 +408,17 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
     pop_last_layers = wf_dict['pop_last_layers']
     decimals = wf_dict['decimals']
     lattice = wf_dict['lattice']
-    hold_layers = wf_dict['hold_n_first_layers']
+    hold_layers = wf_dict['hold_layers']
+    last_layer_factor = wf_dict['last_layer_factor']
+    first_layer_factor = wf_dict['first_layer_factor']
+    adjustment_needed = wf_dict['adjustment_needed']
+    AFM_name = wf_dict['AFM_name']
+    magnetic_layers = wf_dict['magnetic_layers']
+    AFM_layer_positions = wf_dict['AFM_layer_positions']
 
     structure = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
+                                       directions=directions,
                                        host_symbol=host_symbol,
                                        latticeconstant=latticeconstant,
                                        size=size,
@@ -408,37 +428,67 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
 
     structure = StructureData(ase=structure)
 
-    # substrate needs to be reversed
+    # define substrate in case of unknown surface, will be rewritten for known ones
     substrate = create_manual_slab_ase(lattice=lattice,
                                        miller=miller,
+                                       directions=directions,
                                        host_symbol=host_symbol,
                                        latticeconstant=latticeconstant,
                                        size=(1, 1, 1),
                                        replacements=None,
-                                       decimals=decimals,
-                                       inverse=True)
+                                       decimals=decimals)
 
     tmp_substrate = create_manual_slab_ase(lattice=lattice,
                                            miller=miller,
+                                           directions=directions,
                                            host_symbol=host_symbol,
                                            latticeconstant=latticeconstant,
                                            size=(2, 2, 2),
                                            replacements=None,
                                            decimals=decimals)
 
-    bond_length = find_min_distance_unary_struct(tmp_substrate)
+    bond_length = find_min_distance_unary_structure(tmp_substrate)
 
     suggestion = suggestion_node.get_dict()
 
-    # structure will be reversed here
-    structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, hold_layers)
+    if adjustment_needed:
+        if has_z_reflection(structure):
+            structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
+            sym_film = True
+        else:
+            structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
+                                               first_layer_factor)
+            sym_film = False
+
+    try:
+        if AFM_layer_positions:  # in this case use given layer positions, not adjusted ones (for AFM if FM is done)
+            AFM_structure = AFM_layer_positions
+        else:
+            AFM_structure = structure
+        structure, substrate = define_AFM_structures(AFM_structure,
+                                                     lattice,
+                                                     directions,
+                                                     host_symbol,
+                                                     replacements,
+                                                     latticeconstant,
+                                                     size,
+                                                     decimals,
+                                                     pop_last_layers,
+                                                     AFM_name,
+                                                     magnetic_layers,
+                                                     sym_film=sym_film)
+    except ValueError as err:  # do not mark spin-up spin-down atoms, something went wrong
+        if AFM_name != 'FM':
+            raise ValueError('Could not mark spin-up and spin-down atoms') from err
+
+    structure = mark_fixed_atoms(structure, hold_layers)
 
     centered_structure = center_film(structure)
 
     return {'structure': centered_structure, 'substrate': StructureData(ase=substrate)}
 
 
-def find_min_distance_unary_struct(tmp_substrate):
+def find_min_distance_unary_structure(tmp_substrate):
     """
     Finds a minimal distance beteween atoms in a unary structure.
 

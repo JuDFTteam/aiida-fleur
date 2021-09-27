@@ -13,99 +13,191 @@
 Tests for the `plot_fleur` function.
 All test are executed with show false, if some plot opens, something is not right
 """
-
-from __future__ import absolute_import
+#TODO: Tests for banddos and orbcontrol workchain
 import pytest
 import os
 from aiida import orm
-from aiida_fleur.tools.plot.fleur import plot_fleur
+from aiida_fleur.tools.plot import plot_fleur
 import aiida_fleur
-import matplotlib as plt
-plt.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 
-def test_plot_fleur_single_wc_matplotlib(aiida_profile, read_dict_from_file):
-    """test if plot fleur can visualize a workchain"""
+@pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
+def test_plot_fleur_single_scf_wc_matplotlib(read_dict_from_file):
+    """
+    Test of visualization of single SCF workchain with matplotlib
+    """
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
-    out_node_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_outputpara.json')
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
-    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
-    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
-    p_calc = plot_fleur(fleur_outputnode, show=False)
-
-    assert isinstance(p_calc, list)
-    assert p_calc[0] is None  # isinstance(p_scf[0], plt.figure)
+    plt.gcf().clear()
 
     scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+
     p_scf = plot_fleur(scf_output, show=False)
-
     assert isinstance(p_scf, list)
-    # assert isinstance(p_scf[0], type(plt.axes))  # isinstance(p_scf[0], plt.figure)
 
-    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
-    p_eos = plot_fleur(eos_output, show=False)
-
-    assert isinstance(p_eos, list)
-    #assert isinstance(p_eos[0], type(plt.axes))
+    return plt.gcf()
 
 
-def test_plot_fleur_multiple_wc_matplotlib(aiida_profile, read_dict_from_file):
-    """test if plot fleur can visualize a multiple workchain output node, Fleur calcjob output nodes """
-
-    from matplotlib.axes import Axes
+def test_plot_fleur_single_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
+    """
+    Test of visualization of single SCF workchain with bokeh
+    """
+    pytest.importorskip('bokeh')
+    from bokeh.layouts import gridplot  # pylint: disable=import-error
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
-    out_node_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_outputpara.json')
     out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
-    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
-
-    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
-    p_calc = plot_fleur([fleur_outputnode, fleur_outputnode], show=False)
-
-    assert isinstance(p_calc, list)
-    assert p_calc[0] == []  # isinstance(p_scf[0], plt.figure)
 
     scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
-    p_scf = plot_fleur([scf_output, scf_output], show=False)
 
+    p_scf = plot_fleur(scf_output, show=False, backend='bokeh')
     assert isinstance(p_scf, list)
-    # assert isinstance(p_scf[0][0], type(Axes))  # return 2 plots
+
+    grid = gridplot(p_scf[0], ncols=1)
+
+    check_bokeh_plot(grid)
+
+
+@pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
+def test_plot_fleur_multiple_scf_wc_matplotlib(read_dict_from_file):
+    """
+    Test of visualization of single SCF workchain with matplotlib
+    """
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
+
+    plt.gcf().clear()
+
+    scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    p_scf = plot_fleur([scf_output, scf_output], show=False, axis_energy=ax1, axis_distance=ax2)
+    assert isinstance(p_scf, list)
+
+    return fig
+
+
+def test_plot_fleur_multiple_scf_wc_bokeh(read_dict_from_file, check_bokeh_plot):
+    """
+    Test of visualization of single SCF workchain with bokeh
+    """
+    pytest.importorskip('bokeh')
+    from bokeh.layouts import gridplot  # pylint: disable=import-error
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
+
+    scf_output = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
+
+    p_scf = plot_fleur([scf_output, scf_output], show=False, backend='bokeh')
+    assert isinstance(p_scf, list)
+
+    grid = gridplot(p_scf[0], ncols=1)
+
+    check_bokeh_plot(grid)
+
+
+@pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
+def test_plot_fleur_single_eos_wc_matplotlib(read_dict_from_file):
+    """
+    Test of visualization of single SCF workchain with matplotlib
+    """
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    plt.gcf().clear()
+
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_scf_wc_para')
+    print(eos_output.get_dict())
+
+    p_eos = plot_fleur(eos_output, show=False)
+    assert isinstance(p_eos, list)
+
+    return plt.gcf()
+
+
+def test_plot_fleur_single_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot):
+    """
+    Test of visualization of single SCF workchain with bokeh
+    """
+    pytest.importorskip('bokeh')
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
     eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
-    p_eos = plot_fleur([eos_output, eos_output], show=False)
 
+    p_eos = plot_fleur(eos_output, show=False, backend='bokeh')
     assert isinstance(p_eos, list)
-    #assert isinstance(p_eos[0], type(Axes))
+
+    check_bokeh_plot(p_eos[0])
 
 
-def test_plot_fleur_single_wc_bokeh(aiida_profile, read_dict_from_file):
-    """test if plot fleur can visualize a single workchain with bokeh backend"""
-    try:  #bokeh is not a prerequisite of Aiida-Fleur, might become of masci-tools
-        from bokeh.layouts import column  # gridplot
-    except ImportError:
-        return
+@pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
+def test_plot_fleur_multiple_eos_wc_matplotlib(read_dict_from_file):
+    """
+    Test of visualization of single SCF workchain with matplotlib
+    """
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    plt.gcf().clear()
+
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_scf_wc_para')
+
+    p_eos = plot_fleur([eos_output, eos_output], show=False)
+    assert isinstance(p_eos, list)
+
+    return plt.gcf()
+
+
+def test_plot_fleur_multiple_eos_wc_bokeh(read_dict_from_file, check_bokeh_plot):
+    """
+    Test of visualization of single SCF workchain with bokeh
+    """
+    pytest.importorskip('bokeh')
+
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
+
+    eos_output = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
+
+    p_eos = plot_fleur([eos_output, eos_output], show=False, backend='bokeh')
+    assert isinstance(p_eos, list)
+
+    check_bokeh_plot(p_eos[0])
+
+
+def test_plot_fleur_single_invalid_node(read_dict_from_file):
+    """
+    Test that plot_fleur raises for non-workchain nodes
+    """
 
     aiida_path = os.path.dirname(aiida_fleur.__file__)
     out_node_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_outputpara.json')
-    out_node_scf_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_scf_wc_para.json')
-    out_node_eos_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_output_eos_wc_para.json')
 
     fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
-    p_calc = plot_fleur(fleur_outputnode, show=False, backend='bokeh')
+    with pytest.raises(ValueError, match=r'Sorry, I do not know how to visualize'):
+        plot_fleur(fleur_outputnode, show=False)
 
-    assert isinstance(p_calc, list)
-    assert p_calc[0] is None  # currently does not have a visualization
 
-    scf_out = orm.Dict(dict=read_dict_from_file(out_node_scf_path), label='output_scf_wc_para')
-    p_scf = plot_fleur(scf_out, show=False, backend='bokeh')
+def test_plot_fleur_mulitple_invalid_node(read_dict_from_file):
+    """
+    Test that plot_fleur raises for non-workchain nodes
+    """
 
-    assert isinstance(p_scf, list)
-    assert isinstance(p_scf[0], type(column()))
+    aiida_path = os.path.dirname(aiida_fleur.__file__)
+    out_node_path = os.path.join(aiida_path, '../tests/files/jsons/fleur_outputpara.json')
 
-    # eos_out = orm.Dict(dict=read_dict_from_file(out_node_eos_path), label='output_eos_wc_para')
-    # p_eos = plot_fleur(eos_out, show=False, backend='bokeh')
-
-    # assert isinstance(p_eos, list)
-    # assert isinstance(p_eos[0], type(column()))
+    fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
+    with pytest.warns(UserWarning, match=r'Sorry, I do not know how to visualize'):
+        plot_fleur([fleur_outputnode, fleur_outputnode], show=False)

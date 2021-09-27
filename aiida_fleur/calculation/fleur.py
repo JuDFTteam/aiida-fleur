@@ -100,6 +100,9 @@ class FleurCalculation(CalcJob):
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
+    #files for crystal field calculations
+    _CFDATA_HDF5_FILE_NAME = 'CFdata.hdf'
+
     #files for greensfunctions
     _GREENSF_HDF5_FILE_NAME = 'greensf.hdf'
 
@@ -415,7 +418,12 @@ class FleurCalculation(CalcJob):
             if modes['greensf']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
-            if modes['force_theorem']:
+            if modes['cf_coeff']:
+                if with_hdf5:
+                    mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
+                else:
+                    self.logger.warning('CF calculation without HDF5 not supported ' 'for automatic file retrieval.')
+            if modes['force_theorem'] or modes['cf_coeff']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
                 if with_hdf5:
@@ -439,7 +447,7 @@ class FleurCalculation(CalcJob):
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
                     if 'n_mmp_mat' in fleurinp.files:
-                        self.logger.warning('Ingnoring n_mmp_mat from fleurinp. '
+                        self.logger.warning('Ignoring n_mmp_mat from fleurinp. '
                                             'There is already an n_mmp_mat file '
                                             'for the parent calculation')
                         local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
@@ -475,14 +483,7 @@ class FleurCalculation(CalcJob):
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
             if copy_remotely:  # on same computer.
-                # from fleurmodes
-                if modes['dos']:
-                    pass
-                elif modes['band']:
-                    pass
-                else:
-                    filelist_tocopy_remote = filelist_tocopy_remote + \
-                        self._copy_filelist_scf_remote
+                filelist_tocopy_remote = filelist_tocopy_remote + self._copy_filelist_scf_remote
                 # from settings, user specified
                 # TODO: check if list?
                 for file1 in settings_dict.get('additional_remotecopy_list', []):
@@ -500,7 +501,7 @@ class FleurCalculation(CalcJob):
                 self.logger.info('remote copy file list %s', str(remote_copy_list))
 
         # create a JUDFT_WARN_ONLY file in the calculation folder
-        with io.StringIO(u'/n') as handle:
+        with io.StringIO('/n') as handle:
             warn_only_filename = self._JUDFT_WARN_ONLY_INFO_FILE_NAME
             folder.create_file_from_filelike(handle, filename=warn_only_filename, mode='w')
 
@@ -584,7 +585,7 @@ class FleurCalculation(CalcJob):
         # + ["<", self._INPXML_FILE_NAME,
         # ">", self._SHELLOUTPUT_FILE_NAME, "2>&1"]
         codeinfo.code_uuid = code.uuid
-        codeinfo.withmpi = self.node.get_attribute('max_wallclock_seconds')
+        codeinfo.withmpi = self.node.get_attribute('withmpi')
         codeinfo.stdin_name = None  # self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUTPUT_FILE_NAME
         #codeinfo.join_files = True

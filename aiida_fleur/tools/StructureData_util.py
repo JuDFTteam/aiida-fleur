@@ -548,7 +548,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
                 new_alst = atomlst.copy()
                 new_alst['id'] = should_id
                 if write_new_kind_names:
-                    new_alst[u'name'] = kind_name
+                    new_alst['name'] = kind_name
                 atomlistname = 'atom{}'.format(j)
                 param_new_dict[atomlistname] = new_alst
                 j = j + 1
@@ -910,7 +910,7 @@ def move_atoms_incell(structure, vector):
 
     for site in sites:
         pos = site.position
-        new_pos = np.around(np.array(pos) + np.array(vector), decimals=10)
+        new_pos = np.around(np.array(pos) + np.array(vector), decimals=8)
         new_site = Site(kind_name=site.kind_name, position=new_pos)
         new_structure.append_site(new_site)
         new_structure.label = structure.label
@@ -1143,31 +1143,38 @@ def sort_atoms_z_value(structure):
 
 def create_manual_slab_ase(lattice='fcc',
                            miller=None,
+                           directions=None,
                            host_symbol='Fe',
                            latticeconstant=4.0,
                            size=(1, 1, 5),
                            replacements=None,
-                           decimals=10,
-                           pop_last_layers=0,
-                           inverse=False):
+                           decimals=8,
+                           pop_last_layers=0):
     """
     Wraps ase.lattice lattices generators to create a slab having given lattice vectors directions.
 
     :param lattice: 'fcc' and 'bcc' are supported. Set the host lattice of a slab.
-    :param miller: a list of directions of lattice vectors
+    :param miller: a list of directions of planes forming the primitive unit cell
+    :param directions: a list of directions of lattice vectors
     :param symbol: a string specifying the atom type
     :param latticeconstant: the lattice constant of a structure
     :param size: a 3-element tuple that sets supercell size. For instance, use (1,1,5) to set
                  5 layers of a slab.
+    :param replacements: a dict of type {INT: STRING}, where INT is the layer number to be replaced
+                         (counting from lowest z-coordinate layers, INT=1 for the first layer
+                         INT=-1 for the last one) and STRING is the element name.
     :param decimals: sets the rounding of atom positions. See numpy.around.
-    :param pop_last_layers: specifies how many bottom layers to remove. Sometimes one does not want
+    :param pop_last_layers: specifies how many layers to remove. Sometimes one does not want
                             to use the integer number of unit cells along z, extra layers can be
-                            removed.
+                            removed. Layers are removed in order from highest to lowest z-coordinate.
     :return structure: an ase-lattice representing a slab with replaced atoms
 
     """
+
     if miller is None:
-        miller = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        miller = [None, None, None]
+    if directions is None:
+        directions = [None, None, None]
 
     if lattice == 'fcc':
         from ase.lattice.cubic import FaceCenteredCubic
@@ -1179,12 +1186,26 @@ def create_manual_slab_ase(lattice='fcc',
         raise ValueError('The given lattice {} is not supported'.format(lattice))
 
     structure = structure_factory(miller=miller,
+                                  directions=directions,
                                   symbol=host_symbol,
                                   pbc=(1, 1, 0),
                                   latticeconstant=latticeconstant,
                                   size=size)
 
-    *_, layer_occupancies = get_layers(structure)
+    # sort atoms according to z coordinate
+    current_symbols = structure.get_chemical_symbols()
+    positions = structure.positions
+
+    zipped = zip(positions, current_symbols)
+    zipped = sorted(zipped, key=lambda x: x[0][2])
+
+    positions = [x[0] for x in zipped]
+    current_symbols = [x[1] for x in zipped]
+    structure.set_chemical_symbols(current_symbols)
+    structure.set_positions(positions)
+
+    # pop layers having the highest z coordinate
+    layer_occupancies = get_layers(structure)[2]
 
     if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
@@ -1199,34 +1220,21 @@ def create_manual_slab_ase(lattice='fcc',
     for i in range(atoms_to_pop[pop_last_layers]):
         structure.pop()
 
+    # incorporate replacements
     current_symbols = structure.get_chemical_symbols()
-    positions = structure.positions
-
-    zipped = zip(positions, current_symbols)
-    zipped = sorted(zipped, key=lambda x: x[0][2])
-
-    positions = [x for x, _ in zipped]
-    current_symbols = [x for _, x in zipped]
-    structure.set_chemical_symbols(current_symbols)
-    structure.set_positions(positions)
-
-    *_, layer_occupancies = get_layers(structure)
+    layer_occupancies = get_layers(structure)[2]
     layer_occupancies.insert(0, 0)
     for i, at_type in replacements.items():
         if isinstance(i, str):
             i = int(i)
-        if i < 0:
-            i = i - 1
+        if i != 0:
+            i = i - 1  # if i positive: makes layers count from 1; if negative: makes count from -1
+        else:
+            raise ValueError('replacement layer should not be equal to 0')
         atoms_to_skip = np.cumsum(np.array(layer_occupancies))[i]
         for k in range(layer_occupancies[i + 1]):
             current_symbols[k + atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
-
-    if inverse:
-        structure.positions[:, 2] = -structure.positions[:, 2]
-        structure.positions = np.around(structure.positions, decimals=decimals)
-    else:
-        structure.positions = np.around(structure.positions, decimals=decimals)
 
     return structure
 
@@ -1235,7 +1243,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               tolerance_decimals=10):
+                               z_coordinate_window=3):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -1269,16 +1277,19 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     sorted_struc = sort_atoms_z_value(relaxed_structure)
     sites = sorted_struc.sites
 
-    layers = {np.around(atom.position[2], decimals=tolerance_decimals) for atom in sites}
+    layers = {np.around(atom.position[2], decimals=z_coordinate_window) for atom in sites}
     num_layers = len(layers)
-    max_layers_to_extract = num_layers // 2 + num_layers % 2
+    if has_z_reflection(sorted_struc):
+        max_layers_to_extract = num_layers // 2 + num_layers % 2
+    else:
+        max_layers_to_extract = num_layers
 
     if isinstance(orig_structure, StructureData):
         positions = orig_structure.get_ase().positions
     else:
         positions = orig_structure.positions
 
-    num_layers_org = len({np.around(x[2], decimals=tolerance_decimals) for x in positions})
+    num_layers_org = len({np.around(x[2], decimals=z_coordinate_window) for x in positions})
 
     if num_layers_org > num_layers:
         raise ValueError('Your original structure contains more layers than given in relaxed '
@@ -1296,29 +1307,29 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     magn_structure.pbc = (True, True, False)
     for kind in relaxed_structure.kinds:
         kind_append = kind
-        kind_append.name = kind.name.split('-')[0]
+        kind_append.name = simplify_kind_name(kind.name)
         try:
-            magn_structure.append_kind(kind)
+            magn_structure.append_kind(kind_append)
         except ValueError:
             pass
 
     done_layers = 0
     while True:
         if done_layers < num_relaxed_layers:
-            layer, *_ = get_layers(sorted_struc)
+            layer = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)[0]
             for atom in layer[done_layers]:
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
             k = done_layers % num_layers_org
-            layer, pos_z, _ = get_layers(orig_structure)
-            if k == 0:
-                add_distance = abs(pos_z[0] + orig_structure.cell[2][2] - pos_z[-1])
-            else:
-                add_distance = abs(pos_z[k] - pos_z[k - 1])
+            layer = get_layers(orig_structure, z_coordinate_window=z_coordinate_window)[0]
             prev_layer_z = magn_structure.sites[-1].position[2]
             for atom in layer[k]:
+                if k == 0:
+                    add_distance = abs(atom[0][2] + orig_structure.cell[2][2] - layer[k - 1][0][0][2])
+                else:
+                    add_distance = abs(atom[0][2] - layer[k - 1][0][0][2])
                 atom[0][2] = prev_layer_z + add_distance
                 a = Site(kind_name=atom[1], position=atom[0])
                 magn_structure.append_site(a)
@@ -1330,14 +1341,17 @@ def magnetic_slab_from_relaxed(relaxed_structure,
     return magn_structure
 
 
-def get_layers(structure, decimals=10):
+def get_layers(structure, z_coordinate_window=8):
     """
     Extracts atom positions and their types belonging to the same layer
     Removes any information related to kind specie.
 
     :param structure: ase lattice or StructureData which represents a slab
     :param number: the layer number. Note, that layers will be sorted according to z-position
-    :param decimals: sets the tolerance of atom positions determination. See more in numpy.around.
+    :param z_coordinate_window: sets the maximal difference between 2 atoms that will be considered in the same layer.
+                                it is an interger, which sets how z-coordinates will be rounded. For instance,
+                                z_coordinate_window = 2 means that first z-coordinates will be rounded up to 2 digits
+                                after the dot and than grouped.
     :return layer, layer_z_positions: layer is a list of tuples, the first element of which is
                                       atom positions and the second one is atom type.
                                       layer_z_position is a sorted list of all layer positions
@@ -1351,9 +1365,8 @@ def get_layers(structure, decimals=10):
     structure = copy.deepcopy(structure)
 
     if isinstance(structure, StructureData):
-        reformat = [
-            (list(x.position), x.kind_name.split('-')[0]) for x in sorted(structure.sites, key=lambda x: x.position[2])
-        ]
+        reformat = [(list(x.position), simplify_kind_name(x.kind_name))
+                    for x in sorted(structure.sites, key=lambda x: x.position[2])]
     elif isinstance(structure, Lattice):
         reformat = list(zip(structure.positions, structure.get_chemical_symbols()))
     else:
@@ -1362,7 +1375,7 @@ def get_layers(structure, decimals=10):
     layer_z_positions = []
     layer_occupancies = []
     layers = []
-    for val, e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=decimals)):
+    for val, e in groupby(reformat, key=lambda x: np.around(x[0][2], decimals=z_coordinate_window)):
         layer_z_positions.append(val)
         layer_content = list(e)
         layers.append(layer_content)
@@ -1371,17 +1384,133 @@ def get_layers(structure, decimals=10):
     return layers, layer_z_positions, layer_occupancies
 
 
-def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, hold_layers=3):
+def adjust_film_relaxation(structure,
+                           suggestion,
+                           scale_as=None,
+                           bond_length=None,
+                           last_layer_factor=0.85,
+                           first_layer_factor=0.85):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
-    This function only works if USER_API_KEY was set.
+    Works only for films having no z-reflection symmetry, for other films check out the adjust_sym_film_relaxation
 
-    For now only binary structures are analysed to ensure the closest contact between two
-    elements of the interest. In case of trinary systems (like ABC) I can not not guarantee that
-    A and C will be the nearest neighbours.
+    .. warning:
 
-    The same is true for interlayer distances of the same element. To ensure the nearest-neighbour
-    condition I use unary compounds.
+        This should work ony for metallic bonding since bond length can drastically
+        depend on the atom hybridisation.
+
+    .. warning:
+
+        The algorithm builds structure from the highest z-coordinates to the lowest
+        z-coordinates. If your system is a film deposited on substrate, make sure that
+        the substrate is located above magnetic elements i.e. the substrate has the most positive z-coordinates.
+        If you use create_manual_slab_ase, it can be achieved by replacing substrate for magnetic elements from the
+        bottom, using for example {1: 'Fe'} instead of {-1: 'Fe'}.
+
+    :param structure: ase film structure which will be adjusted
+    :param suggestion: dictionary containing average bond length between different elements,
+                       is is basically the result of
+                       :py:func:`~aiida_fleur.tools.StructureData_util.request_average_bond_length()`
+    :param scale_as: an element name, for which the El-El bond length will be enforced. It is
+                     can be helpful to enforce the same interlayer distance in the substrate,
+                     i.e. adjust deposited film interlayer distances only.
+    :param bond_length: a float that sets the bond length for scale_as element
+    :param hold_layers: this parameters sets the number of layers that will be marked via the
+                        certain label. The label is reserved for future use in the relaxation WC:
+                        all the atoms marked with the label will not be relaxed.
+    :param last_layer_factor: a float factor to which interlayer distance between last and second last layers
+                              is multiplied
+    :param first_layer_factor: a float factor to which interlayer distance between first and second layers
+                              is multiplied
+    """
+    from aiida.orm import StructureData
+    from copy import deepcopy
+    from itertools import product
+
+    if scale_as and not bond_length:
+        raise ValueError('bond_length is required when scale_as was provided')
+
+    structure = sort_atoms_z_value(structure)
+    layers = get_layers(structure)[0][::-1]  # inverse the structure to start building from substrate
+
+    suggestion = deepcopy(suggestion)
+    if scale_as:
+        norm = suggestion[scale_as][scale_as]
+        for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
+            try:
+                suggestion[sym1][sym2] = suggestion[sym1][sym2] / norm
+            except KeyError:
+                pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
+
+    layers_supercell = get_layers(supercell_ncf(structure, 2, 2, 1))[0][::-1]
+
+    def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
+        pos_prev = np.array(atom_prev[0])[0:2]
+        z_dist = [0]
+        for atom_this in layers_supercell[num_layer]:
+            pos_this = np.array(atom_this[0])[0:2]
+            xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
+            if scale_as:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+            else:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+            if xy_dist_sq < bond_length_sq:
+                z_dist.append((bond_length_sq - xy_dist_sq)**(0.5))
+        return z_dist
+
+    def suggest_distance_to_previous(num_layer):
+        z_distances = []
+        for atom_prev in layers_supercell[num_layer - 1]:
+            z_distances.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+
+        # find suggestion for distance to 2nd layer
+        z_distances2 = []
+        if num_layer != 1:
+            for atom_prev in layers_supercell[num_layer - 2]:
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+
+        if not z_distances:
+            z_distances = [0]
+
+        if not z_distances2:
+            z_distances2 = [0]
+
+        return max(z_distances), max(z_distances2)
+
+    # take relaxed interlayers
+    rebuilt_structure = StructureData(cell=structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+
+    for atom in layers[0]:
+        rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -atom[0][2]),
+                                      name=atom[1])  # minus inverses back
+
+    prev_distance = 0
+    for i, layer in enumerate(layers[1:]):
+        add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
+        add_distance2 = add_distance2 - prev_distance
+        if add_distance1 <= 0 and add_distance2 <= 0:
+            raise ValueError('error not implemented')
+        prev_distance = max(add_distance1, add_distance2)
+        if i == len(layers) - 2 and last_layer_factor:
+            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
+        elif i == 0 and first_layer_factor:
+            prev_distance = prev_distance * first_layer_factor
+
+        layer_copy = deepcopy(layer)
+        prev_layer_z = -rebuilt_structure.sites[-1].position[2]  # minus to pretend that we built inverted structure
+        for atom in layer_copy:
+            atom[0][2] = -(prev_layer_z + prev_distance)  # minus inverses back
+            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+
+    rebuilt_structure = center_film(rebuilt_structure)
+    return rebuilt_structure
+
+
+def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, last_layer_factor=0.85):
+    """
+    Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
+    Works only for films having z-reflection symmetry, for other films check out the adjust_film_relaxation
 
     .. warning:
 
@@ -1399,6 +1528,8 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     :param hold_layers: this parameters sets the number of layers that will be marked via the
                         certain label. The label is reserved for future use in the relaxation WC:
                         all the atoms marked with the label will not be relaxed.
+    :param last_layer_factor: a float factor to which interlayer distance between last and second last layers
+                              is multiplied
     """
     from aiida.orm import StructureData
     from copy import deepcopy
@@ -1407,8 +1538,8 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
     if scale_as and not bond_length:
         raise ValueError('bond_length is required when scale_as was provided')
 
+    structure = center_film(structure)
     structure = sort_atoms_z_value(structure)
-    layers, z_positions, occupancies = get_layers(structure)
 
     suggestion = deepcopy(suggestion)
     if scale_as:
@@ -1419,38 +1550,40 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
             except KeyError:
                 pass  # do nothing, happens for magnetic-magnetic or substrate-substrate combinations
 
+    # sort layers from central to surface atoms
+    sorted_layers = sorted(get_layers(structure)[0], key=lambda x: abs(x[0][0][2]))
+    sorted_layers = [x for x in sorted_layers if x[0][0][2] >= 0]
+
+    layers_supercell = sorted(get_layers(supercell_ncf(structure, 2, 2, 1))[0], key=lambda x: abs(x[0][0][2]))
+    layers_supercell = [x for x in layers_supercell if x[0][0][2] >= 0]
+
+    def calculate_distance_to_previous(num_layer, atom_prev, layers_supercell):
+        pos_prev = np.array(atom_prev[0])[0:2]
+        z_dist = [0]
+        for atom_this in layers_supercell[num_layer]:
+            pos_this = np.array(atom_this[0])[0:2]
+            xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
+            if scale_as:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
+            else:
+                bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
+            if xy_dist_sq < bond_length_sq:
+                z_dist.append((bond_length_sq - xy_dist_sq)**(0.5))
+        return z_dist
+
     def suggest_distance_to_previous(num_layer):
         z_distances = []
-        for atom_prev in layers[num_layer - 1]:
-            pos_prev = np.array(atom_prev[0])[0:2]
-            for atom_this in layers[num_layer]:
-                pos_this = np.array(atom_this[0])[0:2]
-                xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
-                if scale_as:
-                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
-                else:
-                    bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
-                if xy_dist_sq > bond_length_sq:
-                    pass
-                else:
-                    z_distances.append((bond_length_sq - xy_dist_sq)**(0.5))
+        for atom_prev in layers_supercell[num_layer - 1]:
+            z_distances.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
 
-        # find suggestion for distance to 2nd layer back
+        # find suggestion for distance to 2nd previous layer
         z_distances2 = []
         if num_layer != 1:
-            for atom_prev in layers[num_layer - 2]:
-                pos_prev = np.array(atom_prev[0])[0:2]
-                for atom_this in layers[num_layer]:
-                    pos_this = np.array(atom_this[0])[0:2]
-                    xy_dist_sq = np.linalg.norm(pos_prev - pos_this)**2
-                    if scale_as:
-                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2 * bond_length**2
-                    else:
-                        bond_length_sq = suggestion[atom_prev[1]][atom_this[1]]**2
-                    if xy_dist_sq > bond_length_sq:
-                        pass
-                    else:
-                        z_distances2.append((bond_length_sq - xy_dist_sq)**(0.5))
+            for atom_prev in layers_supercell[num_layer - 2]:
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
+        elif layers_supercell[0][0][0][2] == 0:  # if it is the second layer and the first one is in the center
+            for atom_prev in layers_supercell[num_layer]:  # we should consider the mirror image too
+                z_distances2.extend(calculate_distance_to_previous(num_layer, atom_prev, layers_supercell))
 
         if not z_distances:
             z_distances = [0]
@@ -1460,85 +1593,143 @@ def adjust_film_relaxation(structure, suggestion, scale_as=None, bond_length=Non
 
         return max(z_distances), max(z_distances2)
 
-    # take relaxed interlayers
     rebuilt_structure = StructureData(cell=structure.cell)
     rebuilt_structure.pbc = (True, True, False)
-    # for kind in structure.kinds:
-    #     rebuilt_structure.append_kind(kind)
 
-    for atom in layers[0]:
-        # a = Site(kind_name=atom[1], position=atom[0])
-        # minus because I build from bottom (inversed structure)
-        if hold_layers < 1:
-            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -atom[0][2]), name=atom[1])
-        else:
-            rebuilt_structure.append_atom(symbols=atom[1],
-                                          position=(atom[0][0], atom[0][1], -atom[0][2]),
-                                          name=atom[1] + '49999')
+    for atom in sorted_layers[0]:
+        if atom[0][2] != 0:  # no layers in the center, calculate distance to the mirror image
+            z_distances2 = []
+            for atom_prev in layers_supercell[0]:
+                z_distances2.extend(calculate_distance_to_previous(0, atom_prev, layers_supercell))
+            z_first = max(z_distances2) / 2
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], z_first), name=atom[1])
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], -z_first), name=atom[1])
+        else:  # if the first layer is in the center we can simply add it
+            rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
-    for i, layer in enumerate(layers[1:]):
+
+    for i, layer in enumerate(sorted_layers[1:]):
         add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
-        add_distance2 = add_distance2 - prev_distance
+        if i == 0:  # the 2nd distance is the distance to the mirror image in films with no central layer
+            # for a film with central layer add_distance2 == 0
+            add_distance2 = add_distance2 / 2
+        else:
+            add_distance2 = add_distance2 - prev_distance
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(layers) - 2:
-            prev_distance = prev_distance * 0.85  # last layer should be closer
+        if i == len(sorted_layers) - 2 and last_layer_factor:
+            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
-        prev_layer_z = rebuilt_structure.sites[-1].position[2]
+        prev_layer_z = max([x.position[2] for x in rebuilt_structure.sites])
+
         for atom in layer_copy:
-            atom[0][2] = prev_layer_z - prev_distance  # minus because I build from bottom (inverse)
-            # a = Site(kind_name=atom[1], position=atom[0])
-            # rebuilt_structure.append_site(a)
-            if i < hold_layers - 1:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1] + '49999')
-            else:
-                rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
+            rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
+            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])
 
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
 
-def request_average_bond_length_store(main_elements, sub_elements, user_api_key):
+def mark_fixed_atoms(structure, hold_layers=None):
+    '''
+    Marks atom in layers, that should be fixed in the relaxation. Uses reserved 49999 label
+    '''
+    from aiida.orm import StructureData
+
+    if hold_layers is None or not hold_layers:
+        return structure
+
+    rebuilt_structure = StructureData(cell=structure.cell)
+    rebuilt_structure.pbc = (True, True, False)
+
+    layers = get_layers(structure)[0]
+
+    for i, layer in enumerate(layers):
+        if i + 1 in hold_layers or (-len(layers) + i) in hold_layers:
+            addition = '49999'
+        else:
+            addition = ''
+        for atom in layer:
+            element = atom[1].rstrip('0123456789')
+            old_addition = atom[1][len(element):]
+            if old_addition != '' and addition == '':
+                addition = old_addition
+            rebuilt_structure.append_atom(position=atom[0], symbols=element, name=element + addition)
+
+    return rebuilt_structure
+
+
+def has_z_reflection(structure):
+    '''
+    Checks if a structure has z-reflection symmetry
+    '''
+    structure = center_film(structure)
+    structure = sort_atoms_z_value(structure)
+    layers = get_layers(structure)[0]
+
+    for i, layer in enumerate(layers):
+        for atom in layer:
+            atom_symmetrical = list(layers[-1 - i])
+            atom_check = ([atom[0][0], atom[0][1], -atom[0][2]], atom[1])
+
+            if atom_check not in atom_symmetrical:
+                return False
+    return True
+
+
+def request_average_bond_length_store(first_bin, second_bin, user_api_key, ignore_second_bin=False):
     """
     Requests MaterialsProject to estimate thermal average bond length between given elements.
     Also requests information about lattice constants of fcc and bcc structures.
     Stores the result in the Database. Notice that this is not a calcfunction!
     Therefore, the inputs are not stored and the result node is unconnected.
 
-    :param main_elements: element list to calculate the average bond length
-                          only combinations of AB, AA and BB are calculated, where
-                          A belongs to main_elements, B belongs to sub_elements.
-    :param sub_elements: element list, see main_elements
+    :param first_bin: element list to calculate the average bond length
+                      only combinations of AB, AA and BB are calculated, where
+                      A belongs to first_bin, B belongs to second_bin.
+    :param second_bin: element list, see main_elements
+    :param user_api_key: user API key from materialsproject
+    :param ignore_second_bin: if True, the second bin is ignored and all possible combinations from the first one are
+                              constructed.
     :return: bond_data, a dict containing obtained lattice constants.
     """
-    result = request_average_bond_length(main_elements, sub_elements, user_api_key)
+    result = request_average_bond_length(first_bin, second_bin, user_api_key, ignore_second_bin)
     result.store()
     return result
 
 
-def request_average_bond_length(main_elements, sub_elements, user_api_key):
+def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_second_bin=False):
     """
     Requests MaterialsProject to estimate thermal average bond length between given elements.
     Also requests information about lattice constants of fcc and bcc structures.
 
-    :param main_elements: element list to calculate the average bond length
-                          only combinations of AB, AA and BB are calculated, where
-                          A belongs to main_elements, B belongs to sub_elements.
-    :param sub_elements: element list, see main_elements
+    :param first_bin: element list to calculate the average bond length
+                      only combinations of AB are calculated, where
+                      A belongs to first_bin, B belongs to second_bin.
+    :param second_bin: element list, see main_elements
+    :param user_api_key: user API key from materialsproject
+    :param ignore_second_bin: if True, the second bin is ignored and all possible combinations from the first one are
+                              constructed.
     :return: bond_data, a dict containing obtained lattice constants.
     """
     from itertools import product, combinations
-    from math import exp
+    from math import exp  # pylint: disable=no-name-in-module
     from aiida.orm import Dict
     from pymatgen.ext.matproj import MPRester
     from collections import defaultdict
     from copy import deepcopy
 
     bond_data = defaultdict(lambda: defaultdict(lambda: 0.0))
-    symbols = main_elements + sub_elements
+    if ignore_second_bin:
+        symbols = first_bin
+        second_bin_calculate = first_bin
+    else:
+        symbols = first_bin + second_bin
+        second_bin_calculate = second_bin
 
     for sym in symbols:
         distance = 0
@@ -1570,7 +1761,9 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
         bond_data[sym][sym] = distance
         print('Request completed for {symst} {symst} pair'.format(symst=sym))
 
-    for sym1, sym2 in product(main_elements, sub_elements):
+    for sym1, sym2 in product(first_bin, second_bin_calculate):
+        if sym1 == sym2:
+            continue
         distance = 0
         partition_function = 0
         with MPRester(user_api_key) as mat_project:
@@ -1598,6 +1791,319 @@ def request_average_bond_length(main_elements, sub_elements, user_api_key):
         print('Request completed for {} {} pair'.format(sym1, sym2))
 
     return Dict(dict=bond_data)
+
+
+def simplify_kind_name(kind_name):
+    '''
+    Simplifies the kind name string. Example: "W-1" -> "W", "Iron (Fe)" -> "Fe"
+    '''
+    if '(' in kind_name:
+        return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
+    else:
+        return kind_name.split('-')[0]
+
+
+def define_AFM_structures(structure,
+                          lattice,
+                          directions,
+                          host_symbol,
+                          replacements,
+                          latticeconstant,
+                          size,
+                          decimals=8,
+                          pop_last_layers=0,
+                          AFM_name='FM',
+                          magnetic_layers=1,
+                          sym_film=False):
+    """
+    Create
+    """
+    from aiida.orm import StructureData
+    if magnetic_layers not in [1, 2]:
+        raise ValueError('magnetic_layers should be equal to 1 or 2, other options are not supported')
+
+    size_z = size[2]
+
+    if lattice == 'fcc':
+
+        if directions == [[-1, 1, 0], [0, 0, 1], [1, 1, 0]]:
+            if AFM_name == 'FM':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=directions,
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=directions,
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
+                def spin_up(atom):
+                    return True
+
+            elif AFM_name == 'AFM_x':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(2, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(2, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_y':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 2, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 2, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, 1),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_xy':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[-1, 1, 2], [1, -1, 2], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[-1, 1, 2], [1, -1, 2], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
+                last_layer_z = get_layers(output_structure)[1][-1]
+
+                def spin_up(atom):
+                    if round(atom[0][2], 10) > 0 and round(atom[0][2],
+                                                           decimals) != last_layer_z:  # 2nd first and last layers only
+                        if round(atom[0][0], 10) == 0 and round(atom[0][1], 10) != 0 or round(
+                                atom[0][0], 10) != 0 and round(atom[0][1], 10) == 0:
+                            return False
+                    else:  # first and last layers only
+                        if round(atom[0][0], 10) != 0 and round(atom[0][1], 10) != 0:
+                            return False
+                    return True
+
+    elif lattice == 'bcc':
+
+        if directions == [[1, -1, 1], [1, -1, -1], [1, 1, 0]]:
+            if AFM_name == 'FM':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=directions,
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=directions,
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
+                def spin_up(atom):
+                    return True
+
+            elif AFM_name == 'AFM_x':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_y':
+                output_structure = create_manual_slab_ase(lattice=lattice,
+                                                          directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                          host_symbol=host_symbol,
+                                                          latticeconstant=latticeconstant,
+                                                          size=(1, 1, size_z),
+                                                          replacements=replacements,
+                                                          decimals=decimals,
+                                                          pop_last_layers=pop_last_layers)
+
+                substrate = create_manual_slab_ase(lattice=lattice,
+                                                   directions=[[0, 0, 1], [1, -1, 0], [1, 1, 0]],
+                                                   host_symbol=host_symbol,
+                                                   latticeconstant=latticeconstant,
+                                                   size=(1, 1, 1),
+                                                   replacements=None,
+                                                   decimals=decimals)
+
+                def spin_up(atom):
+                    if round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+            elif AFM_name == 'AFM_xy':
+                if magnetic_layers == 1:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(2, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(2, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
+                else:
+                    output_structure = create_manual_slab_ase(lattice=lattice,
+                                                              directions=directions,
+                                                              host_symbol=host_symbol,
+                                                              latticeconstant=latticeconstant,
+                                                              size=(1, 1, size_z),
+                                                              replacements=replacements,
+                                                              decimals=decimals,
+                                                              pop_last_layers=pop_last_layers)
+
+                    substrate = create_manual_slab_ase(lattice=lattice,
+                                                       directions=directions,
+                                                       host_symbol=host_symbol,
+                                                       latticeconstant=latticeconstant,
+                                                       size=(1, 1, 1),
+                                                       replacements=None,
+                                                       decimals=decimals)
+
+                def spin_up(atom):
+                    if round(atom[0][0], 10) != 0 or round(atom[0][1], 10) != 0:
+                        return False
+                    return True
+
+    if isinstance(structure, StructureData):
+        init_layers = get_layers(structure)[1]
+    else:
+        init_layers = structure
+
+    try:
+        rebuilt_structure = StructureData(cell=output_structure.cell)
+        rebuilt_structure.pbc = (True, True, False)
+    except UnboundLocalError as err:
+        raise ValueError('Please check the lattice and directions input, I do now know given values') from err
+
+    output_layers = get_layers(output_structure)[0]
+
+    if len(init_layers) != len(output_layers):
+        raise ValueError('input and output structure have different number of layers')
+
+    for i, layer in enumerate(get_layers(output_structure)[0]):
+        for atom in layer:
+            if i < magnetic_layers or sym_film and i >= len(output_layers) - magnetic_layers:
+                if spin_up(atom):
+                    addition = '49990'
+                else:
+                    addition = '49991'
+            else:
+                addition = ''
+            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], init_layers[i]),
+                                          symbols=atom[1],
+                                          name=atom[1] + addition)
+
+    return rebuilt_structure, substrate
 
 
 '''

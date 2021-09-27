@@ -340,7 +340,11 @@ class FleurinpModifier(FleurXMLModifier):
             :param not_contains: str, this string has to NOT be in the final path
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'create_tag' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -387,7 +391,11 @@ class FleurinpModifier(FleurXMLModifier):
             :param not_contains: str, this string has to NOT be in the final path
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_tag' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -424,7 +432,11 @@ class FleurinpModifier(FleurXMLModifier):
                             valid values are: settable, settable_contains, other
         """
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_att' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -479,7 +491,11 @@ class FleurinpModifier(FleurXMLModifier):
         warnings.warn('Replacing a tag with a given etree Element is only supported via the show()'
                       'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
 
-        if 'xpath' in kwargs or '/' in args[0]:
+        old_interface = 'xpath' in kwargs
+        if args:
+            old_interface = old_interface or '/' in args[0]
+
+        if old_interface:
             warnings.warn(
                 "The 'delete_att' method no longer requires an explicit xpath. "
                 'This Usage is deprecated. '
@@ -588,6 +604,7 @@ class FleurinpModifier(FleurXMLModifier):
         self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
 
         xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
+        develop_version = new_fleurinp.inp_version != schema_dict['inp_version']
 
         try:
             with new_fleurinp.open(path='n_mmp_mat', mode='r') as n_mmp_file:
@@ -595,7 +612,14 @@ class FleurinpModifier(FleurXMLModifier):
         except FileNotFoundError:
             nmmplines = None
 
-        xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+        try:
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+        except etree.DocumentInvalid as exc:
+            if not develop_version:
+                raise
+            else:
+                new_fleurinp.logger.warning(f'Ignoring validation errors for modifications of develop version: \n{exc}')
+
         return xmltree
 
     def show(self, display=True, validate=False):

@@ -74,7 +74,18 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
+        aiida-version: ['aiida-core']
+        aiida-name: ['stable']
+        allowed-to-fail: [false]
+        include:
+          - python-version: 3.8
+            aiida-version: 'git+https://github.com/aiidateam/aiida-core.git@develop'
+            aiida-name: 'develop'
+            allowed-to-fail: true
+
+    name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
+    continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
       postgres:
@@ -98,9 +109,9 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-${{ matrix.python-version }}-tests-${{ hashFiles('**/setup.json') }}
+        key: pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests-${{ hashFiles('**/setup.json') }}
         restore-keys: |
-          pip-${{ matrix.python-version }}-tests
+          pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -115,7 +126,8 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        # pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install ${{ matrix.aiida-version }}
         pip install .[testing]
         reentry scan
 

@@ -96,10 +96,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        message='FLEUR calculation failed because an atom spilled to the'
                        'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
-        spec.exit_code(315,
-                       'ERROR_INVALID_ELEMENTS_MMPMAT',
-                       message='The LDA+U density matrix contains invalid elements.'
-                       ' Consider a less aggresive mixing scheme')
         spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
         spec.exit_code(399,
@@ -123,7 +119,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.max_queue_wallclock_sec = self.inputs.add_comp_para['max_queue_wallclock_sec']
 
         input_options = self.inputs.options.get_dict()
-        self.ctx.optimize_resources = input_options.pop('optimize_resources', False)
+        self.ctx.optimize_resources = input_options.pop('optimize_resources', True)
         self.ctx.inputs.metadata.options = input_options
 
         if 'parent_folder' in self.inputs:
@@ -201,7 +197,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
         if self.ctx.use_omp:
             self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if self.ctx.inputs.metadata.options['environment_variables']:
+            if 'environment_variables' in self.ctx.inputs.metadata.options:
                 self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
             else:
                 self.ctx.inputs.metadata.options['environment_variables'] = {}
@@ -284,26 +280,6 @@ def _handle_mt_relax_error(self, calculation):
         return ErrorHandlerReport(True, True, self.exit_codes.ERROR_MT_RADII_RELAX)
 
 
-@register_error_handler(FleurBaseWorkChain, 51)
-def _handle_invalid_elements_mmpmat(self, calculation):
-    """
-    Calculation failed due to invalid elements in the LDA+U density matrix.
-    Mixing history is reset.
-    TODO: HOw to handle consecutive errors
-    """
-    if calculation.exit_status in FleurProcess.get_exit_statuses(['ERROR_INVALID_ELEMENTS_MMPMAT']):
-        self.ctx.restart_calc = None
-        self.ctx.is_finished = False
-        self.report('FLEUR calculation failed due to invalid elements in mmpmat. Resetting mixing_history')
-
-        if 'settings' not in self.ctx.inputs:
-            self.ctx.inputs.settings = {}
-        else:
-            self.ctx.inputs.settings = self.inputs.settings.get_dict()
-        self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
-        return ErrorHandlerReport(True, True)
-
-
 @register_error_handler(FleurBaseWorkChain, 50)
 def _handle_not_enough_memory(self, calculation):
     """
@@ -355,7 +331,7 @@ def _handle_time_limits(self, calculation):
         # if previous calculation failed for the same reason, do not restart
         try:
             prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
-            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].exit_status
+            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].node.exit_status
             if prev_calculation_status in FleurProcess.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
                 return ErrorHandlerReport(True, True)

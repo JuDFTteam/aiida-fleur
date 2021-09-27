@@ -53,9 +53,9 @@ class FleurEosWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.5.1'
 
-    _default_wf_para = {'points': 9, 'step': 0.002, 'guess': 1.00, 'enforce_same_para': True}
+    _default_wf_para = {'points': 9, 'step': 0.005, 'guess': 1.00, 'enforce_same_para': True}
     _default_options = FleurScfWorkChain._default_options
 
     @classmethod
@@ -126,7 +126,7 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.wf_dict = wf_dict
 
         self.ctx.points = wf_dict.get('points', 9)
-        self.ctx.step = wf_dict.get('step', 0.002)
+        self.ctx.step = wf_dict.get('step', 0.005)
         self.ctx.guess = wf_dict.get('guess', 1.00)
         self.ctx.serial = wf_dict.get('serial', False)  # True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
@@ -183,7 +183,7 @@ class FleurEosWorkChain(WorkChain):
         label = self.ctx.labels[0]
         first_scf = self.ctx[label]
         if not first_scf.is_finished_ok:
-            self.report('Initial sub process did not finish successful so aborting the workchain.')
+            self.report('Initial sub process did not finish successfully; aborting the workchain.')
             # return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 

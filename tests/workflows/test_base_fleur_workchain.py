@@ -17,10 +17,63 @@ from __future__ import print_function
 import pytest
 import aiida_fleur
 import os
+from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+from aiida_fleur.common.workchain.utils import ErrorHandlerReport
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
+
+
+@pytest.mark.parametrize('exit_status', [
+    'ERROR_FLEUR_CALC_FAILED', 'ERROR_MT_RADII', 'ERROR_NO_RETRIEVED_FOLDER', 'ERROR_OPENING_OUTPUTS',
+    'ERROR_NO_OUTXML', 'ERROR_XMLOUT_PARSING_FAILED', 'ERROR_RELAX_PARSING_FAILED'
+])
+def test_handle_general_error(generate_workchain_base, exit_status):
+    """Test `FleurBaseWorkChain._handle_general_error`."""
+    exit_codes = FleurCalculation.exit_codes
+
+    process = generate_workchain_base(exit_code=exit_codes(exit_status))
+    process.setup()
+
+    result = process._handle_general_error(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
+
+    result = process.inspect_calculation()
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
+
+
+def test_handle_vacuum_spill_error(generate_workchain_base):
+    """Test `FleurBaseWorkChain._handle_vacuum_spill_error`."""
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_VACUUM_SPILL_RELAX)
+    process.setup()
+
+    result = process._handle_vacuum_spill_error(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_VACUUM_SPILL_RELAX
+
+    result = process.inspect_calculation()
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_VACUUM_SPILL_RELAX
+
+
+def test_handle_mt_relax_error(generate_workchain_base):
+    """Test `FleurBaseWorkChain._handle_mt_relax_error`."""
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_MT_RADII_RELAX)
+    process.setup()
+
+    result = process._handle_mt_relax_error(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_MT_RADII_RELAX
+
+    result = process.inspect_calculation()
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_MT_RADII_RELAX
 
 
 # tests
@@ -39,7 +92,6 @@ class Test_FleurBaseWorkChain():
         """
         from aiida.orm import Code, load_node, Dict, StructureData
         from numpy import array
-        from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
         options = {
             'resources': {

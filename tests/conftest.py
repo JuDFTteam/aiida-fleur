@@ -14,7 +14,7 @@ from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
 # aiida_testing.mock_codes in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
 
-run_regression_tests = False  # We set this false for the CI, as long they do not work, enable per hand
+run_regression_tests = True  # We set this false for the CI, as long they do not work, enable per hand
 try:
     import aiida_testing
     from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
@@ -23,9 +23,12 @@ except ImportError:
     run_regression_tests = False
 
 if run_regression_tests:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache']  # pylint: disable=invalid-name
+    pytest_plugins = [
+        'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
+        'masci_tools.testing.bokeh'
+    ]  # pylint: disable=invalid-name
 else:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures']
+    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
 
 @pytest.fixture(scope='function')
@@ -286,6 +289,80 @@ def eval_xpath():
 
 
 @pytest.fixture
+def generate_inputs_base(fixture_code, create_fleurinp, generate_kpoints_mesh):
+    """Generate default inputs for a `PwCalculation."""
+
+    def _generate_inputs_base():
+        """Generate default inputs for a `PwCalculation."""
+        from aiida_fleur.common.defaults import default_options
+
+        TEST_INPXML_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files/inpxml/Si/inp.xml'))
+
+        inputs = {
+            'code': fixture_code('fleur'),
+            'fleurinpdata': create_fleurinp(TEST_INPXML_PATH),
+            'options': Dict(dict=default_options)
+        }
+
+        return inputs
+
+    return _generate_inputs_base
+
+
+@pytest.fixture
+def generate_workchain_base(generate_workchain, generate_inputs_base, generate_calc_job_node):
+    """Generate an instance of a `FleurBaseWorkChain`."""
+
+    def _generate_workchain_base(exit_code=None, inputs=None, return_inputs=False):
+        from plumpy import ProcessState
+
+        entry_point = 'fleur.base'
+
+        if inputs is None:
+            inputs = generate_inputs_base()
+
+        if return_inputs:
+            return inputs
+
+        process = generate_workchain(entry_point, inputs)
+
+        if exit_code is not None:
+            node = generate_calc_job_node('fleur.fleur', inputs={'parameters': Dict()})
+            node.set_process_state(ProcessState.FINISHED)
+            node.set_exit_status(exit_code.status)
+
+            process.ctx.iteration = 1
+            process.ctx.calculations = [node]
+
+        return process
+
+    return _generate_workchain_base
+
+
+@pytest.fixture
+def generate_workchain():
+    """Generate an instance of a `WorkChain`."""
+
+    def _generate_workchain(entry_point, inputs):
+        """Generate an instance of a `WorkChain` with the given entry point and inputs.
+        :param entry_point: entry point name of the work chain subclass.
+        :param inputs: inputs to be passed to process construction.
+        :return: a `WorkChain` instance.
+        """
+        from aiida.engine.utils import instantiate_process
+        from aiida.manage.manager import get_manager
+        from aiida.plugins import WorkflowFactory
+
+        process_class = WorkflowFactory(entry_point)
+        runner = get_manager().get_runner()
+        process = instantiate_process(runner, process_class, **inputs)
+
+        return process
+
+    return _generate_workchain
+
+
+@pytest.fixture
 def generate_work_chain_node():
     """Fixture to generate a mock `WorkChainNode` for testing parsers."""
 
@@ -358,6 +435,27 @@ def generate_film_structure():
         structure.append_atom(position=(0., 0., -1.99285 * BOHR_A), symbols='Fe')
         structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
         structure.append_atom(position=(0., 0., 2.65059 * BOHR_A), symbols='Pt')
+        structure.pbc = (True, True, False)
+
+        return structure
+
+    return _generate_film_structure
+
+
+@pytest.fixture
+def generate_sym_film_structure():
+    """Return a `StructureData` representing bulk silicon."""
+
+    def _generate_film_structure():
+        """Return a `StructureData` representing bulk silicon."""
+        from aiida.orm import StructureData
+        from aiida_fleur.common.constants import BOHR_A
+        a = 7.497 * BOHR_A
+        cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=(0., 0., -1.99285 * BOHR_A), symbols='Fe')
+        structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+        structure.append_atom(position=(0., 0., 1.99285 * BOHR_A), symbols='Fe')
         structure.pbc = (True, True, False)
 
         return structure
@@ -484,7 +582,7 @@ def create_or_fake_local_code(aiida_local_code_factory):
         # if path is non existent, we create a dummy executable
         # if all caches are there, it should run, like on a CI server
         if not os.path.exists(_exe_path):
-            open(_exe_path, 'a').close()
+            open(_exe_path, 'a').close()  #pylint: disable=consider-using-with
 
         # make sure code is found in PATH
         os.environ['PATH'] += ':' + _exe_path

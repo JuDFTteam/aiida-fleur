@@ -7,9 +7,11 @@ import os
 import pytest
 from aiida import orm
 from aiida.common import datastructures
+from aiida.cmdline.utils.common import get_calcjob_report
 from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
+
 from ..conftest import run_regression_tests
 
 
@@ -63,7 +65,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
       2\n         14       0.0000000000       0.0000000000       0.0000000000
          14       0.2500000000       0.2500000000       0.2500000000\n"""
     # Checks on the files written to the sandbox folder as raw input
-    assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
@@ -133,7 +135,7 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
   div1=17   div2=17   div3=17   tkb=0.0005 /
 """
     # Checks on the files written to the sandbox folder as raw input
-    assert sorted(fixture_sandbox.get_content_list()) == sorted(['aiida.in'])
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
@@ -194,8 +196,9 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
     print(calc)
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
     print(node)
-    print((res['remote_folder'].list_objects()))
-    print((res['retrieved'].list_objects()))
+    print(get_calcjob_report(node))
+    print((res['remote_folder'].list_object_names()))
+    print((res['retrieved'].list_object_names()))
     assert bool(node.is_finished_ok)
 
 
