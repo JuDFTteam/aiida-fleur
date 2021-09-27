@@ -1,9 +1,16 @@
+## v.1.2.1
+### release compatible with AiiDA-core 1.3.0+
+- General improvements for CreateMagnetic workchain and related methods
+- Added OrbControl workchain
+- FleurBandDosWorkchain provides AiiDA BandsData for bandstructure calculations and XyData for DOS calculations as outputs
+- General Improvements to plot_fleur function, e.g. can now visualize FleurBandDosWorkChain
+
 ## v.1.2.0
 ### release compatible with AiiDA-core 1.3.0+
 possibly ready for aiida-core 2.0.0
-- supports Fleur MaXR4 and MaXR5 versions with new inpgen 
+- supports Fleur MaXR4 and MaXR5 versions with new inpgen
 MaXR4 requires providing versions in the code nodes
-- Some features relying on the id in the inpgen files, 
+- Some features relying on the id in the inpgen files,
 may be broken by the new inpgen interface change when using MaXR5.1
 - Added support for GW calculations with Spex, and the Strain workchain
 - Major code refactoring, moving all xml tools to masci-tools (therefore requires masci-tools >=0.4.8)
@@ -28,7 +35,7 @@ may be broken by the new inpgen interface change when using MaXR5.1
 - Implemented feature in fleurinputCalculation to set significant figures
 - Implemented feature scf can now use default queues specified in code extras
 - First implementation of relax type None, which cases the relax workchain to skip the
-relaxation, becoming a usual scf wc,  which might make it easier to switch relaxation on 
+relaxation, becoming a usual scf wc,  which might make it easier to switch relaxation on
 and off in other workchains.
 - Fleur parser parses now the total magnetic moment of the cell
 - Introduced common constants, for bohr and htr, increased precision
