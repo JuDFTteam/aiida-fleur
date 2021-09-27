@@ -23,6 +23,7 @@ from aiida.orm import StructureData, Dict
 from aiida_fleur.data.fleurinp import FleurinpData
 import io
 
+
 class FleurinputgenCalculation(CalcJob):
     """
     JobCalculationClass for the inpgen, which is a preprocessor for a FLEUR calculation.
