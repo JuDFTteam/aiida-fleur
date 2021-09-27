@@ -64,6 +64,7 @@ class FleurScfWorkChain(WorkChain):
         'density_converged': 0.00002,
         'energy_converged': 0.002,
         'force_converged': 0.002,
+        'torque_converged': 0.0002,
         'kpoints_distance': None,  # in 1/A, usually 0.1
         'kpoints_force_parity': False,
         'kpoints_force_odd': False,
@@ -214,8 +215,13 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.all_forces = []
         self.ctx.total_energy = []
         self.ctx.nmmp_distance = []
+        self.ctx.x_torques = []
+        self.ctx.y_torques = []
+        self.ctx.alpha_angles = []
+        self.ctx.beta_angles = []
         self.ctx.energydiff = 10000
         self.ctx.forcediff = 10000
+        self.ctx.torquediff = 10000
         self.ctx.last_charge_density = 10000
         self.ctx.last_nmmp_distance = -10000
         self.ctx.warnings = []
@@ -298,7 +304,7 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict['mode']
-        if mode not in ['force', 'density', 'energy', 'spex']:
+        if mode not in ['force', 'density', 'energy', 'spex', 'torque']:
             error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -508,6 +514,25 @@ class FleurScfWorkChain(WorkChain):
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
+        elif converge_mode == 'torque':
+            dist = wf_dict.get('density_converged')
+            fleurmode.set_inpchanges({
+                'itmax': self.ctx.default_itmax,
+                'minDistance': dist
+            })
+            fleurmode.set_complex_tag('greensFunction',
+                    changes={'realAxis': {'ne': 5400, 'ellow': -1, 'elup': 1.0},
+                                          'contourSemicircle': {'n':128, 'eb':-1.0, 'et':0.0, 'alpha':1.0}},
+                    create=True)
+            fleurmode.set_species(species_name='all',
+               attributedict={'torgueCalculation':
+                                                  {'kkintgrCutoff': "d",
+                                                   'greensfElements':
+                                                                    {'s': ['F', 'F', 'F','F'],
+                                                                     'p': ['F', 'F', 'F','F'],
+                                                                     'd': ['F', 'F', 'F','F'],
+                                                                     'f': ['F', 'F', 'F','F']}}},
+               create=True)
 
         # apply further user dependend changes
         if fchanges:
@@ -672,6 +697,52 @@ class FleurScfWorkChain(WorkChain):
                     for force_iter in forces:
                         self.ctx.all_forces.append([force for atom, force in force_iter])
 
+            if mode == 'torque':
+                torque_def = {'torques':{
+                            'x_torque': {
+                                        'parse_type': 'attrib',
+                                        'path_spec': {
+                                            'name': 'sigma_x',
+                                            'contains': 'noncollinearTorgue'
+                                        }
+                                },
+                                'y_torque': {
+                                    'parse_type': 'attrib',
+                                    'path_spec': {
+                                        'name': 'sigma_y',
+                                        'contains': 'noncollinearTorgue'
+                                    }
+                                }
+                            },
+                            'angles_atom': {
+                                '_general':True,
+                                'noco_params': {
+                                    'parse_type': 'allAttribs',
+                                    'path_spec': {
+                                        'name': 'nocoParams',
+                                        'contains': 'Group'
+                                    },
+                            'flat':False
+                            }
+                        }
+                }
+
+                with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                    output_dict_torque = outxml_parser(outxmlfile,
+                                                       iteration_to_parse='all',
+                                                       ignore_validation=True,
+                                                       additional_tasks=torque_def)
+
+                    x_torques = output_dict_torque.get('x_torque', [])
+                    y_torques = output_dict_torque.get('y_torque', [])
+                    noco_para = output_dict_torque.get('noco_params', {})
+                    alpha_angles = noco_para.get('alpha', [])
+                    beta_angles = noco_para.get('beta', [])
+
+                    self.ctx.x_torques.extend(x_torques)
+                    self.ctx.y_torques.extend(y_torques)
+                    self.ctx.alpha_angles = alpha_angles
+                    self.ctx.beta_angles = beta_angles
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -719,6 +790,16 @@ class FleurScfWorkChain(WorkChain):
         else:
             self.ctx.forcediff = 'can not be determined'
 
+        if mode == 'torque':
+            x_torques = self.ctx.x_torques
+            y_torques = self.ctx.y_torques
+            if len(x_torques) > 2 and len(y_torques) > 2:
+                max_x_torque_diff = max([abs(x_torques[-1][i] - x_torques[-2][i] for i in range(len(x_torques[0])))])
+                max_y_torque_diff = max([abs(y_torques[-1][i] - y_torques[-2][i] for i in range(len(y_torques[0])))])
+                self.ctx.torquediff = max(max_x_torque_diff, max_y_torque_diff)
+            else:
+                self.ctx.torquediff = 'can not be determined'
+
         if self.ctx.last_nmmp_distance > 0.0 and \
            self.ctx.last_nmmp_distance >= self.ctx.wf_dict['nmmp_converged']:
             ldau_notconverged = True
@@ -747,6 +828,15 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
+                    if not ldau_notconverged:
+                        return False
+        elif mode == 'torque':
+            if self.ctx.last_charge_density is None:
+                if self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
+                    if not ldau_notconverged:
+                        return False
+            elif self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
+                if self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
                     if not ldau_notconverged:
                         return False
 
@@ -798,6 +888,12 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
+
+        if self.ctx.x_torques:
+            outputnode_dict['last_x_torques'] = self.ctx.x_torques[-1]
+            outputnode_dict['last_y_torques'] = self.ctx.y_torques[-1]
+            outputnode_dict['alphas'] = self.ctx.alpha_angles
+            outputnode_dict['betas'] = self.ctx.beta_angles
 
         num_iterations = last_calc_out_dict.get('number_of_iterations_total', None)
         if self.ctx.successful and self.ctx.reached_conv:
