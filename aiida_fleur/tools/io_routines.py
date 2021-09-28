@@ -15,6 +15,7 @@ For example collection of data or database evaluations, for other people.
 """
 import warnings
 
+
 def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
     """
     Writes data to a file
@@ -149,13 +150,14 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
             delete_xpath = f'{xpath_iteration}[position()>{int(iterations_to_keep)}]'
 
         if abs(iterations_to_keep) > n_iters:
-            warnings.warn('iterations_to_keep is larger then the number of iterations'
-                  ' in the given out.xml file, I keep all.', UserWarning)
+            warnings.warn(
+                'iterations_to_keep is larger then the number of iterations'
+                ' in the given out.xml file, I keep all.', UserWarning)
         else:
             print(f'Deleting iterations under the xpath: {delete_xpath}')
-            xmltree = delete_tag(xmltree,schema_dict, 'iteration', complex_xpath=delete_xpath)
+            xmltree = delete_tag(xmltree, schema_dict, 'iteration', complex_xpath=delete_xpath)
 
-    etree.indent(xmltree) #Make sure the print looks nice
+    etree.indent(xmltree)  #Make sure the print looks nice
 
     if dest_file_path is None:
         dest_file_path = outxmlfilepath  # overwrite file
