@@ -17,6 +17,7 @@ out.xml file of FLEUR.
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
 # or rather throw exception on lowest level and catch at higher levels?
 from lxml import etree  #, objectify
+import warnings
 
 from masci_tools.util.xml.common_functions import eval_xpath, get_xml_attribute
 #convert_to_float
@@ -112,6 +113,9 @@ def extract_corelevels(outxmlfile, options=None):
     #######################################
     ########################
     #XPATHS to maintain
+    warnings.warn('extract_corelevels is deprecated. You can use the outxml_parser\n'
+                  "in masci_tools.io.parsers.fleur instead with outxml_parser(outxmlfile, optional_tasks=('corelevels'))\n"
+                  'To get this information', DeprecationWarning)
 
     species_xpath = '/fleurOutput/inputData/atomSpecies'
     iteration_xpath = '/fleurOutput/scfLoop/iteration'
