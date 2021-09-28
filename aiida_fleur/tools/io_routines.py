@@ -146,7 +146,7 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
             position_keep = n_iters + iterations_to_keep + 1
             delete_xpath = f'{xpath_iteration}[position()<{int(position_keep)}]'
         else:
-            delete_xpath = f'{xpath_iteration}[position()<{int(iterations_to_keep)}]'
+            delete_xpath = f'{xpath_iteration}[position()>{int(iterations_to_keep)}]'
 
         if abs(iterations_to_keep) > n_iters:
             warnings.warn('iterations_to_keep is larger then the number of iterations'
