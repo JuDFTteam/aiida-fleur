@@ -202,9 +202,7 @@ class FleurCoreholeWorkChain(WorkChain):
         Do some input checks. Further input checks are done in further workflow steps
         """
         # TODO: document parameters
-        self.report('started FleurCoreholeWorkChain version {} '
-                    'Workchain node identifiers: '  #{}"
-                    ''.format(self._workflowversion))  #, ProcessRegistry().current_calc_node))
+        self.report(f'started FleurCoreholeWorkChain version {self._workflowversion}')
 
         ### init ctx ###
 
@@ -301,8 +299,7 @@ class FleurCoreholeWorkChain(WorkChain):
         """
 
         supercell_base = self.ctx.supercell_size
-        description = ('WF, Creates a supercell of a crystal structure x({},{},{}).'
-                       ''.format(supercell_base[0], supercell_base[0], supercell_base[2]))
+        description = f'WF, Creates a supercell of a crystal structure x{tuple(supercell_base)}.'
 
         supercell_s = supercell(self.ctx.base_structure_relax,
                                 Int(supercell_base[0]),
@@ -314,8 +311,7 @@ class FleurCoreholeWorkChain(WorkChain):
                                 })
 
         # overwrite label and description of new structure
-        supercell_s.label = '{}x{}x{} of {}'.format(supercell_base[0], supercell_base[1], supercell_base[2],
-                                                    self.ctx.base_structure_relax.uuid)
+        supercell_s.label = f"{'x'.join(map(str,supercell_base))} of {self.ctx.base_structure_relax.uuid}"
         supercell_s.description = supercell_s.description + ' created in a FleurCoreholeWorkChain'
         self.ctx.ref_supercell = supercell_s
         calc_para = self.ctx.ref_para
@@ -436,9 +432,8 @@ class FleurCoreholeWorkChain(WorkChain):
                 try:
                     to_append = base_atoms_sites[atom_info]
                 except IndexError:
-                    error = ("ERROR: The index/integer: {} specified in 'atoms' key is not valid."
-                             'There are only {} atom sites in your provided structure.'
-                             ''.format(atom_info, len(base_atoms_sites)))
+                    error = (f"ERROR: The index/integer: {atom_info} specified in 'atoms' key is not valid."
+                             f'There are only {len(base_atoms_sites)} atom sites in your provided structure.')
                     to_append = None
                     self.report(error)
                 if to_append:
@@ -463,9 +458,9 @@ class FleurCoreholeWorkChain(WorkChain):
                 if len(elm_cl) != 2:
                     # something went wrong, wrong input
                     # TODO log, error and hint
-                    error = ('ERROR: corelevel was given in the wrong format: {},'
+                    error = (f'ERROR: corelevel was given in the wrong format: {elm_cl},'
                              'should have len 2. Hint hast to be the format '
-                             "['Element,corelevel',...] i.e ['Be,1s', 'W,all]".format(elm_cl))
+                             "['Element,corelevel',...] i.e ['Be,1s', 'W,all]")
                     self.control_end_wc(error)
                     return self.exit_codes.ERROR_IN_REFERENCE_CREATION
                 else:
@@ -565,27 +560,23 @@ class FleurCoreholeWorkChain(WorkChain):
                     fleurinp_change.append(change)
                     if correct_val_charge:  # only needed in certain methods
                         charge_change = (
-                            'add_num_to_att',
+                            'add_number_to_first_attrib',
                             {
-                                'xpathn': '/fleurInput/calculationSetup/bzIntegration',
                                 'attributename': 'valenceElectrons',
-                                'set_val': -1.0000,  #-hole_charge,  #one electron was added by ingen, we remove it
+                                'add_number': -1.0,  #-hole_charge,  #one electron was added by inpgen, we remove it
                                 'mode': 'abs',
-                                'occ': [0],
                             })
                         fleurinp_change.append(charge_change)
                     elif hole_charge != 1.0:  # fractional valence hole
                         charge_change = (
-                            'add_num_to_att',
+                            'add_number_to_first_attrib',
                             {
-                                'xpathn': '/fleurInput/calculationSetup/bzIntegration',
                                 'attributename': 'valenceElectrons',
-                                'set_val': -1.0000 + hole_charge,  # one electron was already added by inpgen
+                                'add_number': -1.0 + hole_charge,  # one electron was already added by inpgen
                                 'mode': 'abs',
-                                'occ': [0],
                             })
                         fleurinp_change.append(charge_change)
-                    if self.ctx.magnetic:  # Do a collinear magentic calculation
+                    if self.ctx.magnetic:  # Do a collinear magnetic calculation
                         charge_change = ('set_inpchanges', {'change_dict': {'jspins': 2}})
                         fleurinp_change.append(charge_change)
                     #self.report('{}'.format(fleurinp_change))
