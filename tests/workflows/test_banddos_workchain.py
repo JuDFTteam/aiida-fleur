@@ -25,12 +25,9 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache,
-                                fleur_local_code,
-                                create_fleurinp):
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -81,8 +78,8 @@ def test_fleur_band_fleurinp_Si(with_export_cache,
     assert 'output_banddos_wc_bands' in out
     assert 'last_calc_retrieved' in out
     res_files = out['last_calc_retrieved'].list_object_names()
-    assert any(file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
-
+    assert any(
+        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
 # tests
