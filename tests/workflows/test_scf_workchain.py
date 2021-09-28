@@ -162,7 +162,11 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     n = out['output_scf_wc_para']
     n = n.get_dict()
     print(n)
-    assert abs(n.get('distance_charge') - 8.0987e-06) < 2.0e-6
+    #The two distances correspond to the scenario where
+    # 1. The inpgen ignores the set Muffin-tin radius and uses it's default
+    #assert abs(n.get('distance_charge') - 8.0987e-06) < 2.0e-6
+    # 2. The set muffin-tin radius is respected
+    assert abs(n.get('distance_charge') - 1.67641e-05) < 2.0e-6
     assert n.get('errors') == []
 
 
