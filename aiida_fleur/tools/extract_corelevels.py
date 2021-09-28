@@ -347,10 +347,10 @@ def convert_to_float(value_string, parser_info=None):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, TypeError'.format(value_string))
+        parser_info['parser_warnings'].append(f'Could not convert: "{value_string}" to float, TypeError')
         return value_string, False
     except ValueError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
+        parser_info['parser_warnings'].append(f'Could not convert: "{value_string}" to float, ValueError')
         return value_string, False
     return value, True
 
@@ -412,7 +412,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
 
         if not ref_el:  # no refernce for that element given
             if warn:
-                print(("WARNING: Reference for element: '{}' not given. " 'I ignore these.'.format(elem)))
+                print(f"WARNING: Reference for element: '{elem}' not given. I ignore these.")
             continue
 
         return_corelevel_dict[elem] = {}

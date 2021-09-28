@@ -126,7 +126,7 @@ print('##################### TEST FleurEosWorkChain #####################')
 if submit_wc:
     res = submit(FleurEosWorkChain, **inputs)
     print('##################### Submited FleurEosWorkChain #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print((res.pk))
     print('##################### Finished submiting FleurEosWorkChain #####################')
 

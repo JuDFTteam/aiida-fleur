@@ -150,7 +150,7 @@ print('##################### TEST fleur_spst_wc #####################')
 if submit_wc:
     res = submit(FleurMaeWorkChain, **inputs)
     print('##################### Submited fleur_spst_wc #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print((res.pk))
     print('##################### Finished submiting fleur_spst_wc #####################')
 

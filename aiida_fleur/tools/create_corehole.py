@@ -40,7 +40,7 @@ def create_corehole_para(structure, kind, econfig, species_name='corehole', para
     symbol = kindo.symbol
     head = kindo.name.rstrip('01223456789')
     charge = _atomic_numbers[kindo.symbol]
-    a_id = float('{}.{}'.format(charge, kindo.name[len(head):]))
+    a_id = float(f'{charge}.{kindo.name[len(head):]}')
 
     # get kind symbol, get kind name,
     #&atom element="W" jri=921 lmax=8 rmt=2.52 dx=0.014 lo="5p" econfig="[Kr] 5s2 4d10 4f13 | 5p6 5d4 6s2" /

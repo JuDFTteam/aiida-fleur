@@ -128,7 +128,7 @@ print('##################### TEST fleur_dos_wc #####################')
 if submit_wc:
     res = submit(fleur_dos_wc, **inputs)
     print('##################### Submited fleur_dos_wc #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print('##################### Finished submiting fleur_dos_wc #####################')
 else:
     print('##################### Running fleur_dos_wc #####################')

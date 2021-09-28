@@ -115,7 +115,7 @@ class FleurSSDispWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation workflow version {}\n' ''.format(self._workflowversion))
+        self.report(f'INFO: started Spin Stiffness calculation workflow version {self._workflowversion}\n')
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
@@ -133,7 +133,7 @@ class FleurSSDispWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SSDisp contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for SSDisp contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 

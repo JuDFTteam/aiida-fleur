@@ -83,7 +83,7 @@ def read_cif_folder(path=os.getcwd(),
                 filepaths.append(filepath)
 
     nfiles = len(filenames)
-    print('{} cif-files found in folder "{}" '.format(nfiles, parent_cif_folder))
+    print(f'{nfiles} cif-files found in folder "{parent_cif_folder}" ')
 
     structuredatas = []
 
@@ -96,7 +96,7 @@ def read_cif_folder(path=os.getcwd(),
         try:
             new_cif = cifdata.get_or_create(filepaths[i], store_cif=True)
         except (ValueError, AttributeError, ImportError) as emessage:
-            print(('invalid cif file: {}, the error message was {} '.format(filepaths[i], emessage)))
+            print(f'invalid cif file: {filepaths[i]}, the error message was {emessage} ')
             continue
         #print new_cif
         if new_cif[1]:
@@ -149,7 +149,7 @@ def read_cif_folder(path=os.getcwd(),
         file1 = os.open(logfile_name, os.O_RDWR | os.O_CREAT)
         os.write(file1, bytes(infofilestring, 'UTF8'))
         os.close(file1)
-    print('{} cif-files and {} structures were saved in the database'.format(saved_count_cif, saved_count))
+    print(f'{saved_count_cif} cif-files and {saved_count} structures were saved in the database')
 
     return structuredatas2, filenames2
 

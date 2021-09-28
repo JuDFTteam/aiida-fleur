@@ -75,7 +75,7 @@ def dict_merger(dict1, dict2):
         elif isinstance(val, float):
             new_dict[key] = val + dict2.get(key, 0.0)
         else:
-            print(("don't know what to do with element : {}".format(key)))
+            print(f"don't know what to do with element : {key}")
     return new_dict
 
 

@@ -99,7 +99,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain, validate inputs
         """
-        self.report('INFO: Started structure relaxation workflow version {}\n'.format(self._workflowversion))
+        self.report(f'INFO: Started structure relaxation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []  # Collects Hints
         self.ctx.warnings = []  # Collects Warnings
@@ -129,7 +129,7 @@ class FleurRelaxWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -348,13 +348,12 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report('INFO: Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
         elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
                 'forcemix'] == 'straight':
-            self.report('INFO: Seems it is safe to switch to BFGS. Current largest force: '
-                        '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True
             return False
 
@@ -441,7 +440,7 @@ class FleurRelaxWorkChain(WorkChain):
         formula = structure.get_formula()
         input_final_scf.structure = structure
         input_final_scf.fleur = input_scf.fleur
-        input_final_scf.metadata.label = 'SCF_final_{}'.format(formula)
+        input_final_scf.metadata.label = f'SCF_final_{formula}'
         input_final_scf.metadata.description = ('Final SCF workchain running on optimized structure {}, '
                                                 'part of relax workchain'.format(formula))
 

@@ -199,7 +199,7 @@ class FleurinputgenCalculation(CalcJob):
             # run old inpgen
             cmdline_params = ['-explicit']
         else:
-            cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
+            cmdline_params = ['-explicit', '-inc', '+all', '-f', f'{self._INPUT_FILE_NAME}']
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

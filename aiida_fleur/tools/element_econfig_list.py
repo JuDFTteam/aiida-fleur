@@ -1446,10 +1446,10 @@ def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
                 spin = state[2:]
                 occ = max_state_occ_spin.get(spin)
                 if base not in econfstring_new:
-                    econfstring_new = '{}{}{} '.format(econfstring_new, base, int(occ))
+                    econfstring_new = f'{econfstring_new}{base}{int(occ)} '
                 else:
                     max_occ = max_state_occ.get(base[1])
-                    econfstring_new = econfstring_new.split(base, maxsplit=1)[0] + '{}{} '.format(base, int(max_occ))
+                    econfstring_new = econfstring_new.split(base, maxsplit=1)[0] + f'{base}{int(max_occ)} '
                     # we assume here that the two states come behind each other, ... rather bad
                     #econfstring_new.replace('{}'.format(base)
             else:
@@ -1517,7 +1517,7 @@ def get_spin_econfig(fulleconfigstr):
         #occ = int(state.split(state_l)[-1])
         spinstates = states_spin.get(state_l, [])
         for spin in spinstates:
-            spin_econfig_string = spin_econfig_string + '{}{} '.format(state[:2], spin)
+            spin_econfig_string = spin_econfig_string + f'{state[:2]}{spin} '
 
     return spin_econfig_string.rstrip()
 

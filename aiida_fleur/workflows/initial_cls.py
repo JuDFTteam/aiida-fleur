@@ -219,7 +219,7 @@ class FleurInitialCLSWorkChain(WorkChain):
             self.ctx.errors.append(error)
             self.control_end_wc(error)
             return self.ERROR_INVALID_INPUT_RESOURCES
-        self.report('INFO: elements in structure: {}'.format(self.ctx.elements))
+        self.report(f'INFO: elements in structure: {self.ctx.elements}')
 
     def get_references(self):
         """
@@ -315,8 +315,7 @@ class FleurInitialCLSWorkChain(WorkChain):
                 #elif isinstance(ref_el, initial_state_CLS):
                 #    extract TODO
                 else:
-                    error = ('ERROR: I do not know what to do with this given '
-                             'reference {} for element {}'.format(ref_el, elem))
+                    error = f'ERROR: I do not know what to do with this given reference {ref_el} for element {elem}'
                     #print(error)
                     self.report(error)
                     self.ctx.errors.append(error)
@@ -376,7 +375,7 @@ class FleurInitialCLSWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.ERROR_REFERENCE_MISSING
 
-        self.report('INFO ref_calcs_torun: {} '.format(self.ctx.ref_calcs_torun))
+        self.report(f'INFO ref_calcs_torun: {self.ctx.ref_calcs_torun} ')
 
         # check if a structureData for these elements was given
         #if yes add to ref_calc to run
@@ -416,7 +415,7 @@ class FleurInitialCLSWorkChain(WorkChain):
         #print(self.ctx.calcs_torun)
         for i, node in enumerate(self.ctx.calcs_torun):
             #print node
-            calclabel = 'ori_calc_{}'.format(i)
+            calclabel = f'ori_calc_{i}'
             calc_labels.append(calclabel)
             scf_label = 'cls|scf_wc main'
             scf_description = 'cls|scf of the main structure'
@@ -453,7 +452,7 @@ class FleurInitialCLSWorkChain(WorkChain):
                     self.report('ERROR: something in calcs_torun which I do not'
                                 'recognize, list has not 2 entries: {}'.format(node))
             else:
-                self.report('ERROR: something in calcs_torun which I do not ' 'recognize: {}'.format(node))
+                self.report(f'ERROR: something in calcs_torun which I do not recognize: {node}')
                 #self.report('{}{}'.format(type(node[0], node[1])))
                 res = None
                 continue
@@ -547,8 +546,8 @@ class FleurInitialCLSWorkChain(WorkChain):
         i = 0
         #print(self.ctx.ref_calcs_torun)
         for i, node in enumerate(self.ctx.ref_calcs_torun):
-            scf_label = 'cls|scf_wc on ref {}'.format(self.ctx.elements[i])
-            scf_description = ('cls|scf of the reference structure of element {}' ''.format(self.ctx.elements[i]))
+            scf_label = f'cls|scf_wc on ref {self.ctx.elements[i]}'
+            scf_description = f'cls|scf of the reference structure of element {self.ctx.elements[i]}'
             #print node
             if isinstance(node, StructureData):
                 inputs = {
@@ -582,9 +581,9 @@ class FleurInitialCLSWorkChain(WorkChain):
                 }
                 res = self.submit(FleurScfWorkChain, **inputs)  #
             else:
-                self.report('WARNING: something in calcs_torun which I do not reconise: {}'.format(node))
+                self.report(f'WARNING: something in calcs_torun which I do not reconise: {node}')
                 continue
-            label = str('calc_ref{}'.format(i))
+            label = str(f'calc_ref{i}')
             #print(label)
             #calc_node = res['output_scf_wc_para'].get_inputs()[0] # if run is used, otherwise use labels
             self.ctx.ref_labels.append(label)
@@ -1009,7 +1008,7 @@ def extract_results(calcs):
             efermi = float('nan')
             corelevels = [float('nan')]
             atomtypes = [float('nan')]
-            logmsg = 'ERROR: Fleur Calculation with uuid {} was not in in state FINISHED'.format(uuid)
+            logmsg = f'ERROR: Fleur Calculation with uuid {uuid} was not in in state FINISHED'
             log.append(logmsg)
             #continue
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
@@ -1103,7 +1102,7 @@ def get_ref_from_group(element, group):
         if eformula == element:
             return struc, report
 
-    report.append('Structure node for element {} not found in group {}' ''.format(element, group))
+    report.append(f'Structure node for element {element} not found in group {group}')
 
     return structure, report
 
@@ -1155,7 +1154,7 @@ def get_para_from_group(element, group):
         if formula == element:
             return para, report
 
-    report.append('Parameter node for element {} not found in group {}' ''.format(element, group))
+    report.append(f'Parameter node for element {element} not found in group {group}')
 
     return parameter, report
 

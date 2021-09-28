@@ -24,30 +24,30 @@ elif calc.get_state() == calc_states.FAILED:
 elif calc.get_state() != calc_states.FINISHED:
     raise ValueError('The calculation did not complete')
 res = calc.res
-print('Test: {}'.format(calc.label))
-print('Description: {}'.format(calc.description))
-print('Code name in db: {}'.format(calc.get_code()))
+print(f'Test: {calc.label}')
+print(f'Description: {calc.description}')
+print(f'Code name in db: {calc.get_code()}')
 #print "Input structure (chemical formula): {}".format(calc.inp.structure.get_formula())
-print('Code name/version: {}'.format(res.creator_name))
-print('The following files were retrieved: {}'.format(calc.out.retrieved.get_folder_list()))
+print(f'Code name/version: {res.creator_name}')
+print(f'The following files were retrieved: {calc.out.retrieved.get_folder_list()}')
 
 #print "Wall time: {} s".format(calc.res.wall_time_seconds)
 #print "Input wavefunction cutoff: {} Ry".format(calc.inp.parameters.dict.SYSTEM['ecutwfc'])
-print('The total energy of the system is {} eV'.format(res.energy))
-print('The fermi energy of the system is {} htr'.format(res.fermi_energy))
+print(f'The total energy of the system is {res.energy} eV')
+print(f'The fermi energy of the system is {res.fermi_energy} htr')
 
 if res.number_of_spin_components == 1:
     print('Non magnetic calculation, 1 spin component')
-    print('Charge distance of the system is: {} me/bohr^3'.format(res.charge_density))
+    print(f'Charge distance of the system is: {res.charge_density} me/bohr^3')
 else:
     print('Magnetic calculation, 2 spin components')
-    print('Charge distance spin 1 of the system is: {} me/bohr^3'.format(res.charge_density1))
-    print('Charge distance spin 2 of the system is: {} me/bohr^3'.format(res.charge_density2))
-    print('Spin density distance of the system is: {} me/bohr^3'.format(res.spin_density))
+    print(f'Charge distance spin 1 of the system is: {res.charge_density1} me/bohr^3')
+    print(f'Charge distance spin 2 of the system is: {res.charge_density2} me/bohr^3')
+    print(f'Spin density distance of the system is: {res.spin_density} me/bohr^3')
 
 #if calc.res.warnings:
 #    print "List of warnings:"
 #    for warning in calc.res.warnings:
 #        print "- {}".format(warning)
 #if 'res
-print('Log messages: {}'.format(get_log_messages(calc)))
+print(f'Log messages: {get_log_messages(calc)}')

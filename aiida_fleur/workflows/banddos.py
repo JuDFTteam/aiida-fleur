@@ -124,7 +124,7 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        self.report('started bandsdos workflow version {}'.format(self._workflowversion))
+        self.report(f'started bandsdos workflow version {self._workflowversion}')
         #print("Workchain node identifiers: ")#'{}'
         #"".format(ProcessRegistry().current_calc_node))
 

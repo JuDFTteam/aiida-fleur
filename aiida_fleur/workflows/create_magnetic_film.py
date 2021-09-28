@@ -132,7 +132,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Create Magnetic Film' ' workflow version {}\n'.format(self._workflowversion))
+        self.report(f'INFO: started Create Magnetic Film workflow version {self._workflowversion}\n')
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -152,7 +152,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             if key not in list(wf_default.keys()):
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Create Magnetic contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Create Magnetic contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 

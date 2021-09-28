@@ -99,11 +99,11 @@ class FleurParser(Parser):
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info('file list {}'.format(list_of_files))
+        self.logger.info(f'file list {list_of_files}')
 
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
-            self.logger.error("XML out not found '{}'".format(FleurCalculation._OUTXML_FILE_NAME))
+            self.logger.error(f"XML out not found '{FleurCalculation._OUTXML_FILE_NAME}'")
             return self.exit_codes.ERROR_NO_OUTXML
         else:
             has_xml_outfile = True
@@ -111,8 +111,7 @@ class FleurParser(Parser):
         # check if all files expected are there for the calculation
         for file in should_retrieve:
             if file not in list_of_files:
-                self.logger.warning("'{}' file not found in retrived folder, it"
-                                    ' was probably not created by fleur'.format(file))
+                self.logger.warning(f"'{file}' file not found in retrived folder, it was probably not created by fleur")
 
         # check if something was written to the error file
         if FleurCalculation._ERROR_FILE_NAME in list_of_files:
@@ -122,7 +121,7 @@ class FleurParser(Parser):
                 with output_folder.open(errorfile, 'r') as efile:
                     error_file_lines = efile.read()  # Note: read(), not readlines()
             except IOError:
-                self.logger.error('Failed to open error file: {}.'.format(errorfile))
+                self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
             if error_file_lines:
@@ -259,7 +258,7 @@ class FleurParser(Parser):
                 with output_folder.open(dos_file, 'r') as dosf:
                     dos_lines = dosf.read()  # Note: read() and not readlines()
             except IOError:
-                self.logger.error('Failed to open DOS file: {}.'.format(dos_file))
+                self.logger.error(f'Failed to open DOS file: {dos_file}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             dos_data = parse_dos_file(dos_lines)  # , number_of_atom_types)
 
@@ -273,7 +272,7 @@ class FleurParser(Parser):
                 with output_folder.open(band_file, 'r') as bandf:
                     bands_lines = bandf.read()  # Note: read() and not readlines()
             except IOError:
-                self.logger.error('Failed to open bandstructure file: {}.' ''.format(band_file))
+                self.logger.error(f'Failed to open bandstructure file: {band_file}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             bands_data = parse_bands_file(bands_lines)
 

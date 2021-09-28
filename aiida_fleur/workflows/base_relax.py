@@ -319,14 +319,14 @@ def _handle_mt_overlap(self, calculation):
             self.report('MT radii might be too large. I reduce them.')
 
             self.ctx.fixing_methods = [('shift_value_species_label', {
-                'label': '{: >20}'.format(label1),
+                'label': f'{label1: >20}',
                 'att_name': 'radius',
                 'value': value,
                 'mode': 'abs'
             })]
 
             self.ctx.fixing_methods.append(('shift_value_species_label', {
-                'label': '{: >20}'.format(label2),
+                'label': f'{label2: >20}',
                 'att_name': 'radius',
                 'value': value,
                 'mode': 'abs'

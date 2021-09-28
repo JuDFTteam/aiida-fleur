@@ -222,12 +222,12 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = ['{}@{}'.format(c.label, c.computer.label) for [c] in qb.all()]
+        valid_code_labels = [f'{c.label}@{c.computer.label}' for [c] in qb.all()]
 
         if valid_code_labels:
             msg = ('Given Code node is not of expected code type.\n'
                    'Valid labels for a {} executable are:\n'.format(expected_code_type))
-            msg += '\n'.join('* {}'.format(l) for l in valid_code_labels)
+            msg += '\n'.join(f'* {l}' for l in valid_code_labels)
 
             if use_exceptions:
                 raise ValueError(msg) from exc
@@ -324,7 +324,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
-                            print(('WARNING: output node of {} not found. I skip'.format(n)))
+                            print(f'WARNING: output node of {n} not found. I skip')
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -390,21 +390,21 @@ def performance_extract_calcs(calcs):
         try:
             efermi = res.fermi_energy
         except AttributeError:
-            print(('skipping {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping {pk}, {calc.uuid}')
             efermi = -10000
             continue  # we skip these entries
         try:
             gap = res.bandgap
         except AttributeError:
             gap = -10000
-            print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping 2 {pk}, {calc.uuid}')
             continue
 
         try:
             energy = res.energy
         except AttributeError:
             energy = 0.0
-            print(('skipping 3 {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping 3 {pk}, {calc.uuid}')
             continue
 
         data_dict['bandgap'].append(gap)
@@ -600,7 +600,7 @@ def optimize_calc_options(nodes,
         raise ValueError(message)
     elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
-            message = ('WARNING: Changed the number of nodes from {} to {}' ''.format(nodes, best_suggestion[0]))
+            message = f'WARNING: Changed the number of nodes from {nodes} to {best_suggestion[0]}'
         else:
             message = ('Computational setup is perfect! Nodes: {}, MPIs per node {}, OMP per MPI '
                        '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1], best_suggestion[2],

@@ -241,16 +241,16 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         output_d = node.get_dict()
         total_energy = output_d.get('total_energy_all')
         if not total_energy:
-            warnings.warn('No total energy data found, skip this node: {}'.format(node))
+            warnings.warn(f'No total energy data found, skip this node: {node}')
             continue
 
         distance = output_d.get('distance_charge_all')
         num_iterations = output_d.get('iterations_total')
         if not distance:
-            warnings.warn('No distance_charge_all data found, skip this node: {}'.format(node))
+            warnings.warn(f'No distance_charge_all data found, skip this node: {node}')
             continue
         if not num_iterations:
-            warnings.warn('No iteration_total data found, skip this node: {}'.format(node))
+            warnings.warn(f'No iteration_total data found, skip this node: {node}')
             continue
 
         mode = output_d.get('conv_mode')

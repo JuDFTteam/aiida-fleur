@@ -137,7 +137,7 @@ class FleurScfWorkChain(WorkChain):
         """
         init context and some parameters
         """
-        self.report('INFO: started convergence workflow version {}' ''.format(self._workflowversion))
+        self.report(f'INFO: started convergence workflow version {self._workflowversion}')
 
         ####### init    #######
 
@@ -231,7 +231,7 @@ class FleurScfWorkChain(WorkChain):
             if key not in self._default_wf_para.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SCF contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for SCF contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -322,7 +322,7 @@ class FleurScfWorkChain(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
+        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
 
         inpgencode = self.inputs.inpgen
 
@@ -497,12 +497,11 @@ class FleurScfWorkChain(WorkChain):
         label = ' '
         description = ' '
         if self.ctx.formula:
-            label = 'scf: fleur run {}'.format(self.ctx.loop_count + 1)
-            description = '{} fleur run {} on {}'.format(self.ctx.description_wf, self.ctx.loop_count + 1,
-                                                         self.ctx.formula)
+            label = f'scf: fleur run {self.ctx.loop_count + 1}'
+            description = f'{self.ctx.description_wf} fleur run {self.ctx.loop_count + 1} on {self.ctx.formula}'
         else:
-            label = 'scf: fleur run {}'.format(self.ctx.loop_count + 1)
-            description = '{} fleur run {}, fleurinp given'.format(self.ctx.description_wf, self.ctx.loop_count + 1)
+            label = f'scf: fleur run {self.ctx.loop_count + 1}'
+            description = f'{self.ctx.description_wf} fleur run {self.ctx.loop_count + 1}, fleurinp given'
 
         code = self.inputs.fleur
         options = self.ctx.options.copy()
@@ -517,7 +516,7 @@ class FleurScfWorkChain(WorkChain):
                                           add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
-        self.report('INFO: run FLEUR number: {}'.format(self.ctx.loop_count))
+        self.report(f'INFO: run FLEUR number: {self.ctx.loop_count}')
         self.ctx.calcs.append(future)
 
         return ToContext(last_base_wc=future)
@@ -541,7 +540,7 @@ class FleurScfWorkChain(WorkChain):
 
         exit_status = base_wc.exit_status
         if not base_wc.is_finished_ok:
-            error = ('ERROR: Last Fleur calculation failed ' 'with exit status {}'.format(exit_status))
+            error = f'ERROR: Last Fleur calculation failed with exit status {exit_status}'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
         else:

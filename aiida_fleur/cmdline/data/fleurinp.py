@@ -110,7 +110,7 @@ def list_fleurinp(raw, past_days, groups, all_users, strucinfo, uuid, ctime, ext
         echo.echo(tabulate(fleurinp_list_data, tablefmt='plain'))
     else:
         echo.echo(tabulate(fleurinp_list_data, headers='firstrow'))
-        echo.echo('\nTotal results: {}\n'.format(counter))
+        echo.echo(f'\nTotal results: {counter}\n')
 
 
 @cmd_fleurinp.command('cat')

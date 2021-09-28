@@ -44,7 +44,7 @@ def convert_formula_to_formula_unit(formula):
         new_val = int(val / g)
         if new_val == 1:
             new_val = ''
-        formula_unit_string = formula_unit_string + '{}{}'.format(key, new_val)
+        formula_unit_string = formula_unit_string + f'{key}{new_val}'
 
     return formula_unit_string
 
@@ -349,11 +349,11 @@ def determine_reactions(formula, available_data):
         if len(dataset) < 1:
             continue
         for entry in dataset:
-            productstring = productstring + '{}+'.format(entry)
+            productstring = productstring + f'{entry}+'
 
         productstring = productstring[:-1]
         constructed_products.append(productstring)
-        pos_reaction = '{}->{}'.format(formula, productstring)
+        pos_reaction = f'{formula}->{productstring}'
         bal_reaction = balance_equation(pos_reaction, allow_negativ=False, allow_zero=False, eval_linear=True)
         # We do not allow zero coefficients of products, because the resulting equation should already be in our list.
         if bal_reaction:
@@ -421,7 +421,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         try:
             compound_e = formenergydict.get(compound, 0)
         except KeyError:
-            print(('Formation energy of compound {} not given in {}.' 'I abort...'.format(compound, formenergydict)))
+            print(f'Formation energy of compound {compound} not given in {formenergydict}.I abort...')
             compound_e = 0
             # can be that educt side is not a real 'compound' but just a stoichiometry
             # so we give it 0
@@ -432,7 +432,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:
-            print(('Formation energy of compound {} not given in {}.' 'I abort...'.format(compound, formenergydict)))
+            print(f'Formation energy of compound {compound} not given in {formenergydict}.I abort...')
             compound_e = 0
             return None
         product_energy = product_energy + factor * compound_e
