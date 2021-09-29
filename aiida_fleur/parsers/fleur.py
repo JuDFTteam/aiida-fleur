@@ -139,27 +139,31 @@ class FleurParser(Parser):
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
 
                     kb_used = 0.0
-                    with output_folder.open(FleurCalculation._OUTXML_FILE_NAME,
-                                            'r') as out_file:  # lazy out.xml parsing
-                        outlines = out_file.read()
-                        try:
-                            line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
-                            mem_kb_avail = int(re.findall(r'\d+', line_avail)[0])
-                        except IndexError:
-                            mem_kb_avail = 1.0
-                            self.logger.info('Did not manage to find memory available info.')
-                        else:
-                            usage_json = FleurCalculation._USAGE_FILE_NAME
-                            if usage_json in list_of_files:
-                                with output_folder.open(usage_json, 'r') as us_file:
-                                    usage = json.load(us_file)
-                                kb_used = usage['data']['VmPeak']
+                    if has_xml_outfile:
+                        with output_folder.open(FleurCalculation._OUTXML_FILE_NAME,
+                                                'r') as out_file:  # lazy out.xml parsing
+                            outlines = out_file.read()
+                            try:
+                                line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]
+                                mem_kb_avail = int(re.findall(r'\d+', line_avail)[0])
+                            except IndexError:
+                                mem_kb_avail = 1.0
+                                self.logger.info('Did not manage to find memory available info.')
                             else:
-                                try:
-                                    line_used = re.findall(r'used.+', error_file_lines)[0]
-                                    kb_used = int(re.findall(r'\d+', line_used)[2])
-                                except IndexError:
-                                    self.logger.info('Did not manage to find memory usage info.')
+                                usage_json = FleurCalculation._USAGE_FILE_NAME
+                                if usage_json in list_of_files:
+                                    with output_folder.open(usage_json, 'r') as us_file:
+                                        usage = json.load(us_file)
+                                    kb_used = usage['data']['VmPeak']
+                                else:
+                                    try:
+                                        line_used = re.findall(r'used.+', error_file_lines)[0]
+                                        kb_used = int(re.findall(r'\d+', line_used)[2])
+                                    except IndexError:
+                                        self.logger.info('Did not manage to find memory usage info.')
+                    else:
+                        self.logger.info('Did not manage to find memory available info.')
+                        self.logger.info('Did not manage to find memory usage info.')
 
                     # here we estimate how much walltime was available and consumed
                     try:
