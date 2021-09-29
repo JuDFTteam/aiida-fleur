@@ -539,7 +539,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
-        outputnode_dict['last_calc_pk'] = self.ctx.banddos_calc.pk
         outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band
