@@ -104,7 +104,7 @@ class FleurParser(Parser):
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
             self.logger.error(f"XML out not found '{FleurCalculation._OUTXML_FILE_NAME}'")
-            return self.exit_codes.ERROR_NO_OUTXML
+            has_xml_outfile = False #Return after the error lines were processed
         else:
             has_xml_outfile = True
 
@@ -217,37 +217,38 @@ class FleurParser(Parser):
 
         ####### Parse the files ########
 
-        if has_xml_outfile:
-            # open output file
+        if not has_xml_outfile:
+            return self.exit_codes.ERROR_NO_OUTXML
+        # open output file
 
-            with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile_opened:
-                success = True
-                parser_info = {}
-                try:
-                    out_dict = outxml_parser(outxmlfile_opened, parser_info_out=parser_info, ignore_validation=True)
-                except (ValueError, FileNotFoundError, KeyError) as exc:
-                    self.logger.error(f'XML output parsing failed: {str(exc)}')
-                    success = False
+        with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile_opened:
+            success = True
+            parser_info = {}
+            try:
+                out_dict = outxml_parser(outxmlfile_opened, parser_info_out=parser_info, ignore_validation=True)
+            except (ValueError, FileNotFoundError, KeyError) as exc:
+                self.logger.error(f'XML output parsing failed: {str(exc)}')
+                success = False
 
-            # Call routines for output node creation
-            if not success:
-                self.logger.error('Parsing of XML output file was not successfull.')
-                parameter_data = dict(list(parser_info.items()))
-                outxml_params = Dict(dict=parameter_data)
-                link_name = self.get_linkname_outparams()
-                self.out(link_name, outxml_params)
-                return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
-            elif out_dict:
-                outputdata = dict(list(out_dict.items()) + list(parser_info.items()))
-                outxml_params = Dict(dict=outputdata)
-                link_name = self.get_linkname_outparams()
-                self.out(link_name, outxml_params)
-            else:
-                self.logger.error('Something went wrong, no out_dict found')
-                parameter_data = dict(list(parser_info.items()))
-                outxml_params = Dict(dict=parameter_data)
-                link_name = self.get_linkname_outparams()
-                self.out(link_name, outxml_params)
+        # Call routines for output node creation
+        if not success:
+            self.logger.error('Parsing of XML output file was not successfull.')
+            parameter_data = dict(list(parser_info.items()))
+            outxml_params = Dict(dict=parameter_data)
+            link_name = self.get_linkname_outparams()
+            self.out(link_name, outxml_params)
+            return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
+        elif out_dict:
+            outputdata = dict(list(out_dict.items()) + list(parser_info.items()))
+            outxml_params = Dict(dict=outputdata)
+            link_name = self.get_linkname_outparams()
+            self.out(link_name, outxml_params)
+        else:
+            self.logger.error('Something went wrong, no out_dict found')
+            parameter_data = dict(list(parser_info.items()))
+            outxml_params = Dict(dict=parameter_data)
+            link_name = self.get_linkname_outparams()
+            self.out(link_name, outxml_params)
 
         # optional parse other files
         # DOS
