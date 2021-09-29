@@ -130,6 +130,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         self.ctx.scf_needed = False
         self.ctx.banddos_calc = None
+        self.ctx.scf = None
         self.ctx.successful = False
         self.ctx.info = []
         self.ctx.warnings = []
@@ -521,6 +522,11 @@ class FleurBandDosWorkChain(WorkChain):
                     scf_results = load_node(w.node.pk).res
                     efermi_scf = scf_results.fermi_energy
                     bandgap_scf = scf_results.bandgap
+        elif 'scf' in self.inputs:
+            if self.ctx.scf.is_finished_ok:
+                scf_results = load_node(self.ctx.scf.outputs.output_scf_wc_para['last_calc_uuid']).res
+                efermi_scf = scf_results.fermi_energy
+                bandgap_scf = scf_results.bandgap
 
         efermi_band = last_calc_out_dict.get('fermi_energy', None)
         bandgap_band = last_calc_out_dict.get('bandgap', None)
