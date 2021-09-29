@@ -24,10 +24,9 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
-@pytest.mark.skip(reason='Not implemented')
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
