@@ -30,6 +30,9 @@ if run_regression_tests:
 else:
     pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
+def pytest_addoption(parser):
+    parser.addoption("--local-exe-hdf5", action="store_true",
+                    help='Is the local executable compiled with HDF5')
 
 @pytest.fixture(scope='function')
 def fixture_sandbox():
@@ -609,7 +612,7 @@ def inpgen_local_code(create_or_fake_local_code):
 
 
 @pytest.fixture(scope='function')
-def fleur_local_code(create_or_fake_local_code):
+def fleur_local_code(create_or_fake_local_code, pytestconfig):
     """
     Create or load Fleur code
     """
@@ -617,7 +620,8 @@ def fleur_local_code(create_or_fake_local_code):
     exec_rel_path = 'local_exe/'  # location where it is found
     entrypoint = 'fleur.fleur'  # entrypoint
     fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
-
+    if pytestconfig.getoption('--local-exe-hdf5'):
+        fleur_code.description = 'Local executable with HDF5'
     return fleur_code
 
 
