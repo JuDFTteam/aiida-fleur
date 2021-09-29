@@ -162,6 +162,8 @@ class FleurParser(Parser):
                                     except IndexError:
                                         self.logger.info('Did not manage to find memory usage info.')
                     else:
+                        kb_used = 0.0
+                        mem_kb_avail = 1.0
                         self.logger.info('Did not manage to find memory available info.')
                         self.logger.info('Did not manage to find memory usage info.')
 
