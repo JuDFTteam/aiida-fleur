@@ -471,11 +471,11 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         # TODO more here
         self.report('BandDOS workflow Done')
-        self.report(f'A bandstructure was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
-                    f'calculation {self.ctx.banddos_calc}')
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.banddos_calc:
+            self.report(f'A bandstructure was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
+                        f'calculation {self.ctx.banddos_calc}')
             try:
                 last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
             except NotExistent:

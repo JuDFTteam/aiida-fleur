@@ -48,9 +48,11 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
     builder.metadata.label = 'FleurBanddos_test_Si_bulk'
-    builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
     builder.options = orm.Dict(dict=options).store()
     builder.fleur = FleurCode
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
     # now run calculation
