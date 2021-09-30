@@ -442,6 +442,7 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     builder.fleurinp = fleurinp
     builder.remote = remote
     builder.options = options
+    builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
 
     out, node = run_get_node(builder)
@@ -457,6 +458,7 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     builder.fleurinp = fleurinp
     builder.remote = remote
     builder.options = options
+    builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
     
     out, node = run_get_node(builder)
@@ -472,6 +474,7 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     builder.fleurinp = fleurinp
     builder.remote = remote
     builder.options = options
+    builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
 
     out, node = run_get_node(builder)
