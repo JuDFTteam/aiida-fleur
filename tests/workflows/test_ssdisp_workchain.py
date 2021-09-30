@@ -138,7 +138,7 @@ def test_fleur_ssdisp_FePt_film(
     assert outpara.get('warnings') == []
     assert outpara.get('q_vectors') == [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]]
     assert outpara.get('is_it_force_theorem')
-    assert outpara.get('energies') == []
+    assert outpara.get('energies') == [0.0, 0.088007065396813, 0.032308078890001, 0.096042587755383]
 
 
 @pytest.mark.skip(reason='not implemented')
