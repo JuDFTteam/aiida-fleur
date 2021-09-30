@@ -189,7 +189,7 @@ class FleurBandDosWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_number'] is not None:
+        if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_distance'] is not None:
             error = 'ERROR: Only provide either the distance or number for the kpoints'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
