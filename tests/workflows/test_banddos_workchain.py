@@ -210,7 +210,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
 
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
-    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
+    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from seekpath'
     builder.metadata.label = 'FleurBanddos_test_Si_bulk'
     builder.options = orm.Dict(dict=options).store()
     builder.fleur = FleurCode
@@ -287,7 +287,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
 
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
-    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
+    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from ase'
     builder.metadata.label = 'FleurBanddos_test_Si_bulk'
     builder.options = orm.Dict(dict=options).store()
     builder.fleur = FleurCode
@@ -299,7 +299,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
 
     # now run calculation
     #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_seek.tar.gz')
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_ase.tar.gz')
     with with_export_cache(data_dir_abspath=data_dir_path):
         out, node = run_get_node(builder)
     #print(out)
