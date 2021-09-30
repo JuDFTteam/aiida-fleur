@@ -54,7 +54,6 @@ def test_fleur_ssdisp_FePt_film(
         'fleur_runmax': 2,
         'itmax_per_run': 120,
         'density_converged': 0.3,
-        'serial': False,
         'mode': 'density'
     }
 
