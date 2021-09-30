@@ -10,8 +10,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains test for the eos workchain, short, interface and regression '''
-from __future__ import absolute_import
-from __future__ import print_function
 
 import pytest
 import os
@@ -47,7 +45,7 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-    wf_param = {'points': 7, 'step': 0.002, 'guess': 1.00}
+    wf_param = {'points': 3, 'step': 0.02, 'guess': 1.00}
 
     calc_parameters = {
         'atom': {
