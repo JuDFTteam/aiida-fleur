@@ -268,13 +268,15 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.run_inpgen = False
         else:
             error = 'ERROR: No StructureData nor FleurinpData nor RemoteData was provided'
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
         if 'inpgen' in inputs:
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
+                error = 'The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen'
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'fleur' in inputs:
@@ -287,12 +289,14 @@ class FleurScfWorkChain(WorkChain):
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
         if mode not in ['force', 'density', 'energy', 'gw']:
-            error = ('ERROR: Wrong mode of convergence' + ": one of 'force', 'density', 'energy' or 'gw' was expected.")
+            error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         max_iters = self.ctx.wf_dict.get('itmax_per_run')
         if max_iters <= 1:
-            error = ("ERROR: 'itmax_per_run' should be equal at least 2")
+            error = "ERROR: 'itmax_per_run' should be equal at least 2"
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # check format of inpxml_changes
@@ -300,9 +304,9 @@ class FleurScfWorkChain(WorkChain):
         if fchanges:
             for change in fchanges:
                 # somehow the tuple type gets destroyed on the way and becomes a list
-                if (not isinstance(change, tuple)) and (not isinstance(change, list)):
-                    error = ('ERROR: Wrong Input inpxml_changes wrong format of'
-                             ': {} should be tuple of 2. I abort'.format(change))
+                if not isinstance(change, (tuple, list)):
+                    error = f'ERROR: Wrong Input inpxml_changes wrong format of: {change} should be tuple of 2. I abort'
+                    self.report(error)
                     return self.exit_codes.ERROR_INVALID_INPUT_PARAM
         return
 
@@ -720,60 +724,52 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
 
+        num_iterations = last_calc_out_dict.get('number_of_iterations_total', None)
         if self.ctx.successful and self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
                 self.report('STATUS: Done, the convergence criteria are reached.\n'
                             'INFO: The charge density of the FLEUR calculation '
-                            'converged after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime to {} "me/bohr^3" \n'
+                            f'converged after {self.ctx.loop_count} FLEUR runs, {num_iterations} '
+                            f'iterations and {self.ctx.total_wall_time} sec '
+                            f'walltime to {outputnode_dict["distance_charge"]} "me/bohr^3" \n'
                             'INFO: Did not manage to get energy and largest force difference '
-                            'between two last iterations, probably converged in a single iteration'
-                            ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total', None),
-                                      self.ctx.total_wall_time, outputnode_dict['distance_charge']))
-                if self.ctx.last_nmmp_distance > 0.0:
-                    self.report('INFO: The LDA+U density matrix is converged to {} change '
-                                'of all matrix elements'.format(self.ctx.last_nmmp_distance))
+                            'between two last iterations, probably converged in a single iteration')
             else:
                 self.report('STATUS: Done, the convergence criteria are reached.\n'
                             'INFO: The charge density of the FLEUR calculation '
-                            'converged after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime to {} "me/bohr^3" \n'
+                            f'converged after {self.ctx.loop_count} FLEUR runs, {num_iterations} '
+                            f'iterations and {self.ctx.total_wall_time} sec '
+                            f'walltime to {outputnode_dict["distance_charge"]} "me/bohr^3" \n'
                             'INFO: The total energy difference of the last two iterations '
-                            'is {} Htr and largest force difference is {} Htr/bohr'
-                            ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total',
-                                                                                  None), self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff))
-                if self.ctx.last_nmmp_distance > 0.0:
-                    self.report('INFO: The LDA+U density matrix is converged to {} change '
-                                'of all matrix elements'.format(self.ctx.last_nmmp_distance))
+                            f'is {self.ctx.energydiff} Htr and largest force difference is '
+                            f'{self.ctx.forcediff} Htr/bohr')
         elif self.ctx.successful and not self.ctx.reached_conv:
             if len(self.ctx.total_energy) <= 1:  # then len(self.ctx.all_forces) <= 1 too
                 self.report('STATUS/WARNING: Done, the maximum number of runs '
                             'was reached.\n INFO: The '
                             'charge density of the FLEUR calculation, '
-                            'after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime is {} "me/bohr^3"\n'
+                            f'after {self.ctx.loop_count} FLEUR runs, {num_iterations} '
+                            f' iterations and {self.ctx.total_wall_time} sec '
+                            f'walltime is {outputnode_dict["distance_charge"]} "me/bohr^3"\n'
                             'INFO: can not extract energy and largest force difference between'
-                            ' two last iterations, probably converged in a single iteration'
-                            ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total', None),
-                                      self.ctx.total_wall_time, outputnode_dict['distance_charge']))
+                            ' two last iterations, probably converged in a single iteration')
             else:
                 self.report('STATUS/WARNING: Done, the maximum number of runs '
                             'was reached.\n INFO: The '
                             'charge density of the FLEUR calculation, '
-                            'after {} FLEUR runs, {} iterations and {} sec '
-                            'walltime is {} "me/bohr^3"\n'
+                            f'after {self.ctx.loop_count} FLEUR runs, {num_iterations} '
+                            f' iterations and {self.ctx.total_wall_time} sec '
+                            f'walltime is {outputnode_dict["distance_charge"]} "me/bohr^3"\n'
                             'INFO: The total energy difference of the last two iterations '
-                            'is {} Htr and largest force difference is {} Htr/bohr\n'
-                            ''.format(self.ctx.loop_count, last_calc_out_dict.get('number_of_iterations_total',
-                                                                                  None), self.ctx.total_wall_time,
-                                      outputnode_dict['distance_charge'], self.ctx.energydiff, self.ctx.forcediff))
-            if self.ctx.last_nmmp_distance > 0.0:
-                self.report('INFO: The LDA+U density matrix is converged to {} change '
-                            'of all matrix elements'.format(self.ctx.last_nmmp_distance))
+                            f'is {self.ctx.energydiff} Htr and largest force difference is'
+                            f'{self.ctx.forcediff} Htr/bohr\n')
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and ' 'errors/warning/hints in output_scf_wc_para')
+
+        if self.ctx.last_nmmp_distance > 0.0:
+            self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '
+                        'of all matrix elements')
 
         outputnode_t = Dict(dict=outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...
