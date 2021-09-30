@@ -173,34 +173,34 @@ class FleurBandDosWorkChain(WorkChain):
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
                 error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the BandDOS calculation'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
                 error = 'ERROR: you gave SCF input + fleurinp for the BandDOS calculation'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
             error = 'ERROR: you gave neither SCF input nor remote'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
 
         if wf_dict['mode'] == 'dos' and wf_dict['kpath'] not in ('auto', 'skip'):
             error = 'ERROR: you specified the DOS mode but provided a non default kpath argument'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_distance'] is not None:
             error = 'ERROR: Only provide either the distance or number for the kpoints'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
     def change_fleurinp(self):
