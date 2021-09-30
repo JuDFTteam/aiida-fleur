@@ -118,7 +118,7 @@ def test_fleur_ssdisp_FePt_film(
     }
 
     # now run calculation
-    data_dir_path = os.path.join(aiida_path, 'tests/workflows/caches/fleur_ssdisp_FePt.tar.gz')
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_ssdisp_FePt.tar.gz')
 
     #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
     #with enable_caching():
