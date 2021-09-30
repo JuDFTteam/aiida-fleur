@@ -107,6 +107,7 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_DROP_CDN, inputs=inputs)
     process.setup()
+    process.validate_inputs()  #Needed so that the inputs are on the context of the workchain
 
     result = process._handle_dirac_equation(process.ctx.calculations[-1])
     assert isinstance(result, ErrorHandlerReport)
@@ -115,6 +116,22 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
 
     result = process.inspect_calculation()
     assert result is None
+
+
+def test_handle_not_enough_memory_no_solution(generate_workchain_base):
+    """Test `FleurBaseWorkChain._handle_not_enough_memory`."""
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_NOT_ENOUGH_MEMORY)
+    process.setup()
+    process.ctx.can_be_optimised = False
+
+    result = process._handle_not_enough_memory(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_NOT_ENOUGH_MEMORY_NO_SOLUTION
+
+    result = process.inspect_calculation()
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_NOT_ENOUGH_MEMORY_NO_SOLUTION
 
 
 # tests
@@ -131,7 +148,7 @@ class Test_FleurBaseWorkChain():
         full example using FleurBaseWorkChain with just a fleurinp data as input.
         Several fleur runs needed till convergence
         """
-        from aiida.orm import Code, load_node, Dict, StructureData
+        from aiida.orm import Code, load_node, StructureData
         from numpy import array
 
         options = {
