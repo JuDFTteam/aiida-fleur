@@ -306,19 +306,20 @@ class FleurEosWorkChain(WorkChain):
                 if issubclass(type(i), np.complex):
                     write_defaults_fit = True
 
-            # cast float, because np datatypes are sometimes not serialable
-            volume, bulk_modulus = float(volume), float(bulk_modulus)
-            bulk_deriv, residuals = float(bulk_deriv), float(residuals)
+            if all(i is not None for i in (volume, bulk_modulus, bulk_deriv, residuals)):
+                # cast float, because np datatypes are sometimes not serialable
+                volume, bulk_modulus = float(volume), float(bulk_modulus)
+                bulk_deriv, residuals = float(bulk_deriv), float(residuals)
 
-            volumes = self.ctx.volume
-            gs_scale = volume * natoms / self.ctx.org_volume
-            bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
-            if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
-                warn = ('Groundstate volume was not in the scaling range.')
-                hint = f'Consider rerunning around point {gs_scale}'
-                self.ctx.info.append(hint)
-                self.ctx.warnings.append(warn)
-                # TODO maybe make it a feature to rerun with centered around the gs.
+                volumes = self.ctx.volume
+                gs_scale = volume * natoms / self.ctx.org_volume
+                bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
+                if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
+                    warn = ('Groundstate volume was not in the scaling range.')
+                    hint = f'Consider rerunning around point {gs_scale}'
+                    self.ctx.info.append(hint)
+                    self.ctx.warnings.append(warn)
+                    # TODO maybe make it a feature to rerun with centered around the gs.
         else:
             write_defaults_fit = True
 

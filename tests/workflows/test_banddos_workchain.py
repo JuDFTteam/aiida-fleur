@@ -330,10 +330,10 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
 
 @pytest.mark.skip(reason='Test is not implemented')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
+def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
     """
-    Test the validation behavior of band dos workchain if wrong input is provided it should throw
-    an exitcode and not start a Fleur run or crash
+    Test the behaviour of the banddos workchain when started from a remote data input
+    without scf
     """
     assert False
 
