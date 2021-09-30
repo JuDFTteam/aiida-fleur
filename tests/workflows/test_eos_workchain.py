@@ -110,7 +110,7 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_eos_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
+def test_fleur_eos_validation_wrong_inputs(run_with_cache, mock_code_factory, generate_structure2):
     """
     Test the validation behavior of FleurEosWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
