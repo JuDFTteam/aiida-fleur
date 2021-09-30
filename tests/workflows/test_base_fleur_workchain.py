@@ -184,13 +184,16 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data):
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.num_machines == 2
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
     assert 'fleurinpdata' not in process.ctx.inputs
 
     process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
+    process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_calculation()
     assert result.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
+    assert process.ctx.num_machines == 20
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
     assert 'fleurinpdata' not in process.ctx.inputs
 
