@@ -163,6 +163,162 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
 
 
+def test_handle_time_limits(generate_workchain_base, generate_remote_data):
+    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    from aiida.common import LinkType
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    code = process.ctx.inputs.code
+
+    #Add outgoing remote folder
+    process.ctx.calculations[-1].store()
+    remote = generate_remote_data(code.computer, '/tmp')
+    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+
+    result = process._handle_time_limits(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.inputs.parent_folder.uuid == remote.uuid
+    assert 'fleurinpdata' not in process.ctx.inputs
+
+    process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
+    result = process.inspect_calculation()
+    assert result.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
+    assert process.ctx.inputs.parent_folder.uuid == remote.uuid
+    assert 'fleurinpdata' not in process.ctx.inputs
+
+
+def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, create_fleurinp,
+                                              fixture_code):
+    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    from aiida.common import LinkType
+    from aiida_fleur.common.defaults import default_options
+
+    INPXML_PATH = os.path.abspath(os.path.join(aiida_path, '../tests/files/inpxml/CuDOSXML/files/inp.xml'))
+    fleurinp = create_fleurinp(INPXML_PATH)
+    fleur = fixture_code('fleur.fleur')
+    path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
+    remote_before = generate_remote_data(fleur.computer, path).store()
+
+    inputs = {
+        'code': fleur,
+        'fleurinpdata': fleurinp,
+        'parent_folder': remote_before,
+        'options': Dict(dict=default_options)
+    }
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    #Add outgoing remote folder
+    process.ctx.calculations[-1].store()
+    remote = generate_remote_data(fleur.computer, '/tmp')
+    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+
+    result = process._handle_time_limits(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.inputs.parent_folder.uuid == remote_before.uuid
+
+
+def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote_data, create_fleurinp, fixture_code):
+    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    from aiida.common import LinkType
+    from aiida_fleur.common.defaults import default_options
+
+    INPXML_PATH = os.path.abspath(os.path.join(aiida_path, '../tests/files/inpxml/CuDOSXML/files/inp.xml'))
+    fleurinp = create_fleurinp(INPXML_PATH)
+    fleur = fixture_code('fleur.fleur')
+    path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
+    remote_before = generate_remote_data(fleur.computer, path).store()
+
+    inputs = {
+        'code': fleur,
+        'fleurinpdata': fleurinp,
+        'parent_folder': remote_before,
+        'options': Dict(dict=default_options)
+    }
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    process.ctx.inputs.pop('fleurinpdata')  #Simulate the fact that some previous error handler dropped fleurinpdata
+
+    #Add outgoing remote folder
+    process.ctx.calculations[-1].store()
+    remote = generate_remote_data(fleur.computer, '/tmp')
+    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+
+    result = process._handle_time_limits(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.inputs.parent_folder.uuid == remote.uuid
+
+
+def test_handle_time_limits_previous_calculation_error(generate_workchain_base, generate_remote_data, create_fleurinp,
+                                                       fixture_code, generate_calc_job_node):
+    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    from aiida.common import LinkType
+    from plumpy import ProcessState
+    from aiida_fleur.common.defaults import default_options
+
+    INPXML_PATH = os.path.abspath(os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml'))
+    fleurinp = create_fleurinp(INPXML_PATH)
+    fleur = fixture_code('fleur.fleur')
+    path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
+    remote_before = generate_remote_data(fleur.computer, path)
+
+    prev_calc = generate_calc_job_node('fleur.fleur', inputs={'parameters': Dict()})
+    prev_calc.set_process_state(ProcessState.FINISHED)
+    prev_calc.set_exit_status(FleurCalculation.exit_codes.ERROR_TIME_LIMIT.status)
+    prev_calc.store()
+
+    remote_before.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
+    remote_before.store()
+
+    inputs = {
+        'code': fleur,
+        'fleurinpdata': fleurinp,
+        'parent_folder': remote_before,
+        'options': Dict(dict=default_options)
+    }
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    #Add outgoing remote folder
+    process.ctx.calculations[-1].add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
+    process.ctx.calculations[-1].store()
+    remote = generate_remote_data(fleur.computer, '/tmp')
+    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+
+    result = process._handle_time_limits(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 6 * 60 * 60
+
+    result = process.inspect_calculation()
+    assert result.status == 0
+
+
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurBaseWorkChain():
