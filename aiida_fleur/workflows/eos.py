@@ -309,7 +309,7 @@ class FleurEosWorkChain(WorkChain):
             if all(i is not None for i in (volume, bulk_modulus, bulk_deriv, residuals)):
                 # cast float, because np datatypes are sometimes not serialable
                 volume, bulk_modulus = float(volume), float(bulk_modulus)
-                bulk_deriv, residuals = float(bulk_deriv), float(residuals)
+                bulk_deriv, residuals = float(bulk_deriv), residuals.tolist()
 
                 volumes = self.ctx.volume
                 gs_scale = volume * natoms / self.ctx.org_volume
