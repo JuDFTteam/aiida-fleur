@@ -111,11 +111,12 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
 
     result = process._handle_dirac_equation(process.ctx.calculations[-1])
     assert isinstance(result, ErrorHandlerReport)
-    assert not result.do_break
+    assert result.do_break
+    assert result.exit_code.status == 0
     assert 'parent_folder' not in process.ctx.inputs
 
     result = process.inspect_calculation()
-    assert result is None
+    assert result.status == 0
 
 
 def test_handle_not_enough_memory_no_solution(generate_workchain_base):
@@ -128,10 +129,10 @@ def test_handle_not_enough_memory_no_solution(generate_workchain_base):
     result = process._handle_not_enough_memory(process.ctx.calculations[-1])
     assert isinstance(result, ErrorHandlerReport)
     assert result.do_break
-    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_NOT_ENOUGH_MEMORY_NO_SOLUTION
+    assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
     result = process.inspect_calculation()
-    assert result == FleurBaseWorkChain.exit_codes.ERROR_NOT_ENOUGH_MEMORY_NO_SOLUTION
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
 
 # tests
