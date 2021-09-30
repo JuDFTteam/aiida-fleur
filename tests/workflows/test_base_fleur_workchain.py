@@ -138,6 +138,31 @@ def test_handle_not_enough_memory_no_solution(generate_workchain_base):
     assert result == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
 
+def test_handle_not_enough_memory(generate_workchain_base):
+    """Test `FleurBaseWorkChain._handle_not_enough_memory`."""
+
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_NOT_ENOUGH_MEMORY)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    result = process._handle_not_enough_memory(process.ctx.calculations[-1])
+    assert isinstance(result, ErrorHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 0
+    assert process.ctx.num_machines == 2
+    assert abs(process.ctx.suggest_mpi_omp_ratio - 0.5) < 1e-12
+    assert 'settings' in process.ctx.inputs
+    assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
+
+    process.ctx.num_machines = 14  #doubling goes over the maximum specified
+    result = process.inspect_calculation()
+    assert result.status == 0
+    assert process.ctx.num_machines == 20
+    assert abs(process.ctx.suggest_mpi_omp_ratio - 0.25) < 1e-12
+    assert 'settings' in process.ctx.inputs
+    assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
+
+
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurBaseWorkChain():

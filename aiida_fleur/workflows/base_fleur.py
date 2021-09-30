@@ -305,10 +305,9 @@ def _handle_not_enough_memory(self, calculation):
 
             if 'settings' not in self.ctx.inputs:
                 self.ctx.inputs.settings = {}
-            else:
-                self.ctx.inputs.settings = self.inputs.settings.get_dict()
-            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
-
+            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
+            if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
+                self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
             return ErrorHandlerReport(True, True)
         else:
             self.ctx.restart_calc = calculation
