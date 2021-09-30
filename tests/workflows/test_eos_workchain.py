@@ -45,7 +45,7 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-    wf_param = {'points': 3, 'step': 0.02, 'guess': 1.00}
+    wf_param = {'points': 3, 'step': 0.02, 'guess': 1.03}
 
     calc_parameters = {
         'atom': {
