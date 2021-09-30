@@ -148,6 +148,15 @@ class FleurBandDosWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = f'ERROR: input wf_parameters for Banddos contains extra keys: {extra_keys}'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
         defaultoptions = self._default_options
         if 'options' in inputs:
             options = inputs.options.get_dict()

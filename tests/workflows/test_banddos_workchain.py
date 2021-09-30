@@ -336,3 +336,146 @@ def test_fleur_band_validation_wrong_inputs(self, run_with_cache, mock_code_fact
     an exitcode and not start a Fleur run or crash
     """
     assert False
+
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
+                                               generate_remote_data, clear_spec, clear_database):
+    """
+    Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
+    an exitcode and not start a Fleur run or crash
+    """
+    #from aiida.engine import run_get_node
+
+    #clear_spec()
+
+    # prepare input nodes and dicts
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+    options = orm.Dict(dict=options).store()
+
+    FleurCode = mock_code_factory(
+        label='fleur',
+        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
+        entry_point=CALC_ENTRY_POINT,
+        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
+    InpgenCode = mock_code_factory(label='inpgen',
+                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                 'calc_data_dir/'),
+                                   entry_point=CALC2_ENTRY_POINT,
+                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+
+    structure = generate_structure2()
+    structure.store()
+    fleurinp = create_fleurinp(TEST_INP_XML_PATH)
+    fleurinp.store()
+    remote = generate_remote_data(FleurCode.computer, '/tmp').store()
+
+    ################
+    # Create builders
+
+    # 1. create builder with both scf and remote input
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.scf.fleurinp = fleurinp
+    builder.scf.fleur = FleurCode
+    builder.scf.options = options
+    builder.fleur = FleurCode
+    builder.options = options
+    builder.remote = remote
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 231
+
+    # 2. create builder no scf no remote
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.fleur = FleurCode
+    builder.options = options
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 231
+
+    # 3. create builder invalid fleurcode given
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.fleur = InpgenCode
+    builder.options = options
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 233
+
+    # 4. no code given
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+
+    # caught by aiida during creation
+    with pytest.raises(ValueError) as e_info:
+        out, node = run_get_node(builder)
+
+    # 5. create builder extra keys
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'kpath': 'auto', 'unknown': 'Test'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.wf_parameters = wf_parameters
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
+
+    # 6. create builder dos and kpath specification
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'mode': 'dos', 'kpath': 'seek'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.wf_parameters = wf_parameters
+    
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
+
+    # 7. create builder kpoints_number and kpoints_distance given
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200,  'kpoints_distance': 0.1, 'kpath': 'GXG'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.wf_parameters = wf_parameters
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
