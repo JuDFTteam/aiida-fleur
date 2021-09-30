@@ -16,6 +16,8 @@ from __future__ import print_function
 import pytest
 import os
 from aiida.engine import run_get_node
+from aiida import orm
+
 import aiida_fleur
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 
@@ -25,6 +27,86 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
+
+
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure, clear_spec,
+                                clear_database_after_test):
+    """
+    full example using scf workflow with just a fleurinp data as input.
+    Several fleur runs needed till convergence
+    """
+
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 10 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+    wf_param = {'points': 7, 'step': 0.002, 'guess': 1.00}
+
+    calc_parameters = {
+        'atom': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 8,
+            'lnonsph': 6
+        },
+        'comp': {
+            'kmax': 3.4
+        },
+        'kpt': {
+            'div1': 10,
+            'div2': 10,
+            'div3': 10,
+            'tkb': 0.0005
+        }
+    }
+
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    # create process builder to set parameters
+    builder = FleurEosWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur FleurEosWorkChain test for Si bulk'
+    builder.metadata.label = 'FleurEosWorkChain_test_Si_bulk'
+    builder.structure = generate_structure().store()  #generate_structure2().store()
+    builder.wf_parameters = orm.Dict(dict=wf_param).store()
+    builder.scf = {
+        'fleur': FleurCode,
+        'inpgen': InpgenCode,
+        'options': orm.Dict(dict=options).store(),
+        'calc_parameters': orm.Dict(dict=calc_parameters).store()
+    }
+    print(builder)
+    # now run calculation
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_eos_si_structure.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+
+    print(out)
+    print(node)
+
+    outpara = out.get('output_eos_wc_para', None)
+    assert outpara is not None
+    outpara = outpara.get_dict()
+    print(outpara)
+
+    outstruc = out.get('output_eos_wc_structure', None)
+    assert outstruc is not None
+
+    assert node.is_finished_ok
+
+    # check output
+    #distance, bulk modulus, optimal structure, opt scaling
+    assert abs(outpara.get('scaling_gs') - 0.99268546558578) < 10**14
+    assert outpara.get('warnings') == ['Groundstate volume was not in the scaling range.']
+    assert outpara.get('info') == ['Consider rerunning around point 0.9926854655857787']
 
 
 # tests
