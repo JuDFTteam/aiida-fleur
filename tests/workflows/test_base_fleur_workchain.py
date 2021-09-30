@@ -78,6 +78,7 @@ def test_handle_dirac_equation_no_parent_folder(generate_workchain_base):
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_DROP_CDN)
     process.setup()
+    process.validate_inputs()  #Needed so that the inputs are on the context of the workchain
 
     result = process._handle_dirac_equation(process.ctx.calculations[-1])
     assert isinstance(result, ErrorHandlerReport)
@@ -115,6 +116,8 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
     assert result.exit_code.status == 0
     assert 'parent_folder' not in process.ctx.inputs
 
+    #Reinsert parent_folder
+    process.ctx.inputs.parent_folder = remote
     result = process.inspect_calculation()
     assert result.status == 0
 
