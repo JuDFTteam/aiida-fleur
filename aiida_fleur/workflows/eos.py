@@ -17,11 +17,7 @@ of an equation of state
 # allow different inputs, make things optional(don't know yet how)
 # half number of iteration if you are close to be converged. (therefore
 # one can start with 18 iterations, and if thats not enough run again 9 or something)
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
-
-import six
 
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict, List
@@ -29,10 +25,11 @@ from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
 
+from masci_tools.util.constants import HTR_TO_EV
+
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
-from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurEosWorkChain(WorkChain):
@@ -121,7 +118,7 @@ class FleurEosWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -389,7 +386,7 @@ class FleurEosWorkChain(WorkChain):
             returndict['output_eos_wc_structure'] = outputstructure
 
         # create link to workchain node
-        for link_name, node in six.iteritems(returndict):
+        for link_name, node in returndict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):
