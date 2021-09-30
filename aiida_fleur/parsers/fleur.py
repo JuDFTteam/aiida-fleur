@@ -104,7 +104,7 @@ class FleurParser(Parser):
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
             self.logger.error(f"XML out not found '{FleurCalculation._OUTXML_FILE_NAME}'")
-            has_xml_outfile = False #Return after the error lines were processed
+            has_xml_outfile = False  #Return after the error lines were processed
         else:
             has_xml_outfile = True
 

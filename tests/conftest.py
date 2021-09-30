@@ -30,9 +30,10 @@ if run_regression_tests:
 else:
     pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
+
 def pytest_addoption(parser):
-    parser.addoption("--local-exe-hdf5", action="store_true",
-                    help='Is the local executable compiled with HDF5')
+    parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
+
 
 @pytest.fixture(scope='function')
 def fixture_sandbox():

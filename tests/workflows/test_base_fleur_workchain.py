@@ -87,7 +87,9 @@ def test_handle_dirac_equation_no_parent_folder(generate_workchain_base):
     result = process.inspect_calculation()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
 
-def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, create_fleurinp, fixture_code, generate_remote_data):
+
+def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, create_fleurinp, fixture_code,
+                                                   generate_remote_data):
     """Test `FleurBaseWorkChain._handle_mt_relax_error`."""
     from aiida_fleur.common.defaults import default_options
     import io
@@ -96,17 +98,12 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
     relax_file = io.BytesIO(b'<relaxation/>')
     relax_file.name = 'relax.xml'
     fleurinp = create_fleurinp(INPXML_PATH, additional_files=[relax_file])
-    
+
     fleur = fixture_code('fleur.fleur')
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinpdata': fleurinp,
-        'parent_folder': remote,
-        'options': Dict(dict=default_options)
-    }
+    inputs = {'code': fleur, 'fleurinpdata': fleurinp, 'parent_folder': remote, 'options': Dict(dict=default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_DROP_CDN, inputs=inputs)
     process.setup()
@@ -118,6 +115,7 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
 
     result = process.inspect_calculation()
     assert result is None
+
 
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
