@@ -337,6 +337,7 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
     """
     assert False
 
+
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
@@ -460,7 +461,7 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     builder.options = options
     builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
-    
+
     out, node = run_get_node(builder)
     assert out == {}
     assert node.is_finished
@@ -468,7 +469,7 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     assert node.exit_status == 230
 
     # 7. create builder kpoints_number and kpoints_distance given
-    wf_parameters = orm.Dict(dict={'kpoints_number': 200,  'kpoints_distance': 0.1, 'kpath': 'GXG'})
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'kpoints_distance': 0.1, 'kpath': 'GXG'})
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
