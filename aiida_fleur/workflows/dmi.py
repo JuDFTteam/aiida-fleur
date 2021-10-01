@@ -538,7 +538,7 @@ class FleurDMIWorkChain(WorkChain):
             if e_u in ['Htr', 'htr']:
                 for labels, energies in t_energydict.items():
                     t_energydict[labels] = energies * HTR_TO_EV
-        except AttributeError:
+        except (AttributeError, TypeError):
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
