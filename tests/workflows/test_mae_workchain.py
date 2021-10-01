@@ -27,7 +27,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
-@pytest.mark.timeout(500, method='thread')
+@pytest.mark.timeout(1000, method='thread')
 def test_fleur_mae_FePt_film(
         clear_database,
         with_export_cache,  #run_with_cache,
