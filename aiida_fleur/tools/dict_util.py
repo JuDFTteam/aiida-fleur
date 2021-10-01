@@ -15,7 +15,7 @@ commonly used by the fleur plugin and workflows
 """
 
 import typing as typ
-import collections
+from collections.abc import Mapping
 
 
 def extract_elementpara(parameter_dict, element):
@@ -111,7 +111,7 @@ def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any])
     """
     for key, value in left.items():
         if key in right:
-            if isinstance(value, collections.Mapping) and isinstance(right[key], collections.Mapping):
+            if isinstance(value, Mapping) and isinstance(right[key], Mapping):
                 right[key] = recursive_merge(value, right[key])
 
     merged = left.copy()
