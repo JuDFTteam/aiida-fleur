@@ -10,13 +10,14 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains tests for the FleurRelaxWorkChain. '''
-from __future__ import absolute_import
-from __future__ import print_function
-
 import pytest
 import aiida_fleur
 import os
+
 from aiida.engine import run_get_node
+from aiida import orm
+from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
+
 from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 
 from ..conftest import run_regression_tests
@@ -27,49 +28,66 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
+@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
+    """
+    full example using FleurRelaxWorkChain with just a fleurinp data as input.
+    Several fleur runs needed till convergence
+    """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+
+    FleurCode = fleur_local_code
+
+    # create process builder to set parameters
+    builder = FleurRelaxWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
+    builder.metadata.label = 'FleurSCF_test_Si_bulk'
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.options = orm.Dict(dict=options).store()
+    builder.scf.fleur = FleurCode
+    #print(builder)
+
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_relax_fleurinp_Si.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
+
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_relax_wc_para']
+    n = n.get_dict()
+
+    print(get_workchain_report(orm.load_node(n['last_scf_wc_uuid']), 'REPORT'))
+
+    print(n)
+    #Dummy checks
+    assert n.get('errors') == []
+    assert n.get('force') == []
+    assert n.get('energy') == []
+
+    relax_struc = out['optimized_structure']
+
+
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurRelaxWorkChain():
     """
     Regression tests for the FleurRelaxWorkChain
     """
-
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_relax_fleurinp_Si_bulk(self, run_with_cache, mock_code_factory, create_fleurinp):
-        """
-        full example using FleurRelaxWorkChain with just a fleurinp data as input.
-        Several fleur runs needed till convergence
-        """
-        from aiida.orm import Code, load_node, Dict, StructureData
-        from numpy import array
-
-        options = {
-            'resources': {
-                'num_machines': 1
-            },
-            'max_wallclock_seconds': 5 * 60,
-            'withmpi': False,
-            'custom_scheduler_commands': ''
-        }
-
-        FleurCode = mock_code = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-        # create process builder to set parameters
-        builder = FleurRelaxWorkChain.get_builder()
-        builder.metadata.description = 'Simple Fleur relax test for Si bulk with fleurinp data given'
-        builder.metadata.label = 'Fleurrelax_test_Si_bulk'
-        builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.options = Dict(dict=options)
-        builder.fleur = FleurCode
-
-        # now run calculation
-        out, node = run_with_cache(builder)
-
-        # check output
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
