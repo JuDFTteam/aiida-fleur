@@ -50,12 +50,7 @@ def test_fleur_mae_FePt_film(
             'custom_scheduler_commands': ''
         })
 
-    wf_para_scf = {
-        'fleur_runmax': 2,
-        'itmax_per_run': 120,
-        'density_converged': 0.3,
-        'mode': 'density'
-    }
+    wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
     wf_para_scf = Dict(dict=wf_para_scf)
 

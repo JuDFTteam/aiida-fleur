@@ -23,7 +23,7 @@ from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
+TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 

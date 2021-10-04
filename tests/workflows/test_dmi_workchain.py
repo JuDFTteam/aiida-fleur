@@ -50,27 +50,22 @@ def test_fleur_dmi_FePt_film(
             'custom_scheduler_commands': ''
         })
 
-    wf_para_scf = {
-        'fleur_runmax': 2,
-        'itmax_per_run': 120,
-        'density_converged': 0.3,
-        'mode': 'density'
-    }
+    wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
     wf_para_scf = Dict(dict=wf_para_scf)
 
     wf_para = Dict(
         dict={
             'beta': {
-            'all': 1.57079
-        },
-        'sqas_theta': [0.0, 1.57079, 1.57079],
-        'sqas_phi': [0.0, 0.0, 1.57079],
-        'soc_off': [],
-        # 'prop_dir': [1.0, 0.0, 0.0],
-        'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
-        'ref_qss': [0.0, 0.0, 0.0],
-        'inpxml_changes': []
+                'all': 1.57079
+            },
+            'sqas_theta': [0.0, 1.57079, 1.57079],
+            'sqas_phi': [0.0, 0.0, 1.57079],
+            'soc_off': [],
+            # 'prop_dir': [1.0, 0.0, 0.0],
+            'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
+            'ref_qss': [0.0, 0.0, 0.0],
+            'inpxml_changes': []
         })
 
     bohr_a_0 = 0.52917721092  # A
