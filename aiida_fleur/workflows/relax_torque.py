@@ -43,7 +43,10 @@ class FleurRelaxTorqueWorkChain(WorkChain):
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
         'torque_criterion': 0.001,  # Converge the force until lower this value in atomic units
-        'run_final_scf': False  # Run a final scf on the final relaxed structure
+        'run_final_scf': False,  # Run a final scf on the final relaxed structure
+        'relax_alpha': 0.1,
+        'break_symmetry': False,
+
     }
 
     _default_options = FleurScfWorkChain._default_options
@@ -93,7 +96,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         # Pre-initialization of some variables
         self.ctx.loop_count = 0  # Counts relax restarts
-        self.ctx.forces = []  # Collects forces
+        self.ctx.max_torques = []  # Collects forces
         self.ctx.reached_relax = False  # Bool if is relaxed
         self.ctx.scf_res = None  # Last scf results
         self.ctx.total_magnetic_moment = None
@@ -160,7 +163,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         This allows to call the workchain to run an scf only and makes
         logic of other higher workflows a lot easier
         """
-        relaxtype = self.ctx.wf_dict.get('relaxation_type', 'atoms')
+        relaxtype = self.ctx.wf_dict.get('relaxation_type', 'spins')
         if relaxtype is None:
             self.ctx.reached_relax = True
             return False
@@ -229,7 +232,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
                 old_changes = scf_wf_dict['inpxml_changes']
                 new_changes = []
                 for change in old_changes:
-                    if 'shift_value' not in change[0]:
+                    if 'shift_value' not in change[0] and '':
                         new_changes.append(change)
                 scf_wf_dict['inpxml_changes'] = new_changes
 
@@ -277,10 +280,8 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         scf_wc = self.ctx.scf_res
 
         try:
-            x_torques = scf_wc.outputs.output_scf_wc_para['x_torques']
-            y_torques = scf_wc.outputs.output_scf_wc_para['y_torques']
-            alpha_angles = scf_wc.outputs.output_scf_wc_para['alpha_angles']
-            beta_angles = scf_wc.outputs.output_scf_wc_para['beta_angles']
+            x_torques = scf_wc.outputs.output_scf_wc_para['last_x_torques']
+            y_torques = scf_wc.outputs.output_scf_wc_para['last_y_torques']
 
         except (NotExistent, AttributeError):
             # TODO: throw exit code
@@ -289,10 +290,9 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            all_torques = x_torques.extend(y_torques)
-            self.ctx.max_torques.append(max(all_torques))
+            self.ctx.max_torques.append(max(x_torques + y_torques))
 
-        largest_now = self.ctx.forces[-1]
+        largest_now = self.ctx.max_torques[-1]
 
         if largest_now < self.ctx.wf_dict['torque_criterion']:
             self.report('INFO: Structure is converged to the largest torque ' '{}'.format(self.ctx.max_torques[-1]))
@@ -318,35 +318,72 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.analyse_relax()`.
         New FleurinpData is stored in the context.
         """
-        # TODO do we loose provenance here, which we like to keep?
+        from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
+
+        relax_alpha = self.ctx.wf_dict['relax_alpha']
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-        try:
-            relax_parsed = last_calc.outputs.relax_parameters
-        except NotExistent:
-            return self.exit_codes.ERROR_NO_SCF_OUTPUT
+        x_torques = scf_wc.outputs.output_scf_wc_para.get_dict()['last_x_torques']
+        y_torques = scf_wc.outputs.output_scf_wc_para.get_dict()['last_y_torques']
+        alphas = scf_wc.outputs.output_scf_wc_para.get_dict()['alphas']
+        betas = scf_wc.outputs.output_scf_wc_para.get_dict()['betas']
 
-        new_fleurinp = self.analyse_relax(relax_parsed)
+        new_angles = self.analyse_relax(alphas, betas, x_torques, y_torques, relax_alpha)
 
-        self.ctx.new_fleurinp = new_fleurinp
+        first_fleurcalc = find_nested_process(scf_wc, FleurCalc)
+        old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinpdata
+
+        fm = FleurinpModifier(old_fleurinp)
+        for i, angle in enumerate(zip(new_angles['alphas'], new_angles['betas'])):
+            fm.set_atomgroup(attributedict={'nocoParams': {'beta': angle[1], 'alpha': angle[0]}}, position=i+1)
+
+        new_fleurinpdata = fm.freeze()
+
+        self.ctx.new_fleurinp = new_fleurinpdata
 
     @staticmethod
-    def analyse_relax(relax_dict):
+    def analyse_relax(alphas, betas, x_torques, y_torques, relax_alpha):
         """
         This function generates a new fleurinp analysing parsed relax.xml from the previous
         calculation.
 
-        **NOT IMPLEMENTED YET**
-
         :param relax_dict: parsed relax.xml from the previous calculation
         :return new_fleurinp: new FleurinpData object that will be used for next relax iteration
         """
-        # TODO: implement this function, now always use relax.xml generated in FLEUR
-        should_relax = False
-        if should_relax:
-            return 1
+        from numpy import cos, sin
 
-        return None
+        def rotation_matrix(alpha, beta):
+            'This matrix converts local spin directions to the global frame'
+            return np.array([[cos(alpha) * cos(beta), -sin(alpha), cos(alpha) * sin(beta)],
+                            [sin(alpha) * cos(beta), cos(alpha), sin(alpha) * sin(beta)],
+                            [-sin(beta),             0,           cos(beta)]])
+
+        def convert_to_xyz(alpha, beta):
+            x = sin(beta) * cos(alpha)
+            y = sin(beta) * sin(alpha)
+            z = cos(beta)
+            return np.array([x, y, z])
+
+        def convert_to_angles(vector):
+            alpha = np.arctan2(vector[1], vector[0])
+            beta = np.arccos(vector[2]/np.linalg.norm(vector))
+
+            return alpha, beta
+
+        torques = []
+        for alpha, beta, x_torque, y_torque in zip(alphas, betas, x_torques, y_torques):
+            torque = np.dot(rotation_matrix(alpha, beta), np.array([x_torque, y_torque, 0]))
+            torque = np.array(torque)
+            if np.linalg.norm(torque) > np.pi / 90:
+                torque = torque / np.linalg.norm(torque) * np.pi / 90
+            torques.append(np.array(torque))
+
+        spin_coordinates = [np.array(convert_to_xyz(alpha, beta)) for alpha, beta in zip(alphas, betas)]
+
+        new_spin_coordinates = [spin + relax_alpha * torque for spin, torque in zip(spin_coordinates, torques)]
+        new_alpha_beta = [convert_to_angles(vector) for vector in new_spin_coordinates]
+        new_alpha_beta = {'alphas': [x[0] for x in new_alpha_beta], 'betas': [x[1] for x in new_alpha_beta]}
+
+        return new_alpha_beta
 
     def should_run_final_scf(self):
         """
@@ -402,11 +439,9 @@ class FleurRelaxTorqueWorkChain(WorkChain):
     def get_results_relax(self):
         """
         Generates results of the workchain.
-        Creates a new structure data node which is an
-        optimized structure.
         """
 
-        if self.ctx.wf_dict.get('relaxation_type', 'atoms') is None:
+        if self.ctx.wf_dict.get('relaxation_type', 'spins') is None:
             input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
             if 'structure' in input_scf:
                 structure = input_scf.structure
@@ -420,29 +455,28 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             return
 
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-            last_fleur = find_nested_process(self.ctx.scf_res, FleurCalc)[-1]
-            retrieved_node = last_fleur.outputs.retrieved
+            relax_out = self.ctx.scf_res.outputs.output_scf_wc_para
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
         relax_out = relax_out.get_dict()
 
         try:
-            total_energy = relax_out['energy']
-            total_energy_units = relax_out['energy_units']
-            atomtype_info = relax_out['relax_atomtype_info']
+            total_energy = relax_out['total_energy']
+            total_energy_units = relax_out['total_energy_units']
+            last_x_torques = relax_out['last_x_torques']
+            last_y_torques = relax_out['last_y_torques']
+            alphas = relax_out['alphas']
+            betas = relax_out['betas']
         except KeyError:
             return self.exit_codes.ERROR_NO_RELAX_OUTPUT
 
         self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
-        self.ctx.atomtype_info = atomtype_info
-
-        fleurinp = FleurinpData(files=['inp.xml', 'relax.xml'], node=retrieved_node)
-        structure = fleurinp.get_structuredata_ncf()
-
-        self.ctx.final_structure = structure
+        self.ctx.torques_x = last_x_torques
+        self.ctx.torques_y = last_y_torques
+        self.ctx.alphas = alphas
+        self.ctx.betas = betas
 
     def get_results_final_scf(self):
         """
@@ -465,7 +499,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
 
-        if self.ctx.wf_dict.get('relaxation_type', 'atoms') is None:
+        if self.ctx.wf_dict.get('relaxation_type', 'spins') is None:
             # we need this for run through
             self.ctx.scf_res = self.ctx.scf_final_res
 
@@ -490,11 +524,11 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
             'errors': self.ctx.errors,
-            'force': self.ctx.forces,
-            'force_iter_done': self.ctx.loop_count,
-            # uuids in the output are bad for caching should be avoided,
-            # instead better return the node.
-            'last_scf_wc_uuid': self.ctx.scf_res.uuid,
+            'relax_iter_done': self.ctx.loop_count,
+            'alphas': self.ctx.alphas,
+            'betas': self.ctx.betas,
+            'x_torques': self.ctx.torques_x,
+            'y_torques': self.ctx.torques_y,
             'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
             'total_magnetic_moment_cell_units': 'muBohr'
         }
