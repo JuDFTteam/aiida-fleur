@@ -198,6 +198,7 @@ class FleurinputgenCalculation(CalcJob):
         if int(code_version) < 32:
             # run old inpgen
             cmdline_params = ['-explicit']
+            codeinfo.stdin_name = self._INPUT_FILE_NAME
         else:
             cmdline_params = ['-explicit', '-inc', '+all', '-f', f'{self._INPUT_FILE_NAME}']
 
@@ -207,10 +208,8 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUT_FILE_NAME  # shell output will be piped in file
         codeinfo.stderr_name = self._ERROR_FILE_NAME  # std error too
-
         calcinfo.codes_info = [codeinfo]
 
         return calcinfo
