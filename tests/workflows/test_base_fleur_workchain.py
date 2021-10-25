@@ -11,12 +11,13 @@
 ###############################################################################
 '''Contains tests for the FleurBaseWorkChain'''
 import pytest
-import aiida_fleur
 import os
 from aiida.orm import Dict
+from aiida.engine.processes.workchains.utils import ProcessHandlerReport
+
+import aiida_fleur
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida_fleur.common.workchain.utils import ErrorHandlerReport
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
@@ -34,12 +35,12 @@ def test_handle_general_error(generate_workchain_base, exit_status):
     process = generate_workchain_base(exit_code=exit_codes(exit_status))
     process.setup()
 
-    result = process._handle_general_error(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_general_error(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
 
 
@@ -49,12 +50,12 @@ def test_handle_vacuum_spill_error(generate_workchain_base):
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_VACUUM_SPILL_RELAX)
     process.setup()
 
-    result = process._handle_vacuum_spill_error(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_vacuum_spill_error(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_VACUUM_SPILL_RELAX
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_VACUUM_SPILL_RELAX
 
 
@@ -64,12 +65,12 @@ def test_handle_mt_relax_error(generate_workchain_base):
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_MT_RADII_RELAX)
     process.setup()
 
-    result = process._handle_mt_relax_error(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_mt_relax_error(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_MT_RADII_RELAX
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_MT_RADII_RELAX
 
 
@@ -80,12 +81,12 @@ def test_handle_dirac_equation_no_parent_folder(generate_workchain_base):
     process.setup()
     process.validate_inputs()  #Needed so that the inputs are on the context of the workchain
 
-    result = process._handle_dirac_equation(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_dirac_equation(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_SOMETHING_WENT_WRONG
 
 
@@ -110,15 +111,15 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
     process.setup()
     process.validate_inputs()  #Needed so that the inputs are on the context of the workchain
 
-    result = process._handle_dirac_equation(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_dirac_equation(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert 'parent_folder' not in process.ctx.inputs
 
     #Reinsert parent_folder
     process.ctx.inputs.parent_folder = remote
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result.status == 0
 
 
@@ -129,12 +130,12 @@ def test_handle_not_enough_memory_no_solution(generate_workchain_base):
     process.setup()
     process.ctx.can_be_optimised = False
 
-    result = process._handle_not_enough_memory(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_not_enough_memory(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
 
@@ -145,8 +146,8 @@ def test_handle_not_enough_memory(generate_workchain_base):
     process.setup()
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
-    result = process._handle_not_enough_memory(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_not_enough_memory(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.num_machines == 2
@@ -155,7 +156,7 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
 
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result.status == 0
     assert process.ctx.num_machines == 20
     assert abs(process.ctx.suggest_mpi_omp_ratio - 0.25) < 1e-12
@@ -174,13 +175,13 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data):
     code = process.ctx.inputs.code
 
     #Add outgoing remote folder
-    process.ctx.calculations[-1].store()
+    process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
-    result = process._handle_time_limits(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_time_limits(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
@@ -190,7 +191,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data):
 
     process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
     assert process.ctx.num_machines == 20
@@ -222,13 +223,13 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
     #Add outgoing remote folder
-    process.ctx.calculations[-1].store()
+    process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
-    result = process._handle_time_limits(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_time_limits(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
@@ -260,13 +261,13 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
     process.ctx.inputs.pop('fleurinpdata')  #Simulate the fact that some previous error handler dropped fleurinpdata
 
     #Add outgoing remote folder
-    process.ctx.calculations[-1].store()
+    process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
-    result = process._handle_time_limits(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_time_limits(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
@@ -306,19 +307,19 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
     #Add outgoing remote folder
-    process.ctx.calculations[-1].add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
-    process.ctx.calculations[-1].store()
+    process.ctx.children[-1].add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
+    process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.calculations[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
-    result = process._handle_time_limits(process.ctx.calculations[-1])
-    assert isinstance(result, ErrorHandlerReport)
+    result = process._handle_time_limits(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
     assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 6 * 60 * 60
 
-    result = process.inspect_calculation()
+    result = process.inspect_process()
     assert result.status == 0
 
 

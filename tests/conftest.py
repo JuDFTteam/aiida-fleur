@@ -336,7 +336,7 @@ def generate_workchain_base(generate_workchain, generate_inputs_base, generate_c
             node.set_exit_status(exit_code.status)
 
             process.ctx.iteration = 1
-            process.ctx.calculations = [node]
+            process.ctx.children = [node]
 
         return process
 
