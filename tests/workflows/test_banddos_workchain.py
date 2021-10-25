@@ -17,7 +17,6 @@ from aiida import orm
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import os
-from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
@@ -25,7 +24,7 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
                                 aiida_caplog):
@@ -98,7 +97,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
                                aiida_caplog):
@@ -174,7 +173,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
                                          clear_spec, aiida_caplog):
@@ -251,7 +250,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
                                     aiida_caplog):
@@ -338,7 +337,7 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
     assert False
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
                                                generate_remote_data, clear_spec, clear_database):

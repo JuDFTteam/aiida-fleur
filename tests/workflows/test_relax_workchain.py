@@ -20,15 +20,13 @@ from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 
 from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
     """
@@ -113,7 +111,7 @@ class Test_FleurRelaxWorkChain():
         """
         assert False
 
-    @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+    @pytest.mark.regression_test
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
         """

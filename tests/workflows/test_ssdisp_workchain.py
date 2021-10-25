@@ -21,12 +21,10 @@ from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_ssdisp_FePt_film(
         clear_database,

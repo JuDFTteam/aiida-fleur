@@ -10,9 +10,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains various tests for the scf workchain '''
-from __future__ import absolute_import
-from __future__ import print_function
-
 import pytest
 import os
 from aiida.orm import Code, load_node, Dict, StructureData
@@ -23,19 +20,12 @@ import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
-CALC_ENTRY_POINT = 'fleur.fleur'
-CALC2_ENTRY_POINT = 'fleur.inpgen'
 
-
-# tests
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si(
-        #run_with_cache,
         with_export_cache,
         fleur_local_code,
         create_fleurinp,
@@ -55,15 +45,13 @@ def test_fleur_scf_fleurinp_Si(
         'custom_scheduler_commands': ''
     }
 
-    FleurCode = fleur_local_code
-
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
     builder.metadata.label = 'FleurSCF_test_Si_bulk'
     builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
     builder.options = Dict(dict=options).store()
-    builder.fleur = FleurCode
+    builder.fleur = fleur_local_code
     #print(builder)
 
     # now run calculation
@@ -89,7 +77,7 @@ def test_fleur_scf_fleurinp_Si(
     #assert abs(n.get('starting_fermi_energy') - 0.409241) < 10**-14
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
                                 generate_structure2, clear_spec):
@@ -107,8 +95,6 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-    FleurCode = fleur_local_code
-    InpgenCode = inpgen_local_code
 
     wf_parameters = {'itmax_per_run': 30}
 
@@ -144,8 +130,8 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     builder.options = Dict(dict=options).store()
     builder.calc_parameters = Dict(dict=calc_parameters).store()
     builder.wf_parameters = Dict(dict=wf_parameters).store()
-    builder.fleur = FleurCode.store()
-    builder.inpgen = InpgenCode.store()
+    builder.fleur = fleur_local_code
+    builder.inpgen = inpgen_local_code
     print(builder)
 
     # now run scf with cache fixture
@@ -170,7 +156,7 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     assert n.get('errors') == []
 
 
-@pytest.mark.skip(reason='todo investigate, SCF workflow returns true, bug or caching issue')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
                                    generate_structure2, clear_spec):
@@ -188,8 +174,6 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-    FleurCode = fleur_local_code
-    InpgenCode = inpgen_local_code
 
     wf_parameters = {'itmax_per_run': 3}
 
@@ -220,8 +204,8 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
     builder.options = Dict(dict=options).store()
     builder.calc_parameters = Dict(dict=calc_parameters).store()
     builder.wf_parameters = Dict(dict=wf_parameters).store()
-    builder.fleur = FleurCode.store()
-    builder.inpgen = InpgenCode.store()
+    builder.fleur = fleur_local_code
+    builder.inpgen = inpgen_local_code
     print(builder)
 
     # now run scf with cache fixture
@@ -233,13 +217,10 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
     assert node.exit_status == 362
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_fleurinp_Si_modifications(
-        #run_with_cache,
         with_export_cache,
-        #mock_code_factory,
-        #aiida_local_code_factory,
         fleur_local_code,
         create_fleurinp,
         clear_database,
@@ -278,7 +259,6 @@ def test_fleur_scf_fleurinp_Si_modifications(
         'custom_scheduler_commands': ''
     }
 
-    FleurCode = fleur_local_code
 
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
@@ -287,7 +267,7 @@ def test_fleur_scf_fleurinp_Si_modifications(
     builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
     builder.options = Dict(dict=options).store()
     builder.wf_parameters = Dict(dict=wf_parameters).store()
-    builder.fleur = FleurCode
+    builder.fleur = fleur_local_code
     #print(builder)
 
     # now run calculation
@@ -327,7 +307,7 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
     assert False
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
                                            clear_spec, clear_database):

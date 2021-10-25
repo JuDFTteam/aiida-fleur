@@ -12,10 +12,8 @@ from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
 
-from ..conftest import run_regression_tests
 
-
-def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_default_calcinfo(fixture_sandbox, generate_calc_job, fixture_code,
                                       generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
@@ -70,7 +68,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_with_parameters(fixture_sandbox, generate_calc_job, fixture_code,
                                      generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
 
@@ -140,8 +138,8 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not their or not wanted.')
-def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
+@pytest.mark.regression_test
+def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
@@ -203,7 +201,6 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
 
 
 def test_x_and_bunchatom_input(
-    aiida_profile,
     fixture_sandbox,
     generate_calc_job,
     fixture_code,

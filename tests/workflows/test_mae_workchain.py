@@ -11,8 +11,6 @@
 ###############################################################################
 ''' Various tests for the FleurMaeWorkChain, different groupping '''
 # Here we test if the interfaces of the workflows are still the same
-from __future__ import absolute_import
-from __future__ import print_function
 
 import pytest
 import aiida_fleur
@@ -21,12 +19,10 @@ from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.mae import FleurMaeWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_mae_FePt_film(
         clear_database,

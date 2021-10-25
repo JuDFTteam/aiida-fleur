@@ -14,15 +14,15 @@ from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
 # aiida_testing.mock_codes in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
 
-run_regression_tests = True  # We set this false for the CI, as long they do not work, enable per hand
+RUN_REGRESSION_TESTS = True
 try:
     import aiida_testing
     from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
-    run_regression_tests = False
+    RUN_REGRESSION_TESTS = False
 
-if run_regression_tests:
+if RUN_REGRESSION_TESTS:
     pytest_plugins = [
         'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
         'masci_tools.testing.bokeh'
@@ -33,6 +33,28 @@ else:
 
 def pytest_addoption(parser):
     parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
+
+def pytest_configure(config):
+    """
+    Here you can add things by a pytest config, could be also part of a separate file
+    So far we add some markers here to be able to execute a certain group of tests
+    We make them all lowercaps as convention
+    """
+    config.addinivalue_line("markers", "regression_test: test using the aiida-testing plugin for workflow regression tests")
+
+def pytest_collection_modifyitems(session, config, items):
+    """After test collection modify collection.
+
+    Skip regression test if aiida-tesing is not there
+    """
+
+    skip_regression = pytest.mark.skip(reason='Workflow regression test is skipped, because aiida-testing is not available')
+
+    if not RUN_REGRESSION_TESTS:
+        regression_items = [item for item in items if 'regression_test' in item.keywords]
+        for item in regression_items:
+            item.add_marker(skip_regression)
+
 
 
 @pytest.fixture(scope='function')
