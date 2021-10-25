@@ -634,6 +634,7 @@ def inpgen_local_code(mock_code_factory, shared_datadir):
 
     return InpgenCode
 
+
 @pytest.fixture(name='test_file')
 def test_file_fixture():
     """Test file fixture"""
@@ -646,6 +647,7 @@ def test_file_fixture():
         return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
 
     return _test_file
+
 
 @pytest.fixture(scope='function')
 def fleur_local_code(mock_code_factory, pytestconfig, test_file):
