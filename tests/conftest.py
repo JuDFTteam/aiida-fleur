@@ -88,6 +88,20 @@ def fixture_code(fixture_localhost):
 
     return _fixture_code
 
+@pytest.fixture(name='test_file')
+def test_file_fixture():
+    """Test file fixture"""
+
+    def _test_file(relative_path):
+        """
+        Return path to file in the tests/files folder
+        Returns filesystem path
+        """
+        return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
+
+    return _test_file
+
+
 
 @pytest.fixture
 def generate_calc_job():
@@ -623,39 +637,36 @@ def generate_structure_cif():
 
 
 @pytest.fixture(scope='function')
-def inpgen_local_code(mock_code_factory, shared_datadir):
+def inpgen_local_code(mock_code_factory, request):
     """
     Create, inpgen code
     """
+    #Adapted from shared_datadir of pytest-datadir to not use paths
+    #in the tmp copies created by pytest
+    data_dir = Path(os.path.join(request.fspath.dirname, 'calculations'))
+    if not data_dir.is_dir():
+        data_dir.mkdir()
+
     InpgenCode = mock_code_factory(label='inpgen',
-                                   data_dir_abspath=shared_datadir,
+                                   data_dir_abspath=data_dir,
                                    entry_point='fleur.inpgen',
                                    ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
     return InpgenCode
 
-
-@pytest.fixture(name='test_file')
-def test_file_fixture():
-    """Test file fixture"""
-
-    def _test_file(relative_path):
-        """
-        Return path to file in the tests/files folder
-        Returns filesystem path
-        """
-        return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
-
-    return _test_file
-
-
 @pytest.fixture(scope='function')
-def fleur_local_code(mock_code_factory, pytestconfig, test_file):
+def fleur_local_code(mock_code_factory, pytestconfig, request):
     """
     Create or load Fleur code
     """
+    #Adapted from shared_datadir of pytest-datadir to not use paths
+    #in the tmp copies created by pytest
+    data_dir = Path(os.path.join(request.fspath.dirname, 'calculations'))
+    if not data_dir.is_dir():
+        data_dir.mkdir()
+
     FleurCode = mock_code_factory(label='fleur',
-                                  data_dir_abspath=test_file('mock-calculations'),
+                                  data_dir_abspath=data_dir,
                                   entry_point='fleur.fleur',
                                   ignore_files=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
