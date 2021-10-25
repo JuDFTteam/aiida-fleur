@@ -74,8 +74,8 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     print(n)
     #Dummy checks
     assert n.get('errors') == []
-    assert n.get('force') == []
-    assert n.get('energy') == []
+    assert n.get('force') == [0.0]
+    assert abs(n.get('energy')[0] - -15784.562888656) < 1e-6
 
     relax_struc = out['optimized_structure']
 
