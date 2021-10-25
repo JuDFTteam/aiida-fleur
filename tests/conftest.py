@@ -34,13 +34,16 @@ else:
 def pytest_addoption(parser):
     parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
 
+
 def pytest_configure(config):
     """
     Here you can add things by a pytest config, could be also part of a separate file
     So far we add some markers here to be able to execute a certain group of tests
     We make them all lowercaps as convention
     """
-    config.addinivalue_line("markers", "regression_test: test using the aiida-testing plugin for workflow regression tests")
+    config.addinivalue_line('markers',
+                            'regression_test: test using the aiida-testing plugin for workflow regression tests')
+
 
 def pytest_collection_modifyitems(session, config, items):
     """After test collection modify collection.
@@ -48,13 +51,13 @@ def pytest_collection_modifyitems(session, config, items):
     Skip regression test if aiida-tesing is not there
     """
 
-    skip_regression = pytest.mark.skip(reason='Workflow regression test is skipped, because aiida-testing is not available')
+    skip_regression = pytest.mark.skip(
+        reason='Workflow regression test is skipped, because aiida-testing is not available')
 
     if not RUN_REGRESSION_TESTS:
         regression_items = [item for item in items if 'regression_test' in item.keywords]
         for item in regression_items:
             item.add_marker(skip_regression)
-
 
 
 @pytest.fixture(scope='function')
@@ -627,7 +630,6 @@ def inpgen_local_code(mock_code_factory, shared_datadir):
                                    entry_point='fleur.inpgen',
                                    ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
-
     return InpgenCode
 
 
@@ -636,22 +638,17 @@ def fleur_local_code(mock_code_factory, pytestconfig, shared_datadir):
     """
     Create or load Fleur code
     """
-    FleurCode = mock_code_factory(
-                            label='fleur',
-                            data_dir_abspath=shared_datadir,
-                            entry_point='fleur.fleur',
-                            ignore_files=['_aiidasubmit.sh',
-                                          'cdnc',
-                                          'out', 
-                                          'FleurInputSchema.xsd',
-                                          'FleurOutputSchema.xsd',
-                                          'cdn.hdf',
-                                          'usage.json', 
-                                          'cdn??'])
+    FleurCode = mock_code_factory(label='fleur',
+                                  data_dir_abspath=shared_datadir,
+                                  entry_point='fleur.fleur',
+                                  ignore_files=[
+                                      '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
+                                      'cdn.hdf', 'usage.json', 'cdn??'
+                                  ])
 
     if pytestconfig.getoption('--local-exe-hdf5'):
         FleurCode.description = 'Local executable with HDF5'
-    
+
     return FleurCode
 
 

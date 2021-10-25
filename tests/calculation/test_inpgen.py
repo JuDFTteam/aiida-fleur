@@ -170,12 +170,6 @@ def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W): 
         }
     }
 
-    mock_code = mock_code_factory(label='inpgen',
-                                  data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                'data_dir/'),
-                                  entry_point=CALC_ENTRY_POINT,
-                                  ignore_files=['_aiidasubmit.sh'])
-    print(mock_code)
     inputs = {
         'structure': generate_structure_W(),
         'parameters': orm.Dict(dict=parameters),
@@ -192,12 +186,12 @@ def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W): 
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
     print(calc)
-    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=inpgen_local_code, **inputs)
     print(node)
     print(get_calcjob_report(node))
     print((res['remote_folder'].list_object_names()))
     print((res['retrieved'].list_object_names()))
-    assert bool(node.is_finished_ok)
+    assert node.is_finished_ok
 
 
 def test_x_and_bunchatom_input(

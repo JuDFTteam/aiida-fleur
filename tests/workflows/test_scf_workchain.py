@@ -23,14 +23,10 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 
+
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si(
-        with_export_cache,
-        fleur_local_code,
-        create_fleurinp,
-        clear_database,
-        clear_spec):
+def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -219,12 +215,8 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si_modifications(
-        with_export_cache,
-        fleur_local_code,
-        create_fleurinp,
-        clear_database,
-        clear_spec):
+def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+                                             clear_spec):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
     but adjusting the Fleur input file before the fleur run.
@@ -258,7 +250,6 @@ def test_fleur_scf_fleurinp_Si_modifications(
         'withmpi': False,
         'custom_scheduler_commands': ''
     }
-
 
     # create process builder to set parameters
     builder = FleurScfWorkChain.get_builder()
@@ -309,15 +300,12 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
+def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp, generate_structure2,
                                            clear_spec, clear_database):
     """
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
     """
-    #from aiida.engine import run_get_node
-
-    #clear_spec()
 
     # prepare input nodes and dicts
     options = {
@@ -330,17 +318,6 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
         'custom_scheduler_commands': ''
     }
     options = Dict(dict=options).store()
-
-    FleurCode = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-    InpgenCode = mock_code_factory(label='inpgen',
-                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                 'calc_data_dir/'),
-                                   entry_point=CALC2_ENTRY_POINT,
-                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
     calc_parameters = Dict(dict={})
     calc_parameters.store()
@@ -357,27 +334,27 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
     builder_struc_fleurinp.structure = structure
     builder_struc_fleurinp.fleurinp = fleurinp
     builder_struc_fleurinp.options = options
-    builder_struc_fleurinp.fleur = FleurCode
-    builder_struc_fleurinp.inpgen = InpgenCode
+    builder_struc_fleurinp.fleur = fleur_local_code
+    builder_struc_fleurinp.inpgen = inpgen_local_code
 
     # 2. create builder structure no inpgen given
     builder_no_inpgen = FleurScfWorkChain.get_builder()
     builder_no_inpgen.structure = structure
     builder_no_inpgen.options = options
-    builder_no_inpgen.fleur = FleurCode
+    builder_no_inpgen.fleur = fleur_local_code
 
-    # 3. create builder no fleurcode given
+    # 3. create builder no fleur code given
     builder_no_fleur = FleurScfWorkChain.get_builder()
     builder_no_fleur.structure = structure
     builder_no_fleur.options = options
-    builder_no_fleur.inpgen = InpgenCode
+    builder_no_fleur.inpgen = inpgen_local_code
 
     # 4. wrong code given (here we swap)
     builder_wrong_code = FleurScfWorkChain.get_builder()
     builder_wrong_code.structure = structure
     builder_wrong_code.options = options
-    builder_wrong_code.inpgen = FleurCode
-    builder_wrong_code.fleur = InpgenCode
+    builder_wrong_code.inpgen = fleur_local_code
+    builder_wrong_code.fleur = inpgen_local_code
 
     # 5. create builder fleurinp and calc_parameter given
 
@@ -385,8 +362,8 @@ def test_fleur_scf_validation_wrong_inputs(run_with_cache, mock_code_factory, cr
     builder_calc_para_fleurinp.calc_parameters = calc_parameters
     builder_calc_para_fleurinp.fleurinp = fleurinp
     builder_calc_para_fleurinp.options = options
-    builder_calc_para_fleurinp.fleur = FleurCode
-    builder_calc_para_fleurinp.inpgen = InpgenCode
+    builder_calc_para_fleurinp.fleur = fleur_local_code
+    builder_calc_para_fleurinp.inpgen = inpgen_local_code
 
     ###################
     # now run the buidlers all should fail early with exit codes

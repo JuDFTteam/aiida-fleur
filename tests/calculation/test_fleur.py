@@ -58,40 +58,13 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurinp, clear_database,
 @pytest.mark.regression_test
-                                hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
+def test_FleurJobCalc_full_mock(fleur_local_code, create_fleurinp, clear_database, hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
 
     """
-
-    mock_code = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=[
-            '_aiidasubmit.sh',
-            'cdnc',
-            'out',
-            'FleurInputSchema.xsd',
-            'cdn.hdf',
-            'usage.json',  # 'cdn??']
-            'cdn00',
-            'cdn01',
-            'cdn02',
-            'cdn03',
-            'cdn04',
-            'cdn05',
-            'cdn06',
-            'cdn07',
-            'cdn08',
-            'cdn09',
-            'cdn10',
-            'cdn11'
-        ])
-    #mock_code.append_text = 'rm cdn?? broyd* wkf2 inf cdnc stars pot* FleurInputSchema* cdn.hdf'
 
     inputs = {
         'fleurinpdata': create_fleurinp(TEST_INP_XML_PATH),
@@ -107,9 +80,8 @@ def test_FleurJobCalc_full_mock(aiida_profile, mock_code_factory, create_fleurin
             }
         }
     }
-    #calc = CalculationFactory(CALC_ENTRY_POINT, code=mock_code, **inputs)
 
-    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=fleur_local_code, **inputs)
 
     print(get_calcjob_report(node))
     print((res['remote_folder'].list_object_names()))
