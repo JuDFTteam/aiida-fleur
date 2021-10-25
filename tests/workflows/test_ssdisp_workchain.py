@@ -45,7 +45,8 @@ def test_fleur_ssdisp_FePt_film(
             },
             'max_wallclock_seconds': 60 * 60,
             'queue_name': '',
-            'custom_scheduler_commands': ''
+            'custom_scheduler_commands': '',
+            'withmpi': False,
         })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
