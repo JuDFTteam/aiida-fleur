@@ -670,7 +670,7 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
                                   entry_point='fleur.fleur',
                                   ignore_files=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
-                                      'cdn.hdf', 'usage.json', 'cdn??'
+                                      'cdn.hdf', 'usage.json', 'cdn*'
                                   ])
 
     if pytestconfig.getoption('--local-exe-hdf5'):
