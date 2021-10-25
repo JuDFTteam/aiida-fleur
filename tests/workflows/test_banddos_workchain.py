@@ -339,8 +339,8 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp, generate_structure2,
-                                               generate_remote_data, clear_spec, clear_database):
+def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp,
+                                               generate_structure2, generate_remote_data, clear_spec, clear_database):
     """
     Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash

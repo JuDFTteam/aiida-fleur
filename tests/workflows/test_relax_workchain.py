@@ -79,6 +79,7 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
 
     relax_struc = out['optimized_structure']
 
+
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_relax_validation_wrong_inputs(fleur_local_code, inpgen_local_code, generate_structure2):
