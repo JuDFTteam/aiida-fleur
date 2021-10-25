@@ -87,8 +87,9 @@ disable=too-few-public-methods,
     too-many-return-statements, # FIXME ?
     too-many-arguments, # FIXME
     unspecified-encoding, # FIXME ?
-    pointless-string-statement # Because of multi line comments, or outcommented code
-
+    pointless-string-statement, # Because of multi line comments, or outcommented code
+    consider-using-f-string #Flynt in the pre-commit run fixes almost all of the cases The rest are just noise for now
+    
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
