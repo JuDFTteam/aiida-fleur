@@ -618,59 +618,41 @@ def generate_structure_cif():
 
 
 @pytest.fixture(scope='function')
-def create_or_fake_local_code(aiida_local_code_factory):
-    """
-    Create or fake a local code.
-    This is old consider using mock-code_factory of aiida-testing instead
-    """
-
-    def _get_code(executable, exec_relpath, entrypoint):
-        from aiida.tools.importexport import import_data, export
-        from aiida.orm import load_node
-
-        _exe_path = os.path.abspath(exec_relpath)
-
-        # if path is non existent, we create a dummy executable
-        # if all caches are there, it should run, like on a CI server
-        if not os.path.exists(_exe_path):
-            open(_exe_path, 'a').close()  #pylint: disable=consider-using-with
-
-        # make sure code is found in PATH
-        os.environ['PATH'] += ':' + _exe_path
-
-        # get code using aiida_local_code_factory fixture
-        code = aiida_local_code_factory(entrypoint, executable)
-
-        return code
-
-    return _get_code
-
-
-@pytest.fixture(scope='function')
-def inpgen_local_code(create_or_fake_local_code):
+def inpgen_local_code(mock_code_factory, shared_datadir):
     """
     Create, inpgen code
     """
-    executable = 'inpgen'  # name of the inpgen executable
-    exec_rel_path = 'local_exe/'  # location where it is found
-    entrypoint = 'fleur.inpgen'  # entrypoint
-    # prepend text to be added before execution
-    inpgen_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
-    return inpgen_code
+    InpgenCode = mock_code_factory(label='inpgen',
+                                   data_dir_abspath=shared_datadir,
+                                   entry_point='fleur.inpgen',
+                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+
+
+    return InpgenCode
 
 
 @pytest.fixture(scope='function')
-def fleur_local_code(create_or_fake_local_code, pytestconfig):
+def fleur_local_code(mock_code_factory, pytestconfig, shared_datadir):
     """
     Create or load Fleur code
     """
-    executable = 'fleur'  # name of the KKRhost executable
-    exec_rel_path = 'local_exe/'  # location where it is found
-    entrypoint = 'fleur.fleur'  # entrypoint
-    fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
+    FleurCode = mock_code_factory(
+                            label='fleur',
+                            data_dir_abspath=shared_datadir,
+                            entry_point='fleur.fleur',
+                            ignore_files=['_aiidasubmit.sh',
+                                          'cdnc',
+                                          'out', 
+                                          'FleurInputSchema.xsd',
+                                          'FleurOutputSchema.xsd',
+                                          'cdn.hdf',
+                                          'usage.json', 
+                                          'cdn??'])
+
     if pytestconfig.getoption('--local-exe-hdf5'):
-        fleur_code.description = 'Local executable with HDF5'
-    return fleur_code
+        FleurCode.description = 'Local executable with HDF5'
+    
+    return FleurCode
 
 
 @pytest.fixture(scope='function')
