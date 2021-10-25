@@ -88,6 +88,7 @@ def fixture_code(fixture_localhost):
 
     return _fixture_code
 
+
 @pytest.fixture(name='test_file')
 def test_file_fixture():
     """Test file fixture"""
@@ -100,7 +101,6 @@ def test_file_fixture():
         return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
 
     return _test_file
-
 
 
 @pytest.fixture
@@ -653,6 +653,7 @@ def inpgen_local_code(mock_code_factory, request):
                                    ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
 
     return InpgenCode
+
 
 @pytest.fixture(scope='function')
 def fleur_local_code(mock_code_factory, pytestconfig, request):
