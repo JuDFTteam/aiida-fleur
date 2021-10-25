@@ -170,7 +170,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     assert 'last_calc_retrieved' in out
     res_files = out['last_calc_retrieved'].list_object_names()
     assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+        file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test

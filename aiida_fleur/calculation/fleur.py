@@ -75,6 +75,7 @@ class FleurCalculation(CalcJob):
 
     # special out files
     _DOS_FILE_NAME = 'DOS.*'
+    _DOS_MAX5_FILE_NAME = 'Local.*'
     _DOSINP_FILE_NAME = 'dosinp'
     _BAND_GNU_FILE_NAME = 'band.gnu'
     _BAND_FILE_NAME = 'bands.*'
@@ -405,6 +406,7 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._DOS_MAX5_FILE_NAME)
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['relax']:
