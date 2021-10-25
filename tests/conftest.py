@@ -2,7 +2,6 @@
 # pylint: disable=redefined-outer-name
 """Initialise a text database and profile for pytest.
 This part of code is copied from aiida-quantumespresso"""
-from __future__ import absolute_import
 
 import io
 import os
@@ -10,6 +9,9 @@ from collections.abc import Mapping
 import pytest
 import sys
 from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
+from pathlib import Path
+
+CONFTEST_LOCATION = Path(__file__).parent.resolve()
 
 # aiida_testing.mock_codes in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
@@ -632,14 +634,26 @@ def inpgen_local_code(mock_code_factory, shared_datadir):
 
     return InpgenCode
 
+@pytest.fixture(name='test_file')
+def test_file_fixture():
+    """Test file fixture"""
+
+    def _test_file(relative_path):
+        """
+        Return path to file in the tests/files folder
+        Returns filesystem path
+        """
+        return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
+
+    return _test_file
 
 @pytest.fixture(scope='function')
-def fleur_local_code(mock_code_factory, pytestconfig, shared_datadir):
+def fleur_local_code(mock_code_factory, pytestconfig, test_file):
     """
     Create or load Fleur code
     """
     FleurCode = mock_code_factory(label='fleur',
-                                  data_dir_abspath=shared_datadir,
+                                  data_dir_abspath=test_file('mock-calculations'),
                                   entry_point='fleur.fleur',
                                   ignore_files=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
