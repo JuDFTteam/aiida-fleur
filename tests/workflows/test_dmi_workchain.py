@@ -61,7 +61,10 @@ def test_fleur_dmi_FePt_film(
             # 'prop_dir': [1.0, 0.0, 0.0],
             'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
             'ref_qss': [0.0, 0.0, 0.0],
-            'inpxml_changes': []
+            'inpxml_changes': [],
+            'add_comp_para': {
+                'serial': True
+            }
         })
 
     bohr_a_0 = 0.52917721092  # A

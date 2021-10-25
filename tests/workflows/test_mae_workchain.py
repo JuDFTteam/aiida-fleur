@@ -59,6 +59,9 @@ def test_fleur_mae_FePt_film(
             'sqas_phi': [0.0, 0.0, 1.57079],
             'soc_off': [],
             'inpxml_changes': [],
+            'add_comp_para': {
+                'serial': True
+            }
         })
 
     bohr_a_0 = 0.52917721092  # A
