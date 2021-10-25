@@ -32,7 +32,7 @@ class Test_FleurInitialCLSWorkChain():
 
     @pytest.mark.timeout(500, method='thread')
     def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
-                                 export_cache, load_cache, clear_spec):
+                                 export_cache, load_cache):
         """
         full example using FleurInitialCLSWorkChain with just elemental W as input
         (W, onw atoms per unit cell)

@@ -35,7 +35,7 @@ class Test_FleurCreateMagneticWorkChain:
     """
 
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec):
+    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence

@@ -678,28 +678,3 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
         FleurCode.description = 'Local executable with HDF5'
 
     return FleurCode
-
-
-@pytest.fixture(scope='function')
-def clear_spec():
-    """Ficture to delete the spec of workchains"""
-    from aiida_fleur.workflows.scf import FleurScfWorkChain
-    from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-    from aiida_fleur.workflows.eos import FleurEosWorkChain
-
-    def clear_sp():
-        # I do not fully comprehend why do we require this for a clean environment
-        if hasattr(FleurScfWorkChain, '_spec'):
-            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-            # otherwise we will run into DbNode matching query does not exist
-            del FleurScfWorkChain._spec
-        if hasattr(FleurBaseWorkChain, '_spec'):
-            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-            # otherwise we will run into DbNode matching query does not exist
-            del FleurBaseWorkChain._spec
-        if hasattr(FleurEosWorkChain, '_spec'):
-            del FleurEosWorkChain._spec
-
-    clear_sp()
-    yield  # test runs
-    clear_sp()

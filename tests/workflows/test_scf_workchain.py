@@ -26,7 +26,7 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
+def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -76,7 +76,7 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
-                                generate_structure2, clear_spec):
+                                generate_structure2):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
@@ -156,7 +156,7 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
 @pytest.mark.skip(reason='todo investigate, SCF workflow returns true, bug or caching issue')
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_code, inpgen_local_code,
-                                   generate_structure2, clear_spec):
+                                   generate_structure2):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
     Check if calc parameters are given through, check if wf default parameters are updated
@@ -216,8 +216,7 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
-                                             clear_spec):
+def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
     but adjusting the Fleur input file before the fleur run.
@@ -302,7 +301,7 @@ def test_fleur_scf_continue_converged(run_with_cache, mock_code_factory):
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp, generate_structure2,
-                                           clear_spec, clear_database):
+                                           clear_database):
     """
     Test the validation behavior of FleurScfWorkchain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash

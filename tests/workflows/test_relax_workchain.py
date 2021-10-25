@@ -28,7 +28,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
+def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
     """
     full example using FleurRelaxWorkChain with just a fleurinp data as input.
     Several fleur runs needed till convergence

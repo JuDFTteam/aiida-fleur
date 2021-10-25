@@ -26,8 +26,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                                aiida_caplog):
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -99,8 +98,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                               aiida_caplog):
+def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -176,7 +174,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
-                                         clear_spec, aiida_caplog):
+                                         aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses seekpath to determine the path for the bandstructure
@@ -252,8 +250,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                                    aiida_caplog):
+def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses ase bandpath to determine the path through the briloouin zone
@@ -340,14 +337,12 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp,
-                                               generate_structure2, generate_remote_data, clear_spec, clear_database):
+                                               generate_structure2, generate_remote_data, clear_database):
     """
     Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
     """
     #from aiida.engine import run_get_node
-
-    #clear_spec()
 
     # prepare input nodes and dicts
     options = {
