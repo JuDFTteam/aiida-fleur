@@ -339,7 +339,7 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
+def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp, generate_structure2,
                                                generate_remote_data, clear_spec, clear_database):
     """
     Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
@@ -361,16 +361,8 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     }
     options = orm.Dict(dict=options).store()
 
-    FleurCode = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-    InpgenCode = mock_code_factory(label='inpgen',
-                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                 'calc_data_dir/'),
-                                   entry_point=CALC2_ENTRY_POINT,
-                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
 
     structure = generate_structure2()
     structure.store()
