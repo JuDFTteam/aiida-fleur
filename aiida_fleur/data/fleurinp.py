@@ -588,7 +588,7 @@ class FleurinpData(Data):
                 kps.set_kpoints(kpoints_set, cartesian=False, weights=weights_set)
                 #kpoints_data.add_link_from(self, label='fleurinp.kpts', link_type=LinkType.CREATE)
                 kps.label = 'fleurinp.kpts'
-                kpoints_data[label] = kps
+                kpoints_data[label.replace('-','_')] = kps
         else:
             kpoints_data = KpointsData()
             kpoints_data.set_cell(cell)
