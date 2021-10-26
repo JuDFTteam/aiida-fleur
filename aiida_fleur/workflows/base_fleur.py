@@ -72,6 +72,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                        message='FLEUR calculation failed because an atom spilled to the'
                        'vacuum during relaxation')
         spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
+        spec.exit_code(388, 'ERROR_TIME_LIMIT_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(389, 'ERROR_MEMORY_ISSUE_NO_SOLUTION', message='Computational resources are not optimal.')
         spec.exit_code(390, 'ERROR_NOT_OPTIMAL_RESOURCES', message='Computational resources are not optimal.')
         spec.exit_code(399,
@@ -287,7 +288,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].node.exit_status
             if prev_calculation_status in FleurCalculation.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
-                return ProcessHandlerReport(True)
+                return ProcessHandlerReport(True, self.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION)
         except NotExistent:
             pass
 
@@ -309,6 +310,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
+        check_remote = False
 
         if 'fleurinpdata' in self.ctx.inputs:
             modes = self.ctx.inputs.fleurinpdata.get_fleur_modes()
@@ -316,8 +318,22 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                 # in modes listed above it makes no sense copying cdn.hdf
                 self.ctx.inputs.parent_folder = remote
                 del self.ctx.inputs.fleurinpdata
+                check_remote = True
         else:
             # it is harder to extract modes in this case - simply try to reuse cdn.hdf and hope it works
             self.ctx.inputs.parent_folder = remote
+            check_remote = True
+
+        if check_remote:
+            #If no charge density file is available to restart from the calculation will except
+            #with a not nice error message. So we try to catch these cases to produce a nice error message
+            retrieved_filenames = calculation.get_outgoing().get_node_by_label('retrieved').list_object_names()
+            if all(file not in retrieved_filenames for file in (
+                    'cdn_last.hdf',
+                    'cdn1',
+            )):
+                self.report(
+                    'FleurCalculation failed due to time limits and no charge density file is available. Aborting!')
+                return ProcessHandlerReport(True, self.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION)
 
         return ProcessHandlerReport(True)

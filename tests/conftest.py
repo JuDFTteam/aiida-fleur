@@ -185,6 +185,27 @@ def generate_structure():
 
     return _generate_structure
 
+@pytest.fixture
+def generate_retrieved_data():
+    """
+    Generate orm.FolderData for retrieved output
+    """
+    def _generate_retrieved_data(node,name,type='fleur'):
+        """
+        Generate FolderData for the retrieved output of the given node
+        """
+        from aiida import orm
+        from aiida.common import LinkType
+
+        basepath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(basepath, 'parsers', 'fixtures', type, name)
+
+        retrieved = orm.FolderData()
+        retrieved.put_object_from_tree(filepath)
+        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.store()
+        return retrieved
+    return _generate_retrieved_data
 
 @pytest.fixture
 def generate_kpoints_mesh():

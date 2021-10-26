@@ -196,6 +196,9 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 383       | EOS WorkChain failed.                                   | CreateMagnetic         |
 +-----------+---------------------------------------------------------+------------------------+
+| 388       | Fleur Calculation failed due to time limits             | FleurBase              |
+|           | and it cannot be resolved (e.g because of no cdn file)  |                        |
++-----------+---------------------------------------------------------+------------------------+
 | 389       | FLEUR calculation failed due to memory issue            | FleurBase              |
 |           | and it can not be solved for this scheduler             |                        |
 +-----------+---------------------------------------------------------+------------------------+

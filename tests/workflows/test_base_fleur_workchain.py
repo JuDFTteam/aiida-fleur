@@ -164,7 +164,7 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
 
 
-def test_handle_time_limits(generate_workchain_base, generate_remote_data):
+def test_handle_time_limits(generate_workchain_base, generate_remote_data, generate_retrieved_data):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
 
@@ -179,6 +179,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data):
     remote = generate_remote_data(code.computer, '/tmp')
     remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'default')
 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
@@ -198,8 +199,33 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data):
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
     assert 'fleurinpdata' not in process.ctx.inputs
 
+def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_remote_data, generate_retrieved_data):
+    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    from aiida.common import LinkType
 
-def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, create_fleurinp,
+    process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
+    process.setup()
+    process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    code = process.ctx.inputs.code
+
+    #Add outgoing remote folder
+    process.ctx.children[-1].store()
+    remote = generate_remote_data(code.computer, '/tmp')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'complex_errorout')
+
+    result = process._handle_time_limits(process.ctx.children[-1])
+    assert isinstance(result, ProcessHandlerReport)
+    assert result.do_break
+    assert result.exit_code.status == 388
+
+    result = process.inspect_process()
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
+
+
+def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, generate_retrieved_data, create_fleurinp,
                                               fixture_code):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
@@ -227,6 +253,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     remote = generate_remote_data(fleur.computer, '/tmp')
     remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'default')
 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
@@ -236,7 +263,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     assert process.ctx.inputs.parent_folder.uuid == remote_before.uuid
 
 
-def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote_data, create_fleurinp, fixture_code):
+def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote_data, generate_retrieved_data, create_fleurinp, fixture_code):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
     from aiida_fleur.common.defaults import default_options
@@ -265,6 +292,7 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
     remote = generate_remote_data(fleur.computer, '/tmp')
     remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'default')
 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
@@ -316,11 +344,11 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
-    assert result.exit_code.status == 0
+    assert result.exit_code.status == 388
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 6 * 60 * 60
 
     result = process.inspect_process()
-    assert result.status == 0
+    assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
 
 
 # tests
