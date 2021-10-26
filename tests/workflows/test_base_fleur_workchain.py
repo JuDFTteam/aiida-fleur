@@ -199,6 +199,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
     assert 'fleurinpdata' not in process.ctx.inputs
 
+
 def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_remote_data, generate_retrieved_data):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
@@ -225,8 +226,8 @@ def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_
     assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
 
 
-def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, generate_retrieved_data, create_fleurinp,
-                                              fixture_code):
+def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, generate_retrieved_data,
+                                              create_fleurinp, fixture_code):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
     from aiida_fleur.common.defaults import default_options
@@ -263,7 +264,8 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     assert process.ctx.inputs.parent_folder.uuid == remote_before.uuid
 
 
-def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote_data, generate_retrieved_data, create_fleurinp, fixture_code):
+def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote_data, generate_retrieved_data,
+                                        create_fleurinp, fixture_code):
     """Test `FleurBaseWorkChain._handle_time_limits`."""
     from aiida.common import LinkType
     from aiida_fleur.common.defaults import default_options
