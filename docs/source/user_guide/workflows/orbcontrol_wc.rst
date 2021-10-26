@@ -160,7 +160,7 @@ on the setup of the inputs, one of the four supported scenarios will happen:
       inp.xml file and initial
       charge density will be copied from the remote folder. Should not represent a LDA+U calculation
 
-4. **structure** + **calc_parameters**(optional) + **inpgen:
+4. **structure** + **calc_parameters**(optional) + **inpgen**:
   
       The initial structure is used to generate a `FleurinpData` object via the input generator.
       This is used to start the LDA+U calculations without a SCF workchain. directly starting with
