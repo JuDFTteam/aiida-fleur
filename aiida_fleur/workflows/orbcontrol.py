@@ -15,13 +15,13 @@
 """
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import Dict, load_node, Code, CalcJobNode, RemoteData
+from aiida.orm import Dict, load_node, Code, StructureData, RemoteData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.engine import CalcJob
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -123,13 +123,16 @@ class FleurOrbControlWorkChain(WorkChain):
     :param scf_no_ldau: (Dict), Inputs to a FleurScfWorkChain providing the initial system
                                 either converged or staring from a structure
     :param scf_with_ldau: (Dict), Inputs to a FleurScfWorkChain. Only the wf_parameters are valid
+    :param fleurinp: (FleurinpData) FleurinpData to start from if no SCF should be done
+    :param remote: (RemoteData) RemoteData to start from if no SCF should be done
+    :param structure: (StructureData) Structure to start from if no SCF should be done
     :param calc_parameters: (Dict), Inpgen Parameters
     :param settings: (Dict), additional settings for e.g retrieving files
     :param options: (Dict), Options for the submission of the jobs
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.1.0'
+    _workflowversion = '0.2.0'
 
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
@@ -165,6 +168,8 @@ class FleurOrbControlWorkChain(WorkChain):
                            namespace='scf_no_ldau')
         spec.input('remote', valid_type=RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
@@ -173,13 +178,16 @@ class FleurOrbControlWorkChain(WorkChain):
                            exclude=('structure', 'fleurinp', 'remote_data'),
                            namespace='scf_with_ldau')
         spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=False)
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('options', valid_type=Dict, required=False)
+        spec.input('options_inpgen', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
+        spec.input('settings_inpgen', valid_type=Dict, required=False)
 
         spec.outline(cls.start, cls.validate_input,
-                     if_(cls.scf_no_ldau_needed)(cls.converge_scf_no_ldau), cls.create_configurations,
-                     cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
+                     if_(cls.scf_no_ldau_needed)(cls.converge_scf_no_ldau).elif_(cls.inpgen_needed)(cls.run_inpgen),
+                     cls.create_configurations, cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
 
         spec.output('output_orbcontrol_wc_para', valid_type=Dict)
         spec.output('output_orbcontrol_wc_gs_scf', valid_type=Dict)
@@ -198,6 +206,7 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.exit_code(343,
                        'ERROR_ALL_CONFIGS_FAILED',
                        message='Convergence LDA+U calculation failed for all Initial configurations.')
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation failed.')
         spec.exit_code(450, 'ERROR_SCF_NOLDAU_FAILED', message='Convergence workflow without LDA+U failed.')
 
     def start(self):
@@ -211,11 +220,14 @@ class FleurOrbControlWorkChain(WorkChain):
         # internal para /control para
         self.ctx.scf_no_ldau = None
         self.ctx.scf_no_ldau_needed = False
+        self.ctx.inpgen_needed = False
         self.ctx.fixed_configurations = []
         self.ctx.successful = True
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_orbcontrol_wc|'
+        self.ctx.label_wf = self.inputs.get('label', 'fleur_orbcontrol_wc')
 
         wf_default = self._wf_default
         if 'wf_parameters' in self.inputs:
@@ -358,6 +370,13 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
+        if 'inpgen' in inputs:
+            try:
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+            except ValueError:
+                error = ('The code you provided for INPGEN does not use the plugin fleur.inpgen')
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+
         fleurinp = None
         remote = None
         if 'scf_no_ldau' in inputs:
@@ -375,11 +394,41 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'ERROR: you gave SCF input + fleurinp for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'structure' in inputs:
+                error = 'ERROR: you gave SCF input + structure for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: you gave SCF input + calc_parameters for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'inpgen' in inputs:
+                error = 'ERROR: you gave SCF input + inpgen for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'structure' in inputs:
+            self.ctx.inpgen_needed = True
+            if 'inpgen' not in inputs:
+                error = 'ERROR: you gave structure input but no inpgen code Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
             error = 'ERROR: you gave neither SCF input nor remote'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: you gave remote input + calc_parameters for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'structure' in inputs:
+                error = 'ERROR: you gave remote input + structure for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'inpgen' in inputs:
+                error = 'ERROR: you gave remote input + inpgen for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             remote = inputs.remote
             if 'fleurinp' in inputs:
                 fleurinp = inputs.fleurinp
@@ -432,6 +481,57 @@ class FleurOrbControlWorkChain(WorkChain):
             input_scf.options = self.inputs.options
 
         return input_scf
+
+    def inpgen_needed(self):
+        """
+        Returns whether the inpgen should be run directly by this workchain
+        """
+        return self.ctx.inpgen_needed
+
+    def run_inpgen(self):
+        """
+        Run the input generator
+        """
+        ## prepare inputs for inpgen
+        structure = self.inputs.structure
+        self.ctx.formula = structure.get_formula()
+        label = 'scf: inpgen'
+        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
+
+        inpgencode = self.inputs.inpgen
+
+        if 'calc_parameters' in self.inputs:
+            params = self.inputs.calc_parameters
+        else:
+            params = None
+
+        if 'settings_inpgen' in self.inputs:
+            settings = self.inputs.settings_inpgen
+        else:
+            settings = None
+
+        if 'options_inpgen' in self.inputs:
+            options = self.inputs.options_inpgen
+        else:
+            #Only take the parts that could be relevant (resources is overwritten anyway)
+            options = {
+                'max_wallclock_seconds': int(self.inputs.options.get('max_wallclock_seconds')),
+                'queue_name': self.options.get('queue_name', '')
+            }
+
+        inputs_build = get_inputs_inpgen(structure,
+                                         inpgencode,
+                                         options,
+                                         label,
+                                         description,
+                                         settings=settings,
+                                         params=params)
+
+        # Launch inpgen
+        self.report('INFO: run inpgen')
+        future = self.submit(inputs_build)
+
+        return ToContext(inpgen=future)
 
     def create_configurations(self):
         """
@@ -494,6 +594,12 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'Fleurinp generated in the SCF calculation is not found.'
                 self.control_end_wc(error)
                 return {}, self.exit_codes.ERROR_SCF_NOLDAU_FAILED
+        elif self.ctx.inpgen_needed:
+            if not self.ctx.inpgen.is_finished_ok:
+                error = 'Inpgen calculation failed'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+            fleurinp = self.ctx.inpgen.outputs.fleurinpData
         else:
             remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:

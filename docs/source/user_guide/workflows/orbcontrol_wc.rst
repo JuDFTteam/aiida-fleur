@@ -3,7 +3,7 @@
 Fleur orbital occupation control workflow
 ------------------------------------------
 
-* **Current version**: 0.1.0
+* **Current version**: 0.2.0
 * **Class**: :py:class:`~aiida_fleur.workflows.orbcontrol.FleurOrbControlWorkChain`
 * **String to pass to the** :py:func:`~aiida.plugins.WorkflowFactory`: ``fleur.orbcontrol``
 * **Workflow type**: Technical
@@ -39,26 +39,39 @@ Input nodes
 
 The table below shows all the possible input nodes of the OrbControl workchain.
 
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| name          | type                                                | description                                    | required |
-+===============+=====================================================+================================================+==========+
-| scf_no_ldau   | namespace                                           | Inputs for SCF calculation before adding LDA+U | no       |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| remote        | :py:class:`~aiida.orm.RemoteData`                   | Remote folder to start the calculations from   | no       |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| fleurinp      | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` | :ref:`FLEUR input<fleurinp_data>`              | no       |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| scf_with_ldau | namespace                                           | Inputs for SCF calculations with LDA+U         | yes      |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| fleur         | :py:class:`~aiida.orm.Code`                         | Fleur code                                     | yes      |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| wf_parameters | :py:class:`~aiida.orm.Dict`                         | Settings of the workchain                      | no       |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| options       | :py:class:`~aiida.orm.Dict`                         | AiiDA options (computational resources)        | no       |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
-| settings      | :py:class:`~aiida.orm.Dict`                         | Special :ref:`settings<fleurcode_plugin>`      | no       |
-|               |                                                     | for Fleur calculation                          |          |
-+---------------+-----------------------------------------------------+------------------------------------------------+----------+
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| name             | type                                                | description                                    | required |
++==================+=====================================================+================================================+==========+
+| scf_no_ldau      | namespace                                           | Inputs for SCF calculation before adding LDA+U | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| remote           | :py:class:`~aiida.orm.RemoteData`                   | Remote folder to start the calculations from   | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| fleurinp         | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` | :ref:`FLEUR input<fleurinp_data>`              | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| structure        | :py:class:`~aiida.orm.StructureData`                | Structure to start from without SCF            | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| calc_parameters  | :py:class:`~aiida.orm.Dict`                         | Parameters for Inpgen calculation              | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| scf_with_ldau    | namespace                                           | Inputs for SCF calculations with LDA+U         | yes      |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| fleur            | :py:class:`~aiida.orm.Code`                         | Fleur code                                     | yes      |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| inpgen           | :py:class:`~aiida.orm.Code`                         | Inpgen Code                                    | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| wf_parameters    | :py:class:`~aiida.orm.Dict`                         | Settings of the workchain                      | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+| options          | :py:class:`~aiida.orm.Dict`                         | AiiDA options (computational resources)        | no       |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+|| options_inpgen  || :py:class:`~aiida.orm.Dict`                        || AiiDA options (computational resources)       || no      |
+||                 ||                                                    || for the inpgen calculation                    ||         |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+|| settings        || :py:class:`~aiida.orm.Dict`                        || Special :ref:`settings<fleurcode_plugin>`     || no      |
+||                 ||                                                    || for Fleur calculation                         ||         |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+|| settings_inpgen || :py:class:`~aiida.orm.Dict`                        || Special :ref:`settings<fleurcode_plugin>`     || no      |
+||                 ||                                                    || for INpgen calculation                        ||         |
++------------------+-----------------------------------------------------+------------------------------------------------+----------+
+
 
 Only ``fleur`` and ``scf_with_ldau`` input is required. However, it does not mean that it is enough to specify these
 only. One *must* keep one of the supported input configurations described in the
@@ -147,7 +160,13 @@ on the setup of the inputs, one of the four supported scenarios will happen:
       inp.xml file and initial
       charge density will be copied from the remote folder. Should not represent a LDA+U calculation
 
-3. **scf_no_ldau**:
+4. **structure** + **calc_parameters**(optional) + **inpgen:
+  
+      The initial structure is used to generate a `FleurinpData` object via the input generator.
+      This is used to start the LDA+U calculations without a SCF workchain. directly starting with
+      the fixed LDA+U density matrices
+
+5. **scf_no_ldau**:
 
       A ``FleurSCFWorkChain`` is started with the input in the **scf_no_ldau**
       namespace and the output is used as a starting point for the LDA+U calculations
@@ -171,17 +190,19 @@ In case of failure the OrbControl WorkChain should throw one of the :ref:`exit c
 +-----------+----------------------------------------------+
 | 231       | Invalid input configuration                  |
 +-----------+----------------------------------------------+
-| 233       | Invalid code node specified, check           |
-|           | fleur code nodes                             |
+|| 233      || Invalid code node specified, check          |
+||          || fleur code nodes                            |
 +-----------+----------------------------------------------+
 | 235       | Input file modification failed               |
 +-----------+----------------------------------------------+
 | 236       | Input file was corrupted after modifications |
 +-----------+----------------------------------------------+
-| 342       | Some of the LDA+U calculations failed        |
-|           | This is expected for many situations         |
+|| 342      || Some of the LDA+U calculations failed       |
+||          || This is expected for many situations        |
 +-----------+----------------------------------------------+
 | 343       | All of the LDA+U calculations failed         |
++-----------+----------------------------------------------+
+| 360       | The inpgen calculation failed                |
 +-----------+----------------------------------------------+
 | 450       | SCF calculation without LDA+U failed         |
 +-----------+----------------------------------------------+
