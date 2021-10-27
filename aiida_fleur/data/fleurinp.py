@@ -587,8 +587,14 @@ class FleurinpData(Data):
                 kps.pbc = pbc
                 kps.set_kpoints(kpoints_set, cartesian=False, weights=weights_set)
                 #kpoints_data.add_link_from(self, label='fleurinp.kpts', link_type=LinkType.CREATE)
-                kps.label = 'fleurinp.kpts'
-                kpoints_data[label.replace('-','_')] = kps
+                pattern = re.compile(r'\W', re.UNICODE)
+                kpoint_identifier = re.sub(pattern, '', label.replace('-', '_'))
+                if kpoint_identifier != label.replace('-', '_'):
+                    warnings.warn(
+                        f'Normed the name of the kpoint set {label} to {kpoint_identifier}'
+                        ' to be able to use it as a link label', UserWarning)
+                kps.label = f'fleurinp.kpts.{kpoint_identifier}'
+                kpoints_data[kpoint_identifier] = kps
         else:
             kpoints_data = KpointsData()
             kpoints_data.set_cell(cell)
