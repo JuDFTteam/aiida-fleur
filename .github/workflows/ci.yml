@@ -131,6 +131,7 @@ jobs:
         # pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install ${{ matrix.aiida-version }}
         pip install ${{ matrix.pip-flags }} .[testing]
+        pip install reentry
         reentry scan
 
     - name: Run pytest
