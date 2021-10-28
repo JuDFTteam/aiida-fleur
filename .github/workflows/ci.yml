@@ -77,11 +77,13 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
         aiida-version: ['aiida-core']
         aiida-name: ['stable']
+        pip-flags: ''
         allowed-to-fail: [false]
         include:
           - python-version: 3.8
             aiida-version: 'git+https://github.com/aiidateam/aiida-core.git@develop'
             aiida-name: 'develop'
+            pip-flags: '--no-deps'
             allowed-to-fail: true
 
     name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
@@ -128,7 +130,7 @@ jobs:
         pip install --upgrade wheel setuptools
         # pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install ${{ matrix.aiida-version }}
-        pip install .[testing]
+        pip install ${{ matrix.pip-flags }} .[testing]
         reentry scan
 
     - name: Run pytest
