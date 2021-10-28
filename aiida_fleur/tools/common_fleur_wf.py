@@ -265,7 +265,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
     formenergy_dict = {}
-    for compound, uuid in six.iteritems(workchain_dict):
+    for compound, uuid in workchain_dict.items():
         # TODO ggf get formation energy from output node, or extras
         if isinstance(uuid, float):  # allow to give values
             formenergy_dict[compound] = uuid
