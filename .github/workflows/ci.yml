@@ -77,7 +77,7 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
         aiida-version: ['aiida-core']
         aiida-name: ['stable']
-        pip-flags: ''
+        pip-flags: ['']
         allowed-to-fail: [false]
         include:
           - python-version: 3.8
