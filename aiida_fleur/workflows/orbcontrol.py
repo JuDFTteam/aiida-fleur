@@ -132,7 +132,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'

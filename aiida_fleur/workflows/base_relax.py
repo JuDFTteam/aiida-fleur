@@ -35,7 +35,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = '0.1.2'
+    _workflowversion = '0.1.3'
 
     _calculation_class = RelaxProcess
     # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
