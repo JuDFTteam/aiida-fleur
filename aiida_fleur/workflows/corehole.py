@@ -139,7 +139,6 @@ class FleurCoreholeWorkChain(WorkChain):
         'scf_para': None,  # wf parameter dict for the scfs
         'same_para': True,  # enforce the same atom parameter/cutoffs on the corehole calc and ref
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400

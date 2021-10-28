@@ -70,7 +70,6 @@ class FleurStrainWorkChain(WorkChain):
     _wf_default = {
         'fleur_runmax': 4,
         'density_converged': 0.02,
-        'serial': False,
         'itmax_per_run': 30,
         'inpxml_changes': [],
         'points': 3,
@@ -78,7 +77,7 @@ class FleurStrainWorkChain(WorkChain):
         'guess': 1.00
     }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+    _scf_keys = ['fleur_runmax', 'density_converged', 'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
@@ -139,7 +138,6 @@ class FleurStrainWorkChain(WorkChain):
         self.ctx.points = wf_dict.get('points', 3)
         self.ctx.step = wf_dict.get('step', 0.02)
         self.ctx.guess = wf_dict.get('guess', 1.00)
-        self.ctx.serial = wf_dict.get('serial', False)  # True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
         # initialize the dictionary using defaults if no options are given

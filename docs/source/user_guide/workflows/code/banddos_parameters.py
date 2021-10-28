@@ -10,7 +10,6 @@
 'emin': -0.50,
 'emax': 0.90,
 'add_comp_para': {
-    'serial': False,
     'only_even_MPI': False,
     'max_queue_nodes': 20,
     'max_queue_wallclock_sec': 86400

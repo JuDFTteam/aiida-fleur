@@ -14,50 +14,10 @@ In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
-import six
+import warnings
 
 from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
-
-# def is_code(code):
-#     """
-#     Test if the given input is a Code node, by object, id, uuid, or pk
-#     if yes returns a Code node in all cases
-#     if no returns None
-#     """
-#     from aiida.orm import Code
-#     from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
-
-#     if isinstance(code, Code):
-#         return code
-
-#     try:
-#         pk = int(code)
-#     except ValueError:
-#         codestring = str(code)
-#         try:
-#             code = Code.get_from_string(codestring)
-#         except NotExistent:
-#             try:
-#                 code = load_node(codestring)
-#             except NotExistent:
-#                 code = None
-#         except (InputValidationError, MultipleObjectsError):
-#             code = None
-#     else:
-#         try:
-#             code = load_node(pk)
-#         except NotExistent:
-#             code = None
-
-#     if isinstance(code, Code):
-#         return code
-#     else:
-#         return None
-
 
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
     '''
@@ -71,8 +31,9 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     :param label: a string setting a label of the CalcJob in the DB
     :param description: a string setting a description of the CalcJob in the DB
     :param settings: additional settings of Dict type
-    :param serial: True if run a calculation in a serial mode
-
+    :param add_comp_para: dict with extra keys controlling the behaviour of the parallelization
+                          of the FleurBaseWorkChain
+    
     Example of use::
 
         inputs_build = get_inputs_inpgen(structure, inpgencode, options, label,
@@ -85,7 +46,6 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     inputs = {}
 
     add_comp_para_default = {
-        'serial': False,
         'only_even_MPI': False,
         'max_queue_nodes': 20,
         'max_queue_wallclock_sec': 86400
@@ -109,8 +69,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs['label'] = label
     else:
         inputs['label'] = ''
-    # TODO check  if code is parallel version?
-    if add_comp_para['serial']:
+
+    if add_comp_para.get('serial', False):
+        warnings.warn('The serial input in add_comp_para is deprecated. Control the usage of'
+                      'MPI with the withmpi key in the options input')
         if not options:
             options = {}
         options['withmpi'] = False  # for now
@@ -118,13 +80,15 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-    else:
-        options['withmpi'] = True
+    
+    if options:
+        if not options.get('withmpi', True) and 'resources' not in options:
+            # TODO not every machine/scheduler type takes number of machines
+            #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
+            # also a full will run here mpi on that node... also not what we want.ß
+            options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
 
     inputs['add_comp_para'] = Dict(dict=add_comp_para)
-
-    custom_commands = options.get('custom_scheduler_commands', '')
-    options['custom_scheduler_commands'] = custom_commands
 
     if settings:
         if isinstance(settings, Dict):

@@ -6,7 +6,6 @@
 'q_vectors': [[0.0, 0.0, 0.0],          # set a set of q-vectors to calculate DMI dispersion
               [0.1, 0.1, 0.0]]
 'add_comp_para': {
-    'serial': False,                    # False if use MPI version for the FT calc
     'only_even_MPI': False,             # True if suppress parallelisation having odd number of MPI
     'max_queue_nodes': 20,              # Max number of nodes allowed (used by automatic error fix)
     'max_queue_wallclock_sec': 86400    # Max number of walltime allowed (used by automatic error fix)

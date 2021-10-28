@@ -60,7 +60,6 @@ class FleurDMIWorkChain(WorkChain):
 
     _default_wf_para = {
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400

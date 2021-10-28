@@ -13,7 +13,6 @@ wf_para = Dict(dict={'sqa_ref': [0.7, 0.7],
                      'sqas_theta': [0.0, 1.57079, 1.57079],
                      'sqas_phi': [0.0, 0.0, 1.57079],
                      'add_comp_para': {
-                                        'serial': False,
                                         'only_even_MPI': False,
                                         'max_queue_nodes': 20,
                                         'max_queue_wallclock_sec': 86400
@@ -44,7 +43,6 @@ parameters = Dict(dict={'atom': {'element': 'Pt',
 wf_para_scf = {'fleur_runmax': 2,
                'itmax_per_run': 120,
                'density_converged': 0.2,
-               'serial': False,
                'mode': 'density'
                }
 

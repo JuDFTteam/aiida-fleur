@@ -125,8 +125,6 @@ class FleurEosWorkChain(WorkChain):
         self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.005)
         self.ctx.guess = wf_dict.get('guess', 1.00)
-        self.ctx.serial = wf_dict.get('serial', False)  # True
-        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.enforce_para = wf_dict.get('enforce_same_para', True)
 
     def structures(self):

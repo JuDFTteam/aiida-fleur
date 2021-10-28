@@ -110,7 +110,7 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
 
-    wf_parameters = {'add_comp_para': {'serial': True}, 'itmax_per_run': 30}
+    wf_parameters = {'itmax_per_run': 30}
 
     calc_parameters = {
         'atom': {
@@ -191,7 +191,7 @@ def test_fleur_scf_non_convergence(run_with_cache, clear_database, fleur_local_c
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
 
-    wf_parameters = {'add_comp_para': {'serial': True}, 'itmax_per_run': 3}
+    wf_parameters = {'itmax_per_run': 3}
 
     calc_parameters = {
         'atom': {
@@ -255,9 +255,6 @@ def test_fleur_scf_fleurinp_Si_modifications(
         'energy_converged': 0.002,
         'force_converged': 0.002,
         'mode': 'density',  # 'density', 'energy' or 'force'
-        'add_comp_para': {
-            'serial': True,
-        },
         'itmax_per_run': 30,
         'force_dict': {
             'qfix': 2,

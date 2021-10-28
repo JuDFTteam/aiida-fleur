@@ -34,7 +34,6 @@ parameters = Dict(dict={'atom': {'element': 'Pt',
 wf_para_scf = {'fleur_runmax': 2,
                'itmax_per_run': 120,
                'density_converged': 0.2,
-               'serial': False,
                'mode': 'density'
                }
 

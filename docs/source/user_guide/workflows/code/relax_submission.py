@@ -14,7 +14,6 @@ wf_relax = {'film_distance_relaxation': False,
             }
 
 wf_relax_scf = {'fleur_runmax': 5,
-                'serial': False,
                 'itmax_per_run': 50,
                 'alpha_mix': 0.015,
                 'relax_iter': 25,
