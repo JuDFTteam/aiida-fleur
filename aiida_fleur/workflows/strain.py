@@ -54,7 +54,7 @@ class FleurStrainWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.3.5'
+    _workflowversion = '0.3.6'
 
     _default_options = {
         'resources': {

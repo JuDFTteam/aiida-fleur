@@ -41,7 +41,7 @@ class FleurMaeWorkChain(WorkChain):
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.3.1'
 
     _default_options = {
         'resources': {

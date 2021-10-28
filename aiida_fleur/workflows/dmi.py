@@ -44,7 +44,7 @@ class FleurDMIWorkChain(WorkChain):
     This workflow calculates DMI energy dispersion of a structure.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _default_options = {
         'resources': {

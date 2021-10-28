@@ -112,7 +112,7 @@ class FleurCoreholeWorkChain(WorkChain):
     # Hints:
     # 1. This workflow does not work with local codes!
 
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.5.1'
     _default_options = {
         'resources': {
             'num_machines': 1,

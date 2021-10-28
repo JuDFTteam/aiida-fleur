@@ -69,7 +69,7 @@ class FleurInitialCLSWorkChain(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.5.1'
     _default_wf_para = {
         'references': {},
         'relax': True,
