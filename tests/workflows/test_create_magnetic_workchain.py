@@ -68,12 +68,7 @@ class Test_FleurCreateMagneticWorkChain:
 
         wf_eos = {'points': 9, 'step': 0.015, 'guess': 1.00}
 
-        wf_eos_scf = {
-            'fleur_runmax': 4,
-            'density_converged': 0.0002,
-            'itmax_per_run': 50,
-            'inpxml_changes': []
-        }
+        wf_eos_scf = {'fleur_runmax': 4, 'density_converged': 0.0002, 'itmax_per_run': 50, 'inpxml_changes': []}
 
         wf_eos_scf = Dict(dict=wf_eos_scf)
 

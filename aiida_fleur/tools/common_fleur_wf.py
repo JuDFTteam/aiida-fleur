@@ -19,6 +19,7 @@ import warnings
 from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
+
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
@@ -33,7 +34,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     :param settings: additional settings of Dict type
     :param add_comp_para: dict with extra keys controlling the behaviour of the parallelization
                           of the FleurBaseWorkChain
-    
+
     Example of use::
 
         inputs_build = get_inputs_inpgen(structure, inpgencode, options, label,
@@ -45,11 +46,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     Dict = DataFactory('dict')
     inputs = {}
 
-    add_comp_para_default = {
-        'only_even_MPI': False,
-        'max_queue_nodes': 20,
-        'max_queue_wallclock_sec': 86400
-    }
+    add_comp_para_default = {'only_even_MPI': False, 'max_queue_nodes': 20, 'max_queue_wallclock_sec': 86400}
     if add_comp_para is None:
         add_comp_para = {}
     add_comp_para = {**add_comp_para_default, **add_comp_para}
@@ -80,7 +77,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-    
+
     if options:
         if not options.get('withmpi', True) and 'resources' not in options:
             # TODO not every machine/scheduler type takes number of machines
