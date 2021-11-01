@@ -21,6 +21,7 @@ from aiida_fleur.tools.plot import plot_fleur
 import aiida_fleur
 import matplotlib.pyplot as plt
 import matplotlib
+
 matplotlib.use('Agg')
 
 

@@ -2,6 +2,7 @@
 """Helper for regenerating inp.xml files
 """
 from aiida import load_profile
+
 load_profile()
 
 from aiida.orm import load_node

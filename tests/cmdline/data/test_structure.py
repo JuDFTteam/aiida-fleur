@@ -14,6 +14,7 @@ Module to test all CLI data structure commands.
 '''
 import os
 from aiida.orm import Dict
+
 file_path1 = '../../files/inpxml/FePt/inp.xml'
 
 inpxmlfilefolder = os.path.dirname(os.path.abspath(__file__))
