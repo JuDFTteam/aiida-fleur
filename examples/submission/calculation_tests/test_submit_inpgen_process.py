@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aiida import load_profile
+
 load_profile()
 
 import sys

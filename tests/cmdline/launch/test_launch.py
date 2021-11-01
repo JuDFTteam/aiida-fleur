@@ -17,6 +17,7 @@ but execute large parts of the workchain code base.
 '''
 import os
 from aiida.orm import Dict
+
 file_path1 = '../../files/inpxml/FePt/inp.xml'
 
 inpxmlfilefolder = os.path.dirname(os.path.abspath(__file__))

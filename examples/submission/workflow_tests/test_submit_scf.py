@@ -19,6 +19,7 @@ import argparse
 from pprint import pprint
 
 from aiida import load_profile
+
 load_profile()
 
 from aiida.plugins import DataFactory
