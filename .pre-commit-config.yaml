@@ -5,7 +5,7 @@ ci:
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v4.0.1
     hooks:
     - id: double-quote-string-fixer
       types: [python]
@@ -17,7 +17,7 @@ repos:
       types: [python]
 
 - repo: git://github.com/pre-commit/mirrors-yapf
-  rev: v0.30.0
+  rev: v0.31.0
   hooks:
   - id: yapf
     name: yapf
