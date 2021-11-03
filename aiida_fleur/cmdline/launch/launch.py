@@ -15,9 +15,7 @@ Module with CLI commands to launch for calcjob and workflows of aiida-fleur.
 # TODO: these launch commands should be put in separate files, if this one becomes to large..
 
 import click
-from ..util import options
-from ..util.utils import launch_process
-from ..util import defaults
+from ..util import options, utils, defaults
 from aiida_fleur.tools.dict_util import clean_nones
 from aiida.orm import Code, load_node, Dict
 from aiida.plugins import WorkflowFactory
@@ -71,7 +69,7 @@ def launch_inpgen(structure, inpgen, calc_parameters, settings, daemon, option_n
     inputs = clean_nones(inputs)
     builder = process_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('fleur')
@@ -154,7 +152,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
         builder = workchain_class.get_builder()
         builder.update(**inputs_base)
 
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('scf')
@@ -190,7 +188,7 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('relax')
@@ -225,7 +223,7 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('eos')
@@ -257,7 +255,7 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('banddos')
@@ -283,7 +281,7 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_processs(builder, daemon)
 
 
 @click.command('init_cls')
@@ -341,7 +339,7 @@ def launch_corehole(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('mae')
@@ -381,7 +379,7 @@ def launch_mae(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('create_magnetic')
@@ -428,7 +426,7 @@ def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_pa
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('ssdisp')
@@ -461,7 +459,7 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('dmi')
@@ -495,4 +493,4 @@ def launch_dmi(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
