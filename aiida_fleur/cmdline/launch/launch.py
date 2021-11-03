@@ -281,7 +281,7 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    utils.launch_processs(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('init_cls')
@@ -310,7 +310,7 @@ def launch_init_cls(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    launch_process(builder, daemon)
+    utils.launch_process(builder, daemon)
 
 
 @click.command('corehole')
