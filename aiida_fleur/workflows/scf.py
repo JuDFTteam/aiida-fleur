@@ -69,6 +69,7 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_parity': False,
         'kpoints_force_odd': False,
         'kpoints_force_false': False,
+        'kpoints_force_gamma': False,
         'nmmp_converged': 0.002,
         'mode': 'density',  # 'density', 'energy' or 'force'
         'add_comp_para': {
@@ -347,7 +348,8 @@ class FleurScfWorkChain(WorkChain):
                     'distance': kpt_dist,
                     'force_parity': self.ctx.wf_dict.get('kpoints_force_parity', False),
                     'force_even': self.ctx.wf_dict.get('kpoints_force_even', False),
-                    'force_odd': self.ctx.wf_dict.get('kpoints_force_odd', False)
+                    'force_odd': self.ctx.wf_dict.get('kpoints_force_odd', False),
+                    'include_gamma': self.ctx.wf_dict.get('kpoints_force_gamma', False)
                 })
             inputs = {
                 'structure': structure,
