@@ -25,6 +25,7 @@ def test_create_kpoints_from_distance_no_para(generate_structure):
 
     assert result_para.get_dict() == wanted_result
 
+
 def test_create_kpoints_from_distance_gamma(generate_structure):
     """Test mesh generation of create_kpoints_from_distance_parameter without calc_parameter input"""
 
