@@ -45,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.5.2'
 
     _default_options = {
         'resources': {
@@ -129,6 +129,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         self.ctx.scf_needed = False
         self.ctx.banddos_calc = None
+        self.ctx.fleurinp_banddos = None
         self.ctx.scf = None
         self.ctx.successful = False
         self.ctx.info = []
@@ -295,7 +296,7 @@ class FleurBandDosWorkChain(WorkChain):
             fleurmode.set_kpointsdata(output['explicit_kpoints'], switch=True)
 
         elif kpath == 'skip':
-            return
+            pass
         else:
             #Use ase
             struc = fleurin.get_structuredata()
@@ -395,6 +396,10 @@ class FleurBandDosWorkChain(WorkChain):
             return status
 
         fleurin = self.ctx.fleurinp_banddos
+        if fleurin is None:
+            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # Do not copy mixing_history* files from the parent
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
@@ -442,6 +447,10 @@ class FleurBandDosWorkChain(WorkChain):
             return status
 
         fleurin = self.ctx.fleurinp_banddos
+        if fleurin is None:
+            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # Do not copy mixing_history* files from the parent
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
