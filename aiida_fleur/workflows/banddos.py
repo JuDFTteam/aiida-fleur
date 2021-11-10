@@ -261,8 +261,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         if 'kpoints' in self.inputs:
             fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
-
-        if kpath == 'auto':
+        elif kpath == 'auto':
             if fleurin.inp_version >= '0.32' and listname is not None:
                 fleurmode.switch_kpointset(listname)
         elif isinstance(kpath, dict):
