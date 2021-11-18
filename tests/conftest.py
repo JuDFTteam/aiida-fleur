@@ -192,7 +192,7 @@ def generate_retrieved_data():
     Generate orm.FolderData for retrieved output
     """
 
-    def _generate_retrieved_data(node, name, type='fleur'):
+    def _generate_retrieved_data(node, name, calc_type='fleur'):
         """
         Generate FolderData for the retrieved output of the given node
         """
@@ -200,7 +200,7 @@ def generate_retrieved_data():
         from aiida.common import LinkType
 
         basepath = os.path.dirname(os.path.abspath(__file__))
-        filepath = os.path.join(basepath, 'parsers', 'fixtures', type, name)
+        filepath = os.path.join(basepath, 'parsers', 'fixtures', calc_type, name)
 
         retrieved = orm.FolderData()
         retrieved.put_object_from_tree(filepath)
