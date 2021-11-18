@@ -346,11 +346,11 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
-    assert result.exit_code.status == 388
+    assert result.exit_code.status == 0
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 6 * 60 * 60
 
     result = process.inspect_process()
-    assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
+    assert result.status == 0
 
 
 # tests
