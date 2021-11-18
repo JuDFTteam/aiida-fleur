@@ -16,16 +16,17 @@ the Relax workchain. Inheritance from the BaseRestartWorkChain
 allows to add scenarios to restart a calculation in an
 automatic way if an expected failure occurred.
 """
-from __future__ import absolute_import
-import six
 
 from aiida.common import AttributeDict
 from aiida.common.exceptions import ValidationError
 from aiida.engine import while_
-from aiida.orm import load_node, Dict
+from aiida.orm import load_node, Dict, WorkChainNode
 from aiida.plugins import WorkflowFactory, DataFactory
-from aiida_fleur.common.workchain.base.restart import BaseRestartWorkChain
-from aiida_fleur.common.workchain.utils import register_error_handler, ErrorHandlerReport
+from aiida.engine.processes.workchains import BaseRestartWorkChain
+from aiida.engine.processes.workchains.utils import process_handler, ProcessHandlerReport
+
+from aiida_fleur.data.fleurinpmodifier import modify_fleurinpdata
+from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
 
 # pylint: disable=invalid-name
 RelaxProcess = WorkflowFactory('fleur.relax')
@@ -35,29 +36,24 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = '0.1.3'
+    _workflowversion = '0.2.0'
 
-    _calculation_class = RelaxProcess
-    # _error_handler_entry_point = 'aiida_fleur.workflow_error_handlers.pw.base'
+    _process_class = RelaxProcess
 
     @classmethod
     def define(cls, spec):
         super().define(spec)
         spec.expose_inputs(RelaxProcess)
-        spec.input('description',
-                   valid_type=six.string_types,
-                   required=False,
-                   non_db=True,
-                   help='Calculation description.')
-        spec.input('label', valid_type=six.string_types, required=False, non_db=True, help='Calculation label.')
+        spec.input('description', valid_type=str, required=False, non_db=True, help='Calculation description.')
+        spec.input('label', valid_type=str, required=False, non_db=True, help='Calculation label.')
 
         spec.outline(
             cls.setup,
             cls.validate_inputs,
-            while_(cls.should_run_calculation)(
+            while_(cls.should_run_process)(
                 cls.set_pop_shift,
-                cls.run_calculation,
-                cls.inspect_calculation,
+                cls.run_process,
+                cls.inspect_process,
                 cls.pop_non_stacking_inpxml_changes,
             ),
             cls.results,
@@ -135,47 +131,45 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         wf_param['inpxml_changes'] = new_changes
         self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
 
+    # @process_handler(priority=50, exit_codes=RelaxProcess.exit_codes.ERROR_DID_NOT_RELAX)
+    # def _handle_not_conv_error(self, calculation):
+    #     """
+    #     Calculation failed for unknown reason.
+    #     """
 
-# @register_error_handler(FleurBaseRelaxWorkChain, 50)
-# def _handle_not_conv_error(self, calculation):
-#     """
-#     Calculation failed for unknown reason.
-#     """
-#     if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_DID_NOT_RELAX']):
-#         self.ctx.is_finished = False
-#         self.report('Relax WC did not lead to convergence, submit next RelaxWC')
-#         last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
-#         last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
-#         last_fleur_calc = load_node(last_fleur_calc)
-#         remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
-#         if 'wf_parameters' in self.ctx.inputs:
-#             parameters = self.ctx.inputs.wf_parameters
-#             run_final = parameters.get_dict().get('run_final_scf', False)
-#         else:
-#             run_final = False
+    #     self.ctx.is_finished = False
+    #     self.report('Relax WC did not lead to convergence, submit next RelaxWC')
+    #     last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
+    #     last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+    #     last_fleur_calc = load_node(last_fleur_calc)
+    #     remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+    #     if 'wf_parameters' in self.ctx.inputs:
+    #         parameters = self.ctx.inputs.wf_parameters
+    #         run_final = parameters.get_dict().get('run_final_scf', False)
+    #     else:
+    #         run_final = False
 
-#         self.ctx.inputs.scf.remote_data = remote
-#         if 'structure' in self.ctx.inputs.scf:
-#             del self.ctx.inputs.scf.structure
-#         if 'inpgen' in self.ctx.inputs.scf:
-#             if run_final:
-#                 self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
-#             del self.ctx.inputs.scf.inpgen
-#         if 'calc_parameters' in self.ctx.inputs.scf:
-#             if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
-#                 self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
-#             del self.ctx.inputs.scf.calc_parameters
+    #     self.ctx.inputs.scf.remote_data = remote
+    #     if 'structure' in self.ctx.inputs.scf:
+    #         del self.ctx.inputs.scf.structure
+    #     if 'inpgen' in self.ctx.inputs.scf:
+    #         if run_final:
+    #             self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
+    #         del self.ctx.inputs.scf.inpgen
+    #     if 'calc_parameters' in self.ctx.inputs.scf:
+    #         if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
+    #             self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
+    #         del self.ctx.inputs.scf.calc_parameters
 
-#         return ErrorHandlerReport(True, True)
+    #     return ProcessHandlerReport(True)
 
+    @process_handler(priority=49, exit_codes=RelaxProcess.exit_codes.ERROR_SWITCH_BFGS)
+    def _handle_switch_to_bfgs(self, calculation):
+        """
+        SCF can be switched to BFGS. For now cdn and relax.xml are kept because the current progress is
+        treated as successful.
+        """
 
-@register_error_handler(FleurBaseRelaxWorkChain, 49)
-def _handle_switch_to_bfgs(self, calculation):
-    """
-    SCF can be switched to BFGS. For now cdn and relax.xml are kept because the current progress is
-    treated as successful.
-    """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_SWITCH_BFGS']):
         self.ctx.is_finished = False
         self.report('It is time to switch from straight to BFGS relaxation')
         last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
@@ -205,34 +199,33 @@ def _handle_switch_to_bfgs(self, calculation):
                 self.ctx.inputs.final_scf.calc_parameters = self.ctx.inputs.scf.calc_parameters
             del self.ctx.inputs.scf.calc_parameters
 
-        return ErrorHandlerReport(True, True)
+        return ProcessHandlerReport(True)
 
+    @process_handler(priority=1,
+                     exit_codes=[
+                         RelaxProcess.exit_codes.ERROR_INVALID_INPUT_PARAM,
+                         RelaxProcess.exit_codes.ERROR_SCF_FAILED,
+                         RelaxProcess.exit_codes.ERROR_NO_RELAX_OUTPUT,
+                         RelaxProcess.exit_codes.ERROR_NO_SCF_OUTPUT,
+                         RelaxProcess.exit_codes.ERROR_DID_NOT_RELAX,
+                     ])
+    def _handle_general_error(self, calculation):
+        """
+        Calculation failed for a reason that can not be fixed automatically.
+        """
 
-@register_error_handler(FleurBaseRelaxWorkChain, 1)
-def _handle_general_error(self, calculation):
-    """
-    Calculation failed for a reason that can not be fixed automatically.
-    """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses([
-            'ERROR_INVALID_INPUT_PARAM', 'ERROR_SCF_FAILED', 'ERROR_NO_RELAX_OUTPUT', 'ERROR_NO_SCF_OUTPUT',
-            'ERROR_DID_NOT_RELAX'
-    ]):
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.report('Calculation failed for a reason that can not be fixed automatically')
         self.results()
-        return ErrorHandlerReport(True, True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
-    else:
-        raise ValueError('Calculation failed for unknown reason, please register the '
-                         'corresponding exit code in this error handler')
+        return ProcessHandlerReport(True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
+    @process_handler(priority=100, exit_codes=RelaxProcess.exit_codes.ERROR_VACUUM_SPILL_RELAX)
+    def _handle_vacuum_spill(self, calculation):
+        """
+        Calculation failed because atom spilled to the vacuum region.
+        """
 
-@register_error_handler(FleurBaseRelaxWorkChain, 100)
-def _handle_vacuum_spill(self, calculation):
-    """
-    Calculation failed because atom spilled to the vacuum region.
-    """
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX']):
         if 'remote_data' in self.ctx.inputs.scf:
             inputs = find_inputs_relax(self.ctx.inputs.scf.remote_data)
             del self.ctx.inputs.scf.remote_data
@@ -255,17 +248,14 @@ def _handle_vacuum_spill(self, calculation):
         self.ctx.use_stashed_shift_methods = True
         self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
 
-        return ErrorHandlerReport(True, True)
+        return ProcessHandlerReport(True)
 
+    @process_handler(priority=101, exit_codes=RelaxProcess.exit_codes.ERROR_MT_RADII_RELAX)
+    def _handle_mt_overlap(self, calculation):
+        """
+        Calculation failed because MT overlapped during calculation.
+        """
 
-@register_error_handler(FleurBaseRelaxWorkChain, 101)
-def _handle_mt_overlap(self, calculation):
-    """
-    Calculation failed because MT overlapped during calculation.
-    """
-    from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
-    from aiida_fleur.data.fleurinpmodifier import modify_fleurinpdata
-    if calculation.exit_status in RelaxProcess.get_exit_statuses(['ERROR_MT_RADII_RELAX']):
         if 'remote_data' in self.ctx.inputs.scf:
             inputs = find_inputs_relax(self.ctx.inputs.scf.remote_data)
             del self.ctx.inputs.scf.remote_data
@@ -338,7 +328,7 @@ def _handle_mt_overlap(self, calculation):
             wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
             self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
 
-        return ErrorHandlerReport(True, True)
+        return ProcessHandlerReport(True)
 
 
 def find_inputs_relax(remote_node):
@@ -346,7 +336,6 @@ def find_inputs_relax(remote_node):
     Finds the original inputs of the relaxation workchain which can be either
     FleurinpData or structure+inpgen+calc_param.
     """
-    from aiida.orm import WorkChainNode
     inc_nodes = remote_node.get_incoming().all()
     for link in inc_nodes:
         if isinstance(link.node, WorkChainNode):

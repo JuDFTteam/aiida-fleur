@@ -187,6 +187,31 @@ def generate_structure():
 
 
 @pytest.fixture
+def generate_retrieved_data():
+    """
+    Generate orm.FolderData for retrieved output
+    """
+
+    def _generate_retrieved_data(node, name, calc_type='fleur'):
+        """
+        Generate FolderData for the retrieved output of the given node
+        """
+        from aiida import orm
+        from aiida.common import LinkType
+
+        basepath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(basepath, 'parsers', 'fixtures', calc_type, name)
+
+        retrieved = orm.FolderData()
+        retrieved.put_object_from_tree(filepath)
+        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.store()
+        return retrieved
+
+    return _generate_retrieved_data
+
+
+@pytest.fixture
 def generate_kpoints_mesh():
     """Return a `KpointsData` node."""
 
@@ -336,7 +361,7 @@ def generate_workchain_base(generate_workchain, generate_inputs_base, generate_c
             node.set_exit_status(exit_code.status)
 
             process.ctx.iteration = 1
-            process.ctx.calculations = [node]
+            process.ctx.children = [node]
 
         return process
 
