@@ -26,7 +26,7 @@ from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
@@ -313,10 +313,10 @@ class FleurRelaxWorkChain(WorkChain):
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
                 fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -479,7 +479,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-            last_fleur = find_nested_process(self.ctx.scf_res, FleurCalc)[-1]
+            last_fleur = find_nested_process(self.ctx.scf_res, FleurBaseWorkChain)[-1]
             retrieved_node = last_fleur.outputs.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
