@@ -20,17 +20,15 @@ from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 
 from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec):
+def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
     """
     full example using FleurRelaxWorkChain with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -76,10 +74,66 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     print(n)
     #Dummy checks
     assert n.get('errors') == []
-    assert n.get('force') == []
-    assert n.get('energy') == []
+    assert n.get('force') == [0.0]
+    assert abs(n.get('energy') - -15784.562888656) < 1e-6
 
     relax_struc = out['optimized_structure']
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_relax_validation_wrong_inputs(fleur_local_code, inpgen_local_code, generate_structure2):
+    """
+    Test the validation behavior of FleurRelaxWorkChain if wrong input is provided it should throw
+    an exitcode and not start a Fleur run or crash
+    """
+    from aiida.orm import Dict
+
+    # prepare input nodes and dicts
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+    options = Dict(dict=options).store()
+
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    wf_parameters = Dict(dict={
+        'relax_iter': 5,
+        'film_distance_relaxation': False,
+        'force_criterion': 0.001,
+        'wrong_key': None
+    })
+    wf_parameters.store()
+    structure = generate_structure2()
+    structure.store()
+
+    ################
+    # Create builders
+    # interface of exposed scf is tested elsewhere
+
+    # 1. create builder with wrong wf parameters
+    builder_additionalkeys = FleurRelaxWorkChain.get_builder()
+    builder_additionalkeys.scf.structure = structure
+    builder_additionalkeys.wf_parameters = wf_parameters
+    builder_additionalkeys.scf.fleur = FleurCode
+    builder_additionalkeys.scf.inpgen = InpgenCode
+
+    ###################
+    # now run the builders all should fail early with exit codes
+
+    # 1. structure and fleurinp given
+    out, node = run_get_node(builder_additionalkeys)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
 
 
 # tests
@@ -112,69 +166,6 @@ class Test_FleurRelaxWorkChain():
         Full regression test of FleurRelaxWorkChain starting from an already converged relaxed structure
         """
         assert False
-
-    @pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_relax_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
-        """
-        Test the validation behavior of FleurRelaxWorkChain if wrong input is provided it should throw
-        an exitcode and not start a Fleur run or crash
-        """
-        from aiida.orm import Dict
-
-        # prepare input nodes and dicts
-        options = {
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 5 * 60,
-            'withmpi': False,
-            'custom_scheduler_commands': ''
-        }
-        options = Dict(dict=options).store()
-
-        FleurCode = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-        InpgenCode = mock_code_factory(label='inpgen',
-                                       data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                     'calc_data_dir/'),
-                                       entry_point=CALC2_ENTRY_POINT,
-                                       ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
-
-        wf_parameters = Dict(dict={
-            'relax_iter': 5,
-            'film_distance_relaxation': False,
-            'force_criterion': 0.001,
-            'wrong_key': None
-        })
-        wf_parameters.store()
-        structure = generate_structure2()
-        structure.store()
-
-        ################
-        # Create builders
-        # interface of exposed scf is tested elsewhere
-
-        # 1. create builder with wrong wf parameters
-        builder_additionalkeys = FleurRelaxWorkChain.get_builder()
-        builder_additionalkeys.scf.structure = structure
-        builder_additionalkeys.wf_parameters = wf_parameters
-        builder_additionalkeys.scf.fleur = FleurCode
-        builder_additionalkeys.scf.inpgen = InpgenCode
-
-        ###################
-        # now run the builders all should fail early with exit codes
-
-        # 1. structure and fleurinp given
-        out, node = run_get_node(builder_additionalkeys)
-        assert out == {}
-        assert node.is_finished
-        assert not node.is_finished_ok
-        assert node.exit_status == 230
 
 
 # maybe validate common interface of code acknostic worklfows and builders, to make sure it can take

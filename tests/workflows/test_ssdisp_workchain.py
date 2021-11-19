@@ -21,12 +21,10 @@ from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_ssdisp_FePt_film(
         clear_database,
@@ -47,7 +45,8 @@ def test_fleur_ssdisp_FePt_film(
             },
             'max_wallclock_seconds': 60 * 60,
             'queue_name': '',
-            'custom_scheduler_commands': ''
+            'custom_scheduler_commands': '',
+            'withmpi': False,
         })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}

@@ -491,7 +491,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.banddos_calc:
-            self.report(f'A bandstructure was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
+            self.report(f'A bandstructure/DOS was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
                         f'calculation {self.ctx.banddos_calc}')
             try:
                 last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
@@ -516,7 +516,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf']
+        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf', 'Local.1', 'Local.2']
 
         bandfile_res = []
         if retrieved:
@@ -526,7 +526,7 @@ class FleurBandDosWorkChain(WorkChain):
             if name in bandfile_res:
                 self.ctx.successful = True
         if not self.ctx.successful:
-            self.report('!NO bandstructure file was found, something went wrong!')
+            self.report('!NO bandstructure/DOS file was found, something went wrong!')
 
         # # get efermi from last calculation
         scf_results = None

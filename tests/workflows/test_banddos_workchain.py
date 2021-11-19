@@ -17,7 +17,6 @@ from aiida import orm
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import os
-from ..conftest import run_regression_tests
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
@@ -25,10 +24,9 @@ CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                                aiida_caplog):
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -98,10 +96,9 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                               aiida_caplog):
+def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -171,13 +168,13 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     assert 'last_calc_retrieved' in out
     res_files = out['last_calc_retrieved'].list_object_names()
     assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+        file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
-                                         clear_spec, aiida_caplog):
+                                         aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses seekpath to determine the path for the bandstructure
@@ -251,10 +248,9 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, clear_spec,
-                                    aiida_caplog):
+def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses ase bandpath to determine the path through the briloouin zone
@@ -338,17 +334,15 @@ def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
     assert False
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory, create_fleurinp, generate_structure2,
-                                               generate_remote_data, clear_spec, clear_database):
+def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp,
+                                               generate_structure2, generate_remote_data, clear_database):
     """
     Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
     """
     #from aiida.engine import run_get_node
-
-    #clear_spec()
 
     # prepare input nodes and dicts
     options = {
@@ -362,16 +356,8 @@ def test_fleur_banddos_validation_wrong_inputs(run_with_cache, mock_code_factory
     }
     options = orm.Dict(dict=options).store()
 
-    FleurCode = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-    InpgenCode = mock_code_factory(label='inpgen',
-                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                 'calc_data_dir/'),
-                                   entry_point=CALC2_ENTRY_POINT,
-                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
 
     structure = generate_structure2()
     structure.store()

@@ -19,17 +19,15 @@ from aiida import orm
 import aiida_fleur
 from aiida_fleur.workflows.eos import FleurEosWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure, clear_spec,
+def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure,
                                 clear_database_after_test):
     """
     full example using scf workflow with just a fleurinp data as input.
@@ -108,9 +106,9 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
 
 
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
+@pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_eos_validation_wrong_inputs(run_with_cache, mock_code_factory, generate_structure2):
+def test_fleur_eos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, generate_structure2):
     """
     Test the validation behavior of FleurEosWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
@@ -129,16 +127,8 @@ def test_fleur_eos_validation_wrong_inputs(run_with_cache, mock_code_factory, ge
     }
     options = Dict(dict=options).store()
 
-    FleurCode = mock_code_factory(
-        label='fleur',
-        data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-        entry_point=CALC_ENTRY_POINT,
-        ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-    InpgenCode = mock_code_factory(label='inpgen',
-                                   data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                 'calc_data_dir/'),
-                                   entry_point=CALC2_ENTRY_POINT,
-                                   ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
 
     wf_parameters = Dict(dict={'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
     wf_parameters.store()

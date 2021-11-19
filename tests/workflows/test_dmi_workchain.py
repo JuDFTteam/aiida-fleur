@@ -11,9 +11,6 @@
 ###############################################################################
 ''' Various tests for the FleurDMIWorkChain, different groupping '''
 # Here we test if the interfaces of the workflows are still the same
-from __future__ import absolute_import
-from __future__ import print_function
-
 import pytest
 import aiida_fleur
 import os
@@ -21,13 +18,11 @@ from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.dmi import FleurDMIWorkChain
 
-from ..conftest import run_regression_tests
-
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not there or not wanted.')
-@pytest.mark.timeout(1000, method='thread')
+@pytest.mark.regression_test
+@pytest.mark.timeout(2000, method='thread')
 def test_fleur_dmi_FePt_film(
         clear_database,
         with_export_cache,  #run_with_cache,
@@ -47,7 +42,8 @@ def test_fleur_dmi_FePt_film(
             },
             'max_wallclock_seconds': 60 * 60,
             'queue_name': '',
-            'custom_scheduler_commands': ''
+            'custom_scheduler_commands': '',
+            'withmpi': False,
         })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
@@ -65,7 +61,7 @@ def test_fleur_dmi_FePt_film(
             # 'prop_dir': [1.0, 0.0, 0.0],
             'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
             'ref_qss': [0.0, 0.0, 0.0],
-            'inpxml_changes': []
+            'inpxml_changes': [],
         })
 
     bohr_a_0 = 0.52917721092  # A
