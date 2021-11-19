@@ -22,7 +22,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.regression_test
-@pytest.mark.timeout(1000, method='thread')
+@pytest.mark.timeout(2000, method='thread')
 def test_fleur_dmi_FePt_film(
         clear_database,
         with_export_cache,  #run_with_cache,
