@@ -513,7 +513,7 @@ class FleurOrbControlWorkChain(WorkChain):
             options = self.inputs.options_inpgen
         else:
             #Only take the parts that could be relevant (resources is overwritten anyway)
-            options = {'queue_name': self.options.get_dict().get('queue_name', '')}
+            options = {'queue_name': self.inputs.options.get_dict().get('queue_name', '')}
             if 'max_wallclock_seconds' in options:
                 options['max_wallclock_seconds'] = int(self.inputs.options['max_wallclock_seconds'])
 
