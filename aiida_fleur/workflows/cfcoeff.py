@@ -267,7 +267,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         input_orbcontrol = AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
 
-        if self.ctx.wf_dict['soc_off']:
+        if self.ctx.wf_dict['soc_off'] and 'scf_no_ldau' in input_orbcontrol:
             if 'wf_parameters' not in input_orbcontrol['scf_no_ldau']:
                 scf_wf_dict = {}
             else:
@@ -286,6 +286,25 @@ class FleurCFCoeffWorkChain(WorkChain):
             }))
 
             input_orbcontrol.scf_no_ldau.wf_parameters = Dict(dict=scf_wf_dict)
+        elif self.ctx.wf_dict['soc_off']:
+            if 'wf_parameters' not in input_orbcontrol:
+                orbcontrol_wf_dict = {}
+            else:
+                orbcontrol_wf_dict = input_orbcontrol.wf_parameters.get_dict()
+
+            if 'inpxml_changes' not in orbcontrol_wf_dict:
+                orbcontrol_wf_dict['inpxml_changes'] = []
+
+            orbcontrol_wf_dict['inpxml_changes'].append(('set_species', {
+                'species_name': f"all-{self.ctx.wf_dict['element']}",
+                'attributedict': {
+                    'special': {
+                        'socscale': 0.0
+                    }
+                }
+            }))
+
+            input_orbcontrol.wf_parameters = Dict(dict=orbcontrol_wf_dict)
 
         return input_orbcontrol
 

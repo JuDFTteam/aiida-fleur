@@ -656,7 +656,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 fm.add_task_list(fchanges)
             except (ValueError, TypeError) as exc:
                 error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                        f', which failed with {exc}. I abort, good luck next time!')
+                         f', which failed with {exc}. I abort, good luck next time!')
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
