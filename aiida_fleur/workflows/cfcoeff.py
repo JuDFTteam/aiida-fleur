@@ -585,7 +585,7 @@ def calculate_cf_coefficients(cf_cdn_folder, cf_pot_folder, convert=True):
 
     out_dict = {}
 
-    cfcalc = CFCalculation(general={'quiet': True})
+    cfcalc = CFCalculation(quiet=True)
 
     #Reading in the HDF files
     with cf_cdn_folder.open('CFdata.hdf', 'rb') as f:
