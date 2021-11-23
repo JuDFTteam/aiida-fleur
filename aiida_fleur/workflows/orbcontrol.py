@@ -602,11 +602,11 @@ class FleurOrbControlWorkChain(WorkChain):
             if not self.ctx.inpgen.is_finished_ok:
                 error = 'Inpgen calculation failed'
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+                return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
             try:
                 fleurinp = self.ctx.inpgen.outputs.fleurinpData
             except (AttributeError, NotExistent):
-                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+                return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
         else:
             remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
@@ -657,18 +657,18 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
                          f', which failed with {exc}. I abort, good luck next time!')
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         try:
             fm.show(display=False, validate=True)
         except etree.DocumentInvalid:
             self.control_end_wc('ERROR: input, inp.xml changes did not validate')
-            return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
             error = ('ERROR: input, inp.xml changes could not be applied.'
                      f'The following error was raised {exc}')
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+            return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         fleurinp_fixed = fm.freeze()
 
