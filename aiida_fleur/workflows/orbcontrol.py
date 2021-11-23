@@ -153,6 +153,7 @@ class FleurOrbControlWorkChain(WorkChain):
         'use_orbital_occupation': False,
         'fixed_occupations': None,
         'fixed_configurations': None,
+        'inpxml_changes': []
     }
 
     @classmethod
@@ -603,7 +604,10 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'Inpgen calculation failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-            fleurinp = self.ctx.inpgen.outputs.fleurinpData
+            try:
+                fleurinp = self.ctx.inpgen.outputs.fleurinpData
+            except (AttributeError, NotExistent):
+                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
         else:
             remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
@@ -645,6 +649,16 @@ class FleurOrbControlWorkChain(WorkChain):
                                    orbital=int(orbital),
                                    spin=spin + 1,
                                    state_occupations=config_spin)
+
+        fchanges = self.ctx.wf_dict['inpxml_changes']
+        if fchanges:
+            try:
+                fm.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                        f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         try:
             fm.show(display=False, validate=True)
