@@ -172,7 +172,16 @@ class FleurCFCoeffWorkChain(WorkChain):
             input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         elif 'orbcontrol' in self.inputs:
             input_scf = AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
-            input_scf = input_scf['scf_no_ldau']
+            input_scf_tmp = input_scf.get('scf_no_ldau')
+            if input_scf_tmp is None:
+                input_scf_tmp = {}
+                input_scf_tmp['structure'] = input_scf['structure']
+                input_scf_tmp['inpgen'] = input_scf['inpgen']
+                input_scf_tmp['fleur'] = input_scf['fleur']
+                input_scf_tmp['options'] = input_scf['options']
+                if 'calc_parameters' in input_scf:
+                    input_scf_tmp['calc_parameters'] = input_scf['calc_parameters']
+            input_scf = input_scf_tmp
 
         if 'structure' in input_scf:
             orig_structure = input_scf['structure']
