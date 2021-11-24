@@ -374,9 +374,9 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_yttrium_analogue'))
 
-        fleurinp_scf = self.ctx.yttrium_analogue.outputs.fleurinp
+        fleurinp_scf = self.ctx.yttrium_analogue_scf.outputs.fleurinp
         remote_data = load_node(
-            self.ctx.yttrium_analogue.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+            self.ctx.yttrium_analogue_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
 
         if 'settings' in inputs:
             settings = inputs.settings.get_dict()
