@@ -719,7 +719,10 @@ class FleurOrbControlWorkChain(WorkChain):
         Get the input for the scf workchain after the fixed density matrix calculations
         to relax the density matrix
         """
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_with_ldau'))
+        if 'scf_with_ldau' in self.inputs:
+            input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_with_ldau'))
+        else:
+            input_scf = AttributeDict({})
 
         if 'fleur' not in input_scf:
             input_scf.fleur = self.inputs.fleur
