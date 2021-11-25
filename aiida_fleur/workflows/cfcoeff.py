@@ -29,6 +29,7 @@ from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
 from masci_tools.tools.cf_calculation import CFCalculation
 import h5py
+from lxml import etree
 
 
 class FleurCFCoeffWorkChain(WorkChain):
@@ -392,6 +393,17 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         fm.set_atomgroup(attributedict={'cFCoeffs': {'chargeDensity': False, 'potential': True}}, species='all-Y')
 
+        try:
+            fm.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, inp.xml changes did not validate')
+            self.control_end_wc(error)
+            return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
         fleurinp_cf = fm.freeze()
 
         label = 'Yttrium Analogue Potential'
@@ -454,6 +466,18 @@ class FleurCFCoeffWorkChain(WorkChain):
                 'remove4f': True
             }},
                              species=f'all-{element}')
+
+        try:
+            fm.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, inp.xml changes did not validate')
+            self.control_end_wc(error)
+            return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
         fleurinp_cf = fm.freeze()
 
         inputs_rareearth = get_inputs_fleur(inputs.fleur,
