@@ -77,6 +77,8 @@ class FleurCFCoeffWorkChain(WorkChain):
         spec.output('output_cfcoeff_wc_para', valid_type=Dict)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
+        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
         spec.exit_code(345, 'ERROR_SCF_FAILED', message='Convergence scf workflow failed.')
         spec.exit_code(451, 'ERROR_ORBCONTROL_FAILED', message='Convergence orbcontrol workflow failed.')
         spec.exit_code(452, 'ERROR_CFCALC_FAILED', message='CF calculation failed.')
