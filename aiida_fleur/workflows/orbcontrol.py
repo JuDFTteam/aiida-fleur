@@ -21,6 +21,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 
+from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -131,9 +132,6 @@ class FleurOrbControlWorkChain(WorkChain):
     :param fleur: (Code)
     """
     _workflowversion = '0.3.3'
-
-    _NMMPMAT_FILE_NAME = 'n_mmp_mat'
-    _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
 
     _default_options = {
         'resources': {
@@ -442,8 +440,8 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if remote is not None:
             retrieved_filenames = remote.creator.outputs.retrieved.list_object_names()
-            if self._NMMPMAT_FILE_NAME in retrieved_filenames or \
-               self._NMMPMAT_HDF5_FILE_NAME in retrieved_filenames:
+            if FleurCalculation._NMMPMAT_FILE_NAME in retrieved_filenames or \
+               FleurCalculation._NMMPMAT_HDF5_FILE_NAME in retrieved_filenames:
                 error = f"ERROR: Wrong input: remote_data {'in scf_no_ldau' if 'scf_no_ldau' in inputs else ''} already contains LDA+U"
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
