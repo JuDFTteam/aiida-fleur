@@ -13,10 +13,10 @@
     In this module you find the workflow 'FleurCFCoeffWorkChain' for calculating
     the 4f crystal field coefficients
 """
-from aiida.engine import WorkChain, ToContext
+from aiida.engine import WorkChain, ToContext, ExitCode
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
-from aiida.orm import Dict, load_node, Bool
+from aiida import orm
 from aiida.common.constants import elements as PeriodicTableElements
 
 from aiida_fleur.tools.StructureData_util import replace_element
@@ -69,11 +69,11 @@ class FleurCFCoeffWorkChain(WorkChain):
                                'required': False,
                                'populate_defaults': False
                            })
-        spec.input('wf_parameters', valid_type=Dict, required=False)
+        spec.input('wf_parameters', valid_type=orm.Dict, required=False)
 
         spec.outline(cls.start, cls.validate_input, cls.run_scfcalculations, cls.run_cfcalculation, cls.return_results)
 
-        spec.output('output_cfcoeff_wc_para', valid_type=Dict)
+        spec.output('output_cfcoeff_wc_para', valid_type=orm.Dict)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
@@ -198,7 +198,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         replace_dict = {}
         replace_dict[self.ctx.wf_dict['element']] = self.ctx.wf_dict['analogue_element']
 
-        new_structures = replace_element(orig_structure, Dict(dict=replace_dict), replace_all=Bool(True))
+        new_structures = replace_element(orig_structure, orm.Dict(dict=replace_dict), replace_all=orm.Bool(self.ctx.wf_dict['replace_all']))
 
         structure = new_structures['replaced_all']
         inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
@@ -213,7 +213,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                     if 'element' in value:
                         if value['element'] == self.ctx.wf_dict['element']:
                             new_params.pop(key)
-            inputs_analogue.calc_parameters = Dict(dict=new_params)
+            inputs_analogue.calc_parameters = orm.Dict(dict=new_params)
 
         if self.ctx.wf_dict['soc_off']:
             if 'wf_parameters' not in inputs_analogue:
@@ -233,7 +233,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }
             }))
 
-            inputs_analogue.wf_parameters = Dict(dict=scf_wf_dict)
+            inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
 
         return inputs_analogue
 
@@ -259,7 +259,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }
             }))
 
-            input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+            input_scf.wf_parameters = orm.Dict(dict=scf_wf_dict)
 
         return input_scf
 
@@ -285,7 +285,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }
             }))
 
-            input_orbcontrol.scf_no_ldau.wf_parameters = Dict(dict=scf_wf_dict)
+            input_orbcontrol.scf_no_ldau.wf_parameters = orm.Dict(dict=scf_wf_dict)
         elif self.ctx.wf_dict['soc_off']:
             if 'wf_parameters' not in input_orbcontrol:
                 orbcontrol_wf_dict = {}
@@ -304,7 +304,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }
             }))
 
-            input_orbcontrol.wf_parameters = Dict(dict=orbcontrol_wf_dict)
+            input_orbcontrol.wf_parameters = orm.Dict(dict=orbcontrol_wf_dict)
 
         return input_orbcontrol
 
@@ -379,7 +379,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
 
         fleurinp_scf = self.ctx.analogue_scf.outputs.fleurinp
-        remote_data = load_node(
+        remote_data = orm.load_node(
             self.ctx.analogue_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
 
         if 'settings' in inputs:
@@ -432,14 +432,14 @@ class FleurCFCoeffWorkChain(WorkChain):
             inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
             fleurinp_scf = self.ctx.rare_earth_scf.outputs.fleurinp
-            remote_data = load_node(
+            remote_data = orm.load_node(
                 self.ctx.rare_earth_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
         elif 'orbcontrol' in self.inputs:
             inputs = AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
 
             fleurinp_scf = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_fleurinp
             gs_scf_para = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_scf
-            remote_data = load_node(gs_scf_para['last_calc_uuid']).outputs.remote_folder
+            remote_data = orm.load_node(gs_scf_para['last_calc_uuid']).outputs.remote_folder
 
         if 'settings' in inputs:
             settings = inputs.settings.get_dict()
@@ -552,12 +552,6 @@ class FleurCFCoeffWorkChain(WorkChain):
             link_label = calc_name
             outnodedict[link_label] = outputnode_calc
 
-        cf_calc_out = {}
-        if not skip_calculation:
-            cf_calc_out = calculate_cf_coefficients(retrieved_nodes['cdn'],
-                                                    retrieved_nodes['pot'],
-                                                    convert=self.ctx.wf_dict['convert_to_stevens'])
-
         out = {
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
@@ -571,8 +565,16 @@ class FleurCFCoeffWorkChain(WorkChain):
             'errors': self.ctx.errors
         }
 
-        for key, value in cf_calc_out.items():
-            out[key] = value
+
+        if not skip_calculation:
+            cf_calc_out = calculate_cf_coefficients(retrieved_nodes['cdn'],
+                                                    retrieved_nodes['pot'],
+                                                    convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']))
+            if isinstance(cf_calc_out, orm.Dict):
+                for key, value in cf_calc_out.get_dict().items():
+                    out[key] = value
+            else:
+                self.ctx.successful = False
 
         if self.ctx.successful:
             self.report('Done, Crystal Field coefficients calculation complete')
@@ -580,7 +582,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
 
-        outnode = Dict(dict=out)
+        outnode = orm.Dict(dict=out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...
@@ -628,8 +630,8 @@ def create_cfcoeff_results_node(**kwargs):
 
     return outdict
 
-
-def calculate_cf_coefficients(cf_cdn_folder, cf_pot_folder, convert=True):
+@cf
+def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData, cf_pot_folder: orm.FolderData, convert: orm.Bool=None) -> orm.Dict:
     """
     Calculate the crystal filed coefficients using the tool from the
     masci-tools package
@@ -641,7 +643,9 @@ def calculate_cf_coefficients(cf_cdn_folder, cf_pot_folder, convert=True):
     :raises: ExitCode 310, CFdata.hdf reading failed
     :raises: ExitCode 320, Crystal field calculation failed
     """
-    from aiida.engine import ExitCode
+
+    if convert is None:
+        convert = orm.Bool(True)
 
     CRYSTAL_FIELD_FILE = 'CFdata.hdf'
 
@@ -695,5 +699,9 @@ def calculate_cf_coefficients(cf_cdn_folder, cf_pot_folder, convert=True):
     out_dict['density_normalization'] = cfcalc.denNorm
     out_dict['cf_coefficients_units'] = units
     out_dict['cf_coefficients_convention'] = convention
+
+    out_dict = orm.Dict(dict=out_dict)
+    out_dict.label = 'CFCoefficients'
+    out_dict.description = 'Results of the post-processing tool for calculating Crystal field coefficients'
 
     return out_dict
