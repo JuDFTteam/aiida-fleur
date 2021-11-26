@@ -17,6 +17,7 @@ cycle management of a FLEUR calculation with AiiDA.
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from lxml import etree
+from copy import deepcopy
 
 from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict, Bool, Float
@@ -85,6 +86,7 @@ class FleurScfWorkChain(WorkChain):
         },
         'use_relax_xml': False,
         'inpxml_changes': [],
+        'drop_mixing_first_iteration': False
         'straight_iterations': None,
         'initial_straight_mixing': False,
         'initial_ldau_straight_mixing': False,
@@ -515,11 +517,12 @@ class FleurScfWorkChain(WorkChain):
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
         elif converge_mode == 'torque':
+            dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges({
                 'itmax': self.ctx.default_itmax,
-                'minDistance': 0.0,
+                'minDistance': dist,
                 'l_noco': 'T',
-                'numbands': 'all',
+                # 'numbands': 'all',
                 'ctail': 'F'
             })
             fleurmode.set_complex_tag('greensFunction',
@@ -577,10 +580,18 @@ class FleurScfWorkChain(WorkChain):
             return status
 
         if 'settings' in self.inputs:
-            settings = self.inputs.settings
+            settings = deepcopy(self.inputs.settings.get_dict())
         else:
             settings = None
 
+        if self.ctx.wf_dict['drop_mixing_first_iteration'] and self.ctx.loop_count == 0:
+            if settings is None:
+                settings = {}
+            remotecopy_list = settings.get('remove_from_remotecopy_list', [])
+            if 'mixing_history*' not in remotecopy_list:
+                remotecopy_list.append('mixing_history*')
+            settings['remove_from_remotecopy_list'] = remotecopy_list
+        
         if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
             status = self.reset_straight_mixing()
             if status:
@@ -722,8 +733,6 @@ class FleurScfWorkChain(WorkChain):
                     self.ctx.y_torques.extend(y_torques)
                     self.ctx.alpha_angles = alpha_angles
                     self.ctx.beta_angles = beta_angles
-                    self.report('Extracted {}\n{}\n{}\n{}'.format(x_torques, y_torques, alpha_angles, beta_angles))
-                    self.report('Saved {}\n{}'.format(self.ctx.x_torques, self.ctx.y_torques))
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -812,7 +821,10 @@ class FleurScfWorkChain(WorkChain):
                     if not ldau_notconverged:
                         return False
         elif mode == 'torque':
-                if self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
+                if self.ctx.torquediff == 'can not be determined' and self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
+                    if not ldau_notconverged:
+                        return False
+                elif self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
                     if not ldau_notconverged:
                         return False
 
