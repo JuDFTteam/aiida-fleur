@@ -212,6 +212,18 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
+        if 'settings' not in input_scf:
+            settings = {}
+        else:
+            settings = input_scf.settings.get_dict()
+
+        remove_retrieve = settings.get('remove_from_retrieve_list', [])
+        if 'greensf.hdf' not in remove_retrieve:
+            remove_retrieve.append('greensf.hdf')
+        settings['remove_from_retrieve_list'] = remove_retrieve
+
+        input_scf.settings = Dict(dict=settings)
+
         return input_scf
 
     def get_inputs_scf(self):
