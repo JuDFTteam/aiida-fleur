@@ -40,19 +40,18 @@ class FleurCFCoeffWorkChain(WorkChain):
 
     _wf_default = {
         'element': '',
-        'yttrium_analogue': False,
+        'rare_earth_analogue': False,
+        'analogue_element': 'Y',
         'replace_all': True,
         'soc_off': True,
         'convert_to_stevens': True,
     }
 
-    _yttrium_default_params = {'element': 'Y', 'lo': '4s 4p', 'lmax': 15, 'lnonsph': 15}
-
     @classmethod
     def define(cls, spec):
         super(FleurCFCoeffWorkChain, cls).define(spec)
         spec.expose_inputs(FleurScfWorkChain,
-                           namespace='scf_yttrium_analogue',
+                           namespace='scf_rare_earth_analogue',
                            exclude=('structure', 'fleurinp'),
                            namespace_options={
                                'required': False,
@@ -151,11 +150,11 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.report('INFO: Starting SCF calculations')
         inputs = {}
         calcs = {}
-        if self.ctx.wf_dict['yttrium_analogue']:
-            self.report('INFO: Creating Yttrium Analogue')
-            inputs = self.get_inputs_yttrium_analogue()
-            result_yttrium = self.submit(FleurScfWorkChain, **inputs)
-            calcs['yttrium_analogue_scf'] = result_yttrium
+        if self.ctx.wf_dict['rare_earth_analogue']:
+            self.report(f"INFO: Creating Rare-Earth Analogue with {self.ctx.wf_dict['analogue_element']}")
+            inputs = self.get_inputs_rare_earth_analogue()
+            result_analogue = self.submit(FleurScfWorkChain, **inputs)
+            calcs['analogue_scf'] = result_analogue
 
         if 'scf' in self.inputs:
             inputs = self.get_inputs_scf()
@@ -168,7 +167,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         return ToContext(**calcs)
 
-    def get_inputs_yttrium_analogue(self):
+    def get_inputs_rare_earth_analogue(self):
 
         inputs = self.inputs
         if 'scf' in inputs:
@@ -197,16 +196,15 @@ class FleurCFCoeffWorkChain(WorkChain):
             rare_earth_params = {}
 
         replace_dict = {}
-        replace_dict[self.ctx.wf_dict['element']] = 'Y'
+        replace_dict[self.ctx.wf_dict['element']] = self.ctx.wf_dict['analogue_element']
 
         new_structures = replace_element(orig_structure, Dict(dict=replace_dict), replace_all=Bool(True))
 
         structure = new_structures['replaced_all']
-        inputs_yttrium_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain,
-                                                                    namespace='scf_yttrium_analogue'))
-        inputs_yttrium_analogue.structure = structure
+        inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
+        inputs_analogue.structure = structure
 
-        if 'calc_parameters' not in inputs_yttrium_analogue:
+        if 'calc_parameters' not in inputs_analogue:
 
             #Reuse parameters from rare earth calculation
             new_params = rare_earth_params.copy()
@@ -215,20 +213,19 @@ class FleurCFCoeffWorkChain(WorkChain):
                     if 'element' in value:
                         if value['element'] == self.ctx.wf_dict['element']:
                             new_params.pop(key)
-                            new_params[key] = self._yttrium_default_params
-            inputs_yttrium_analogue.calc_parameters = Dict(dict=new_params)
+            inputs_analogue.calc_parameters = Dict(dict=new_params)
 
         if self.ctx.wf_dict['soc_off']:
-            if 'wf_parameters' not in inputs_yttrium_analogue:
+            if 'wf_parameters' not in inputs_analogue:
                 scf_wf_dict = {}
             else:
-                scf_wf_dict = inputs_yttrium_analogue.wf_parameters.get_dict()
+                scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
             if 'inpxml_changes' not in scf_wf_dict:
                 scf_wf_dict['inpxml_changes'] = []
 
             scf_wf_dict['inpxml_changes'].append(('set_species', {
-                'species_name': 'all-Y',
+                'species_name': f"all-{self.ctx.wf_dict['analogue_element']}",
                 'attributedict': {
                     'special': {
                         'socscale': 0.0
@@ -236,9 +233,9 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }
             }))
 
-            inputs_yttrium_analogue.wf_parameters = Dict(dict=scf_wf_dict)
+            inputs_analogue.wf_parameters = Dict(dict=scf_wf_dict)
 
-        return inputs_yttrium_analogue
+        return inputs_analogue
 
     def get_inputs_scf(self):
 
@@ -338,6 +335,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             except KeyError:
                 message = ('ERROR: Orbcontrol workflow (rare-earth) failed, no orbcontrol output node')
                 self.ctx.errors.append(message)
+                self.report(message)
                 return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
             try:
@@ -345,27 +343,30 @@ class FleurCFCoeffWorkChain(WorkChain):
             except KeyError:
                 message = ('ERROR: Orbcontrol workflow (rare-earth) failed, no groundstate scf output node')
                 self.ctx.errors.append(message)
+                self.report(message)
                 return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
-        if self.ctx.wf_dict['yttrium_analogue']:
-            if not self.ctx.yttrium_analogue_scf.is_finished_ok:
-                error = ('ERROR: SCF workflow (yttrium-analogue) was not successful')
+        if self.ctx.wf_dict['rare_earth_analogue']:
+            if not self.ctx.analogue_scf.is_finished_ok:
+                error = (f"ERROR: SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) was not successful")
                 self.report(error)
                 return self.exit_codes.ERROR_SCF_FAILED
 
             try:
-                outdict = self.ctx.yttrium_analogue_scf.outputs.output_scf_wc_para
+                outdict = self.ctx.analogue_scf.outputs.output_scf_wc_para
             except KeyError:
-                message = ('ERROR: SCF workflow (yttrium-analogue) failed, no scf output node')
+                message = (
+                    f"ERROR: SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) failed, no scf output node")
                 self.ctx.errors.append(message)
+                self.report(message)
                 return self.exit_codes.ERROR_SCF_FAILED
 
         self.report('INFO: Running Crystal Field Calculations')
         calcs = {}
-        if self.ctx.wf_dict['yttrium_analogue']:
-            inputs = self.get_inputs_cfyttrium_calculation()
-            result_yttrium = self.submit(FleurBaseWorkChain, **inputs)
-            calcs['yttrium_analogue_cf'] = result_yttrium
+        if self.ctx.wf_dict['rare_earth_analogue']:
+            inputs = self.get_inputs_cfanalogue_calculation()
+            result_analogue = self.submit(FleurBaseWorkChain, **inputs)
+            calcs['analogue_cf'] = result_analogue
 
         inputs = self.get_inputs_cfrareearth_calculation()
         result_rareearth = self.submit(FleurBaseWorkChain, **inputs)
@@ -373,13 +374,13 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         return ToContext(**calcs)
 
-    def get_inputs_cfyttrium_calculation(self):
+    def get_inputs_cfanalogue_calculation(self):
 
-        inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_yttrium_analogue'))
+        inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
 
-        fleurinp_scf = self.ctx.yttrium_analogue_scf.outputs.fleurinp
+        fleurinp_scf = self.ctx.analogue_scf.outputs.fleurinp
         remote_data = load_node(
-            self.ctx.yttrium_analogue_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+            self.ctx.analogue_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
 
         if 'settings' in inputs:
             settings = inputs.settings.get_dict()
@@ -393,7 +394,12 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         fm = FleurinpModifier(fleurinp_scf)
 
-        fm.set_atomgroup(attributedict={'cFCoeffs': {'chargeDensity': False, 'potential': True}}, species='all-Y')
+        analogue_element = self.ctx.wf_dict['analogue_element']
+        fm.set_atomgroup(attributedict={'cFCoeffs': {
+            'chargeDensity': False,
+            'potential': True
+        }},
+                         species=f'all-{analogue_element}')
 
         try:
             fm.show(display=False, validate=True)
@@ -408,17 +414,17 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         fleurinp_cf = fm.freeze()
 
-        label = 'Yttrium Analogue Potential'
-        description = 'Calculation of crystal field potential with Yttrium Analogue Method'
+        label = f'Rare-Earth Analogue ({analogue_element}) CF Potential'
+        description = f'Calculation of crystal field potential with {analogue_element} Analogue Method'
 
-        inputs_yttrium = get_inputs_fleur(inputs.fleur,
-                                          remote_data,
-                                          fleurinp_cf,
-                                          options,
-                                          label,
-                                          description,
-                                          settings=settings)
-        return inputs_yttrium
+        inputs_analogue = get_inputs_fleur(inputs.fleur,
+                                           remote_data,
+                                           fleurinp_cf,
+                                           options,
+                                           label,
+                                           description,
+                                           settings=settings)
+        return inputs_analogue
 
     def get_inputs_cfrareearth_calculation(self):
 
@@ -446,14 +452,14 @@ class FleurCFCoeffWorkChain(WorkChain):
             options = {}
 
         label = 'CF calculation'
-        if self.ctx.wf_dict['yttrium_analogue']:
+        if self.ctx.wf_dict['rare_earth_analogue']:
             description = 'Calculation of crystal field charge density'
         else:
             description = 'Calculation of crystal field potential/charge density'
 
         fm = FleurinpModifier(fleurinp_scf)
         element = self.ctx.wf_dict['element']
-        if self.ctx.wf_dict['yttrium_analogue']:
+        if self.ctx.wf_dict['rare_earth_analogue']:
             #Only charge density
             fm.set_atomgroup(attributedict={'cFCoeffs': {
                 'chargeDensity': True,
@@ -496,8 +502,8 @@ class FleurCFCoeffWorkChain(WorkChain):
         Return results fo cf calculation
         """
 
-        if self.ctx.wf_dict['yttrium_analogue']:
-            calculations = ['rare_earth_cf', 'yttrium_analogue_cf']
+        if self.ctx.wf_dict['rare_earth_analogue']:
+            calculations = ['rare_earth_cf', 'analogue_cf']
         else:
             calculations = ['rare_earth_cf']
 
@@ -538,9 +544,9 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             if calc_name == 'rare_earth_cf':
                 retrieved_nodes['cdn'] = calc.outputs.retrieved
-                if not self.ctx.wf_dict['yttrium_analogue']:
+                if not self.ctx.wf_dict['rare_earth_analogue']:
                     retrieved_nodes['pot'] = calc.outputs.retrieved
-            elif calc_name == 'yttrium_analogue_cf':
+            elif calc_name == 'analogue_cf':
                 retrieved_nodes['pot'] = calc.outputs.retrieved
 
             link_label = calc_name
