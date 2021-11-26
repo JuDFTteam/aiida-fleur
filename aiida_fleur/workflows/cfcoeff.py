@@ -571,11 +571,6 @@ class FleurCFCoeffWorkChain(WorkChain):
             'errors': self.ctx.errors
         }
 
-        if self.ctx.wf_dict['convert_to_stevens']:
-            out['cf_coefficients_convention'] = 'Stevens'
-        else:
-            out['cf_coefficients_convention'] = 'Wybourne'
-
         for key, value in cf_calc_out.items():
             out[key] = value
 
@@ -641,25 +636,64 @@ def calculate_cf_coefficients(cf_cdn_folder, cf_pot_folder, convert=True):
 
     :param cf_cdn_folder: FolderData for the retrieved files for the charge density data
     :param cf_pot_folder: FolderData for the retrieved files for the potential data
+
+    :raises: ExitCode 300, CFData.hdf file is missing
+    :raises: ExitCode 310, CFdata.hdf reading failed
+    :raises: ExitCode 320, Crystal field calculation failed
     """
+    from aiida.engine import ExitCode
+
+    CRYSTAL_FIELD_FILE = 'CFdata.hdf'
 
     out_dict = {}
 
     cfcalc = CFCalculation(quiet=True)
-
     #Reading in the HDF files
-    with cf_cdn_folder.open('CFdata.hdf', 'rb') as f:
-        with h5py.File(f, 'r') as cffile:
-            cfcalc.readCDN(cffile)
+    if CRYSTAL_FIELD_FILE in cf_cdn_folder.list_object_names():
+        try:
+            with cf_cdn_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
+                with h5py.File(f, 'r') as cffile:
+                    cfcalc.readCDN(cffile)
+        except ValueError as exc:
+            return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
+    else:
+        return ExitCode(300, message=f'{CRYSTAL_FIELD_FILE} file not in the retrieved files')
 
-    with cf_pot_folder.open('CFdata.hdf', 'rb') as f:
-        with h5py.File(f, 'r') as cffile:
-            cfcalc.readPot(cffile)
+    if CRYSTAL_FIELD_FILE in cf_pot_folder.list_object_names():
+        try:
+            with cf_pot_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
+                with h5py.File(f, 'r') as cffile:
+                    cfcalc.readPot(cffile)
+        except ValueError as exc:
+            return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
+    else:
+        return ExitCode(300, message=f'{CRYSTAL_FIELD_FILE} file not in the retrieved files')
 
-    out_dict['cf_coefficients'] = cfcalc.performIntegration(convert=convert)
+    try:
+        coefficients = cfcalc.performIntegration(convert=convert)
+    except ValueError as exc:
+        return ExitCode(320, message=f'Crystal field calculation failed with: {exc}')
+    if len(coefficients) == 0:
+        return ExitCode(320, message='Crystal field calculation failed with: No Coefficients produced')
+
+    units = None
+    convention = None
+    coefficients_dict_up = {}
+    coefficients_dict_dn = {}
+    for coeff in coefficients:
+        if units is None:
+            units = coeff.unit
+            convention = coeff.convention
+        coefficients_dict_up[(coeff.l, coeff.m)] = coeff.spin_up
+        coefficients_dict_dn[(coeff.l, coeff.m)] = coeff.spin_down
+
+    out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
+    out_dict['cf_coefficients_spin_down'] = coefficients_dict_dn
     #Output more information about the performed calculation
     out_dict['angle_a_to_x_axis'] = cfcalc.phi
     out_dict['angle_c_to_z_axis'] = cfcalc.theta
     out_dict['density_normalization'] = cfcalc.denNorm
+    out_dict['cf_coefficients_units'] = units
+    out_dict['cf_coefficients_convention'] = convention
 
     return out_dict
