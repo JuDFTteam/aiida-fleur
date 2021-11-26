@@ -198,7 +198,9 @@ class FleurCFCoeffWorkChain(WorkChain):
         replace_dict = {}
         replace_dict[self.ctx.wf_dict['element']] = self.ctx.wf_dict['analogue_element']
 
-        new_structures = replace_element(orig_structure, orm.Dict(dict=replace_dict), replace_all=orm.Bool(self.ctx.wf_dict['replace_all']))
+        new_structures = replace_element(orig_structure,
+                                         orm.Dict(dict=replace_dict),
+                                         replace_all=orm.Bool(self.ctx.wf_dict['replace_all']))
 
         structure = new_structures['replaced_all']
         inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
@@ -565,7 +567,6 @@ class FleurCFCoeffWorkChain(WorkChain):
             'errors': self.ctx.errors
         }
 
-
         if not skip_calculation:
             cf_calc_out = calculate_cf_coefficients(retrieved_nodes['cdn'],
                                                     retrieved_nodes['pot'],
@@ -630,8 +631,11 @@ def create_cfcoeff_results_node(**kwargs):
 
     return outdict
 
+
 @cf
-def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData, cf_pot_folder: orm.FolderData, convert: orm.Bool=None) -> orm.Dict:
+def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
+                              cf_pot_folder: orm.FolderData,
+                              convert: orm.Bool = None) -> orm.Dict:
     """
     Calculate the crystal filed coefficients using the tool from the
     masci-tools package
