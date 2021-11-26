@@ -232,7 +232,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
                 old_changes = scf_wf_dict['inpxml_changes']
                 new_changes = []
                 for change in old_changes:
-                    if 'shift_value' not in change[0] and '':
+                    if 'shift_value' not in change[0] and 'set_atomgroup' not in change[0]:
                         new_changes.append(change)
                 scf_wf_dict['inpxml_changes'] = new_changes
 
@@ -290,7 +290,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            self.ctx.max_torques.append(max(x_torques + y_torques))
+            self.ctx.max_torques.append(max([abs(x) for x in x_torques + y_torques]))
 
         largest_now = self.ctx.max_torques[-1]
 
@@ -373,8 +373,8 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         for alpha, beta, x_torque, y_torque in zip(alphas, betas, x_torques, y_torques):
             torque = np.dot(rotation_matrix(alpha, beta), np.array([x_torque, y_torque, 0]))
             torque = np.array(torque)
-            if np.linalg.norm(torque) > np.pi / 90:
-                torque = torque / np.linalg.norm(torque) * np.pi / 90
+            if np.linalg.norm(torque) > np.pi / 180 * 5:
+                torque = torque / np.linalg.norm(torque) * np.pi / 180 * 5
             torques.append(np.array(torque))
 
         spin_coordinates = [np.array(convert_to_xyz(alpha, beta)) for alpha, beta in zip(alphas, betas)]
