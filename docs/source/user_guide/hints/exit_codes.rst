@@ -139,6 +139,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 316       | Calculation failed due to time limits.                  | FleurCalculation       |
 +-----------+---------------------------------------------------------+------------------------+
+| 318       | Calculation failed due to a missing dependency          | FleurCalculation       |
++-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | MAE                    |

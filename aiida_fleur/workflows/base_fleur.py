@@ -177,6 +177,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                          FleurCalculation.exit_codes.ERROR_NO_OUTXML,
                          FleurCalculation.exit_codes.ERROR_XMLOUT_PARSING_FAILED,
                          FleurCalculation.exit_codes.ERROR_RELAX_PARSING_FAILED,
+                         FleurCalculation.exit_codes.ERROR_MISSING_DEPENDENCY,
                      ])
     def _handle_general_error(self, calculation):
         """
