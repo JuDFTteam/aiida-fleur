@@ -120,6 +120,7 @@ class FleurScfWorkChain(WorkChain):
         spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
         spec.output('last_fleur_calc_output', valid_type=Dict)
+        spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc')
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -788,6 +789,9 @@ class FleurScfWorkChain(WorkChain):
 
         if last_calc_out:
             outdict['last_fleur_calc_output'] = last_calc_out
+
+        if self.ctx.last_base_wc:
+            self.out_many(self.exposed_outputs(self.ctx.last_base_wc, FleurBaseWorkChain, namespace='last_calc'))
 
         #outdict['output_scf_wc_para'] = outputnode
         for link_name, node in outdict.items():
