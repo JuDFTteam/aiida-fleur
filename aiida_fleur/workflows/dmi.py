@@ -244,7 +244,7 @@ class FleurDMIWorkChain(WorkChain):
 
         # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
