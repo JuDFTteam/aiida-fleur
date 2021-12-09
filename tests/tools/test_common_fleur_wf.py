@@ -73,6 +73,7 @@ def test_get_inputs_fleur():
     assert results['add_comp_para']['only_even_MPI'] is False
     assert results['add_comp_para']['max_queue_nodes'] == 20
     assert results['add_comp_para']['max_queue_wallclock_sec'] == 86400
+    assert not results['clean_workdir']
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 

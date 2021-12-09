@@ -86,6 +86,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
             # also a full will run here mpi on that node... also not what we want.ß
             options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
 
+    inputs['clean_workdir'] = Bool(add_comp_para.pop('clean_workdir', False))
     inputs['add_comp_para'] = Dict(dict=add_comp_para)
 
     if settings:
