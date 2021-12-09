@@ -256,8 +256,8 @@ class FleurOrbControlWorkChain(WorkChain):
         validate input
         """
         extra_keys = []
-        for key in self.ctx.wf_dict.keys():
-            if key not in self._wf_default.keys():
+        for key in self.ctx.wf_dict:
+            if key not in self._wf_default:
                 extra_keys.append(key)
         if extra_keys:
             error = f'ERROR: input wf_parameters for Orbcontrol contains extra keys: {extra_keys}'

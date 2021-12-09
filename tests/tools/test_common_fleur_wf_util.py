@@ -165,9 +165,9 @@ def test_check_eos_energies():
     energylist = [-1, -2, -3, -2, -2, -3, -2, -1]
     abnormality, abnormalityindexlist = check_eos_energies(energylist)
     assert not abnormality
-    assert abnormalityindexlist == []
+    assert len(abnormalityindexlist) == 0
 
     energylist = [-1, -2, -3, -4, -5, -3, -2, -1]
     abnormality, abnormalityindexlist = check_eos_energies(energylist)
     assert not abnormality
-    assert abnormalityindexlist == []
+    assert len(abnormalityindexlist) == 0

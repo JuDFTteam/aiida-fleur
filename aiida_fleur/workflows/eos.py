@@ -109,8 +109,8 @@ class FleurEosWorkChain(WorkChain):
             wf_dict = wf_default
 
         extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
+        for key in wf_dict:
+            if key not in wf_default:
                 extra_keys.append(key)
         if extra_keys:
             error = f'ERROR: input wf_parameters for EOS contains extra keys: {extra_keys}'

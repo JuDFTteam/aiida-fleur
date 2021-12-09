@@ -228,8 +228,8 @@ class FleurScfWorkChain(WorkChain):
         # return True means run inpgen if false run fleur directly
         """
         extra_keys = []
-        for key in self.ctx.wf_dict.keys():
-            if key not in self._default_wf_para.keys():
+        for key in self.ctx.wf_dict:
+            if key not in self._default_wf_para:
                 extra_keys.append(key)
         if extra_keys:
             error = f'ERROR: input wf_parameters for SCF contains extra keys: {extra_keys}'
