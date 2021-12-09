@@ -244,7 +244,7 @@ class FleurDMIWorkChain(WorkChain):
 
         # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
@@ -290,35 +290,17 @@ class FleurDMIWorkChain(WorkChain):
         # copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
         # create forceTheorem tags
-        fchanges.extend([('create_tag', {
-            'xpath': '/fleurInput',
-            'newelement': 'forceTheorem'
-        }), ('create_tag', {
-            'xpath': '/fleurInput/forceTheorem',
-            'newelement': 'DMI'
-        }), ('create_tag', {
-            'xpath': '/fleurInput/forceTheorem/DMI',
-            'newelement': 'qVectors'
-        }),
-                         ('xml_set_attribv_occ', {
-                             'xpathn': '/fleurInput/forceTheorem/DMI',
-                             'attributename': 'theta',
-                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_theta')))
-                         }),
-                         ('xml_set_attribv_occ', {
-                             'xpathn': '/fleurInput/forceTheorem/DMI',
-                             'attributename': 'phi',
-                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_phi')))
-                         })])
-
-        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append(('create_tag', {'xpath': '/fleurInput/forceTheorem/DMI/qVectors', 'newelement': 'q'}))
-            fchanges.append(('xml_set_text_occ', {
-                'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
-                'text': ' '.join(six.moves.map(str, vectors)),
-                'create': False,
-                'occ': i
-            }))
+        fchanges.append(('set_complex_tag', {
+            'tag_name': 'DMI',
+            'create': True,
+            'changes': {
+                'qVectors': {
+                    'q': self.ctx.wf_dict['q_vectors']
+                },
+                'theta': self.ctx.wf_dict['sqas_theta'],
+                'phi': self.ctx.wf_dict['sqas_phi']
+            }
+        }))
 
         changes_dict = {
             'itmax': 1,
@@ -331,63 +313,57 @@ class FleurDMIWorkChain(WorkChain):
         fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            fchanges.append(('set_atomgr_att_label', {
+        for label, beta in self.ctx.wf_dict['beta'].items():
+            fchanges.append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
-                        'beta': val
+                        'beta': beta
                     }
                 },
-                'atom_label': key
+                'atom_label': label
             }))
 
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             fchanges.append(('set_species_label', {
-                'at_label': atom_label,
+                'atom_label': atom_label,
                 'attributedict': {
                     'special': {
                         'socscale': 0.0
                     }
                 },
-                'create': True
             }))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
-            avail_ac_dict = fleurmode.get_avail_actions()
-
-            # apply further user dependend changes
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    method(**para)
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # validate?
             try:
                 fleurmode.show(display=False, validate=True)
             except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            except ValueError as exc:
+                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                         f'The following error was raised {exc}')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # apply
             out = fleurmode.freeze()
             self.ctx.fleurinp = out
-            return
         else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
-            return
+
+        return
 
     def force_after_scf(self):
         '''
@@ -509,8 +485,7 @@ class FleurDMIWorkChain(WorkChain):
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
-                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                           'exit status {}'.format(calculation.exit_status))
+                message = f'ERROR: Force theorem Fleur calculation failed somehow it has exit status {calculation.exit_status}'
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:

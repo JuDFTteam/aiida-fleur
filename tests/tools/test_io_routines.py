@@ -79,7 +79,7 @@ def test_compress_fleuroutxml(eval_xpath):
     niter1 = get_npath(dest_path, xpath_iter)
     neig = get_npath(dest_path, xpath_eig)
 
-    assert isfile  # check outfile
+    assert isfile_  # check outfile
     assert niter1 == 15  # check if 15 iterations are kept
     assert neig == 0  # check if eigenvalues del
 
@@ -89,13 +89,15 @@ def test_compress_fleuroutxml(eval_xpath):
     assert niter2 == 1  # check of only one iteration kept
 
     # test if more iteration given then in file should change nothing
-    compress_fleuroutxml(testfilepath, dest_file_path=dest_path, iterations_to_keep=25)
+    with pytest.warns(UserWarning, match='iterations_to_keep is larger then the number of iterations'):
+        compress_fleuroutxml(testfilepath, dest_file_path=dest_path, iterations_to_keep=25)
     niter3 = get_npath(dest_path, xpath_iter)
 
     assert niter3 == niter_file  # check if no iteration deleted
 
     # test if broken file will not generate an error
-    compress_fleuroutxml(testfilepath_broken, dest_file_path=dest_path2, iterations_to_keep=25)
+    with pytest.warns(UserWarning, match='The out.xml file is broken'):
+        compress_fleuroutxml(testfilepath_broken, dest_file_path=dest_path2, iterations_to_keep=25)
 
     # cleanup
     remove(dest_path)
