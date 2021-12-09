@@ -459,7 +459,10 @@ class FleurCalculation(CalcJob):
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
-                    local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
+                    if file1 not in outfolder_filenames:
+                        raise InputValidationError(
+                            f'File {file1} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file1, file1))
             elif not fleurinpgen and (not has_fleurinp):  # fleurCalc
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
@@ -468,8 +471,16 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_nohdf
                 else:
                     copylist = self._copy_scf
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
             elif fleurinpgen and has_fleurinp:
                 # everything is taken care of
@@ -482,8 +493,16 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_noinp_nohdf
                 else:
                     copylist = self._copy_scf_noinp
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
 
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
