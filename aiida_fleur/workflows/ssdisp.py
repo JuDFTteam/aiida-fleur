@@ -281,9 +281,7 @@ class FleurSSDispWorkChain(WorkChain):
             'tag_name': 'spinSpiralDispersion',
             'create': True,
             'changes': {
-                'qVectors': {
-                    'q': self.ctx.wf_dict['q_vectors']
-                }
+                'q': self.ctx.wf_dict['q_vectors']
             }
         }))
 
