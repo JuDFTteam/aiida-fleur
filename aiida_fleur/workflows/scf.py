@@ -317,7 +317,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.run_straight_mixing = self.ctx.wf_dict.get('initial_straight_mixing') or \
                                        self.ctx.wf_dict.get('initial_ldau_straight_mixing')
 
-        if straight_iters > 0:
+        if straight_iters is not None:
             if not self.ctx.run_straight_mixing:
                 error = "ERROR: 'initial_straight_mixing' or 'initial_ldau_straight_mixing' should be True if 'straight_iterations' is given"
                 self.report(error)
