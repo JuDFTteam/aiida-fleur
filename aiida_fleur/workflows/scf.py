@@ -88,7 +88,7 @@ class FleurScfWorkChain(WorkChain):
         'straight_iterations': None,
         'initial_straight_mixing': False,
         'initial_ldau_straight_mixing': False,
-        'initial_ldau_straight_mix_param': 0.0, #Density matrix frozen by default, since it is the most stable option
+        'initial_ldau_straight_mix_param': 0.0,  #Density matrix frozen by default, since it is the most stable option
     }
 
     _default_options = {
@@ -442,18 +442,20 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.run_straight_mixing:
             if self.ctx.loop_count == 0:
                 #Set up straight mixing
-                itmax = self.ctx.straight_mixing_iters #Is set further below
+                itmax = self.ctx.straight_mixing_iters  #Is set further below
                 if wf_dict.get('initial_straight_mixing'):
                     fleurmode.set_inpchanges({'imix': 'straight'})
                 if wf_dict.get('initial_ldau_straight_mixing'):
-                    fleurmode.set_inpchanges({'l_linmix': True, 'mixParam': wf_dict.get('initial_ldau_straight_mix_param')})
+                    fleurmode.set_inpchanges({
+                        'l_linmix': True,
+                        'mixParam': wf_dict.get('initial_ldau_straight_mix_param')
+                    })
             elif self.ctx.loop_count == 1:
                 #Take out straight mixing
                 if wf_dict.get('initial_straight_mixing'):
-                    fleurmode.set_inpchanges({'imix': 'Anderson'}) #TODO: should take the actual value from before
+                    fleurmode.set_inpchanges({'imix': 'Anderson'})  #TODO: should take the actual value from before
                 if wf_dict.get('initial_ldau_straight_mixing'):
                     fleurmode.set_inpchanges({'l_linmix': False})
-
 
         # set proper convergence parameters in inp.xml
         if converge_mode == 'density':
