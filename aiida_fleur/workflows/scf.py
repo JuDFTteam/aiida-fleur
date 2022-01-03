@@ -87,7 +87,7 @@ class FleurScfWorkChain(WorkChain):
         },
         'use_relax_xml': False,
         'inpxml_changes': [],
-        'drop_mixing_first_iteration': False
+        'drop_mixing_first_iteration': True
     }
 
     _default_options = {
