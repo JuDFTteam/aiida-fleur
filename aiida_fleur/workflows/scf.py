@@ -856,7 +856,8 @@ class FleurScfWorkChain(WorkChain):
                             f'{self.ctx.forcediff} Htr/bohr\n')
         else:  # Termination ok, but not converged yet...
             if self.ctx.abort:  # some error occurred, do not use the output.
-                self.report('STATUS/ERROR: I abort, see logs and ' 'errors/warning/hints in output_scf_wc_para')
+                self.report('STATUS/ERROR: I abort, see logs and '
+                            'errors/warning/hints in output_scf_wc_para')
 
         if self.ctx.last_nmmp_distance > 0.0:
             self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '

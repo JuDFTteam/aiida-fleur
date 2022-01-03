@@ -138,15 +138,18 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'label' in kwargs:
-            warnings.warn('The argument label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            warnings.warn('The argument label is deprecated.'
+                          "Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('label')
 
         if 'att_name' in kwargs:
-            warnings.warn('The argument att_name is deprecated.' "Use 'attributename' instead", DeprecationWarning)
+            warnings.warn('The argument att_name is deprecated.'
+                          "Use 'attributename' instead", DeprecationWarning)
             kwargs['attributename'] = kwargs.pop('att_name')
 
         if 'value' in kwargs:
-            warnings.warn('The argument value is deprecated.' "Use 'value_given' instead", DeprecationWarning)
+            warnings.warn('The argument value is deprecated.'
+                          "Use 'value_given' instead", DeprecationWarning)
             kwargs['value_given'] = kwargs.pop('value')
 
         super().shift_value_species_label(*args, **kwargs)
@@ -161,7 +164,8 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'at_label' in kwargs:
-            warnings.warn('The argument at_label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            warnings.warn('The argument at_label is deprecated.'
+                          "Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('at_label')
 
         super().set_species_label(*args, **kwargs)
@@ -549,7 +553,8 @@ class FleurinpModifier(FleurXMLModifier):
         """
 
         if 'occStates' in kwargs:
-            warnings.warn('The argument occStates is deprecated.' "Use 'state_occupations' instead", DeprecationWarning)
+            warnings.warn('The argument occStates is deprecated.'
+                          "Use 'state_occupations' instead", DeprecationWarning)
             kwargs['state_occupations'] = kwargs.pop('occStates')
 
         super().set_nmmpmat(*args, **kwargs)

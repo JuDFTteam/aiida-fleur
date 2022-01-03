@@ -652,7 +652,8 @@ class FleurOrbControlWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            error = ('ERROR: input, inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
             self.control_end_wc(error)
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 

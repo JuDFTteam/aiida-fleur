@@ -80,7 +80,8 @@ class Fleur_inputgenParser(Parser):
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning('The following was written into std error and piped to {}'
                                         ' : \n {}'.format(errorfile, error_file_lines))
-                    self.logger.error('Inpgen calculation did not finish' ' successfully.')
+                    self.logger.error('Inpgen calculation did not finish'
+                                      ' successfully.')
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:

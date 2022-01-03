@@ -108,7 +108,8 @@ def test_import_extras(temp_dir, capsys):
     import_extras(empty_file)
 
     captured = capsys.readouterr()
-    assert captured.out == ('The file has to be loadable by json. i.e json format' ' (which it is not).\n')
+    assert captured.out == ('The file has to be loadable by json. i.e json format'
+                            ' (which it is not).\n')
 
 
 '''

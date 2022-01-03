@@ -427,7 +427,8 @@ class FleurCalculation(CalcJob):
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
                 else:
-                    self.logger.warning('CF calculation without HDF5 not supported ' 'for automatic file retrieval.')
+                    self.logger.warning('CF calculation without HDF5 not supported '
+                                        'for automatic file retrieval.')
             if modes['force_theorem'] or modes['cf_coeff']:
                 if 'remove_from_retrieve_list' not in settings_dict:
                     settings_dict['remove_from_retrieve_list'] = []
