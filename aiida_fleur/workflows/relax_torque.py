@@ -10,39 +10,35 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 """
-    In this module you find the workflow 'FleurRelaxWorkChain' for geometry optimization.
+    In this module you find the workflow 'FleurRelaxTorqueWorkChain' which relaxed a spin struture.
 """
 from __future__ import absolute_import
 from __future__ import print_function
 import copy
-import numpy as np
 import six
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import load_node
-from aiida.orm import StructureData, Dict
+from aiida.orm import load_node, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
-from aiida_fleur.data.fleurinp import FleurinpData
-from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 from aiida_fleur.tools.common_fleur_wf import find_nested_process
 
 
 class FleurRelaxTorqueWorkChain(WorkChain):
     """
-    This workflow performs structure optimization.
+    This workflow performs spin structure optimization.
     """
 
     _workflowversion = '0.0.1'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
-        'torque_criterion': 0.001,  # Converge the force until lower this value in atomic units
+        'torque_criterion': 0.001,
         'run_final_scf': False,  # Run a final scf on the final relaxed structure
         'relax_alpha': 0.1,
         'break_symmetry': False,
@@ -77,13 +73,12 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         )
 
         spec.output('output_relax_wc_para', valid_type=Dict)
-        spec.output('optimized_structure', valid_type=StructureData)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INPGEN_MISSING', message='If you want to run a final scf inpgen has to be there.')
-        spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence of forces.')
-        spec.exit_code(351, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
+        spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence.')
+        spec.exit_code(351, 'ERROR_SCF_FAILED', message='An SCF Workchain failed for some reason.')
 
     def start(self):
         """
@@ -100,7 +95,6 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         self.ctx.max_torques = []  # Collects forces
         self.ctx.reached_relax = False  # Bool if is relaxed
         self.ctx.scf_res = None  # Last scf results
-        self.ctx.total_magnetic_moment = None
         self.ctx.old_scf = []
 
         # initialize the dictionary using defaults if no wf paramters are given
@@ -485,13 +479,6 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             # we need this for run through
             self.ctx.scf_res = self.ctx.scf_final_res
 
-        #if jspin ==2
-        try:
-            total_mag = scf_out_d['total_magnetic_moment_cell']
-            self.ctx.total_magnetic_moment = total_mag
-        except KeyError:
-            self.report('ERROR: Could not parse total magnetic moment cell of final scf run')
-
     def return_results(self):
         """
         This function stores results of the workchain into the output nodes.
@@ -510,9 +497,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             'alphas': self.ctx.alphas,
             'betas': self.ctx.betas,
             'x_torques': self.ctx.torques_x,
-            'y_torques': self.ctx.torques_y,
-            'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
-            'total_magnetic_moment_cell_units': 'muBohr'
+            'y_torques': self.ctx.torques_y
         }
         outnode = Dict(dict=out)
 
@@ -535,19 +520,12 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         # TODO: for a trajectory output node all corresponding nodes have to go into
         # con_nodes
 
-        if self.ctx.final_structure is not None:
-            outdict = create_relax_result_node(output_relax_wc_para=outnode,
-                                               optimized_structure=self.ctx.final_structure,
-                                               **con_nodes)
-        else:
-            outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
+        outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
 
         # return output nodes
         for link_name, node in six.iteritems(outdict):
             self.out(link_name, node)
 
-        if self.ctx.switch_bfgs:
-            return self.exit_codes.ERROR_SWITCH_BFGS
         if not self.ctx.reached_relax:
             return self.exit_codes.ERROR_DID_NOT_RELAX
 
@@ -576,11 +554,5 @@ def create_relax_result_node(**kwargs):
             outnode.label = 'output_relax_wc_para'
             outnode.description = ('Contains results and information of an FleurRelaxWorkChain run.')
             outdict['output_relax_wc_para'] = outnode
-
-        if key == 'optimized_structure':
-            structure = val.clone()  # dublicate node instead of circle (keep DAG)
-            structure.label = 'optimized_structure'
-            structure.description = ('Relaxed structure result of an FleurRelaxWorkChain run.')
-            outdict['optimized_structure'] = structure
 
     return outdict
