@@ -46,7 +46,8 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         'run_final_scf': False,  # Run a final scf on the final relaxed structure
         'relax_alpha': 0.1,
         'break_symmetry': False,
-
+        'opt_scheme': 'straight',
+        'trajectory_workchains': []
     }
 
     _default_options = FleurScfWorkChain._default_options
@@ -100,6 +101,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         self.ctx.reached_relax = False  # Bool if is relaxed
         self.ctx.scf_res = None  # Last scf results
         self.ctx.total_magnetic_moment = None
+        self.ctx.old_scf = []
 
         # initialize the dictionary using defaults if no wf paramters are given
         wf_default = copy.deepcopy(self._default_wf_para)
@@ -177,6 +179,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         inputs = {}
         if self.ctx.loop_count:
             inputs = self.get_inputs_scf()
+            self.ctx.old_scf.append(self.ctx.scf_res)
         else:
             inputs = self.get_inputs_first_scf()
         res = self.submit(FleurScfWorkChain, **inputs)
@@ -339,7 +342,19 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         alphas = scf_wc.outputs.output_scf_wc_para.get_dict()['alphas']
         betas = scf_wc.outputs.output_scf_wc_para.get_dict()['betas']
 
-        new_angles = self.analyse_relax(alphas, betas, x_torques, y_torques, relax_alpha)
+        if self.ctx.wf_dict['opt_scheme'] == 'straight':
+
+            new_angles = self.analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha)
+
+        elif self.ctx.wf_dict['opt_scheme'] == 'bfgs':
+            from aiida_fleur.tools.bfgs import BFGS_torques
+
+            traj = self.ctx.wf_dict['trajectory_workchains'] + self.ctx.old_scf
+            bfgs_optimizer = BFGS_torques(self.ctx.scf_res, len(x_torques), traj)
+            bfgs_optimizer.step()
+            new_angles = {}
+            new_angles['alphas'] = bfgs_optimizer.new_positions[:len(alphas)]
+            new_angles['betas'] = bfgs_optimizer.new_positions[len(alphas):]
 
         first_fleurcalc = find_nested_process(scf_wc, FleurCalc)
         old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinpdata
@@ -353,7 +368,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         self.ctx.new_fleurinp = new_fleurinpdata
 
     @staticmethod
-    def analyse_relax(alphas, betas, x_torques, y_torques, relax_alpha):
+    def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha):
         """
         This function generates a new fleurinp analysing parsed relax.xml from the previous
         calculation.
