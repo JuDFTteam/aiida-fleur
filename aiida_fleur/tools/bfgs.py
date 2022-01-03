@@ -1,18 +1,25 @@
-import warnings
-from aiida.engine.processes.workchains import workchain
-
 import numpy as np
 from numpy.linalg import eigh
 from numpy import cos, sin
 
-from ase.optimize.optimize import Optimizer
-
-
 class BFGS_torques():
-    # default parameters
+    """
+    BFGS optimiser for spin directions
+    """
     defaults = {'maxstep': 0.1, 'alpha': 1}
 
     def __init__(self, current_workchain, atoms, workchains=None, maxstep=None, alpha=None):
+        """
+        Initiates a BFGS optimiser.
+
+        :param current_workchain: the final SCF workchain that calculated torques
+        :param atoms: the total number of atoms
+        :param workchains: a list of workchains, in which SCF workchains will be searched and the relaxation history
+                           will be built up
+        :param maxstep: the maximal allowed displacement between two iterations
+        :param alpha: initial guess for the Hessian
+
+        """
 
         if maxstep is None:
             self.maxstep = self.defaults['maxstep']
@@ -41,7 +48,9 @@ class BFGS_torques():
         self.replay_trajectory()
 
     def step(self, f=None):
-
+        """
+        Proposes alphas and betas for the next iteration
+        """
         if f is None:
             f = get_forces(self.current_workchain)
 
@@ -105,6 +114,9 @@ class BFGS_torques():
         self.f0 = f0
 
 def unwrap_workchains(workchains):
+    """
+    Finds all nested SCF workchains and sorts them according to the PK
+    """
     from aiida_fleur.tools.common_fleur_wf import find_nested_process
     from aiida_fleur.workflows.scf import FleurScfWorkChain
 
@@ -118,11 +130,17 @@ def unwrap_workchains(workchains):
     return sorted(unwrapped, key=lambda x: x.pk)
 
 def get_positions(workchain):
+    """
+    Extracts alpha and beta angles
+    """
     output_dict = workchain.outputs.output_scf_wc_para.get_dict()
     r = np.array(output_dict['alphas'] + output_dict['betas'])
     return r
 
 def get_forces(workchain):
+    """
+    Extracts torques and converts them from the local frame to the global spherical one
+    """
     output_dict = workchain.outputs.output_scf_wc_para.get_dict()
     alphas = output_dict['alphas']
     betas = output_dict['betas']
