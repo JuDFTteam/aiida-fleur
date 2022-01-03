@@ -26,10 +26,12 @@ class BFGS_torques():
 
         if workchains is None:
             self.workchains = []
+        else:
+            self.workchains = workchains
 
         self.current_workchain = current_workchain
 
-        self.H0 = np.eye(2 * len(atoms)) * self.alpha
+        self.H0 = np.eye(2 * atoms) * self.alpha
 
         self.H = None
         self.r0 = None
@@ -49,7 +51,7 @@ class BFGS_torques():
         omega, V = eigh(self.H)
 
         dr = np.dot(V, np.dot(f, V) / np.fabs(omega))
-        steplengths = (dr**2).sum(1)**0.5
+        steplengths = (dr**2).sum(0)**0.5
         dr = self.determine_step(dr, steplengths)
         self.new_positions = r + dr
         self.r0 = r.copy()
@@ -87,7 +89,7 @@ class BFGS_torques():
     def replay_trajectory(self):
         """Initialize hessian from old trajectory."""
 
-        workchains = self.workchains
+        workchains = unwrap_workchains(self.workchains) + [self.current_workchain]
 
         r0 = get_positions(workchains[0])
         f0 = get_forces(workchains[0])
@@ -101,6 +103,19 @@ class BFGS_torques():
 
         self.r0 = r0
         self.f0 = f0
+
+def unwrap_workchains(workchains):
+    from aiida_fleur.tools.common_fleur_wf import find_nested_process
+    from aiida_fleur.workflows.scf import FleurScfWorkChain
+
+    unwrapped = []
+    for workchain in workchains:
+        if workchain.process_class is not FleurScfWorkChain:
+            unwrapped.extend(find_nested_process(workchain, FleurScfWorkChain))
+        else:
+            unwrapped.append(workchain)
+
+    return sorted(unwrapped, key=lambda x: x.pk)
 
 def get_positions(workchain):
     output_dict = workchain.outputs.output_scf_wc_para.get_dict()
