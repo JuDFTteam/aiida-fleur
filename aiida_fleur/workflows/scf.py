@@ -727,8 +727,11 @@ class FleurScfWorkChain(WorkChain):
                         x_torques = [x_torques]
                         y_torques = [y_torques]
 
-                    alpha_angles = output_dict_torque.get('noco_alpha', [])
-                    beta_angles = output_dict_torque.get('noco_beta', [])
+                    # extract angles from inp.xml because out.xml causes alpha and beta to jump
+                    # alpha_angles = output_dict_torque.get('noco_alpha', [])
+                    # beta_angles = output_dict_torque.get('noco_beta', [])
+                    alpha_angles = [x['nocoParams']['alpha'] for x in self.ctx.fleurinp.inp_dict['atomGroups']]
+                    beta_angles = [x['nocoParams']['beta'] for x in self.ctx.fleurinp.inp_dict['atomGroups']]
 
                     self.ctx.x_torques.extend(x_torques)
                     self.ctx.y_torques.extend(y_torques)
