@@ -118,9 +118,12 @@ def unwrap_workchains(workchains):
     """
     from aiida_fleur.tools.common_fleur_wf import find_nested_process
     from aiida_fleur.workflows.scf import FleurScfWorkChain
+    from aiida.orm import load_node
 
     unwrapped = []
     for workchain in workchains:
+        if isinstance(workchain, (str,int)):
+            workchain = load_node(workchain)
         if workchain.process_class is not FleurScfWorkChain:
             unwrapped.extend(find_nested_process(workchain, FleurScfWorkChain))
         else:
