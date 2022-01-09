@@ -344,7 +344,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             from aiida_fleur.tools.bfgs import BFGS_torques
 
             traj = self.ctx.wf_dict['trajectory_workchains'] + self.ctx.old_scf
-            bfgs_optimizer = BFGS_torques(self.ctx.scf_res, len(x_torques), traj)
+            bfgs_optimizer = BFGS_torques(self.ctx.scf_res, len(x_torques), traj, alpha=relax_alpha)
             bfgs_optimizer.step()
             new_angles = {}
             new_angles['alphas'] = bfgs_optimizer.new_positions[:len(alphas)]
