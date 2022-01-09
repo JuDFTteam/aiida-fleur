@@ -60,18 +60,17 @@ class BFGS_torques():
         omega, V = eigh(self.H)
 
         dr = np.dot(V, np.dot(f, V) / np.fabs(omega))
-        steplengths = (dr**2).sum(0)**0.5
-        dr = self.determine_step(dr, steplengths)
+        dr = self.determine_step(dr)
         self.new_positions = r + dr
         self.r0 = r.copy()
         self.f0 = f.copy()
 
-    def determine_step(self, dr, steplengths):
+    def determine_step(self, dr):
         """Determine step to take according to maxstep
         Normalize all steps as the largest step. This way
         we still move along the eigendirection.
         """
-        maxsteplength = np.max(steplengths)
+        maxsteplength = np.max(dr)
         if maxsteplength >= self.maxstep:
             scale = self.maxstep / maxsteplength
 
