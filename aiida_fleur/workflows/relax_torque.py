@@ -338,7 +338,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         if self.ctx.wf_dict['opt_scheme'] == 'straight':
             from aiida_fleur.tools.straight_torque import analyse_relax_straight
-            new_angles = analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha)
+            new_angles = analyse_relax_straight(alphas, betas, x_torques, y_torques, -relax_alpha)
 
         elif self.ctx.wf_dict['opt_scheme'] == 'bfgs':
             from aiida_fleur.tools.bfgs import BFGS_torques
