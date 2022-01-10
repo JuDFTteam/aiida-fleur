@@ -56,7 +56,7 @@ def test_fleurinp_modifier1(create_fleurinp):
     fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
     fm.undo(revert_all=True)
     changes = fm.changes()
-    assert changes == []
+    assert len(changes) == 0
 
 
 def test_fleurinp_modifier2(create_fleurinp, inpxml_etree, eval_xpath):

@@ -108,7 +108,7 @@ def rescale_nowf(inp_structure, scale):
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = '{}  rescaled'.format(scale)  #, structure.uuid)
+    rescaled_structure.label = f'{scale}  rescaled'  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
 
@@ -203,8 +203,8 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
     formula = inp_structure.get_formula()
-    new_structure.label = 'supercell of {}'.format(formula)
-    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
+    new_structure.label = f'supercell of {formula}'
+    new_structure.description = f'{n_a1}x{n_a2}x{n_a3} supercell of {formula}'
     return new_structure
 
 
@@ -447,7 +447,7 @@ def break_symmetry(structure,
                 newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
                 kind_name_id_mapping[newkindname] = symbol_count[symbol] - 1
             else:
-                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                newkindname = f'{symbol}{symbol_count[symbol]}'
                 kind_name_id_mapping[newkindname] = symbol_count[symbol]
             new_kind = Kind(name=newkindname, symbols=symbol)
             new_structure.append_kind(new_kind)
@@ -505,7 +505,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
             atom_lists.append(val)
             if add_atom_base_lists:
                 if not 'id' in val:
-                    atomlistname = 'atom{}'.format(j)
+                    atomlistname = f'atom{j}'
                     param_new_dict[atomlistname] = val
                     j = j + 1
         else:
@@ -526,14 +526,14 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
             should_id = None
             continue
 
-        should_id = '{}.{}'.format(atomic_number, kind_namet)
+        should_id = f'{atomic_number}.{kind_namet}'
         # check if atom list with id was given if yes use that one
         found_kind = False
         for atomlst in atom_lists:
             if atomlst.get('id', None) == should_id:
                 #if atomlst.get('element', None) != symbol or atomlst.get('z', None) != atomic_number:
                 #    continue # None id, but wrong element
-                atomlistname = 'atom{}'.format(j)
+                atomlistname = f'atom{j}'
                 param_new_dict[atomlistname] = atomlst
                 j = j + 1
                 found_kind = True
@@ -549,7 +549,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
                 new_alst['id'] = should_id
                 if write_new_kind_names:
                     new_alst['name'] = kind_name
-                atomlistname = 'atom{}'.format(j)
+                atomlistname = f'atom{j}'
                 param_new_dict[atomlistname] = new_alst
                 j = j + 1
 
@@ -589,7 +589,7 @@ def check_structure_para_consistent(parameter, structure, verbose=True):
             #print('Warning: Kind name {} will be ignored by a FleurinputgenCalculation and not set a charge number. id'.
             #      format(kind_name))
         else:
-            atomic_number_name = '{}.{}'.format(kind_charges[i], kind_namet)
+            atomic_number_name = f'{kind_charges[i]}.{kind_namet}'
             possible_ids.append(atomic_number_name)
         # Id can also be integer number only?
 
@@ -600,17 +600,17 @@ def check_structure_para_consistent(parameter, structure, verbose=True):
                 if val['z'] not in kind_charges:
                     consistent = False
                     if not verbose:
-                        print('Charge z in atomlist {} is not consistent with structure.'.format(key))
+                        print(f'Charge z in atomlist {key} is not consistent with structure.')
             if 'element' in val:
                 if val['element'] not in kind_symbols:
                     consistent = False
                     if not verbose:
-                        print('Element in atomlist {} is not consistent with structure.'.format(key))
+                        print(f'Element in atomlist {key} is not consistent with structure.')
             if 'id' in val:
                 if str(val['id']) not in possible_ids:
                     consistent = False
                     if not verbose:
-                        print('Id in atomlist {} is not consistent with kinds in structure.'.format(key))
+                        print(f'Id in atomlist {key} is not consistent with kinds in structure.')
 
     return consistent
 
@@ -1183,7 +1183,7 @@ def create_manual_slab_ase(lattice='fcc',
         from ase.lattice.cubic import BodyCenteredCubic
         structure_factory = BodyCenteredCubic
     else:
-        raise ValueError('The given lattice {} is not supported'.format(lattice))
+        raise ValueError(f'The given lattice {lattice} is not supported')
 
     structure = structure_factory(miller=miller,
                                   directions=directions,
@@ -1788,7 +1788,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
             distance = distance / partition_function
         bond_data[sym1][sym2] = distance
         bond_data[sym2][sym1] = distance
-        print('Request completed for {} {} pair'.format(sym1, sym2))
+        print(f'Request completed for {sym1} {sym2} pair')
 
     return Dict(dict=bond_data)
 

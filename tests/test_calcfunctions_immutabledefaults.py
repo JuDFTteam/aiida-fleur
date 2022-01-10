@@ -60,8 +60,6 @@ def test_check_immutable_defaults():
         defaults = get_default_args(calcf)
         for key, val in defaults.items():
             if not isinstance(val, immutable):
-                message = ('Default value of calcfunction not immutable: \n'
-                           'function: {}\n'
-                           'kwarg: {} : {}'.format(calcf, key, val))
+                message = f'Default value of calcfunction not immutable: \nfunction: {calcf}\nkwarg: {key} : {val}'
                 # Add reason explaination, https://github.com/JuDFTteam/aiida-fleur/issues/85
                 assert False, message

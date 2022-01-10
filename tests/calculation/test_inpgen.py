@@ -12,10 +12,8 @@ from aiida.engine import run_get_node
 from aiida.plugins import CalculationFactory, DataFactory
 from aiida_fleur.calculation.fleur import FleurCalculation
 
-from ..conftest import run_regression_tests
 
-
-def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_default_calcinfo(fixture_sandbox, generate_calc_job, fixture_code,
                                       generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
@@ -70,7 +68,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_with_parameters(fixture_sandbox, generate_calc_job, fixture_code,
                                      generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
 
@@ -140,8 +138,8 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not their or not wanted.')
-def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
+@pytest.mark.regression_test
+def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
@@ -172,12 +170,6 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         }
     }
 
-    mock_code = mock_code_factory(label='inpgen',
-                                  data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                'data_dir/'),
-                                  entry_point=CALC_ENTRY_POINT,
-                                  ignore_files=['_aiidasubmit.sh'])
-    print(mock_code)
     inputs = {
         'structure': generate_structure_W(),
         'parameters': orm.Dict(dict=parameters),
@@ -194,16 +186,15 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
     print(calc)
-    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=inpgen_local_code, **inputs)
     print(node)
     print(get_calcjob_report(node))
     print((res['remote_folder'].list_object_names()))
     print((res['retrieved'].list_object_names()))
-    assert bool(node.is_finished_ok)
+    assert node.is_finished_ok
 
 
 def test_x_and_bunchatom_input(
-    aiida_profile,
     fixture_sandbox,
     generate_calc_job,
     fixture_code,

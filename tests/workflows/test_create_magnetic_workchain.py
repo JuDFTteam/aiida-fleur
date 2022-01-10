@@ -35,7 +35,7 @@ class Test_FleurCreateMagneticWorkChain:
     """
 
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code, clear_spec):
+    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence
@@ -68,13 +68,7 @@ class Test_FleurCreateMagneticWorkChain:
 
         wf_eos = {'points': 9, 'step': 0.015, 'guess': 1.00}
 
-        wf_eos_scf = {
-            'fleur_runmax': 4,
-            'density_converged': 0.0002,
-            'serial': False,
-            'itmax_per_run': 50,
-            'inpxml_changes': []
-        }
+        wf_eos_scf = {'fleur_runmax': 4, 'density_converged': 0.0002, 'itmax_per_run': 50, 'inpxml_changes': []}
 
         wf_eos_scf = Dict(dict=wf_eos_scf)
 
@@ -110,7 +104,6 @@ class Test_FleurCreateMagneticWorkChain:
 
         wf_relax_scf = {
             'fleur_runmax': 5,
-            'serial': False,
             'itmax_per_run': 50,
             #'alpha_mix': 0.015,
             #'relax_iter': 25,

@@ -31,7 +31,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _default_wf_para = {
         'beta': {
@@ -87,7 +87,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -136,7 +136,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         # change beta parameter
         for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
@@ -168,14 +168,14 @@ class FleurSSDispConvWorkChain(WorkChain):
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(label))
+                message = f'One SCF workflow was not successful: {label}'
                 self.ctx.warnings.append(message)
                 continue
 
             try:
                 outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
+                message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue
 
@@ -183,7 +183,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', 'failed')
             if not isinstance(t_e, float):
-                message = ('Did not manage to extract float total energy from one ' 'SCF workflow: {}'.format(label))
+                message = f'Did not manage to extract float total energy from one SCF workflow: {label}'
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')

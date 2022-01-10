@@ -26,7 +26,7 @@ from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
@@ -38,7 +38,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.3.1'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -99,7 +99,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain, validate inputs
         """
-        self.report('INFO: Started structure relaxation workflow version {}\n'.format(self._workflowversion))
+        self.report(f'INFO: Started structure relaxation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []  # Collects Hints
         self.ctx.warnings = []  # Collects Warnings
@@ -129,7 +129,7 @@ class FleurRelaxWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -232,7 +232,7 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wf_dict['mode'] = 'force'
 
         if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup', {
                 'attributedict': {
                     'force': {
                         'relaxXYZ': 'FFT'
@@ -242,7 +242,7 @@ class FleurRelaxWorkChain(WorkChain):
             }))
 
         for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'force': {
                         'relaxXYZ': 'FFF'
@@ -251,7 +251,7 @@ class FleurRelaxWorkChain(WorkChain):
                 'atom_label': specie_off
             }))
 
-        scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+        scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
             'attributedict': {
                 'force': {
                     'relaxXYZ': 'FFF'
@@ -313,10 +313,10 @@ class FleurRelaxWorkChain(WorkChain):
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
                 fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -348,13 +348,12 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report('INFO: Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
         elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
                 'forcemix'] == 'straight':
-            self.report('INFO: Seems it is safe to switch to BFGS. Current largest force: '
-                        '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True
             return False
 
@@ -441,7 +440,7 @@ class FleurRelaxWorkChain(WorkChain):
         formula = structure.get_formula()
         input_final_scf.structure = structure
         input_final_scf.fleur = input_scf.fleur
-        input_final_scf.metadata.label = 'SCF_final_{}'.format(formula)
+        input_final_scf.metadata.label = f'SCF_final_{formula}'
         input_final_scf.metadata.description = ('Final SCF workchain running on optimized structure {}, '
                                                 'part of relax workchain'.format(formula))
 
@@ -480,7 +479,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-            last_fleur = find_nested_process(self.ctx.scf_res, FleurCalc)[-1]
+            last_fleur = find_nested_process(self.ctx.scf_res, FleurBaseWorkChain)[-1]
             retrieved_node = last_fleur.outputs.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT

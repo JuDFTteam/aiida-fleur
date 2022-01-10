@@ -54,7 +54,6 @@ def test_get_inputs_fleur():
             'test': 1
         },
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -74,6 +73,7 @@ def test_get_inputs_fleur():
     assert results['add_comp_para']['only_even_MPI'] is False
     assert results['add_comp_para']['max_queue_nodes'] == 20
     assert results['add_comp_para']['max_queue_wallclock_sec'] == 86400
+    assert not results['clean_workdir']
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 
@@ -82,10 +82,10 @@ def test_get_inputs_fleur():
         'remote': 'remote',
         'fleurinp': 'fleurinp',
         'options': {
+            'withmpi': False,
             'custom_scheduler_commands': 'test_command'
         },
         'add_comp_para': {
-            'serial': True,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400

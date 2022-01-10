@@ -41,7 +41,7 @@ class FleurMaeWorkChain(WorkChain):
         This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.3.1'
 
     _default_options = {
         'resources': {
@@ -61,7 +61,6 @@ class FleurMaeWorkChain(WorkChain):
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -113,8 +112,7 @@ class FleurMaeWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Magnetic Anisotropy Energy calculation workflow version {}\n'
-                    ''.format(self._workflowversion))
+        self.report(f'INFO: started Magnetic Anisotropy Energy calculation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []
         self.ctx.warnings = []
@@ -136,7 +134,7 @@ class FleurMaeWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for MAE contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for MAE contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -280,52 +278,25 @@ class FleurMaeWorkChain(WorkChain):
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
 
         # add forceTheorem tag into inp.xml
-        fchanges.extend([
-            ('create_tag', {
-                'xpath': '/fleurInput',
-                'newelement': 'forceTheorem'
-            }),
-            ('create_tag', {
-                'xpath': '/fleurInput/forceTheorem',
-                'newelement': 'MAE'
-            }),
-            ('xml_set_attribv_occ', {
-                'xpathn': '/fleurInput/forceTheorem/MAE',
-                'attributename': 'theta',
-                'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_theta')))
-            }),
-            ('xml_set_attribv_occ', {
-                'xpathn': '/fleurInput/forceTheorem/MAE',
-                'attributename': 'phi',
-                'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_phi')))
-            }),
-            ('set_inpchanges', {
-                'change_dict': {
-                    'itmax': 1,
-                    'l_soc': True
-                }
-            }),
-        ])
+        fchanges.append(('set_complex_tag', {
+            'tag_name': 'MAE',
+            'create': True,
+            'changes': {
+                'theta': self.ctx.wf_dict['sqas_theta'],
+                'phi': self.ctx.wf_dict['sqas_phi']
+            }
+        }))
+        fchanges.append(('set_inpchanges', {'change_dict': {'itmax': 1, 'l_soc': True}}),)
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
-            avail_ac_dict = fleurmode.get_avail_actions()
-
-            # apply further user dependend changes
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    method(**para)
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # validate?
             try:
@@ -334,14 +305,19 @@ class FleurMaeWorkChain(WorkChain):
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            except ValueError as exc:
+                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                         f'The following error was raised {exc}')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # apply
             out = fleurmode.freeze()
             self.ctx.fleurinp = out
-            return
         else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
-            return
+
+        return
 
     def force_after_scf(self):
         """
@@ -460,8 +436,7 @@ class FleurMaeWorkChain(WorkChain):
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
-                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                           'exit status {}'.format(calculation.exit_status))
+                message = f'ERROR: Force theorem Fleur calculation failed somehow it has exit status {calculation.exit_status}'
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:
@@ -486,7 +461,7 @@ class FleurMaeWorkChain(WorkChain):
                 t_energydict = [(x - minenergy) for x in t_energydict]
 
         except AttributeError as e_message:
-            message = ('Did not manage to read evSum or energy units after FT calculation. {}'.format(e_message))
+            message = f'Did not manage to read evSum or energy units after FT calculation. {e_message}'
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 

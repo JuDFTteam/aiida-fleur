@@ -26,6 +26,17 @@ def test_create_kpoints_from_distance_no_para(generate_structure):
     assert result_para.get_dict() == wanted_result
 
 
+def test_create_kpoints_from_distance_gamma(generate_structure):
+    """Test mesh generation of create_kpoints_from_distance_parameter without calc_parameter input"""
+
+    wanted_result = {'kpt': {'div1': 23, 'div2': 23, 'div3': 23, 'gamma': True}}
+    structure = generate_structure()
+    cf_para = Dict(dict={'distance': 0.1, 'force_parity': True, 'force_odd': True, 'include_gamma': True})
+    result_para = create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=None)
+
+    assert result_para.get_dict() == wanted_result
+
+
 def test_create_kpoints_from_distance_with_para(generate_structure):
     """Test mesh generation of create_kpoints_from_distance_parameter with calc_parameter input"""
 

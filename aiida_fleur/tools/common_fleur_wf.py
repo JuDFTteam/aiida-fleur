@@ -14,49 +14,10 @@ In here we put all things (methods) that are common to workflows AND
 depend on AiiDA classes, therefore can only be used if the dbenv is loaded.
 Util that does not depend on AiiDA classes should go somewhere else.
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
-import six
+import warnings
 
 from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
-
-# def is_code(code):
-#     """
-#     Test if the given input is a Code node, by object, id, uuid, or pk
-#     if yes returns a Code node in all cases
-#     if no returns None
-#     """
-#     from aiida.orm import Code
-#     from aiida.common.exceptions import NotExistent, MultipleObjectsError, InputValidationError
-
-#     if isinstance(code, Code):
-#         return code
-
-#     try:
-#         pk = int(code)
-#     except ValueError:
-#         codestring = str(code)
-#         try:
-#             code = Code.get_from_string(codestring)
-#         except NotExistent:
-#             try:
-#                 code = load_node(codestring)
-#             except NotExistent:
-#                 code = None
-#         except (InputValidationError, MultipleObjectsError):
-#             code = None
-#     else:
-#         try:
-#             code = load_node(pk)
-#         except NotExistent:
-#             code = None
-
-#     if isinstance(code, Code):
-#         return code
-#     else:
-#         return None
 
 
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
@@ -71,7 +32,8 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     :param label: a string setting a label of the CalcJob in the DB
     :param description: a string setting a description of the CalcJob in the DB
     :param settings: additional settings of Dict type
-    :param serial: True if run a calculation in a serial mode
+    :param add_comp_para: dict with extra keys controlling the behaviour of the parallelization
+                          of the FleurBaseWorkChain
 
     Example of use::
 
@@ -84,12 +46,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     Dict = DataFactory('dict')
     inputs = {}
 
-    add_comp_para_default = {
-        'serial': False,
-        'only_even_MPI': False,
-        'max_queue_nodes': 20,
-        'max_queue_wallclock_sec': 86400
-    }
+    add_comp_para_default = {'only_even_MPI': False, 'max_queue_nodes': 20, 'max_queue_wallclock_sec': 86400}
     if add_comp_para is None:
         add_comp_para = {}
     add_comp_para = {**add_comp_para_default, **add_comp_para}
@@ -109,8 +66,10 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         inputs['label'] = label
     else:
         inputs['label'] = ''
-    # TODO check  if code is parallel version?
-    if add_comp_para['serial']:
+
+    if add_comp_para.get('serial', False):
+        warnings.warn('The serial input in add_comp_para is deprecated. Control the usage of'
+                      'MPI with the withmpi key in the options input')
         if not options:
             options = {}
         options['withmpi'] = False  # for now
@@ -118,13 +77,17 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
         #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
         # also a full will run here mpi on that node... also not what we want.ß
         options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-    else:
-        options['withmpi'] = True
 
+    if options:
+        options['withmpi'] = options.get('withmpi', True)
+        if not options['withmpi'] and 'resources' not in options:
+            # TODO not every machine/scheduler type takes number of machines
+            #  lsf takes number of total_mpi_procs,slurm and psb take num_machines,\
+            # also a full will run here mpi on that node... also not what we want.ß
+            options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
+
+    inputs['clean_workdir'] = Bool(add_comp_para.pop('clean_workdir', False))
     inputs['add_comp_para'] = Dict(dict=add_comp_para)
-
-    custom_commands = options.get('custom_scheduler_commands', '')
-    options['custom_scheduler_commands'] = custom_commands
 
     if settings:
         if isinstance(settings, Dict):
@@ -222,12 +185,12 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = ['{}@{}'.format(c.label, c.computer.label) for [c] in qb.all()]
+        valid_code_labels = [f'{c.label}@{c.computer.label}' for [c] in qb.all()]
 
         if valid_code_labels:
             msg = ('Given Code node is not of expected code type.\n'
                    'Valid labels for a {} executable are:\n'.format(expected_code_type))
-            msg += '\n'.join('* {}'.format(l) for l in valid_code_labels)
+            msg += '\n'.join(f'* {l}' for l in valid_code_labels)
 
             if use_exceptions:
                 raise ValueError(msg) from exc
@@ -301,7 +264,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
     # then sort the given list from (lowest if negativ energies to highest)
     energy_sorted_reactions = []
     formenergy_dict = {}
-    for compound, uuid in six.iteritems(workchain_dict):
+    for compound, uuid in workchain_dict.items():
         # TODO ggf get formation energy from output node, or extras
         if isinstance(uuid, float):  # allow to give values
             formenergy_dict[compound] = uuid
@@ -324,7 +287,7 @@ def determine_favorable_reaction(reaction_list, workchain_dict):
                         except (AttributeError, KeyError, ValueError):  # TODO: Check this
                             ouputnode = None
                             formenergy = None
-                            print(('WARNING: output node of {} not found. I skip'.format(n)))
+                            print(f'WARNING: output node of {n} not found. I skip')
                             continue
                     formenergy = ouputnode.get('formation_energy')
                     # TODO is this value per atom?
@@ -390,21 +353,21 @@ def performance_extract_calcs(calcs):
         try:
             efermi = res.fermi_energy
         except AttributeError:
-            print(('skipping {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping {pk}, {calc.uuid}')
             efermi = -10000
             continue  # we skip these entries
         try:
             gap = res.bandgap
         except AttributeError:
             gap = -10000
-            print(('skipping 2 {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping 2 {pk}, {calc.uuid}')
             continue
 
         try:
             energy = res.energy
         except AttributeError:
             energy = 0.0
-            print(('skipping 3 {}, {}'.format(pk, calc.uuid)))
+            print(f'skipping 3 {pk}, {calc.uuid}')
             continue
 
         data_dict['bandgap'].append(gap)
@@ -600,7 +563,7 @@ def optimize_calc_options(nodes,
         raise ValueError(message)
     elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
-            message = ('WARNING: Changed the number of nodes from {} to {}' ''.format(nodes, best_suggestion[0]))
+            message = f'WARNING: Changed the number of nodes from {nodes} to {best_suggestion[0]}'
         else:
             message = ('Computational setup is perfect! Nodes: {}, MPIs per node {}, OMP per MPI '
                        '{}. Number of k-points is {}'.format(best_suggestion[0], best_suggestion[1], best_suggestion[2],

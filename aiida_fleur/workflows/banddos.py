@@ -45,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.5.2'
 
     _default_options = {
         'resources': {
@@ -70,7 +70,6 @@ class FleurBandDosWorkChain(WorkChain):
         'emin': -0.50,
         'emax': 0.90,
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -124,12 +123,14 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         ### input check ### ? or done automaticly, how optional?
         # check if fleuinp corresponds to fleur_calc
-        self.report('started bandsdos workflow version {}'.format(self._workflowversion))
+        self.report(f'started bandsdos workflow version {self._workflowversion}')
         #print("Workchain node identifiers: ")#'{}'
         #"".format(ProcessRegistry().current_calc_node))
 
         self.ctx.scf_needed = False
         self.ctx.banddos_calc = None
+        self.ctx.fleurinp_banddos = None
+        self.ctx.scf = None
         self.ctx.successful = False
         self.ctx.info = []
         self.ctx.warnings = []
@@ -147,6 +148,15 @@ class FleurBandDosWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+        extra_keys = []
+        for key in self.ctx.wf_dict.keys():
+            if key not in wf_default.keys():
+                extra_keys.append(key)
+        if extra_keys:
+            error = f'ERROR: input wf_parameters for Banddos contains extra keys: {extra_keys}'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
         defaultoptions = self._default_options
         if 'options' in inputs:
             options = inputs.options.get_dict()
@@ -163,34 +173,34 @@ class FleurBandDosWorkChain(WorkChain):
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
                 error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'scf' in inputs:
             self.ctx.scf_needed = True
             if 'remote' in inputs:
                 error = 'ERROR: you gave SCF input + remote for the BandDOS calculation'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
                 error = 'ERROR: you gave SCF input + fleurinp for the BandDOS calculation'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'remote' not in inputs:
             error = 'ERROR: you gave neither SCF input nor remote'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
 
         if wf_dict['mode'] == 'dos' and wf_dict['kpath'] not in ('auto', 'skip'):
             error = 'ERROR: you specified the DOS mode but provided a non default kpath argument'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_number'] is not None:
+        if wf_dict['kpoints_number'] is not None and wf_dict['kpoints_distance'] is not None:
             error = 'ERROR: Only provide either the distance or number for the kpoints'
-            self.control_end_wc(error)
+            self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
     def change_fleurinp(self):
@@ -251,8 +261,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         if 'kpoints' in self.inputs:
             fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
-
-        if kpath == 'auto':
+        elif kpath == 'auto':
             if fleurin.inp_version >= '0.32' and listname is not None:
                 fleurmode.switch_kpointset(listname)
         elif isinstance(kpath, dict):
@@ -286,7 +295,7 @@ class FleurBandDosWorkChain(WorkChain):
             fleurmode.set_kpointsdata(output['explicit_kpoints'], switch=True)
 
         elif kpath == 'skip':
-            return
+            pass
         else:
             #Use ase
             struc = fleurin.get_structuredata()
@@ -386,6 +395,10 @@ class FleurBandDosWorkChain(WorkChain):
             return status
 
         fleurin = self.ctx.fleurinp_banddos
+        if fleurin is None:
+            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # Do not copy mixing_history* files from the parent
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
@@ -433,6 +446,10 @@ class FleurBandDosWorkChain(WorkChain):
             return status
 
         fleurin = self.ctx.fleurinp_banddos
+        if fleurin is None:
+            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         # Do not copy mixing_history* files from the parent
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
@@ -471,11 +488,11 @@ class FleurBandDosWorkChain(WorkChain):
         '''
         # TODO more here
         self.report('BandDOS workflow Done')
-        self.report(f'A bandstructure was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
-                    f'calculation {self.ctx.banddos_calc}')
 
         from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.banddos_calc:
+            self.report(f'A bandstructure/DOS was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
+                        f'calculation {self.ctx.banddos_calc}')
             try:
                 last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
             except NotExistent:
@@ -499,7 +516,7 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf']
+        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf', 'Local.1', 'Local.2']
 
         bandfile_res = []
         if retrieved:
@@ -509,7 +526,7 @@ class FleurBandDosWorkChain(WorkChain):
             if name in bandfile_res:
                 self.ctx.successful = True
         if not self.ctx.successful:
-            self.report('!NO bandstructure file was found, something went wrong!')
+            self.report('!NO bandstructure/DOS file was found, something went wrong!')
 
         # # get efermi from last calculation
         scf_results = None
@@ -519,6 +536,12 @@ class FleurBandDosWorkChain(WorkChain):
             for w in self.inputs.remote.get_incoming().all():
                 if isinstance(w.node, CalcJobNode):
                     scf_results = load_node(w.node.pk).res
+                    efermi_scf = scf_results.fermi_energy
+                    bandgap_scf = scf_results.bandgap
+        elif 'scf' in self.inputs:
+            if self.ctx.scf:
+                if self.ctx.scf.is_finished_ok:
+                    scf_results = load_node(self.ctx.scf.outputs.output_scf_wc_para['last_calc_uuid']).res
                     efermi_scf = scf_results.fermi_energy
                     bandgap_scf = scf_results.bandgap
 
@@ -539,7 +562,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
-        outputnode_dict['last_calc_pk'] = self.ctx.banddos_calc.pk
         outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band

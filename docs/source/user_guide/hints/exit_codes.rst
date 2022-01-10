@@ -139,6 +139,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 316       | Calculation failed due to time limits.                  | FleurCalculation       |
 +-----------+---------------------------------------------------------+------------------------+
+| 318       | Calculation failed due to a missing dependency          | FleurCalculation       |
++-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | DMI                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 334       | Reference calculation failed.                           | MAE                    |
@@ -185,6 +187,8 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 +-----------+---------------------------------------------------------+------------------------+
 | 360       | Inpgen calculation failed                               | SCF                    |
 +-----------+---------------------------------------------------------+------------------------+
+| 360       | Inpgen calculation failed                               | OrbControl             |  
++-----------+---------------------------------------------------------+------------------------+
 | 361       | Fleur calculation failed                                | SCF                    |
 +-----------+---------------------------------------------------------+------------------------+
 | 380       | Specified substrate is not bcc or fcc,                  | CreateMagnetic         |
@@ -193,6 +197,9 @@ The list of all exit codes implemented in AiiDA-FLEUR:
 | 382       | Relaxation calculation failed.                          | CreateMagnetic         |
 +-----------+---------------------------------------------------------+------------------------+
 | 383       | EOS WorkChain failed.                                   | CreateMagnetic         |
++-----------+---------------------------------------------------------+------------------------+
+| 388       | Fleur Calculation failed due to time limits             | FleurBase              |
+|           | and it cannot be resolved (e.g because of no cdn file)  |                        |
 +-----------+---------------------------------------------------------+------------------------+
 | 389       | FLEUR calculation failed due to memory issue            | FleurBase              |
 |           | and it can not be solved for this scheduler             |                        |

@@ -32,6 +32,7 @@ from aiida_fleur.data.fleurinp import FleurinpData
 
 class fleur_dos_wc(WorkChain):
     """
+    DEPRECATED: Use FleurBandDosWorkChain instead (entrypoint fleur.banddos)
     This workflow calculated a DOS from a Fleur calculation
 
     :Params: a Fleurcalculation node

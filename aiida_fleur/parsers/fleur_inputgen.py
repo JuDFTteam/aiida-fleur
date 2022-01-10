@@ -61,7 +61,7 @@ class Fleur_inputgenParser(Parser):
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info('file list {}'.format(list_of_files))
+        self.logger.info(f'file list {list_of_files}')
 
         errorfile = FleurinputgenCalculation._ERROR_FILE_NAME
         if errorfile in list_of_files:
@@ -69,7 +69,7 @@ class Fleur_inputgenParser(Parser):
                 with output_folder.open(errorfile, 'r') as error_file:
                     error_file_lines = error_file.read()
             except IOError:
-                self.logger.error('Failed to open error file: {}.'.format(errorfile))
+                self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, prior fleur 32
             if error_file_lines:
@@ -84,7 +84,7 @@ class Fleur_inputgenParser(Parser):
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
-            self.logger.error("XML inp not found '{}'".format(inpxml_file))
+            self.logger.error(f"XML inp not found '{inpxml_file}'")
             return self.exit_codes.ERROR_NO_INPXML
 
         for file1 in self._default_files:
@@ -97,14 +97,14 @@ class Fleur_inputgenParser(Parser):
             fleurinp = FleurinpData(files=[])
             fleurinp.set_file(inpxml_file, node=output_folder)
         except InputValidationError as ex:
-            self.logger.error('FleurinpData initialization failed: {}'.format(str(ex)))
+            self.logger.error(f'FleurinpData initialization failed: {str(ex)}')
             if fleurinp.parser_info == {}:
                 self.logger.error('Parser output: No Output produced')
             else:
                 self.logger.error(f'Parser output: {pprint.pformat(fleurinp.parser_info)}')
             return self.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID
         except ValidationError as ex:
-            self.logger.error('FleurinpData validation failed: {}'.format(str(ex)))
+            self.logger.error(f'FleurinpData validation failed: {str(ex)}')
             return self.exit_codes.ERROR_FLEURINPDATA_NOT_VALID
 
         self.logger.info('FleurinpData initialized')

@@ -10,106 +10,462 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains tests for the FleurBandDosWorkChain '''
-from __future__ import absolute_import
-from __future__ import print_function
-
 import pytest
 import aiida_fleur
+from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
+from aiida import orm
+from aiida.engine import run_get_node
+from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import os
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
+TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
+CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
-# tests
-@pytest.mark.usefixtures('aiida_profile', 'clear_database')
-class Test_BandDosWorkChain():
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
     """
-    Regression tests for the FleurBandDosWorkChain
+    Full example using the band dos workchain with just a fleurinp data as input.
+    Calls scf, Several fleur runs needed till convergence
     """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_converged_Si(self, run_with_cache, mock_code_factory, create_remote_fleur):
-        """
-        full example using the band dos workchain with just a fleurinp data as input.
-        Calls scf, Several fleur runs needed till convergence
-        """
-        from aiida.orm import Code, load_node, Dict, StructureData
-        from numpy import array
-        from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
+    FleurCode = fleur_local_code
+    desc = FleurCode.description
+    with_hdf5 = False
+    if desc is not None:
+        if 'hdf5' in desc:
+            with_hdf5 = True
+        elif 'Hdf5' in desc:
+            with_hdf5 = True
+        elif 'HDF5' in desc:
+            with_hdf5 = True
+        else:
+            with_hdf5 = False
 
-        options = {
-            'resources': {
-                'num_machines': 1
-            },
-            'max_wallclock_seconds': 5 * 60,
-            'withmpi': False,
-            'custom_scheduler_commands': ''
-        }
+    # create process builder to set parameters
+    builder = FleurBandDosWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
+    builder.metadata.label = 'FleurBanddos_test_Si_bulk'
+    builder.options = orm.Dict(dict=options).store()
+    builder.fleur = FleurCode
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
+    #print(builder)
 
-        FleurCode = mock_code = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir_calcs/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-        # create process builder to set parameters
-        builder = FleurBandDosWorkChain.get_builder()
-        builder.metadata.description = 'Simple Fleur Band Dos calculation ontop converged fleur calc'
-        builder.metadata.label = 'FleurBandDos_test'
-        #builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.remote = create_remote_fleur()
-        builder.options = Dict(dict=options)
-        builder.fleur = FleurCode
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
 
-        # now run calculation
-        out, node = run_with_cache(builder)
+    print(get_workchain_report(node, 'REPORT'))
 
-        # check output
-        # check if BandDos file was parsed. success and all output nodes there.
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_banddos_wc_para']
+    n = n.get_dict()
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
-        """
-        full example using the band dos workchain with just a fleurinp data as input.
-        Calls scf, Several fleur runs needed till convergence
-        """
+    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
-        assert False
+    #print(n)
+    efermi = 0.2034799610
+    bandgap = 0.8556165891
+    assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
+    assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
+    assert n.get('mode') == 'band'
+    if with_hdf5:
+        assert 'output_banddos_wc_bands' in out
+    assert 'last_calc_retrieved' in out
+    res_files = out['last_calc_retrieved'].list_object_names()
+    assert any(
+        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_structure_Si(self, run_with_cache, mock_code_factory):
-        """
-        Full regression test of the band dos workchain starting with a crystal structure and parameters
-        """
-        assert False
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
-        """
-        Test the validation behavior of band dos workchain if wrong input is provided it should throw
-        an exitcode and not start a Fleur run or crash
-        """
-        assert False
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+    """
+    Full example using the band dos workchain with just a fleurinp data as input.
+    Calls scf, Several fleur runs needed till convergence
+    """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
 
-    # needed?
+    wf_parameters = {'mode': 'dos'}
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_seekpath(self, run_with_cache, mock_code_factory):
-        """
-        Tests if the band dos workchain is capable of running without a specified path
-        """
-        assert False
+    FleurCode = fleur_local_code
+    desc = FleurCode.description
+    with_hdf5 = False
+    if desc is not None:
+        if 'hdf5' in desc:
+            with_hdf5 = True
+        elif 'Hdf5' in desc:
+            with_hdf5 = True
+        elif 'HDF5' in desc:
+            with_hdf5 = True
+        else:
+            with_hdf5 = False
 
-    @pytest.mark.skip(reason='Test is not implemented')
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_band_no_seekpath(self, run_with_cache, mock_code_factory):
-        """
-        Tests if the band dos workchain is capable of running with a specified path
-        """
-        assert False
+    # create process builder to set parameters
+    builder = FleurBandDosWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur Banddos test for DOS of  Si bulk with fleurinp data given'
+    builder.metadata.label = 'FleurBanddos_test_Si_bulk_dos'
+    builder.options = orm.Dict(dict=options).store()
+    builder.fleur = FleurCode
+    builder.wf_parameters = orm.Dict(dict=wf_parameters).store()
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
+    #print(builder)
+
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_dos_fleurinp_Si.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
+
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_banddos_wc_para']
+    n = n.get_dict()
+
+    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
+
+    #print(n)
+    efermi = 0.2034799610
+    bandgap = 0.8556165891
+    assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
+    assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
+    assert n.get('mode') == 'dos'
+    if with_hdf5:
+        assert 'output_banddos_wc_dos' in out
+    assert 'last_calc_retrieved' in out
+    res_files = out['last_calc_retrieved'].list_object_names()
+    assert any(
+        file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+                                         aiida_caplog):
+    """
+    Full example using the band dos workchain with just a fleurinp data as input.
+    Uses seekpath to determine the path for the bandstructure
+    Calls scf, Several fleur runs needed till convergence
+    """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+
+    wf_parameters = {'kpath': 'seek'}
+
+    FleurCode = fleur_local_code
+    desc = FleurCode.description
+    with_hdf5 = False
+    if desc is not None:
+        if 'hdf5' in desc:
+            with_hdf5 = True
+        elif 'Hdf5' in desc:
+            with_hdf5 = True
+        elif 'HDF5' in desc:
+            with_hdf5 = True
+        else:
+            with_hdf5 = False
+
+    # create process builder to set parameters
+    builder = FleurBandDosWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from seekpath'
+    builder.metadata.label = 'FleurBanddos_test_Si_bulk'
+    builder.options = orm.Dict(dict=options).store()
+    builder.fleur = FleurCode
+    builder.wf_parameters = orm.Dict(dict=wf_parameters).store()
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
+    #print(builder)
+
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_seek.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
+
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_banddos_wc_para']
+    n = n.get_dict()
+
+    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
+
+    #print(n)
+    efermi = 0.2034799610
+    bandgap = 0.8556165891
+    assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
+    assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
+    assert n.get('mode') == 'band'
+    if with_hdf5:
+        assert 'output_banddos_wc_bands' in out
+    assert 'last_calc_retrieved' in out
+    res_files = out['last_calc_retrieved'].list_object_names()
+    assert any(
+        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+    """
+    Full example using the band dos workchain with just a fleurinp data as input.
+    Uses ase bandpath to determine the path through the briloouin zone
+    Calls scf, Several fleur runs needed till convergence
+    """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+
+    wf_parameters = {'kpath': 'XKGLWWXG', 'kpoints_number': 200}
+
+    FleurCode = fleur_local_code
+    desc = FleurCode.description
+    with_hdf5 = False
+    if desc is not None:
+        if 'hdf5' in desc:
+            with_hdf5 = True
+        elif 'Hdf5' in desc:
+            with_hdf5 = True
+        elif 'HDF5' in desc:
+            with_hdf5 = True
+        else:
+            with_hdf5 = False
+
+    # create process builder to set parameters
+    builder = FleurBandDosWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from ase'
+    builder.metadata.label = 'FleurBanddos_test_Si_bulk'
+    builder.options = orm.Dict(dict=options).store()
+    builder.fleur = FleurCode
+    builder.wf_parameters = orm.Dict(dict=wf_parameters).store()
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH).store()
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
+    #print(builder)
+
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_ase.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
+
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_banddos_wc_para']
+    n = n.get_dict()
+
+    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
+
+    #print(n)
+    efermi = 0.2034799610
+    bandgap = 0.8556165891
+    assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
+    assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
+    assert n.get('mode') == 'band'
+    if with_hdf5:
+        assert 'output_banddos_wc_bands' in out
+    assert 'last_calc_retrieved' in out
+    res_files = out['last_calc_retrieved'].list_object_names()
+    assert any(
+        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+
+
+@pytest.mark.skip(reason='Test is not implemented')
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_band_without_scf(self, run_with_cache, mock_code_factory):
+    """
+    Test the behaviour of the banddos workchain when started from a remote data input
+    without scf
+    """
+    assert False
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(500, method='thread')
+def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, create_fleurinp,
+                                               generate_structure2, generate_remote_data, clear_database):
+    """
+    Test the validation behavior of FleurBandDosWorkChain if wrong input is provided it should throw
+    an exitcode and not start a Fleur run or crash
+    """
+    #from aiida.engine import run_get_node
+
+    # prepare input nodes and dicts
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+    options = orm.Dict(dict=options).store()
+
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    structure = generate_structure2()
+    structure.store()
+    fleurinp = create_fleurinp(TEST_INP_XML_PATH)
+    fleurinp.store()
+    remote = generate_remote_data(FleurCode.computer, '/tmp').store()
+
+    ################
+    # Create builders
+
+    # 1. create builder with both scf and remote input
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.scf.fleurinp = fleurinp
+    builder.scf.fleur = FleurCode
+    builder.scf.options = options
+    builder.fleur = FleurCode
+    builder.options = options
+    builder.remote = remote
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 231
+
+    # 2. create builder no scf no remote
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.fleur = FleurCode
+    builder.options = options
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 231
+
+    # 3. create builder invalid fleurcode given
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.fleur = InpgenCode
+    builder.options = options
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 233
+
+    # 4. no code given
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+
+    # caught by aiida during creation
+    with pytest.raises(ValueError) as e_info:
+        out, node = run_get_node(builder)
+
+    # 5. create builder extra keys
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'kpath': 'auto', 'unknown': 'Test'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.fleur = FleurCode
+    builder.wf_parameters = wf_parameters
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
+
+    # 6. create builder dos and kpath specification
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'mode': 'dos', 'kpath': 'seek'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.fleur = FleurCode
+    builder.wf_parameters = wf_parameters
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230
+
+    # 7. create builder kpoints_number and kpoints_distance given
+    wf_parameters = orm.Dict(dict={'kpoints_number': 200, 'kpoints_distance': 0.1, 'kpath': 'GXG'})
+    builder = FleurBandDosWorkChain.get_builder()
+
+    builder.fleurinp = fleurinp
+    builder.remote = remote
+    builder.options = options
+    builder.fleur = FleurCode
+    builder.wf_parameters = wf_parameters
+
+    out, node = run_get_node(builder)
+    assert out == {}
+    assert node.is_finished
+    assert not node.is_finished_ok
+    assert node.exit_status == 230

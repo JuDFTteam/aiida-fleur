@@ -20,7 +20,6 @@ wf_para = Dict(
         'emin': -0.50,
         'emax': 0.90,
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -35,7 +34,6 @@ wf_para_scf = Dict(
         'mode': 'density',
         'itmax_per_run': 30,
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400

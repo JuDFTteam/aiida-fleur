@@ -127,8 +127,9 @@ jobs:
       run: |
         pip install --upgrade wheel setuptools
         # pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
-        pip install ${{ matrix.aiida-version }}
         pip install .[testing]
+        pip install ${{ matrix.aiida-version }}
+        pip install reentry
         reentry scan
 
     - name: Run pytest

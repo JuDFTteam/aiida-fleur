@@ -11,20 +11,22 @@
 ###############################################################################
 ''' Various tests for the FleurMaeWorkChain, different groupping '''
 # Here we test if the interfaces of the workflows are still the same
+from __future__ import absolute_import
+from __future__ import print_function
 
 import pytest
 import aiida_fleur
 import os
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
-from aiida_fleur.workflows.mae import FleurMaeWorkChain
+from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_mae_FePt_film(
+def test_fleur_ssdisp_FePt_film(
         clear_database,
         with_export_cache,  #run_with_cache,
         fleur_local_code,
@@ -53,11 +55,12 @@ def test_fleur_mae_FePt_film(
 
     wf_para = Dict(
         dict={
-            'sqa_ref': [0.7, 0.7],
-            'use_soc_ref': False,
-            'sqas_theta': [0.0, 1.57079, 1.57079],
-            'sqas_phi': [0.0, 0.0, 1.57079],
-            'soc_off': [],
+            'beta': {
+                'all': 1.57079
+            },
+            'prop_dir': [1.0, 0.0, 0.0],
+            'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
+            'ref_qss': [0.0, 0.0, 0.0],
             'inpxml_changes': [],
         })
 
@@ -108,35 +111,33 @@ def test_fleur_mae_FePt_film(
     }
 
     # now run calculation
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_mae_FePt.tar.gz')
+    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_ssdisp_FePt.tar.gz')
 
     #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
     #with enable_caching():
     with with_export_cache(data_dir_abspath=data_dir_path):
-        out, node = run_get_node(FleurMaeWorkChain, **inputs)
+        out, node = run_get_node(FleurSSDispWorkChain, **inputs)
     print(out)
     print(node)
     print(get_workchain_report(node, 'REPORT'))
 
     assert node.is_finished_ok
 
-    outpara = out.get('output_mae_wc_para', None)
+    outpara = out.get('out', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     print(outpara)
 
     # check output
     assert outpara.get('warnings') == []
-    assert outpara.get('phi') == [0.0, 0.0, 1.57079]
-    assert outpara.get('theta') == [0.0, 1.57079, 1.57079]
+    assert outpara.get('q_vectors') == [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]]
     assert outpara.get('is_it_force_theorem')
-    assert outpara.get('maes') == [0.0036191143706664, 0.0022422182265768, 0.0]
-    #assert outpara.get('maes') == [0.0039456509729923, 0.0026014085035566, 0.0] #TODO; check if this result is actually right
+    assert outpara.get('energies') == [0.0, 0.088007065396813, 0.032308078890001, 0.096042587755383]
 
 
 @pytest.mark.skip(reason='not implemented')
 @pytest.mark.timeout(5000, method='thread')
-def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
+def test_fleur_ssdisp_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     """
     Test the validation behavior of FleurMaeWorkChain if wrong input is provided it should throw
     an exitcode and not start a Fleur run or crash
@@ -178,7 +179,7 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     # now run the builders all should fail early with exit codes
 
     # 1. structure and fleurinp given
-    out, node = run_get_node(FleurMaeWorkChain, **inputs1)
+    out, node = run_get_node(FleurSSDispWorkChain, **inputs1)
     assert out == {}
     assert node.is_finished
     assert not node.is_finished_ok

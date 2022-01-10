@@ -17,6 +17,7 @@ but execute large parts of the workchain code base.
 '''
 import os
 from aiida.orm import Dict
+
 file_path1 = '../../files/inpxml/FePt/inp.xml'
 
 inpxmlfilefolder = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +162,6 @@ def test_launch_create_magnetic_base(run_cli_process_launch_command, fixture_cod
         'use_soc_ref': False,
         'sqas_theta': [0.0, 1.57079, 1.57079],
         'sqas_phi': [0.0, 0.0, 1.57079],
-        'serial': False,
         'soc_off': [],
         'inpxml_changes': [],
     }
@@ -180,7 +180,6 @@ def test_launch_dmi_base(run_cli_process_launch_command, fixture_code):
     fleur = fixture_code('fleur.fleur').store()
 
     wf_para = {
-        'serial': False,
         'beta': {
             '123': 1.57079
         },

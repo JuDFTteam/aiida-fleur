@@ -19,6 +19,7 @@ import argparse
 from pprint import pprint
 
 from aiida import load_profile
+
 load_profile()
 
 from aiida.plugins import DataFactory
@@ -205,7 +206,7 @@ print('##################### TEST FleurScfWorkChain #####################')
 if submit_wc:
     res = submit(FleurScfWorkChain, **inputs)
     print('##################### Submited FleurScfWorkChain #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print('##################### Finished submiting FleurScfWorkChain #####################')
 else:
     print('##################### Running FleurScfWorkChain #####################')

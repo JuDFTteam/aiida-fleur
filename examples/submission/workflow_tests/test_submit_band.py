@@ -128,7 +128,7 @@ print('##################### TEST FleurBandWorkChain #####################')
 if submit_wc:
     res = submit(FleurBandWorkChain, **inputs)
     print('##################### Submited FleurBandWorkChain #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print('##################### Finished submiting FleurBandWorkChain #####################')
 else:
     print('##################### Running fleur_dos_wc #####################')

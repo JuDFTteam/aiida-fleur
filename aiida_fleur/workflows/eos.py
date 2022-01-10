@@ -17,11 +17,7 @@ of an equation of state
 # allow different inputs, make things optional(don't know yet how)
 # half number of iteration if you are close to be converged. (therefore
 # one can start with 18 iterations, and if thats not enough run again 9 or something)
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
-
-import six
 
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict, List
@@ -29,10 +25,11 @@ from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
 
+from masci_tools.util.constants import HTR_TO_EV
+
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
-from aiida_fleur.common.constants import HTR_TO_EV
 
 
 class FleurEosWorkChain(WorkChain):
@@ -85,7 +82,7 @@ class FleurEosWorkChain(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report('Started eos workflow version {}'.format(self._workflowversion))
+        self.report(f'Started eos workflow version {self._workflowversion}')
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -112,24 +109,22 @@ class FleurEosWorkChain(WorkChain):
             wf_dict = wf_default
 
         extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
+        for key in wf_dict:
+            if key not in wf_default:
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for EOS contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for EOS contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
         self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.005)
         self.ctx.guess = wf_dict.get('guess', 1.00)
-        self.ctx.serial = wf_dict.get('serial', False)  # True
-        self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
         self.ctx.enforce_para = wf_dict.get('enforce_same_para', True)
 
     def structures(self):
@@ -144,7 +139,7 @@ class FleurEosWorkChain(WorkChain):
         for point in range(points):
             self.ctx.scalelist.append(startscale + point * step)
 
-        self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
+        self.report(f'scaling factors which will be calculated:{self.ctx.scalelist}')
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
 
         struc_dict = eos_structures(self.inputs.structure, List(list=self.ctx.scalelist))
@@ -164,7 +159,7 @@ class FleurEosWorkChain(WorkChain):
         natoms = len(struc.sites)
         label = str(self.ctx.scalelist[i])
         label_c = '|eos| fleur_scf_wc'
-        description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
+        description = f'|FleurEosWorkChain|fleur_scf_wc|scale {label}, {i}'
 
         self.ctx.volume.append(struc.get_cell_volume())
         self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
@@ -202,7 +197,7 @@ class FleurEosWorkChain(WorkChain):
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i + 1])
             label_c = '|eos| fleur_scf_wc'
-            description = '|FleurEosWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i + 1)
+            description = f'|FleurEosWorkChain|fleur_scf_wc|scale {label}, {i + 1}'
             #inputs.label = label_c
             #inputs.description = description
 
@@ -254,7 +249,7 @@ class FleurEosWorkChain(WorkChain):
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(label))
+                message = f'One SCF workflow was not successful: {label}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 continue
@@ -262,14 +257,14 @@ class FleurEosWorkChain(WorkChain):
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
+                message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
 
             # we loose the connection of the failed scf here.
             # link labels cannot contain '.'
-            link_label = 'scale_{}'.format(label).replace('.', '_')
+            link_label = f'scale_{label}'.replace('.', '_')
             outnodedict[link_label] = outputnode_scf
 
             outpara = outputnode_scf.get_dict()
@@ -288,7 +283,7 @@ class FleurEosWorkChain(WorkChain):
         not_ok, an_index = check_eos_energies(t_energylist_peratom)
 
         if not_ok:
-            message = ('Abnormality in Total energy list detected. Check ' 'entr(ies) {}.'.format(an_index))
+            message = f'Abnormality in Total energy list detected. Check entr(ies) {an_index}.'
             hint = ('Consider refining your basis set.')
             self.ctx.info.append(hint)
             self.ctx.warnings.append(message)
@@ -306,19 +301,20 @@ class FleurEosWorkChain(WorkChain):
                 if issubclass(type(i), np.complex):
                     write_defaults_fit = True
 
-            # cast float, because np datatypes are sometimes not serialable
-            volume, bulk_modulus = float(volume), float(bulk_modulus)
-            bulk_deriv, residuals = float(bulk_deriv), float(residuals)
+            if all(i is not None for i in (volume, bulk_modulus, bulk_deriv, residuals)):
+                # cast float, because np datatypes are sometimes not serialable
+                volume, bulk_modulus = float(volume), float(bulk_modulus)
+                bulk_deriv, residuals = float(bulk_deriv), residuals.tolist()
 
-            volumes = self.ctx.volume
-            gs_scale = volume * natoms / self.ctx.org_volume
-            bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
-            if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
-                warn = ('Groundstate volume was not in the scaling range.')
-                hint = ('Consider rerunning around point {}'.format(gs_scale))
-                self.ctx.info.append(hint)
-                self.ctx.warnings.append(warn)
-                # TODO maybe make it a feature to rerun with centered around the gs.
+                volumes = self.ctx.volume
+                gs_scale = volume * natoms / self.ctx.org_volume
+                bulk_modulus = bulk_modulus * 160.217733  # *echarge*1.0e21,#GPa
+                if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
+                    warn = ('Groundstate volume was not in the scaling range.')
+                    hint = f'Consider rerunning around point {gs_scale}'
+                    self.ctx.info.append(hint)
+                    self.ctx.warnings.append(warn)
+                    # TODO maybe make it a feature to rerun with centered around the gs.
         else:
             write_defaults_fit = True
 
@@ -388,7 +384,7 @@ class FleurEosWorkChain(WorkChain):
             returndict['output_eos_wc_structure'] = outputstructure
 
         # create link to workchain node
-        for link_name, node in six.iteritems(returndict):
+        for link_name, node in returndict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):
@@ -449,7 +445,7 @@ def eos_structures(inp_structure, scalelist):
     for key, struc in re_strucs.items():
         # label already set by rescale_nowf
         struc.description = str(key)
-        link_name = 'scale_{}'.format(key).replace('.', '_')
+        link_name = f'scale_{key}'.replace('.', '_')
         res_new[link_name] = struc
 
     return res_new

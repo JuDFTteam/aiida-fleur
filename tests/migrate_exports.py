@@ -17,5 +17,5 @@ for dirs in data_dirs:
         infile_old = 'old_' + infile
         shutil.move(dirs + infile, dirs + infile_old)
         #subprocess.run(["", "])
-        os.system('verdi export migrate {} {}'.format(dirs + infile_old, dirs + infile))
+        os.system(f'verdi export migrate {dirs + infile_old} {dirs + infile}')
         #os.system("ls {} {}".format(dirs+infile_old, dirs+infile))

@@ -35,7 +35,7 @@ class Test_FleurCoreholeWorkChain():
             self,  #run_with_cache,
             inpgen_local_code,
             fleur_local_code,
-            generate_structure_W):  #, clear_spec):
+            generate_structure_W):
         """
         full example using FleurCoreholeWorkChain on W.
         Several fleur runs needed, calculation of all only certain coreholes

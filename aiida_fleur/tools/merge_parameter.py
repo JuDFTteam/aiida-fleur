@@ -83,7 +83,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
 
     for i, atom in enumerate(atomlist):
         # TODO check for duplicates? what about
-        key = 'atom{}'.format(i)
+        key = f'atom{i}'
         atoms_dict[key] = atom
 
     # merge all namelists except atoms
@@ -118,7 +118,7 @@ def merge_parameters(DictList, overwrite=True):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print(('WARNING: Entry : {} {} is not of type Dict, I skip it.'.format(i, parameter)))
+            print(f'WARNING: Entry : {i} {parameter} is not of type Dict, I skip it.')
 
     return paremeter_data_new
 

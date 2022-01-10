@@ -75,6 +75,7 @@ class FleurCalculation(CalcJob):
 
     # special out files
     _DOS_FILE_NAME = 'DOS.*'
+    _DOS_MAX5_FILE_NAME = 'Local.*'
     _DOSINP_FILE_NAME = 'dosinp'
     _BAND_GNU_FILE_NAME = 'band.gnu'
     _BAND_FILE_NAME = 'bands.*'
@@ -257,6 +258,9 @@ class FleurCalculation(CalcJob):
                        'ERROR_INVALID_ELEMENTS_MMPMAT',
                        message='The LDA+U density matrix contains invalid elements.')
         spec.exit_code(316, 'ERROR_TIME_LIMIT', message='Calculation failed due to time limits.')
+        spec.exit_code(318,
+                       'ERROR_MISSING_DEPENDENCY',
+                       message='Calculation failed due to missing dependency ({name}) for given calculation.')
 
     @classproperty
     def _get_output_folder(self):
@@ -405,6 +409,7 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._DOS_MAX5_FILE_NAME)
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['relax']:
@@ -454,7 +459,10 @@ class FleurCalculation(CalcJob):
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
-                    local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
+                    if file1 not in outfolder_filenames:
+                        raise InputValidationError(
+                            f'File {file1} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file1, file1))
             elif not fleurinpgen and (not has_fleurinp):  # fleurCalc
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
@@ -463,8 +471,16 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_nohdf
                 else:
                     copylist = self._copy_scf
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
             elif fleurinpgen and has_fleurinp:
                 # everything is taken care of
@@ -477,8 +493,16 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_noinp_nohdf
                 else:
                     copylist = self._copy_scf_noinp
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
 
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
@@ -575,7 +599,7 @@ class FleurCalculation(CalcJob):
         if walltime_sec:
             walltime_min = int(max(1, walltime_sec / 60))
             cmdline_params.append('-wtime')
-            cmdline_params.append('{}'.format(int(walltime_min)))
+            cmdline_params.append(f'{int(walltime_min)}')
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

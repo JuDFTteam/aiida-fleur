@@ -55,7 +55,11 @@ intersphinx_mapping = {
     #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
     'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
-    'ase': ('https://wiki.fysik.dtu.dk/ase/', None)
+    'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'python': ('https://docs.python.org/3', None),
+    'lxml': ('https://lxml.de/apidoc/',None),
+    'h5py': ('https://docs.h5py.org/en/latest/', None)
 }
 
 nitpick_ignore = [('py:obj', 'module')]
@@ -82,7 +86,7 @@ copyright_owners = u'FZ Jülich GmbH, Germany'
 current_year = time.localtime().tm_year
 copyright_year_string = current_year if current_year == copyright_first_year else '{}-{}'.format(
     copyright_first_year, current_year)
-copyright = u'{}, {}. All rights reserved'.format(copyright_year_string, copyright_owners)
+copyright = f'{copyright_year_string}, {copyright_owners}. All rights reserved'
 
 
 # The version info for the project you're documenting, acts as replacement for
