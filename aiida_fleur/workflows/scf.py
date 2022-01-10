@@ -659,7 +659,10 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.last_charge_density = self.ctx.distance[-1]
 
         if self.ctx.nmmp_distance:
-            self.ctx.last_nmmp_distance = max(self.ctx.nmmp_distance[-1])
+            if isinstance(self.ctx.nmmp_distance[-1], list):
+                self.ctx.last_nmmp_distance = max(self.ctx.nmmp_distance[-1])
+            else:
+                self.ctx.last_nmmp_distance = self.ctx.nmmp_distance[-1]
 
     def condition(self):
         """
