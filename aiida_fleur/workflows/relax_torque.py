@@ -43,6 +43,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         'relax_alpha': 0.1,
         'break_symmetry': False,
         'opt_scheme': 'straight',
+        'maxstep': 0.1,
         'trajectory_workchains': []
     }
 
@@ -330,6 +331,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
 
         relax_alpha = self.ctx.wf_dict['relax_alpha']
+        maxstep = self.ctx.wf_dict['maxstep']
         scf_wc = self.ctx.scf_res
         x_torques = scf_wc.outputs.output_scf_wc_para.get_dict()['last_x_torques']
         y_torques = scf_wc.outputs.output_scf_wc_para.get_dict()['last_y_torques']
@@ -338,13 +340,13 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         if self.ctx.wf_dict['opt_scheme'] == 'straight':
             from aiida_fleur.tools.straight_torque import analyse_relax_straight
-            new_angles = analyse_relax_straight(alphas, betas, x_torques, y_torques, -relax_alpha)
+            new_angles = analyse_relax_straight(alphas, betas, x_torques, y_torques, -relax_alpha, maxstep)
 
         elif self.ctx.wf_dict['opt_scheme'] == 'bfgs':
             from aiida_fleur.tools.bfgs import BFGS_torques
 
             traj = self.ctx.wf_dict['trajectory_workchains'] + self.ctx.old_scf
-            bfgs_optimizer = BFGS_torques(self.ctx.scf_res, len(x_torques), traj, alpha=relax_alpha)
+            bfgs_optimizer = BFGS_torques(self.ctx.scf_res, len(x_torques), traj, maxstep, relax_alpha)
             bfgs_optimizer.step()
             new_angles = {}
             new_angles['alphas'] = bfgs_optimizer.new_positions[:len(alphas)]
