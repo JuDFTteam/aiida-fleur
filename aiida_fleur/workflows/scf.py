@@ -630,7 +630,7 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.distance.extend(distances)
 
             if 'ldau_info' in output_dict:
-                nmmp_distances = output_dict['ldau_info'].get('nmmp_distances', [])
+                nmmp_distances = output_dict['ldau_info'].get('density_matrix_distance', [])
 
                 if nmmp_distances is not None:
                     self.ctx.nmmp_distance.extend(nmmp_distances)
