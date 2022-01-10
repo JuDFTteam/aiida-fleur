@@ -558,17 +558,24 @@ class FleurScfWorkChain(WorkChain):
         if status:
             return status
 
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings
+        else:
+            settings = None
+
         if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
             status = self.reset_straight_mixing()
             if status:
                 return status
 
-        fleurin = self.ctx.fleurinp
+            if settings is None:
+                settings = {}
+            else:
+                settings = settings.get_dict()
 
-        if 'settings' in self.inputs:
-            settings = self.inputs.settings
-        else:
-            settings = None
+            settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
+
+        fleurin = self.ctx.fleurinp
 
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
