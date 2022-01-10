@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 
-def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha):
+def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha, maxstep):
     """
     This function generates a new fleurinp analysing parsed relax.xml from the previous
     calculation.
