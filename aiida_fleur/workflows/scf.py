@@ -405,6 +405,43 @@ class FleurScfWorkChain(WorkChain):
 
         return ToContext(inpgen=future)
 
+    def reset_straight_mixing(self):
+        """
+        Turn off the straight mixing features again
+        """
+        if not self.ctx.fleurinp:
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
+        wf_dict = self.ctx.wf_dict
+
+        fleurmode = FleurinpModifier(self.ctx.fleurinp)
+
+        fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax})
+        #Take out straight mixing
+        if wf_dict.get('initial_straight_mixing'):
+            fleurmode.set_inpchanges({'imix': 'Anderson'})  #TODO: should take the actual value from before
+        if wf_dict.get('initial_ldau_straight_mixing'):
+            fleurmode.set_inpchanges({'l_linmix': False})
+
+        # validate?
+        try:
+            fleurmode.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, user wanted inp.xml changes did not validate')
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
+        # apply
+        out = fleurmode.freeze()
+        self.ctx.fleurinp = out
+        return
+
+
     def change_fleurinp(self):
         """
         This routine sets somethings in the fleurinp file before running a fleur
@@ -450,12 +487,6 @@ class FleurScfWorkChain(WorkChain):
                         'l_linmix': True,
                         'mixParam': wf_dict.get('initial_ldau_straight_mix_param')
                     })
-            elif self.ctx.loop_count == 1:
-                #Take out straight mixing
-                if wf_dict.get('initial_straight_mixing'):
-                    fleurmode.set_inpchanges({'imix': 'Anderson'})  #TODO: should take the actual value from before
-                if wf_dict.get('initial_ldau_straight_mixing'):
-                    fleurmode.set_inpchanges({'l_linmix': False})
 
         # set proper convergence parameters in inp.xml
         if converge_mode == 'density':
@@ -526,6 +557,11 @@ class FleurScfWorkChain(WorkChain):
         status = self.change_fleurinp()
         if status:
             return status
+
+        if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
+            status = self.reset_straight_mixing()
+            if status:
+                return status
 
         fleurin = self.ctx.fleurinp
 
