@@ -59,11 +59,9 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     atoms_dict = {}
     atomlist = []
     if not isinstance(Dict1, Dict):
-        raise InputValidationError('Dict1, must be of '
-                                   'type Dict')
+        raise InputValidationError('Dict1, must be of type Dict')
     if not isinstance(Dict2, Dict):
-        raise InputValidationError('Dict2, must be of '
-                                   'type Dict')
+        raise InputValidationError('Dict2, must be of type Dict')
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 

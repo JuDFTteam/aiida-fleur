@@ -133,8 +133,7 @@ class FleurParser(Parser):
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning('The following was written into std error and piped to {}'
                                         ' : \n {}'.format(errorfile, error_file_lines))
-                    self.logger.error('FLEUR calculation did not finish'
-                                      ' successfully.')
+                    self.logger.error('FLEUR calculation did not finish successfully.')
 
                     # here we estimate how much memory was available and consumed
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
