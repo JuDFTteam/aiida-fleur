@@ -237,10 +237,17 @@ class FleurMaeWorkChain(WorkChain):
             scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': {'l_soc': False}}))
         else:  # set soc parameters explicitly
             changes_dict = {'theta': soc[0], 'phi': soc[1], 'l_soc': True}
-            scf_wf_dict['inpxml_changes'].append(('set_inpchanges',
-                                                  {'change_dict': changes_dict,
-                                                   'path_spec': {'phi': {'contains': 'soc'},
-                                                                 'theta': {'contains': 'soc'}}}))
+            scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {
+                'change_dict': changes_dict,
+                'path_spec': {
+                    'phi': {
+                        'contains': 'soc'
+                    },
+                    'theta': {
+                        'contains': 'soc'
+                    }
+                }
+            }))
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 

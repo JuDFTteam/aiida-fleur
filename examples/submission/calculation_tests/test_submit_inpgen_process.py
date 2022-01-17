@@ -29,7 +29,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
+    print(('The first parameter can only be either '
+           '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:

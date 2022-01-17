@@ -212,7 +212,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('Can not drop charge density. If I drop the remote folder, there will be' 'no inp.xml')
+        self.report('Can not drop charge density. If I drop the remote folder, there will be no inp.xml')
         self.results()
         return ProcessHandlerReport(True, self.exit_codes.ERROR_SOMETHING_WENT_WRONG)
 
@@ -236,7 +236,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         """
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.report('FLEUR calculation failed due to MT overlap.' ' Can be fixed via RelaxBaseWorkChain')
+        self.report('FLEUR calculation failed due to MT overlap. Can be fixed via RelaxBaseWorkChain')
         self.results()
         return ProcessHandlerReport(True, self.exit_codes.ERROR_MT_RADII_RELAX)
 

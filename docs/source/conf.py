@@ -52,7 +52,6 @@ extensions = ['sphinx.ext.autodoc',
 todo_include_todos = True
 
 intersphinx_mapping = {
-    #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
     'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
     'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
@@ -78,10 +77,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'AiiDA-FLEUR'
+project = 'AiiDA-FLEUR'
 #copyright = u'2016-2019, Jens Broeder'
 copyright_first_year = 2016
-copyright_owners = u'FZ Jülich GmbH, Germany'
+copyright_owners = 'FZ Jülich GmbH, Germany'
 
 current_year = time.localtime().tm_year
 copyright_year_string = current_year if current_year == copyright_first_year else '{}-{}'.format(
@@ -250,7 +249,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
+    ('index', 'aiida-fleur.tex', 'AiiDa-FLEUR Documentation',
      author.replace(',', r'\and'), 'manual'),
 ]
 
@@ -361,7 +360,7 @@ def setup(app):
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'aiida-fleur', u'AiiDA-FLEUR Documentation',
+    ('index', 'aiida-fleur', 'AiiDA-FLEUR Documentation',
      [author], 1)
 ]
 
@@ -375,7 +374,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'aiida-fleur', u'AiiDA-Fleur Documentation',
+    ('index', 'aiida-fleur', 'AiiDA-Fleur Documentation',
      author, 'aiida-fleur', 'One line description of project.',
      'Miscellaneous'),
 ]
@@ -395,7 +394,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'AiiDA-FLEUR'
+epub_title = 'AiiDA-FLEUR'
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright

@@ -116,14 +116,15 @@ def plot_fleur_mn(nodelist, **kwargs):
     ###
 
     if not isinstance(nodelist, list):
-        raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list. ')
+        raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list.')
 
     for node in nodelist:
 
         try:
             plot_nodes, workflow_name, label = classify_node(node)
         except ValueError as exc:
-            warnings.warn(f'Failed to classify node {node}: {exc}' 'Skipping this one')
+            warnings.warn(f'Failed to classify node {node}: {exc}\n'
+                          'Skipping this one')
             continue
 
         all_nodes[workflow_name].append(plot_nodes)
@@ -341,7 +342,7 @@ def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         else:
             energy.append(total_e)
         scaling.append(outpara.get('scaling'))
-        default_labels.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
+        default_labels.append(f'gs_vol: {volume_gs:.3} A^3, gs_scale {scale_gs:.3}, data {i}')
 
     labels = default_labels
 

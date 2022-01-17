@@ -648,11 +648,11 @@ class FleurOrbControlWorkChain(WorkChain):
         try:
             fm.show(display=False, validate=True)
         except etree.DocumentInvalid:
-            error = ('ERROR: input, inp.xml changes did not validate')
-            self.control_end_wc(error)
+            self.control_end_wc('ERROR: input, inp.xml changes did not validate')
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            error = ('ERROR: input, inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
             self.control_end_wc(error)
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
