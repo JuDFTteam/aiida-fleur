@@ -229,3 +229,4 @@ py:class  etree._Element
 py:class  etree._ElementTree
 
 py:class  ModifierTask
+py:class  FleurXMLModifier
