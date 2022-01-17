@@ -223,10 +223,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
-            if 'inpxml_changes' not in scf_wf_dict:
-                scf_wf_dict['inpxml_changes'] = []
-
-            scf_wf_dict['inpxml_changes'].append(('set_species', {
+            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
                 'species_name': f"all-{self.ctx.wf_dict['analogue_element']}",
                 'attributedict': {
                     'special': {
@@ -249,10 +246,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-            if 'inpxml_changes' not in scf_wf_dict:
-                scf_wf_dict['inpxml_changes'] = []
-
-            scf_wf_dict['inpxml_changes'].append(('set_species', {
+            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
                 'species_name': f"all-{self.ctx.wf_dict['element']}",
                 'attributedict': {
                     'special': {
@@ -275,10 +269,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 scf_wf_dict = input_orbcontrol['scf_no_ldau'].wf_parameters.get_dict()
 
-            if 'inpxml_changes' not in scf_wf_dict:
-                scf_wf_dict['inpxml_changes'] = []
-
-            scf_wf_dict['inpxml_changes'].append(('set_species', {
+            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
                 'species_name': f"all-{self.ctx.wf_dict['element']}",
                 'attributedict': {
                     'special': {
@@ -294,10 +285,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 orbcontrol_wf_dict = input_orbcontrol.wf_parameters.get_dict()
 
-            if 'inpxml_changes' not in orbcontrol_wf_dict:
-                orbcontrol_wf_dict['inpxml_changes'] = []
-
-            orbcontrol_wf_dict['inpxml_changes'].append(('set_species', {
+            orbcontrol_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
                 'species_name': f"all-{self.ctx.wf_dict['element']}",
                 'attributedict': {
                     'special': {
@@ -381,8 +369,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
 
         fleurinp_scf = self.ctx.analogue_scf.outputs.fleurinp
-        remote_data = orm.load_node(
-            self.ctx.analogue_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+        remote_data = self.ctx.analogue_scf.outputs.last_calc.remote_folder
 
         if 'settings' in inputs:
             settings = inputs.settings.get_dict()
@@ -410,7 +397,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             self.control_end_wc(error)
             return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            error = ('ERROR: input, inp.xml changes could not be applied.\n'
+                     f'The following error was raised {exc}')
             self.control_end_wc(error)
             return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
@@ -434,14 +422,12 @@ class FleurCFCoeffWorkChain(WorkChain):
             inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
             fleurinp_scf = self.ctx.rare_earth_scf.outputs.fleurinp
-            remote_data = orm.load_node(
-                self.ctx.rare_earth_scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+            remote_data = self.ctx.rare_earth_scf.outputs.last_calc.remote_folder
         elif 'orbcontrol' in self.inputs:
             inputs = AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
 
             fleurinp_scf = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_fleurinp
-            gs_scf_para = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_scf
-            remote_data = orm.load_node(gs_scf_para['last_calc_uuid']).outputs.remote_folder
+            remote_data = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf.last_calc.remote_folder
 
         if 'settings' in inputs:
             settings = inputs.settings.get_dict()
@@ -484,7 +470,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             self.control_end_wc(error)
             return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            error = ('ERROR: input, inp.xml changes could not be applied.\n'
+                     f'The following error was raised {exc}')
             self.control_end_wc(error)
             return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
