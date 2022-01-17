@@ -227,3 +227,5 @@ py:func   click.Option.get_default
 
 py:class  etree._Element
 py:class  etree._ElementTree
+
+py:class  ModifierTask
