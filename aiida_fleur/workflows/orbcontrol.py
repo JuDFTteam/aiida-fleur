@@ -611,7 +611,7 @@ class FleurOrbControlWorkChain(WorkChain):
             settings = {}
         else:
             settings = inputs.settings.get_dict()
-        settings.set_default('remove_from_remotecopy_list', []).append('mixing_history*')
+        settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
         self.report(f'INFO: create fleurinp for config {index}')
         fm = FleurinpModifier(fleurinp)
@@ -704,14 +704,14 @@ class FleurOrbControlWorkChain(WorkChain):
             settings = {}
         else:
             settings = input_scf.settings.get_dict()
-        settings.set_default('remove_from_remotecopy_list', []).append('mixing_history*')
+        settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        scf_wf_dict.set_default('inpxml_changes', []).append(('set_inpchanges', {
+        scf_wf_dict.setdefault('inpxml_changes', []).append(('set_inpchanges', {
             'change_dict': {
                 'l_linMix': False,
             }
