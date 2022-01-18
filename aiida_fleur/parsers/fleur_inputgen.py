@@ -78,8 +78,8 @@ class Fleur_inputgenParser(Parser):
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')
                 if 'Run finished successfully' not in error_file_lines:
-                    self.logger.warning('The following was written into std error and piped to {}'
-                                        ' : \n {}'.format(errorfile, error_file_lines))
+                    self.logger.warning(
+                        f'The following was written into std error and piped to {errorfile}: \n {error_file_lines}')
                     self.logger.error('Inpgen calculation did not finish successfully.')
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
@@ -89,8 +89,8 @@ class Fleur_inputgenParser(Parser):
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                self.logger.error("'{}' file not found in retrieved folder, it was probably "
-                                  'not created by inpgen'.format(file1))
+                self.logger.error(f"Expected file '{file1}' not found in retrieved folder, it was probably "
+                                  'not created by inpgen')
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:
