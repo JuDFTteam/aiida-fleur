@@ -543,10 +543,12 @@ class FleurCFCoeffWorkChain(WorkChain):
         out = {
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
-            'cf_coefficients': {},
             'angle_a_to_x_axis': None,
             'angle_c_to_z_axis': None,
             'density_normalization': None,
+            'cf_coefficients_spin_up': None,
+            'cf_coefficients_spin_down': None,
+            'cf_coefficients_convention': None,
             'cf_coefficients_units': 'K',
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
