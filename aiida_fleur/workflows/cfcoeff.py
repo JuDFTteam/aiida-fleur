@@ -22,6 +22,7 @@ from aiida.common.constants import elements as PeriodicTableElements
 from aiida_fleur.tools.StructureData_util import replace_element
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -49,7 +50,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurCFCoeffWorkChain, cls).define(spec)
+        super().define(spec)
         spec.expose_inputs(FleurScfWorkChain,
                            namespace='scf_rare_earth_analogue',
                            exclude=('structure', 'fleurinp'),
@@ -109,10 +110,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         """
         validate input
         """
-        extra_keys = []
-        for key in self.ctx.wf_dict.keys():
-            if key not in self._wf_default.keys():
-                extra_keys.append(key)
+        extra_keys = {key for key in self.ctx.wf_dict if key not in self._wf_default}
         if extra_keys:
             error = f'ERROR: input wf_parameters for CFCoeff contains extra keys: {extra_keys}'
             self.report(error)
@@ -524,8 +522,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 self.ctx.successful = False
                 continue
 
-            if 'CFdata.hdf' not in calc.outputs.retrieved.list_object_names():
-                message = f'One CF calculation did not produce a CFdata.hdf file: {calc_name}'
+            if FleurCalculation._CFDATA_HDF5_FILE_NAME not in calc.outputs.retrieved.list_object_names():
+                message = f'One CF calculation did not produce a {FleurCalculation._CFDATA_HDF5_FILE_NAME} file: {calc_name}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 skip_calculation = True
@@ -572,6 +570,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         outnode = orm.Dict(dict=out)
         outnodedict['results_node'] = outnode
+        outnodedict['crystal_field_coefficients'] = cf_calc_out
 
         # create links between all these nodes...
         outputnode_dict = create_cfcoeff_results_node(**outnodedict)
@@ -638,7 +637,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     if convert is None:
         convert = orm.Bool(True)
 
-    CRYSTAL_FIELD_FILE = 'CFdata.hdf'
+    CRYSTAL_FIELD_FILE = FleurCalculation._CFDATA_HDF5_FILE_NAME
 
     out_dict = {}
 
