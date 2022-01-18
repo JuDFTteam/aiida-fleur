@@ -1197,9 +1197,7 @@ def create_manual_slab_ase(lattice='fcc',
     positions = structure.positions
 
     zipped = zip(positions, current_symbols)
-    zipped = sorted(zipped, key=lambda x: (x[0][2], x[0][1], x[0][0]))
-
-    print(zipped)
+    zipped = sorted(zipped, key=lambda x: np.around(x[0][2], decimals=decimals))
 
     positions = [x[0] for x in zipped]
     current_symbols = [x[1] for x in zipped]
