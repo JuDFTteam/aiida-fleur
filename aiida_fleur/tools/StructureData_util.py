@@ -1204,7 +1204,6 @@ def create_manual_slab_ase(lattice='fcc',
     structure.set_chemical_symbols(current_symbols)
     structure.set_positions(positions)
 
-
     # pop layers having the highest z coordinate
     layer_occupancies = get_layers(structure)[2]
 
