@@ -1204,6 +1204,8 @@ def create_manual_slab_ase(lattice='fcc',
     structure.set_chemical_symbols(current_symbols)
     structure.set_positions(positions)
 
+    print(structure.positions)
+
     # pop layers having the highest z coordinate
     layer_occupancies = get_layers(structure)[2]
 
@@ -1215,10 +1217,13 @@ def create_manual_slab_ase(lattice='fcc',
     else:
         replacements = {}
 
+    print(structure.positions)
     layer_occupancies.append(0)  # technical append
     atoms_to_pop = np.cumsum(np.array(layer_occupancies[-1::-1]))
     for i in range(atoms_to_pop[pop_last_layers]):
         structure.pop()
+
+    print(structure.positions)
 
     # incorporate replacements
     current_symbols = structure.get_chemical_symbols()
@@ -1235,6 +1240,8 @@ def create_manual_slab_ase(lattice='fcc',
         for k in range(layer_occupancies[i + 1]):
             current_symbols[k + atoms_to_skip] = at_type
     structure.set_chemical_symbols(current_symbols)
+
+    print(structure.positions)
 
     return structure
 
