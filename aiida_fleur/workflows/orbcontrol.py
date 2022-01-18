@@ -18,7 +18,6 @@ from aiida.engine import calcfunction as cf
 from aiida.orm import Dict, Code, StructureData, RemoteData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
-from aiida.engine import CalcJob
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
@@ -132,7 +131,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.3.1'
 
     _NMMPMAT_FILE_NAME = 'n_mmp_mat'
     _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
@@ -802,6 +801,7 @@ class FleurOrbControlWorkChain(WorkChain):
             'successful_configs': configs_list,
             'non_converged_configs': non_converged_configs,
             'failed_configs': failed_configs,
+            'groundstate_configuration': None,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
             'errors': self.ctx.errors
@@ -815,6 +815,15 @@ class FleurOrbControlWorkChain(WorkChain):
         else:
             self.report('Done, but something went wrong.... All Calculations failed. Probably something is'
                         ' wrong in your setup')
+
+        #Find the minimal total energy in the list
+        if len(t_energylist) != 0:
+            groundstate_index = np.array(t_energylist).argmin()
+            out['groundstate_configuration'] = groundstate_index
+
+            if f'Relaxed_{groundstate_index}' in self.ctx:
+                groundstate_scf = self.ctx[f'Relaxed_{groundstate_index}']
+                self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
 
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -831,13 +840,9 @@ class FleurOrbControlWorkChain(WorkChain):
 
         outputscf = outputnode_dict.get('output_orbcontrol_wc_gs_scf', None)
         if outputscf:
+            outputscf.label = 'output_orbcontrol_wc_gs_scf'
             outputscf.description = ('SCF output from the run with the lowest total '
                                      'energy extracted from FleurOrbControlWorkChain')
-
-            groundstate_scf = outputscf.get_incoming(FleurScfWorkChain)
-            if groundstate_scf:
-                groundstate_scf = groundstate_scf.first().node
-                self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
 
         if len(t_energylist) == 0:
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
@@ -872,11 +877,9 @@ def create_orbcontrol_result_node(**kwargs):
     # copy, because we rather produce the same node twice
     # then have a circle in the database for now...
     outputdict = outpara.get_dict()
-    e_list = outputdict.get('total_energy', [])
-    if len(e_list) == 0:
+    groundstate_index = outputdict.get('groundstate_configuration')
+    if groundstate_index is None:
         return outdict
-
-    groundstate_index = np.array(e_list).argmin()
 
     if f'configuration_{groundstate_index}' in kwargs:
         outdict['output_orbcontrol_wc_gs_scf'] = kwargs[f'configuration_{groundstate_index}'].clone()
