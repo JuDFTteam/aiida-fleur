@@ -533,17 +533,14 @@ class FleurBandDosWorkChain(WorkChain):
         efermi_scf = 0
         bandgap_scf = 0
         if 'remote' in self.inputs:
-            for w in self.inputs.remote.get_incoming().all():
-                if isinstance(w.node, CalcJobNode):
-                    scf_results = load_node(w.node.pk).res
-                    efermi_scf = scf_results.fermi_energy
-                    bandgap_scf = scf_results.bandgap
+            scf_results = self.inputs.remote.creator.res
         elif 'scf' in self.inputs:
-            if self.ctx.scf:
-                if self.ctx.scf.is_finished_ok:
-                    scf_results = load_node(self.ctx.scf.outputs.output_scf_wc_para['last_calc_uuid']).res
-                    efermi_scf = scf_results.fermi_energy
-                    bandgap_scf = scf_results.bandgap
+            if self.ctx.scf and self.ctx.scf.is_finished_ok:
+                scf_results = self.ctx.scf.outputs.last_calc.output_parameters
+
+        if scf_results is not None:
+            efermi_scf = scf_results.fermi_energy
+            bandgap_scf = scf_results.bandgap
 
         efermi_band = last_calc_out_dict.get('fermi_energy', None)
         bandgap_band = last_calc_out_dict.get('bandgap', None)

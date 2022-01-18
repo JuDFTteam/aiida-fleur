@@ -30,7 +30,6 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
-from aiida_fleur.tools.common_fleur_wf import find_nested_process
 
 
 class FleurRelaxWorkChain(WorkChain):
@@ -290,9 +289,7 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-
-        input_scf.remote_data = last_calc.outputs.remote_folder
+        input_scf.remote_data = scf_wc.outputs.last_calc.remote_folder
         if self.ctx.new_fleurinp:
             input_scf.fleurinp = self.ctx.new_fleurinp
 
@@ -312,7 +309,7 @@ class FleurRelaxWorkChain(WorkChain):
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
-                fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+                fleur_calc = scf_wc.outputs.last_calc.remote_folder.creator
                 if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
@@ -330,7 +327,7 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wc = self.ctx.scf_res
 
         try:
-            last_calc = load_node(scf_wc.outputs.output_scf_wc_para.dict.last_calc_uuid)
+            relax_data = scf_wc.outputs.last_calc.relax_parameters
         except (NotExistent, AttributeError):
             # TODO: throw exit code
             # message = 'ERROR: Did not manage to read the largest force'
@@ -338,7 +335,7 @@ class FleurRelaxWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            forces_data = last_calc.outputs.relax_parameters.get_dict()['posforces'][-1]
+            forces_data = relax_data.get_dict()['posforces'][-1]
             all_forces = []
             for force in forces_data:
                 all_forces.extend(force[-3:])
@@ -378,9 +375,8 @@ class FleurRelaxWorkChain(WorkChain):
         """
         # TODO do we loose provenance here, which we like to keep?
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         try:
-            relax_parsed = last_calc.outputs.relax_parameters
+            relax_parsed = scf_wc.outputs.last_calc.relax_parameters
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -478,9 +474,8 @@ class FleurRelaxWorkChain(WorkChain):
             return
 
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-            last_fleur = find_nested_process(self.ctx.scf_res, FleurBaseWorkChain)[-1]
-            retrieved_node = last_fleur.outputs.retrieved
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_scf_wc_para
+            retrieved_node = self.ctx.scf_res.outputs.last_calc.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 

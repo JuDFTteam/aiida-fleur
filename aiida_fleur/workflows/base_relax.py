@@ -173,9 +173,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         self.ctx.is_finished = False
         self.report('It is time to switch from straight to BFGS relaxation')
         last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
-        last_fleur_calc = last_scf_calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
-        last_fleur_calc = load_node(last_fleur_calc)
-        remote = last_fleur_calc.get_outgoing().get_node_by_label('remote_folder')
+        remote = last_scf_calc.outputs.last_calc.remote_folder
         if 'wf_parameters' in self.ctx.inputs:
             parameters = self.ctx.inputs.wf_parameters
             run_final = parameters.get_dict().get('run_final_scf', False)
@@ -269,8 +267,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
         last_scf = load_node(last_scf_wc_uuid)
-        last_fleur = load_node(last_scf.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-        error_params = last_fleur.outputs.error_params.get_dict()
+        error_params = last_scf.outputs.last_calc.error_params.get_dict()
         label1 = int(error_params['overlapped_indices'][0])
         label2 = int(error_params['overlapped_indices'][1])
         value = -(float(error_params['overlaping_value']) + 0.01) / 2
