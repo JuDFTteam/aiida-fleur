@@ -887,6 +887,9 @@ def test_create_manual_slab_ase(inputs, symbols, positions):
 
     assert structure.get_chemical_symbols() == symbols
 
+    print(structure.positions)
+    print(positions)
+    print(np.max(structure.positions-positions))
     assert np.isclose(structure.positions, positions).all()
 
 
