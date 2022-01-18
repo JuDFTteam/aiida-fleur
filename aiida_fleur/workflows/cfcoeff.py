@@ -328,7 +328,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
             try:
-                outdict = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf
+                outdict = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf.output_scf_wc_para
             except NotExistent:
                 message = ('ERROR: Orbcontrol workflow (rare-earth) failed, no groundstate scf output node')
                 self.ctx.errors.append(message)
@@ -425,7 +425,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         elif 'orbcontrol' in self.inputs:
             inputs = AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
 
-            fleurinp_scf = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_fleurinp
+            fleurinp_scf = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf.fleurinp
             remote_data = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf.last_calc.remote_folder
 
         if 'settings' in inputs:
