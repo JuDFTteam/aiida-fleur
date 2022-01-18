@@ -562,7 +562,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
             try:
                 self.ctx.scf_no_ldau.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = ('ERROR: SCF workflow without LDA+U failed, no scf output node')
                 self.ctx.errors.append(message)
                 return self.exit_codes.ERROR_SCF_NOLDAU_FAILED
@@ -697,7 +697,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
             try:
                 fixed_calc.outputs.output_parameters
-            except KeyError:
+            except NotExistent:
                 message = f'One Base workflow (fixed nmmpmat) failed, no output node: {index}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue
@@ -789,7 +789,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = f'One SCF workflow failed, no scf output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
@@ -800,7 +800,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
             try:
                 fleurinp_scf = calc.outputs.fleurinp
-            except KeyError:
+            except NotExistent:
                 message = f'One SCF workflow failed, no fleurinp output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False

@@ -16,6 +16,7 @@
 from aiida.engine import WorkChain, ToContext, ExitCode
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
+from aiida.common.exceptions import NotExistent
 from aiida import orm
 from aiida.common.constants import elements as PeriodicTableElements
 
@@ -306,7 +307,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             try:
                 outdict = self.ctx.rare_earth_scf.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = ('ERROR: SCF workflow (rare-earth) failed, no scf output node')
                 self.ctx.errors.append(message)
                 return self.exit_codes.ERROR_SCF_FAILED
@@ -320,15 +321,15 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             try:
                 outdict = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_para
-            except KeyError:
+            except NotExistent:
                 message = ('ERROR: Orbcontrol workflow (rare-earth) failed, no orbcontrol output node')
                 self.ctx.errors.append(message)
                 self.report(message)
                 return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
             try:
-                outdict = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_scf
-            except KeyError:
+                outdict = self.ctx.rare_earth_orbcontrol.outputs.groundstate_scf
+            except NotExistent:
                 message = ('ERROR: Orbcontrol workflow (rare-earth) failed, no groundstate scf output node')
                 self.ctx.errors.append(message)
                 self.report(message)
@@ -342,7 +343,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             try:
                 outdict = self.ctx.analogue_scf.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = (
                     f"ERROR: SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) failed, no scf output node")
                 self.ctx.errors.append(message)
@@ -516,7 +517,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             try:
                 outputnode_calc = calc.outputs.output_parameters
-            except KeyError:
+            except NotExistent:
                 message = f'One CF calculation failed, no output node: {calc_name}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
