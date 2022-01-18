@@ -873,7 +873,7 @@ create_slab_positions = [
     np.array([[0.00000000, 0., 0.00000000], [1.41421356, 2., 1.41421356], [-0.0000000, 0., 2.82842712],
               [1.41421356, 2., 4.24264069], [-0.0000000, 0., 5.65685425]]),
     np.array([[0., 0., 0.], [2., 2., 2.], [0., 0., 4.], [2., 2., 6.], [0., 0., 8.], [2., 2., 10.]]),
-    np.array([[2., 2.82842712, 0], [0., 0., -0.], [2., 0, 2.82842712], [0, 2.82842712, 2.82842712], [-0, 0, 5.65685425],
+    np.array([[0., 0., -0.], [2., 2.82842712, 0], [2., 0, 2.82842712], [0, 2.82842712, 2.82842712], [-0, 0, 5.65685425],
               [2., 2.82842712, 5.65685425], [2., 0, 8.48528137], [-0., 2.82842712, 8.48528137]])
 ]
 
@@ -887,9 +887,6 @@ def test_create_manual_slab_ase(inputs, symbols, positions):
 
     assert structure.get_chemical_symbols() == symbols
 
-    print(structure.positions)
-    print(positions)
-    print(np.max(structure.positions-positions))
     assert np.isclose(structure.positions, positions).all()
 
 
