@@ -681,8 +681,8 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         if units is None:
             units = coeff.unit
             convention = coeff.convention
-        coefficients_dict_up[f'{coeff.l}\{coeff.m}'] = coeff.spin_up
-        coefficients_dict_dn[f'{coeff.l}\{coeff.m}'] = coeff.spin_down
+        coefficients_dict_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up
+        coefficients_dict_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down
 
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
     out_dict['cf_coefficients_spin_down'] = coefficients_dict_dn
