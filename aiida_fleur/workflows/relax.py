@@ -579,7 +579,7 @@ class FleurRelaxWorkChain(WorkChain):
                                                **con_nodes)
         else:
             outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
-        
+
         #Expose the outputs of the last scf calculation
         self.out_many(self.exposed_outputs(self.ctx.scf_res, FleurScfWorkChain, namespace='last_scf'))
 
