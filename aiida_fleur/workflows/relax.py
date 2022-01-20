@@ -37,7 +37,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.3.1'
+    _workflowversion = '0.4.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -79,6 +79,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         spec.output('output_relax_wc_para', valid_type=Dict)
         spec.output('optimized_structure', valid_type=StructureData)
+        spec.expose_outputs(FleurScfWorkChain, namespace='last_scf')
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -578,9 +579,12 @@ class FleurRelaxWorkChain(WorkChain):
                                                **con_nodes)
         else:
             outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
+        
+        #Expose the outputs of the last scf calculation
+        self.out_many(self.exposed_outputs(self.ctx.scf_res, FleurScfWorkChain, namespace='last_scf'))
 
         # return output nodes
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
         if self.ctx.switch_bfgs:

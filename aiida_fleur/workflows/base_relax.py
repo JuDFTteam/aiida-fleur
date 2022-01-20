@@ -36,7 +36,7 @@ FleurinpData = DataFactory('fleur.fleurinp')
 
 class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
     """Workchain to run Relax WorkChain with automated error handling and restarts"""
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.3.0'
 
     _process_class = RelaxProcess
 
