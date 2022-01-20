@@ -474,7 +474,7 @@ class FleurRelaxWorkChain(WorkChain):
             return
 
         try:
-            relax_out = self.ctx.scf_res.outputs.last_calc.output_scf_wc_para
+            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
             retrieved_node = self.ctx.scf_res.outputs.last_calc.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT

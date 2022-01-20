@@ -536,7 +536,7 @@ class FleurBandDosWorkChain(WorkChain):
             scf_results = self.inputs.remote.creator.res
         elif 'scf' in self.inputs:
             if self.ctx.scf and self.ctx.scf.is_finished_ok:
-                scf_results = self.ctx.scf.outputs.last_calc.output_parameters
+                scf_results = self.ctx.scf.outputs.last_calc.output_parameters.dict
 
         if scf_results is not None:
             efermi_scf = scf_results.fermi_energy
