@@ -85,6 +85,7 @@
             "fleur.strain = aiida_fleur.workflows.strain:FleurStrainWorkChain",
 	        "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
             "fleur.cfcoeff = aiida_fleur.workflows.cfcoeff:FleurCFCoeffWorkChain",
+            "fleur.hubbard1 = aiida_fleur.workflows.hubbard1:FleurHubbard1WorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain",
             "fleur.corehole = aiida_fleur.workflows.corehole:FleurCoreholeWorkChain",
             "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",

@@ -164,3 +164,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
 
         builder = FleurCFCoeffWorkChain.get_builder()
+
+    def test_fleur_hubbard1_wc_init(self):
+        """
+        Test the interface of the cfcoeff workchain
+        """
+        from aiida_fleur.workflows.hubbard1 import FleurHubbard1WorkChain
+
+        builder = FleurHubbard1WorkChain.get_builder()
