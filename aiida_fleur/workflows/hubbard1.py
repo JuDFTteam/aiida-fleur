@@ -145,7 +145,7 @@ class FleurHubbard1WorkChain(WorkChain):
 
         try:
             self.ctx.cfcoeff.outputs.output_cfcoeff_wc_para
-        except KeyError:
+        except NotExistent:
             message = ('ERROR: CFCoeff workflow failed, no output node')
             self.ctx.errors.append(message)
             return self.exit_codes.ERROR_CFCOEFF_CALCULATION_FAILED
@@ -255,7 +255,7 @@ class FleurHubbard1WorkChain(WorkChain):
 
         try:
             self.ctx.hubbard1.outputs.output_scf_wc_para
-        except KeyError:
+        except NotExistent:
             error = ('ERROR: Hubbard1 SCF workflow failed, no output node')
             self.ctx.successful = False
             self.control_end_wc(error)
