@@ -140,7 +140,7 @@ jobs:
        touch local_exe/fleur && chmod +x local_exe/fleur
        # At the moment the aiida-testing config cannot be used with relative paths
        # here we replace the dot in the path to make it absolute
-       sed -i "s/\./${GITHUB_WORKSPACE//\//\\/}\/aiida-fleur\/tests/g" .aiida-testing-config.yml
+       sed -i "s/\./${GITHUB_WORKSPACE//\//\\/}\/tests/g" .aiida-testing-config.yml
        ./run_all_cov.sh
 
     - name: Upload report to Codecov
