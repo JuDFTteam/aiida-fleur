@@ -116,7 +116,7 @@ class FleurHubbard1WorkChain(WorkChain):
         """
         Return whether calculations need to be run before the hubbard 1 calculation
         """
-        return self.ctx.run_prelimiary
+        return self.ctx.run_preliminary
 
     def run_preliminary_calculations(self):
         """
