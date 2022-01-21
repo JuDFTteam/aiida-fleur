@@ -19,7 +19,7 @@ class FleurHubbard1WorkChain(WorkChain):
     WorkChain for performing Hubbard-1 calculations
     """
 
-    _workflow_version = '0.0.1'
+    _workflowversion = '0.0.1'
 
     _default_wf_para = {
         'ldahia_dict': None,
@@ -275,6 +275,7 @@ class FleurHubbard1WorkChain(WorkChain):
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['errors'] = self.ctx.errors
