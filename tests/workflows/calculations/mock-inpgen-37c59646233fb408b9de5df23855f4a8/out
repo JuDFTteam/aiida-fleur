@@ -1,0 +1,80 @@
+   5.3011796809999998        7.4970000020000001        5.3011796809999998        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ primitive       tetragonal  
+
+
+ Point group of the Bravais lattice has 16 operations
+
+
+ Point group of the Bravais lattice has 16 operations
+Symmetry element no.  2 incompatible with SQA       -0.5144444148
+Symmetry element no.  3 incompatible with SQA       -0.6555227281
+Symmetry element no.  4 incompatible with SQA        0.1699671429
+Symmetry element no.  5 incompatible with SQA        0.1699671429
+Symmetry element no.  6 incompatible with SQA       -0.6555227281
+Symmetry element no.  7 incompatible with SQA       -0.5144444148
+Symmetry element no.  9 incompatible with SQA        0.9235280671
+Symmetry element no. 10 incompatible with SQA       -0.6231358587
+Symmetry element no. 11 incompatible with SQA       -1.2680053390
+Symmetry element no. 12 incompatible with SQA        0.9676131306
+Symmetry element no. 13 incompatible with SQA        0.9676131306
+Symmetry element no. 14 incompatible with SQA       -1.2680053390
+Symmetry element no. 15 incompatible with SQA       -0.6231358587
+Symmetry element no. 16 incompatible with SQA        0.9235280671
+ symmetry incompatible with SOC - Spin Quant Axis
+
+
+ Atomic positions:
+ -----------------
+ atom types =    3
+      total =    3
+
+       lattice coordinates               (scaled) Cartesian coordinates   atom
+  0.000000  0.000000 -0.149825            0.000000  0.000000 -1.992850      1
+  0.500000  0.500000  0.000000            2.650590  3.748500  0.000000      2
+  0.000000  0.000000  0.199275            0.000000  0.000000  2.650590      3
+   5.3011796809999998        7.4970000020000001        12.420000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ primitive       orthorhombic
+ values accepted unchanged
+    8   12    0              nmop(i),i=1,3
+ orientation of boundary faces
+    1    -1  -0.6398592          ifac,iside,orient for xvec
+    2    -1  -0.4456977          ifac,iside,orient for xvec
+    3    -1  -0.2512253          ifac,iside,orient for xvec
+    4    -1  -0.2211528          ifac,iside,orient for xvec
+    5    -1  -0.3923956          ifac,iside,orient for xvec
+    6    -1  -0.5453836          ifac,iside,orient for xvec
+Bravais lattice vectors
+                                               5.301180    0.000000    0.000000
+                                               0.000000    7.497000    0.000000
+                                               0.000000    0.000000   12.420000
+reciprocal lattice vectors
+                                               1.185243    0.000000    0.000000
+                                               0.000000    0.838093    0.000000
+                                               0.000000    0.000000    0.472378
+    8   12    0           Monkhorst-Pack-parameters
+ Monkhorst-Pack-fractions
+    0          nbound; no k-points  on boundary of BZ
+        1     idim
+          -0.4375000
+          -0.3125000
+          -0.1875000
+          -0.0625000
+           0.0625000
+           0.1875000
+           0.3125000
+           0.4375000
+        2     idim
+          -0.4583333
+          -0.3750000
+          -0.2916667
+          -0.2083333
+          -0.1250000
+          -0.0416667
+           0.0416667
+           0.1250000
+           0.2083333
+           0.2916667
+           0.3750000
+           0.4583333
+   5.3011796809999998        7.4970000020000001        12.420000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ primitive       orthorhombic

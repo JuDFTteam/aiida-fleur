@@ -1,0 +1,17 @@
+      Welcome to FLEUR - inpgen   (www.flapw.de)   
+      MaX-Release 5.1          (www.max-centre.eu)
+ Found inversion center at finite position.
+ Shifting crystal by:
+  -0.1250000000  -0.1250000000  -0.1250000000
+ 
+ Processing k-point string: grid=10,10,10                           
+ Generating a k-point grid:          10          10          10
+ Processing k-point string: band=240                                
+ Generating a k-point set for bandstructures with          240  k-points
+ Stored k-point lists:
+ 
+                NAME           TYPE      NKPT   COMMENT
+ ================================================================================
+           default-1           MESH       110   10 x 10 x 10
+              path-2           PATH       240   X - K - g - L - W - X - g
+ ================================================================================
