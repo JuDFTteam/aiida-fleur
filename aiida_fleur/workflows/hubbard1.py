@@ -6,7 +6,8 @@ a complete hubbard 1 calculation including calculating model parameters beforeha
 from collections import defaultdict
 
 from aiida.common import AttributeDict
-from aiida.engine import WorkChain, ToContext, if_
+from aiida.common.exceptions import NotExistent
+from aiida.engine import WorkChain, ToContext, if_, calcfunction
 from aiida import orm
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
@@ -55,13 +56,14 @@ class FleurHubbard1WorkChain(WorkChain):
         })
         spec.input('wf_parameters', valid_type=orm.Dict, required=False)
 
+        #TODO: hubbard1 calculation in loop until converged?
         spec.outline(
             cls.start, cls.validate_inputs,
             if_(cls.preliminary_calcs_needed)(cls.run_preliminary_calculations, cls.inspect_preliminary_calculations),
             cls.run_hubbard1_calculation, cls.inspect_hubbard1_calculation, cls.return_results)
 
         spec.output('output_hubbard1_wc_para', valid_type=orm.Dict)
-        spec.expose_outputs(FleurScfWorkChain, namespace='scf')
+        spec.expose_outputs(FleurScfWorkChain)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -76,6 +78,10 @@ class FleurHubbard1WorkChain(WorkChain):
 
         self.ctx.run_preliminary = False
         self.ctx.fleurinp_hubbard1 = None
+        self.ctx.successful = True
+        self.ctx.info = []
+        self.ctx.errors = []
+        self.ctx.warnings = []
 
         wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
@@ -244,15 +250,82 @@ class FleurHubbard1WorkChain(WorkChain):
         """
         if not self.ctx.hubbard1.is_finished_ok:
             error = ('ERROR: Hubbard1 SCF workflow was not successful')
-            self.report(error)
-            return self.exit_codes.ERROR_HUBBARD1_CALCULATION_FAILED
+            self.ctx.successful = False
+            self.control_end_wc(error)
 
         try:
             self.ctx.hubbard1.outputs.output_scf_wc_para
         except KeyError:
-            message = ('ERROR: Hubbard1 SCF workflow failed, no output node')
-            self.ctx.errors.append(message)
-            return self.exit_codes.ERROR_HUBBARD1_CALCULATION_FAILED
+            error = ('ERROR: Hubbard1 SCF workflow failed, no output node')
+            self.ctx.successful = False
+            self.control_end_wc(error)
 
     def return_results(self):
-        pass
+        """
+        Return results of the hubbard1 workchain
+        """
+
+        try:  # if something failed, we still might be able to retrieve something
+            last_calc_out = self.ctx.hubbard1.outputs.last_calc.output_parameters
+            retrieved = self.ctx.hubbard1.outputs.last_calc.retrieved
+        except (NotExistent, AttributeError):
+            last_calc_out = None
+            retrieved = None
+
+        outputnode_dict = {}
+
+        outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['info'] = self.ctx.info
+        outputnode_dict['errors'] = self.ctx.errors
+        outputnode_dict['successful'] = self.ctx.successful
+        #TODO: What should be in here
+        # - magnetic moments
+        # - orbital moments
+        # What else
+
+        outputnode = orm.Dict(dict=outputnode_dict)
+
+        outdict = create_hubbard1_result_node(outpara=outputnode,
+                                              last_calc_out=last_calc_out,
+                                              last_calc_retrieved=retrieved)
+
+        if self.ctx.hubbard1:
+            self.out_many(self.exposed_outputs(self.ctx.hubbard1, FleurScfWorkChain))
+
+        for link_name, node in outdict.items():
+            self.out(link_name, node)
+
+        if not self.ctx.successful:
+            return self.exit_codes.ERROR_HUBBARD1_CALCULATION_FAILED
+
+    def control_end_wc(self, errormsg):
+        """
+        Controlled way to shutdown the workchain. will initialize the output nodes
+        The shutdown of the workchain will has to be done afterwards
+        """
+        self.ctx.successful = False
+        self.ctx.abort = True
+        self.report(errormsg)  # because return_results still fails somewhen
+        self.ctx.errors.append(errormsg)
+        self.return_results()
+
+
+@calcfunction
+def create_hubbard1_result_node(**kwargs):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    outpara = kwargs['outpara']  #Should always be there
+    outdict = {}
+    outputnode = outpara.clone()
+    outputnode.label = 'output_hubbard1_wc_para'
+    outputnode.description = (
+        'Contains self-consistency/magnetic information results and information of an FleurHubbard1WorkChain run.')
+
+    outdict['output_hubbard1_wc_para'] = outputnode
+    return outdict
