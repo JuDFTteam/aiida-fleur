@@ -154,7 +154,7 @@ class FleurHubbard1WorkChain(WorkChain):
         """
         Create the inpxml_changes input to create the hubbard 1 input
         """
-        inputs_hubbard1 = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        inputs_hubbard1 = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='hubbard1_scf'))
 
         if 'wf_parameters' in inputs_hubbard1:
             scf_wf_para = inputs_hubbard1.wf_parameters.get_dict()
