@@ -37,7 +37,7 @@ class FleurHubbard1WorkChain(WorkChain):
         'energy_grid': {
             'ellow': -1.0,
             'elup': 1.0,
-            'n': 5400
+            'ne': 5400
         },
         'inpxml_changes': [],
     }
