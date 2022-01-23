@@ -228,7 +228,12 @@ class FleurHubbard1WorkChain(WorkChain):
             if self.ctx.wf_dict['soc'] != 'auto':
                 ldahia_dict = {**ldahia_dict, 'addarg': {'key': 'xiSOC', 'value': self.ctx.wf_dict['soc']}}
 
-            scf_wf_para['inpxml_changes'].append(('set_species', {'species_name': species_name, 'ldahia': ldahia_dict}))
+            scf_wf_para['inpxml_changes'].append(('set_species', {
+                'species_name': species_name,
+                'attributedict': {
+                    'ldahia': ldahia_dict
+                }
+            }))
 
         inputs_hubbard1.wf_parameters = orm.Dict(dict=scf_wf_para)
 
