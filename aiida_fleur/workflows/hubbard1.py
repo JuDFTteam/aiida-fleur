@@ -4,6 +4,7 @@ This module contains the FleurHubbard1WorkChain, which is used to perform
 a complete hubbard 1 calculation including calculating model parameters beforehand
 """
 from collections import defaultdict
+import copy
 
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -83,7 +84,7 @@ class FleurHubbard1WorkChain(WorkChain):
         self.ctx.errors = []
         self.ctx.warnings = []
 
-        wf_default = self._default_wf_para
+        wf_default = copy.deepcopy(self._default_wf_para)
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
