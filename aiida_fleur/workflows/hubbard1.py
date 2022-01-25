@@ -215,7 +215,7 @@ class FleurHubbard1WorkChain(WorkChain):
             coefficient_tags.append({'l': l, 'm': m, 'value': coeff})
 
         exc_constant_tags = []
-        exc_constant = self.ctx.wf_dict.get('exchange_constant', {})
+        exc_constant = self.ctx.wf_dict.get('exchange_constants', {})
         for l, exc_dict in exc_constant.items():
             exc_constant_tags.append({'l': l, **exc_dict})
 
