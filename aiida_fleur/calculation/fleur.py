@@ -388,7 +388,7 @@ class FleurCalculation(CalcJob):
             if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
-            if modes['ldau']:
+            if modes['ldau'] or modes['ldahia']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
