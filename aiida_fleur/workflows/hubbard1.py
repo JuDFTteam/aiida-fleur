@@ -205,7 +205,7 @@ class FleurHubbard1WorkChain(WorkChain):
             #TODO: Select spin channel
             cf_coefficients = self.ctx.cfcoeff.outputs.output_cfcoeff_wc_para.dict.cf_coefficients_spin_up
             #Drop coefficients with negative m
-            cf_coefficients = {key: coeff for key, coeff in cf_coefficients.items() if '-' in key}
+            cf_coefficients = {key: coeff for key, coeff in cf_coefficients.items() if '-' not in key}
         else:
             cf_coefficients = self.ctx.wf_dict.get('cf_coefficients', {})
 
