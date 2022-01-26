@@ -38,7 +38,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
-        'torque_criterion': 0.001,
+        'torque_criterion': 0.5,
         'run_final_scf': False,  # Run a final scf on the final relaxed structure
         'relax_alpha': 0.1,
         'break_symmetry': False,
