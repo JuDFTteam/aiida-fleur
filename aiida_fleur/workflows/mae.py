@@ -20,11 +20,12 @@ import copy
 import six
 #from six.moves import map
 from lxml import etree
+from ase.dft.kpoints import monkhorst_pack
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import Code, load_node
-from aiida.orm import RemoteData, Dict
+from aiida.orm import RemoteData, Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
@@ -65,6 +66,7 @@ class FleurMaeWorkChain(WorkChain):
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
         },
+        'kmesh_force_theorem': None,
         'soc_off': [],
         'inpxml_changes': [],
     }
@@ -287,6 +289,12 @@ class FleurMaeWorkChain(WorkChain):
             }
         }))
         fchanges.append(('set_inpchanges', {'change_dict': {'itmax': 1, 'l_soc': True}}),)
+
+        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+            kmesh = KpointsData()
+            kmesh.set_kpoints_mesh(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+            kmesh.store()
+            fchanges.append(('set_kpointsdata', {'kpointsdata_uuid': kmesh.uuid, 'switch': True}))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
