@@ -25,7 +25,7 @@ import json
 from lxml import etree
 
 from aiida.parsers import Parser
-from aiida.orm import Dict, BandsData
+from aiida.orm import Dict
 from aiida.common.exceptions import NotExistent
 
 from masci_tools.io.parsers.fleur import outxml_parser
@@ -80,12 +80,7 @@ class FleurParser(Parser):
         should_retrieve = calc.get_attribute('retrieve_list')
 
         has_xml_outfile = False
-        has_dos_file = False
-        has_bands_file = False
         has_relax_file = False
-
-        dos_file = None
-        band_file = None
 
         ######### Check presence of files ######
 
@@ -99,7 +94,7 @@ class FleurParser(Parser):
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info(f'file list {list_of_files}')
+        self.logger.info(f'File list: {list_of_files}')
 
         # has output xml file, otherwise error
         if FleurCalculation._OUTXML_FILE_NAME not in list_of_files:
@@ -111,7 +106,8 @@ class FleurParser(Parser):
         # check if all files expected are there for the calculation
         for file in should_retrieve:
             if file not in list_of_files:
-                self.logger.warning(f"'{file}' file not found in retrived folder, it was probably not created by fleur")
+                self.logger.warning(
+                    f"Expected file '{file}' not found in retrieved folder, it was probably not created by fleur")
 
         # check if something was written to the error file
         if FleurCalculation._ERROR_FILE_NAME in list_of_files:
@@ -133,7 +129,7 @@ class FleurParser(Parser):
                 if 'Run finished successfully' not in error_file_lines:
                     self.logger.warning('The following was written into std error and piped to {}'
                                         ' : \n {}'.format(errorfile, error_file_lines))
-                    self.logger.error('FLEUR calculation did not finish' ' successfully.')
+                    self.logger.error('FLEUR calculation did not finish successfully.')
 
                     # here we estimate how much memory was available and consumed
                     mpiprocs = self.node.get_attribute('resources').get('num_mpiprocs_per_machine', 1)
@@ -213,11 +209,6 @@ class FleurParser(Parser):
                     else:
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
-        if FleurCalculation._DOS_FILE_NAME in list_of_files:
-            has_dos = True
-        if FleurCalculation._BAND_FILE_NAME in list_of_files:
-            has_bands = True
-
         # if a relax.xml was retrieved
         if FleurCalculation._RELAX_FILE_NAME in list_of_files:
             self.logger.info('relax.xml file found in retrieved folder')
@@ -241,49 +232,19 @@ class FleurParser(Parser):
         # Call routines for output node creation
         if not success:
             self.logger.error('Parsing of XML output file was not successfull.')
-            parameter_data = dict(list(parser_info.items()))
-            outxml_params = Dict(dict=parameter_data)
+            outxml_params = Dict(dict=parser_info)
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
             return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
         elif out_dict:
-            outputdata = dict(list(out_dict.items()) + list(parser_info.items()))
-            outxml_params = Dict(dict=outputdata)
+            outxml_params = Dict(dict={**out_dict, **parser_info})
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
         else:
             self.logger.error('Something went wrong, no out_dict found')
-            parameter_data = dict(list(parser_info.items()))
-            outxml_params = Dict(dict=parameter_data)
+            outxml_params = Dict(dict=parser_info)
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
-
-        # optional parse other files
-        # DOS
-        if has_dos_file:
-            dos_file = FleurCalculation._DOS_FILE_NAME
-            # if dos_file is not None:
-            try:
-                with output_folder.open(dos_file, 'r') as dosf:
-                    dos_lines = dosf.read()  # Note: read() and not readlines()
-            except IOError:
-                self.logger.error(f'Failed to open DOS file: {dos_file}.')
-                return self.exit_codes.ERROR_OPENING_OUTPUTS
-            dos_data = parse_dos_file(dos_lines)  # , number_of_atom_types)
-
-        # Bands
-        if has_bands_file:
-            # TODO: be carefull there might be two files.
-            band_file = FleurCalculation._BAND_FILE_NAME
-
-            # if band_file is not None:
-            try:
-                with output_folder.open(band_file, 'r') as bandf:
-                    bands_lines = bandf.read()  # Note: read() and not readlines()
-            except IOError:
-                self.logger.error(f'Failed to open bandstructure file: {band_file}.')
-                return self.exit_codes.ERROR_OPENING_OUTPUTS
-            bands_data = parse_bands_file(bands_lines)
 
         if has_relax_file:
             relax_name = FleurCalculation._RELAX_FILE_NAME
@@ -309,51 +270,6 @@ class FleurParser(Parser):
                     except etree.XMLSyntaxError:
                         return self.exit_codes.ERROR_RELAX_PARSING_FAILED
                     self.out('relax_parameters', relax_dict)
-
-
-def parse_dos_file(dos_lines):  # , number_of_atom_types):
-    """
-    Parses the returned DOS.X files.
-    Structure:
-    (100(1x,e10.3))   e,totdos,interstitial,vac1,vac2,
-    (at(i),i=1,ntype),((q(l,i),l=1,LMAX),i=1,ntype)
-    where e is the energy in eV (= 1/27.2 htr) at(i) is the local DOS of a
-    single atom of the i'th atom-type and q(l,i) is the l-resolved DOS at
-    the i'th atom but has to be multiplied by the number of atoms of this type.
-
-    :param dos_lines: string of the read in dos file
-    :param number_of_atom_types: integer, number of atom types
-    """
-    # pass
-    return 0
-
-
-def parse_bands_file(bands_lines):
-    '''
-    Parses the returned bands.1 and bands.2 file and returns a complete
-    bandsData object. bands.1 has the form: k value, energy
-
-    :param bands_lines: string of the read in bands file
-    '''
-    # TODO: not finished
-    # read bands out of file:
-    nrows = 0  # get number of rows (known form number of atom types
-    bands_values = []  # init an array of arrays nkpoint * ...
-    bands_labels = []  # label for each row.
-
-    # fill and correct fermi energy.
-    bands_values = []
-
-    # TODO: we need to get the cell from StructureData node
-    # and KpointsData node from inpxml
-    fleur_bands = BandsData()
-    # fleur_bands.set_cell(cell)
-    #fleur_bands.set_kpoints(kpoints, cartesian=True)
-    fleur_bands.set_bands(bands=bands_values, units='eV', labels=bands_labels)
-
-    for line in bands_lines:
-        pass
-    return fleur_bands
 
 
 def parse_relax_file(relax_file, schema_dict):

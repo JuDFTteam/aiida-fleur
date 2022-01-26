@@ -30,30 +30,6 @@ def test_fleurparse_relax_file():
     assert result.get_dict() != {}
 
 
-# parse_dos_file, test for different dos files with spin and without
-@pytest.mark.skip(reason='Test is not implemented')
-def test_parse_dos_file():
-    """
-    test for the fleur dos file parser. test if right output, datastructures are produced without error
-    """
-    from aiida_fleur.parsers.fleur import parse_dos_file
-    # test if array data is prodcued without error
-    assert False
-
-
-# parse_bands_file
-@pytest.mark.skip(reason='Test is not implemented')
-def test_parse_bands_file():
-    """
-    test for band file parse routine.
-    """
-
-    from aiida_fleur.parsers.fleur import parse_bands_file
-
-    # test if a bandsdata object is produced
-    assert False
-
-
 # test the full parser itself. on all kinds of different output files.
 
 # test if the right aiida datastructures are produced for different output
