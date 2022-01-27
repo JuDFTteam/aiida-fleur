@@ -107,10 +107,15 @@ class FleurHubbard1WorkChain(WorkChain):
 
         inputs = self.inputs
         if 'cfcoeff' in inputs:
+            if 'wf_parameters' in inputs:
+                if inputs.wf_parameters.get_dict().get('convert_to_stevens') is True:
+                    error = 'ERROR: you gave cfcoeff input with explcitly setting convert_to_setvens to True. This needs to be False'
+                    self.report(error)
+                    return self.exit_codes.ERROR_INVALID_INPUT_PARAM
             self.ctx.run_preliminary = True
             if self.ctx.wf_dict['cf_coefficients'] is not None:
                 error = 'ERROR: you gave cfcoeff input + explicit cf_coefficients in wf_parameters'
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
     def preliminary_calcs_needed(self):
@@ -131,6 +136,15 @@ class FleurHubbard1WorkChain(WorkChain):
             self.report('INFO: Starting Crystal field calculation')
 
             inputs = AttributeDict(self.exposed_inputs(FleurCFCoeffWorkChain, namespace='cfcoeff'))
+
+            if 'wf_parameters' in inputs:
+                if 'convert_to_stevens' not in inputs:
+                    inputs.wf_parameters = orm.Dict(dict={
+                        **inputs.wf_parameters.get_dict(), 'convert_to_stevens': False
+                    })
+            else:
+                inputs.wf_parameters = orm.Dict(dict={'convert_to_stevens': False})
+
             calcs['cfcoeff'] = self.submit(FleurCFCoeffWorkChain, **inputs)
 
         return ToContext(**calcs)
