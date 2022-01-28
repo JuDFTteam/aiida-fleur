@@ -299,7 +299,7 @@ class FleurMaeWorkChain(WorkChain):
 
         if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
             kmesh = KpointsData()
-            kmesh.set_kpoints_mesh(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
             kmesh.store()
             fchanges.append(('set_kpointsdata', {'kpointsdata_uuid': kmesh.uuid, 'switch': True}))
 
