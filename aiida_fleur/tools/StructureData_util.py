@@ -1197,7 +1197,7 @@ def create_manual_slab_ase(lattice='fcc',
     positions = structure.positions
 
     zipped = zip(positions, current_symbols)
-    zipped = sorted(zipped, key=lambda x: np.around(x[0][2], decimals=decimals))
+    zipped = sorted(zipped, key=lambda x: x[0][2])
 
     positions = [x[0] for x in zipped]
     current_symbols = [x[1] for x in zipped]
@@ -1243,7 +1243,7 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               z_coordinate_window=3):
+                               z_coordinate_window=3, shift=(0,0)):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -1318,7 +1318,10 @@ def magnetic_slab_from_relaxed(relaxed_structure,
         if done_layers < num_relaxed_layers:
             layer = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)[0]
             for atom in layer[done_layers]:
-                a = Site(kind_name=atom[1], position=atom[0])
+                orig_pos = atom[0]
+                pos_x = atom[0][0] + shift[0] * magn_structure.cell[0][0] + shift[1] * magn_structure.cell[1][0]
+                pos_y = atom[0][1] + shift[0] * magn_structure.cell[0][1] + shift[1] * magn_structure.cell[1][1]
+                a = Site(kind_name=atom[1], position=(pos_x, pos_y, atom[0][2]))
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
@@ -1913,7 +1916,7 @@ def define_AFM_structures(structure,
                                                               directions=directions,
                                                               host_symbol=host_symbol,
                                                               latticeconstant=latticeconstant,
-                                                              size=(1, 1, 1),
+                                                              size=(1, 1, size_z),
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
@@ -2088,7 +2091,7 @@ def define_AFM_structures(structure,
     output_layers = get_layers(output_structure)[0]
 
     if len(init_layers) != len(output_layers):
-        raise ValueError('input and output structure have different number of layers')
+        raise ValueError('input and output structure have different number of layers {} {}'.format(len(init_layers), len(output_layers)))
 
     for i, layer in enumerate(get_layers(output_structure)[0]):
         for atom in layer:
