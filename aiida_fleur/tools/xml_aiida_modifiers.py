@@ -4,7 +4,7 @@ This module defines XML modifying functions, that require an aiida node as input
 """
 
 
-def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=False):
+def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
     """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
     in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
     ``inp.xml`` file. Currently it is the users responsibility to provide a full
@@ -42,11 +42,11 @@ def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=
     if labels is not None:
         labels_dict = dict(labels)
 
-    try:
-        KpointsDataNode.get_kpoints_mesh()
-        kpoint_type = 'mesh'
-    except AttributeError:
-        kpoint_type = 'path'
+    # try:
+    #     KpointsDataNode.get_kpoints_mesh()
+    #     kpoint_type = 'mesh'
+    # except AttributeError:
+    #     kpoint_type = 'path'
 
     if schema_dict.inp_version <= (0, 31):
         xmltree = set_kpointlist(xmltree, schema_dict, kpoints, weights)
