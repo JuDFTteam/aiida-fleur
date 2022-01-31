@@ -102,7 +102,10 @@ class FleurinpModifier(FleurXMLModifier):
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
-        :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.
+        :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
+        :param name: str name to give the newly entered kpoint list (only MaX5 or later)
+        :param switch: bool if True the entered kpoint list will be used directly (only Max5 or later)
+        :param kpoint_type: str of the type of kpoint list given (mesh, path, etc.) only Max5 or later
         """
         from aiida.orm import KpointsData, load_node
 
