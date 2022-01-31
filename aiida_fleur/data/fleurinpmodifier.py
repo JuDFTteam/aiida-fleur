@@ -118,11 +118,13 @@ class FleurinpModifier(FleurXMLModifier):
 
         self._other_nodes[node_label] = load_node(kpointsdata_uuid)
         self._tasks.append(
-            ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={
-                'name': name,
-                'switch': switch,
-                'kpoint_type': kpoint_type
-            }))
+            ModifierTask('set_kpointsdata',
+                         args=(kpointsdata_uuid,),
+                         kwargs={
+                             'name': name,
+                             'switch': switch,
+                             'kpoint_type': kpoint_type
+                         }))
 
     #Modification functions that were renamed in masci-tools
 

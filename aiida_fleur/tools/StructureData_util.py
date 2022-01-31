@@ -1243,7 +1243,8 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               z_coordinate_window=3, shift=(0,0)):
+                               z_coordinate_window=3,
+                               shift=(0, 0)):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -2091,7 +2092,8 @@ def define_AFM_structures(structure,
     output_layers = get_layers(output_structure)[0]
 
     if len(init_layers) != len(output_layers):
-        raise ValueError('input and output structure have different number of layers {} {}'.format(len(init_layers), len(output_layers)))
+        raise ValueError('input and output structure have different number of layers {} {}'.format(
+            len(init_layers), len(output_layers)))
 
     for i, layer in enumerate(get_layers(output_structure)[0]):
         for atom in layer:

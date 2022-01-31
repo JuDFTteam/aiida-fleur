@@ -301,7 +301,11 @@ class FleurMaeWorkChain(WorkChain):
             kmesh = KpointsData()
             kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
             kmesh.store()
-            fchanges.append(('set_kpointsdata', {'kpointsdata_uuid': kmesh.uuid, 'switch': True, 'kpoint_type': 'mesh'}))
+            fchanges.append(('set_kpointsdata', {
+                'kpointsdata_uuid': kmesh.uuid,
+                'switch': True,
+                'kpoint_type': 'mesh'
+            }))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
