@@ -252,15 +252,15 @@ class FleurBandDosWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        if listname is None:
-            if wf_dict.get('mode') == 'band':
-                listname = 'path-2'
+        if listname is None and wf_dict['mode'] == 'band':
+            listname = 'path-2'
 
         if nkpts is None and distance is None:
             nkpts = 500
 
         if 'kpoints' in self.inputs:
-            fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True)
+            kpoint_type = 'path' if wf_dict['mode'] == 'band' else 'mesh'
+            fleurmode.set_kpointsdata(self.inputs.kpoints, switch=True, kpoint_type=kpoint_type)
         elif kpath == 'auto':
             if fleurin.inp_version >= '0.32' and listname is not None:
                 fleurmode.switch_kpointset(listname)
@@ -324,11 +324,10 @@ class FleurBandDosWorkChain(WorkChain):
         emin = wf_dict['emin']
         emax = wf_dict['emax']
 
-        if fleurin.inp_version < '0.32':
-            if wf_dict.get('mode') == 'dos':
-                fleurmode.set_inpchanges({'ndir': -1})
+        if fleurin.inp_version < '0.32' and wf_dict['mode'] == 'dos':
+            fleurmode.set_inpchanges({'ndir': -1})
 
-        if wf_dict.get('mode') == 'dos':
+        if wf_dict['mode'] == 'dos':
             change_dict = {'dos': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         else:
             change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
