@@ -71,6 +71,8 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_even': False,
         'kpoints_force_gamma': False,
         'nmmp_converged': 0.002,
+        'hubbard1_occ_converged': 0.01,
+        'hubbard1_elem_converged': 0.001,
         'mode': 'density',  # 'density', 'energy', 'force' or 'gw'
         'add_comp_para': {
             'only_even_MPI': False,
@@ -216,10 +218,14 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.all_forces = []
         self.ctx.total_energy = []
         self.ctx.nmmp_distance = []
+        self.ctx.hubbard1_occ_distance = []
+        self.ctx.hubbard1_elem_distance = []
         self.ctx.energydiff = 10000
         self.ctx.forcediff = 10000
         self.ctx.last_charge_density = 10000
         self.ctx.last_nmmp_distance = -10000
+        self.ctx.last_hubbard1_occ_distance = -10000
+        self.ctx.last_hubbard1_elem_distance = -10000
         self.ctx.warnings = []
         # "debug": {},
         self.ctx.errors = []
@@ -668,6 +674,15 @@ class FleurScfWorkChain(WorkChain):
 
                 if nmmp_distances is not None:
                     self.ctx.nmmp_distance.extend(nmmp_distances)
+            
+            if 'ldahia_info' in output_dict:
+                occ_distances = output_dict['ldahia_info'].get('occupation_distance', [])
+                elem_distances = output_dict['ldahia_info'].get('element_distance', [])
+
+                if occ_distances:
+                    #Assume both worked
+                    self.ctx.hubbard1_occ_distance.extend(occ_distances)
+                    self.ctx.hubbard1_elem_distance.extend(elem_distances)
 
             if mode == 'force':
                 forces = output_dict.get('force_atoms', [])
@@ -709,6 +724,7 @@ class FleurScfWorkChain(WorkChain):
         self.report('INFO: checking condition FLEUR')
         mode = self.ctx.wf_dict['mode']
         ldau_notconverged = False
+        ldahia_notconverged = False
 
         energy = self.ctx.total_energy
         if len(energy) >= 2:
@@ -725,14 +741,22 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.last_nmmp_distance > 0.0 and \
            self.ctx.last_nmmp_distance >= self.ctx.wf_dict['nmmp_converged']:
             ldau_notconverged = True
+        
+        if self.ctx.last_hubbard1_occ_distance > 0.0 and \
+           self.ctx.last_hubbard1_occ_distance >= self.ctx.wf_dict['hubbard1_occ_converged']:
+            ldahia_notconverged = True
+        
+        if self.ctx.last_hubbard1_elem_distance > 0.0 and \
+           self.ctx.last_hubbard1_elem_distance >= self.ctx.wf_dict['hubbard1_elem_converged']:
+            ldahia_notconverged = True
 
         if mode == 'density':
             if self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
-                if not ldau_notconverged:
+                if not ldau_notconverged or not ldahia_notconverged:
                     return False
         elif mode in ('energy', 'spex'):
             if self.ctx.wf_dict['energy_converged'] >= self.ctx.energydiff:
-                if not ldau_notconverged:
+                if not ldau_notconverged or not ldahia_notconverged:
                     return False
         elif mode == 'force':
             if self.ctx.last_charge_density is None:
@@ -741,7 +765,7 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    if not ldau_notconverged:
+                    if not ldau_notconverged or not ldahia_notconverged:
                         return False
 
             elif self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
@@ -750,7 +774,7 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    if not ldau_notconverged:
+                    if not ldau_notconverged or not ldahia_notconverged:
                         return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
@@ -785,6 +809,14 @@ class FleurScfWorkChain(WorkChain):
         last_nmmp_distance = None
         if self.ctx.last_nmmp_distance > 0.0:
             last_nmmp_distance = self.ctx.last_nmmp_distance
+        
+        last_hubbard1_occ_distance = None
+        if self.ctx.last_hubbard1_occ_distance > 0.0:
+            last_hubbard1_occ_distance = self.ctx.last_hubbard1_occ_distance
+        
+        last_hubbard1_elem_distance = None
+        if self.ctx.last_hubbard1_elem_distance > 0.0:
+            last_hubbard1_elem_distance = self.ctx.last_hubbard1_elem_distance
 
         outputnode_dict = {}
         outputnode_dict['workflow_name'] = self.__class__.__name__
@@ -803,6 +835,10 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['nmmp_distance'] = last_nmmp_distance
         outputnode_dict['nmmp_distance_all'] = self.ctx.nmmp_distance
+        outputnode_dict['hubbard1_occ_distance'] = last_hubbard1_occ_distance
+        outputnode_dict['hubbard1_occ_distance_all'] = self.ctx.hubbard1_occ_distance
+        outputnode_dict['hubbard1_elem_distance'] = last_hubbard1_elem_distance
+        outputnode_dict['hubbard1_elem_distance_all'] = self.ctx.hubbard1_elem_distance
         outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
         outputnode_dict['total_wall_time_units'] = 's'
@@ -856,6 +892,10 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.last_nmmp_distance > 0.0:
             self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '
                         'of all matrix elements')
+        
+        if self.ctx.last_hubbard1_occ_distance > 0.0:
+            self.report(f'INFO: The LDA+Hubbard 1 density matrix is converged to {self.ctx.last_hubbard1_occ_distance} change '
+                        f'of occupation and {self.ctx.last_hubbard1_elem_distance} change of all matrix elements')
 
         outputnode_t = Dict(dict=outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...
