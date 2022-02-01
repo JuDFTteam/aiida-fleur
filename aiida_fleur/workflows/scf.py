@@ -754,6 +754,14 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.last_nmmp_distance > 0.0 and \
            self.ctx.last_nmmp_distance >= self.ctx.wf_dict['nmmp_converged']:
             ldau_notconverged = True
+        
+        if self.ctx.last_hubbard1_occ_distance > 0.0 and \
+           self.ctx.last_hubbard1_occ_distance >= self.ctx.wf_dict['hubbard1_occ_converged']:
+            ldahia_notconverged = True
+        
+        if self.ctx.last_hubbard1_elem_distance > 0.0 and \
+           self.ctx.last_hubbard1_elem_distance >= self.ctx.wf_dict['hubbard1_elem_converged']:
+            ldahia_notconverged = True
 
         if self.ctx.last_hubbard1_occ_distance > 0.0 and \
            self.ctx.last_hubbard1_occ_distance >= self.ctx.wf_dict['hubbard1_occ_converged']:
