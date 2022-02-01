@@ -674,7 +674,7 @@ class FleurScfWorkChain(WorkChain):
 
                 if nmmp_distances is not None:
                     self.ctx.nmmp_distance.extend(nmmp_distances)
-            
+
             if 'ldahia_info' in output_dict:
                 occ_distances = output_dict['ldahia_info'].get('occupation_distance', [])
                 elem_distances = output_dict['ldahia_info'].get('element_distance', [])
@@ -831,11 +831,11 @@ class FleurScfWorkChain(WorkChain):
         last_nmmp_distance = None
         if self.ctx.last_nmmp_distance > 0.0:
             last_nmmp_distance = self.ctx.last_nmmp_distance
-        
+
         last_hubbard1_occ_distance = None
         if self.ctx.last_hubbard1_occ_distance > 0.0:
             last_hubbard1_occ_distance = self.ctx.last_hubbard1_occ_distance
-        
+
         last_hubbard1_elem_distance = None
         if self.ctx.last_hubbard1_elem_distance > 0.0:
             last_hubbard1_elem_distance = self.ctx.last_hubbard1_elem_distance
@@ -922,10 +922,11 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.last_nmmp_distance > 0.0:
             self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '
                         'of all matrix elements')
-        
+
         if self.ctx.last_hubbard1_occ_distance > 0.0:
-            self.report(f'INFO: The LDA+Hubbard 1 density matrix is converged to {self.ctx.last_hubbard1_occ_distance} change '
-                        f'of occupation and {self.ctx.last_hubbard1_elem_distance} change of all matrix elements')
+            self.report(
+                f'INFO: The LDA+Hubbard 1 density matrix is converged to {self.ctx.last_hubbard1_occ_distance} change '
+                f'of occupation and {self.ctx.last_hubbard1_elem_distance} change of all matrix elements')
 
         if self.ctx.last_hubbard1_occ_distance > 0.0:
             self.report(
