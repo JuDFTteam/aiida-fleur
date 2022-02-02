@@ -187,7 +187,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         if 'structure' in input_scf:
             orig_structure = input_scf['structure']
         elif 'fleurinp' in input_scf:
-            orig_structure = input_scf['fleurinp'].get_structuredata()
+            orig_structure = input_scf['fleurinp'].get_structuredata_ncf()
 
         if 'calc_parameters' in input_scf:
             rare_earth_params = input_scf['calc_parameters'].get_dict()
