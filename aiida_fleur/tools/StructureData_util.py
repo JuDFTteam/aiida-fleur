@@ -1870,6 +1870,25 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
     return new_structures
 
 
+def mark_atoms(structure, condition, kind_id='99999'):
+    '''
+    Marks atom where sites fullfill the given condition with a given id
+    The resulting kind name for these atoms is element-kind_id
+    '''
+    from aiida.orm import StructureData
+
+    new_structure = StructureData(cell=structure.cell)
+    new_structure.pbc = structure.pbc
+
+    for site in structure.sites:
+        if not condition(site):
+            continue
+        element = site.symbols[0]
+        new_structure.append(position=site.position, symbols=element, name=f'{element}-{kind_id}')
+
+    return new_structure
+
+
 def simplify_kind_name(kind_name):
     '''
     Simplifies the kind name string. Example: "W-1" -> "W", "Iron (Fe)" -> "Fe"

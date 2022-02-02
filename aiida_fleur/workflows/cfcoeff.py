@@ -20,7 +20,7 @@ from aiida.common.exceptions import NotExistent
 from aiida import orm
 from aiida.common.constants import elements as PeriodicTableElements
 
-from aiida_fleur.tools.StructureData_util import replace_element
+from aiida_fleur.tools.StructureData_util import replace_element, mark_atoms
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -50,6 +50,8 @@ class FleurCFCoeffWorkChain(WorkChain):
         'soc_off': True,
         'convert_to_stevens': True,
     }
+
+    _CF_GROUP_LABEL = '89999'
 
     @classmethod
     def define(cls, spec):
@@ -100,6 +102,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.num_analogues = None
         wf_default = self._wf_default
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
@@ -154,9 +157,9 @@ class FleurCFCoeffWorkChain(WorkChain):
         calcs = {}
         if self.ctx.wf_dict['rare_earth_analogue']:
             self.report(f"INFO: Creating Rare-Earth Analogue with {self.ctx.wf_dict['analogue_element']}")
-            inputs = self.get_inputs_rare_earth_analogue()
-            result_analogue = self.submit(FleurScfWorkChain, **inputs)
-            calcs['analogue_scf'] = result_analogue
+            all_inputs = self.get_inputs_rare_earth_analogue()
+            for name, inputs in all_inputs.items():
+                calcs[name] = self.submit(FleurScfWorkChain, **inputs)
 
         if 'scf' in self.inputs:
             inputs = self.get_inputs_scf()
@@ -204,39 +207,44 @@ class FleurCFCoeffWorkChain(WorkChain):
                                          orm.Dict(dict=replace_dict),
                                          replace_all=orm.Bool(self.ctx.wf_dict['replace_all']))
 
-        structure = new_structures['replaced_all']
-        inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
-        inputs_analogue.structure = structure
+        inputs = {}
+        self.ctx.num_analogues = len(new_structures)
+        for index, structure in enumerate(new_structures.values()):
+            inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
+            inputs_analogue.structure = mark_atoms(structure,
+                                                   lambda site: site.symbols == (self.ctx.wf_dict['analogue_element'],),
+                                                   kind_id=self._CF_GROUP_LABEL)
 
-        if 'calc_parameters' not in inputs_analogue:
+            if 'calc_parameters' not in inputs_analogue:
 
-            #Reuse parameters from rare earth calculation
-            new_params = rare_earth_params.copy()
-            for key, value in rare_earth_params.items():
-                if 'atom' in key:
-                    if 'element' in value:
-                        if value['element'] == self.ctx.wf_dict['element']:
-                            new_params.pop(key)
-            inputs_analogue.calc_parameters = orm.Dict(dict=new_params)
+                #Reuse parameters from rare earth calculation
+                new_params = rare_earth_params.copy()
+                for key, value in rare_earth_params.items():
+                    if 'atom' in key:
+                        if 'element' in value:
+                            if value['element'] == self.ctx.wf_dict['element']:
+                                new_params.pop(key)
+                inputs_analogue.calc_parameters = orm.Dict(dict=new_params)
 
-        if self.ctx.wf_dict['soc_off']:
-            if 'wf_parameters' not in inputs_analogue:
-                scf_wf_dict = {}
-            else:
-                scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
+            if self.ctx.wf_dict['soc_off']:
+                if 'wf_parameters' not in inputs_analogue:
+                    scf_wf_dict = {}
+                else:
+                    scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
-            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['analogue_element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+                scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species_label', {
+                    'attributedict': {
+                        'special': {
+                            'socscale': 0.0
+                        }
+                    },
+                    'atom_label': self._CF_GROUP_LABEL
+                }))
 
             inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
+            inputs[f'analogue_scf_{index}'] = inputs_analogue
 
-        return inputs_analogue
+        return inputs
 
     def get_inputs_scf(self):
 
@@ -339,13 +347,15 @@ class FleurCFCoeffWorkChain(WorkChain):
                 return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
         if self.ctx.wf_dict['rare_earth_analogue']:
-            if not self.ctx.analogue_scf.is_finished_ok:
-                error = (f"ERROR: SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) was not successful")
+            if not all(self.ctx[f'analogue_scf_{index}'].is_finished_ok for index in range(self.ctx.num_analogues)):
+                error = (
+                    f"ERROR: One SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) was not successful")
                 self.report(error)
                 return self.exit_codes.ERROR_SCF_FAILED
 
             try:
-                outdict = self.ctx.analogue_scf.outputs.output_scf_wc_para
+                for index in range(self.ctx.num_analogues):
+                    _ = self.ctx[f'analogue_scf_{index}'].outputs.output_scf_wc_para
             except NotExistent:
                 message = (
                     f"ERROR: SCF workflow ({self.ctx.wf_dict['analogue_element']}-analogue) failed, no scf output node")
@@ -356,9 +366,9 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.report('INFO: Running Crystal Field Calculations')
         calcs = {}
         if self.ctx.wf_dict['rare_earth_analogue']:
-            inputs = self.get_inputs_cfanalogue_calculation()
-            result_analogue = self.submit(FleurBaseWorkChain, **inputs)
-            calcs['analogue_cf'] = result_analogue
+            all_inputs = self.get_inputs_cfanalogue_calculation()
+            for name, inputs in all_inputs.items():
+                calcs[name] = self.submit(FleurBaseWorkChain, **inputs)
 
         inputs = self.get_inputs_cfrareearth_calculation()
         result_rareearth = self.submit(FleurBaseWorkChain, **inputs)
@@ -368,55 +378,58 @@ class FleurCFCoeffWorkChain(WorkChain):
 
     def get_inputs_cfanalogue_calculation(self):
 
-        inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
-
-        fleurinp_scf = self.ctx.analogue_scf.outputs.fleurinp
-        remote_data = self.ctx.analogue_scf.outputs.last_calc.remote_folder
-
-        if 'settings' in inputs:
-            settings = inputs.settings.get_dict()
-        else:
-            settings = {}
-
-        if 'options' in inputs:
-            options = inputs.options.get_dict()
-        else:
-            options = {}
-
-        fm = FleurinpModifier(fleurinp_scf)
-
         analogue_element = self.ctx.wf_dict['analogue_element']
-        fm.set_atomgroup(attributedict={'cFCoeffs': {
-            'chargeDensity': False,
-            'potential': True
-        }},
-                         species=f'all-{analogue_element}')
 
-        try:
-            fm.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = ('ERROR: input, inp.xml changes did not validate')
-            self.control_end_wc(error)
-            return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.\n'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
-            return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+        all_inputs = {}
+        for index in range(self.ctx.num_analogues):
+            inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
 
-        fleurinp_cf = fm.freeze()
+            fleurinp_scf = self.ctx[f'analogue_scf_{index}'].outputs.fleurinp
+            remote_data = self.ctx[f'analogue_scf_{index}'].outputs.last_calc.remote_folder
 
-        label = f'Rare-Earth Analogue ({analogue_element}) CF Potential'
-        description = f'Calculation of crystal field potential with {analogue_element} Analogue Method'
+            if 'settings' in inputs:
+                settings = inputs.settings.get_dict()
+            else:
+                settings = {}
 
-        inputs_analogue = get_inputs_fleur(inputs.fleur,
-                                           remote_data,
-                                           fleurinp_cf,
-                                           options,
-                                           label,
-                                           description,
-                                           settings=settings)
-        return inputs_analogue
+            if 'options' in inputs:
+                options = inputs.options.get_dict()
+            else:
+                options = {}
+
+            fm = FleurinpModifier(fleurinp_scf)
+
+            fm.set_atomgroup_label(attributedict={'cFCoeffs': {
+                'chargeDensity': False,
+                'potential': True
+            }},
+                                   atom_label=self._CF_GROUP_LABEL)
+
+            try:
+                fm.show(display=False, validate=True)
+            except etree.DocumentInvalid:
+                error = ('ERROR: input, inp.xml changes did not validate')
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
+            except ValueError as exc:
+                error = ('ERROR: input, inp.xml changes could not be applied.\n'
+                         f'The following error was raised {exc}')
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
+            fleurinp_cf = fm.freeze()
+
+            label = f'Rare-Earth Analogue ({analogue_element}) CF Potential'
+            description = f'Calculation of crystal field potential with {analogue_element} Analogue Method'
+
+            all_inputs[f'analogue_cf_{index}'] = get_inputs_fleur(inputs.fleur,
+                                                                  remote_data,
+                                                                  fleurinp_cf,
+                                                                  options,
+                                                                  label,
+                                                                  description,
+                                                                  settings=settings)
+        return all_inputs
 
     def get_inputs_cfrareearth_calculation(self):
 
