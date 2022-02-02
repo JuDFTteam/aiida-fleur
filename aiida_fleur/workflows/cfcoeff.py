@@ -207,7 +207,8 @@ class FleurCFCoeffWorkChain(WorkChain):
         for index, structure in enumerate(new_structures.values()):
             inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
             inputs_analogue.structure = mark_atoms(structure,
-                                                   lambda _, kind: kind.symbols == (self.ctx.wf_dict['analogue_element'],),
+                                                   lambda _, kind: kind.symbols ==
+                                                   (self.ctx.wf_dict['analogue_element'],),
                                                    kind_id=self._CF_GROUP_LABEL)
 
             if 'calc_parameters' not in inputs_analogue:
