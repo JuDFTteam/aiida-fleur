@@ -30,6 +30,8 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
 from masci_tools.tools.cf_calculation import CFCalculation
+from masci_tools.util.schema_dict_util import eval_simple_xpath, tag_exists
+
 import h5py
 from lxml import etree
 
@@ -38,7 +40,7 @@ class FleurCFCoeffWorkChain(WorkChain):
     """
     Workflow for calculating rare-earth crystal field coefficients
     """
-    _workflowversion = '0.1.0'
+    _workflowversion = '0.2.0'
 
     _wf_default = {
         'element': '',
@@ -498,6 +500,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         skip_calculation = False
         retrieved_nodes = {}
         outnodedict = {}
+        atomTypes = []
         for calc_name in calculations:
             if calc_name in self.ctx:
                 calc = self.ctx[calc_name]
@@ -537,6 +540,14 @@ class FleurCFCoeffWorkChain(WorkChain):
             elif calc_name == 'analogue_cf':
                 retrieved_nodes['pot'] = calc.outputs.retrieved
 
+            if not atomTypes:
+                xmltree, schema_dict = calc.inputs.fleurinpdata.load_inpxml()
+
+                groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
+                for index, group in enumerate(groups):
+                    if tag_exists(group, schema_dict, 'cfcoeffs'):
+                        atomTypes.append(index + 1)
+
             link_label = calc_name
             outnodedict[link_label] = outputnode_calc
 
@@ -558,18 +569,20 @@ class FleurCFCoeffWorkChain(WorkChain):
         if not skip_calculation:
             cf_calc_out = calculate_cf_coefficients(retrieved_nodes['cdn'],
                                                     retrieved_nodes['pot'],
-                                                    convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']))
+                                                    convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
+                                                    atomTypes=orm.List(list=atomTypes))
             if isinstance(cf_calc_out, orm.Dict):
                 for key, value in cf_calc_out.get_dict().items():
                     out[key] = value
             else:
+                self.report('Calculation of crystal field coefficients failed')
                 self.ctx.successful = False
 
         if self.ctx.successful:
             self.report('Done, Crystal Field coefficients calculation complete')
         else:
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
-                        ' a scf-cycle did not reach the desired distance.')
+                        ' a scf-cycle did not reach the desired distance or the post-processing failed.')
 
         outnode = orm.Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -624,7 +637,8 @@ def create_cfcoeff_results_node(**kwargs):
 @cf
 def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                               cf_pot_folder: orm.FolderData,
-                              convert: orm.Bool = None) -> orm.Dict:
+                              convert: orm.Bool = None,
+                              atomTypes: orm.List = None) -> orm.Dict:
     """
     Calculate the crystal filed coefficients using the tool from the
     masci-tools package
@@ -640,9 +654,78 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     if convert is None:
         convert = orm.Bool(True)
 
-    CRYSTAL_FIELD_FILE = FleurCalculation._CFDATA_HDF5_FILE_NAME
-
     out_dict = {}
+
+    units = None
+    convention = None
+    phi = None
+    theta = None
+    norm = None
+    coefficients_dict_up = {}
+    coefficients_dict_dn = {}
+    coefficients_dict_up_imag = {}
+    coefficients_dict_dn_imag = {}
+    if atomTypes is None:
+        cfcalc, coefficients = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert)
+        for coeff in coefficients:
+            if units is None:
+                units = coeff.unit
+                convention = coeff.convention
+            coefficients_dict_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.real
+            coefficients_dict_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.real
+            coefficients_dict_up_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.imag
+            coefficients_dict_dn_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.imag
+        phi = cfcalc.phi
+        theta = cfcalc.theta
+        norm = cfcalc.denNorm
+    else:
+        norm = {}
+        for atomType in atomTypes:
+            cfcalc, coefficients = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atomType)
+
+            atom_up = coefficients_dict_up.setdefault(atomType, {})
+            atom_dn = coefficients_dict_dn.setdefault(atomType, {})
+            atom_up_imag = coefficients_dict_up_imag.setdefault(atomType, {})
+            atom_dn_imag = coefficients_dict_dn_imag.setdefault(atomType, {})
+            norm[atomType] = cfcalc.denNorm
+            phi = cfcalc.phi
+            theta = cfcalc.theta
+
+            for coeff in coefficients:
+                if units is None:
+                    units = coeff.unit
+                    convention = coeff.convention
+
+                atom_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.real
+                atom_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.real
+                atom_up_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.imag
+                atom_dn_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.imag
+
+    out_dict['cf_coeffcients_atomtypes'] = atomTypes.get_list()
+    out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
+    out_dict['cf_coefficients_spin_down'] = coefficients_dict_dn
+    if not convert:
+        out_dict['cf_coefficients_spin_up_imag'] = coefficients_dict_up_imag
+        out_dict['cf_coefficients_spin_down_imag'] = coefficients_dict_dn_imag
+    #Output more information about the performed calculation
+    out_dict['angle_a_to_x_axis'] = phi
+    out_dict['angle_c_to_z_axis'] = theta
+    out_dict['density_normalization'] = norm
+    out_dict['cf_coefficients_units'] = units
+    out_dict['cf_coefficients_convention'] = convention
+
+    out_dict = orm.Dict(dict=out_dict)
+    out_dict.label = 'CFCoefficients'
+    out_dict.description = 'Results of the post-processing tool for calculating Crystal field coefficients'
+
+    return out_dict
+
+
+def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
+    """
+    Private method wrapping the calculation of coefficients
+    """
+    CRYSTAL_FIELD_FILE = FleurCalculation._CFDATA_HDF5_FILE_NAME
 
     cfcalc = CFCalculation(quiet=True)
     #Reading in the HDF files
@@ -650,7 +733,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         try:
             with cf_cdn_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
                 with h5py.File(f, 'r') as cffile:
-                    cfcalc.readCDN(cffile)
+                    cfcalc.readCDN(cffile, **kwargs)
         except ValueError as exc:
             return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
     else:
@@ -660,7 +743,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         try:
             with cf_pot_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
                 with h5py.File(f, 'r') as cffile:
-                    cfcalc.readPot(cffile)
+                    cfcalc.readPot(cffile, **kwargs)
         except ValueError as exc:
             return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
     else:
@@ -673,28 +756,4 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     if len(coefficients) == 0:
         return ExitCode(320, message='Crystal field calculation failed with: No Coefficients produced')
 
-    units = None
-    convention = None
-    coefficients_dict_up = {}
-    coefficients_dict_dn = {}
-    for coeff in coefficients:
-        if units is None:
-            units = coeff.unit
-            convention = coeff.convention
-        coefficients_dict_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up
-        coefficients_dict_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down
-
-    out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
-    out_dict['cf_coefficients_spin_down'] = coefficients_dict_dn
-    #Output more information about the performed calculation
-    out_dict['angle_a_to_x_axis'] = cfcalc.phi
-    out_dict['angle_c_to_z_axis'] = cfcalc.theta
-    out_dict['density_normalization'] = cfcalc.denNorm
-    out_dict['cf_coefficients_units'] = units
-    out_dict['cf_coefficients_convention'] = convention
-
-    out_dict = orm.Dict(dict=out_dict)
-    out_dict.label = 'CFCoefficients'
-    out_dict.description = 'Results of the post-processing tool for calculating Crystal field coefficients'
-
-    return out_dict
+    return cfcalc, coefficients
