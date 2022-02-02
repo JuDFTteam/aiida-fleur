@@ -273,7 +273,7 @@ class FleurBandDosWorkChain(WorkChain):
                 raise ValueError('set_kpath is only supported for inputs up to Max4')
         elif kpath == 'seek':
             #Use aiida functionality
-            struc = fleurin.get_structuredata()
+            struc = fleurin.get_structuredata_ncf()
 
             if distance is not None:
                 output = get_explicit_kpoints_path(struc, reference_distance=distance)
@@ -298,7 +298,7 @@ class FleurBandDosWorkChain(WorkChain):
             pass
         else:
             #Use ase
-            struc = fleurin.get_structuredata()
+            struc = fleurin.get_structuredata_ncf()
 
             path = bandpath(kpath, cell=struc.cell, npoints=nkpts, density=distance)
 
