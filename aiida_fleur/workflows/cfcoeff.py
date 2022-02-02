@@ -80,6 +80,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         spec.output('output_cfcoeff_wc_para', valid_type=orm.Dict)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
         spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
         spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
         spec.exit_code(345, 'ERROR_SCF_FAILED', message='Convergence scf workflow failed.')
