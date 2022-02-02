@@ -671,10 +671,11 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
             if units is None:
                 units = coeff.unit
                 convention = coeff.convention
-            coefficients_dict_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.real
-            coefficients_dict_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.real
-            coefficients_dict_up_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.imag
-            coefficients_dict_dn_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.imag
+            key = f'{coeff.l}/{coeff.m}'
+            coefficients_dict_up[key] = coeff.spin_up.real
+            coefficients_dict_dn[key] = coeff.spin_down.real
+            coefficients_dict_up_imag[key] = coeff.spin_up.imag
+            coefficients_dict_dn_imag[key] = coeff.spin_down.imag
         phi = cfcalc.phi
         theta = cfcalc.theta
         norm = cfcalc.denNorm
@@ -695,11 +696,11 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                 if units is None:
                     units = coeff.unit
                     convention = coeff.convention
-
-                atom_up[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.real
-                atom_dn[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.real
-                atom_up_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_up.imag
-                atom_dn_imag[f'{coeff.l}/{coeff.m}'] = coeff.spin_down.imag
+                key = f'{coeff.l}/{coeff.m}'
+                atom_up[key] = coeff.spin_up.real
+                atom_dn[key] = coeff.spin_down.real
+                atom_up_imag[key] = coeff.spin_up.imag
+                atom_dn_imag[key] = coeff.spin_down.imag
 
     out_dict['cf_coeffcients_atomtypes'] = atomTypes.get_list()
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
