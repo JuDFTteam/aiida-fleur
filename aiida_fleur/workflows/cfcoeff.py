@@ -145,11 +145,6 @@ class FleurCFCoeffWorkChain(WorkChain):
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        if not self.ctx.wf_dict['replace_all']:
-            error = 'ERROR: Invalid Input. replace_all False not implemented yet'
-            self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-
     def run_scfcalculations(self):
 
         self.report('INFO: Starting SCF calculations')
