@@ -218,7 +218,7 @@ class FleurHubbard1WorkChain(WorkChain):
             #Take the output crystal field cofficients from the CFCoeffWorkchain
             #TODO: Select spin channel
             cf_coefficients = self.ctx.cfcoeff.outputs.output_cfcoeff_wc_para.dict.cf_coefficients_spin_up
-            if all(isinstance(key, int) for key in cf_coefficients):
+            if all('/' not in key for key in cf_coefficients):
                 self.report('WARNING: Crystal field coefficients from multiple atomtypes not supported fully')
                 _, cf_coefficients = cf_coefficients.popitem() #Just take one (To support multiple we need to split up species)
 
