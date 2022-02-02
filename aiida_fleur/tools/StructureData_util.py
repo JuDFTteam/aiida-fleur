@@ -1874,6 +1874,8 @@ def mark_atoms(structure, condition, kind_id='99999'):
     '''
     Marks atom where sites fullfill the given condition with a given id
     The resulting kind name for these atoms is element-kind_id
+
+    condition is a callable taking the site and kind as arguments
     '''
     from aiida.orm import StructureData
 
@@ -1881,7 +1883,8 @@ def mark_atoms(structure, condition, kind_id='99999'):
     new_structure.pbc = structure.pbc
 
     for site in structure.sites:
-        if not condition(site):
+        kind = structure.get_kind(site.kind_name)
+        if not condition(site, kind):
             continue
         element = site.symbols[0]
         new_structure.append(position=site.position, symbols=element, name=f'{element}-{kind_id}')
