@@ -154,8 +154,8 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert abs(process.ctx.suggest_mpi_omp_ratio - 0.5) < 1e-12
     assert 'settings' in process.ctx.inputs
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
-    
-    process.ctx.inputs.settings = Dict(dict={}) #Test that already set inputs also work
+
+    process.ctx.inputs.settings = Dict(dict={})  #Test that already set inputs also work
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_process()
     assert result.status == 0
