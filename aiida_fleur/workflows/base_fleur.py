@@ -264,6 +264,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
             if 'settings' not in self.ctx.inputs:
                 self.ctx.inputs.settings = {}
+            else:
+                self.ctx.inputs.settings = self.ctx.inputs.settings.get_dict()
             self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
             if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
                 self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
