@@ -1884,10 +1884,10 @@ def mark_atoms(structure, condition, kind_id='99999'):
 
     for site in structure.sites:
         kind = structure.get_kind(site.kind_name)
-        if not condition(site, kind):
-            continue
         element = kind.symbols[0]
-        new_structure.append_atom(position=site.position, symbols=element, name=f'{element}-{kind_id}')
+        if condition(site, kind):
+            kind = f'{element}-{kind_id}'
+        new_structure.append_atom(position=site.position, symbols=element, name=kind)
 
     return new_structure
 

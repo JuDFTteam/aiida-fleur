@@ -546,7 +546,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinpdata.load_inpxml()
 
-            groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
+            groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
             atomTypes = []
             for index, group in enumerate(groups):
                 if tag_exists(group, schema_dict, 'cfcoeffs'):
@@ -575,7 +575,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                     outnodedict[link_label] = self.ctx[calc_name].outputs.output_parameters
 
                     xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinpdata.load_inpxml()
-                    groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
+                    groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
                     atomTypes = []
                     for group_index, group in enumerate(groups):
                         if tag_exists(group, schema_dict, 'cfcoeffs'):
