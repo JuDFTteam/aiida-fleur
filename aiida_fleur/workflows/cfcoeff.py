@@ -497,69 +497,140 @@ class FleurCFCoeffWorkChain(WorkChain):
                                             settings=settings)
         return inputs_rareearth
 
+    def check_cf_calculation(self, calc_name):
+        """
+        Check that the CFCalculation finished successfully
+        """
+        successful = True
+
+        if calc_name in self.ctx:
+            calc = self.ctx[calc_name]
+        else:
+            message = f'One CF calculation was not run because the scf workflow failed: {calc_name}'
+            self.ctx.warnings.append(message)
+            successful = False
+
+        if not calc.is_finished_ok:
+            message = f'One CF calculation was not successful: {calc_name}'
+            self.ctx.warnings.append(message)
+            successful = False
+
+        try:
+            _ = calc.outputs.output_parameters
+        except NotExistent:
+            message = f'One CF calculation failed, no output node: {calc_name}. I skip this one.'
+            self.ctx.errors.append(message)
+            successful = False
+
+        if FleurCalculation._CFDATA_HDF5_FILE_NAME not in calc.outputs.retrieved.list_object_names():
+            message = f'One CF calculation did not produce a {FleurCalculation._CFDATA_HDF5_FILE_NAME} file: {calc_name}'
+            self.ctx.warnings.append(message)
+            successful = False
+
+        self.ctx.successful = self.ctx.successful and successful
+        return successful
+
     def return_results(self):
         """
         Return results fo cf calculation
         """
 
-        if self.ctx.wf_dict['rare_earth_analogue']:
-            calculations = ['rare_earth_cf', 'analogue_cf']
-        else:
-            calculations = ['rare_earth_cf']
-
-        skip_calculation = False
-        retrieved_nodes = {}
         outnodedict = {}
-        atomTypes = []
-        for calc_name in calculations:
-            if calc_name in self.ctx:
-                calc = self.ctx[calc_name]
+        cf_calcs_out = []  #All single nodes
+        #This calculation is always there
+        success = self.check_cf_calculation('rare_earth_cf')
+        if success:
+            link_label = 'rare_earth_cf'
+            outnodedict[link_label] = self.ctx.rare_earth_cf.outputs.output_parameters
+            cdn_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
+
+            xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinpdata.load_inpxml()
+
+            groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
+            atomTypes = []
+            for index, group in enumerate(groups):
+                if tag_exists(group, schema_dict, 'cfcoeffs'):
+                    atomTypes.append(index + 1)
+
+            if not self.ctx.wf_dict['rare_earth_analogue']:
+                pot_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
+                cf_calc_out = calculate_cf_coefficients(cdn_retrieved,
+                                                        pot_retrieved,
+                                                        convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
+                                                        atomTypes=orm.List(list=atomTypes))
+                if not isinstance(cf_calc_out, orm.Dict):
+                    self.report(f'Calculation of crystal field coefficients failed with {cf_calc_out!r}')
+                    self.ctx.successful = False
+                else:
+                    cf_calcs_out = [cf_calc_out]
+                    cf_calc_out = {}
             else:
-                message = f'One CF calculation was not run because the scf workflow failed: {calc_name}'
-                self.ctx.warnings.append(message)
-                self.ctx.successful = False
-                skip_calculation = True
-                continue
+                cf_calc_out = {}
+                for index in range(self.ctx.num_analogues):
+                    calc_name = f'analogue_cf_{index}'
+                    success = self.check_cf_calculation(calc_name)
+                    if not success:
+                        continue
+                    pot_retrieved = self.ctx[calc_name].outputs.retrieved
+                    outnodedict[link_label] = self.ctx[calc_name].outputs.output_parameters
 
-            if not calc.is_finished_ok:
-                message = f'One CF calculation was not successful: {calc_name}'
-                self.ctx.warnings.append(message)
-                self.ctx.successful = False
-                skip_calculation = True
-                continue
+                    xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinpdata.load_inpxml()
+                    groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
+                    atomTypes = []
+                    for group_index, group in enumerate(groups):
+                        if tag_exists(group, schema_dict, 'cfcoeffs'):
+                            atomTypes.append(group_index + 1)
 
-            try:
-                outputnode_calc = calc.outputs.output_parameters
-            except NotExistent:
-                message = f'One CF calculation failed, no output node: {calc_name}. I skip this one.'
-                self.ctx.errors.append(message)
-                self.ctx.successful = False
-                continue
+                    cf_calc_out_analogue = calculate_cf_coefficients(cdn_retrieved,
+                                                                     pot_retrieved,
+                                                                     convert=orm.Bool(
+                                                                         self.ctx.wf_dict['convert_to_stevens']),
+                                                                     atomTypes=orm.List(list=atomTypes))
+                    if not isinstance(cf_calc_out_analogue, orm.Dict):
+                        self.report(
+                            f'Calculation of crystal field coefficients failed: {calc_name} with {cf_calc_out!r}')
+                        self.ctx.successful = False
+                        continue
 
-            if FleurCalculation._CFDATA_HDF5_FILE_NAME not in calc.outputs.retrieved.list_object_names():
-                message = f'One CF calculation did not produce a {FleurCalculation._CFDATA_HDF5_FILE_NAME} file: {calc_name}'
-                self.ctx.warnings.append(message)
-                self.ctx.successful = False
-                skip_calculation = True
-                continue
+                    cf_calcs_out.append(cf_calc_out_analogue)
 
-            if calc_name == 'rare_earth_cf':
-                retrieved_nodes['cdn'] = calc.outputs.retrieved
-                if not self.ctx.wf_dict['rare_earth_analogue']:
-                    retrieved_nodes['pot'] = calc.outputs.retrieved
-            elif calc_name == 'analogue_cf':
-                retrieved_nodes['pot'] = calc.outputs.retrieved
+                    if not cf_calc_out:
+                        cf_calc_out = cf_calc_out_analogue.get_dict()
 
-            if not atomTypes:
-                xmltree, schema_dict = calc.inputs.fleurinpdata.load_inpxml()
-
-                groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup')
-                for index, group in enumerate(groups):
-                    if tag_exists(group, schema_dict, 'cfcoeffs'):
-                        atomTypes.append(index + 1)
-
-            link_label = calc_name
-            outnodedict[link_label] = outputnode_calc
+                    if len(atomTypes) == 1:
+                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes.get_list()
+                        cf_calc_out['cf_coefficients_spin_up'] = {
+                            atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_up']
+                        }
+                        cf_calc_out['cf_coefficients_spin_down'] = {
+                            atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_dn']
+                        }
+                        if not self.ctx.wf_dict['convert_to_stevens']:
+                            cf_calc_out['cf_coefficients_spin_up_imag'] = {
+                                atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_up_imag']
+                            }
+                            cf_calc_out['cf_coefficients_spin_down_imag'] = {
+                                atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_dn_imag']
+                            }
+                    else:
+                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes.get_list()
+                        cf_calc_out['cf_coefficients_spin_up'] = {
+                            **cf_calc_out['cf_coefficients_spin_up'],
+                            **cf_calc_out_analogue['cf_coefficients_spin_up']
+                        }
+                        cf_calc_out['cf_coefficients_spin_down'] = {
+                            **cf_calc_out['cf_coefficients_spin_dn'],
+                            **cf_calc_out_analogue['cf_coefficients_spin_dn']
+                        }
+                        if not self.ctx.wf_dict['convert_to_stevens']:
+                            cf_calc_out['cf_coefficients_spin_up_imag'] = {
+                                **cf_calc_out['cf_coefficients_spin_up_imag'],
+                                **cf_calc_out_analogue['cf_coefficients_spin_up_imag']
+                            }
+                            cf_calc_out['cf_coefficients_spin_down_imag'] = {
+                                **cf_calc_out['cf_coefficients_spin_dn_imag'],
+                                **cf_calc_out_analogue['cf_coefficients_spin_dn_imag']
+                            }
 
         out = {
             'workflow_name': self.__class__.__name__,
@@ -576,17 +647,9 @@ class FleurCFCoeffWorkChain(WorkChain):
             'errors': self.ctx.errors
         }
 
-        if not skip_calculation:
-            cf_calc_out = calculate_cf_coefficients(retrieved_nodes['cdn'],
-                                                    retrieved_nodes['pot'],
-                                                    convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
-                                                    atomTypes=orm.List(list=atomTypes))
-            if isinstance(cf_calc_out, orm.Dict):
-                for key, value in cf_calc_out.get_dict().items():
-                    out[key] = value
-            else:
-                self.report('Calculation of crystal field coefficients failed')
-                self.ctx.successful = False
+        if cf_calc_out:
+            for key, value in cf_calc_out.items():
+                out[key] = value
 
         if self.ctx.successful:
             self.report('Done, Crystal Field coefficients calculation complete')
@@ -595,8 +658,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                         ' a scf-cycle did not reach the desired distance or the post-processing failed.')
 
         outnode = orm.Dict(dict=out)
+        outnodedict = {f'crystal_field_coefficients_{index}': cf_coff for index, cf_coff in enumerate(cf_calcs_out)}
         outnodedict['results_node'] = outnode
-        outnodedict['crystal_field_coefficients'] = cf_calc_out
 
         # create links between all these nodes...
         outputnode_dict = create_cfcoeff_results_node(**outnodedict)
@@ -712,7 +775,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                 atom_up_imag[key] = coeff.spin_up.imag
                 atom_dn_imag[key] = coeff.spin_down.imag
 
-    out_dict['cf_coeffcients_atomtypes'] = atomTypes.get_list()
+    out_dict['cf_coefficients_atomtypes'] = atomTypes.get_list()
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
     out_dict['cf_coefficients_spin_down'] = coefficients_dict_dn
     if not convert:
