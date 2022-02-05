@@ -193,7 +193,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         if 'calc_parameters' in input_scf:
             rare_earth_params = input_scf['calc_parameters'].get_dict()
         elif 'fleurinp' in input_scf:
-            rare_earth_params = input_scf['fleurinp'].get_parameter_data_ncf(write_ids=False).get_dict()
+            rare_earth_params = input_scf['fleurinp'].get_parameterdata_ncf(write_ids=False).get_dict()
         else:
             rare_earth_params = {}
 
