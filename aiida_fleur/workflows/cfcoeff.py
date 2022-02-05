@@ -603,14 +603,14 @@ class FleurCFCoeffWorkChain(WorkChain):
                             atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_up']
                         }
                         cf_calc_out['cf_coefficients_spin_down'] = {
-                            atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_dn']
+                            atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_down']
                         }
                         if not self.ctx.wf_dict['convert_to_stevens']:
                             cf_calc_out['cf_coefficients_spin_up_imag'] = {
                                 atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_up_imag']
                             }
                             cf_calc_out['cf_coefficients_spin_down_imag'] = {
-                                atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_dn_imag']
+                                atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_down_imag']
                             }
                     else:
                         cf_calc_out['cf_coefficients_atomtypes'] += atomTypes
@@ -619,8 +619,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                             **cf_calc_out_analogue['cf_coefficients_spin_up']
                         }
                         cf_calc_out['cf_coefficients_spin_down'] = {
-                            **cf_calc_out['cf_coefficients_spin_dn'],
-                            **cf_calc_out_analogue['cf_coefficients_spin_dn']
+                            **cf_calc_out['cf_coefficients_spin_down'],
+                            **cf_calc_out_analogue['cf_coefficients_spin_down']
                         }
                         if not self.ctx.wf_dict['convert_to_stevens']:
                             cf_calc_out['cf_coefficients_spin_up_imag'] = {
@@ -628,8 +628,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                                 **cf_calc_out_analogue['cf_coefficients_spin_up_imag']
                             }
                             cf_calc_out['cf_coefficients_spin_down_imag'] = {
-                                **cf_calc_out['cf_coefficients_spin_dn_imag'],
-                                **cf_calc_out_analogue['cf_coefficients_spin_dn_imag']
+                                **cf_calc_out['cf_coefficients_spin_down_imag'],
+                                **cf_calc_out_analogue['cf_coefficients_spin_down_imag']
                             }
 
         out = {
