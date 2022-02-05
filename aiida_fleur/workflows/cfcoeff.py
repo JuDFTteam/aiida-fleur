@@ -598,7 +598,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                         cf_calc_out = cf_calc_out_analogue.get_dict()
 
                     if len(atomTypes) == 1:
-                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes.get_list()
+                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes
                         cf_calc_out['cf_coefficients_spin_up'] = {
                             atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_up']
                         }
@@ -613,7 +613,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                                 atomTypes[0]: cf_calc_out_analogue['cf_coefficients_spin_dn_imag']
                             }
                     else:
-                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes.get_list()
+                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes
                         cf_calc_out['cf_coefficients_spin_up'] = {
                             **cf_calc_out['cf_coefficients_spin_up'],
                             **cf_calc_out_analogue['cf_coefficients_spin_up']
