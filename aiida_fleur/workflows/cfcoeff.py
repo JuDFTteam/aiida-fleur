@@ -208,6 +208,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.ctx.num_analogues = len(new_structures)
         for index, structure in enumerate(new_structures.values()):
             inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
+            inputs_analogue.structure = structure
             # inputs_analogue.structure = mark_atoms(structure,
             #                                        lambda _, kind: kind.symbols ==
             #                                        (self.ctx.wf_dict['analogue_element'],),
