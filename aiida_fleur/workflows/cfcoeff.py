@@ -741,7 +741,10 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     coefficients_dict_up_imag = {}
     coefficients_dict_dn_imag = {}
     if atomTypes is None:
-        cfcalc, coefficients = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert)
+        res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert)
+        if isinstance(res, ExitCode):
+            return res
+        cfcalc, coefficients = res
         for coeff in coefficients:
             if units is None:
                 units = coeff.unit
@@ -757,7 +760,10 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     else:
         norm = {}
         for atomType in atomTypes:
-            cfcalc, coefficients = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atomType)
+            res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atomType)
+            if isinstance(res, ExitCode):
+                return res
+            cfcalc, coefficients = res
 
             atom_up = coefficients_dict_up.setdefault(atomType, {})
             atom_dn = coefficients_dict_dn.setdefault(atomType, {})
