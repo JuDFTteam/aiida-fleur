@@ -208,10 +208,10 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.ctx.num_analogues = len(new_structures)
         for index, structure in enumerate(new_structures.values()):
             inputs_analogue = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_rare_earth_analogue'))
-            inputs_analogue.structure = mark_atoms(structure,
-                                                   lambda _, kind: kind.symbols ==
-                                                   (self.ctx.wf_dict['analogue_element'],),
-                                                   kind_id=self._CF_GROUP_LABEL)
+            # inputs_analogue.structure = mark_atoms(structure,
+            #                                        lambda _, kind: kind.symbols ==
+            #                                        (self.ctx.wf_dict['analogue_element'],),
+            #                                        kind_id=self._CF_GROUP_LABEL)
 
             if 'calc_parameters' not in inputs_analogue:
 
@@ -230,13 +230,14 @@ class FleurCFCoeffWorkChain(WorkChain):
                 else:
                     scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
-                scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species_label', {
+                scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
                     'attributedict': {
                         'special': {
                             'socscale': 0.0
                         }
                     },
-                    'atom_label': self._CF_GROUP_LABEL
+                    'species_name':
+                    f"all-{self.ctx.wf_dict['analogue_element']}"
                 }))
 
             inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
@@ -397,11 +398,11 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             fm = FleurinpModifier(fleurinp_scf)
 
-            fm.set_atomgroup_label(attributedict={'cFCoeffs': {
+            fm.set_atomgroup(attributedict={'cFCoeffs': {
                 'chargeDensity': False,
                 'potential': True
             }},
-                                   atom_label=self._CF_GROUP_LABEL)
+                             species=f"all-{self.ctx.wf_dict['analogue_element']}")
 
             try:
                 fm.show(display=False, validate=True)
