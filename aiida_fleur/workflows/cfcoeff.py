@@ -513,6 +513,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             message = f'One CF calculation was not run because the scf workflow failed: {calc_name}'
             self.ctx.warnings.append(message)
             successful = False
+            self.ctx.successful = self.ctx.successful and successful
+            return successful
 
         if not calc.is_finished_ok:
             message = f'One CF calculation was not successful: {calc_name}'
