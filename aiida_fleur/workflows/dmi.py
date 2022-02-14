@@ -22,11 +22,12 @@ import six
 #from six.moves import range
 #from six.moves import map
 from lxml import etree
+from ase.dft.kpoints import monkhorst_pack
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import Code, load_node
-from aiida.orm import RemoteData, Dict
+from aiida.orm import RemoteData, Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
@@ -73,6 +74,7 @@ class FleurDMIWorkChain(WorkChain):
         # 'prop_dir': [1.0, 0.0, 0.0],
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
+        'kmesh_force_theorem': None,
         'inpxml_changes': []
     }
 
@@ -311,6 +313,16 @@ class FleurDMIWorkChain(WorkChain):
             'l_ss': True
         }
         fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
+
+        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+            kmesh = KpointsData()
+            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+            kmesh.store()
+            fchanges.append(('set_kpointsdata', {
+                'kpointsdata_uuid': kmesh.uuid,
+                'switch': True,
+                'kpoint_type': 'mesh'
+            }))
 
         # change beta parameter
         for label, beta in self.ctx.wf_dict['beta'].items():
