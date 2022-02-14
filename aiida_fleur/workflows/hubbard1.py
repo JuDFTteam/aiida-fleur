@@ -228,12 +228,14 @@ class FleurHubbard1WorkChain(WorkChain):
             cf_coefficients = self.ctx.wf_dict.get('cf_coefficients', {})
 
         coefficient_tags = []
+        cf_coefficients = cf_coefficients or {}
         for key, coeff in cf_coefficients.items():
             l, m = key.split('/')
             coefficient_tags.append({'l': l, 'm': m, 'value': coeff})
 
         exc_constant_tags = []
         exc_constant = self.ctx.wf_dict.get('exchange_constants', {})
+        exc_constant = exc_constant or {}
         for l, exc_dict in exc_constant.items():
             exc_constant_tags.append({'l': l, **exc_dict})
 
