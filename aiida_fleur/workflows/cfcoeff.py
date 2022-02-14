@@ -746,7 +746,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         #since we already checked for an exit code we assume everything worked
         with cf_cdn_folder.open(FleurCalculation._CFDATA_HDF5_FILE_NAME, 'rb') as f:
             with h5py.File(f, 'r') as cffile:
-                atomTypes = orm.List(list=[key.split('-',maxsplit=1)[1] for key in cffile if 'cdn-' in key])
+                atomTypes = orm.List(list=[key.split('-', maxsplit=1)[1] for key in cffile if 'cdn-' in key])
         for coeff in coefficients:
             if units is None:
                 units = coeff.unit
