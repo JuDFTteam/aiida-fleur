@@ -507,7 +507,7 @@ class FleurDMIWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.dmi_force_evsum
+            evsum = out_dict.dmi_force_evsum
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles
@@ -516,20 +516,20 @@ class FleurDMIWorkChain(WorkChain):
             e_u = out_dict.dmi_force_units
 
             for i in six.moves.range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
-                ref_enrg = t_energydict.pop(i)
+                ref_enrg = evsum.pop(i)
                 q_vectors.pop(i)
                 for k in six.moves.range(i, i + num_ang - 1, 1):
-                    t_energydict[k] -= ref_enrg
+                    evsum[k] -= ref_enrg
 
             if e_u in ['Htr', 'htr']:
-                for labels, energies in t_energydict.items():
-                    t_energydict[labels] = energies * HTR_TO_EV
+                for index, energy in enumerate(evsum):
+                    evsum[index] = energy * HTR_TO_EV
         except (AttributeError, TypeError):
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
-        self.ctx.t_energydict = t_energydict
+        self.ctx.energies = evsum
         self.ctx.q_vectors = q_vectors
         self.ctx.mae_thetas = mae_thetas
         self.ctx.mae_phis = mae_phis
@@ -543,7 +543,7 @@ class FleurDMIWorkChain(WorkChain):
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
-            'energies': self.ctx.t_energydict,
+            'energies': self.ctx.energies,
             'q_vectors': self.ctx.q_vectors,
             'theta': self.ctx.mae_thetas,
             'phi': self.ctx.mae_phis,
