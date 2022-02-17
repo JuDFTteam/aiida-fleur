@@ -13,14 +13,9 @@
     In this module you find the workflow 'FleurDMIWorkChain' for the calculation of
     DMI energy dispersion.
 """
-
-from __future__ import absolute_import
 import copy
 import numpy as np
 
-import six
-#from six.moves import range
-#from six.moves import map
 from lxml import etree
 from ase.dft.kpoints import monkhorst_pack
 
@@ -150,7 +145,7 @@ class FleurDMIWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -174,7 +169,7 @@ class FleurDMIWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -245,7 +240,7 @@ class FleurDMIWorkChain(WorkChain):
         scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+        for key, val in self.ctx.wf_dict.get('beta', {}).items():
             scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
@@ -514,20 +509,29 @@ class FleurDMIWorkChain(WorkChain):
             num_q_vectors = out_dict.dmi_force_qs
             q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_q]
             e_u = out_dict.dmi_force_units
-
-            for i in six.moves.range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
-                ref_enrg = evsum.pop(i)
-                q_vectors.pop(i)
-                for k in six.moves.range(i, i + num_ang - 1, 1):
-                    evsum[k] -= ref_enrg
-
-            if e_u in ['Htr', 'htr']:
-                for index, energy in enumerate(evsum):
-                    evsum[index] = energy * HTR_TO_EV
-        except (AttributeError, TypeError):
+        except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+
+        if not isinstance(evsum, list):
+            message = ('Did not manage to read evSum or energy units after FT calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+
+        reference_indices = [q * (num_ang + 1) for q in range(num_q_vectors)]
+        reference_energies = np.array([evsum[index] for index in reference_indices])
+        reference_energies = np.repeat(reference_energies, num_ang + 1)
+
+        evsum = np.array(evsum) - reference_energies
+
+        if e_u in ['htr', 'Htr']:
+            evsum *= HTR_TO_EV
+
+        evsum = evsum.tolist()
+        for index in reference_indices:
+            evsum.pop(index)
+            q_vectors.pop(index)
 
         self.ctx.energies = evsum
         self.ctx.q_vectors = q_vectors
