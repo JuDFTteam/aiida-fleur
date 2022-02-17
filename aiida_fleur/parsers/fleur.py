@@ -16,10 +16,7 @@ different files produced by FLEUR.
 Please implement file parsing routines that they can be executed from outside
 the parser. Makes testing and portability easier.
 """
-# TODO: move methods to utils, xml or other
 # TODO: warnings
-from __future__ import absolute_import
-import os
 import re
 import json
 from lxml import etree
@@ -29,7 +26,7 @@ from aiida.orm import Dict
 from aiida.common.exceptions import NotExistent
 
 from masci_tools.io.parsers.fleur import outxml_parser
-from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
+from masci_tools.io.parsers.fleur_schema import InputSchemaDict
 
 
 class FleurParser(Parser):

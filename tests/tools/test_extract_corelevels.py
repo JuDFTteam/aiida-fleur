@@ -10,10 +10,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for routines in extract_corelevels.'''
-from __future__ import absolute_import
 import pytest
-
-#class test_extract_corelevels():
 
 
 # TODO: test in general more results outcome.
@@ -26,7 +23,8 @@ def test_extract_corelevels_outfile_allfiles():
     outxmlfiles = get_example_outxml_files()
 
     for outfile in outxmlfiles:
-        corelevel, atomtypes = extract_corelevels(outfile)
+        with pytest.deprecated_call():
+            corelevel, atomtypes = extract_corelevels(outfile)
         assert bool(corelevel)
         assert bool(atomtypes)
 

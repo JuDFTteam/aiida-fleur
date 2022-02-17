@@ -333,7 +333,7 @@ def inpxml_etree():
 
     def _get_etree(path, return_schema=False):
         from lxml import etree
-        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
+        from masci_tools.io.parsers.fleur_schema import InputSchemaDict
         with open(path, 'r') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
             version = tree.getroot().attrib['fleurInputVersion']
