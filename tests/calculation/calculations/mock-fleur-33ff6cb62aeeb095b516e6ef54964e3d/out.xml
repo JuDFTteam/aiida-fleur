@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <fleurOutput fleurOutputVersion="0.35">
-   <programVersion version="fleur 34">
-      <compilationInfo date="2022-01-21T04:04:10" user="" host="runner-4-yb7a4l-project-19-concurrent-0gjpcb" flag="-I/opt/include -I/usr/include -ffree-line-length-none -Wno-missing-include-dirs -fno-sign-zero -fdefault-real-8 -fdefault-double-8 -fopenmp" link="-lwannier;-L/opt/lib;-ldl;-L/usr/lib;-L/usr/lib/x86_64-linux-gnu;-lscalapack-openmpi;-lfftw3;/usr/lib/x86_64-linux-gnu/libxml2.so;/usr/lib/x86_64-linux-gnu/liblapack.so;/usr/lib/x86_64-linux-gnu/libblas.so;-lxcf90;-lxc"/>
-      <gitInfo version="MaX-R5.1-892-g8395bda1" branch="HEAD" lastCommitHash="8395bda14ccfa945272be431fbf6c49e459121f5"/>
+   <programVersion version="fleur 35">
+      <compilationInfo date="2022-02-17T15:41:29" user="" host="runner-7uttgz5-project-19-concurrent-1vk6dp" flag="-I/opt/include -I/usr/include -ffree-line-length-none -Wno-missing-include-dirs -fno-sign-zero -fdefault-real-8 -fdefault-double-8 -fopenmp" link="-lwannier;-L/opt/lib;-ldl;-L/usr/lib;-L/usr/lib/x86_64-linux-gnu;-lscalapack-openmpi;-lfftw3;/usr/lib/x86_64-linux-gnu/libxml2.so;/usr/lib/x86_64-linux-gnu/liblapack.so;/usr/lib/x86_64-linux-gnu/libblas.so;-lxcf90;-lxc"/>
+      <gitInfo version="MaX-R6.0-94-g4b3cb258" branch="HEAD" lastCommitHash="4b3cb258c74da8ec465ace82308cd23c92a5b555"/>
       <targetComputerArchitectures>GEN</targetComputerArchitectures>
       <precision type="DOUBLE"/>
       <targetStructureClass> </targetStructureClass>
@@ -12,7 +12,7 @@
       <openMP ompThreads="2"/>
       <mem memoryPerNode="131839472 kB"/>
    </parallelSetup>
-   <startDateAndTime date="2022/01/21" time="04:12:19" zone="+0000"/>
+   <startDateAndTime date="2022/02/17" time="15:51:18" zone="+0000"/>
    <!-- Now follows a dump of the inp.xml file after evaluating the Schema -->
   <fleurInput fleurInputVersion="0.35">
      <comment>
@@ -1011,14 +1011,14 @@
             <extrapolationTo0K value="-580.0719874006"/>
          </totalEnergy>
          <densityConvergence units="me/bohr^3">
-            <chargeDensity spin="1" distance="0.0186092427"/>
+            <chargeDensity spin="1" distance="0.0186092426"/>
          </densityConvergence>
       </iteration>
       <iteration numberForCurrentRun="    7" overallNumber="    7">
          <energyParameters units="Htr">
             <atomicEP atomType="1" spin="1" branch="3s" branchLowest="-4.72" branchHighest="1.01" value="-0.1269578684"/>
             <atomicEP atomType="1" spin="1" branch="3p" branchLowest="-3.11" branchHighest="1.49" value="0.0593326172"/>
-            <atomicEP atomType="1" spin="1" branch="3d" branchLowest="-9.99" branchHighest="1.91" value="0.2547729772"/>
+            <atomicEP atomType="1" spin="1" branch="3d" branchLowest="-9.99" branchHighest="1.91" value="0.2547729771"/>
             <atomicEP atomType="1" spin="1" branch="4f" branchLowest="-9.99" branchHighest="4.00" value="0.4229696888"/>
          </energyParameters>
          <bandgap value="0.8556283365" units="eV"/>
@@ -1031,7 +1031,7 @@
             <spinDependentCharge spin="1" total="8.0000000" interstitial="3.5384976" mtSpheres="4.4615024"/>
             <totalCharge value="8.0000000000"/>
          </valenceDensity>
-         <coreStates atomType="     1" atomicNumber=" 14" spin="1" kinEnergy="    285.3748659555" eigValSum="   -158.3948233795" lostElectrons=" 0.001494">
+         <coreStates atomType="     1" atomicNumber=" 14" spin="1" kinEnergy="    285.3748659555" eigValSum="   -158.3948233796" lostElectrons=" 0.001494">
             <state n="1" l="0" j="0.5" energy="-65.2032090496" weight="1.0000000000"/>
             <state n="2" l="0" j="0.5" energy="-4.7102543850" weight="1.0000000000"/>
             <state n="2" l="1" j="0.5" energy="-3.1104788652" weight="1.0000000000"/>
@@ -1046,14 +1046,14 @@
                <coreElectrons value="-316.7896467591"/>
                <valenceElectrons value="0.1807188642"/>
             </sumOfEigenvalues>
-            <densityCoulombPotentialIntegral value="-844.3884957259"/>
+            <densityCoulombPotentialIntegral value="-844.3884957260"/>
             <densityEffectivePotentialIntegral value="-898.2981633414"/>
             <chargeDenXCDenIntegral value="-41.7441554930"/>
             <FockExchangeEnergyValence value="0.0000000000"/>
             <FockExchangeEnergyCore value="0.0000000000"/>
             <atomTypeDependentContributions atomType="1">
                <electronNucleiInteractionDifferentMTs value="685.0569424451"/>
-               <MadelungTerm value="-12.7658730389"/>
+               <MadelungTerm value="-12.7658730390"/>
             </atomTypeDependentContributions>
             <tkbTimesEntropy value="0.0000000000"/>
             <freeEnergy value="-580.0719833936"/>
@@ -1102,7 +1102,7 @@
             <FockExchangeEnergyCore value="0.0000000000"/>
             <atomTypeDependentContributions atomType="1">
                <electronNucleiInteractionDifferentMTs value="685.0580814788"/>
-               <MadelungTerm value="-12.7660923283"/>
+               <MadelungTerm value="-12.7660923284"/>
             </atomTypeDependentContributions>
             <tkbTimesEntropy value="0.0000000000"/>
             <freeEnergy value="-580.0719867866"/>
@@ -1120,7 +1120,7 @@
             <atomicEP atomType="1" spin="1" branch="4f" branchLowest="-9.99" branchHighest="4.00" value="0.4229807726"/>
          </energyParameters>
          <bandgap value="0.8556948338" units="eV"/>
-         <sumValenceSingleParticleEnergies value="0.1809489953" units="Htr"/>
+         <sumValenceSingleParticleEnergies value="0.1809489952" units="Htr"/>
          <FermiEnergy value="0.2034722861" units="Htr"/>
          <valenceDensity>
             <mtCharges spin="1">
@@ -1141,24 +1141,24 @@
          </allElectronCharges>
          <totalEnergy                                    value="     -580.0719870526" units="Htr">
             <sumOfEigenvalues                            value="     -316.6061897481">
-               <coreElectrons value="-316.7871387433"/>
-               <valenceElectrons value="0.1809489953"/>
+               <coreElectrons value="-316.7871387434"/>
+               <valenceElectrons value="0.1809489952"/>
             </sumOfEigenvalues>
-            <densityCoulombPotentialIntegral value="-844.3853353742"/>
-            <densityEffectivePotentialIntegral value="-898.2953863799"/>
+            <densityCoulombPotentialIntegral value="-844.3853353743"/>
+            <densityEffectivePotentialIntegral value="-898.2953863800"/>
             <chargeDenXCDenIntegral value="-41.7444465082"/>
             <FockExchangeEnergyValence value="0.0000000000"/>
             <FockExchangeEnergyCore value="0.0000000000"/>
             <atomTypeDependentContributions atomType="1">
-               <electronNucleiInteractionDifferentMTs value="685.0576942340"/>
-               <MadelungTerm value="-12.7663752552"/>
+               <electronNucleiInteractionDifferentMTs value="685.0576942339"/>
+               <MadelungTerm value="-12.7663752553"/>
             </atomTypeDependentContributions>
             <tkbTimesEntropy value="0.0000000000"/>
             <freeEnergy value="-580.0719870526"/>
             <extrapolationTo0K value="-580.0719870526"/>
          </totalEnergy>
          <densityConvergence units="me/bohr^3">
-            <chargeDensity spin="1" distance="0.0013676622"/>
+            <chargeDensity spin="1" distance="0.0013676625"/>
          </densityConvergence>
       </iteration>
       <iteration numberForCurrentRun="   10" overallNumber="   10">
@@ -1207,7 +1207,7 @@
             <extrapolationTo0K value="-580.0719870095"/>
          </totalEnergy>
          <densityConvergence units="me/bohr^3">
-            <chargeDensity spin="1" distance="0.0001762029"/>
+            <chargeDensity spin="1" distance="0.0001762030"/>
          </densityConvergence>
       </iteration>
       <iteration numberForCurrentRun="   11" overallNumber="   11">
@@ -1227,7 +1227,7 @@
             <spinDependentCharge spin="1" total="8.0000000" interstitial="3.5386835" mtSpheres="4.4613165"/>
             <totalCharge value="8.0000000000"/>
          </valenceDensity>
-         <coreStates atomType="     1" atomicNumber=" 14" spin="1" kinEnergy="    285.3741877523" eigValSum="   -158.3933853199" lostElectrons=" 0.001494">
+         <coreStates atomType="     1" atomicNumber=" 14" spin="1" kinEnergy="    285.3741877522" eigValSum="   -158.3933853199" lostElectrons=" 0.001494">
             <state n="1" l="0" j="0.5" energy="-65.2030751938" weight="1.0000000000"/>
             <state n="2" l="0" j="0.5" energy="-4.7101094766" weight="1.0000000000"/>
             <state n="2" l="1" j="0.5" energy="-3.1103319902" weight="1.0000000000"/>
@@ -1239,7 +1239,7 @@
          </allElectronCharges>
          <totalEnergy                                    value="     -580.0719870013" units="Htr">
             <sumOfEigenvalues                            value="     -316.6057706059">
-               <coreElectrons value="-316.7867706399"/>
+               <coreElectrons value="-316.7867706398"/>
                <valenceElectrons value="0.1810000339"/>
             </sumOfEigenvalues>
             <densityCoulombPotentialIntegral value="-844.3851166256"/>
@@ -1248,7 +1248,7 @@
             <FockExchangeEnergyValence value="0.0000000000"/>
             <FockExchangeEnergyCore value="0.0000000000"/>
             <atomTypeDependentContributions atomType="1">
-               <electronNucleiInteractionDifferentMTs value="685.0582056474"/>
+               <electronNucleiInteractionDifferentMTs value="685.0582056475"/>
                <MadelungTerm value="-12.7661819748"/>
             </atomTypeDependentContributions>
             <tkbTimesEntropy value="0.0000000000"/>
@@ -1256,9 +1256,9 @@
             <extrapolationTo0K value="-580.0719870013"/>
          </totalEnergy>
          <densityConvergence units="me/bohr^3">
-            <chargeDensity spin="1" distance="0.0000329527"/>
+            <chargeDensity spin="1" distance="0.0000329526"/>
          </densityConvergence>
       </iteration>
    </scfLoop>
-   <endDateAndTime date="2022/01/21" time="04:12:39" zone="+0000"/>
+   <endDateAndTime date="2022/02/17" time="15:51:38" zone="+0000"/>
 </fleurOutput>
