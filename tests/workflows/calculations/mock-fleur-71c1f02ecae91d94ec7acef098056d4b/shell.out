@@ -1,0 +1,21 @@
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Now copying inp_dump.xml
+ 
+ ========== k-point set info ==========
+ Selected k-point list: default-3
+ k-point list type: path
+ Number of k points: 198
+ 
+ --------------------------------------------------------
+ Number of OMP-threads:           2
+ --------------------------------------------------------
+ Fermi energy correction for insulators:
+ Fermi energy in bands.* files has been set to the maximal
+ value determined in the band structure calculation and
+ the calculation of the underlying density, respectively.
+ 
+ Note: Band structure data (together with different weights) is also stored in the banddos.hdf file.
+       A convenient way of extracting and plotting the data from that file is by making use of the
+       masci-tools (https://pypi.org/project/masci-tools/).
+ As requested by command line option usage data was not send, please send usage.json manually

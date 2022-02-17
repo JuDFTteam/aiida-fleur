@@ -1,5 +1,5 @@
       Welcome to FLEUR        (www.flapw.de)   
-      MaX-Release 5.1          (www.max-centre.eu)
+      MaX-Release 6.0          (www.max-centre.eu)
  Now copying inp_dump.xml
  
  ========== k-point set info ==========
@@ -11,55 +11,55 @@
  --------------------------------------------------------
  Number of OMP-threads:           2
  --------------------------------------------------------
- Iteration:           1  Distance:   7.9843399384243803     
+ Iteration:           1  Distance:   7.9843399384243900     
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           2  Distance:   7.5403008150398296     
+ Iteration:           2  Distance:   7.5403008150399087     
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           3  Distance:  0.86255662407721034     
+ Iteration:           3  Distance:  0.86255662407902733     
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           4  Distance:  0.45411592669771156     
+ Iteration:           4  Distance:  0.45411592670116857     
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           5  Distance:  0.21011812917555078     
+ Iteration:           5  Distance:  0.21011812917101974     
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           6  Distance:   1.6055354729369257E-002
+ Iteration:           6  Distance:   1.6055354717145733E-002
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           7  Distance:   1.2884767884367343E-002
+ Iteration:           7  Distance:   1.2884767890677665E-002
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           8  Distance:   1.3907366461371265E-003
+ Iteration:           8  Distance:   1.3907366404607648E-003
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           9  Distance:   1.5273508788244490E-003
+ Iteration:           9  Distance:   1.5273509523078771E-003
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          10  Distance:   1.5251731338505105E-004
+ Iteration:          10  Distance:   1.5251731619597101E-004
  Test for time of next iteration:
  Time provided (min):   10.000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          11  Distance:   1.8997138024439769E-005
+ Iteration:          11  Distance:   1.8997164057037999E-005
  As requested by command line option usage data was not send, please send usage.json manually

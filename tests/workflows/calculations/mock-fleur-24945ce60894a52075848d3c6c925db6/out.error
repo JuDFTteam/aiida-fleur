@@ -1,6 +1,5 @@
 I/O warning : failed to load external entity "relax.xml"
 rm: cannot remove 'cdn_last.hdf': No such file or directory
-Note: The following floating-point exceptions are signalling: IEEE_DENORMAL
 STOP OK
 
  *****************************************
@@ -8,4 +7,4 @@ STOP OK
  Stop message:
    all done
  *****************************************
-Rank:0 used    0.149   0.031 GB/	  215736 kB
+Rank:0 used    0.151   0.031 GB/	  217016 kB
