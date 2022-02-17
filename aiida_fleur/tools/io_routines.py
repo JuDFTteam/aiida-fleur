@@ -122,13 +122,13 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=-1)
     """
     from masci_tools.util.xml.xml_setters_names import delete_tag
-    from masci_tools.util.schema_dict_util import get_tag_xpath, get_number_of_nodes
+    from masci_tools.util.schema_dict_util import get_number_of_nodes
     from masci_tools.util.schema_dict_util import eval_simple_xpath
     from masci_tools.io.io_fleurxml import load_outxml
     from lxml import etree
 
     xmltree, schema_dict = load_outxml(outxmlfilepath)
-    xpath_iteration = get_tag_xpath(schema_dict, 'iteration')
+    xpath_iteration = schema_dict.tag_xpath('iteration')
 
     # delete eigenvalues (all)
     if delete_eig:

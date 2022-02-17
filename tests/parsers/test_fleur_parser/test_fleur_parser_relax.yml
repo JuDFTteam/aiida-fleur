@@ -72,6 +72,8 @@ output_parameters:
     \ 'kPointList', attribute 'posScale': The attribute 'posScale' is not allowed.\
     \ \nLine 172: Element 'spinDependentCharge': This element is not expected. Expected\
     \ is ( iteration ). \n"
+  - No text found for tag absPos
+  - No text found for tag relPos
   relax_atom_positions:
   - - 0.0
     - 0.0
