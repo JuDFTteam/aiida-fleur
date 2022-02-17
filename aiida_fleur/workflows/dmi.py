@@ -547,6 +547,7 @@ class FleurDMIWorkChain(WorkChain):
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
+            'is_it_force_theorem': True,
             'energies': self.ctx.energies,
             'q_vectors': self.ctx.q_vectors,
             'theta': self.ctx.mae_thetas,
