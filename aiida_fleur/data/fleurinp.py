@@ -30,7 +30,7 @@ import six
 from lxml import etree
 import warnings
 
-from aiida.orm import Data, Node, load_node, CalcJobNode
+from aiida.orm import Data, Node, load_node, CalcJobNode, Bool
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -538,7 +538,7 @@ class FleurinpData(Data):
         return struc
 
     @cf
-    def get_structuredata(self, normalize_kind_name=True):
+    def get_structuredata(self, normalize_kind_name=None):
         """
         This routine return an AiiDA Structure Data type produced from the ``inp.xml``
         file. If this was done before, it returns the existing structure data node.
@@ -547,6 +547,8 @@ class FleurinpData(Data):
         :param fleurinp: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node
         """
+        if normalize_kind_name is None:
+            normalize_kind_name = Bool(True)
         return self.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
 
     def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
