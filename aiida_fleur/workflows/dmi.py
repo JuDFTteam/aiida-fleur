@@ -233,7 +233,13 @@ class FleurDMIWorkChain(WorkChain):
         # set up q vector for the reference calculation
         list_ref_qss = self.ctx.wf_dict['ref_qss']
         if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True, 'l_soc': False}
+            changes_dict = {
+                'qss': self.ctx.wf_dict['ref_qss'],
+                'l_noco': True,
+                'ctail': False,
+                'l_ss': True,
+                'l_soc': False
+            }
         else:
             changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False, 'l_soc': False}
 
