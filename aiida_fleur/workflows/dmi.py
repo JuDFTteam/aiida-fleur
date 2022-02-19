@@ -238,9 +238,9 @@ class FleurDMIWorkChain(WorkChain):
         # set up q vector for the reference calculation
         list_ref_qss = self.ctx.wf_dict['ref_qss']
         if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True}
+            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True, 'l_soc': False}
         else:
-            changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False}
+            changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False, 'l_soc': False}
 
         scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
@@ -264,6 +264,7 @@ class FleurDMIWorkChain(WorkChain):
                 calc_parameters = {}
             sum_vec = np.array([np.pi / 4.0, np.e / 3.0, np.euler_gamma])
             calc_parameters['qss'] = {'x': sum_vec[0], 'y': sum_vec[1], 'z': sum_vec[2]}
+            calc_parameters['soc'] = {'theta': 0.7, 'phi': 0.7}
             input_scf.calc_parameters = Dict(dict=calc_parameters)
         return input_scf
 
