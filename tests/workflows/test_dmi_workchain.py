@@ -31,6 +31,7 @@ def test_fleur_dmi_FePt_film(
     """
     full example using mae workflow with FePt film structure as input.
     """
+    pytest.importorskip('masci_tools', minversion='0.7.3')
     from aiida.orm import Code, load_node, Dict, StructureData
     from aiida.manage.caching import enable_caching
 
@@ -130,11 +131,21 @@ def test_fleur_dmi_FePt_film(
 
     # check output
     assert outpara.get('warnings') == []
-    assert outpara.get('phi') == [0.0, 0.0, 1.57079]
-    assert outpara.get('theta') == [0.0, 1.57079, 1.57079]
-    assert outpara.get('q_vectors') == [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]]
+    assert outpara.get('phi') == [
+        3.14159265, 3.14159265, 4.71238265, 3.14159265, 3.14159265, 4.71238265, 3.14159265, 3.14159265, 4.71238265,
+        3.14159265, 3.14159265, 4.71238265
+    ]
+    assert outpara.get('theta') == [
+        0.0, -1.57079, -1.57079, 0.0, -1.57079, -1.57079, 0.0, -1.57079, -1.57079, 0.0, -1.57079, -1.57079
+    ]
+    assert outpara.get('q_vectors') == [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.125, 0.0, 0.0],
+                                        [0.125, 0.0, 0.0], [0.125, 0.0, 0.0], [0.25, 0.0, 0.0], [0.25, 0.0, 0.0],
+                                        [0.25, 0.0, 0.0], [0.375, 0.0, 0.0], [0.375, 0.0, 0.0], [0.375, 0.0, 0.0]]
     assert outpara.get('is_it_force_theorem')
-    assert outpara.get('energies') == []
+    assert pytest.approx(outpara.get('energies')) == [
+        0.0, 0.0, 0.0, 0.0, -3.2653662329991e-06, 0.0068507386014181, 0.0, 0.0, 0.0065778083972169, 0.0, 0.0,
+        -6.5307326593468e-06
+    ]
 
 
 @pytest.mark.skip(reason='not implemented')

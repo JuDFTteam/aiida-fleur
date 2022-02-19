@@ -706,7 +706,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # save inp.xml
     # store new fleurinp (copy)
     import tempfile
-    from masci_tools.util.xml.common_functions import reverse_xinclude
+    from masci_tools.util.schema_dict_util import reverse_xinclude
 
     new_fleurinp = original.clone()
 
