@@ -508,7 +508,7 @@ class FleurinpData(Data):
 
         return get_nkpts(xmltree, schema_dict)
 
-    def get_structuredata_ncf(self):
+    def get_structuredata_ncf(self, normalize_kind_name=True):
         """
         This routine returns an AiiDA Structure Data type produced from the ``inp.xml``
         file. not a calcfunction
@@ -521,7 +521,10 @@ class FleurinpData(Data):
 
         xmltree, schema_dict = self.load_inpxml()
 
-        atoms, cell, pbc = get_structure_data(xmltree, schema_dict, site_namedtuple=True)
+        atoms, cell, pbc = get_structure_data(xmltree,
+                                              schema_dict,
+                                              site_namedtuple=True,
+                                              normalize_kind_name=normalize_kind_name)
 
         struc = StructureData(cell=cell, pbc=pbc)
 
@@ -535,7 +538,7 @@ class FleurinpData(Data):
         return struc
 
     @cf
-    def get_structuredata(self):
+    def get_structuredata(self, normalize_kind_name=True):
         """
         This routine return an AiiDA Structure Data type produced from the ``inp.xml``
         file. If this was done before, it returns the existing structure data node.
@@ -544,7 +547,7 @@ class FleurinpData(Data):
         :param fleurinp: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node
         """
-        return self.get_structuredata_ncf()
+        return self.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
 
     def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
         """
