@@ -567,9 +567,9 @@ class FleurCFCoeffWorkChain(WorkChain):
                 if not isinstance(cf_calc_out, orm.Dict):
                     self.report(f'Calculation of crystal field coefficients failed with {cf_calc_out!r}')
                     self.ctx.successful = False
+                    cf_calc_out = {}
                 else:
                     cf_calcs_out = [cf_calc_out]
-                    cf_calc_out = {}
             else:
                 cf_calc_out = {}
                 for index in range(self.ctx.num_analogues):
