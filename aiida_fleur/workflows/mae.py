@@ -67,6 +67,7 @@ class FleurMaeWorkChain(WorkChain):
             'max_queue_wallclock_sec': 86400
         },
         'kmesh_force_theorem': None,
+        'use_symmetries_reference': False,
         'soc_off': [],
         'inpxml_changes': [],
     }
@@ -258,7 +259,9 @@ class FleurMaeWorkChain(WorkChain):
                 calc_parameters = input_scf.calc_parameters.get_dict()
             else:
                 calc_parameters = {}
-            calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
+            if not self.ctx.wf_dict.get('use_symmetries_reference'):
+                # break symmetries, SOC will be removed if not set
+                calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
             input_scf.calc_parameters = Dict(dict=calc_parameters)
 
         return input_scf
@@ -298,6 +301,7 @@ class FleurMaeWorkChain(WorkChain):
         fchanges.append(('set_inpchanges', {'change_dict': {'itmax': 1, 'l_soc': True}}),)
 
         if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+            # set k-mesh for the full BZ
             kmesh = KpointsData()
             kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
             kmesh.store()
@@ -305,6 +309,13 @@ class FleurMaeWorkChain(WorkChain):
                 'kpointsdata_uuid': kmesh.uuid,
                 'switch': True,
                 'kpoint_type': 'mesh'
+            }))
+
+        if self.ctx.wf_dict['use_symmetries_reference']:
+            # remove symmetries from the inp.xml
+            fchanges.append(('delete_tag', {
+                'tag': 'symOp',
+                'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
             }))
 
         if fchanges:  # change inp.xml file
