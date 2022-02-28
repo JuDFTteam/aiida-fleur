@@ -26,6 +26,7 @@ class FleurHubbard1WorkChain(WorkChain):
         'ldahia_dict': None,
         'soc': 'auto',
         'exchange_constants': None,
+        'exchange_field': None,
         'cf_coefficients': None,
         'occupation_converged': 0.01,
         'matrix_elements_converged': 0.001,
@@ -117,6 +118,12 @@ class FleurHubbard1WorkChain(WorkChain):
                 error = 'ERROR: you gave cfcoeff input + explicit cf_coefficients in wf_parameters'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+
+        if self.ctx.wf_dict['exchange_constants'] is not None and \
+            self.ctx.wf_dict['exchange_field'] is not None:
+            error = 'ERROR: you gave exchange_constants input + exchange_field in wf_parameters'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
     def preliminary_calcs_needed(self):
         """
@@ -220,7 +227,8 @@ class FleurHubbard1WorkChain(WorkChain):
             cf_coefficients = self.ctx.cfcoeff.outputs.output_cfcoeff_wc_para.dict.cf_coefficients_spin_up
             if all('/' not in key for key in cf_coefficients):
                 self.report('WARNING: Crystal field coefficients from multiple atomtypes not supported fully')
-                _, cf_coefficients = cf_coefficients.popitem() #Just take one (To support multiple we need to split up species)
+                _, cf_coefficients = cf_coefficients.popitem(
+                )  #Just take one (To support multiple we need to split up species)
 
             #Drop coefficients with negative m
             cf_coefficients = {key: coeff for key, coeff in cf_coefficients.items() if '-' not in key}
@@ -239,6 +247,13 @@ class FleurHubbard1WorkChain(WorkChain):
         for l, exc_dict in exc_constant.items():
             exc_constant_tags.append({'l': l, **exc_dict})
 
+        addarg_tags = []
+        if self.ctx.wf_dict['soc'] != 'auto':
+            addarg_tags.append({'key': 'xiSOC', 'value': self.ctx.wf_dict['soc']})
+
+        if self.ctx.wf_dict['exchange_field'] is not None:
+            addarg_tags.append({'key': 'Exc', 'value': self.ctx.wf_dict['exchange_field']})
+
         for species_name, ldahia_dict in self.ctx.wf_dict['ldahia_dict'].items():
             if coefficient_tags:
                 ldahia_dict = {**ldahia_dict, 'cfCoeff': coefficient_tags}
@@ -246,8 +261,8 @@ class FleurHubbard1WorkChain(WorkChain):
             if exc_constant_tags:
                 ldahia_dict = {**ldahia_dict, 'exc': exc_constant_tags}
 
-            if self.ctx.wf_dict['soc'] != 'auto':
-                ldahia_dict = {**ldahia_dict, 'addarg': {'key': 'xiSOC', 'value': self.ctx.wf_dict['soc']}}
+            if addarg_tags:
+                ldahia_dict.setdefault('addarg', []).extend(addarg_tags)
 
             scf_wf_para['inpxml_changes'].append(('set_species', {
                 'species_name': species_name,
