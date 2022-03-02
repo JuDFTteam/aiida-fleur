@@ -1,0 +1,17 @@
+      Welcome to FLEUR - inpgen   (www.flapw.de)
+      MaX-Release 6.0          (www.max-centre.eu)
+ NOTE: right now the "-profile" option is under development and experimental.
+ Could not find profile non_existent. Using default profile.
+ Processing k-point string:
+ Generating default k-point set
+           8           8           8         512
+ Processing k-point string: band=240
+ Generating a k-point set for bandstructures with          240  k-points
+ Stored k-point lists:
+
+                NAME           TYPE      NKPT   COMMENT
+ ================================================================================
+             default           MESH        60   8 x 8 x 8
+              path-2           PATH       240   X - K - g - L - W - X - g
+ ================================================================================
+ Usage data sending failed

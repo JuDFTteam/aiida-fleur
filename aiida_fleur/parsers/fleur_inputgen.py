@@ -20,6 +20,7 @@ from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
 import pprint
+import re
 
 
 class Fleur_inputgenParser(Parser):
@@ -78,6 +79,29 @@ class Fleur_inputgenParser(Parser):
                     self.logger.warning(
                         f'The following was written into std error and piped to {errorfile}: \n {error_file_lines}')
                     self.logger.error('Inpgen calculation did not finish successfully.')
+
+        #Check for a message if the given profile could not be found
+        #This is only in the stdout at the moment
+        shellout_file = FleurinputgenCalculation._SHELLOUT_FILE_NAME
+        if FleurinputgenCalculation._SHELLOUT_FILE_NAME in list_of_files:
+            try:
+                with output_folder.open(shellout_file, 'r') as shellout:
+                    shellout_file_lines = shellout.read()
+            except IOError:
+                self.logger.error(f'Failed to open error file: {shellout_file}.')
+                return self.exit_codes.ERROR_OPENING_OUTPUTS
+            if shellout_file_lines:
+                if isinstance(shellout_file_lines, bytes):
+                    shellout_file_lines = shellout_file_lines.replace(b'\x00', b' ')
+                else:
+                    shellout_file_lines = shellout_file_lines.replace('\x00', ' ')
+                if 'Could not find profile' in shellout_file_lines:
+                    m = re.search(r'Could not find profile ([^\s]+)', shellout_file_lines)
+                    profile_name = 'NOT_FOUND'
+                    if m is not None:
+                        profile_name = m.group(1)[:-1]  #The output contains a dot directly after the name
+                    self.logger.error('Inpgen code does not recognize the given profile %s', profile_name)
+                    return self.exit_codes.ERROR_UNKNOWN_PROFILE.format(profile=profile_name)
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
