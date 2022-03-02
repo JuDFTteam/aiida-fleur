@@ -188,6 +188,66 @@ def test_fleurinpgen_with_profile_and_parameters(fixture_sandbox, generate_calc_
     assert 'Inpgen profile specified but atom/LAPW basis specific parameters are provided' in logs[0].message
 
 
+def test_fleurinpgen_profile(fixture_sandbox, generate_calc_job, fixture_code, generate_structure):  # file_regression
+    """Test a default `FleurinputgenCalculation` with a profile setting."""
+    entry_point_name = 'fleur.inpgen'
+
+    #Should not raise a warning for conflicting with the profile
+    parameters = {'soc': {'theta': 0.0, 'phi': 0.0}}
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': generate_structure(),
+        'parameters': orm.Dict(dict=parameters),
+        'settings': orm.Dict(dict={'profile': 'precise'}),
+        'metadata': {
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
+        }
+    }
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+    codes_info = calc_info.codes_info
+    cmdline_params = ['-explicit']  # for inpgen2 ['+all', '-explicit', 'aiida.in']
+    local_copy_list = []
+    retrieve_list = ['inp.xml', 'out', 'shell.out', 'out.error', 'struct.xsf', 'aiida.in']
+    retrieve_temporary_list = []
+
+    # Check the attributes of the returned `CalcInfo`
+    assert isinstance(calc_info, datastructures.CalcInfo)
+    #assert sorted(codes_info[0].cmdline_params) == sorted(cmdline_params)
+    assert sorted(calc_info.local_copy_list) == sorted(local_copy_list)
+    assert sorted(calc_info.retrieve_list) == sorted(retrieve_list)
+    # assert sorted(calc_info.retrieve_temporary_list) == sorted(retrieve_temporary_list)
+    assert sorted(calc_info.remote_symlink_list) == sorted([])
+
+    with fixture_sandbox.open('aiida.in') as handle:
+        input_written = handle.read()
+
+    aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
+       0.000000000        5.130606429        5.130606429
+       5.130606429        0.000000000        5.130606429
+       5.130606429        5.130606429        0.000000000
+      1.0000000000
+       1.000000000        1.000000000        1.000000000
+
+      2\n         14       0.0000000000       0.0000000000       0.0000000000
+         14       0.2500000000       0.2500000000       0.2500000000\n&soc\n 0.0  0.0 /\n"""
+    # Checks on the files written to the sandbox folder as raw input
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
+    assert input_written == aiida_in_text
+
+    assert calc_info.codes_info[0].cmdline_params[-2:] == ['-profile', 'precise']
+
+    logs = orm.Log.objects.get_logs_for(orm.load_node(calc_info.uuid))
+    assert len(logs) == 0
+
+
 @pytest.mark.regression_test
 def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
