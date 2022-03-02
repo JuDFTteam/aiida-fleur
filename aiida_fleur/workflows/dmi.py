@@ -120,12 +120,10 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        self.ctx.energy_dict = []
         self.ctx.qs = []
         self.ctx.mae_thetas = []
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
-        self.ctx.energies = []
         self.ctx.h_so = []
         self.ctx.q_vectors = []
 
@@ -490,11 +488,9 @@ class FleurDMIWorkChain(WorkChain):
         """
         Generates results of the workchain.
         """
-        t_energydict = []
         mae_thetas = []
         mae_phis = []
         num_ang = 0
-        num_q_vectors = 0
         q_vectors = []
 
         try:
@@ -510,39 +506,25 @@ class FleurDMIWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            evsum = out_dict.dmi_force_evsum
             h_so = out_dict.dmi_force_so_h_so
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles
-            num_q_vectors = out_dict.dmi_force_qs
-            q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_q]
+            q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_so_q]
             e_u = out_dict.dmi_force_units
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
-        if not isinstance(evsum, list):
+        if not isinstance(h_so, list):
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
-        reference_indices = [q * (num_ang + 1) for q in range(num_q_vectors)]
-        reference_energies = np.array([evsum[index] for index in reference_indices])
-        reference_energies = np.repeat(reference_energies, num_ang + 1)
-
-        evsum = np.array(evsum) - reference_energies
-
         if e_u in ['htr', 'Htr']:
-            evsum *= HTR_TO_EV
+            h_so *= HTR_TO_EV
 
-        evsum = evsum.tolist()
-        for index in reference_indices:
-            evsum.pop(index)
-            q_vectors.pop(index)
-
-        self.ctx.energies = evsum
         self.ctx.h_so = h_so
         self.ctx.q_vectors = q_vectors
         self.ctx.mae_thetas = mae_thetas
@@ -558,7 +540,6 @@ class FleurDMIWorkChain(WorkChain):
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
             'is_it_force_theorem': True,
-            'energies': self.ctx.energies,
             'soc_energies': self.ctx.h_so,
             'q_vectors': self.ctx.q_vectors,
             'theta': self.ctx.mae_thetas,
