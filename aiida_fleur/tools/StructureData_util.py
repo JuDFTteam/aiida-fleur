@@ -1867,6 +1867,10 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
                     label = f'replaced_{replace_symbol}_{new_symbol}_site_{index}'
                     new_structures[label] = StructureData(ase=struc)
 
+    for name, structure in new_structures.items():
+        structure.label = name
+        structure.description = f"Structure with {'all' if 'all' in name else ''} {replace_symbol} atoms replaced with {new_symbol}"
+
     return new_structures
 
 

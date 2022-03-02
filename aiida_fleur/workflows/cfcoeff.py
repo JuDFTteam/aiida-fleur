@@ -155,15 +155,23 @@ class FleurCFCoeffWorkChain(WorkChain):
             all_inputs = self.get_inputs_rare_earth_analogue()
             for name, inputs in all_inputs.items():
                 calcs[name] = self.submit(FleurScfWorkChain, **inputs)
+                calcs[name].label = name
+                calcs[
+                    name].description = f"SCF workflow for the rare-earth analogue ({self.ctx.wf_dict['analogue_element']}); number {name.split('_')[-1]}"
 
         if 'scf' in self.inputs:
             inputs = self.get_inputs_scf()
             result_scf = self.submit(FleurScfWorkChain, **inputs)
             calcs['rare_earth_scf'] = result_scf
+            calcs['rare_earth_scf'].label = 'rare_earth_scf'
+            calcs['rare_earth_scf'].description = 'SCF workflow for the rare-earth system for the CF calculation'
         elif 'orbcontrol' in self.inputs:
             inputs = self.get_inputs_orbcontrol()
             result_orbcontrol = self.submit(FleurOrbControlWorkChain, **inputs)
             calcs['rare_earth_orbcontrol'] = result_orbcontrol
+            calcs['rare_earth_orbcontrol'].label = 'rare_earth_orbcontrol'
+            calcs[
+                'rare_earth_orbcontrol'].description = 'Orbcontrol workflow for the rare-earth system for the CF calculation'
 
         return ToContext(**calcs)
 
@@ -369,10 +377,15 @@ class FleurCFCoeffWorkChain(WorkChain):
             all_inputs = self.get_inputs_cfanalogue_calculation()
             for name, inputs in all_inputs.items():
                 calcs[name] = self.submit(FleurBaseWorkChain, **inputs)
+                calcs[name].label = name
+                calcs[
+                    name].description = f"Calculation of crystal field potential with {self.ctx.wf_dict['analogue_element']} Analogue Method"
 
         inputs = self.get_inputs_cfrareearth_calculation()
         result_rareearth = self.submit(FleurBaseWorkChain, **inputs)
         calcs['rare_earth_cf'] = result_rareearth
+        calcs['rare_earth_cf'].label = 'rare_earth_cf'
+        calcs['rare_earth_cf'].description = 'Crystal Field Calculation including the 4f element'
 
         return ToContext(**calcs)
 
@@ -419,16 +432,16 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             fleurinp_cf = fm.freeze()
 
-            label = f'Rare-Earth Analogue ({analogue_element}) CF Potential'
+            label = f'analogue_cf_{index}'
             description = f'Calculation of crystal field potential with {analogue_element} Analogue Method'
 
-            all_inputs[f'analogue_cf_{index}'] = get_inputs_fleur(inputs.fleur,
-                                                                  remote_data,
-                                                                  fleurinp_cf,
-                                                                  options,
-                                                                  label,
-                                                                  description,
-                                                                  settings=settings)
+            all_inputs[label] = get_inputs_fleur(inputs.fleur,
+                                                 remote_data,
+                                                 fleurinp_cf,
+                                                 options,
+                                                 label,
+                                                 description,
+                                                 settings=settings)
         return all_inputs
 
     def get_inputs_cfrareearth_calculation(self):
@@ -454,7 +467,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         else:
             options = {}
 
-        label = 'CF calculation'
+        label = 'rare_earth_cf'
         if self.ctx.wf_dict['rare_earth_analogue']:
             description = 'Calculation of crystal field charge density'
         else:
