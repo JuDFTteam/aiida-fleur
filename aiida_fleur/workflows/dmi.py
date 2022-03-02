@@ -126,6 +126,7 @@ class FleurDMIWorkChain(WorkChain):
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
         self.ctx.energies = []
+        self.ctx.h_so = []
         self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
