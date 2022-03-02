@@ -510,6 +510,7 @@ class FleurDMIWorkChain(WorkChain):
         try:
             out_dict = calculation.outputs.output_parameters.dict
             evsum = out_dict.dmi_force_evsum
+            h_so = out_dict.dmi_force_so_h_so
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles
@@ -541,6 +542,7 @@ class FleurDMIWorkChain(WorkChain):
             q_vectors.pop(index)
 
         self.ctx.energies = evsum
+        self.ctx.h_so = h_so
         self.ctx.q_vectors = q_vectors
         self.ctx.mae_thetas = mae_thetas
         self.ctx.mae_phis = mae_phis
@@ -556,6 +558,7 @@ class FleurDMIWorkChain(WorkChain):
             # 'initial_structure': self.inputs.structure.uuid,
             'is_it_force_theorem': True,
             'energies': self.ctx.energies,
+            'soc_energies': self.ctx.h_so,
             'q_vectors': self.ctx.q_vectors,
             'theta': self.ctx.mae_thetas,
             'phi': self.ctx.mae_phis,
