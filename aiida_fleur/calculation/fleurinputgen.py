@@ -151,6 +151,19 @@ class FleurinputgenCalculation(CalcJob):
                 self.logger.info('settings dict key %s for Fleur calculation'
                                  'not recognized, only %s are allowed.', key, str(self._settings_keys))
 
+        #Check that if a inpgen profile is given no additional parameters are provided
+        #since this will overwrite the effects of the inpgen profile (For now we just issue a warning)
+        if 'profile' in settings_dict:
+            lapw_parameters_given = any('atom' in key for key in parameters_dict)
+            comp = parameters_dict.get('comp', {})
+            lapw_parameters_given = lapw_parameters_given or \
+                                    'kmax' in comp or \
+                                    'gmax' in comp or \
+                                    'gmaxxc' in comp
+            if lapw_parameters_given:
+                self.logger.warning('Inpgen profile specified but atom/LAPW basis specific '
+                                    'parameters are provided. These will conflict/override each other')
+
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
 

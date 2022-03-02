@@ -1,13 +1,13 @@
 """Tests for the `FleurinputgenCalculation` class."""
 
-import os
 import pytest
 from aiida import orm
 from aiida.common import datastructures
 from aiida.cmdline.utils.common import get_calcjob_report
 from aiida.engine import run_get_node
-from aiida.plugins import CalculationFactory, DataFactory
-from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida.plugins import CalculationFactory
+
+import logging
 
 
 def test_fleurinpgen_default_calcinfo(fixture_sandbox, generate_calc_job, fixture_code,
@@ -133,6 +133,59 @@ def test_fleurinpgen_with_parameters(fixture_sandbox, generate_calc_job, fixture
     assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
     assert input_written == aiida_in_text
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
+
+
+def test_fleurinpgen_with_profile_and_parameters(fixture_sandbox, generate_calc_job, fixture_code, generate_structure,
+                                                 aiida_caplog):  # file_regression
+    """Test a default `FleurinputgenCalculation`."""
+
+    # Todo add (more) tests with full parameter possibilities, i.e econfig, los, ....
+
+    entry_point_name = 'fleur.inpgen'
+
+    parameters = {
+        'atom': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },  #'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
+        'comp': {
+            'kmax': 5.0,
+            'gmaxxc': 12.5,
+            'gmax': 15.0
+        },
+        'kpt': {
+            'div1': 17,
+            'div2': 17,
+            'div3': 17,
+            'tkb': 0.0005
+        }
+    }
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': generate_structure(),
+        'parameters': orm.Dict(dict=parameters),
+        'settings': orm.Dict(dict={'profile': 'default'}),
+        'metadata': {
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
+        }
+    }
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+
+    logs = orm.Log.objects.get_logs_for(orm.load_node(calc_info.uuid))
+
+    assert len(logs) == 1
+    assert 'Inpgen profile specified but atom/LAPW basis specific parameters are provided' in logs[0].message
 
 
 @pytest.mark.regression_test
