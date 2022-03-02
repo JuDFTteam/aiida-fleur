@@ -622,8 +622,9 @@ class FleurCFCoeffWorkChain(WorkChain):
 
                     if not cf_calc_out:
                         cf_calc_out = cf_calc_out_analogue.get_dict()
+                    else:
+                        cf_calc_out['cf_coefficients_atomtypes'] += atomTypes
 
-                    cf_calc_out['cf_coefficients_atomtypes'] += atomTypes
                     cf_calc_out['cf_coefficients_spin_up'] = {
                         **cf_calc_out['cf_coefficients_spin_up'],
                         **cf_calc_out_analogue['cf_coefficients_spin_up']
