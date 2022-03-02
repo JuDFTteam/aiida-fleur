@@ -250,6 +250,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 }))
 
             inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
+            inputs_analogue.metadata.call_link_label = f'analogue_scf_{index}'
             inputs[f'analogue_scf_{index}'] = inputs_analogue
 
         return inputs
@@ -274,6 +275,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             }))
 
             input_scf.wf_parameters = orm.Dict(dict=scf_wf_dict)
+        input_scf.metadata.call_link_label = 'rare_earth_scf'
 
         return input_scf
 
@@ -313,6 +315,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             }))
 
             input_orbcontrol.wf_parameters = orm.Dict(dict=orbcontrol_wf_dict)
+        input_orbcontrol.metadata.call_link_label = 'rare_earth_orbcontrol'
 
         return input_orbcontrol
 
@@ -442,6 +445,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                                                  label,
                                                  description,
                                                  settings=settings)
+            all_inputs[label].setdefault('metadata', {})['call_link_label'] = label
+
         return all_inputs
 
     def get_inputs_cfrareearth_calculation(self):
@@ -512,6 +517,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                                             label,
                                             description,
                                             settings=settings)
+        inputs_rareearth.setdefault('metadata', {})['call_link_label'] = label
+
         return inputs_rareearth
 
     def check_cf_calculation(self, calc_name):
