@@ -314,7 +314,7 @@ class FleurMaeWorkChain(WorkChain):
         if self.ctx.wf_dict['use_symmetries_reference']:
             # remove symmetries from the inp.xml
             fchanges.append(('delete_tag', {
-                'tag_name': 'symOp',
+                'tag': 'symOp',
                 'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
             }))
 
