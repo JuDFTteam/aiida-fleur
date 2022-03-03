@@ -1077,3 +1077,12 @@ def test_replace_element(generate_structure):
     assert result['replaced_Si_Y_site_0'].kinds[1].symbols[0] == 'Si'
     assert result['replaced_Si_Y_site_1'].kinds[0].symbols[0] == 'Si'
     assert result['replaced_Si_Y_site_1'].kinds[1].symbols[0] == 'Y'
+
+
+def test_get_atomtype_site_symmetry(generate_structure):
+    from aiida_fleur.tools.StructureData_util import get_atomtype_site_symmetry
+
+    structure = generate_structure()
+    result = get_atomtype_site_symmetry(structure)
+
+    assert result == ['-43m']

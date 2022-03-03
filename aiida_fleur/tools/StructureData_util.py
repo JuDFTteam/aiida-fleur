@@ -2213,6 +2213,34 @@ def define_AFM_structures(structure,
     return rebuilt_structure, substrate
 
 
+def get_atomtype_site_symmetry(struc):
+    """
+    Get the local site symmetry symbols for each atomtype
+
+    Uses pymatgen SpaceGroupAnalyzer
+
+    :param struc: StructureData to analyse
+
+    :returns: list of the site symmetry symbols for each atomtype
+              (In the order they appear in the StructureData)
+    """
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    from more_itertools import unique_everseen
+
+    pym_struc = struc.get_pymatgen()
+
+    symmetry_analyzer = SpacegroupAnalyzer(pym_struc)
+    sym_data = symmetry_analyzer.get_symmetry_dataset()
+
+    site_symmetries = sym_data['site_symmetry_symbols']
+    equivalent_atoms = sym_data['equivalent_atoms']
+
+    #Get the representative atom for each atomtype
+    representative_atoms = unique_everseen(equivalent_atoms)
+
+    return [site_symmetries[repr_atom] for repr_atom in representative_atoms]
+
+
 '''
 def estimate_mt_radii(structure, stepsize=0.05):
     """
