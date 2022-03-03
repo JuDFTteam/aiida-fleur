@@ -20,7 +20,7 @@ from aiida.common.exceptions import NotExistent
 from aiida import orm
 from aiida.common.constants import elements as PeriodicTableElements
 
-from aiida_fleur.tools.StructureData_util import replace_element, mark_atoms
+from aiida_fleur.tools.StructureData_util import replace_element, mark_atoms, get_atomtype_site_symmetry
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -569,7 +569,6 @@ class FleurCFCoeffWorkChain(WorkChain):
             link_label = 'rare_earth_cf'
             outnodedict[link_label] = self.ctx.rare_earth_cf.outputs.output_parameters
             cdn_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
-
             xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinpdata.load_inpxml()
 
             groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
@@ -652,6 +651,15 @@ class FleurCFCoeffWorkChain(WorkChain):
                         _, cf_calc_out['cf_coefficients_spin_down_imag'] = cf_calc_out[
                             'cf_coefficients_spin_down_imag'].popitem()
 
+        rare_earth_site_symmetries = []
+        if success and len(cf_calc_out['cf_coefficients_atomtypes']) > 0:
+            #For this to work the order of the atomtype CANNOT change between the conversions
+            struc = self.ctx.rare_earth_cf.inputs.fleurinpdata.get_structuredata_ncf()
+            site_symmetries = get_atomtype_site_symmetry(struc)
+            rare_earth_site_symmetries = [
+                site_symmetries[atomtype - 1] for atomtype in cf_calc_out['cf_coefficients_atomtypes']
+            ]
+
         out = {
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
@@ -662,6 +670,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             'cf_coefficients_spin_down': None,
             'cf_coefficients_convention': None,
             'cf_coefficients_units': 'K',
+            'cf_coefficients_site_symmetries': rare_earth_site_symmetries,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
             'errors': self.ctx.errors
