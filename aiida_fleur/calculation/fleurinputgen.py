@@ -250,6 +250,9 @@ def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=
     for site in structure.sites:
         atoms_dict_list.append(site.get_raw())
 
+    if settings is None:
+        settings = {}
+
     write_settings = {}
     if 'significant_figures_cell' in settings:
         write_settings['significant_figures_cell'] = settings.get('significant_figures_cell')
