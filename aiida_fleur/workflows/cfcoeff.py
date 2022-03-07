@@ -802,7 +802,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             #Merge the different calculations together
             pot_output = orm.XyData()
-            x_array, x_name, x_unit = potentials[0].get_x()
+            x_name, x_array, x_unit = potentials[0].get_x()
             pot_output.set_x(x_array, x_name, x_unit)
 
             y_names, y_arrays, y_units = [], [], []
