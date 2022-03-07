@@ -850,7 +850,11 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         for atom_type in atomTypes.get_list():
             charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
             for coeff in coefficients:
-                potentials[f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'] = cfcalc.vlm[(coeff.l, coeff.m)]
+                prefix = f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'
+                vlm = cfcalc.vlm[(coeff.l, coeff.m)]
+                potentials[f'{prefix}-up'] = vlm[0, :]
+                if vlm.shape[0] == 2:
+                    potentials[f'{prefix}-down'] = vlm[1, :]
 
     else:
         norm = {}
@@ -883,7 +887,11 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                 potentials_rmesh = cfcalc.vlm['rmesh']
             charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
             for coeff in coefficients:
-                potentials[f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'] = cfcalc.vlm[(coeff.l, coeff.m)]
+                prefix = f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'
+                vlm = cfcalc.vlm[(coeff.l, coeff.m)]
+                potentials[f'{prefix}-up'] = vlm[0, :]
+                if vlm.shape[0] == 2:
+                    potentials[f'{prefix}-down'] = vlm[1, :]
 
     out_dict['cf_coefficients_atomtypes'] = atomTypes.get_list()
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
