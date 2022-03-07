@@ -80,6 +80,8 @@ class FleurCFCoeffWorkChain(WorkChain):
         spec.outline(cls.start, cls.validate_input, cls.run_scfcalculations, cls.run_cfcalculation, cls.return_results)
 
         spec.output('output_cfcoeff_wc_para', valid_type=orm.Dict)
+        spec.output('output_cfcoeff_wc_charge_densities', valid_type=orm.XyData, required=False)
+        spec.output('output_cfcoeff_wc_potentials', valid_type=orm.XyData, required=False)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -563,6 +565,9 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         outnodedict = {}
         cf_calcs_out = []  #All single nodes
+        charge_densities = []
+        potentials = []
+
         #This calculation is always there
         success = self.check_cf_calculation('rare_earth_cf')
         if success:
@@ -583,12 +588,14 @@ class FleurCFCoeffWorkChain(WorkChain):
                                                         pot_retrieved,
                                                         convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
                                                         atomTypes=orm.List(list=atomTypes))
-                if not isinstance(cf_calc_out, orm.Dict):
+                if isinstance(cf_calc_out, ExitCode):
                     self.report(f'Calculation of crystal field coefficients failed with {cf_calc_out!r}')
                     self.ctx.successful = False
                     cf_calc_out = {}
                 else:
-                    cf_calcs_out = [cf_calc_out]
+                    cf_calcs_out = [cf_calc_out['out']]
+                    charge_densities = [cf_calc_out['charge_densities']]
+                    potentials = [cf_calc_out['potentials']]
             else:
                 cf_calc_out = {}
                 for index in range(self.ctx.num_analogues):
@@ -611,11 +618,15 @@ class FleurCFCoeffWorkChain(WorkChain):
                                                                      convert=orm.Bool(
                                                                          self.ctx.wf_dict['convert_to_stevens']),
                                                                      atomTypes=orm.List(list=atomTypes))
-                    if not isinstance(cf_calc_out_analogue, orm.Dict):
+                    if isinstance(cf_calc_out_analogue, ExitCode):
                         self.report(
                             f'Calculation of crystal field coefficients failed: {calc_name} with {cf_calc_out!r}')
                         self.ctx.successful = False
                         continue
+
+                    charge_densities.append(cf_calc_out_analogue['charge_densities'])
+                    potentials.append(cf_calc_out_analogue['potentials'])
+                    cf_calc_out_analogue = cf_calc_out_analogue['out']
 
                     cf_calcs_out.append(cf_calc_out_analogue)
 
@@ -690,6 +701,41 @@ class FleurCFCoeffWorkChain(WorkChain):
         outnodedict = {f'crystal_field_coefficients_{index}': cf_coff for index, cf_coff in enumerate(cf_calcs_out)}
         outnodedict['results_node'] = outnode
 
+        if charge_densities:
+            #Merge the different calculations together
+            cdn_output = orm.XyData()
+            x_name, x_array, x_unit = charge_densities[0].get_x()
+            cdn_output.set_x(x_array, x_name, x_unit)
+
+            y_names, y_arrays, y_units = [], [], []
+            for cdn in charge_densities:
+                names, arrays, units = cdn.get_y()
+                y_names.extend(names)
+                y_arrays.extend(arrays)
+                y_units.extend(units)
+            cdn_output.set_y(y_arrays, y_names, y_units)
+
+            cdn_output.label = 'output_cfcoeff_wc_charge_densities'
+            cdn_output.description = 'Charge densities used in the Crystal Field calculation'
+            outnodedict['charge_densities'] = cdn_output
+
+            #Merge the different calculations together
+            pot_output = orm.XyData()
+            x_array, x_name, x_unit = potentials[0].get_x()
+            pot_output.set_x(x_array, x_name, x_unit)
+
+            y_names, y_arrays, y_units = [], [], []
+            for pot in potentials:
+                names, arrays, units = pot.get_y()
+                y_names.extend(names)
+                y_arrays.extend(arrays)
+                y_units.extend(units)
+            pot_output.set_y(y_arrays, y_names, y_units)
+
+            pot_output.label = 'output_cfcoeff_wc_potentials'
+            pot_output.description = 'Potentials used in the Crystal Field calculation'
+            outnodedict['potentials'] = pot_output
+
         # create links between all these nodes...
         outputnode_dict = create_cfcoeff_results_node(**outnodedict)
         outputnode = outputnode_dict.get('output_cfcoeff_wc_para')
@@ -699,6 +745,9 @@ class FleurCFCoeffWorkChain(WorkChain):
 
         returndict = {}
         returndict['output_cfcoeff_wc_para'] = outputnode
+        if charge_densities:
+            returndict['output_cfcoeff_wc_charge_densities'] = cdn_output
+            returndict['output_cfcoeff_wc_potentials'] = pot_output
 
         # create link to workchain node
         for link_name, node in returndict.items():
@@ -767,12 +816,18 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     coefficients_dict_dn = {}
     coefficients_dict_up_imag = {}
     coefficients_dict_dn_imag = {}
+
+    charge_densities = {}
+    charge_densities_rmesh = None
+    potentials = {}
+    potentials_rmesh = None
+
     if atomTypes is None:
         res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert)
         if isinstance(res, ExitCode):
             return res
         cfcalc, coefficients = res
-        #Find out shich atomtype (this should be integrated into masci-tools)
+        #Find out which atomtype (this should be integrated into masci-tools)
         #since we already checked for an exit code we assume everything worked
         with cf_cdn_folder.open(FleurCalculation._CFDATA_HDF5_FILE_NAME, 'rb') as f:
             with h5py.File(f, 'r') as cffile:
@@ -789,19 +844,27 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         phi = cfcalc.phi
         theta = cfcalc.theta
         norm = cfcalc.denNorm
+
+        charge_densities_rmesh = cfcalc.cdn['rmesh']
+        potentials_rmesh = cfcalc.vlm['rmesh']
+        for atom_type in atomTypes.get_list():
+            charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
+            for coeff in coefficients:
+                potentials[f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'] = cfcalc.vlm[(coeff.l, coeff.m)]
+
     else:
         norm = {}
-        for atomType in atomTypes:
-            res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atomType)
+        for atom_type in atomTypes:
+            res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atom_type)
             if isinstance(res, ExitCode):
                 return res
             cfcalc, coefficients = res
 
-            atom_up = coefficients_dict_up.setdefault(atomType, {})
-            atom_dn = coefficients_dict_dn.setdefault(atomType, {})
-            atom_up_imag = coefficients_dict_up_imag.setdefault(atomType, {})
-            atom_dn_imag = coefficients_dict_dn_imag.setdefault(atomType, {})
-            norm[atomType] = cfcalc.denNorm
+            atom_up = coefficients_dict_up.setdefault(atom_type, {})
+            atom_dn = coefficients_dict_dn.setdefault(atom_type, {})
+            atom_up_imag = coefficients_dict_up_imag.setdefault(atom_type, {})
+            atom_dn_imag = coefficients_dict_dn_imag.setdefault(atom_type, {})
+            norm[atom_type] = cfcalc.denNorm
             phi = cfcalc.phi
             theta = cfcalc.theta
 
@@ -814,6 +877,13 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                 atom_dn[key] = coeff.spin_down.real
                 atom_up_imag[key] = coeff.spin_up.imag
                 atom_dn_imag[key] = coeff.spin_down.imag
+
+            if charge_densities_rmesh is None:
+                charge_densities_rmesh = cfcalc.cdn['rmesh']
+                potentials_rmesh = cfcalc.vlm['rmesh']
+            charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
+            for coeff in coefficients:
+                potentials[f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'] = cfcalc.vlm[(coeff.l, coeff.m)]
 
     out_dict['cf_coefficients_atomtypes'] = atomTypes.get_list()
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
@@ -832,7 +902,27 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     out_dict.label = 'CFCoefficients'
     out_dict.description = 'Results of the post-processing tool for calculating Crystal field coefficients'
 
-    return out_dict
+    cdn_data = orm.XyData()
+    cdn_data.set_x(charge_densities_rmesh, 'rmesh', x_units='Bohr')
+
+    y_names, y_arrays = zip(*charge_densities.items())
+    y_units = ['density'] * len(y_names)
+    cdn_data.set_y(y_arrays, y_names, y_units=y_units)
+
+    cdn_data.label = 'cfcoeff_cdn_data'
+    cdn_data.description = ('Contains XyData for the Charge density used in the crystal field calculation')
+
+    pot_data = orm.XyData()
+    pot_data.set_x(potentials_rmesh, 'rmesh', x_units='Bohr')
+
+    y_names, y_arrays = zip(*potentials.items())
+    y_units = ['htr'] * len(y_names)
+    pot_data.set_y(y_arrays, y_names, y_units=y_units)
+
+    pot_data.label = 'cfcoeff_pot_data'
+    pot_data.description = ('Contains XyData for the Poteintials used in the crystal field calculation')
+
+    return {'out': out_dict, 'charge_densities': cdn_data, 'potentials': pot_data}
 
 
 def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
