@@ -29,11 +29,92 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
-from masci_tools.tools.cf_calculation import CFCalculation
+from masci_tools.tools.cf_calculation import CFCalculation, CFCoefficient
 from masci_tools.util.schema_dict_util import eval_simple_xpath, tag_exists
 
 import h5py
 from lxml import etree
+import numpy as np
+
+
+def reconstruct_cfcoeffcients(output_dict, atomtype=None):
+    """
+    Reconstruct the CFCoefficient list from the output dictionary
+    of the FleurCFCoeffWorkChain
+
+    :param output_dict: output dictionary node or the corresponding
+                        dictionary
+    :param atomtype: int of the atomtype to reconstruct the coefficients for
+    """
+    if isinstance(output_dict, orm.Dict):
+        output_dict = output_dict.get_dict()
+
+    if atomtype is not None and not isinstance(atomtype, str):
+        atomtype = str(atomtype)
+
+    multiple_atomtypes = all('/' not in key for key in output_dict['cf_coefficients_spin_up'])
+
+    if atomtype is None and multiple_atomtypes:
+        raise ValueError('atomtype not specified')
+
+    if multiple_atomtypes and atomtype not in output_dict['cf_coefficients_spin_up']:
+        raise ValueError(f'Atomtype {atomtype} not available')
+
+    spin_up = output_dict['cf_coefficients_spin_up']
+    spin_down = output_dict['cf_coefficients_spin_down']
+    spin_up_imag = output_dict.get('cf_coefficients_spin_up_imag', {})
+    spin_down_imag = output_dict.get('cf_coefficients_spin_down_imag', {})
+
+    convention = output_dict['cf_coefficients_convention']
+    unit = output_dict['cf_coefficients_units']
+
+    if multiple_atomtypes:
+        spin_up = spin_up[atomtype]
+        spin_down = spin_down[atomtype]
+        spin_up_imag = spin_up_imag.get(atomtype, {})
+        spin_down_imag = spin_down_imag.get(atomtype, {})
+
+    coefficients = []
+    for key in spin_up:
+        l, m = key.split('/', maxsplit=1)
+        up = spin_up[key]
+        if key in spin_up_imag:
+            up = up + 1j * spin_up_imag[key]
+        down = spin_down[key]
+        if key in spin_down_imag:
+            down = down + 1j * spin_down_imag[key]
+
+        coefficients.append(CFCoefficient(l=l, m=m, spin_up=up, spin_down=down, unit=unit, convention=convention))
+
+    return coefficients
+
+
+def reconstruct_cfcalculation(charge_densities, potentials, atomtype, **kwargs):
+    """
+    Reconstruct the CFCalculation instance from the outputs of the
+    FleurCFCoeffWorkChain
+    """
+
+    radial_meshes = {'cdn': charge_densities.get_x()[1], 'pot': potentials.get_x()[1]}
+    names, cdn_array, _ = charge_densities.get_y()
+    if f'atomtype-{atomtype}' not in names:
+        raise ValueError(f'Atomtype {atomtype} not available')
+    density = cdn_array[names.index(f'atomtype-{atomtype}')]
+
+    names, pot_array, _ = potentials.get_y()
+
+    pot_dict = {}
+    for l in range(0, 7):
+        for m in range(-l, l + 1):
+            if f'atomtype-{atomtype}-{l}/{m}-up' in names:
+                p = [pot_array[names.index(f'atomtype-{atomtype}-{l}/{m}-up')]]
+                if f'atomtype-{atomtype}-{l}/{m}-down' in names:
+                    p.append(pot_array[names.index(f'atomtype-{atomtype}-{l}/{m}-down')])
+                pot_dict[(l, m)] = np.array(p)
+
+    cfcalc = CFCalculation.from_arrays(density, potentials=pot_dict, radial_meshes=radial_meshes, **kwargs)
+
+    return cfcalc
 
 
 class FleurCFCoeffWorkChain(WorkChain):
