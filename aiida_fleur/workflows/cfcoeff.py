@@ -96,12 +96,12 @@ def reconstruct_cfcalculation(charge_densities, potentials, atomtype, **kwargs):
     """
 
     radial_meshes = {'cdn': charge_densities.get_x()[1], 'pot': potentials.get_x()[1]}
-    names, cdn_array, _ = charge_densities.get_y()
+    names, cdn_array, _ = zip(*charge_densities.get_y())
     if f'atomtype-{atomtype}' not in names:
         raise ValueError(f'Atomtype {atomtype} not available')
     density = cdn_array[names.index(f'atomtype-{atomtype}')]
 
-    names, pot_array, _ = potentials.get_y()
+    names, pot_array, _ = zip(*potentials.get_y())
 
     pot_dict = {}
     for l in range(0, 7):
@@ -790,7 +790,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             y_names, y_arrays, y_units = [], [], []
             for cdn in charge_densities:
-                names, arrays, units = cdn.get_y()
+                names, arrays, units = zip(*cdn.get_y())
                 y_names.extend(names)
                 y_arrays.extend(arrays)
                 y_units.extend(units)
@@ -807,7 +807,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             y_names, y_arrays, y_units = [], [], []
             for pot in potentials:
-                names, arrays, units = pot.get_y()
+                names, arrays, units = zip(*pot.get_y())
                 y_names.extend(names)
                 y_arrays.extend(arrays)
                 y_units.extend(units)
