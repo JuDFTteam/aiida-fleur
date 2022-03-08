@@ -616,9 +616,11 @@ def find_nested_process(wc_node, p_class):
     child_process = []
     lower = wc_node.get_outgoing().all()
     for i in lower:
-        if 'CALL' in i.link_label:
+        try:
             if i.node.process_class is p_class:
                 child_process.append(i.node)
             else:
                 child_process.extend(find_nested_process(i.node, p_class))
+        except:
+             pass
     return child_process
