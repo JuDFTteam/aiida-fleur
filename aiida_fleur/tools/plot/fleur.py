@@ -432,9 +432,9 @@ def plot_fleur_banddos_wc(param_node,
             data, attributes = h5reader.read(recipe=hdf_recipe)
 
     if mode == 'dos':
-        plot_res = plot_fleur_dos(data, attributes, backend=backend, save=save, show=show, **kwargs)
+        plot_res = plot_fleur_dos(data, attributes, backend=backend, save_plots=save, show=show, **kwargs)
     else:
-        plot_res = plot_fleur_bands(data, attributes, backend=backend, save=save, show=show, **kwargs)
+        plot_res = plot_fleur_bands(data, attributes, backend=backend, save_plots=save, show=show, **kwargs)
 
     return plot_res
 
@@ -524,7 +524,7 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
                  markersize=10.0,
                  legend=True,
                  legend_option={'loc': 'upper right'},
-                 save=save,
+                 save_plots=save,
                  show=show,
                  **kwargs)
     return p1
