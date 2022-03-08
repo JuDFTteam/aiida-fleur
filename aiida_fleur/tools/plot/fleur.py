@@ -33,7 +33,7 @@ __all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults',
            'reset_defaults')
 
 
-def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwargs):
+def plot_fleur(*args, save=False, show_dict=False, show=True, backend=None, **kwargs):
     """
     Plot single or multiple Fleur WorkChainNodes. Can be started from the Workchain or output parameters (Dict) node.
     The following WorkChains are supported:
