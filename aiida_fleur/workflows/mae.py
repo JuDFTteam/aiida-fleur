@@ -311,12 +311,12 @@ class FleurMaeWorkChain(WorkChain):
                 'kpoint_type': 'mesh'
             }))
 
-        if self.ctx.wf_dict['use_symmetries_reference']:
-            # remove symmetries from the inp.xml
-            fchanges.append(('delete_tag', {
-                'tag_name': 'symOp',
-                'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
-            }))
+        # if self.ctx.wf_dict['use_symmetries_reference']:
+        #     # remove symmetries from the inp.xml
+        #     fchanges.append(('delete_tag', {
+        #         'tag_name': 'symOp',
+        #         'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
+        #     }))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
