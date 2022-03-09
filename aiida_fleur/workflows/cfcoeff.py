@@ -908,11 +908,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
         if isinstance(res, ExitCode):
             return res
         cfcalc, coefficients = res
-        #Find out which atomtype (this should be integrated into masci-tools)
-        #since we already checked for an exit code we assume everything worked
-        with cf_cdn_folder.open(FleurCalculation._CFDATA_HDF5_FILE_NAME, 'rb') as f:
-            with h5py.File(f, 'r') as cffile:
-                atomTypes = orm.List(list=[key.split('-', maxsplit=1)[1] for key in cffile if 'cdn-' in key])
+        atomTypes = orm.List(list=[cfcalc.atom_type])
         for coeff in coefficients:
             if units is None:
                 units = coeff.unit
@@ -924,18 +920,21 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
             coefficients_dict_dn_imag[key] = coeff.spin_down.imag
         phi = cfcalc.phi
         theta = cfcalc.theta
-        norm = cfcalc.denNorm
+        norm = cfcalc.density_normalization
 
-        charge_densities_rmesh = cfcalc.cdn['rmesh']
-        potentials_rmesh = cfcalc.vlm['rmesh']
-        for atom_type in atomTypes.get_list():
-            charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
-            for coeff in coefficients:
-                prefix = f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'
-                vlm = cfcalc.vlm[(coeff.l, coeff.m)]
-                potentials[f'{prefix}-up'] = vlm[0, :]
-                if vlm.shape[0] == 2:
-                    potentials[f'{prefix}-down'] = vlm[1, :]
+        atom_prefix = f'atomtype-{cfcalc.atom_type}'
+        charge_densities_rmesh, charge_densities[atom_prefix] = cfcalc.get_charge_density(interpolated=False)
+
+        potentials_rmesh, potentials_up = cfcalc.get_potentials('up', interpolated=False)
+        potentials_down = {}
+        if cfcalc.spin_polarized:
+            _, potentials_down = cfcalc.get_potentials('down', interpolated=False)
+
+        for (l, m), pot in potentials_up.items():
+            prefix = f'{prefix}-{l}/{m}'
+            potentials[f'{prefix}-up'] = pot
+            if (l, m) in potentials_down:
+                potentials[f'{prefix}-down'] = potentials_down[(l, m)]
 
     else:
         norm = {}
@@ -949,7 +948,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
             atom_dn = coefficients_dict_dn.setdefault(atom_type, {})
             atom_up_imag = coefficients_dict_up_imag.setdefault(atom_type, {})
             atom_dn_imag = coefficients_dict_dn_imag.setdefault(atom_type, {})
-            norm[atom_type] = cfcalc.denNorm
+            norm[atom_type] = cfcalc.density_normalization
             phi = cfcalc.phi
             theta = cfcalc.theta
 
@@ -963,16 +962,23 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                 atom_up_imag[key] = coeff.spin_up.imag
                 atom_dn_imag[key] = coeff.spin_down.imag
 
+            atom_prefix = f'atomtype-{atom_type}'
+            rmesh, charge_densities[atom_prefix] = cfcalc.get_charge_density(interpolated=False)
             if charge_densities_rmesh is None:
-                charge_densities_rmesh = cfcalc.cdn['rmesh']
-                potentials_rmesh = cfcalc.vlm['rmesh']
-            charge_densities[f'atomtype-{atom_type}'] = cfcalc.cdn['data']
-            for coeff in coefficients:
-                prefix = f'atomtype-{atom_type}-{coeff.l}/{coeff.m}'
-                vlm = cfcalc.vlm[(coeff.l, coeff.m)]
-                potentials[f'{prefix}-up'] = vlm[0, :]
-                if vlm.shape[0] == 2:
-                    potentials[f'{prefix}-down'] = vlm[1, :]
+                charge_densities_rmesh = rmesh
+
+            rmesh, potentials_up = cfcalc.get_potentials('up', interpolated=False)
+            if potentials_rmesh is None:
+                potentials_rmesh = rmesh
+            potentials_down = {}
+            if cfcalc.spin_polarized:
+                _, potentials_down = cfcalc.get_potentials('down', interpolated=False)
+
+            for (l, m), pot in potentials_up.items():
+                prefix = f'{atom_prefix}-{l}/{m}'
+                potentials[f'{prefix}-up'] = pot
+                if (l, m) in potentials_down:
+                    potentials[f'{prefix}-down'] = potentials_down[(l, m)]
 
     out_dict['cf_coefficients_atomtypes'] = atomTypes.get_list()
     out_dict['cf_coefficients_spin_up'] = coefficients_dict_up
@@ -1026,7 +1032,7 @@ def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
         try:
             with cf_cdn_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
                 with h5py.File(f, 'r') as cffile:
-                    cfcalc.readCDN(cffile, **kwargs)
+                    cfcalc.read_charge_density(cffile, **kwargs)
         except ValueError as exc:
             return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
     else:
@@ -1036,14 +1042,14 @@ def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
         try:
             with cf_pot_folder.open(CRYSTAL_FIELD_FILE, 'rb') as f:
                 with h5py.File(f, 'r') as cffile:
-                    cfcalc.readPot(cffile, **kwargs)
+                    cfcalc.read_potential(cffile, **kwargs)
         except ValueError as exc:
             return ExitCode(310, message=f'{CRYSTAL_FIELD_FILE} reading failed with: {exc}')
     else:
         return ExitCode(300, message=f'{CRYSTAL_FIELD_FILE} file not in the retrieved files')
 
     try:
-        coefficients = cfcalc.performIntegration(convert=convert)
+        coefficients = cfcalc.get_coefficients(convention='Stevens' if convert else 'Wybourne')
     except ValueError as exc:
         return ExitCode(320, message=f'Crystal field calculation failed with: {exc}')
     if len(coefficients) == 0:
