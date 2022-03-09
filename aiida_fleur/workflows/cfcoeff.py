@@ -665,18 +665,20 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             if not self.ctx.wf_dict['rare_earth_analogue']:
                 pot_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
-                cf_calc_out = calculate_cf_coefficients(cdn_retrieved,
-                                                        pot_retrieved,
-                                                        convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
-                                                        atomTypes=orm.List(list=atomTypes))
-                if isinstance(cf_calc_out, ExitCode):
+                res = calculate_cf_coefficients(cdn_retrieved,
+                                                pot_retrieved,
+                                                convert=orm.Bool(self.ctx.wf_dict['convert_to_stevens']),
+                                                atomTypes=orm.List(list=atomTypes))
+                if isinstance(res, ExitCode):
                     self.report(f'Calculation of crystal field coefficients failed with {cf_calc_out!r}')
                     self.ctx.successful = False
+                    success = False
                     cf_calc_out = {}
                 else:
-                    cf_calcs_out = [cf_calc_out['out']]
-                    charge_densities = [cf_calc_out['charge_densities']]
-                    potentials = [cf_calc_out['potentials']]
+                    cf_calc_out = res['out']
+                    cf_calcs_out = [cf_calc_out]
+                    charge_densities = [res['charge_densities']]
+                    potentials = [res['potentials']]
             else:
                 cf_calc_out = {}
                 for index in range(self.ctx.num_analogues):
