@@ -677,6 +677,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                 else:
                     cf_calc_out = res['out']
                     cf_calcs_out = [cf_calc_out]
+                    cf_calc_out = cf_calc_out.get_dict()
                     charge_densities = [res['charge_densities']]
                     potentials = [res['potentials']]
             else:
