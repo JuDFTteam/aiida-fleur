@@ -941,7 +941,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
     else:
         norm = {}
         for atom_type in atomTypes:
-            res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atomType=atom_type)
+            res = _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, atom_type=atom_type)
             if isinstance(res, ExitCode):
                 return res
             cfcalc, coefficients = res
