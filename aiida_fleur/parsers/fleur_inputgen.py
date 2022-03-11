@@ -87,7 +87,7 @@ class Fleur_inputgenParser(Parser):
             try:
                 with output_folder.open(shellout_file, 'r') as shellout:
                     shellout_file_lines = shellout.read()
-            except IOError:
+            except OSError:
                 self.logger.error(f'Failed to open error file: {shellout_file}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             if shellout_file_lines:
