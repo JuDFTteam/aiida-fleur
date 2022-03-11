@@ -200,8 +200,9 @@ class FleurCalculation(CalcJob):
 
         # spec.input('metadata.options.input_filename', valid_type=six.string_types,
         #            default=cls._INPXML_FILE_NAME)
-        spec.input('metadata.options.output_filename', valid_type=(str,), default=cls._OUTXML_FILE_NAME)
-        spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._use_kpoints)
+        spec.input('metadata.options.output_filename', valid_type=str, default=cls._OUTXML_FILE_NAME)
+        spec.input('metadata.options.use_kpoints', valid_type=bool, default=cls._use_kpoints)
+        spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # inputs
         spec.input('fleurinpdata',
@@ -225,9 +226,6 @@ class FleurCalculation(CalcJob):
                    'advanced features how the plugin behaves. You can add files'
                    'the retrieve list, or add command line switches, '
                    'for all available features here check the documentation.')
-
-        # parser
-        spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # declare outputs of the calculation
         spec.output('output_parameters', valid_type=Dict, required=False)
@@ -371,22 +369,20 @@ class FleurCalculation(CalcJob):
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
             # add files belonging to fleurinp into local_copy_list
-            allfiles = fleurinp.files
-            for file1 in allfiles:
-                local_copy_list.append((fleurinp.uuid, file1, file1))
+            for file in fleurinp.files:
+                local_copy_list.append((fleurinp.uuid, file, file))
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
+            if with_hdf5 and (modes['band'] or modes['dos']):
+                mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)  #Should this be removed
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
                 mode_retrieved_filelist.append(self._DOS_MAX5_FILE_NAME)
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
             if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
@@ -395,21 +391,16 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
                     mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
-            if modes['greensf']:
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
+            if with_hdf5 and modes['greensf']:
+                mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['cf_coeff']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
                 else:
                     self.logger.warning('CF calculation without HDF5 not supported for automatic file retrieval.')
             if modes['force_theorem'] or modes['cf_coeff']:
-                if 'remove_from_retrieve_list' not in settings_dict:
-                    settings_dict['remove_from_retrieve_list'] = []
-                if with_hdf5:
-                    settings_dict['remove_from_retrieve_list'].append(self._CDN_LAST_HDF5_FILE_NAME)
-                else:
-                    settings_dict['remove_from_retrieve_list'].append(self._CDN1_FILE_NAME)
+                cdn_file = self._CDN_LAST_HDF5_FILE_NAME if with_hdf5 else self._CDN1_FILE_NAME
+                settings_dict.setdefault('remove_from_retrieve_list', []).append(cdn_file)
 
             # if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
@@ -457,9 +448,6 @@ class FleurCalculation(CalcJob):
                                 f'File {file_orig} not found in parent folder but needed to start calculation')
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
-            elif fleurinpgen and has_fleurinp:
-                # everything is taken care of
-                pass
             elif not fleurinpgen and has_fleurinp:
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:
