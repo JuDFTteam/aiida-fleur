@@ -1,3 +1,5 @@
+# Changelog
+
 ## v.1.2.1
 ### release compatible with AiiDA-core 1.3.0+
 - General improvements for CreateMagnetic workchain and related methods
