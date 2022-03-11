@@ -207,7 +207,7 @@ class FleurCalculation(CalcJob):
         spec.input('fleurinpdata',
                    valid_type=FleurinpData,
                    required=False,
-                   help='Use a FleruinpData node that specifies the input parameters'
+                   help='Use a FleurinpData node that specifies the input parameters'
                    'usually copy from the parent calculation, basically makes'
                    'the inp.xml file visible in the db and makes sure it has '
                    'the files needed.')
@@ -227,7 +227,7 @@ class FleurCalculation(CalcJob):
                    'for all available features here check the documentation.')
 
         # parser
-        spec.input('metadata.options.parser_name', valid_type=(str,), default='fleur.fleurparser')
+        spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # declare outputs of the calculation
         spec.output('output_parameters', valid_type=Dict, required=False)
@@ -333,14 +333,7 @@ class FleurCalculation(CalcJob):
                                            "'fleurcalculation'.")
         else:
             # extract parent calculation
-            parent_calcs = parent_calc_folder.get_incoming(node_class=CalcJob).all()
-            n_parents = len(parent_calcs)
-            if n_parents != 1:
-                raise UniquenessError('Input RemoteData is child of {} '
-                                      'calculation{}, while it should have a single parent'
-                                      ''.format(n_parents, '' if n_parents == 0 else 's'))
-            parent_calc = parent_calcs[0].node
-            parent_calc_class = parent_calc.process_class
+            parent_calc = parent_calc_folder.creator
             has_parent = True
 
             # check that it is a valid parent
@@ -350,33 +343,18 @@ class FleurCalculation(CalcJob):
             # check if folder from db given, or get folder from rep.
             # Parent calc does not has to be on the same computer.
 
-            if parent_calc_class is FleurCalculation:
-                new_comp = self.node.computer
-                old_comp = parent_calc.computer
-                if new_comp.uuid != old_comp.uuid:
-                    # don't copy files, copy files locally
-                    copy_remotely = False
-            elif parent_calc_class is FleurinputgenCalculation:
-                fleurinpgen = True
-                new_comp = self.node.computer
-                old_comp = parent_calc.computer
-                if new_comp.uuid != old_comp.uuid:
-                    # don't copy files, copy files locally
-                    copy_remotely = False
-            else:
+            # don't copy files, copy files locally
+            copy_remotely = self.node.computer == parent_calc.computer
+            if parent_calc.process_class not in (FleurCalculation, FleurinputgenCalculation):
                 raise InputValidationError("parent_calc, must be either an 'inpgen calculation' or"
-                                           " a 'fleur calculation'.")
+                                           f" a 'fleur calculation'. Got {parent_calc.process_class}")
+            fleurinpgen = parent_calc.process_class is FleurinputgenCalculation
 
         # check existence of settings (optional)
         if 'settings' in self.inputs:
-            settings = self.inputs.settings
+            settings_dict = self.inputs.settings.get_dict()
         else:
-            settings = None
-
-        if settings is None:
             settings_dict = {}
-        else:
-            settings_dict = settings.get_dict()
 
         # check for for allowed keys, ignore unknown keys but warn.
         for key in settings_dict.keys():
@@ -443,16 +421,16 @@ class FleurCalculation(CalcJob):
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
             self.logger.info('out folder path %s', outfolder_uuid)
 
-            outfolder_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
+            outfolder_filenames = parent_calc.outputs.retrieved.list_object_names()
             has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
             if (self._NMMPMAT_FILE_NAME in outfolder_filenames or \
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
-                    if 'n_mmp_mat' in fleurinp.files:
-                        self.logger.warning('Ignoring n_mmp_mat from fleurinp. '
-                                            'There is already an n_mmp_mat file '
-                                            'for the parent calculation')
-                        local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
+                    if self._NMMPMAT_FILE_NAME in fleurinp.files:
+                        self.logger.warning('Ignoring {filename} from fleurinp. '
+                                            'There is already an {filename} file '
+                                            'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
+                        local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
@@ -546,10 +524,9 @@ class FleurCalculation(CalcJob):
         retrieve_list = []
         retrieve_list.append(self._OUTXML_FILE_NAME)
         if has_fleurinp:
-            allfiles = fleurinp.files
-            for file1 in allfiles:
-                if file1.endswith('.xml'):
-                    retrieve_list.append(file1)
+            for file in fleurinp.files:
+                if file.endswith('.xml'):
+                    retrieve_list.append(file)
         else:
             retrieve_list.append(self._INPXML_FILE_NAME)
         retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
