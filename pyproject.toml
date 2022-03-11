@@ -75,7 +75,7 @@ disable = [
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--mpl --cov=aiida_fleur --cov=tests --cov-report xml --mpl-generate-summary=html"
+addopts = "--mpl --cov=aiida_fleur --cov=tests --cov-report xml"
 mpl-results-path = "mpl-results"
 testpaths = [
     "tests",
