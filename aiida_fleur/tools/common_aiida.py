@@ -22,7 +22,7 @@ create_group
 """
 # TODO import, export of descriptions, and labels...?
 import json
-import six
+
 from six.moves import input as input_six
 
 from aiida.orm import load_node

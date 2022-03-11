@@ -13,7 +13,6 @@ This file contains a CalcJob that represents FLEUR calculation.
 """
 import os
 import io
-import six
 
 from aiida.engine import CalcJob
 from aiida.orm import Dict

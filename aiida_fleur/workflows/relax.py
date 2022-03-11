@@ -13,7 +13,6 @@
 """
 import copy
 import numpy as np
-import six
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf

@@ -15,7 +15,6 @@
 
 import copy
 
-import six
 #from six.moves import map
 from lxml import etree
 from ase.dft.kpoints import monkhorst_pack

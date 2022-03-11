@@ -15,8 +15,6 @@ of deformation potential
 
 import numpy as np
 
-import six
-
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
 from aiida.orm import Float, StructureData, Dict

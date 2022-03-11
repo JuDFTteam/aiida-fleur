@@ -23,7 +23,7 @@ input manipulation plus methods for extration of AiiDA data structures.
 import os
 import io
 import re
-import six
+
 from lxml import etree
 import warnings
 

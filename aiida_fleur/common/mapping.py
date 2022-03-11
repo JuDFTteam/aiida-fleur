@@ -2,7 +2,6 @@
 This module collects helper methods which are commonly used for dictionaries.
 '''
 from collections.abc import Mapping
-import six
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm.nodes.data.dict import Dict

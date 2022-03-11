@@ -14,7 +14,6 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 """
 
 #import numpy as np
-import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node

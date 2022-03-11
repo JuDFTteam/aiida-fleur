@@ -15,7 +15,6 @@ Util that does depend on AiiDA classes should go somewhere else.
 """
 
 from math import gcd  # pylint: disable=no-name-in-module
-import six
 
 from sympy import Symbol
 

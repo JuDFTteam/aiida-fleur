@@ -12,7 +12,7 @@
 You find the usual binding_energy for all elements in the periodic table.
 """
 from aiida.common.constants import elements as PeriodicTableElements
-import six
+
 import json
 
 atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}

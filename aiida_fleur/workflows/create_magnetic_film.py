@@ -14,7 +14,6 @@
 """
 
 import copy
-import six
 
 from aiida.engine import WorkChain, if_
 from aiida.engine import calcfunction as cf

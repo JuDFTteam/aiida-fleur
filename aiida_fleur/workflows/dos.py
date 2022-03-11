@@ -13,7 +13,6 @@ This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
 """
 import os.path
-import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
