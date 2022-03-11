@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Here we specify some defaults for cli commands
 """

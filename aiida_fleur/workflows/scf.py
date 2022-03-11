@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -722,7 +721,7 @@ class FleurScfWorkChain(WorkChain):
             forces = self.ctx.all_forces
             if len(forces) >= 2:
                 self.ctx.forcediff = max(
-                    [abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(3)])
+                    abs(forces[-1][i][k] - forces[-2][i][k]) for i in range(len(forces[-1])) for k in range(3))
         else:
             self.ctx.forcediff = 'can not be determined'
 

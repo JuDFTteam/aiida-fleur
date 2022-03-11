@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,7 +13,6 @@
     Magnetic Anisotropy Energy via the force theorem.
 """
 
-from __future__ import absolute_import
 import copy
 
 import six
@@ -142,7 +140,7 @@ class FleurMaeWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -172,7 +170,7 @@ class FleurMaeWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -550,7 +548,7 @@ def save_mae_output_node(**kwargs):
     So far it is just also parsed in as argument, because so far we are to lazy
     to put most of the code overworked from return_results in here.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'out':  # should be always there
             outpara = val
     outdict = {}

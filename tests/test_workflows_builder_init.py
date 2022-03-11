@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,7 +12,6 @@
 Contains smoke tests for all workchains of aiida-fleur,
 checks if builderis from aiida-core gets the correct class.
 '''
-from __future__ import absolute_import
 import pytest
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,7 +13,6 @@
     Magnetic Anisotropy Energy converging all the directions.
 """
 
-from __future__ import absolute_import
 import copy
 import six
 
@@ -95,7 +93,7 @@ class FleurMaeConvWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -107,7 +105,7 @@ class FleurMaeConvWorkChain(WorkChain):
         submit a set of Fleur calculations to converge charge density for all given SQAs.
         """
         inputs = {}
-        for key, soc in six.iteritems(self.ctx.wf_dict['sqas']):
+        for key, soc in self.ctx.wf_dict['sqas'].items():
             inputs[key] = self.get_inputs_scf()
             inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
             inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
@@ -159,7 +157,7 @@ class FleurMaeConvWorkChain(WorkChain):
         original_t_energydict = {}
         outnodedict = {}
 
-        for label in six.iterkeys(self.ctx.wf_dict['sqas']):
+        for label in self.ctx.wf_dict['sqas'].keys():
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
@@ -190,7 +188,7 @@ class FleurMaeConvWorkChain(WorkChain):
             # Find a minimal value of MAE and count it as 0
             minenergy = min(t_energydict.values())
 
-            for key in six.iterkeys(t_energydict):
+            for key in t_energydict.keys():
                 original_t_energydict[key] = t_energydict[key]
                 t_energydict[key] = t_energydict[key] - minenergy
 
@@ -204,8 +202,8 @@ class FleurMaeConvWorkChain(WorkChain):
 
         failed_labels = []
 
-        for label in six.iterkeys(self.ctx.wf_dict['sqas']):
-            if label not in six.iterkeys(self.ctx.energydict):
+        for label in self.ctx.wf_dict['sqas'].keys():
+            if label not in self.ctx.energydict.keys():
                 failed_labels.append(label)
 
         out = {

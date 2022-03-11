@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -59,7 +58,7 @@ class MostSimilarCommandGroup(click.Group):
         if matches:
             ctx.fail("'{cmd}' is not a aiida-fleur command.\n\n"
                      'The most similar commands are: \n'
-                     '{matches}'.format(cmd=cmd_name, matches='\n'.join('\t{}'.format(m) for m in sorted(matches))))
+                     '{matches}'.format(cmd=cmd_name, matches='\n'.join(f'\t{m}' for m in sorted(matches))))
         else:
             ctx.fail(f"'{cmd_name}' is not a aiida-fleur command.\n\nNo similar commands found.")
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,7 +13,6 @@
     spin spiral dispersion using scalar-relatevistic Hamiltonian.
 """
 
-from __future__ import absolute_import
 import copy
 
 import six
@@ -139,7 +137,7 @@ class FleurSSDispWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -157,7 +155,7 @@ class FleurSSDispWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -230,7 +228,7 @@ class FleurSSDispWorkChain(WorkChain):
         scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
+        for key, val in self.ctx.wf_dict.get('beta').items():
             scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {

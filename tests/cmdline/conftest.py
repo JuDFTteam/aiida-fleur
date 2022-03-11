@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Fixtures for the command line interface.
 Most of these fixtures are taken from the aiida-quantum espresso package since they

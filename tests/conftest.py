@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Initialise a text database and profile for pytest.
 This part of code is copied from aiida-quantumespresso"""
@@ -341,7 +340,7 @@ def inpxml_etree():
     def _get_etree(path, return_schema=False):
         from lxml import etree
         from masci_tools.io.parsers.fleur_schema import InputSchemaDict
-        with open(path, 'r') as inpxmlfile:
+        with open(path) as inpxmlfile:
             tree = etree.parse(inpxmlfile)
             version = tree.getroot().attrib['fleurInputVersion']
             schema_dict = InputSchemaDict.fromVersion(version)
@@ -558,7 +557,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath, 'r') as jfile:
+        with open(jsonfilepath) as jfile:
             node_dict = json.load(jfile)
 
         return node_dict

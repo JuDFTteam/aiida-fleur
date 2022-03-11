@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,8 +13,6 @@ In this module you find the workflow 'FleurStrainWorkChain' for the calculation 
 of deformation potential
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 
 import six
@@ -81,7 +78,7 @@ class FleurStrainWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-        super(FleurStrainWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=True)
         spec.input('calc_parameters', valid_type=Dict, required=False)
@@ -131,7 +128,7 @@ class FleurStrainWorkChain(WorkChain):
             wf_dict = wf_default
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -148,7 +145,7 @@ class FleurStrainWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -359,7 +356,7 @@ class FleurStrainWorkChain(WorkChain):
         outdict = create_strain_result_node(outpara=outputnode_t)
 
         # create link to work-chain node
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):
@@ -380,7 +377,7 @@ def create_strain_result_node(**kwargs):
     This work function will create the output node in the database.
     It also connects the output_node to all nodes the information comes from.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'outpara':
             outpara = val
     outdict = {}

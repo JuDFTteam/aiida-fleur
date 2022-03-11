@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ''' Contains tests for the inpgen parser and its routines. '''
 # TODO: implement all
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -113,13 +112,13 @@ class FleurParser(Parser):
             try:
                 with output_folder.open(errorfile, 'r') as efile:
                     error_file_lines = efile.read()  # Note: read(), not readlines()
-            except IOError:
+            except OSError:
                 self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
 
             if error_file_lines:
 
-                if isinstance(error_file_lines, type(b'')):
+                if isinstance(error_file_lines, bytes):
                     error_file_lines = error_file_lines.replace(b'\x00', b' ')
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')

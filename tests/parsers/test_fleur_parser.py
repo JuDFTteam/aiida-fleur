@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 ''' Contains tests for the fleur parser and its routines. '''
 
-from __future__ import absolute_import
 import os
 import pytest
 import math
@@ -23,7 +21,7 @@ def test_fleurparse_relax_file(test_file):
     from aiida.orm import Dict
 
     schema_dict = InputSchemaDict.fromVersion('0.34')
-    with open(test_file('relaxxml/Fe_relax.xml'), 'r') as relaxfile:
+    with open(test_file('relaxxml/Fe_relax.xml')) as relaxfile:
         result = parse_relax_file(relaxfile, schema_dict)
     assert isinstance(result, Dict)
     assert result.get_dict() != {}

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -1209,7 +1208,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
-        if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
+        if max(abs(int(x)) for x in keys) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
                              ' {}'.format(len(layer_occupancies)))
     else:
@@ -1627,7 +1626,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
-        prev_layer_z = max([x.position[2] for x in rebuilt_structure.sites])
+        prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
             atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)

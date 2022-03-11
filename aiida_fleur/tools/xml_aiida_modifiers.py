@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module defines XML modifying functions, that require an aiida node as input
 """

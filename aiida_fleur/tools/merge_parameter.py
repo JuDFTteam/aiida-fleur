@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -16,8 +15,6 @@ This might also be of interest for other all-electron codes
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 from aiida.plugins import DataFactory
 from aiida.orm import Bool, Dict

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,7 +13,6 @@ This module contains the parser for a inpgen calculation and methods for
 parsing different files produced by inpgen.
 """
 
-from __future__ import absolute_import
 
 from aiida.parsers import Parser
 from aiida.common.exceptions import NotExistent, InputValidationError, ValidationError
@@ -68,12 +66,12 @@ class Fleur_inputgenParser(Parser):
             try:
                 with output_folder.open(errorfile, 'r') as error_file:
                     error_file_lines = error_file.read()
-            except IOError:
+            except OSError:
                 self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, prior fleur 32
             if error_file_lines:
-                if isinstance(error_file_lines, type(b'')):
+                if isinstance(error_file_lines, bytes):
                     error_file_lines = error_file_lines.replace(b'\x00', b' ')
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')

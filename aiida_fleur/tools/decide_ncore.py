@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,7 +11,6 @@
 '''
 Contains helper functions to decide on the paralellization to use for a given system.
 '''
-from __future__ import absolute_import
 
 
 def gcd(x, y):

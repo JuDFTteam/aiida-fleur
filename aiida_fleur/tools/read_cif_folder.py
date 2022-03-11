@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -19,8 +18,6 @@ from a folder and store the structures in the database.
 # structure visualization, because cif file has more information
 # also keep connection to ICSD id number
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from aiida.plugins import DataFactory

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,7 +11,6 @@
 '''
 Contains extensive tests for the FleurinpData structure of AiiDA-Fleur
 '''
-from __future__ import absolute_import
 import os
 import pytest
 
