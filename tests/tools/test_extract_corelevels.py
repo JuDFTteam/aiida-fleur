@@ -14,13 +14,13 @@ import pytest
 
 
 # TODO: test in general more results outcome.
-def test_extract_corelevels_outfile_allfiles():
+def test_extract_corelevels_outfile_allfiles(test_file):
     """
     Extracts corelevels and atomtype imformation from example out.xml file
     """
     from aiida_fleur.tools.extract_corelevels import extract_corelevels
 
-    outxmlfiles = get_example_outxml_files()
+    outxmlfiles = get_example_outxml_files(test_file('outxml'))
 
     for outfile in outxmlfiles:
         with pytest.deprecated_call():
@@ -76,12 +76,10 @@ def test_clsshifts_to_be_interface():
     #Warning: Reference corelevel '4f5/2' for element: 'W' not given. I ignore these.
 
 
-def get_example_outxml_files():
+def get_example_outxml_files(folder_path):
     """
     helper. returns all the realativ paths to the example out.xml files.
     """
     from os import listdir
     from os.path import join
-    # from top test folder
-    folder_path = './files/outxml/'
     return [join(folder_path, outfile) for outfile in listdir(folder_path) if outfile.endswith('.xml')]

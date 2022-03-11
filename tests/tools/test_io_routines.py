@@ -45,20 +45,18 @@ def test_write_xps_spectra_datafile_interface():
     assert False
 
 
-def test_compress_fleuroutxml(eval_xpath):
+def test_compress_fleuroutxml(eval_xpath, test_file):
     """
     test the compress_fleuroutxml function, checks if right number of iterations is kept, or deleted.
     Further checks if new file is written and if eigenvalues are deleted.
     """
-
-    from os.path import abspath, isfile
-    from os import remove
+    import os
     from lxml import etree
     from aiida_fleur.tools.io_routines import compress_fleuroutxml
 
-    testfilepath = abspath('./files/outxml/BeTi_out.xml')
+    testfilepath = test_file('outxml/BeTi_out.xml')
     dest_path = testfilepath.replace('.xml', '_test.xml')
-    testfilepath_broken = abspath('./files/outxml/special/broken_first_BeTi_out.xml')
+    testfilepath_broken = test_file('outxml/special/broken_first_BeTi_out.xml')
     dest_path2 = testfilepath_broken.replace('.xml', '_test.xml')
     niter_file = 19
     xpath_iter = '/fleurOutput/scfLoop/iteration'
@@ -75,11 +73,10 @@ def test_compress_fleuroutxml(eval_xpath):
 
     # test new file exists, and right number of iteration, eig del
     compress_fleuroutxml(testfilepath, dest_file_path=dest_path, iterations_to_keep=15)
-    isfile_ = isfile(abspath(dest_path))
     niter1 = get_npath(dest_path, xpath_iter)
     neig = get_npath(dest_path, xpath_eig)
 
-    assert isfile_  # check outfile
+    assert os.path.isfile(dest_path)  # check outfile
     assert niter1 == 15  # check if 15 iterations are kept
     assert neig == 0  # check if eigenvalues del
 
@@ -100,5 +97,5 @@ def test_compress_fleuroutxml(eval_xpath):
         compress_fleuroutxml(testfilepath_broken, dest_file_path=dest_path2, iterations_to_keep=25)
 
     # cleanup
-    remove(dest_path)
-    remove(dest_path2)
+    os.remove(dest_path)
+    os.remove(dest_path2)

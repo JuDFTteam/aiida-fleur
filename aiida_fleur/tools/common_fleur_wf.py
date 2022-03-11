@@ -622,5 +622,5 @@ def find_nested_process(wc_node, p_class):
             else:
                 child_process.extend(find_nested_process(i.node, p_class))
         except:
-             pass
+            pass
     return child_process
