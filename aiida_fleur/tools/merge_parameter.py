@@ -15,7 +15,6 @@ This might also be of interest for other all-electron codes
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
 
-
 from aiida.plugins import DataFactory
 from aiida.orm import Bool, Dict
 from aiida.engine import calcfunction as cf

@@ -425,7 +425,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             if not ref_cl:  # no reference corelevel given for that element
                 if warn:
                     print("WARNING: Reference corelevel '{}' for element: '{}' "
-                           'not given. I ignore these.'.format(corelevel_name, elem))
+                          'not given. I ignore these.'.format(corelevel_name, elem))
                 continue
             be_all = []
             nref = len(ref_cl)

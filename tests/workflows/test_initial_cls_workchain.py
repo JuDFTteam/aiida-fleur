@@ -10,7 +10,6 @@
 ###############################################################################
 ''' Contains tests for the FleurInitialCLSWorkChain. '''
 
-
 import pytest
 import aiida_fleur
 import os

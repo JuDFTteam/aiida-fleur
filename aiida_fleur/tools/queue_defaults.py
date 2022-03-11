@@ -19,7 +19,6 @@ You can modify, adjust this file to your needs
 # TODO find AiiDA solution for this
 
 
-
 def queue_defaults(queue_name, computer=None):
     """
     In this class you specify defaults methods which you can use for workflows

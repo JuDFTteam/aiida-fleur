@@ -1,6 +1,5 @@
 '''Contains tests for functions in common_aiida'''
 
-
 import os
 import json
 import pytest

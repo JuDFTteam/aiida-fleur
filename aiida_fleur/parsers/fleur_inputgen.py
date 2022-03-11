@@ -13,7 +13,6 @@ This module contains the parser for a inpgen calculation and methods for
 parsing different files produced by inpgen.
 """
 
-
 from aiida.parsers import Parser
 from aiida.common.exceptions import NotExistent, InputValidationError, ValidationError
 

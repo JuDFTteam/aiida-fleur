@@ -167,8 +167,8 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
     for key, val in stoi.items():
         norm_stoi[key] = stoi[key] / minv
         if len(error_ratio):
-            errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(
-                errors_stoi[key]**2 + (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2)
+            errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(errors_stoi[key]**2 +
+                                                          (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2)
     return norm_stoi, errors_stoi
 
 
@@ -241,8 +241,8 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)  #abs(ref_struc_te_dict.get(elem))
             else:
                 print('Reference energy missing for element {}. '
-                       'You need to provide reference energies for all elements in you compound.'
-                       ''.format(elem))
+                      'You need to provide reference energies for all elements in you compound.'
+                      ''.format(elem))
         eform_dict[formula] = eform / ntotal
         #eform_list.append(eform/ntotal)
     return list(eform_dict.values()), eform_dict
