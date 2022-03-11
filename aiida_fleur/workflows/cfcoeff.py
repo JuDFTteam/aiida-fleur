@@ -737,14 +737,14 @@ class FleurCFCoeffWorkChain(WorkChain):
                             **cf_calc_out_analogue['cf_coefficients_spin_down_imag']
                         }
 
-                if len(cf_calc_out['cf_coefficients_atomtypes']) == 1:
-                    _, cf_calc_out['cf_coefficients_spin_up'] = cf_calc_out['cf_coefficients_spin_up'].popitem()
-                    _, cf_calc_out['cf_coefficients_spin_down'] = cf_calc_out['cf_coefficients_spin_down'].popitem()
-                    if not self.ctx.wf_dict['convert_to_stevens']:
-                        _, cf_calc_out['cf_coefficients_spin_up_imag'] = cf_calc_out[
-                            'cf_coefficients_spin_up_imag'].popitem()
-                        _, cf_calc_out['cf_coefficients_spin_down_imag'] = cf_calc_out[
-                            'cf_coefficients_spin_down_imag'].popitem()
+        #pop out output if only one atomtype is calculated
+        if success and len(cf_calc_out['cf_coefficients_atomtypes']) == 1:
+            _, cf_calc_out['cf_coefficients_spin_up'] = cf_calc_out['cf_coefficients_spin_up'].popitem()
+            _, cf_calc_out['cf_coefficients_spin_down'] = cf_calc_out['cf_coefficients_spin_down'].popitem()
+            if not self.ctx.wf_dict['convert_to_stevens']:
+                _, cf_calc_out['cf_coefficients_spin_up_imag'] = cf_calc_out['cf_coefficients_spin_up_imag'].popitem()
+                _, cf_calc_out['cf_coefficients_spin_down_imag'] = cf_calc_out[
+                    'cf_coefficients_spin_down_imag'].popitem()
 
         rare_earth_site_symmetries = []
         if success and len(cf_calc_out['cf_coefficients_atomtypes']) > 0:
