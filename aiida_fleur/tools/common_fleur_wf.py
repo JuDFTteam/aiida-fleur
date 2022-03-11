@@ -621,6 +621,6 @@ def find_nested_process(wc_node, p_class):
                 child_process.append(i.node)
             else:
                 child_process.extend(find_nested_process(i.node, p_class))
-        except: #pylint: disable-bare-except
+        except:  #pylint: disable-bare-except
             pass
     return child_process
