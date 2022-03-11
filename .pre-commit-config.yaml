@@ -45,6 +45,7 @@ repos:
         args: [
             '--py37-plus'
         ]
+        exclude: '^(docs/)|(examples/)'
 
 - repo: local
   hooks:
