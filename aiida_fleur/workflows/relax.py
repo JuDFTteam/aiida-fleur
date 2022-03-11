@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,11 +11,8 @@
 """
     In this module you find the workflow 'FleurRelaxWorkChain' for geometry optimization.
 """
-from __future__ import absolute_import
-from __future__ import print_function
 import copy
 import numpy as np
-import six
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
@@ -134,7 +130,7 @@ class FleurRelaxWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -611,7 +607,7 @@ def create_relax_result_node(**kwargs):
     All other inputs will be connected in the DB to these ourput nodes
     """
     outdict = {}
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'output_relax_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'output_relax_wc_para'

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -21,12 +20,10 @@ input manipulation plus methods for extration of AiiDA data structures.
 # because otherwise return this node instead of creating a new one!
 # TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import io
 import re
-import six
+
 from lxml import etree
 import warnings
 
@@ -265,7 +262,7 @@ class FleurinpData(Data):
             with node.open(file1, mode='rb') as file2:
                 file1 = io.BytesIO(file2.read())
 
-        elif isinstance(file1, six.string_types):
+        elif isinstance(file1, str):
             is_filelike = False
 
             if not os.path.isabs(file1):

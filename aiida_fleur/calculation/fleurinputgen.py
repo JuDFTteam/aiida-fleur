@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -225,7 +224,7 @@ def _lowercase_dict(dic, dict_name):
     from collections import Counter
 
     if isinstance(dic, dict):
-        new_dict = dict((str(k).lower(), val) for k, val in dic.items())
+        new_dict = {str(k).lower(): val for k, val in dic.items()}
         if len(new_dict) != len(dic):
             num_items = Counter(str(k).lower() for k in dic.keys())
             double_keys = ','.join([k for k, val in num_items if val > 1])

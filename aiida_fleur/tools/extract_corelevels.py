@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -425,8 +424,8 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl:  # no reference corelevel given for that element
                 if warn:
-                    print(("WARNING: Reference corelevel '{}' for element: '{}' "
-                           'not given. I ignore these.'.format(corelevel_name, elem)))
+                    print("WARNING: Reference corelevel '{}' for element: '{}' "
+                          'not given. I ignore these.'.format(corelevel_name, elem))
                 continue
             be_all = []
             nref = len(ref_cl)

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 ''' Contains tests for reading and modification of econfigurations '''
-from __future__ import absolute_import
 
 
 def test_get_econfig_W():

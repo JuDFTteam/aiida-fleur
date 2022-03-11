@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,9 +13,7 @@
     film deposited on a cubic substrate.
 """
 
-from __future__ import absolute_import
 import copy
-import six
 
 from aiida.engine import WorkChain, if_
 from aiida.engine import calcfunction as cf
@@ -157,7 +154,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -16,7 +15,6 @@ nodes, or data-mine go in here
 """
 
 #import time
-from __future__ import absolute_import
 from aiida.plugins import DataFactory
 from aiida.orm.querybuilder import QueryBuilder as QB
 

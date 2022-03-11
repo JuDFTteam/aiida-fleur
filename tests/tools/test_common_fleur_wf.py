@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,7 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for workfunction helpers in common_fleur_wf.py'''
-from __future__ import absolute_import
 import pytest
 import os
 

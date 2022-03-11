@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Helper for regenerating inp.xml files
 """
 from aiida import load_profile

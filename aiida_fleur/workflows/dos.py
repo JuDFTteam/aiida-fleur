@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,10 +12,7 @@
 This is the worklfow 'dos' for the Fleur code, which calculates a
 density of states (DOS).
 """
-from __future__ import absolute_import
-from __future__ import print_function
 import os.path
-import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, StructureData, Dict, RemoteData
@@ -217,5 +213,5 @@ class fleur_dos_wc(WorkChain):
         #outdict['output_band2'] = dosnode2
         outdict['output_dos_wc_para'] = outputnode
         # print outdict
-        for k, v in six.iteritems(outdict):
+        for k, v in outdict.items():
             self.out(k, v)

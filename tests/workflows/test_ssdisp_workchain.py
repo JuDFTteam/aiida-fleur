@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -11,8 +10,6 @@
 ###############################################################################
 ''' Various tests for the FleurMaeWorkChain, different groupping '''
 # Here we test if the interfaces of the workflows are still the same
-from __future__ import absolute_import
-from __future__ import print_function
 
 import pytest
 import aiida_fleur

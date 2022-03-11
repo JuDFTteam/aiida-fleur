@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -22,10 +21,8 @@ create_group
 
 """
 # TODO import, export of descriptions, and labels...?
-from __future__ import absolute_import
-from __future__ import print_function
 import json
-import six
+
 from six.moves import input as input_six
 
 from aiida.orm import load_node
@@ -80,13 +77,13 @@ def import_extras(filename):
     """
 
     all_extras = {}
-    with open(filename, mode='r') as file1:
+    with open(filename) as file1:
         try:
             all_extras = json.load(file1)
         except json.JSONDecodeError:
             print('The file has to be loadable by json. i.e json format (which it is not).')
 
-    for uuid, extras in six.iteritems(all_extras):
+    for uuid, extras in all_extras.items():
 
         try:
             node = load_node(uuid)

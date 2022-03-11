@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 """Tests for the `FleurCalculation` class."""
 
-from __future__ import absolute_import
 import os
 import pytest
 from aiida import orm
@@ -84,8 +82,8 @@ def test_FleurJobCalc_full_mock(fleur_local_code, create_fleurinp, clear_databas
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=fleur_local_code, **inputs)
 
     print(get_calcjob_report(node))
-    print((res['remote_folder'].list_object_names()))
-    print((res['retrieved'].list_object_names()))
+    print(res['remote_folder'].list_object_names())
+    print(res['retrieved'].list_object_names())
 
     if 'out.error' in res['retrieved'].list_object_names():
         with res['retrieved'].open('out.error', 'r') as efile:

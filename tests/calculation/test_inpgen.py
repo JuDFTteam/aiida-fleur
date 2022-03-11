@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
 """Tests for the `FleurinputgenCalculation` class."""
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import pytest
 from aiida import orm
@@ -189,8 +186,8 @@ def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W): 
     res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=inpgen_local_code, **inputs)
     print(node)
     print(get_calcjob_report(node))
-    print((res['remote_folder'].list_object_names()))
-    print((res['retrieved'].list_object_names()))
+    print(res['remote_folder'].list_object_names())
+    print(res['retrieved'].list_object_names())
     assert node.is_finished_ok
 
 

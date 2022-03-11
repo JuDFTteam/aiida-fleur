@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,8 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains tests for the FleurCreateMagneticWorkChain '''
-from __future__ import absolute_import
-from __future__ import print_function
 
 import pytest
 import aiida_fleur

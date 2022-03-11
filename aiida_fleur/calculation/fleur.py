@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,10 +11,8 @@
 """
 This file contains a CalcJob that represents FLEUR calculation.
 """
-from __future__ import absolute_import
 import os
 import io
-import six
 
 from aiida.engine import CalcJob
 from aiida.orm import Dict
@@ -203,7 +200,7 @@ class FleurCalculation(CalcJob):
 
         # spec.input('metadata.options.input_filename', valid_type=six.string_types,
         #            default=cls._INPXML_FILE_NAME)
-        spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._OUTXML_FILE_NAME)
+        spec.input('metadata.options.output_filename', valid_type=(str,), default=cls._OUTXML_FILE_NAME)
         spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._use_kpoints)
 
         # inputs
@@ -230,7 +227,7 @@ class FleurCalculation(CalcJob):
                    'for all available features here check the documentation.')
 
         # parser
-        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
+        spec.input('metadata.options.parser_name', valid_type=(str,), default='fleur.fleurparser')
 
         # declare outputs of the calculation
         spec.output('output_parameters', valid_type=Dict, required=False)

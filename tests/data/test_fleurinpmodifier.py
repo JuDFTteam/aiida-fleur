@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -11,7 +10,6 @@
 ###############################################################################
 ''' Contains tests for modifing FleurinpData with Fleurinpmodifier '''
 
-from __future__ import absolute_import
 import os
 import pytest
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier

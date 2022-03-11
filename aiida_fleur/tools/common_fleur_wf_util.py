@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -15,10 +14,7 @@ depend on AiiDA classes, therefore can be used without loading the dbenv.
 Util that does depend on AiiDA classes should go somewhere else.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 from math import gcd  # pylint: disable=no-name-in-module
-import six
 
 from sympy import Symbol
 
@@ -40,7 +36,7 @@ def convert_formula_to_formula_unit(formula):
         g = gcd(g, a2)
 
     formula_unit_string = ''
-    for key, val in six.iteritems(element_count_dict):
+    for key, val in element_count_dict.items():
         new_val = int(val / g)
         if new_val == 1:
             new_val = ''
@@ -155,7 +151,7 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
     errors_stoi = {}
     for i, formula in enumerate(formulas):
         res = get_natoms_element(formula)
-        for element, val in six.iteritems(res):
+        for element, val in res.items():
             stoi_elm = stoi.get(element, 0)
             stoi[element] = stoi_elm + val * unitcellratios[i]
             if len(error_ratio):
@@ -167,11 +163,11 @@ def calc_stoi(unitcellratios, formulas, error_ratio=None):
     minv = min(vals)
     keymin = list(stoi.keys())[vals.index(minv)]
     norm_stoi = {}
-    for key, val in six.iteritems(stoi):
+    for key, val in stoi.items():
         norm_stoi[key] = stoi[key] / minv
         if len(error_ratio):
-            errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(
-                (errors_stoi[key]**2 + (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2))
+            errors_stoi[key] = 1 / stoi[keymin] * np.sqrt(errors_stoi[key]**2 +
+                                                          (stoi[key] / stoi[keymin] * errors_stoi[keymin])**2)
     return norm_stoi, errors_stoi
 
 
@@ -187,7 +183,7 @@ def get_atomprocent(formula):
     form_dict_new = {}
     form_dict = get_natoms_element(formula)
     ntotal = sum(form_dict.values())
-    for key, val in six.iteritems(form_dict):
+    for key, val in form_dict.items():
         val_new = float(val) / ntotal
         form_dict_new[key] = val_new
     return form_dict_new
@@ -234,18 +230,18 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
     #    ref_struc_te_dict_norm[elem_n.keys()[0]] = val / elem_n.values()[0]
     ref_el_norm = list(ref_struc_te_dict_norm.keys())
 
-    for formula, tE in six.iteritems(struc_te_dict):
+    for formula, tE in struc_te_dict.items():
         elements_count = get_natoms_element(formula)
         ntotal = float(sum(elements_count.values()))
         print(ntotal)
         eform = tE  #abs(tE)
-        for elem, count in six.iteritems(elements_count):
+        for elem, count in elements_count.items():
             if elem in ref_el_norm:
                 eform = eform - count * ref_struc_te_dict_norm.get(elem)  #abs(ref_struc_te_dict.get(elem))
             else:
-                print(('Reference energy missing for element {}. '
-                       'You need to provide reference energies for all elements in you compound.'
-                       ''.format(elem)))
+                print('Reference energy missing for element {}. '
+                      'You need to provide reference energies for all elements in you compound.'
+                      ''.format(elem))
         eform_dict[formula] = eform / ntotal
         #eform_list.append(eform/ntotal)
     return list(eform_dict.values()), eform_dict
@@ -416,7 +412,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
     educt_energy = 0
     product_energy = 0
 
-    for compound, factor in six.iteritems(reac_dict.get('educts', {})):
+    for compound, factor in reac_dict.get('educts', {}).items():
         compound_e = 0
         try:
             compound_e = formenergydict.get(compound, 0)
@@ -428,7 +424,7 @@ def get_enhalpy_of_equation(reaction, formenergydict):
             #return None
         educt_energy = educt_energy + factor * compound_e
 
-    for compound, factor in six.iteritems(reac_dict.get('products', {})):
+    for compound, factor in reac_dict.get('products', {}).items():
         try:
             compound_e = formenergydict.get(compound)
         except KeyError:

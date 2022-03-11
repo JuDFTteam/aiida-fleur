@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,7 +12,6 @@
 FLEUR plug-in
 '''
 
-from __future__ import absolute_import
 from aiida.common.exceptions import OutputParsingError
 
 
