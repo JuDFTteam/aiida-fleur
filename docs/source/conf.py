@@ -39,7 +39,8 @@ needs_sphinx = '1.5'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = ['myst_parser',
+              'sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.doctest',
               'sphinx.ext.todo',
@@ -67,8 +68,7 @@ nitpick_ignore = [('py:obj', 'module')]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-# The suffix of source filenames.
-source_suffix = '.rst'
+myst_enable_extensions = []
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -438,10 +438,11 @@ with open('nitpick-exceptions', 'r') as handle:
         tuple(line.strip().split(None, 1)) for line in handle.readlines() if line.strip() and not line.startswith('#')
     ]
 
+# These folders are copied to the documentation's HTML output
 html_static_path = ['_static']
 
-html_context = {
-    'css_files': [
-        '_static/theme_overrides.css',  # override wide tables in RTD theme
-    ],
-}
+# These paths are either relative to html_static_path
+# or fully qualified paths (eg. https://...)
+html_css_files = [
+    'theme_overrides.css',
+]
