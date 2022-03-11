@@ -37,8 +37,7 @@
         "future",
         "pyhull",
         "more_itertools",
-        "sqlalchemy<1.4",
-        "MarkupSafe<2.1.0"
+        "sqlalchemy<1.4"
     ],
     "extras_require": {
         "graphs ": [
