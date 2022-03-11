@@ -45,10 +45,10 @@
             "matplotlib"
         ],
         "docs": [
-            "Sphinx",
-            "docutils",
+            "sphinx~=4.0",
             "sphinx_rtd_theme",
-            "sphinx-click"
+            "sphinx-click",
+            "myst-parser~=0.15.2"
         ],
         "pre-commit": [
             "pre-commit>=2.6.0",

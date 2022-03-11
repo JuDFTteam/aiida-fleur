@@ -220,6 +220,15 @@ reference to the source code. The search is your friend.
    module_guide/mg_index
 ..   apidoc/aiida_fleur
 
+**********************
+Reference
+**********************
+
+.. toctree::
+   :maxdepth: 2
+
+   reference/index
+
 
 ******************
 Indices and tables
