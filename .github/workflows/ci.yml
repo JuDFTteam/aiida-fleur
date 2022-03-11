@@ -83,6 +83,7 @@ jobs:
             aiida-version: 'git+https://github.com/aiidateam/aiida-core.git@develop'
             aiida-name: 'develop'
             allowed-to-fail: true
+      fail-fast: false
 
     name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}

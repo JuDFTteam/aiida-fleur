@@ -53,8 +53,8 @@ def import_with_migrate(temp_dir):
         # This is the case for aiida >= 2.0.0
         def _import_with_migrate(filename, import_kwargs=None, try_migration=True):
             from click import echo
-            from aiida.tools.archive import import_archive
-            from aiida.tools.archive import IncompatibleArchiveVersionError, get_format
+            from aiida.tools.archive import import_archive, get_format
+            from aiida.common.exceptions import IncompatibleStorageSchema
 
             if import_kwargs is None:
                 import_kwargs = _DEFAULT_IMPORT_KWARGS
@@ -62,7 +62,7 @@ def import_with_migrate(temp_dir):
 
             try:
                 import_archive(archive_path, **import_kwargs)
-            except IncompatibleArchiveVersionError:
+            except IncompatibleStorageSchema:
                 if try_migration:
                     echo(f'incompatible version detected for {archive_path}, trying migration')
                     archive_format = get_format()
