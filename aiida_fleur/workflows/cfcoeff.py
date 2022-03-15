@@ -111,7 +111,7 @@ def reconstruct_cfcalculation(charge_densities, potentials, atomtype, **kwargs):
                     p.append(pot_array[names.index(f'atomtype-{atomtype}-{l}/{m}-down')])
                 pot_dict[(l, m)] = np.array(p)
 
-    cfcalc = CFCalculation.from_arrays(density, potentials=pot_dict, radial_meshes=radial_meshes, **kwargs)
+    cfcalc = CFCalculation.from_arrays(density, potentials=pot_dict, radial_mesh=radial_meshes, **kwargs)
 
     return cfcalc
 
