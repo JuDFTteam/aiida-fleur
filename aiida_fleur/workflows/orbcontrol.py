@@ -63,11 +63,18 @@ def generate_density_matrix_configurations(occupations=None, configurations=None
                 config_dict[ind] = []
 
                 if not isinstance(fixed_occ, list):
-                    fixed_occ = [fixed_occ]
+                    spin_occupation = fixed_occ // 2
+                    if fixed_occ % 2 != 0:
+                        fixed_occ = [spin_occupation, spin_occupation]
+                    else:
+                        fixed_occ = [spin_occupation + 1, spin_occupation]  #not ideal but for fine for now
 
-                for spin, occ in enumerate(fixed_occ):
+                if any(x > 2 * l + 1 for x in fixed_occ):
+                    raise ValueError(f'Invalid occupation {species} {orbital}: {fixed_occ}')
+
+                for occ in fixed_occ:
                     spin_configs = []
-                    start = [0 for x in range(2 * l + 1)]
+                    start = [0 for _ in range(2 * l + 1)]
                     #Fill up the occupations until it matches the wanted one
                     i = 0
                     while sum(start) < occ:
@@ -626,6 +633,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         self.report(f'INFO: create fleurinp for config {index}')
         fm = FleurinpModifier(fleurinp)
+        modes = fleurinp.get_fleur_modes()
 
         fm.set_inpchanges({'itmax': self.ctx.wf_dict['iterations_fixed'], 'l_linMix': True, 'mixParam': 0.0})
 
@@ -635,6 +643,12 @@ class FleurOrbControlWorkChain(WorkChain):
         for config_index, config_species in config.items():
             orbital = config_index.split('-')[-1]
             atom_species = '-'.join(config_index.split('-')[:-1])
+
+            if len(config_species) == 2 and modes['jspin'] == 1:
+                self.report(f'Configuration for species {atom_species} is given spin-polarized, '
+                            'but the calculation is non-spinpolarized. Summing up configurations.')
+                config_species = [sum(np.array(config) for config in config_species).tolist()]
+
             for spin, config_spin in enumerate(config_species):
                 if self.ctx.wf_dict['use_orbital_occupation']:
                     fm.set_nmmpmat(species_name=atom_species,
