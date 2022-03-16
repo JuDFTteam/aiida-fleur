@@ -64,7 +64,7 @@ def generate_density_matrix_configurations(occupations=None, configurations=None
 
                 if not isinstance(fixed_occ, list):
                     spin_occupation = fixed_occ // 2
-                    if fixed_occ % 2 != 0:
+                    if fixed_occ % 2 == 0:
                         fixed_occ = [spin_occupation, spin_occupation]
                     else:
                         fixed_occ = [spin_occupation + 1, spin_occupation]  #not ideal but for fine for now
