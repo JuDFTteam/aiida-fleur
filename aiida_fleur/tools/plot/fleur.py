@@ -493,6 +493,13 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
 
     total_energy = output_d['total_energy']
 
+    #For failed configs no energy is retrieved
+    #to avoid shifting the energies we enter
+    #None in these places
+    #Ideally this should be done on the level of the workchain
+    for failed in output_d['failed_configs']:
+        total_energy.insert(failed, None)
+
     #Divide into converged and non converged
     converged_energy = np.array(
         [total_energy[i] for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']])
@@ -514,15 +521,15 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
         if 'legend_label' not in kwargs:
             kwargs['legend_label'] = ['converged', 'not converged']
 
+    kwargs.setdefault('xlabel', 'Configurations')
+    kwargs.setdefault('ylabel', r'$E_{rel}$ [eV]')
+    kwargs.setdefault('title', 'Results for orbcontrol node')
+    kwargs.setdefault('legend_option', {'loc': 'upper right'})
+    kwargs.setdefault('markersize', 10.0)
+    kwargs.setdefault('legend', True)
+
     p1 = scatter([converged_configs, output_d['non_converged_configs']], [converged_energy, non_converged_energy],
-                 xlabel='Configurations',
-                 ylabel=r'$E_{rel}$ [eV]',
-                 title='Results for orbcontrol node',
-                 linestyle='',
-                 colors=['darkblue', 'darkred'],
-                 markersize=10.0,
-                 legend=True,
-                 legend_option={'loc': 'upper right'},
+                 color=['darkblue', 'darkred'],
                  save_plots=save,
                  show=show,
                  **kwargs)
