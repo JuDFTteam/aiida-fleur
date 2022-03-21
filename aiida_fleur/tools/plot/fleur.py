@@ -473,38 +473,49 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     raise NotImplementedError
 
 
-def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs):
+def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
     """
     from masci_tools.vis.common import scatter
+    from itertools import chain
 
     if labels is None:
         labels = []
 
-    if isinstance(node, list):
-        if len(node) >= 2:
-            return  # TODO
-        else:
-            node = node[0]
+    if not isinstance(nodes, list):
+        nodes = [nodes]
 
-    output_d = node.get_dict()
+    offset = 0
+    lines = []
+    converged_configs = []
+    converged_energy = []
+    non_converged_configs = []
+    non_converged_energy = []
+    for node in nodes:
+        outputs = node.get_dict()
 
-    total_energy = output_d['total_energy']
+        total_energy = outputs['total_energy']
 
-    #For failed configs no energy is retrieved
-    #to avoid shifting the energies we enter
-    #None in these places
-    #Ideally this should be done on the level of the workchain
-    for failed in output_d['failed_configs']:
-        total_energy.insert(failed, None)
+        #For failed configs no energy is retrieved
+        #to avoid shifting the energies we enter
+        #None in these places
+        #Ideally this should be done on the level of the workchain
+        for failed in outputs['failed_configs']:
+            total_energy.insert(failed, None)
 
-    #Divide into converged and non converged
-    converged_energy = np.array(
-        [total_energy[i] for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']])
-    converged_configs = [i for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']]
-    non_converged_energy = np.array([total_energy[i] for i in output_d['non_converged_configs']])
+        non_converged = outputs['non_converged_configs']
+        converged = [i for i in outputs['successful_configs'] if i not in non_converged]
+
+        converged_configs.append(i + offset for i in converged)
+        converged_energy.extend(total_energy[i] for i in converged)
+
+        non_converged_configs.extend(i + offset for i in non_converged)
+        non_converged_energy.extend(total_energy[i] for i in non_converged)
+
+        offset += max(chain(converged, non_converged, outputs['failed_configs'])) + 1
+        lines.append(offset + 0.5)
 
     #Convert to relative eV
     refE = min(converged_energy)
@@ -527,12 +538,18 @@ def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs)
     kwargs.setdefault('legend_option', {'loc': 'upper right'})
     kwargs.setdefault('markersize', 10.0)
     kwargs.setdefault('legend', True)
+    if len(lines) > 1:
+        kwargs.setdefault('lines', {'vertical': lines[:-1]})
 
-    p1 = scatter([converged_configs, output_d['non_converged_configs']], [converged_energy, non_converged_energy],
+    p1 = scatter([converged_configs, non_converged_configs], [converged_energy, non_converged_energy],
                  color=['darkblue', 'darkred'],
                  save_plots=save,
                  show=show,
                  **kwargs)
+
+    if labels and kwargs.get('backend', 'matplotlib'):
+        for label, pos in zip(labels, [0] + [p + 1 for p in lines]):
+            p1.annotate(label, xy=(pos, 0.9), xycoords=('data', 'axes fraction'), ha='center', va='center', size=40)
     return p1
 
 
