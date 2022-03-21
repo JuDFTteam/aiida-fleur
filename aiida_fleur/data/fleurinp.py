@@ -411,34 +411,34 @@ class FleurinpData(Data):
         Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
         Then it is reparsed into a ElementTree and teh xi:include tags are executed
         """
-        from masci_tools.util.xml.common_functions import clear_xml
+        from masci_tools.util.xml.common_functions import clear_xml, eval_xpath
         import tempfile
-
-        xmltree_string = etree.tostring(xmltree)
 
         temp_files = []
         for file in self.files:
-            if file.endswith('.xml') and file != 'inp.xml':
+            #Check if the filename appears in a xi:include tag
+            nodes = eval_xpath(xmltree,
+                               '//xi:include[@href=$filename]',
+                               namespaces={'xi': 'http://www.w3.org/2001/XInclude'},
+                               filename=file,
+                               list_return=True)
+            if not nodes:
+                continue
 
-                #Get file content from node
-                include_content = ''
-                with self.open(path=file, mode='r') as include_file:
-                    include_content = include_file.read()
+            #Get file content from node
+            include_content = self.get_content(file)
 
-                #Write content into temporary file
-                with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
-                    fo.write(include_content)
-                    temp_files.append(fo.name)
-                    #If the include tag for the given file is not present nothing is replaced
-                    xmltree_string = xmltree_string.replace(bytes(file, 'utf-8'), bytes(fo.name, 'utf-8'))
-
-        #Regenerate the tree with tempfile names
-        xmltree_with_includes = etree.fromstring(xmltree_string).getroottree()
+            #Write content into temporary file
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
+                fo.write(include_content)
+                temp_files.append(fo.name)
+                for node in nodes:
+                    node.set('href', fo.name)
 
         #Performs the inclusions and remove comments
-        cleared_tree, included_tags = clear_xml(xmltree_with_includes)
+        cleared_tree, included_tags = clear_xml(xmltree)
 
-        #Remove temporary files
+        #Remove created temporary files
         for file in temp_files:
             os.remove(file)
 
