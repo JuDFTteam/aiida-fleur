@@ -18,7 +18,6 @@ input manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 # TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
-# TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
 import os
 import io
@@ -84,32 +83,22 @@ class FleurinpData(Data):
 
     It stores the files in the repository and stores the input parameters of the
     ``inp.xml`` file of FLEUR in the database as a python dictionary (as internal attributes).
-    When an ``inp.xml`` (name important!) file is added to files, FleurinpData searches
-    for a corresponding xml schema file in the PYTHONPATH environment variable.
-    Therefore, it is recommend to have the plug-in source code directory in the python environment.
-    If no corresponding schema file is found an error is raised.
+    When an ``inp.xml`` (name important!) file is added to files, parsed into a XML tree
+    and validated against the XML schema file for the given file version. These XML schemas
+    are provided by the `masci-tools` library
+
 
     FleurinpData also provides the user with
-    methods to extract AiiDA StructureData and
-    KpointsData nodes.
+    methods to extract AiiDA StructureData, KpointsData nodes
+    and Dict nodes with LAPW parameters.
 
     Remember that most attributes of AiiDA nodes can not be changed after they
     have been stored in the database! Therefore, you have to use the FleurinpModifier class and its
     methods if you want to change somthing in the ``inp.xml`` file. You will retrieve a new
     FleurinpData that way and start a new calculation from it.
     """
-
-    # search in current folder and search in aiida source code
-    # we want to search in the Aiida source directory, get it from python path,
-    # maybe better from somewhere else.
-    # TODO: don not walk the whole python path, test if dir below is aiida?
-    # needs to be improved, schema file is often after new installation not found...
-    # installation with pip should always lead to a schema file in the python path, or even specific place
-
+    
     __version__ = '0.5.0'
-
-    # ignore machine dependent attributes in hash
-    _hash_ignored_attributes = []  #'_schema_file_path', '_search_paths']
 
     def __init__(self, **kwargs):
         """
@@ -408,8 +397,9 @@ class FleurinpData(Data):
         Tries to insert all .xml, which are not inp.xml file into the etree since they are
         not naturally available for the parser (open vs self.open)
 
-        Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
-        Then it is reparsed into a ElementTree and teh xi:include tags are executed
+        Creates a NamedTemporaryFile for each one with their content
+        and replaces the name in the `href` attributes of the `xi:include` tags.
+        Then these are expanded with `xmltree.xinclude()`
         """
         from masci_tools.util.xml.common_functions import clear_xml, eval_xpath
         import tempfile
