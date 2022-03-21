@@ -417,24 +417,25 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'ERROR: you gave structure input but no inpgen code Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs:
-            error = 'ERROR: you gave neither SCF input nor remote'
+        elif 'remote' not in inputs and 'fleurinp' not in inputs:
+            error = 'ERROR: you gave neither SCF input nor remote or fleurinp'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             if 'calc_parameters' in inputs:
-                error = 'ERROR: you gave remote input + calc_parameters for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote/fleurinp input + calc_parameters for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'structure' in inputs:
-                error = 'ERROR: you gave remote input + structure for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote/fleurinp input + structure for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'inpgen' in inputs:
-                error = 'ERROR: you gave remote input + inpgen for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote/fleurinp input + inpgen for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            remote = inputs.remote
+            if 'remote' in inputs:
+                remote = inputs.remote
             if 'fleurinp' in inputs:
                 fleurinp = inputs.fleurinp
 
@@ -613,7 +614,8 @@ class FleurOrbControlWorkChain(WorkChain):
             except (AttributeError, NotExistent):
                 return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
         else:
-            remote_data = self.inputs.remote
+            if 'remote' in self.inputs:
+                remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
                 fleurinp = get_fleurinp_from_remote_data(remote_data, store=True)
                 self.report(f'INFO: generated FleurinpData from {fleurinp.files}')
