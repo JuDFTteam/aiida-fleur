@@ -473,7 +473,7 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     raise NotImplementedError
 
 
-def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, **kwargs):
+def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_labels=None, **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
@@ -508,19 +508,19 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, **kwargs
         non_converged = outputs['non_converged_configs']
         converged = [i for i in outputs['successful_configs'] if i not in non_converged]
 
-        converged_configs.append(i + offset for i in converged)
+        converged_configs.extend(i + offset for i in converged)
         converged_energy.extend(total_energy[i] for i in converged)
 
         non_converged_configs.extend(i + offset for i in non_converged)
         non_converged_energy.extend(total_energy[i] for i in non_converged)
 
         offset += max(chain(converged, non_converged, outputs['failed_configs'])) + 1
-        lines.append(offset + 0.5)
+        lines.append(offset - 0.5)
 
     #Convert to relative eV
     refE = min(converged_energy)
-    converged_energy -= refE
-    non_converged_energy -= refE
+    converged_energy = np.array(converged_energy) - refE
+    non_converged_energy = np.array(non_converged_energy) - refE
 
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
@@ -547,9 +547,10 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, **kwargs
                  show=show,
                  **kwargs)
 
-    if labels and kwargs.get('backend', 'matplotlib'):
-        for label, pos in zip(labels, [0] + [p + 1 for p in lines]):
-            p1.annotate(label, xy=(pos, 0.9), xycoords=('data', 'axes fraction'), ha='center', va='center', size=40)
+    if line_labels and kwargs.get('backend', 'matplotlib'):
+        for label, pos in zip(line_labels, [0] + [p + 0.25 for p in lines]):
+            p1.annotate(label, xy=(pos, 0.95), xycoords=('data', 'axes fraction'), ha='left', va='center', size=16)
+
     return p1
 
 
