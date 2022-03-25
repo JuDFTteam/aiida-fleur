@@ -459,6 +459,8 @@ class FleurOrbControlWorkChain(WorkChain):
 
         self.report('Info: Run SCF without LDA+U')
         future = self.submit(FleurScfWorkChain, **inputs)
+        future.label = 'scf_no_ldau'
+        future.description = 'SCF Calculation for orbital occupation control before adding DFT+U'
         return ToContext(scf_no_ldau=future)
 
     def get_inputs_scf_no_ldau(self):
@@ -473,6 +475,7 @@ class FleurOrbControlWorkChain(WorkChain):
         if 'options' not in input_scf:
             input_scf.options = self.inputs.options
 
+        input_scf.metadata.call_link_label = 'scf_no_ldau'
         return input_scf
 
     def inpgen_needed(self):
@@ -520,9 +523,12 @@ class FleurOrbControlWorkChain(WorkChain):
                                          settings=settings,
                                          params=params)
 
+        inputs_build.metadata.call_link_label = 'inpgen'
         # Launch inpgen
         self.report('INFO: run inpgen')
         future = self.submit(inputs_build)
+        future.label = 'inpgen'
+        future.description = 'Inpgen calculation for Orbital occupation control workflow'
 
         return ToContext(inpgen=future)
 
@@ -568,9 +574,13 @@ class FleurOrbControlWorkChain(WorkChain):
             inputs, status = self.get_inputs_fixed_configurations(index, config)
             if status:
                 return status
+            label = f'Fixed_{index}'
 
+            inputs.metadata.call_link_label = label
             res = self.submit(FleurBaseWorkChain, **inputs)
-            self.to_context(**{f'Fixed_{index}': res})
+            res.label = label
+            res.description = f'DFT+U calculation with fixed configuration number {index}'
+            self.to_context(**{label: res})
 
     def get_inputs_fixed_configurations(self, index, config):
         """
@@ -682,8 +692,12 @@ class FleurOrbControlWorkChain(WorkChain):
             inputs.fleurinp = fixed_calc.inputs.fleurinpdata
             inputs.remote_data = fixed_calc.outputs.remote_folder
 
+            label = f'Relaxed_{index}'
+            inputs.metadata.call_link_label = label
             res = self.submit(FleurScfWorkChain, **inputs)
-            self.to_context(**{f'Relaxed_{index}': res})
+            res.label = label
+            res.description = f'DFT+U calculation for configuration number {index} converging the density matrix'
+            self.to_context(**{label: res})
 
     def get_inputs_scf(self):
         """
