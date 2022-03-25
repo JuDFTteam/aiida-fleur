@@ -97,7 +97,7 @@ class FleurinpData(Data):
     methods if you want to change somthing in the ``inp.xml`` file. You will retrieve a new
     FleurinpData that way and start a new calculation from it.
     """
-    
+
     __version__ = '0.5.0'
 
     def __init__(self, **kwargs):
