@@ -84,7 +84,7 @@ jobs:
             aiida-name: 'develop'
             allowed-to-fail: true
           - python-version: 3.9
-            aiida-version: '2.0.0b1'
+            aiida-version: 'aiida-core==2.0.0b1'
             aiida-name: '2.0.0b1'
             allowed-to-fail: false
       fail-fast: false
