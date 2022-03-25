@@ -741,6 +741,8 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             if not calc.is_finished_ok:
@@ -751,6 +753,8 @@ class FleurOrbControlWorkChain(WorkChain):
                 #because we want to try to exctract the total_energy
                 if calc.exit_status not in FleurScfWorkChain.get_exit_statuses(['ERROR_DID_NOT_CONVERGE']):
                     failed_configs.append(index)
+                    t_energylist.append(None)
+                    distancelist.append(None)
                     continue
                 non_converged_configs.append(index)
 
@@ -761,6 +765,8 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             try:
@@ -770,6 +776,8 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             # we loose the connection of the failed scf here.

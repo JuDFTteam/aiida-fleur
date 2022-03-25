@@ -498,13 +498,6 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_lab
 
         total_energy = outputs['total_energy']
 
-        #For failed configs no energy is retrieved
-        #to avoid shifting the energies we enter
-        #None in these places
-        #Ideally this should be done on the level of the workchain
-        for failed in outputs['failed_configs']:
-            total_energy.insert(failed, None)
-
         non_converged = outputs['non_converged_configs']
         converged = [i for i in outputs['successful_configs'] if i not in non_converged]
 
