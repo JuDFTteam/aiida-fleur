@@ -131,10 +131,10 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install masci-tools==0.9.0a0
         pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida-version }}
+        pip install masci-tools[bokeh-plots]==0.9.0a0
         pip install reentry
         reentry scan
 
