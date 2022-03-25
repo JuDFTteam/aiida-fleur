@@ -42,7 +42,8 @@
     ],
     "extras_require": {
         "graphs ": [
-            "matplotlib"
+            "matplotlib",
+            "masci-tools[bokeh-plots]"
         ],
         "docs": [
             "sphinx~=4.0",
