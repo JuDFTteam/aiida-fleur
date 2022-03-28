@@ -839,7 +839,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         #Find the minimal total energy in the list
         if len(t_energylist) != 0:
-            groundstate_index = np.array(t_energylist).argmin()
+            groundstate_index = np.nanargmin(np.array(t_energylist, dtype=np.float))
             out['groundstate_configuration'] = groundstate_index
 
             if f'Relaxed_{groundstate_index}' in self.ctx:
