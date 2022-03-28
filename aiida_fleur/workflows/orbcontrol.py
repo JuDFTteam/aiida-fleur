@@ -576,7 +576,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 return status
             label = f'Fixed_{index}'
 
-            inputs.metadata.call_link_label = label
+            inputs.setdefault('metadata', {})['call_link_label'] = label
             res = self.submit(FleurBaseWorkChain, **inputs)
             res.label = label
             res.description = f'DFT+U calculation with fixed configuration number {index}'
@@ -693,7 +693,7 @@ class FleurOrbControlWorkChain(WorkChain):
             inputs.remote_data = fixed_calc.outputs.remote_folder
 
             label = f'Relaxed_{index}'
-            inputs.metadata.call_link_label = label
+            inputs.setdefault('metadata', {})['call_link_label'] = label
             res = self.submit(FleurScfWorkChain, **inputs)
             res.label = label
             res.description = f'DFT+U calculation for configuration number {index} converging the density matrix'
@@ -803,9 +803,9 @@ class FleurOrbControlWorkChain(WorkChain):
 
             outpara = outputnode_scf.get_dict()
 
-            t_e = outpara.get('total_energy', float('nan'))
+            t_e = outpara.get('total_energy', None)
             e_u = outpara.get('total_energy_units', 'htr')
-            dis = outpara.get('distance_charge', float('nan'))
+            dis = outpara.get('distance_charge', None)
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             t_energylist.append(t_e)
             distancelist.append(dis)
@@ -865,7 +865,7 @@ class FleurOrbControlWorkChain(WorkChain):
             outputscf.description = ('SCF output from the run with the lowest total '
                                      'energy extracted from FleurOrbControlWorkChain')
 
-        if len(t_energylist) == 0:
+        if all(e is None for e in t_energylist):
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
         elif not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_CONFIGS_FAILED
