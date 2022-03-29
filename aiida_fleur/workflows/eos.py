@@ -156,9 +156,9 @@ class FleurEosWorkChain(WorkChain):
         inputs = self.get_inputs_scf_first()
         inputs.structure = struc
         natoms = len(struc.sites)
-        label = str(self.ctx.scalelist[i])
+        label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
         label_c = '|eos| fleur_scf_wc'
-        description = f'|FleurEosWorkChain|fleur_scf_wc|scale {label}, {i}'
+        description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i}'
 
         self.ctx.volume.append(struc.get_cell_volume())
         self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
@@ -194,9 +194,9 @@ class FleurEosWorkChain(WorkChain):
             inputs = self.get_inputs_scf()
             inputs.structure = struc
             natoms = len(struc.sites)
-            label = str(self.ctx.scalelist[i + 1])
+            label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
             label_c = '|eos| fleur_scf_wc'
-            description = f'|FleurEosWorkChain|fleur_scf_wc|scale {label}, {i + 1}'
+            description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
             #inputs.label = label_c
             #inputs.description = description
 
@@ -261,10 +261,7 @@ class FleurEosWorkChain(WorkChain):
                 self.ctx.successful = False
                 continue
 
-            # we loose the connection of the failed scf here.
-            # link labels cannot contain '.'
-            link_label = f'scale_{label}'.replace('.', '_')
-            outnodedict[link_label] = outputnode_scf
+            outnodedict[label] = outputnode_scf
 
             outpara = outputnode_scf.get_dict()
 
