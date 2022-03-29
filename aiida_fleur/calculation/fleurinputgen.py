@@ -46,7 +46,7 @@ class FleurinputgenCalculation(CalcJob):
 
     _settings_keys = [
         'additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline', 'significant_figures_cell',
-        'significant_figures_positions'
+        'significant_figures_positions', 'profile'
     ]
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
@@ -80,6 +80,8 @@ class FleurinputgenCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurinpgenparser')
 
         # declaration of outputs of the calclation
+        #TODO: Should this be renamed? FleurinpData inputs/outputs are called fleurinp everywhere
+        #else
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
         # exit codes
@@ -97,6 +99,9 @@ class FleurinputgenCalculation(CalcJob):
                        'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
                        message=('During parsing: FleurinpData could not be initialized, see log. '))
         spec.exit_code(309, 'ERROR_FLEURINPDATA_NOT_VALID', message='During parsing: FleurinpData failed validation.')
+        spec.exit_code(310,
+                       'ERROR_UNKNOWN_PROFILE',
+                       message='The profile {profile} is not known to the used inpgen code')
 
     def prepare_for_submission(self, folder):
         """
@@ -145,6 +150,19 @@ class FleurinputgenCalculation(CalcJob):
                 # TODO warning
                 self.logger.info('settings dict key %s for Fleur calculation'
                                  'not recognized, only %s are allowed.', key, str(self._settings_keys))
+
+        #Check that if a inpgen profile is given no additional parameters are provided
+        #since this will overwrite the effects of the inpgen profile (For now we just issue a warning)
+        if 'profile' in settings_dict:
+            lapw_parameters_given = any('atom' in key for key in parameters_dict)
+            comp = parameters_dict.get('comp', {})
+            lapw_parameters_given = lapw_parameters_given or \
+                                    'kmax' in comp or \
+                                    'gmax' in comp or \
+                                    'gmaxxc' in comp
+            if lapw_parameters_given:
+                self.logger.warning('Inpgen profile specified but atom/LAPW basis specific '
+                                    'parameters are provided. These will conflict/override each other')
 
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
@@ -200,6 +218,9 @@ class FleurinputgenCalculation(CalcJob):
             codeinfo.stdin_name = self._INPUT_FILE_NAME
         else:
             cmdline_params = ['-explicit', '-inc', '+all', '-f', f'{self._INPUT_FILE_NAME}']
+
+        if 'profile' in settings_dict:
+            cmdline_params.extend(['-profile', settings_dict['profile']])
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
