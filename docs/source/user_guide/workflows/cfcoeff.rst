@@ -86,7 +86,7 @@ The table below shows all the possible output nodes of the SCF workchain.
 | output_cfcoeff_wc_charge_densities | :py:class:`~aiida.orm.XyData` | XyData with the calculated charge densities |
 +------------------------------------+-------------------------------+---------------------------------------------+
 
-.. _scf_wc_layout:
+.. _cfcoeff_wc_layout:
 
 Layout
 ^^^^^^
