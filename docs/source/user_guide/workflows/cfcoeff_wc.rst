@@ -26,8 +26,8 @@ Calculates the 4f crystal field coefficients for a given structure using the met
 described in C.E. Patrick, J.B. Staunton: J. Phys.: Condens. Matter 31, 305901 (2019).
 
 This method boils down to the formula
-.. math::
 
+.. math::
     B_{lm} = \sqrt{\frac{2l+1}{4\pi}} \int^{R_{MT}}\! dr r^2 V_{lm}(r)n_{4f}(r)
 
 where :math:`V_{lm}(r)` is the potential of the surroundings of the 4f site and
