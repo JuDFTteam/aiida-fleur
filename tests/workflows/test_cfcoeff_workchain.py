@@ -111,9 +111,9 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
 
     keys = sorted(n['cf_coefficients_spin_up'].keys())
     assert pytest.approx([n['cf_coefficients_spin_up'][key] for key in keys]) \
-         == [-585.50088518635, 107.57251558557, 66.240659350976,2.8694095323364, 66.240659350976]
-    assert pytest.approx([n['cf_coefficients_spin_down'][key] for key in keys]) \
          == [-530.07676884271, -51.531259261553, 91.429428364653,3.9379215268871, 91.429428364653]
+    assert pytest.approx([n['cf_coefficients_spin_down'][key] for key in keys]) \
+         == [-585.50088518635, 107.57251558557, 66.240659350976,2.8694095323364, 66.240659350976]
 
 
 @pytest.mark.regression_test
@@ -176,6 +176,7 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
         })
     builder.scf_rare_earth_analogue.fleur = FleurCode
     builder.scf_rare_earth_analogue.inpgen = inpgen_local_code
+    builder.scf_rare_earth_analogue.options = orm.Dict(dict=options).store()
     builder.wf_parameters = orm.Dict(dict={'element': 'Sm', 'rare_earth_analogue': True})
 
     # now run calculation
