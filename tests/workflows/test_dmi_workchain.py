@@ -141,7 +141,7 @@ def test_fleur_dmi_FePt_film(
                                         [0.125, 0.0, 0.0], [0.125, 0.0, 0.0], [0.25, 0.0, 0.0], [0.25, 0.0, 0.0],
                                         [0.25, 0.0, 0.0], [0.375, 0.0, 0.0], [0.375, 0.0, 0.0], [0.375, 0.0, 0.0]]
     assert outpara.get('is_it_force_theorem')
-    assert pytest.approx(outpara.get('energies')) == [
+    assert pytest.approx(outpara.get('soc_energies')) == [
         0.0, 0.0, 0.0, 0.0, -3.2653662329991e-06, 0.0068507386014181, 0.0, 0.0, 0.0065778083972169, 0.0, 0.0,
         -6.5307326593468e-06
     ]
