@@ -247,11 +247,11 @@ def generate_smco5_structure():
         cell = np.array([[a, 0.0, 0.0], [a * np.cos(2 * np.pi / 3), a * np.sin(2 * np.pi / 3), 0.0], [0.0, 0.0, c]])
         structure = StructureData(cell=cell)
         structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
-        structure.append_atom(position=cell @ np.array([1 / 3, 2 / 3, 0.0]), symbols='Co', name='Co')
-        structure.append_atom(position=cell @ np.array([2 / 3, 1 / 3, 0.0]), symbols='Co', name='Co')
-        structure.append_atom(position=cell @ np.array([0.5, 0.5, 0.0]), symbols='Co', name='Co')
-        structure.append_atom(position=cell @ np.array([0.5, 0.0, 0.5]), symbols='Co', name='Co')
-        structure.append_atom(position=cell @ np.array([0.0, 0.5, 0.5]), symbols='Co', name='Co')
+        structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([2 / 3, 1 / 3, 0.0]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.0, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.5, 0.0, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.5, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
 
         return structure
 
