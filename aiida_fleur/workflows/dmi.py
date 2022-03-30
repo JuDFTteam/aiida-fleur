@@ -522,7 +522,8 @@ class FleurDMIWorkChain(WorkChain):
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
         if e_u in ['htr', 'Htr']:
-            h_so *= HTR_TO_EV
+            h_so = np.array(h_so) * HTR_TO_EV
+            h_so = h_so.tolist()
 
         self.ctx.h_so = h_so
         self.ctx.q_vectors = q_vectors
