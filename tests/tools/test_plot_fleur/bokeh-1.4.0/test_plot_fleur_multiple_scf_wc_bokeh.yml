@@ -1,9 +1,7 @@
 roots:
   references:
-  - attributes: {}
-    type: BasicTickFormatter
-  - attributes: {}
-    type: BasicTickFormatter
+  - type: BasicTickFormatter
+  - type: BasicTickFormatter
   - attributes:
       axis_label: Iteration
       axis_label_text_font_size:
@@ -30,10 +28,8 @@ roots:
       ticker:
         type: BasicTicker
     type: LinearAxis
-  - attributes: {}
-    type: BasicTicker
-  - attributes: {}
-    type: BasicTicker
+  - type: BasicTicker
+  - type: BasicTicker
   - attributes:
       ticker:
         type: BasicTicker
@@ -134,12 +130,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Line
-      hover_glyph: null
-      muted_glyph: null
       name: distance_0
       nonselection_glyph:
         type: Line
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -148,12 +141,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Line
-      hover_glyph: null
-      muted_glyph: null
       name: distance_1
       nonselection_glyph:
         type: Line
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -162,12 +152,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Line
-      hover_glyph: null
-      muted_glyph: null
       name: iteration_energy_0
       nonselection_glyph:
         type: Line
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -176,12 +163,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Line
-      hover_glyph: null
-      muted_glyph: null
       name: iteration_energy_1
       nonselection_glyph:
         type: Line
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -190,12 +174,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Scatter
-      hover_glyph: null
-      muted_glyph: null
       name: distance_0
       nonselection_glyph:
         type: Scatter
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -204,12 +185,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Scatter
-      hover_glyph: null
-      muted_glyph: null
       name: distance_1
       nonselection_glyph:
         type: Scatter
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -218,12 +196,9 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Scatter
-      hover_glyph: null
-      muted_glyph: null
       name: iteration_energy_0
       nonselection_glyph:
         type: Scatter
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
@@ -232,31 +207,18 @@ roots:
         type: ColumnDataSource
       glyph:
         type: Scatter
-      hover_glyph: null
-      muted_glyph: null
       name: iteration_energy_1
       nonselection_glyph:
         type: Scatter
-      selection_glyph: null
       view:
         type: CDSView
     type: GlyphRenderer
-  - attributes: {}
-    type: CrosshairTool
-  - attributes: {}
-    type: CrosshairTool
-  - attributes:
-      callback: null
-    type: DataRange1d
-  - attributes:
-      callback: null
-    type: DataRange1d
-  - attributes:
-      callback: null
-    type: DataRange1d
-  - attributes:
-      callback: null
-    type: DataRange1d
+  - type: CrosshairTool
+  - type: CrosshairTool
+  - type: DataRange1d
+  - type: DataRange1d
+  - type: DataRange1d
+  - type: DataRange1d
   - attributes:
       children:
       - - subtype: Figure
@@ -269,7 +231,6 @@ roots:
         - 0
     type: GridBox
   - attributes:
-      callback: null
       renderers:
       - type: GlyphRenderer
       toggleable: false
@@ -282,7 +243,6 @@ roots:
         - '@distance_0'
     type: HoverTool
   - attributes:
-      callback: null
       renderers:
       - type: GlyphRenderer
       toggleable: false
@@ -295,7 +255,6 @@ roots:
         - '@distance_1'
     type: HoverTool
   - attributes:
-      callback: null
       renderers:
       - type: GlyphRenderer
       toggleable: false
@@ -308,7 +267,6 @@ roots:
         - '@energy_diff_0'
     type: HoverTool
   - attributes:
-      callback: null
       renderers:
       - type: GlyphRenderer
       toggleable: false
@@ -432,20 +390,12 @@ roots:
       y:
         field: energy_diff_1
     type: Line
-  - attributes: {}
-    type: LinearScale
-  - attributes: {}
-    type: LinearScale
-  - attributes: {}
-    type: LogScale
-  - attributes: {}
-    type: LogScale
-  - attributes:
-      ticker: null
-    type: LogTickFormatter
-  - attributes:
-      ticker: null
-    type: LogTickFormatter
+  - type: LinearScale
+  - type: LinearScale
+  - type: LogScale
+  - type: LogScale
+  - type: LogTickFormatter
+  - type: LogTickFormatter
   - attributes:
       axis_label: Distance [me/bohr^3]
       axis_label_text_font_size:
@@ -488,10 +438,8 @@ roots:
       ticker:
         type: LogTicker
     type: Grid
-  - attributes: {}
-    type: PanTool
-  - attributes: {}
-    type: PanTool
+  - type: PanTool
+  - type: PanTool
   - attributes:
       fill_alpha:
         value: 0.5
@@ -529,12 +477,10 @@ roots:
       ys_units: screen
     type: PolyAnnotation
   - attributes:
-      callback: null
       overlay:
         type: PolyAnnotation
     type: PolySelectTool
   - attributes:
-      callback: null
       overlay:
         type: PolyAnnotation
     type: PolySelectTool
@@ -574,18 +520,12 @@ roots:
         type: ProxyToolbar
       toolbar_location: above
     type: ToolbarBox
-  - attributes: {}
-    type: RedoTool
-  - attributes: {}
-    type: RedoTool
-  - attributes: {}
-    type: ResetTool
-  - attributes: {}
-    type: ResetTool
-  - attributes: {}
-    type: SaveTool
-  - attributes: {}
-    type: SaveTool
+  - type: RedoTool
+  - type: RedoTool
+  - type: ResetTool
+  - type: ResetTool
+  - type: SaveTool
+  - type: SaveTool
   - attributes:
       fill_color:
         value: '#1f77b4'
@@ -706,24 +646,15 @@ roots:
       y:
         field: energy_diff_1
     type: Scatter
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
-  - attributes: {}
-    type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
   - attributes:
-      callback: null
       data:
         distance_1:
         - 61.1110641131
@@ -754,7 +685,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_1:
         - 61.1110641131
@@ -785,7 +715,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_1:
         - 61.1110641131
@@ -816,7 +745,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_1:
         - 61.1110641131
@@ -847,7 +775,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_0:
         - 61.1110641131
@@ -878,7 +805,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_0:
         - 61.1110641131
@@ -909,7 +835,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_0:
         - 61.1110641131
@@ -940,7 +865,6 @@ roots:
         type: UnionRenderers
     type: ColumnDataSource
   - attributes:
-      callback: null
       data:
         distance_0:
         - 61.1110641131
@@ -970,12 +894,8 @@ roots:
       selection_policy:
         type: UnionRenderers
     type: ColumnDataSource
-  - attributes:
-      callback: null
-    type: TapTool
-  - attributes:
-      callback: null
-    type: TapTool
+  - type: TapTool
+  - type: TapTool
   - attributes:
       text: Convergence (log)
     type: Title
@@ -1004,7 +924,6 @@ roots:
         type: Title
       toolbar:
         type: Toolbar
-      toolbar_location: null
       x_range:
         type: DataRange1d
       x_scale:
@@ -1037,7 +956,6 @@ roots:
         type: Title
       toolbar:
         type: Toolbar
-      toolbar_location: null
       x_range:
         type: DataRange1d
       x_scale:
@@ -1053,7 +971,6 @@ roots:
       active_inspect:
       - type: HoverTool
       - type: HoverTool
-      active_multi: null
       active_scroll: auto
       active_tap: auto
       tools:
@@ -1077,7 +994,6 @@ roots:
       active_inspect:
       - type: HoverTool
       - type: HoverTool
-      active_multi: null
       active_scroll: auto
       active_tap: auto
       tools:
@@ -1096,37 +1012,21 @@ roots:
       - type: ZoomInTool
       - type: ZoomOutTool
     type: Toolbar
-  - attributes: {}
-    type: UndoTool
-  - attributes: {}
-    type: UndoTool
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: UnionRenderers
-  - attributes: {}
-    type: WheelZoomTool
-  - attributes: {}
-    type: WheelZoomTool
-  - attributes: {}
-    type: ZoomInTool
-  - attributes: {}
-    type: ZoomInTool
-  - attributes: {}
-    type: ZoomOutTool
-  - attributes: {}
-    type: ZoomOutTool
+  - type: UndoTool
+  - type: UndoTool
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: WheelZoomTool
+  - type: WheelZoomTool
+  - type: ZoomInTool
+  - type: ZoomInTool
+  - type: ZoomOutTool
+  - type: ZoomOutTool
 title: Bokeh Application
 version: 1.4.0

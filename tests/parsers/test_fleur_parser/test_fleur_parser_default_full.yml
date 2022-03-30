@@ -44,7 +44,7 @@ output_parameters:
   parser_debug: []
   parser_errors: []
   parser_info:
-  - Masci-Tools Fleur out.xml Parser v0.6.0
+  - Masci-Tools Fleur out.xml Parser v0.7.0
   - 'Found fleur out file with the versions out: 0.31; inp: 0.31'
   - 'The following defined constants were found: {''Pi'': 3.141592653589793, ''Deg'':
     0.017453292519943295, ''Ang'': 1.889726124772898, ''nm'': 18.89726124772898, ''pm'':
@@ -66,5 +66,7 @@ output_parameters:
   spin_dependent_charge_total: 28.0
   sum_of_eigenvalues: -316.6406982605
   total_charge: 27.9999999876
+  ts_energy: 0.0
+  ts_energy_units: eV
   walltime: 4
   walltime_units: seconds
