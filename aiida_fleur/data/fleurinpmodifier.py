@@ -569,13 +569,12 @@ class FleurinpModifier(FleurXMLModifier):
                              to store it
         :param node: a :class:`~aiida.orm.FolderData` node containing the file
         """
-        from aiida.orm import FolderData, load_node
+        from aiida.orm import load_node, Data
 
         node_uuid = None
         if node is not None:
-            if isinstance(node, FolderData):
+            if isinstance(node, Data):
                 node_uuid = node.uuid
-
             num_nodes = sum('folder' in label for label in self._other_nodes) + 1
             node_label = f'folder_{num_nodes}'
             # Be more careful? Needs to be stored, otherwise we cannot load it
