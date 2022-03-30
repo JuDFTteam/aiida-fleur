@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module contains the FleurHubbard1WorkChain, which is used to perform
 a complete hubbard 1 calculation including calculating model parameters beforehand
