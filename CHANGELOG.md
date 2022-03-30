@@ -1,5 +1,15 @@
 # Changelog
 
+## v.1.3.0
+### release compatible with AiiDA-core 1.3.0+
+- Guraranteed support for Fleur versions up to Max6
+- Dropped support for python 3.6
+- Added CFCoeff Workchain for calculating 4f crystal field coefficients
+- General Improvements of Forcetheorem workchains, allow switching kpoints for force theorem calculations
+- General Improvements of Orbcontrol workchain, allow starting from structure/charge density without SCF workchain
+- Added support for inpgen profiles
+- Refactored BaseFleurWorkChain; switched implementation of BaseRestartWorkChain from aiida-fleur to implementation provided by aiida-core
+
 ## v.1.2.1
 ### release compatible with AiiDA-core 1.3.0+
 - General improvements for CreateMagnetic workchain and related methods
