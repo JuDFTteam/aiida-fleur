@@ -22,6 +22,102 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
+def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
+                                             generate_smco5_structure, clear_database, aiida_caplog):
+    """
+    Full example using the CFCoeff workchain with just a structure as input.
+    Calls scf for analogue and rare-earth system
+    """
+    options = {
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 5 * 60,
+        'withmpi': False,
+        'custom_scheduler_commands': ''
+    }
+
+    FleurCode = fleur_local_code
+    desc = FleurCode.description
+    with_hdf5 = False
+    if desc is not None:
+        if 'hdf5' in desc:
+            with_hdf5 = True
+        elif 'Hdf5' in desc:
+            with_hdf5 = True
+        elif 'HDF5' in desc:
+            with_hdf5 = True
+        else:
+            with_hdf5 = False
+    if not with_hdf5:
+        pytest.skip('CFCoeff workchain only works with HDF5')
+
+    # create process builder to set parameters
+    builder = FleurCFCoeffWorkChain.get_builder()
+    builder.metadata.description = 'Simple Fleur CFcoeff test for SmCo5 bulk with structure data given'
+    builder.metadata.label = 'FleurCFCoeff_test_analogue'
+
+    builder.scf.fleur = FleurCode
+    builder.scf.options = orm.Dict(dict=options).store()
+    builder.scf.inpgen = inpgen_local_code
+    builder.scf.structure = generate_smco5_structure()
+    builder.scf.calc_parameters = orm.Dict(
+        dict={
+            'comp': {
+                'kmax': 3.0,
+                'gmax': 7.0,
+                'gmaxxc': 7.0
+            },
+            'exco': {
+                'xctyp': 'vwn'
+            },
+            'kpt': {
+                'div1': 1,
+                'div2': 1,
+                'div3': 1
+            }
+        })
+    builder.wf_parameters = orm.Dict(dict={'element': 'Sm'})
+
+    # now run calculation
+    #run_with_cache(builder)
+    data_dir_path = os.path.join(aiida_path,
+                                 '../tests/workflows/caches/fleur_cfcoeff_smco5_structure_no_analogue.tar.gz')
+    with with_export_cache(data_dir_abspath=data_dir_path):
+        out, node = run_get_node(builder)
+    #print(out)
+    #print(node)
+
+    print(get_workchain_report(node, 'REPORT'))
+
+    #assert node.is_finished_ok
+    # check output
+    n = out['output_cfcoeff_wc_para']
+    n = n.get_dict()
+    assert 'output_cfcoeff_wc_potentials' in out
+    assert 'output_cfcoeff_wc_charge_densities' in out
+
+    from pprint import pprint
+    pprint(n)
+
+    assert n['cf_coefficients_convention'] == 'Stevens'
+    assert n['cf_coefficients_site_symmetries'] == ['6/mmm']
+    assert n['angle_a_to_x_axis'] == 0.0
+    assert n['angle_c_to_z_axis'] == 0.0
+
+    assert sorted(n['cf_coefficients_spin_up'].keys()) == ['2/0', '4/0', '6/-6', '6/0', '6/6']
+    assert sorted(n['cf_coefficients_spin_down'].keys()) == ['2/0', '4/0', '6/-6', '6/0', '6/6']
+
+    keys = sorted(n['cf_coefficients_spin_up'].keys())
+    assert pytest.approx([n['cf_coefficients_spin_up'][key] for key in keys]) \
+         == [-585.50088518635, 107.57251558557, 66.240659350976,2.8694095323364, 66.240659350976]
+    assert pytest.approx([n['cf_coefficients_spin_down'][key] for key in keys]) \
+         == [-530.07676884271, -51.531259261553, 91.429428364653,3.9379215268871, 91.429428364653]
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(1000, method='thread')
 def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
                                           generate_smco5_structure, clear_database, aiida_caplog):
     """
@@ -78,8 +174,9 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
                 'div3': 1
             }
         })
-    builder.wf_parameters = orm.Dict(dict={'fleur_runmax': 1, 'density_converged': 0.02})
-    builder.wf_parameters = orm.Dict(dict={'element': 'Sm'})
+    builder.scf_rare_earth_analogue.fleur = FleurCode
+    builder.scf_rare_earth_analogue.inpgen = inpgen_local_code
+    builder.wf_parameters = orm.Dict(dict={'element': 'Sm', 'rare_earth_analogue': True})
 
     # now run calculation
     #run_with_cache(builder)
@@ -106,5 +203,11 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
     assert n['angle_a_to_x_axis'] == 0.0
     assert n['angle_c_to_z_axis'] == 0.0
 
-    assert n['cf_coefficients_spin_up'] == {}
-    assert n['cf_coefficients_spin_down'] == {}
+    assert sorted(n['cf_coefficients_spin_up'].keys()) == ['2/0', '4/0', '6/-6', '6/0', '6/6']
+    assert sorted(n['cf_coefficients_spin_down'].keys()) == ['2/0', '4/0', '6/-6', '6/0', '6/6']
+
+    keys = sorted(n['cf_coefficients_spin_up'].keys())
+    assert pytest.approx([n['cf_coefficients_spin_up'][key] for key in keys]) \
+         == []
+    assert pytest.approx([n['cf_coefficients_spin_down'][key] for key in keys]) \
+         == []
