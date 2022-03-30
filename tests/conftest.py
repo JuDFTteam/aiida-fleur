@@ -234,6 +234,31 @@ def generate_structure():
 
 
 @pytest.fixture
+def generate_smco5_structure():
+    """Return a `StructureData` representing SmCo5"""
+
+    def _generate_structure():
+        """Return a `StructureData` representing SmCo5"""
+        from aiida.orm import StructureData
+        import numpy as np
+
+        a = 4.9679
+        c = 3.9629
+        cell = np.array([[a, 0.0, 0.0], [a * np.cos(2 * np.pi / 3), a * np.sin(2 * np.pi / 3), 0.0], [0.0, 0.0, c]])
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
+        structure.append_atom(position=cell @ np.array([1 / 3, 2 / 3, 0.0]), symbols='Co', name='Co')
+        structure.append_atom(position=cell @ np.array([2 / 3, 1 / 3, 0.0]), symbols='Co', name='Co')
+        structure.append_atom(position=cell @ np.array([0.5, 0.5, 0.0]), symbols='Co', name='Co')
+        structure.append_atom(position=cell @ np.array([0.5, 0.0, 0.5]), symbols='Co', name='Co')
+        structure.append_atom(position=cell @ np.array([0.0, 0.5, 0.5]), symbols='Co', name='Co')
+
+        return structure
+
+    return _generate_structure
+
+
+@pytest.fixture
 def generate_retrieved_data():
     """
     Generate orm.FolderData for retrieved output
