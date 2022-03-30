@@ -209,6 +209,10 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
 
     keys = sorted(n['cf_coefficients_spin_up'].keys())
     assert pytest.approx([n['cf_coefficients_spin_up'][key] for key in keys]) \
-         == []
+         == [-1326.3111439024, 29.816507610986, 80.111746599164, 3.1490421501724, 80.111746599164]
     assert pytest.approx([n['cf_coefficients_spin_down'][key] for key in keys]) \
-         == []
+         == [-1237.5714206598,
+             20.016912116816,
+             75.244818163538,
+             2.6312426823951,
+             75.244818163538]
