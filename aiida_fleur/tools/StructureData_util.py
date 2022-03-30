@@ -23,7 +23,7 @@ from pymatgen.core.surface import SlabGenerator
 import numpy as np
 
 from aiida.plugins import DataFactory
-from aiida.orm import load_node
+from aiida.orm import load_node, Bool
 from aiida.orm.nodes.data.structure import Site, Kind
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -1796,6 +1796,109 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
     return Dict(dict=bond_data)
 
 
+@cf
+def replace_element(inp_structure, replace_dict, replace_all=None):
+    """
+    Replaces the given element with the element_replacement, but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    Keeps the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: Dict with new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+
+    Example usage:
+        This example replaces all Neodymium atoms with Yttrium
+        replace_element(structure,Dict(dict={'Nd':'Y'}),replace_all=Bool(True))
+    """
+
+    return replace_elementf(inp_structure, replace_dict, replace_all)
+
+
+def replace_elementf(inp_structure, replace_dict, replace_all):
+    """
+    Replaces the site according to replace_dict (symbols), but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    DOES NOT keep the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: New StructureData node or list of new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+    """
+
+    if replace_all is None:
+        replace_all = Bool(True)
+
+    # test if structure:
+    structure = is_structure(inp_structure)
+    if not structure:
+        # TODO: log something
+        return None
+
+    StructureData = DataFactory('structure')
+
+    replace_dict = replace_dict.get_dict()
+
+    new_structures = {}
+
+    ase_struc = structure.get_ase()
+    if replace_all:
+        for replace_symbol, new_symbol in replace_dict.items():
+            ase_struc.symbols[ase_struc.symbols == replace_symbol] = new_symbol
+        new_structures['replaced_all'] = StructureData(ase=ase_struc)
+    else:
+        for replace_symbol, new_symbol in replace_dict.items():
+            for index, symbol in enumerate(ase_struc.symbols):
+                if symbol == replace_symbol:
+                    struc = ase_struc.copy()
+                    struc.symbols[index] = new_symbol
+                    label = f'replaced_{replace_symbol}_{new_symbol}_site_{index}'
+                    new_structures[label] = StructureData(ase=struc)
+
+    for name, structure in new_structures.items():
+        structure.label = name
+        structure.description = f"Structure with {'all' if 'all' in name else ''} {replace_symbol} atoms replaced with {new_symbol}"
+
+    return new_structures
+
+
+def mark_atoms(structure, condition, kind_id='99999'):
+    '''
+    Marks atom where sites fullfill the given condition with a given id
+    The resulting kind name for these atoms is element-kind_id
+
+    condition is a callable taking the site and kind as arguments
+    '''
+    from aiida.orm import StructureData
+
+    new_structure = StructureData(cell=structure.cell)
+    new_structure.pbc = structure.pbc
+
+    for site in structure.sites:
+        kind = structure.get_kind(site.kind_name)
+        element = kind.symbols[0]
+        if condition(site, kind):
+            new_structure.append_atom(position=site.position, symbols=element, name=f'{element}-{kind_id}')
+        else:
+            if site.kind_name not in {kind.name for kind in new_structure.kinds}:
+                new_structure.append_kind(kind)
+            new_structure.append_site(site)
+
+    return new_structure
+
+
 def simplify_kind_name(kind_name):
     '''
     Simplifies the kind name string. Example: "W-1" -> "W", "Iron (Fe)" -> "Fe"
@@ -2108,6 +2211,34 @@ def define_AFM_structures(structure,
                                           name=atom[1] + addition)
 
     return rebuilt_structure, substrate
+
+
+def get_atomtype_site_symmetry(struc):
+    """
+    Get the local site symmetry symbols for each atomtype
+
+    Uses pymatgen SpaceGroupAnalyzer
+
+    :param struc: StructureData to analyse
+
+    :returns: list of the site symmetry symbols for each atomtype
+              (In the order they appear in the StructureData)
+    """
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    from more_itertools import unique_everseen
+
+    pym_struc = struc.get_pymatgen()
+
+    symmetry_analyzer = SpacegroupAnalyzer(pym_struc)
+    sym_data = symmetry_analyzer.get_symmetry_dataset()
+
+    site_symmetries = sym_data['site_symmetry_symbols']
+    equivalent_atoms = sym_data['equivalent_atoms']
+
+    #Get the representative atom for each atomtype
+    representative_atoms = unique_everseen(equivalent_atoms)
+
+    return [site_symmetries[repr_atom] for repr_atom in representative_atoms]
 
 
 '''

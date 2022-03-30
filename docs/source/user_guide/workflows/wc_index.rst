@@ -135,3 +135,4 @@ And other workflows like the  create_magnetic_wc.
    :maxdepth: 2
 
    ./create_magnetic_wc
+   ./cfcoeff_wc

@@ -164,7 +164,10 @@ def classify_node(node):
     """
 
     #Define any additional node hat should be passed to the plotting function
-    ADDITIONAL_OUTPUTS = {'FleurBandDosWorkChain': ('last_calc_retrieved',)}
+    ADDITIONAL_OUTPUTS = {
+        'FleurBandDosWorkChain': ('last_calc_retrieved',),
+        'FleurCFCoeffWorkChain': ('output_cfcoeff_wc_charge_densities', 'output_cfcoeff_wc_potentials')
+    }
 
     if isinstance(node, (int, str)):
         node = load_node(node)
@@ -547,6 +550,51 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_lab
     return p1
 
 
+def plot_fleur_cfcoeff_wc(param_node,
+                          cdn_node,
+                          pot_node,
+                          mode='calculation',
+                          labels=None,
+                          save=False,
+                          show=True,
+                          backend='matplotlib',
+                          **kwargs):
+    """
+    Plot the CFCoeff workchain. Either plot the used potentials/charge densities or the angular dependence
+    of the resulting potential
+    """
+    from masci_tools.tools.cf_calculation import plot_crystal_field_calculation, plot_crystal_field_potential
+    from aiida_fleur.workflows.cfcoeff import reconstruct_cfcalculation, reconstruct_cfcoeffcients
+
+    if isinstance(param_node, list):
+        if len(param_node) > 2:
+            return  # TODO
+        else:
+            param_node = param_node[0]
+            cdn_node = cdn_node[0]
+            pot_node = pot_node[0]
+
+    output_d = param_node.get_dict()
+
+    if mode not in ('calculation', 'potential'):
+        raise ValueError(f'Invalid mode for plotting: {mode}')
+
+    if backend != 'matplotlib':
+        raise ValueError('Changing backend not yet implemented for CFCoeffWorkChain')
+
+    plot_res = []
+    if mode == 'potential':
+        for atom_type in output_d['cf_coefficients_atomtypes']:
+            coefficients = reconstruct_cfcoeffcients(output_d, atom_type)
+            plot_res.append(plot_crystal_field_potential(coefficients, save=save, show=show, **kwargs))
+    else:
+        for atom_type in output_d['cf_coefficients_atomtypes']:
+            cfcalc = reconstruct_cfcalculation(cdn_node, pot_node, atom_type)
+            plot_res.append(plot_crystal_field_calculation(cfcalc, save=save, show=show, **kwargs))
+
+    return plot_res
+
+
 FUNCTIONS_DICT = {
     'fleur_scf_wc': plot_fleur_scf_wc,  #support of < 1.0 release
     'fleur_eos_wc': plot_fleur_eos_wc,  #support of < 1.0 release
@@ -556,6 +604,7 @@ FUNCTIONS_DICT = {
     'fleur_band_wc': plot_fleur_band_wc,
     'FleurBandWorkChain': plot_fleur_band_wc,
     'FleurBandDosWorkChain': plot_fleur_banddos_wc,
+    'FleurCFCoeffWorkChain': plot_fleur_cfcoeff_wc,
     #'fleur_corehole_wc' : plot_fleur_corehole_wc,  #support of < 1.5 release
     #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc,  #support of < 1.5 release
     #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,
