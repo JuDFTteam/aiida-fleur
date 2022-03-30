@@ -1113,6 +1113,7 @@ def get_para_from_group(element, group):
 
     report = []
 
+    group_name = None
     try:
         group_pk = int(group)
     except ValueError:
