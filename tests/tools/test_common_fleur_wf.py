@@ -203,13 +203,14 @@ def test_test_and_get_codenode_inpgen(fixture_code):
     assert isinstance(test_and_get_codenode(code, expected), Code)
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, nonexpected)
-    assert str(msg.value) == ('Given Code node is not of expected code type.\n'
+    assert str(msg.value) == ('Expected Code of type fleur.fleur. Got: fleur.inpgen\n'
                               'Valid labels for a fleur.fleur executable are:\n'
                               '* fleur_test@localhost-test')
 
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, not_existing)
-    assert str(msg.value) == ('Code not valid, and no valid codes for fleur.not_existing.\n'
+    assert str(msg.value) == ('Expected Code of type fleur.not_existing. Got: fleur.inpgen\n'
+                              'No valid labels for a fleur.not_existing executable are available\n'
                               'Configure at least one first using\n'
                               '    verdi code setup')
 

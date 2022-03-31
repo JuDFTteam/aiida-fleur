@@ -183,14 +183,15 @@ def test_and_get_codenode(codenode, expected_code_type):
         valid_code_labels = [f'{c.label}@{c.computer.label}' for c in qb.all(flat=True)]
 
         if valid_code_labels:
-            message += f'Valid labels for a {expected_code_type} executable are: \n'
+            message += f'Valid labels for a {expected_code_type} executable are:\n'
             message += '\n'.join(f'* {l}' for l in valid_code_labels)
         else:
             message += f'No valid labels for a {expected_code_type} executable are available\n' \
                         'Configure at least one first using\n' \
                         '    verdi code setup'
-
         raise ValueError(message)
+
+    return codenode
 
 
 def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
