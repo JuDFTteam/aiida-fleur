@@ -169,44 +169,30 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
       calling sys.exit(1)
     :return: a Code object
     """
-    import sys
-    from aiida.common.exceptions import NotExistent
-    from aiida.orm import Code
+    from aiida.orm.querybuilder import QueryBuilder
+    from aiida.orm import Code, load_code
 
-    try:
-        if codenode is None or not isinstance(codenode, Code):
-            raise ValueError
-        code = codenode
-        if code.get_input_plugin_name() != expected_code_type:
-            raise ValueError
-    except ValueError as exc:
-        from aiida.orm.querybuilder import QueryBuilder
+    if not isinstance(codenode, Code):
+        codenode = load_code(codenode)
+
+    plugin_name = codenode.get_input_plugin_name()
+    if plugin_name != expected_code_type:
+        message = f'Expected Code of type {expected_code_type}. Got: {plugin_name}\n'
+
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = [f'{c.label}@{c.computer.label}' for [c] in qb.all()]
+        valid_code_labels = [f'{c.label}@{c.computer.label}' for c in qb.all(flat=True)]
 
         if valid_code_labels:
-            msg = ('Given Code node is not of expected code type.\n'
-                   'Valid labels for a {} executable are:\n'.format(expected_code_type))
-            msg += '\n'.join(f'* {l}' for l in valid_code_labels)
-
-            if use_exceptions:
-                raise ValueError(msg) from exc
-            else:
-                print(msg)  # , file=sys.stderr)
-                sys.exit(1)
+            message += f'Valid labels for a {expected_code_type} executable are: \n'
+            message += '\n'.join(f'* {l}' for l in valid_code_labels)
         else:
-            msg = ('Code not valid, and no valid codes for {}.\n'
-                   'Configure at least one first using\n'
-                   '    verdi code setup'.format(expected_code_type))
-            if use_exceptions:
-                raise ValueError(msg) from exc
-            else:
-                print(msg)  # , file=sys.stderr)
-                sys.exit(1)
+            message += f'No valid labels for a {expected_code_type} executable are available\n' \
+                        'Configure at least one first using\n' \
+                        '    verdi code setup'
 
-    return code
+        raise ValueError(message)
 
 
 def get_kpoints_mesh_from_kdensity(structure, kpoint_density):

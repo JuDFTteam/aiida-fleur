@@ -377,7 +377,7 @@ class FleurOrbControlWorkChain(WorkChain):
         inputs = self.inputs
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
                 self.report(error)
@@ -385,7 +385,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
                 error = 'The code you provided for INPGEN does not use the plugin fleur.inpgen'
                 self.report(error)
