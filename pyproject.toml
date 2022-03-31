@@ -67,7 +67,6 @@ disable = [
     "protected-access",
     "unexpected-keyword-arg",
     "missing-module-docstring",
-    "consider-using-with",
 ]
 
 [tool.pytest.ini_options]

@@ -23,8 +23,6 @@ create_group
 # TODO import, export of descriptions, and labels...?
 import json
 
-from six.moves import input as input_six
-
 from aiida.orm import load_node
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.orm import Group, Node
