@@ -750,13 +750,14 @@ class FleurScfWorkChain(WorkChain):
            self.ctx.last_hubbard1_elem_distance >= self.ctx.wf_dict['hubbard1_elem_converged']:
             ldahia_notconverged = True
 
+        ignore_convergence_criteria = ldau_notconverged or ldahia_notconverged
         if mode == 'density':
             if self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
-                if not ldau_notconverged or not ldahia_notconverged:
+                if not ignore_convergence_criteria:
                     return False
         elif mode in ('energy', 'spex'):
             if self.ctx.wf_dict['energy_converged'] >= self.ctx.energydiff:
-                if not ldau_notconverged or not ldahia_notconverged:
+                if not ignore_convergence_criteria:
                     return False
         elif mode == 'force':
             if self.ctx.last_charge_density is None:
@@ -765,7 +766,7 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    if not ldau_notconverged or not ldahia_notconverged:
+                    if not ignore_convergence_criteria:
                         return False
 
             elif self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
@@ -774,7 +775,7 @@ class FleurScfWorkChain(WorkChain):
                 except NotExistent:
                     pass
                 else:
-                    if not ldau_notconverged or not ldahia_notconverged:
+                    if not ignore_convergence_criteria:
                         return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
