@@ -210,7 +210,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             error = 'ERROR: Missing input. Provide one of the scf or orbcontrol inputs.'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'scf' in inputs and 'orbcontrol' in inputs:
+
+        if 'scf' in inputs and 'orbcontrol' in inputs:
             error = 'ERROR: Invalid Input. Provide only one of the scf or orbcontrol inputs.'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
@@ -221,11 +222,11 @@ class FleurCFCoeffWorkChain(WorkChain):
             error = f'ERROR: Invalid Input. Element not a valid element: {element}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-        else:
-            if atomic_numbers[element] < 57 and atomic_numbers[element] > 70:
-                error = 'ERROR: Invalid Input. CF coefficient workflow only implemented for 4f rare-earths'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+        if atomic_numbers[element] < 57 and atomic_numbers[element] > 70:
+            error = 'ERROR: Invalid Input. CF coefficient workflow only implemented for 4f rare-earths'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
     def run_scfcalculations(self):
 

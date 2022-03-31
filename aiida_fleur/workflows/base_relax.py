@@ -347,7 +347,8 @@ def find_inputs_relax(remote_node):
         if 'calc_parameters' in scf_wc_node.inputs:
             return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen, scf_wc_node.inputs.calc_parameters
         return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen
-    elif 'fleurinp' in scf_wc_node.inputs:
+
+    if 'fleurinp' in scf_wc_node.inputs:
         return scf_wc_node.inputs.fleurinp
 
     raise ValueError('Did not find original inputs for Relax WC')

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+setup: usage: pip install -e .[graphs]
+"""
 from setuptools import setup, find_packages
 import json
 

@@ -605,8 +605,7 @@ class FleurinpModifier(FleurXMLModifier):
         except etree.DocumentInvalid as exc:
             if not develop_version:
                 raise
-            else:
-                new_fleurinp.logger.warning(f'Ignoring validation errors for modifications of develop version: \n{exc}')
+            new_fleurinp.logger.warning(f'Ignoring validation errors for modifications of develop version: \n{exc}')
 
         return xmltree
 

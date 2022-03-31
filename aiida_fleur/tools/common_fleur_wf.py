@@ -156,7 +156,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     return inputs
 
 
-def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
+def test_and_get_codenode(codenode, expected_code_type):
     """
     Pass a code node and an expected code (plugin) type. Check that the
     code exists, is unique, and return the Code object.
@@ -165,8 +165,6 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     :param expected_code_type: a string with the plugin that is expected to
       be loaded. In case no plugins exist with the given name, show all existing
       plugins of that type
-    :param use_exceptions: if True, raise a ValueError exception instead of
-      calling sys.exit(1)
     :return: a Code object
     """
     from aiida.orm.querybuilder import QueryBuilder
@@ -546,7 +544,8 @@ def optimize_calc_options(nodes,
                    ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2], nodes,
                              best_suggestion[0], kpts))
         raise ValueError(message)
-    elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
+
+    if best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
             message = f'WARNING: Changed the number of nodes from {nodes} to {best_suggestion[0]}'
         else:
@@ -569,13 +568,11 @@ def find_last_submitted_calcjob(restart_wc):
     """
     from aiida.common.exceptions import NotExistent
     from aiida.orm import CalcJobNode
-    links = restart_wc.get_outgoing().all()
-    calls = [x for x in links if isinstance(x.node, CalcJobNode)]
+    calls = restart_wc.get_outgoing(node_class=CalcJobNode).all()
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
-    else:
-        raise NotExistent
+    raise NotExistent
 
 
 def find_last_submitted_workchain(restart_wc):
@@ -585,13 +582,11 @@ def find_last_submitted_workchain(restart_wc):
     """
     from aiida.common.exceptions import NotExistent
     from aiida.orm import WorkChainNode
-    links = restart_wc.get_outgoing().all()
-    calls = [x for x in links if isinstance(x.node, WorkChainNode)]
+    calls = restart_wc.get_outgoing(node_class=WorkChainNode).all()
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
-    else:
-        raise NotExistent
+    raise NotExistent
 
 
 def find_nested_process(wc_node, p_class):

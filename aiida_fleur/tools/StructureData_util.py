@@ -46,8 +46,7 @@ def is_structure(structure):
         structure = load_node(structure)
         if isinstance(structure, StructureData):
             return structure
-        else:
-            return None
+        return None
     except NotExistent:
         return None
 
@@ -1905,8 +1904,7 @@ def simplify_kind_name(kind_name):
     '''
     if '(' in kind_name:
         return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
-    else:
-        return kind_name.split('-')[0]
+    return kind_name.split('-')[0]
 
 
 def define_AFM_structures(structure,

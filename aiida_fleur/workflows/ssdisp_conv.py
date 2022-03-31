@@ -230,7 +230,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         if not self.ctx.energydict:
             return self.exit_codes.ERROR_ALL_QVECTORS_FAILED
-        elif failed_labels:
+        if failed_labels:
             return self.exit_codes.ERROR_SOME_QVECTORS_FAILED
 
     def control_end_wc(self, errormsg):

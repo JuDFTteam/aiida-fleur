@@ -389,8 +389,7 @@ class FleurinpData(Data):
 
         if return_included_tags:
             return xmltree, schema_dict, included_tags
-        else:
-            return xmltree, schema_dict
+        return xmltree, schema_dict
 
     def _include_files(self, xmltree):
         """

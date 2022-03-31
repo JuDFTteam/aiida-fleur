@@ -246,36 +246,36 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         Probably works for JURECA only, has to be tested for other systems.
         """
 
-        if self.ctx.can_be_optimised:
-            self.ctx.restart_calc = None
-            self.ctx.is_finished = False
-            self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
-                        ' amount of computational nodes and smaller MPI/OMP ratio')
-
-            # increase number of nodes
-            propose_nodes = self.ctx.num_machines * 2
-            if propose_nodes > self.ctx.max_queue_nodes:
-                propose_nodes = self.ctx.max_queue_nodes
-            self.ctx.num_machines = propose_nodes
-
-            self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
-            self.check_kpts()
-
-            if 'settings' not in self.ctx.inputs:
-                self.ctx.inputs.settings = {}
-            else:
-                self.ctx.inputs.settings = self.ctx.inputs.settings.get_dict()
-            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
-            if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
-                self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
-            return ProcessHandlerReport(True)
-        else:
+        if not self.ctx.can_be_optimised:
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
             self.report('I am not allowed to optimize your settings. Consider providing at least'
                         'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ProcessHandlerReport(True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)
+
+        self.ctx.restart_calc = None
+        self.ctx.is_finished = False
+        self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
+                    ' amount of computational nodes and smaller MPI/OMP ratio')
+
+        # increase number of nodes
+        propose_nodes = self.ctx.num_machines * 2
+        if propose_nodes > self.ctx.max_queue_nodes:
+            propose_nodes = self.ctx.max_queue_nodes
+        self.ctx.num_machines = propose_nodes
+
+        self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
+        self.check_kpts()
+
+        if 'settings' not in self.ctx.inputs:
+            self.ctx.inputs.settings = {}
+        else:
+            self.ctx.inputs.settings = self.ctx.inputs.settings.get_dict()
+        self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
+        if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
+            self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
+        return ProcessHandlerReport(True)
 
     @process_handler(priority=47, exit_codes=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
     def _handle_time_limits(self, calculation):

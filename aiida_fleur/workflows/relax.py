@@ -184,8 +184,7 @@ class FleurRelaxWorkChain(WorkChain):
         if relaxtype is None:
             self.ctx.reached_relax = True
             return False
-        else:
-            return True
+        return True
 
     def converge_scf(self):
         """
@@ -310,7 +309,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -345,7 +344,7 @@ class FleurRelaxWorkChain(WorkChain):
             self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
-        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
+        if largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
                 'forcemix'] == 'straight':
             self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True

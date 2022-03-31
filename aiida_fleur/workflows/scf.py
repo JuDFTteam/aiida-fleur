@@ -452,7 +452,8 @@ class FleurScfWorkChain(WorkChain):
         # Has to never crash because corresponding check was done in validate function
         if self.ctx.fleurinp:  # something was already changed
             return
-        elif 'fleurinp' in inputs:
+
+        if 'fleurinp' in inputs:
             fleurin = self.inputs.fleurinp
         elif 'structure' in inputs:
             if not self.ctx['inpgen'].is_finished_ok:
@@ -634,8 +635,8 @@ class FleurScfWorkChain(WorkChain):
             error = f'ERROR: Last Fleur calculation failed with exit status {exit_status}'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
-        else:
-            self.ctx.parse_last = True
+
+        self.ctx.parse_last = True
 
     def get_res(self):
         """
