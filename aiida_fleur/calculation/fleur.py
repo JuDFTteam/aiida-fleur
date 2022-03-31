@@ -198,7 +198,7 @@ class FleurCalculation(CalcJob):
     def define(cls, spec):
         super().define(spec)
 
-        # spec.input('metadata.options.input_filename', valid_type=six.string_types,
+        # spec.input('metadata.options.input_filename', valid_type=str,
         #            default=cls._INPXML_FILE_NAME)
         spec.input('metadata.options.output_filename', valid_type=str, default=cls._OUTXML_FILE_NAME)
         spec.input('metadata.options.use_kpoints', valid_type=bool, default=cls._use_kpoints)
