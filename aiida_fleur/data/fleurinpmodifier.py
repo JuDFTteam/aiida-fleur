@@ -731,7 +731,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
 
         if new_nmmplines is not None:
             n_mmp_path = os.path.join(td, 'n_mmp_mat')
-            with open(n_mmp_path, 'w') as n_mmp_file:
+            with open(n_mmp_path, 'w', encoding='utf-8') as n_mmp_file:
                 n_mmp_file.write('\n'.join(new_nmmplines))
             new_fleurinp.set_file(n_mmp_path, 'n_mmp_mat')
 

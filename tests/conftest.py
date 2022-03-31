@@ -364,7 +364,7 @@ def inpxml_etree():
 
     def _get_etree(path):
         from lxml import etree
-        with open(path) as inpxmlfile:
+        with open(path, encoding='utf-8') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
         return tree
 
@@ -576,7 +576,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath) as jfile:
+        with open(jsonfilepath, encoding='utf-8') as jfile:
             node_dict = json.load(jfile)
 
         return node_dict

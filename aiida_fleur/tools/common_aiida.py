@@ -58,7 +58,7 @@ def export_extras(nodes, filename='node_extras.txt'):
         extras_dict = node.extras
         outdict[uuid] = extras_dict
 
-    with open(filename, 'w') as file:
+    with open(filename, 'w', encoding='utf-8') as file:
         json.dump(outdict, file, sort_keys=True, indent=4, separators=(',', ': '))
 
 
@@ -77,7 +77,7 @@ def import_extras(filename):
     """
 
     all_extras = {}
-    with open(filename) as file1:
+    with open(filename, encoding='utf-8') as file1:
         try:
             all_extras = json.load(file1)
         except json.JSONDecodeError:

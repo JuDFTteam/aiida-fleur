@@ -8,7 +8,7 @@ import json
 if __name__ == '__main__':
     # Provide static information in setup.json
     # such that it can be discovered automatically
-    with open('setup.json') as info:
+    with open('setup.json', encoding='utf-8') as info:
         kwargs = json.load(info)
     setup(
         packages=find_packages(exclude=['tests*']),
@@ -16,6 +16,6 @@ if __name__ == '__main__':
         package_data={
             '': ['*'],
         },
-        long_description=open('README.md').read(),
+        long_description=open('README.md', encoding='utf-8').read(),
         long_description_content_type='text/markdown',
         **kwargs)

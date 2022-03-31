@@ -64,7 +64,6 @@ disable = [
     "no-else-raise", # FIXME ?
     "no-else-return", # FIXME ?
     "inconsistent-return-statements",
-    "unspecified-encoding",
     "protected-access",
     "unexpected-keyword-arg",
     "missing-module-docstring",

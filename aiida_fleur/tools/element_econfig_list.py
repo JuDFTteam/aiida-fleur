@@ -1643,7 +1643,7 @@ import os
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
-with open(EXP_BINDENERGIES_PATH) as fn:
+with open(EXP_BINDENERGIES_PATH, encoding='utf-8') as fn:
     exp_bindingenergies = json.load(fn)
 """
 exp_bindingenergies = {
