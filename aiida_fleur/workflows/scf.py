@@ -30,6 +30,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
@@ -648,13 +649,12 @@ class FleurScfWorkChain(WorkChain):
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
-            fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
-            walltime = last_base_wc.outputs.output_parameters.dict.walltime
 
+            walltime = last_base_wc.outputs.output_parameters['walltime']
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
-                                                      'rb') as outxmlfile:
+
+            with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile:
                 output_dict = outxml_parser(outxmlfile,
                                             minimal_mode=True,
                                             list_return=True,
