@@ -476,7 +476,13 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     raise NotImplementedError
 
 
-def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_labels=None, **kwargs):
+def plot_fleur_orbcontrol_wc(nodes,
+                             labels=None,
+                             save=False,
+                             show=True,
+                             line_labels=None,
+                             backend='matplotlib',
+                             **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
@@ -521,12 +527,10 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_lab
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
 
-    if kwargs.get('backend', 'matplotlib'):
-        if 'plot_label' not in kwargs:
-            kwargs['plot_label'] = ['converged', 'not converged']
+    if backend == 'matplotlib':
+        kwargs.setdefault('plot_label', ['converged', 'not converged'])
     else:
-        if 'legend_label' not in kwargs:
-            kwargs['legend_label'] = ['converged', 'not converged']
+        kwargs.setdefault('legend_label', ['converged', 'not converged'])
 
     kwargs.setdefault('xlabel', 'Configurations')
     kwargs.setdefault('ylabel', r'$E_{rel}$ [eV]')
@@ -541,9 +545,10 @@ def plot_fleur_orbcontrol_wc(nodes, labels=None, save=False, show=True, line_lab
                  color=['darkblue', 'darkred'],
                  save_plots=save,
                  show=show,
+                 backend=backend,
                  **kwargs)
 
-    if line_labels and kwargs.get('backend', 'matplotlib'):
+    if line_labels and backend == 'matplotlib':
         for label, pos in zip(line_labels, [0] + [p + 0.25 for p in lines]):
             p1.annotate(label, xy=(pos, 0.95), xycoords=('data', 'axes fraction'), ha='left', va='center', size=16)
 
