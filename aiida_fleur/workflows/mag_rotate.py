@@ -60,7 +60,7 @@ class FleurMagRotateWorkChain(WorkChain):
 
         inputs = self.inputs
 
-        wf_default = copy.deepcopy(self._default_wf_para)
+        wf_default = copy.deepcopy(self._wf_default)
         if 'wf_parameters' in inputs:
             wf_dict = inputs.wf_parameters.get_dict()
         else:
