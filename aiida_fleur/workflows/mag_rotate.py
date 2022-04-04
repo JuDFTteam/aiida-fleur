@@ -161,7 +161,7 @@ class FleurMagRotateWorkChain(WorkChain):
     def generate_all_configurations(self):
         pass
 
-    def submit_all_calculations(self):
+    def submit_calculations(self):
         pass
 
     def return_results(self):
