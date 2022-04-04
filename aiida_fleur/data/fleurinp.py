@@ -18,7 +18,6 @@ input manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 # TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
-
 import os
 import io
 import re
@@ -26,6 +25,7 @@ import re
 from lxml import etree
 import warnings
 
+from aiida import orm
 from aiida.orm import Data, Node, load_node, CalcJobNode, Bool
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
@@ -655,3 +655,41 @@ class FleurinpData(Data):
         root = xmltree.getroot()
 
         return eval_xpath(root, xpath)
+
+    @cf
+    def convert_inpxml(self, to_version: orm.Str) -> 'FleurinpData':
+        """
+        Convert the fleurinp data node to a different inp.xml version
+        and return a clone of the node
+        """
+        return self.convert_inpxml_ncf(to_version.value)
+
+    def convert_inpxml_ncf(self, to_version: str) -> 'FleurinpData':
+        """
+        Convert the fleurinp data node to a different inp.xml version
+        and return a clone of the node
+        """
+        from masci_tools.tools.fleur_inpxml_converter import convert_inpxml
+        import tempfile
+        clone = self.clone()
+
+        xmltree, schema_dict = clone.load_inpxml(remove_blank_text=True)
+        try:
+            converted_tree = convert_inpxml(xmltree, schema_dict, to_version)
+        except FileNotFoundError as exc:
+            raise ValueError(
+                f"No conversion available from version {schema_dict['inp_version']} to {to_version}\n"
+                'Please create the conversion by running\n'
+                f"     masci-tools generate-conversion {schema_dict['inp_version']}  {to_version}\n") from exc
+
+        clone.del_file('inp.xml')
+        with tempfile.TemporaryDirectory() as td:
+            inpxml_path = os.path.join(td, 'inp.xml')
+            converted_tree.write(inpxml_path, encoding='utf-8', pretty_print=True)
+            clone.set_file(inpxml_path, 'inp.xml')
+
+        # default label and description
+        clone.label = 'fleurinp_converted'
+        clone.description = f"Fleurinpdata converted from version {schema_dict['inp_version']} to {to_version}"
+
+        return clone
