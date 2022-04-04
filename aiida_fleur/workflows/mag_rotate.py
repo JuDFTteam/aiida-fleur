@@ -144,7 +144,7 @@ class FleurMagRotateWorkChain(WorkChain):
                                                                            }
                                                                        }
                                                                    })])
-
+        inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
         inputs_scf.metadata.call_link_label = label
 
