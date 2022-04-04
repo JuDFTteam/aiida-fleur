@@ -33,7 +33,7 @@ class FleurMagRotateWorkChain(WorkChain):
         spec.outline(
             cls.start,
             if_(cls.run_all)(cls.generate_all_configurations, cls.submit_calculations).else_(
-                while_(cls.configurations_left)(cls.generate_next_configuration, cls.submit_next_calculation)),
+                while_(cls.configurations_left)(cls.submit_next_calculation)),
             cls.return_results)
 
         spec.output('output_mag_rotate_wc_para', valid_type=orm.Dict, required=True)
