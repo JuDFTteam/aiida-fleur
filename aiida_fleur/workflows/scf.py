@@ -464,7 +464,7 @@ class FleurScfWorkChain(WorkChain):
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
             fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
-            self.report(f'INFO: generated FleurinpData from files {fleurin}')
+            self.report(f'INFO: generated FleurinpData from files {fleurin.files} from remote folder pk={self.inputs.remote_data.pk}')
 
         wf_dict = self.ctx.wf_dict
         force_dict = wf_dict.get('force_dict')
