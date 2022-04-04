@@ -618,7 +618,8 @@ class FleurOrbControlWorkChain(WorkChain):
                 remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
                 fleurinp = get_fleurinp_from_remote_data(remote_data, store=True)
-                self.report(f'INFO: generated FleurinpData from {fleurinp.files} from remote folder pk={remote_data.pk}')
+                self.report(
+                    f'INFO: generated FleurinpData from {fleurinp.files} from remote folder pk={remote_data.pk}')
             else:
                 fleurinp = self.inputs.fleurinp
 
