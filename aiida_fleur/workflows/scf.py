@@ -201,7 +201,7 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
         self.ctx.default_itmax = self.ctx.wf_dict.get('itmax_per_run', 30)
-        self.ctx.straight_mixing_iters = self.ctx.wf_dict.get('straight_iters')
+        self.ctx.straight_mixing_iters = self.ctx.wf_dict.get('straight_iterations')
         if self.ctx.straight_mixing_iters is None:
             self.ctx.straight_mixing_iters = self.ctx.default_itmax
 
@@ -307,16 +307,16 @@ class FleurScfWorkChain(WorkChain):
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        straight_iters = self.ctx.wf_dict.get('straight_iters')
-        if straight_iters is not None and straight_iters <= 1:
-            error = "ERROR: 'straight_iters' should be atleast 2 if given"
+        straight_iterations = self.ctx.wf_dict.get('straight_iterations')
+        if straight_iterations is not None and straight_iterations <= 1:
+            error = "ERROR: 'straight_iterations' should be atleast 2 if given"
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         self.ctx.run_straight_mixing = self.ctx.wf_dict.get('initial_straight_mixing') or \
                                        self.ctx.wf_dict.get('initial_ldau_straight_mixing')
 
-        if straight_iters is not None:
+        if straight_iterations is not None:
             if not self.ctx.run_straight_mixing:
                 error = "ERROR: 'initial_straight_mixing' or 'initial_ldau_straight_mixing' should be True if 'straight_iterations' is given"
                 self.report(error)
