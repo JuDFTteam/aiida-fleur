@@ -107,7 +107,7 @@ class FleurMagRotateWorkChain(WorkChain):
         if 'wf_parameters' in inputs_scf:
             wf_parameters = inputs_scf.wf_parameters.get_dict()
 
-        theta, phi = self.ctx.wf_dict['angles'][self.ctx.configuration]
+        theta, phi = self.ctx.wf_dict['angles'][self.ctx.current_configuration]
         if self.ctx.wf_dict['noco']:
             wf_parameters.setdefault('inpxml_changes', []).extend([('set_inpchanges', {
                 'changes': {
