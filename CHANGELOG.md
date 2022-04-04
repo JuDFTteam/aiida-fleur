@@ -9,6 +9,7 @@
 - General Improvements of Orbcontrol workchain, allow starting from structure/charge density without SCF workchain
 - Added support for inpgen profiles
 - Refactored BaseFleurWorkChain; switched implementation of BaseRestartWorkChain from aiida-fleur to implementation provided by aiida-core
+- Added support for starting SCF Workchain with first calculation using straight mixing either for the charge density or the DTF+U density matrix
 
 ## v.1.2.1
 ### release compatible with AiiDA-core 1.3.0+
