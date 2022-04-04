@@ -89,6 +89,7 @@ class FleurMagRotateWorkChain(WorkChain):
 
     def generate_next_configuration(self):
 
+        self.report(f'Generating Inputs for configuration {self.ctx.current_configuration}')
         inputs_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
         if self.ctx.wf_dict['reuse_charge_density'] and self.ctx.current_configuration > 0:
