@@ -160,7 +160,7 @@ print('##################### TEST fleur_corehole_wc #####################')
 if submit_wc:
     res = submit(fleur_corehole_wc, **inputs)
     print('##################### Submited fleur_corehole_wc #####################')
-    print(('Runtime info: {}'.format(res)))
+    print(f'Runtime info: {res}')
     print('##################### Finished submiting fleur_corehole_wc #####################')
 else:
     print('##################### Running fleur_corehole_wc #####################')

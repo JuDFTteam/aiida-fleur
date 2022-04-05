@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -15,7 +14,7 @@ commonly used by the fleur plugin and workflows
 """
 
 import typing as typ
-import collections
+from collections.abc import Mapping
 
 
 def extract_elementpara(parameter_dict, element):
@@ -75,7 +74,7 @@ def dict_merger(dict1, dict2):
         elif isinstance(val, float):
             new_dict[key] = val + dict2.get(key, 0.0)
         else:
-            print(("don't know what to do with element : {}".format(key)))
+            print(f"don't know what to do with element : {key}")
     return new_dict
 
 
@@ -111,7 +110,7 @@ def recursive_merge(left: typ.Dict[str, typ.Any], right: typ.Dict[str, typ.Any])
     """
     for key, value in left.items():
         if key in right:
-            if isinstance(value, collections.Mapping) and isinstance(right[key], collections.Mapping):
+            if isinstance(value, Mapping) and isinstance(right[key], Mapping):
                 right[key] = recursive_merge(value, right[key])
 
     merged = left.copy()

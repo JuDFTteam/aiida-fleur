@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,8 +13,6 @@ This module contains the parser for a inpgen calculation and methods for
 parsing different files produced by inpgen.
 """
 
-from __future__ import absolute_import
-
 from aiida.parsers import Parser
 from aiida.common.exceptions import NotExistent, InputValidationError, ValidationError
 
@@ -23,6 +20,7 @@ from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
 import pprint
+import re
 
 
 class Fleur_inputgenParser(Parser):
@@ -61,50 +59,73 @@ class Fleur_inputgenParser(Parser):
 
         # check what is inside the folder
         list_of_files = output_folder.list_object_names()
-        self.logger.info('file list {}'.format(list_of_files))
+        self.logger.info(f'file list {list_of_files}')
 
         errorfile = FleurinputgenCalculation._ERROR_FILE_NAME
         if errorfile in list_of_files:
             try:
                 with output_folder.open(errorfile, 'r') as error_file:
                     error_file_lines = error_file.read()
-            except IOError:
-                self.logger.error('Failed to open error file: {}.'.format(errorfile))
+            except OSError:
+                self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             # if not empty, has_error equals True, prior fleur 32
             if error_file_lines:
-                if isinstance(error_file_lines, type(b'')):
+                if isinstance(error_file_lines, bytes):
                     error_file_lines = error_file_lines.replace(b'\x00', b' ')
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')
                 if 'Run finished successfully' not in error_file_lines:
-                    self.logger.warning('The following was written into std error and piped to {}'
-                                        ' : \n {}'.format(errorfile, error_file_lines))
-                    self.logger.error('Inpgen calculation did not finish' ' successfully.')
+                    self.logger.warning(
+                        f'The following was written into std error and piped to {errorfile}: \n {error_file_lines}')
+                    self.logger.error('Inpgen calculation did not finish successfully.')
+
+        #Check for a message if the given profile could not be found
+        #This is only in the stdout at the moment
+        shellout_file = FleurinputgenCalculation._SHELLOUT_FILE_NAME
+        if FleurinputgenCalculation._SHELLOUT_FILE_NAME in list_of_files:
+            try:
+                with output_folder.open(shellout_file, 'r') as shellout:
+                    shellout_file_lines = shellout.read()
+            except OSError:
+                self.logger.error(f'Failed to open error file: {shellout_file}.')
+                return self.exit_codes.ERROR_OPENING_OUTPUTS
+            if shellout_file_lines:
+                if isinstance(shellout_file_lines, bytes):
+                    shellout_file_lines = shellout_file_lines.replace(b'\x00', b' ')
+                else:
+                    shellout_file_lines = shellout_file_lines.replace('\x00', ' ')
+                if 'Could not find profile' in shellout_file_lines:
+                    m = re.search(r'Could not find profile ([^\s]+)', shellout_file_lines)
+                    profile_name = 'NOT_FOUND'
+                    if m is not None:
+                        profile_name = m.group(1)[:-1]  #The output contains a dot directly after the name
+                    self.logger.error('Inpgen code does not recognize the given profile %s', profile_name)
+                    return self.exit_codes.ERROR_UNKNOWN_PROFILE.format(profile=profile_name)
 
         inpxml_file = FleurinputgenCalculation._INPXML_FILE_NAME
         if inpxml_file not in list_of_files:
-            self.logger.error("XML inp not found '{}'".format(inpxml_file))
+            self.logger.error(f"XML inp not found '{inpxml_file}'")
             return self.exit_codes.ERROR_NO_INPXML
 
         for file1 in self._default_files:
             if file1 not in list_of_files:
-                self.logger.error("'{}' file not found in retrieved folder, it was probably "
-                                  'not created by inpgen'.format(file1))
+                self.logger.error(f"Expected file '{file1}' not found in retrieved folder, it was probably "
+                                  'not created by inpgen')
                 return self.exit_codes.ERROR_MISSING_RETRIEVED_FILES
 
         try:
             fleurinp = FleurinpData(files=[])
             fleurinp.set_file(inpxml_file, node=output_folder)
         except InputValidationError as ex:
-            self.logger.error('FleurinpData initialization failed: {}'.format(str(ex)))
+            self.logger.error(f'FleurinpData initialization failed: {str(ex)}')
             if fleurinp.parser_info == {}:
                 self.logger.error('Parser output: No Output produced')
             else:
                 self.logger.error(f'Parser output: {pprint.pformat(fleurinp.parser_info)}')
             return self.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID
         except ValidationError as ex:
-            self.logger.error('FleurinpData validation failed: {}'.format(str(ex)))
+            self.logger.error(f'FleurinpData validation failed: {str(ex)}')
             return self.exit_codes.ERROR_FLEURINPDATA_NOT_VALID
 
         self.logger.info('FleurinpData initialized')

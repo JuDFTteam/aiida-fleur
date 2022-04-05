@@ -24,18 +24,18 @@ elif calc.get_state() == calc_states.FAILED:
 elif calc.get_state() != calc_states.FINISHED:
     raise ValueError('The calculation did not complete')
 
-print('Test: {}'.format(calc.label))
-print('Description: {}'.format(calc.description))
-print('Code name in db: {}'.format(calc.get_code()))
-print('Input structure (chemical formula): {}'.format(calc.inp.structure.get_formula()))
+print(f'Test: {calc.label}')
+print(f'Description: {calc.description}')
+print(f'Code name in db: {calc.get_code()}')
+print(f'Input structure (chemical formula): {calc.inp.structure.get_formula()}')
 inp = calc.get_inputs_dict()
 if 'parameters' in inp:
     print('Input parameter dictionary:')
     pprint(calc.inp.parameters.get_dict())
 else:
     print('no parameters were specified for inpgen input')
-print('The following files were retrieved: {}'.format(calc.out.retrieved.get_folder_list()))
-print('Output nodes produced: {}'.format(calc.get_outputs()))
+print(f'The following files were retrieved: {calc.out.retrieved.get_folder_list()}')
+print(f'Output nodes produced: {calc.get_outputs()}')
 #print "Wall time: {} s".format(calc.res.wall_time_seconds)
 
 #if calc.res.warnings:
@@ -43,4 +43,4 @@ print('Output nodes produced: {}'.format(calc.get_outputs()))
 #    for warning in calc.res.warnings:
 #        print "- {}".format(warning)
 #if 'res
-print('Log messages: {}'.format(get_log_messages(calc)))
+print(f'Log messages: {get_log_messages(calc)}')

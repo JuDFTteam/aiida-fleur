@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,17 +13,16 @@
     spin spiral dispersion using scalar-relatevistic Hamiltonian.
 """
 
-from __future__ import absolute_import
 import copy
 
-import six
 #from six.moves import map
 from lxml import etree
+from ase.dft.kpoints import monkhorst_pack
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import Code, load_node
-from aiida.orm import RemoteData, Dict
+from aiida.orm import RemoteData, Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
@@ -42,7 +40,7 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _default_options = {
         'resources': {
@@ -64,11 +62,11 @@ class FleurSSDispWorkChain(WorkChain):
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
         },
+        'kmesh_force_theorem': None,
         'inpxml_changes': []
     }
 
@@ -115,7 +113,7 @@ class FleurSSDispWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started Spin Stiffness calculation workflow version {}\n' ''.format(self._workflowversion))
+        self.report(f'INFO: started Spin Stiffness calculation workflow version {self._workflowversion}\n')
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
@@ -133,12 +131,12 @@ class FleurSSDispWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SSDisp contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for SSDisp contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -156,7 +154,7 @@ class FleurSSDispWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -229,8 +227,8 @@ class FleurSSDispWorkChain(WorkChain):
         scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+        for key, val in self.ctx.wf_dict.get('beta').items():
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
@@ -278,76 +276,68 @@ class FleurSSDispWorkChain(WorkChain):
         # copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
         # create forceTheorem tags
-        fchanges.extend([('create_tag', {
-            'xpath': '/fleurInput',
-            'newelement': 'forceTheorem'
-        }), ('create_tag', {
-            'xpath': '/fleurInput/forceTheorem',
-            'newelement': 'spinSpiralDispersion'
-        })])
-
-        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-
-            fchanges.append(('create_tag', {
-                'xpath': '/fleurInput/forceTheorem/spinSpiralDispersion',
-                'newelement': 'q'
-            }))
-            fchanges.append(('xml_set_text_occ', {
-                'xpathn': '/fleurInput/forceTheorem/spinSpiralDispersion/q',
-                'text': ' '.join(six.moves.map(str, vectors)),
-                'create': False,
-                'occ': i
-            }))
+        fchanges.append(('set_complex_tag', {
+            'tag_name': 'spinSpiralDispersion',
+            'create': True,
+            'changes': {
+                'q': self.ctx.wf_dict['q_vectors']
+            }
+        }))
 
         changes_dict = {'itmax': 1, 'l_noco': True, 'ctail': False, 'l_ss': True}
         fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
 
+        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+            kmesh = KpointsData()
+            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+            kmesh.store()
+            fchanges.append(('set_kpointsdata', {
+                'kpointsdata_uuid': kmesh.uuid,
+                'switch': True,
+                'kpoint_type': 'mesh'
+            }))
+
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            fchanges.append(('set_atomgr_att_label', {
+        for label, beta in self.ctx.wf_dict['beta'].items():
+            fchanges.append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
-                        'beta': val
+                        'beta': beta
                     }
                 },
-                'atom_label': key
+                'atom_label': label
             }))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
-            avail_ac_dict = fleurmode.get_avail_actions()
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-            # apply further user dependend changes
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    method(**para)
-
-            # validate
+            # validate?
             try:
                 fleurmode.show(display=False, validate=True)
             except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            except ValueError as exc:
+                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                         f'The following error was raised {exc}')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # apply
             out = fleurmode.freeze()
             self.ctx.fleurinp = out
-            return
         else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
-            return
+
+        return
 
     def force_after_scf(self):
         '''
@@ -463,8 +453,7 @@ class FleurSSDispWorkChain(WorkChain):
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
-                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                           'exit status {}'.format(calculation.exit_status))
+                message = f'ERROR: Force theorem Fleur calculation failed somehow it has exit status {calculation.exit_status}'
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:

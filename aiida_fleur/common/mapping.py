@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 '''
 This module collects helper methods which are commonly used for dictionaries.
 '''
-from __future__ import absolute_import
 from collections.abc import Mapping
-import six
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm.nodes.data.dict import Dict
@@ -30,7 +27,7 @@ def update_mapping(original, source):
     if isinstance(source, Dict):
         source = source.get_dict()
 
-    for key, value in six.iteritems(source):
+    for key, value in source.items():
         if key in original and isinstance(value, (Dict, Mapping)) and isinstance(original[key], (Dict, Mapping)):
             original[key] = update_mapping(original[key], value)
         else:
@@ -60,7 +57,7 @@ def prepare_process_inputs(process, inputs):
     except AttributeError as exc:
         raise ValueError('Process {} does not have a spec') from exc
 
-    for key, value in six.iteritems(inputs):
+    for key, value in inputs.items():
 
         if key not in process_spec.inputs:
             continue

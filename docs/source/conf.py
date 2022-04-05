@@ -39,7 +39,8 @@ needs_sphinx = '1.5'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = ['myst_parser',
+              'sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.doctest',
               'sphinx.ext.todo',
@@ -52,10 +53,13 @@ extensions = ['sphinx.ext.autodoc',
 todo_include_todos = True
 
 intersphinx_mapping = {
-    #    'python': ('https://docs.python.org/2.7', None),
     'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
     'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
-    'ase': ('https://wiki.fysik.dtu.dk/ase/', None)
+    'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'python': ('https://docs.python.org/3', None),
+    'lxml': ('https://lxml.de/apidoc/',None),
+    'h5py': ('https://docs.h5py.org/en/latest/', None)
 }
 
 nitpick_ignore = [('py:obj', 'module')]
@@ -64,8 +68,7 @@ nitpick_ignore = [('py:obj', 'module')]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-# The suffix of source filenames.
-source_suffix = '.rst'
+myst_enable_extensions = []
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -74,15 +77,15 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'AiiDA-FLEUR'
+project = 'AiiDA-FLEUR'
 #copyright = u'2016-2019, Jens Broeder'
 copyright_first_year = 2016
-copyright_owners = u'FZ Jülich GmbH, Germany'
+copyright_owners = 'FZ Jülich GmbH, Germany'
 
 current_year = time.localtime().tm_year
 copyright_year_string = current_year if current_year == copyright_first_year else '{}-{}'.format(
     copyright_first_year, current_year)
-copyright = u'{}, {}. All rights reserved'.format(copyright_year_string, copyright_owners)
+copyright = f'{copyright_year_string}, {copyright_owners}. All rights reserved'
 
 
 # The version info for the project you're documenting, acts as replacement for
@@ -246,7 +249,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'aiida-fleur.tex', u'AiiDa-FLEUR Documentation',
+    ('index', 'aiida-fleur.tex', 'AiiDa-FLEUR Documentation',
      author.replace(',', r'\and'), 'manual'),
 ]
 
@@ -357,7 +360,7 @@ def setup(app):
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'aiida-fleur', u'AiiDA-FLEUR Documentation',
+    ('index', 'aiida-fleur', 'AiiDA-FLEUR Documentation',
      [author], 1)
 ]
 
@@ -371,7 +374,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'aiida-fleur', u'AiiDA-Fleur Documentation',
+    ('index', 'aiida-fleur', 'AiiDA-Fleur Documentation',
      author, 'aiida-fleur', 'One line description of project.',
      'Miscellaneous'),
 ]
@@ -391,7 +394,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'AiiDA-FLEUR'
+epub_title = 'AiiDA-FLEUR'
 epub_author = author
 epub_publisher = author
 epub_copyright = copyright
@@ -435,10 +438,11 @@ with open('nitpick-exceptions', 'r') as handle:
         tuple(line.strip().split(None, 1)) for line in handle.readlines() if line.strip() and not line.startswith('#')
     ]
 
+# These folders are copied to the documentation's HTML output
 html_static_path = ['_static']
 
-html_context = {
-    'css_files': [
-        '_static/theme_overrides.css',  # override wide tables in RTD theme
-    ],
-}
+# These paths are either relative to html_static_path
+# or fully qualified paths (eg. https://...)
+html_css_files = [
+    'theme_overrides.css',
+]

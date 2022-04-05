@@ -1,0 +1,90 @@
+[tool.pylint.basic]
+good-names = [
+    "_",
+    "x",
+    "y",
+    "z",
+    "i",
+    "j",
+    "k",
+]
+no-docstring-rgx = "^_"
+docstring-min-length = 5
+
+[tool.pylint.classes]
+exclude-protected = [
+    "_asdict",
+    "_fields",
+    "_replace",
+    "_source",
+    "_make",
+    "_Element",
+    "_ElementTree",
+    "_pprint_dict",
+    "_pprint_set",
+    "_dispatch"
+    ]
+
+[tool.pylint.design]
+max-locals = 20
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    "too-few-public-methods",
+    "too-many-public-methods",
+    "wrong-import-position",
+    "line-too-long",
+    "locally-disabled",
+    "wildcard-import",
+    "locally-enabled",
+    "too-many-instance-attributes",
+    "fixme",
+    "len-as-condition",
+    "wrong-import-order",
+    "import-outside-toplevel",
+    "duplicate-code",
+    "invalid-name",
+    "unused-variable",
+    "unused-argument",
+    "unused-import",
+    "missing-function-docstring",
+    "too-many-locals",
+    "too-many-branches",
+    "no-self-use",
+    "c-extension-no-member",
+    "too-many-statements",
+    "too-many-nested-blocks",
+    "too-many-lines",
+    "too-many-return-statements",
+    "too-many-arguments",
+    "pointless-string-statement",
+    "no-member",
+    "consider-using-f-string",
+    "no-else-raise", # FIXME ?
+    "no-else-return", # FIXME ?
+    "inconsistent-return-statements",
+    "unspecified-encoding",
+    "protected-access",
+    "unexpected-keyword-arg",
+    "missing-module-docstring",
+    "consider-using-with",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--mpl --cov=aiida_fleur --cov=tests --cov-report xml"
+mpl-results-path = "mpl-results"
+testpaths = [
+    "tests",
+]
+
+[tool.yapf]
+based_on_style = "google"
+column_limit = 120
+coalesce_brackets = true
+align_closing_bracket_with_visual_indent = true
+split_arguments_when_comma_terminated = true
+indent_dictionary_value = false

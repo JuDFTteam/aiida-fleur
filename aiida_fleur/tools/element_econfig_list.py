@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,13 +11,11 @@
 """
 You find the usual binding_energy for all elements in the periodic table.
 """
-from __future__ import absolute_import
-from __future__ import print_function
 from aiida.common.constants import elements as PeriodicTableElements
-import six
+
 import json
 
-atomic_numbers = {data['symbol']: num for num, data in six.iteritems(PeriodicTableElements)}
+atomic_numbers = {data['symbol']: num for num, data in PeriodicTableElements.items()}
 
 # TODO
 # FLEUR econfig=[core states|valence states]
@@ -1363,8 +1360,8 @@ def get_econfig(element, full=False):
             return econ
         else:
             return econ
-    elif isinstance(element, six.string_types):  # str):
-        atomic_names = {data['symbol']: num for num, data in six.iteritems(econfiguration)}
+    elif isinstance(element, str):  # str):
+        atomic_names = {data['symbol']: num for num, data in econfiguration.items()}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
@@ -1394,7 +1391,7 @@ def get_coreconfig(element, full=False):
         else:
             return econ.split('|')[0].rstrip()
     elif isinstance(element, str):
-        atomic_names = {data['symbol']: num for num, data in six.iteritems(econfiguration)}
+        atomic_names = {data['symbol']: num for num, data in econfiguration.items()}
         element_num = atomic_names.get(element, None)
         econ = econfiguration.get(element_num, {}).get('econfig', None)
         if full:
@@ -1446,10 +1443,10 @@ def convert_fleur_config_to_econfig(fleurconf_str, keep_spin=False):
                 spin = state[2:]
                 occ = max_state_occ_spin.get(spin)
                 if base not in econfstring_new:
-                    econfstring_new = '{}{}{} '.format(econfstring_new, base, int(occ))
+                    econfstring_new = f'{econfstring_new}{base}{int(occ)} '
                 else:
                     max_occ = max_state_occ.get(base[1])
-                    econfstring_new = econfstring_new.split(base, maxsplit=1)[0] + '{}{} '.format(base, int(max_occ))
+                    econfstring_new = econfstring_new.split(base, maxsplit=1)[0] + f'{base}{int(max_occ)} '
                     # we assume here that the two states come behind each other, ... rather bad
                     #econfstring_new.replace('{}'.format(base)
             else:
@@ -1517,7 +1514,7 @@ def get_spin_econfig(fulleconfigstr):
         #occ = int(state.split(state_l)[-1])
         spinstates = states_spin.get(state_l, [])
         for spin in spinstates:
-            spin_econfig_string = spin_econfig_string + '{}{} '.format(state[:2], spin)
+            spin_econfig_string = spin_econfig_string + f'{state[:2]}{spin} '
 
     return spin_econfig_string.rstrip()
 
@@ -1646,7 +1643,7 @@ import os
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 EXP_BINDENERGIES_PATH = os.path.join(aiida_path, 'tools/exp_bindingenergies.json')
-with open(EXP_BINDENERGIES_PATH, 'r') as fn:
+with open(EXP_BINDENERGIES_PATH) as fn:
     exp_bindingenergies = json.load(fn)
 """
 exp_bindingenergies = {

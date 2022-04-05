@@ -133,6 +133,12 @@ OrbControl: Self-consistent calculation of groundstate density matrix with LDA+U
 .. automodule:: aiida_fleur.workflows.orbcontrol
    :members:
 
+CFCoeff: Calculation of 4f crystal field coefficients
+------------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.cfcoeff
+   :members:
+
 
 
 Commandline interface (CLI)

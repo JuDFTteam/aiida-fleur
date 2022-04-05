@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -17,6 +16,7 @@ out.xml file of FLEUR.
 # TODO together with xml_util, parser info handling, has to be also a return value of everything
 # or rather throw exception on lowest level and catch at higher levels?
 from lxml import etree  #, objectify
+import warnings
 
 from masci_tools.util.xml.common_functions import eval_xpath, get_xml_attribute
 #convert_to_float
@@ -112,6 +112,10 @@ def extract_corelevels(outxmlfile, options=None):
     #######################################
     ########################
     #XPATHS to maintain
+    warnings.warn(
+        'extract_corelevels is deprecated. You can use the outxml_parser\n'
+        "in masci_tools.io.parsers.fleur instead with outxml_parser(outxmlfile, optional_tasks=('corelevels'))\n"
+        'To get this information', DeprecationWarning)
 
     species_xpath = '/fleurOutput/inputData/atomSpecies'
     iteration_xpath = '/fleurOutput/scfLoop/iteration'
@@ -347,10 +351,10 @@ def convert_to_float(value_string, parser_info=None):
     try:
         value = float(value_string)
     except TypeError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, TypeError'.format(value_string))
+        parser_info['parser_warnings'].append(f'Could not convert: "{value_string}" to float, TypeError')
         return value_string, False
     except ValueError:
-        parser_info['parser_warnings'].append('Could not convert: "{}" to float, ValueError'.format(value_string))
+        parser_info['parser_warnings'].append(f'Could not convert: "{value_string}" to float, ValueError')
         return value_string, False
     return value, True
 
@@ -412,7 +416,7 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
 
         if not ref_el:  # no refernce for that element given
             if warn:
-                print(("WARNING: Reference for element: '{}' not given. " 'I ignore these.'.format(elem)))
+                print(f"WARNING: Reference for element: '{elem}' not given. I ignore these.")
             continue
 
         return_corelevel_dict[elem] = {}
@@ -420,8 +424,8 @@ def clshifts_to_be(coreleveldict, reference_dict, warn=False):
             ref_cl = ref_el.get(corelevel_name, [])
             if not ref_cl:  # no reference corelevel given for that element
                 if warn:
-                    print(("WARNING: Reference corelevel '{}' for element: '{}' "
-                           'not given. I ignore these.'.format(corelevel_name, elem)))
+                    print("WARNING: Reference corelevel '{}' for element: '{}' "
+                          'not given. I ignore these.'.format(corelevel_name, elem))
                 continue
             be_all = []
             nref = len(ref_cl)

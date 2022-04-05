@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Fixtures for the command line interface.
 Most of these fixtures are taken from the aiida-quantum espresso package since they
@@ -22,27 +21,55 @@ def import_with_migrate(temp_dir):
     # This function has some deep aiida imports which might change in the future
     _DEFAULT_IMPORT_KWARGS = {'group': None}
 
-    def _import_with_migrate(filename, tempdir=temp_dir, import_kwargs=None, try_migration=True):
-        from click import echo
+    try:
         from aiida.tools.importexport import import_data
-        from aiida.tools.importexport import EXPORT_VERSION, IncompatibleArchiveVersionError
-        # these are only availbale after aiida >= 1.5.0, maybe rely on verdi import instead
-        from aiida.tools.importexport import detect_archive_type
-        from aiida.tools.importexport.archive.migrators import get_migrator
-        from aiida.tools.importexport.common.config import ExportFileFormat
-        if import_kwargs is None:
-            import_kwargs = _DEFAULT_IMPORT_KWARGS
-        archive_path = filename
 
-        try:
-            import_data(archive_path, **import_kwargs)
-        except IncompatibleArchiveVersionError as exception:
-            #raise ValueError
-            if try_migration:
-                echo(f'incompatible version detected for {archive_path}, trying migration')
-                migrator = get_migrator(detect_archive_type(archive_path))(archive_path)
-                archive_path = migrator.migrate(EXPORT_VERSION, None, out_compression='none', work_dir=tempdir)
+        def _import_with_migrate(filename, tempdir=temp_dir, import_kwargs=None, try_migration=True):
+            from click import echo
+            from aiida.tools.importexport import import_data
+            from aiida.tools.importexport import EXPORT_VERSION, IncompatibleArchiveVersionError
+            # these are only availbale after aiida >= 1.5.0, maybe rely on verdi import instead
+            from aiida.tools.importexport import detect_archive_type
+            from aiida.tools.importexport.archive.migrators import get_migrator
+            from aiida.tools.importexport.common.config import ExportFileFormat
+            if import_kwargs is None:
+                import_kwargs = _DEFAULT_IMPORT_KWARGS
+            archive_path = filename
+
+            try:
                 import_data(archive_path, **import_kwargs)
+            except IncompatibleArchiveVersionError:
+                #raise ValueError
+                if try_migration:
+                    echo(f'incompatible version detected for {archive_path}, trying migration')
+                    migrator = get_migrator(detect_archive_type(archive_path))(archive_path)
+                    archive_path = migrator.migrate(EXPORT_VERSION, None, out_compression='none', work_dir=tempdir)
+                    import_data(archive_path, **import_kwargs)
+                else:
+                    raise
+
+    except ImportError:
+        # This is the case for aiida >= 2.0.0
+        def _import_with_migrate(filename, import_kwargs=None, try_migration=True):
+            from click import echo
+            from aiida.tools.archive import import_archive, get_format
+            from aiida.common.exceptions import IncompatibleStorageSchema
+
+            if import_kwargs is None:
+                import_kwargs = _DEFAULT_IMPORT_KWARGS
+            archive_path = filename
+
+            try:
+                import_archive(archive_path, **import_kwargs)
+            except IncompatibleStorageSchema:
+                if try_migration:
+                    echo(f'incompatible version detected for {archive_path}, trying migration')
+                    archive_format = get_format()
+                    version = archive_format.latest_version
+                    archive_format.migrate(archive_path, archive_path, version, force=True, compression=6)
+                    import_archive(archive_path, **import_kwargs)
+                else:
+                    raise
 
     return _import_with_migrate
 

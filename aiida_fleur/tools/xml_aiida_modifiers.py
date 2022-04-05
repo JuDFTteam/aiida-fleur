@@ -1,22 +1,22 @@
-# -*- coding: utf-8 -*-
 """
 This module defines XML modifying functions, that require an aiida node as input
 """
 
 
-def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=False):
-    """This calc function writes all kpoints from a :class:`~aiida.orm.KpointsData` node
-    in the ``inp.xml`` file as a kpointslist. It replaces kpoints written in the
-    ``inp.xml`` file. Currently it is the users responsibility to provide a full
-    :class:`~aiida.orm.KpointsData` node with weights.
+def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
+    """This function creates a kpoint list in the inp.xml from a :py:class:`~aiida.orm.KpointsData` Node
+    If no weights are given the weight is distibuted equally along the kpoints
 
-    :param fleurinp_tree_copy: fleurinp_tree_copy
+    :param xmltree: an xmltree that represents inp.xml
+    :param schema_dict: InputSchemaDict containing all information about the structure of the input
     :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
-    :return: modified xml tree
+    :param name: str name to give the newly entered kpoint list (only MaX5 or later)
+    :param switch: bool if True the entered kpoint list will be used directly (only Max5 or later)
+    :param kpoint_type: str of the type of kpoint list given (mesh, path, etc.) only Max5 or later
+
+    :return: xmltree with entered kpoint list
     """
     # TODO: check on weights,
-    # also fleur allows for several kpoint sets, lists, paths and meshes,
-    # support this.
     import numpy as np
     from aiida.orm import KpointsData, load_node
     from aiida.common.exceptions import InputValidationError
@@ -42,11 +42,11 @@ def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=
     if labels is not None:
         labels_dict = dict(labels)
 
-    try:
-        KpointsDataNode.get_kpoints_mesh()
-        kpoint_type = 'mesh'
-    except AttributeError:
-        kpoint_type = 'path'
+    # try:
+    #     KpointsDataNode.get_kpoints_mesh()
+    #     kpoint_type = 'mesh'
+    # except AttributeError:
+    #     kpoint_type = 'path'
 
     if schema_dict.inp_version <= (0, 31):
         xmltree = set_kpointlist(xmltree, schema_dict, kpoints, weights)

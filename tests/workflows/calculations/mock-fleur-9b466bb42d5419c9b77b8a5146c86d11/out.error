@@ -1,0 +1,13 @@
+I/O warning : failed to load external entity "relax.xml"
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+STOP OK
+************juDFT-Warning*****************
+Error message: You specified a theta/phi angle for SOC in a Noco-calculation. These angles are used only in non-Noco SOC calculations.
+*****************************************
+
+ *****************************************
+ Run finished successfully
+ Stop message:
+   Forcetheorem DMI
+ *****************************************
+Rank:0 used    0.269   0.148 GB/	  318708 kB

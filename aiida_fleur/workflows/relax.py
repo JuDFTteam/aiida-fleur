@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,11 +11,8 @@
 """
     In this module you find the workflow 'FleurRelaxWorkChain' for geometry optimization.
 """
-from __future__ import absolute_import
-from __future__ import print_function
 import copy
 import numpy as np
-import six
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
@@ -26,11 +22,10 @@ from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
+from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.common.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
-from aiida_fleur.tools.common_fleur_wf import find_nested_process
 
 
 class FleurRelaxWorkChain(WorkChain):
@@ -38,7 +33,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.4.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -80,6 +75,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         spec.output('output_relax_wc_para', valid_type=Dict)
         spec.output('optimized_structure', valid_type=StructureData)
+        spec.expose_outputs(FleurScfWorkChain, namespace='last_scf')
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -99,7 +95,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain, validate inputs
         """
-        self.report('INFO: Started structure relaxation workflow version {}\n'.format(self._workflowversion))
+        self.report(f'INFO: Started structure relaxation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []  # Collects Hints
         self.ctx.warnings = []  # Collects Warnings
@@ -129,12 +125,12 @@ class FleurRelaxWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -232,7 +228,7 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wf_dict['mode'] = 'force'
 
         if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup', {
                 'attributedict': {
                     'force': {
                         'relaxXYZ': 'FFT'
@@ -242,7 +238,7 @@ class FleurRelaxWorkChain(WorkChain):
             }))
 
         for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'force': {
                         'relaxXYZ': 'FFF'
@@ -251,7 +247,7 @@ class FleurRelaxWorkChain(WorkChain):
                 'atom_label': specie_off
             }))
 
-        scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+        scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
             'attributedict': {
                 'force': {
                     'relaxXYZ': 'FFF'
@@ -290,9 +286,7 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-
-        input_scf.remote_data = last_calc.outputs.remote_folder
+        input_scf.remote_data = scf_wc.outputs.last_calc.remote_folder
         if self.ctx.new_fleurinp:
             input_scf.fleurinp = self.ctx.new_fleurinp
 
@@ -312,11 +306,11 @@ class FleurRelaxWorkChain(WorkChain):
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
-                fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
-                if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
+                fleur_calc = scf_wc.outputs.last_calc.remote_folder.creator
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -330,7 +324,7 @@ class FleurRelaxWorkChain(WorkChain):
         scf_wc = self.ctx.scf_res
 
         try:
-            last_calc = load_node(scf_wc.outputs.output_scf_wc_para.dict.last_calc_uuid)
+            relax_data = scf_wc.outputs.last_calc.relax_parameters
         except (NotExistent, AttributeError):
             # TODO: throw exit code
             # message = 'ERROR: Did not manage to read the largest force'
@@ -338,7 +332,7 @@ class FleurRelaxWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            forces_data = last_calc.outputs.relax_parameters.get_dict()['posforces'][-1]
+            forces_data = relax_data.get_dict()['posforces'][-1]
             all_forces = []
             for force in forces_data:
                 all_forces.extend(force[-3:])
@@ -348,13 +342,12 @@ class FleurRelaxWorkChain(WorkChain):
         largest_now = self.ctx.forces[-1]
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
-            self.report('INFO: Structure is converged to the largest force ' '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
         elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
                 'forcemix'] == 'straight':
-            self.report('INFO: Seems it is safe to switch to BFGS. Current largest force: '
-                        '{}'.format(self.ctx.forces[-1]))
+            self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True
             return False
 
@@ -379,9 +372,8 @@ class FleurRelaxWorkChain(WorkChain):
         """
         # TODO do we loose provenance here, which we like to keep?
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
         try:
-            relax_parsed = last_calc.outputs.relax_parameters
+            relax_parsed = scf_wc.outputs.last_calc.relax_parameters
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -441,7 +433,7 @@ class FleurRelaxWorkChain(WorkChain):
         formula = structure.get_formula()
         input_final_scf.structure = structure
         input_final_scf.fleur = input_scf.fleur
-        input_final_scf.metadata.label = 'SCF_final_{}'.format(formula)
+        input_final_scf.metadata.label = f'SCF_final_{formula}'
         input_final_scf.metadata.description = ('Final SCF workchain running on optimized structure {}, '
                                                 'part of relax workchain'.format(formula))
 
@@ -480,8 +472,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         try:
             relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
-            last_fleur = find_nested_process(self.ctx.scf_res, FleurCalc)[-1]
-            retrieved_node = last_fleur.outputs.retrieved
+            retrieved_node = self.ctx.scf_res.outputs.last_calc.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -585,8 +576,11 @@ class FleurRelaxWorkChain(WorkChain):
         else:
             outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
 
+        #Expose the outputs of the last scf calculation
+        self.out_many(self.exposed_outputs(self.ctx.scf_res, FleurScfWorkChain, namespace='last_scf'))
+
         # return output nodes
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
         if self.ctx.switch_bfgs:
@@ -613,7 +607,7 @@ def create_relax_result_node(**kwargs):
     All other inputs will be connected in the DB to these ourput nodes
     """
     outdict = {}
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'output_relax_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'output_relax_wc_para'

@@ -32,7 +32,6 @@ wf_eos = {'points': 15,
 
 wf_eos_scf = {'fleur_runmax': 4,
               'density_converged': 0.0002,
-              'serial': False,
               'itmax_per_run': 50,
               'inpxml_changes': []
               }
@@ -64,7 +63,6 @@ wf_relax = {'film_distance_relaxation': False,
             }
 
 wf_relax_scf = {'fleur_runmax': 5,
-                'serial': False,
                 'use_relax_xml': True,
                 'itmax_per_run': 50,
                 'alpha_mix': 0.015,

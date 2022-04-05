@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,10 +11,8 @@
 """
 This file contains a CalcJob that represents FLEUR calculation.
 """
-from __future__ import absolute_import
 import os
 import io
-import six
 
 from aiida.engine import CalcJob
 from aiida.orm import Dict
@@ -75,6 +72,7 @@ class FleurCalculation(CalcJob):
 
     # special out files
     _DOS_FILE_NAME = 'DOS.*'
+    _DOS_MAX5_FILE_NAME = 'Local.*'
     _DOSINP_FILE_NAME = 'dosinp'
     _BAND_GNU_FILE_NAME = 'band.gnu'
     _BAND_FILE_NAME = 'bands.*'
@@ -202,14 +200,15 @@ class FleurCalculation(CalcJob):
 
         # spec.input('metadata.options.input_filename', valid_type=six.string_types,
         #            default=cls._INPXML_FILE_NAME)
-        spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._OUTXML_FILE_NAME)
-        spec.input('metadata.options.use_kpoints', valid_type=type(True), default=cls._use_kpoints)
+        spec.input('metadata.options.output_filename', valid_type=str, default=cls._OUTXML_FILE_NAME)
+        spec.input('metadata.options.use_kpoints', valid_type=bool, default=cls._use_kpoints)
+        spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # inputs
         spec.input('fleurinpdata',
                    valid_type=FleurinpData,
                    required=False,
-                   help='Use a FleruinpData node that specifies the input parameters'
+                   help='Use a FleurinpData node that specifies the input parameters'
                    'usually copy from the parent calculation, basically makes'
                    'the inp.xml file visible in the db and makes sure it has '
                    'the files needed.')
@@ -227,9 +226,6 @@ class FleurCalculation(CalcJob):
                    'advanced features how the plugin behaves. You can add files'
                    'the retrieve list, or add command line switches, '
                    'for all available features here check the documentation.')
-
-        # parser
-        spec.input('metadata.options.parser_name', valid_type=six.string_types, default='fleur.fleurparser')
 
         # declare outputs of the calculation
         spec.output('output_parameters', valid_type=Dict, required=False)
@@ -257,6 +253,9 @@ class FleurCalculation(CalcJob):
                        'ERROR_INVALID_ELEMENTS_MMPMAT',
                        message='The LDA+U density matrix contains invalid elements.')
         spec.exit_code(316, 'ERROR_TIME_LIMIT', message='Calculation failed due to time limits.')
+        spec.exit_code(318,
+                       'ERROR_MISSING_DEPENDENCY',
+                       message='Calculation failed due to missing dependency ({name}) for given calculation.')
 
     @classproperty
     def _get_output_folder(self):
@@ -332,14 +331,7 @@ class FleurCalculation(CalcJob):
                                            "'fleurcalculation'.")
         else:
             # extract parent calculation
-            parent_calcs = parent_calc_folder.get_incoming(node_class=CalcJob).all()
-            n_parents = len(parent_calcs)
-            if n_parents != 1:
-                raise UniquenessError('Input RemoteData is child of {} '
-                                      'calculation{}, while it should have a single parent'
-                                      ''.format(n_parents, '' if n_parents == 0 else 's'))
-            parent_calc = parent_calcs[0].node
-            parent_calc_class = parent_calc.process_class
+            parent_calc = parent_calc_folder.creator
             has_parent = True
 
             # check that it is a valid parent
@@ -349,33 +341,18 @@ class FleurCalculation(CalcJob):
             # check if folder from db given, or get folder from rep.
             # Parent calc does not has to be on the same computer.
 
-            if parent_calc_class is FleurCalculation:
-                new_comp = self.node.computer
-                old_comp = parent_calc.computer
-                if new_comp.uuid != old_comp.uuid:
-                    # don't copy files, copy files locally
-                    copy_remotely = False
-            elif parent_calc_class is FleurinputgenCalculation:
-                fleurinpgen = True
-                new_comp = self.node.computer
-                old_comp = parent_calc.computer
-                if new_comp.uuid != old_comp.uuid:
-                    # don't copy files, copy files locally
-                    copy_remotely = False
-            else:
+            # don't copy files, copy files locally
+            copy_remotely = self.node.computer == parent_calc.computer
+            if parent_calc.process_class not in (FleurCalculation, FleurinputgenCalculation):
                 raise InputValidationError("parent_calc, must be either an 'inpgen calculation' or"
-                                           " a 'fleur calculation'.")
+                                           f" a 'fleur calculation'. Got {parent_calc.process_class}")
+            fleurinpgen = parent_calc.process_class is FleurinputgenCalculation
 
         # check existence of settings (optional)
         if 'settings' in self.inputs:
-            settings = self.inputs.settings
+            settings_dict = self.inputs.settings.get_dict()
         else:
-            settings = None
-
-        if settings is None:
             settings_dict = {}
-        else:
-            settings_dict = settings.get_dict()
 
         # check for for allowed keys, ignore unknown keys but warn.
         for key in settings_dict.keys():
@@ -392,21 +369,20 @@ class FleurCalculation(CalcJob):
         # file copy stuff TODO check in fleur input
         if has_fleurinp:
             # add files belonging to fleurinp into local_copy_list
-            allfiles = fleurinp.files
-            for file1 in allfiles:
-                local_copy_list.append((fleurinp.uuid, file1, file1))
+            for file in fleurinp.files:
+                local_copy_list.append((fleurinp.uuid, file, file))
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
+            if with_hdf5 and (modes['band'] or modes['dos']):
+                mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
-                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)  #Should this be removed
             if modes['dos']:
                 mode_retrieved_filelist.append(self._DOS_FILE_NAME)
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
+                mode_retrieved_filelist.append(self._DOS_MAX5_FILE_NAME)
             if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
@@ -415,21 +391,16 @@ class FleurCalculation(CalcJob):
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
                     mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
-            if modes['greensf']:
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
+            if with_hdf5 and modes['greensf']:
+                mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['cf_coeff']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
                 else:
-                    self.logger.warning('CF calculation without HDF5 not supported ' 'for automatic file retrieval.')
+                    self.logger.warning('CF calculation without HDF5 not supported for automatic file retrieval.')
             if modes['force_theorem'] or modes['cf_coeff']:
-                if 'remove_from_retrieve_list' not in settings_dict:
-                    settings_dict['remove_from_retrieve_list'] = []
-                if with_hdf5:
-                    settings_dict['remove_from_retrieve_list'].append(self._CDN_LAST_HDF5_FILE_NAME)
-                else:
-                    settings_dict['remove_from_retrieve_list'].append(self._CDN1_FILE_NAME)
+                cdn_file = self._CDN_LAST_HDF5_FILE_NAME if with_hdf5 else self._CDN1_FILE_NAME
+                settings_dict.setdefault('remove_from_retrieve_list', []).append(cdn_file)
 
             # if noco, ldau, gw...
             # TODO: check from where it was copied, and copy files of its parent
@@ -441,20 +412,23 @@ class FleurCalculation(CalcJob):
             outfolder_uuid = parent_calc.outputs.retrieved.uuid
             self.logger.info('out folder path %s', outfolder_uuid)
 
-            outfolder_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
+            outfolder_filenames = parent_calc.outputs.retrieved.list_object_names()
             has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
             if (self._NMMPMAT_FILE_NAME in outfolder_filenames or \
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
-                    if 'n_mmp_mat' in fleurinp.files:
-                        self.logger.warning('Ignoring n_mmp_mat from fleurinp. '
-                                            'There is already an n_mmp_mat file '
-                                            'for the parent calculation')
-                        local_copy_list.remove((fleurinp.uuid, 'n_mmp_mat', 'n_mmp_mat'))
+                    if self._NMMPMAT_FILE_NAME in fleurinp.files:
+                        self.logger.warning('Ignoring {filename} from fleurinp. '
+                                            'There is already an {filename} file '
+                                            'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
+                        local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
-                    local_copy_list.append((outfolder_uuid, os.path.join(file1), os.path.join(file1)))
+                    if file1 not in outfolder_filenames:
+                        raise InputValidationError(
+                            f'File {file1} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file1, file1))
             elif not fleurinpgen and (not has_fleurinp):  # fleurCalc
                 # need to copy inp.xml from the parent calc
                 if with_hdf5:
@@ -463,12 +437,17 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_nohdf
                 else:
                     copylist = self._copy_scf
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
-            elif fleurinpgen and has_fleurinp:
-                # everything is taken care of
-                pass
             elif not fleurinpgen and has_fleurinp:
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:
@@ -477,8 +456,16 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_ldau_noinp_nohdf
                 else:
                     copylist = self._copy_scf_noinp
-                for file1 in copylist:
-                    local_copy_list.append((outfolder_uuid, file1[0], file1[1]))
+                for file_orig, file_dest in copylist:
+                    if file_orig not in outfolder_filenames:
+                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation'
+                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
+                        else:
+                            raise InputValidationError(
+                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                    local_copy_list.append((outfolder_uuid, file_orig, file_dest))
 
             # TODO: not on same computer -> copy needed files from repository
             # if they are not there throw an error
@@ -525,10 +512,9 @@ class FleurCalculation(CalcJob):
         retrieve_list = []
         retrieve_list.append(self._OUTXML_FILE_NAME)
         if has_fleurinp:
-            allfiles = fleurinp.files
-            for file1 in allfiles:
-                if file1.endswith('.xml'):
-                    retrieve_list.append(file1)
+            for file in fleurinp.files:
+                if file.endswith('.xml'):
+                    retrieve_list.append(file)
         else:
             retrieve_list.append(self._INPXML_FILE_NAME)
         retrieve_list.append(self._SHELLOUTPUT_FILE_NAME)
@@ -575,7 +561,7 @@ class FleurCalculation(CalcJob):
         if walltime_sec:
             walltime_min = int(max(1, walltime_sec / 60))
             cmdline_params.append('-wtime')
-            cmdline_params.append('{}'.format(int(walltime_min)))
+            cmdline_params.append(f'{int(walltime_min)}')
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):

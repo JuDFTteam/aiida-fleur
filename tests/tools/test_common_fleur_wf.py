@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,7 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for workfunction helpers in common_fleur_wf.py'''
-from __future__ import absolute_import
 import pytest
 import os
 
@@ -54,7 +52,6 @@ def test_get_inputs_fleur():
             'test': 1
         },
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -74,6 +71,7 @@ def test_get_inputs_fleur():
     assert results['add_comp_para']['only_even_MPI'] is False
     assert results['add_comp_para']['max_queue_nodes'] == 20
     assert results['add_comp_para']['max_queue_wallclock_sec'] == 86400
+    assert not results['clean_workdir']
     assert out_options == {'custom_scheduler_commands': 'test_command', 'withmpi': True}
     assert out_settings == {'test': 1}
 
@@ -82,10 +80,10 @@ def test_get_inputs_fleur():
         'remote': 'remote',
         'fleurinp': 'fleurinp',
         'options': {
+            'withmpi': False,
             'custom_scheduler_commands': 'test_command'
         },
         'add_comp_para': {
-            'serial': True,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400

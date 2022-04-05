@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -15,9 +14,6 @@ This might also be of interest for other all-electron codes
 """
 # Shall we allow for a python dictionary also instead of forcing paramteraData?
 # but then we can not keep the provenace...
-
-from __future__ import absolute_import
-from __future__ import print_function
 
 from aiida.plugins import DataFactory
 from aiida.orm import Bool, Dict
@@ -59,9 +55,9 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     atoms_dict = {}
     atomlist = []
     if not isinstance(Dict1, Dict):
-        raise InputValidationError('Dict1, must be of ' 'type Dict')
+        raise InputValidationError('Dict1, must be of type Dict')
     if not isinstance(Dict2, Dict):
-        raise InputValidationError('Dict2, must be of ' 'type Dict')
+        raise InputValidationError('Dict2, must be of type Dict')
     dict1 = Dict1.get_dict()
     dict2 = Dict2.get_dict()
 
@@ -83,7 +79,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
 
     for i, atom in enumerate(atomlist):
         # TODO check for duplicates? what about
-        key = 'atom{}'.format(i)
+        key = f'atom{i}'
         atoms_dict[key] = atom
 
     # merge all namelists except atoms
@@ -118,7 +114,7 @@ def merge_parameters(DictList, overwrite=True):
             # merge
             paremeter_data_new = merge_parameter(paremeter_data_new, parameter, overwrite=overwrite)
         else:
-            print(('WARNING: Entry : {} {} is not of type Dict, I skip it.'.format(i, parameter)))
+            print(f'WARNING: Entry : {i} {parameter} is not of type Dict, I skip it.')
 
     return paremeter_data_new
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,8 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for the FleurCoreholeWorkChain'''
-from __future__ import absolute_import
-from __future__ import print_function
 
 import pytest
 import aiida_fleur
@@ -35,7 +32,7 @@ class Test_FleurCoreholeWorkChain():
             self,  #run_with_cache,
             inpgen_local_code,
             fleur_local_code,
-            generate_structure_W):  #, clear_spec):
+            generate_structure_W):
         """
         full example using FleurCoreholeWorkChain on W.
         Several fleur runs needed, calculation of all only certain coreholes

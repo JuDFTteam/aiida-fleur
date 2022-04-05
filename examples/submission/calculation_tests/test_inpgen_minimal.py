@@ -3,7 +3,9 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, ' 'IAS-1/PGI-1, Germany. All rights reserved.')
+
+__copyright__ = (u'Copyright (c), 2016, Forschungszentrum Jülich GmbH, '
+                 'IAS-1/PGI-1, Germany. All rights reserved.')
 __license__ = 'MIT license, see LICENSE.txt file'
 __version__ = '0.27'
 __contributors__ = 'Jens Broeder'
@@ -31,7 +33,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
+    print(('The first parameter can only be either '
+           '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -83,10 +86,10 @@ if settings is not None:
 
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print("Test_submit for calculation (uuid='{}')".format(calc.uuid))
-    print('Submit file in {}'.format(os.path.join(os.path.relpath(subfolder.abspath), script_filename)))
+    print(f"Test_submit for calculation (uuid='{calc.uuid}')")
+    print(f'Submit file in {os.path.join(os.path.relpath(subfolder.abspath), script_filename)}')
 else:
     calc.store_all()
-    print("created calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))
+    print(f"created calculation; calc=Calculation(uuid='{calc.uuid}') # ID={calc.dbnode.pk}")
     calc.submit()
-    print("submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk))
+    print(f"submitted calculation; calc=Calculation(uuid='{calc.uuid}') # ID={calc.dbnode.pk}")

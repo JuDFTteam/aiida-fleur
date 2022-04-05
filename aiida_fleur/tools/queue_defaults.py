@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -18,8 +17,6 @@ You can modify, adjust this file to your needs
 
 # TODO: move computers dict somewhere else?
 # TODO find AiiDA solution for this
-
-from __future__ import print_function
 
 
 def queue_defaults(queue_name, computer=None):

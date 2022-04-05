@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aiida import load_profile
+
 load_profile()
 
 import sys
@@ -28,7 +29,8 @@ try:
     else:
         raise IndexError
 except IndexError:
-    print(('The first parameter can only be either ' '--send or --dont-send'), file=sys.stderr)
+    print(('The first parameter can only be either '
+           '--send or --dont-send'), file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -50,7 +52,7 @@ try:
     if code.get_input_plugin_name() != expected_code_type:
         raise ValueError
 except (NotExistent, ValueError):
-    print('codename {} does not exist or is not of the expected type : {}'.format(codename, expected_code_type))
+    print(f'codename {codename} does not exist or is not of the expected type : {expected_code_type}')
 
 # W bcc structure
 bohr_a_0 = 0.52917721092  # A

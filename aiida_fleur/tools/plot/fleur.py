@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -33,7 +32,7 @@ __all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults',
            'reset_defaults')
 
 
-def plot_fleur(*args, save=False, show_dict=True, show=True, backend=None, **kwargs):
+def plot_fleur(*args, save=False, show_dict=False, show=True, backend=None, **kwargs):
     """
     Plot single or multiple Fleur WorkChainNodes. Can be started from the Workchain or output parameters (Dict) node.
     The following WorkChains are supported:
@@ -116,14 +115,15 @@ def plot_fleur_mn(nodelist, **kwargs):
     ###
 
     if not isinstance(nodelist, list):
-        raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list. ')
+        raise ValueError(f'The nodelist provided: {nodelist}, type {type(nodelist)} is not a list.')
 
     for node in nodelist:
 
         try:
             plot_nodes, workflow_name, label = classify_node(node)
         except ValueError as exc:
-            warnings.warn(f'Failed to classify node {node}: {exc}' 'Skipping this one')
+            warnings.warn(f'Failed to classify node {node}: {exc}\n'
+                          'Skipping this one')
             continue
 
         all_nodes[workflow_name].append(plot_nodes)
@@ -164,7 +164,10 @@ def classify_node(node):
     """
 
     #Define any additional node hat should be passed to the plotting function
-    ADDITIONAL_OUTPUTS = {'FleurBandDosWorkChain': ('last_calc_retrieved',)}
+    ADDITIONAL_OUTPUTS = {
+        'FleurBandDosWorkChain': ('last_calc_retrieved',),
+        'FleurCFCoeffWorkChain': ('output_cfcoeff_wc_charge_densities', 'output_cfcoeff_wc_potentials')
+    }
 
     if isinstance(node, (int, str)):
         node = load_node(node)
@@ -241,16 +244,16 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         output_d = node.get_dict()
         total_energy = output_d.get('total_energy_all')
         if not total_energy:
-            warnings.warn('No total energy data found, skip this node: {}'.format(node))
+            warnings.warn(f'No total energy data found, skip this node: {node}')
             continue
 
         distance = output_d.get('distance_charge_all')
         num_iterations = output_d.get('iterations_total')
         if not distance:
-            warnings.warn('No distance_charge_all data found, skip this node: {}'.format(node))
+            warnings.warn(f'No distance_charge_all data found, skip this node: {node}')
             continue
         if not num_iterations:
-            warnings.warn('No iteration_total data found, skip this node: {}'.format(node))
+            warnings.warn(f'No iteration_total data found, skip this node: {node}')
             continue
 
         mode = output_d.get('conv_mode')
@@ -341,7 +344,7 @@ def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
         else:
             energy.append(total_e)
         scaling.append(outpara.get('scaling'))
-        default_labels.append((r'gs_vol: {:.3} A^3, gs_scale {:.3}, data {}' ''.format(volume_gs, scale_gs, i)))
+        default_labels.append(f'gs_vol: {volume_gs:.3} A^3, gs_scale {scale_gs:.3}, data {i}')
 
     labels = default_labels
 
@@ -431,9 +434,9 @@ def plot_fleur_banddos_wc(param_node,
             data, attributes = h5reader.read(recipe=hdf_recipe)
 
     if mode == 'dos':
-        plot_res = plot_fleur_dos(data, attributes, backend=backend, save=save, show=show, **kwargs)
+        plot_res = plot_fleur_dos(data, attributes, backend=backend, save_plots=save, show=show, **kwargs)
     else:
-        plot_res = plot_fleur_bands(data, attributes, backend=backend, save=save, show=show, **kwargs)
+        plot_res = plot_fleur_bands(data, attributes, backend=backend, save_plots=save, show=show, **kwargs)
 
     return plot_res
 
@@ -473,60 +476,128 @@ def plot_fleur_initial_cls_wc(nodes, labels=None, save=False, show=True, **kwarg
     raise NotImplementedError
 
 
-def plot_fleur_orbcontrol_wc(node, labels=None, save=False, show=True, **kwargs):
+def plot_fleur_orbcontrol_wc(nodes,
+                             labels=None,
+                             save=False,
+                             show=True,
+                             line_labels=None,
+                             backend='matplotlib',
+                             **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
     """
     from masci_tools.vis.common import scatter
+    from itertools import chain
 
     if labels is None:
         labels = []
 
-    if isinstance(node, list):
-        if len(node) >= 2:
-            return  # TODO
-        else:
-            node = node[0]
+    if not isinstance(nodes, list):
+        nodes = [nodes]
 
-    output_d = node.get_dict()
+    offset = 0
+    lines = []
+    converged_configs = []
+    converged_energy = []
+    non_converged_configs = []
+    non_converged_energy = []
+    for node in nodes:
+        outputs = node.get_dict()
 
-    total_energy = output_d['total_energy']
+        total_energy = outputs['total_energy']
 
-    #Divide into converged and non converged
-    converged_energy = np.array(
-        [total_energy[i] for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']])
-    converged_configs = [i for i in output_d['successful_configs'] if i not in output_d['non_converged_configs']]
-    non_converged_energy = np.array([total_energy[i] for i in output_d['non_converged_configs']])
+        non_converged = outputs['non_converged_configs']
+        converged = [i for i in outputs['successful_configs'] if i not in non_converged]
+
+        converged_configs.extend(i + offset for i in converged)
+        converged_energy.extend(total_energy[i] for i in converged)
+
+        non_converged_configs.extend(i + offset for i in non_converged)
+        non_converged_energy.extend(total_energy[i] for i in non_converged)
+
+        offset += max(chain(converged, non_converged, outputs['failed_configs'])) + 1
+        lines.append(offset - 0.5)
 
     #Convert to relative eV
     refE = min(converged_energy)
-    converged_energy -= refE
-    non_converged_energy -= refE
+    converged_energy = np.array(converged_energy) - refE
+    non_converged_energy = np.array(non_converged_energy) - refE
 
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
 
-    if kwargs.get('backend', 'matplotlib'):
-        if 'plot_label' not in kwargs:
-            kwargs['plot_label'] = ['converged', 'not converged']
+    if backend == 'matplotlib':
+        kwargs.setdefault('plot_label', ['converged', 'not converged'])
     else:
-        if 'legend_label' not in kwargs:
-            kwargs['legend_label'] = ['converged', 'not converged']
+        kwargs.setdefault('legend_label', ['converged', 'not converged'])
 
-    p1 = scatter([converged_configs, output_d['non_converged_configs']], [converged_energy, non_converged_energy],
-                 xlabel='Configurations',
-                 ylabel=r'$E_{rel}$ [eV]',
-                 title='Results for orbcontrol node',
-                 linestyle='',
-                 colors=['darkblue', 'darkred'],
-                 markersize=10.0,
-                 legend=True,
-                 legend_option={'loc': 'upper right'},
-                 save=save,
+    kwargs.setdefault('xlabel', 'Configurations')
+    kwargs.setdefault('ylabel', r'$E_{rel}$ [eV]')
+    kwargs.setdefault('title', 'Results for orbcontrol node')
+    kwargs.setdefault('legend_option', {'loc': 'upper right'})
+    kwargs.setdefault('markersize', 10.0)
+    kwargs.setdefault('legend', True)
+    if len(lines) > 1:
+        kwargs.setdefault('lines', {'vertical': lines[:-1]})
+
+    p1 = scatter([converged_configs, non_converged_configs], [converged_energy, non_converged_energy],
+                 color=['darkblue', 'darkred'],
+                 save_plots=save,
                  show=show,
+                 backend=backend,
                  **kwargs)
+
+    if line_labels and backend == 'matplotlib':
+        for label, pos in zip(line_labels, [0] + [p + 0.25 for p in lines]):
+            p1.annotate(label, xy=(pos, 0.95), xycoords=('data', 'axes fraction'), ha='left', va='center', size=16)
+
     return p1
+
+
+def plot_fleur_cfcoeff_wc(param_node,
+                          cdn_node,
+                          pot_node,
+                          mode='calculation',
+                          labels=None,
+                          save=False,
+                          show=True,
+                          backend='matplotlib',
+                          **kwargs):
+    """
+    Plot the CFCoeff workchain. Either plot the used potentials/charge densities or the angular dependence
+    of the resulting potential
+    """
+    from masci_tools.tools.cf_calculation import plot_crystal_field_calculation, plot_crystal_field_potential
+    from aiida_fleur.workflows.cfcoeff import reconstruct_cfcalculation, reconstruct_cfcoeffcients
+
+    if isinstance(param_node, list):
+        if len(param_node) > 2:
+            return  # TODO
+        else:
+            param_node = param_node[0]
+            cdn_node = cdn_node[0]
+            pot_node = pot_node[0]
+
+    output_d = param_node.get_dict()
+
+    if mode not in ('calculation', 'potential'):
+        raise ValueError(f'Invalid mode for plotting: {mode}')
+
+    if backend != 'matplotlib':
+        raise ValueError('Changing backend not yet implemented for CFCoeffWorkChain')
+
+    plot_res = []
+    if mode == 'potential':
+        for atom_type in output_d['cf_coefficients_atomtypes']:
+            coefficients = reconstruct_cfcoeffcients(output_d, atom_type)
+            plot_res.append(plot_crystal_field_potential(coefficients, save=save, show=show, **kwargs))
+    else:
+        for atom_type in output_d['cf_coefficients_atomtypes']:
+            cfcalc = reconstruct_cfcalculation(cdn_node, pot_node, atom_type)
+            plot_res.append(plot_crystal_field_calculation(cfcalc, save=save, show=show, **kwargs))
+
+    return plot_res
 
 
 FUNCTIONS_DICT = {
@@ -538,6 +609,7 @@ FUNCTIONS_DICT = {
     'fleur_band_wc': plot_fleur_band_wc,
     'FleurBandWorkChain': plot_fleur_band_wc,
     'FleurBandDosWorkChain': plot_fleur_banddos_wc,
+    'FleurCFCoeffWorkChain': plot_fleur_cfcoeff_wc,
     #'fleur_corehole_wc' : plot_fleur_corehole_wc,  #support of < 1.5 release
     #'fleur_initial_cls_wc' : plot_fleur_initial_cls_wc,  #support of < 1.5 release
     #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,

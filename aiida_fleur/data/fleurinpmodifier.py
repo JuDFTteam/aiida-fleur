@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=inconsistent-return-statements,protected-access,missing-docstring
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
@@ -97,12 +96,15 @@ class FleurinpModifier(FleurXMLModifier):
 
         return {**outside_actions_fleurxml, **outside_actions_fleurinp}
 
-    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False):
+    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
 
-        :param kpointsdata_uuid: an :class:`aiida.orm.KpointsData` or node uuid, since the node is self cannot be be serialized in tasks.
+        :param kpointsdata_uuid: node identifier or :class:`~aiida.orm.KpointsData` node to be written into ``inp.xml``
+        :param name: str name to give the newly entered kpoint list (only MaX5 or later)
+        :param switch: bool if True the entered kpoint list will be used directly (only Max5 or later)
+        :param kpoint_type: str of the type of kpoint list given (mesh, path, etc.) only Max5 or later
         """
         from aiida.orm import KpointsData, load_node
 
@@ -115,10 +117,13 @@ class FleurinpModifier(FleurXMLModifier):
 
         self._other_nodes[node_label] = load_node(kpointsdata_uuid)
         self._tasks.append(
-            ModifierTask('set_kpointsdata', args=(kpointsdata_uuid,), kwargs={
-                'name': name,
-                'switch': switch
-            }))
+            ModifierTask('set_kpointsdata',
+                         args=(kpointsdata_uuid,),
+                         kwargs={
+                             'name': name,
+                             'switch': switch,
+                             'kpoint_type': kpoint_type
+                         }))
 
     #Modification functions that were renamed in masci-tools
 
@@ -138,15 +143,15 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'label' in kwargs:
-            warnings.warn('The argument label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            warnings.warn("The argument label is deprecated. Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('label')
 
         if 'att_name' in kwargs:
-            warnings.warn('The argument att_name is deprecated.' "Use 'attributename' instead", DeprecationWarning)
+            warnings.warn("The argument att_name is deprecated. Use 'attributename' instead", DeprecationWarning)
             kwargs['attributename'] = kwargs.pop('att_name')
 
         if 'value' in kwargs:
-            warnings.warn('The argument value is deprecated.' "Use 'value_given' instead", DeprecationWarning)
+            warnings.warn("The argument value is deprecated. Use 'value_given' instead", DeprecationWarning)
             kwargs['value_given'] = kwargs.pop('value')
 
         super().shift_value_species_label(*args, **kwargs)
@@ -161,7 +166,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         """
         if 'at_label' in kwargs:
-            warnings.warn('The argument at_label is deprecated.' "Use 'atom_label' instead", DeprecationWarning)
+            warnings.warn("The argument at_label is deprecated. Use 'atom_label' instead", DeprecationWarning)
             kwargs['atom_label'] = kwargs.pop('at_label')
 
         super().set_species_label(*args, **kwargs)
@@ -549,7 +554,7 @@ class FleurinpModifier(FleurXMLModifier):
         """
 
         if 'occStates' in kwargs:
-            warnings.warn('The argument occStates is deprecated.' "Use 'state_occupations' instead", DeprecationWarning)
+            warnings.warn("The argument occStates is deprecated. Use 'state_occupations' instead", DeprecationWarning)
             kwargs['state_occupations'] = kwargs.pop('occStates')
 
         super().set_nmmpmat(*args, **kwargs)
@@ -564,13 +569,12 @@ class FleurinpModifier(FleurXMLModifier):
                              to store it
         :param node: a :class:`~aiida.orm.FolderData` node containing the file
         """
-        from aiida.orm import FolderData, load_node
+        from aiida.orm import load_node, Data
 
         node_uuid = None
         if node is not None:
-            if isinstance(node, FolderData):
+            if isinstance(node, Data):
                 node_uuid = node.uuid
-
             num_nodes = sum('folder' in label for label in self._other_nodes) + 1
             node_label = f'folder_{num_nodes}'
             # Be more careful? Needs to be stored, otherwise we cannot load it
@@ -700,7 +704,7 @@ def modify_fleurinpdata(original, modifications, **kwargs):
     # save inp.xml
     # store new fleurinp (copy)
     import tempfile
-    from masci_tools.util.xml.common_functions import reverse_xinclude
+    from masci_tools.util.schema_dict_util import reverse_xinclude
 
     new_fleurinp = original.clone()
 

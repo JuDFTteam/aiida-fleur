@@ -1,21 +1,16 @@
-# -*- coding: utf-8 -*-
 """Tests for the `FleurinputgenCalculation` class."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-import os
 import pytest
 from aiida import orm
 from aiida.common import datastructures
 from aiida.cmdline.utils.common import get_calcjob_report
 from aiida.engine import run_get_node
-from aiida.plugins import CalculationFactory, DataFactory
-from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida.plugins import CalculationFactory
 
-from ..conftest import run_regression_tests
+import logging
 
 
-def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_default_calcinfo(fixture_sandbox, generate_calc_job, fixture_code,
                                       generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
     entry_point_name = 'fleur.inpgen'
@@ -70,7 +65,7 @@ def test_fleurinpgen_default_calcinfo(aiida_profile, fixture_sandbox, generate_c
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_calc_job, fixture_code,
+def test_fleurinpgen_with_parameters(fixture_sandbox, generate_calc_job, fixture_code,
                                      generate_structure):  # file_regression
     """Test a default `FleurinputgenCalculation`."""
 
@@ -140,8 +135,121 @@ def test_fleurinpgen_with_parameters(aiida_profile, fixture_sandbox, generate_ca
     # file_regression.check(input_written, encoding='utf-8', extension='.in')
 
 
-@pytest.mark.skipif(not run_regression_tests, reason='Aiida-testing not their or not wanted.')
-def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate_structure_W):  # pylint: disable=redefined-outer-name
+def test_fleurinpgen_with_profile_and_parameters(fixture_sandbox, generate_calc_job, fixture_code, generate_structure,
+                                                 aiida_caplog):  # file_regression
+    """Test a default `FleurinputgenCalculation`."""
+
+    # Todo add (more) tests with full parameter possibilities, i.e econfig, los, ....
+
+    entry_point_name = 'fleur.inpgen'
+
+    parameters = {
+        'atom': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },  #'econfig': '[He] 2s2 2p6 | 3s2 3p2', 'lo': ''},
+        'comp': {
+            'kmax': 5.0,
+            'gmaxxc': 12.5,
+            'gmax': 15.0
+        },
+        'kpt': {
+            'div1': 17,
+            'div2': 17,
+            'div3': 17,
+            'tkb': 0.0005
+        }
+    }
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': generate_structure(),
+        'parameters': orm.Dict(dict=parameters),
+        'settings': orm.Dict(dict={'profile': 'default'}),
+        'metadata': {
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
+        }
+    }
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+
+    logs = orm.Log.objects.get_logs_for(orm.load_node(calc_info.uuid))
+
+    assert len(logs) == 1
+    assert 'Inpgen profile specified but atom/LAPW basis specific parameters are provided' in logs[0].message
+
+
+def test_fleurinpgen_profile(fixture_sandbox, generate_calc_job, fixture_code, generate_structure):  # file_regression
+    """Test a default `FleurinputgenCalculation` with a profile setting."""
+    entry_point_name = 'fleur.inpgen'
+
+    #Should not raise a warning for conflicting with the profile
+    parameters = {'soc': {'theta': 0.0, 'phi': 0.0}}
+
+    inputs = {
+        'code': fixture_code(entry_point_name),
+        'structure': generate_structure(),
+        'parameters': orm.Dict(dict=parameters),
+        'settings': orm.Dict(dict={'profile': 'precise'}),
+        'metadata': {
+            'options': {
+                'resources': {
+                    'num_machines': 1
+                },
+                'max_wallclock_seconds': int(100),
+                'withmpi': False
+            }
+        }
+    }
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+    codes_info = calc_info.codes_info
+    cmdline_params = ['-explicit']  # for inpgen2 ['+all', '-explicit', 'aiida.in']
+    local_copy_list = []
+    retrieve_list = ['inp.xml', 'out', 'shell.out', 'out.error', 'struct.xsf', 'aiida.in']
+    retrieve_temporary_list = []
+
+    # Check the attributes of the returned `CalcInfo`
+    assert isinstance(calc_info, datastructures.CalcInfo)
+    #assert sorted(codes_info[0].cmdline_params) == sorted(cmdline_params)
+    assert sorted(calc_info.local_copy_list) == sorted(local_copy_list)
+    assert sorted(calc_info.retrieve_list) == sorted(retrieve_list)
+    # assert sorted(calc_info.retrieve_temporary_list) == sorted(retrieve_temporary_list)
+    assert sorted(calc_info.remote_symlink_list) == sorted([])
+
+    with fixture_sandbox.open('aiida.in') as handle:
+        input_written = handle.read()
+
+    aiida_in_text = """A Fleur input generator calculation with aiida\n&input  cartesian=F /
+       0.000000000        5.130606429        5.130606429
+       5.130606429        0.000000000        5.130606429
+       5.130606429        5.130606429        0.000000000
+      1.0000000000
+       1.000000000        1.000000000        1.000000000
+
+      2\n         14       0.0000000000       0.0000000000       0.0000000000
+         14       0.2500000000       0.2500000000       0.2500000000\n&soc\n 0.0  0.0 /\n"""
+    # Checks on the files written to the sandbox folder as raw input
+    assert sorted(fixture_sandbox.get_content_list()) == sorted(['JUDFT_WARN_ONLY', 'aiida.in'])
+    assert input_written == aiida_in_text
+
+    assert calc_info.codes_info[0].cmdline_params[-2:] == ['-profile', 'precise']
+
+    logs = orm.Log.objects.get_logs_for(orm.load_node(calc_info.uuid))
+    assert len(logs) == 0
+
+
+@pytest.mark.regression_test
+def test_FleurinpgenJobCalc_full_mock(inpgen_local_code, generate_structure_W):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified
@@ -172,12 +280,6 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
         }
     }
 
-    mock_code = mock_code_factory(label='inpgen',
-                                  data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                'data_dir/'),
-                                  entry_point=CALC_ENTRY_POINT,
-                                  ignore_files=['_aiidasubmit.sh'])
-    print(mock_code)
     inputs = {
         'structure': generate_structure_W(),
         'parameters': orm.Dict(dict=parameters),
@@ -194,16 +296,15 @@ def test_FleurinpgenJobCalc_full_mock(aiida_profile, mock_code_factory, generate
     }
     calc = CalculationFactory(CALC_ENTRY_POINT)  # (code=mock_code, **inputs)
     print(calc)
-    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=mock_code, **inputs)
+    res, node = run_get_node(CalculationFactory(CALC_ENTRY_POINT), code=inpgen_local_code, **inputs)
     print(node)
     print(get_calcjob_report(node))
-    print((res['remote_folder'].list_object_names()))
-    print((res['retrieved'].list_object_names()))
-    assert bool(node.is_finished_ok)
+    print(res['remote_folder'].list_object_names())
+    print(res['retrieved'].list_object_names())
+    assert node.is_finished_ok
 
 
 def test_x_and_bunchatom_input(
-    aiida_profile,
     fixture_sandbox,
     generate_calc_job,
     fixture_code,

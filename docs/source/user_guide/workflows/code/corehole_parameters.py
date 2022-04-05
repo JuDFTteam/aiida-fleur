@@ -11,5 +11,4 @@
 'relax_para' : 'default',  # parameter dict for the relaxation
 'scf_para' : 'default',    # wf parameter dict for the scfs
 'same_para' : True,        # enforce the same atom parameter/cutoffs on the corehole calc and ref
-'serial' : True,           # run fleur in serial, or parallel?
 'magnetic' : True          # jspins=2, makes a difference for coreholes

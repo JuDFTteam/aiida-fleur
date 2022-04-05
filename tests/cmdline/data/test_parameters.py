@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,6 +13,7 @@ Module to test all CLI data parameter commands.
 '''
 import os
 from aiida.orm import Dict
+
 file_path1 = '../../files/inpxml/Si/inp.xml'
 
 inpxmlfilefolder = os.path.dirname(os.path.abspath(__file__))

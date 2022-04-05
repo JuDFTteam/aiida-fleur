@@ -19,7 +19,6 @@ wf_para = Dict(
         'ref_qss': [0.0, 0.0, 0.0],
         'inpxml_changes': [],
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -57,7 +56,7 @@ parameters = Dict(
         }
     })
 
-wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.2, 'serial': False, 'mode': 'density'}
+wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.2, 'mode': 'density'}
 
 wf_para_scf = Dict(dict=wf_para_scf)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,4 +11,4 @@
 '''
 AiiDA-FLEUR
 '''
-__version__ = '1.2.1'
+__version__ = '1.3.0'

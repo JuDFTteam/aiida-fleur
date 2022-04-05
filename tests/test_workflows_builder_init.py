@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,7 +12,6 @@
 Contains smoke tests for all workchains of aiida-fleur,
 checks if builderis from aiida-core gets the correct class.
 '''
-from __future__ import absolute_import
 import pytest
 
 
@@ -166,3 +164,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
         builder = FleurOrbControlWorkChain.get_builder()
+
+    def test_fleur_cfcoeff_wc_init(self):
+        """
+        Test the interface of the cfcoeff workchain
+        """
+        from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
+
+        builder = FleurCFCoeffWorkChain.get_builder()

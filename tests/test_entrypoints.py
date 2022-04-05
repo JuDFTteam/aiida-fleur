@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,7 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains smoke tests for all aiida-fleur entry points '''
-from __future__ import absolute_import
 import pytest
 
 
@@ -173,3 +171,10 @@ class TestFleurEntrypoints:
 
         workflow = WorkflowFactory('fleur.orbcontrol')
         assert workflow == FleurOrbControlWorkChain
+
+    def test_fleur_cfcoeff_wc_entry_point(self):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
+
+        workflow = WorkflowFactory('fleur.cfcoeff')
+        assert workflow == FleurCFCoeffWorkChain

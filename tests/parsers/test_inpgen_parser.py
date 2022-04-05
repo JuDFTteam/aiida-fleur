@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ''' Contains tests for the inpgen parser and its routines. '''
 # TODO: implement all
 
@@ -111,6 +110,27 @@ def test_inpgen_parser_nonvalid_inpxml(fixture_localhost, generate_parser, gener
     assert calcfunction.is_finished, calcfunction.exception
     assert calcfunction.is_failed, calcfunction.exit_status
     assert calcfunction.exit_status == node.process_class.exit_codes.ERROR_FLEURINPDATA_INPUT_NOT_VALID.status
+    assert 'fleurinpData' not in results
+
+
+def test_inpgen_parser_unknown_profile(fixture_localhost, generate_parser, generate_calc_job_node, generate_structure):
+    """
+    Default inpgen parser test of a failed inpgen calculation with a unknown profile.
+    """
+
+    name = 'unknown_profile'
+    entry_point_calc_job = 'fleur.inpgen'
+    entry_point_parser = 'fleur.fleurinpgenparser'
+
+    inputs = AttributeDict({'structure': generate_structure(), 'metadata': {}})
+    node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, name, inputs, store=True)
+    parser = generate_parser(entry_point_parser)
+    results, calcfunction = parser.parse_from_node(node, store_provenance=False)
+
+    assert calcfunction.is_finished, calcfunction.exception
+    assert calcfunction.is_failed, calcfunction.exit_status
+    assert calcfunction.exit_status == node.process_class.exit_codes.ERROR_UNKNOWN_PROFILE.status
+    assert 'non_existent' in calcfunction.exit_message
     assert 'fleurinpData' not in results
 
 

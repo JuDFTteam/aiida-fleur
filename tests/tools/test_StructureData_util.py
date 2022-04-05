@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,7 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains tests for StructureData util '''
-from __future__ import absolute_import
 import pytest
 import numpy as np
 
@@ -873,7 +871,7 @@ create_slab_positions = [
     np.array([[0.00000000, 0., 0.00000000], [1.41421356, 2., 1.41421356], [-0.0000000, 0., 2.82842712],
               [1.41421356, 2., 4.24264069], [-0.0000000, 0., 5.65685425]]),
     np.array([[0., 0., 0.], [2., 2., 2.], [0., 0., 4.], [2., 2., 6.], [0., 0., 8.], [2., 2., 10.]]),
-    np.array([[2., 2.82842712, 0], [0., 0., -0.], [2., 0, 2.82842712], [0, 2.82842712, 2.82842712], [-0, 0, 5.65685425],
+    np.array([[0., 0., -0.], [2., 2.82842712, 0], [2., 0, 2.82842712], [0, 2.82842712, 2.82842712], [-0, 0, 5.65685425],
               [2., 2.82842712, 5.65685425], [2., 0, 8.48528137], [-0., 2.82842712, 8.48528137]])
 ]
 
@@ -1061,3 +1059,30 @@ def test_create_all_slabs(generate_structure):
                                         (2, 0, -1), (2, -1, -1)]
     for key, film_struc in film_strucs.items():
         assert isinstance(film_struc, StructureData)
+
+
+def test_replace_element(generate_structure):
+    from aiida_fleur.tools.StructureData_util import replace_element
+    from aiida.orm import Bool, Dict
+
+    structure = generate_structure()
+
+    result = replace_element(structure, Dict(dict={'Si': 'Y'}))
+
+    assert result['replaced_all'].kinds[0].symbols[0] == 'Y'
+
+    result = replace_element(structure, Dict(dict={'Si': 'Y'}), replace_all=Bool(False))
+
+    assert result['replaced_Si_Y_site_0'].kinds[0].symbols[0] == 'Y'
+    assert result['replaced_Si_Y_site_0'].kinds[1].symbols[0] == 'Si'
+    assert result['replaced_Si_Y_site_1'].kinds[0].symbols[0] == 'Si'
+    assert result['replaced_Si_Y_site_1'].kinds[1].symbols[0] == 'Y'
+
+
+def test_get_atomtype_site_symmetry(generate_structure):
+    from aiida_fleur.tools.StructureData_util import get_atomtype_site_symmetry
+
+    structure = generate_structure()
+    result = get_atomtype_site_symmetry(structure)
+
+    assert result == ['-43m']

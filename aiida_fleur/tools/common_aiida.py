@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -22,10 +21,8 @@ create_group
 
 """
 # TODO import, export of descriptions, and labels...?
-from __future__ import absolute_import
-from __future__ import print_function
 import json
-import six
+
 from six.moves import input as input_six
 
 from aiida.orm import load_node
@@ -80,19 +77,19 @@ def import_extras(filename):
     """
 
     all_extras = {}
-    with open(filename, mode='r') as file1:
+    with open(filename) as file1:
         try:
             all_extras = json.load(file1)
         except json.JSONDecodeError:
             print('The file has to be loadable by json. i.e json format (which it is not).')
 
-    for uuid, extras in six.iteritems(all_extras):
+    for uuid, extras in all_extras.items():
 
         try:
             node = load_node(uuid)
         except NotExistent:
             # Does not exists
-            print(('node with uuid {} does not exist in DB'.format(uuid)))
+            print(f'node with uuid {uuid} does not exist in DB')
             node = None
             continue
         if isinstance(node, Node):
@@ -216,14 +213,14 @@ def create_group(name, nodes, description=None, add_if_exist=False):
 
     group, created = Group.objects.get_or_create(label=name)
     if created:
-        print(('Group created with PK={} and name {}'.format(group.pk, group.label)))
+        print(f'Group created with PK={group.pk} and name {group.label}')
     else:
-        print(('Group with name {} and pk {} already exists.' ''.format(group.label, group.pk)))
+        print(f'Group with name {group.label} and pk {group.pk} already exists.')
 
         if add_if_exist:
-            print('Adding nodes to the existing group {}'.format(group.label))
+            print(f'Adding nodes to the existing group {group.label}')
         else:
-            print('Nodes were not added to the existing group {}'.format(group.label))
+            print(f'Nodes were not added to the existing group {group.label}')
             return
 
     nodes2 = []
@@ -232,12 +229,12 @@ def create_group(name, nodes, description=None, add_if_exist=False):
             try:
                 node = load_node(node)
             except NotExistent:
-                print('Skipping {}, it does not exist in the DB'.format(node))
+                print(f'Skipping {node}, it does not exist in the DB')
                 continue
         nodes2.append(node)
 
     group.add_nodes(nodes2)
-    print(('added nodes: {} to group {} {}'.format([x.pk for x in nodes2], group.label, group.pk)))
+    print(f'added nodes: {[x.pk for x in nodes2]} to group {group.label} {group.pk}')
 
     if description:
         group.description = description

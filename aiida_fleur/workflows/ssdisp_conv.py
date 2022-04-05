@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,9 +13,7 @@
     Spin Spiral energy Dispersion converging all the directions.
 """
 
-from __future__ import absolute_import
 import copy
-import six
 
 from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
@@ -31,7 +28,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _default_wf_para = {
         'beta': {
@@ -87,12 +84,12 @@ class FleurSSDispConvWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for SSDisp Conv contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -104,7 +101,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         submit a set of Fleur calculations to converge charge density for all given SQAs.
         """
         inputs = {}
-        for key, q_vector in six.iteritems(self.ctx.wf_dict['q_vectors']):
+        for key, q_vector in self.ctx.wf_dict['q_vectors'].items():
             inputs[key] = self.get_inputs_scf()
             if self.ctx.wf_dict['suppress_symmetries']:
                 inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
@@ -135,8 +132,8 @@ class FleurSSDispConvWorkChain(WorkChain):
             scf_wf_dict['inpxml_changes'] = []
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+        for key, val in self.ctx.wf_dict.get('beta').items():
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
@@ -164,18 +161,18 @@ class FleurSSDispConvWorkChain(WorkChain):
         outnodedict = {}
         htr_to_eV = 27.21138602
 
-        for label in six.iterkeys(self.ctx.wf_dict['q_vectors']):
+        for label in self.ctx.wf_dict['q_vectors'].keys():
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(label))
+                message = f'One SCF workflow was not successful: {label}'
                 self.ctx.warnings.append(message)
                 continue
 
             try:
                 outnodedict[label] = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
+                message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue
 
@@ -183,7 +180,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', 'failed')
             if not isinstance(t_e, float):
-                message = ('Did not manage to extract float total energy from one ' 'SCF workflow: {}'.format(label))
+                message = f'Did not manage to extract float total energy from one SCF workflow: {label}'
                 self.ctx.warnings.append(message)
                 continue
             e_u = outpara.get('total_energy_units', 'Htr')
@@ -195,9 +192,9 @@ class FleurSSDispConvWorkChain(WorkChain):
             # Find a minimal value of Spiral and count it as 0
             minenergy = min(t_energydict.values())
 
-            for key in six.iterkeys(t_energydict):
-                original_t_energydict[key] = t_energydict[key]
-                t_energydict[key] = t_energydict[key] - minenergy
+            for key, energy in t_energydict.items():
+                original_t_energydict[key] = energy
+                t_energydict[key] = energy - minenergy
 
         self.ctx.energydict = t_energydict
         self.ctx.original_energydict = original_t_energydict
@@ -209,8 +206,8 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         failed_labels = []
 
-        for label in six.iterkeys(self.ctx.wf_dict['q_vectors']):
-            if label not in six.iterkeys(self.ctx.energydict):
+        for label in self.ctx.wf_dict['q_vectors'].keys():
+            if label not in self.ctx.energydict.keys():
                 failed_labels.append(label)
 
         out = {

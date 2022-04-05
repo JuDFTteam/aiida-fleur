@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,7 +11,6 @@
 """
 Contains verdi commands for fleurinpdata
 """
-from __future__ import absolute_import
 import click
 from aiida.cmdline.commands.cmd_data.cmd_list import query, list_options
 from aiida.cmdline.params import arguments, options, types
@@ -110,7 +108,7 @@ def list_fleurinp(raw, past_days, groups, all_users, strucinfo, uuid, ctime, ext
         echo.echo(tabulate(fleurinp_list_data, tablefmt='plain'))
     else:
         echo.echo(tabulate(fleurinp_list_data, headers='firstrow'))
-        echo.echo('\nTotal results: {}\n'.format(counter))
+        echo.echo(f'\nTotal results: {counter}\n')
 
 
 @cmd_fleurinp.command('cat')

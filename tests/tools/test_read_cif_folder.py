@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''Contains tests for read and with work cif file routines.'''
 
 import pytest

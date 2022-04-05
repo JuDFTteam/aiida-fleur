@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,6 +13,7 @@ Module to test all CLI data fleurinp commands.
 '''
 import os
 from aiida.orm import Dict
+
 file_path1 = '../../files/inpxml/FePt/inp.xml'
 file_path2 = '../../files/inpxml/Si/inp.xml'
 

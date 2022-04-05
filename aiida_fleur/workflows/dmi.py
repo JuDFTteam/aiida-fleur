@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,20 +12,16 @@
     In this module you find the workflow 'FleurDMIWorkChain' for the calculation of
     DMI energy dispersion.
 """
-
-from __future__ import absolute_import
 import copy
 import numpy as np
 
-import six
-#from six.moves import range
-#from six.moves import map
 from lxml import etree
+from ase.dft.kpoints import monkhorst_pack
 
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.orm import Code, load_node
-from aiida.orm import RemoteData, Dict
+from aiida.orm import RemoteData, Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
@@ -44,7 +39,7 @@ class FleurDMIWorkChain(WorkChain):
     This workflow calculates DMI energy dispersion of a structure.
     """
 
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
 
     _default_options = {
         'resources': {
@@ -60,7 +55,6 @@ class FleurDMIWorkChain(WorkChain):
 
     _default_wf_para = {
         'add_comp_para': {
-            'serial': False,
             'only_even_MPI': False,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
@@ -74,6 +68,7 @@ class FleurDMIWorkChain(WorkChain):
         # 'prop_dir': [1.0, 0.0, 0.0],
         'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
         'ref_qss': [0.0, 0.0, 0.0],
+        'kmesh_force_theorem': None,
         'inpxml_changes': []
     }
 
@@ -120,16 +115,15 @@ class FleurDMIWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain
         """
-        self.report('INFO: started DMI calculation workflow version {}\n' ''.format(self._workflowversion))
+        self.report(f'INFO: started DMI calculation workflow version {self._workflowversion}\n')
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
-        self.ctx.energy_dict = []
         self.ctx.qs = []
         self.ctx.mae_thetas = []
         self.ctx.mae_phis = []
         self.ctx.num_ang = 1
-        self.ctx.t_energydict = []
+        self.ctx.h_so = []
         self.ctx.q_vectors = []
 
         # initialize the dictionary using defaults if no wf paramters are given
@@ -144,12 +138,12 @@ class FleurDMIWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for DMI contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for DMI contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -173,7 +167,7 @@ class FleurDMIWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -237,15 +231,21 @@ class FleurDMIWorkChain(WorkChain):
         # set up q vector for the reference calculation
         list_ref_qss = self.ctx.wf_dict['ref_qss']
         if [x for x in list_ref_qss if x != 0]:
-            changes_dict = {'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True}
+            changes_dict = {
+                'qss': self.ctx.wf_dict['ref_qss'],
+                'l_noco': True,
+                'ctail': False,
+                'l_ss': True,
+                'l_soc': False
+            }
         else:
-            changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False}
+            changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False, 'l_soc': False}
 
         scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
 
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            scf_wf_dict['inpxml_changes'].append(('set_atomgr_att_label', {
+        for key, val in self.ctx.wf_dict.get('beta', {}).items():
+            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
                         'beta': val
@@ -263,6 +263,7 @@ class FleurDMIWorkChain(WorkChain):
                 calc_parameters = {}
             sum_vec = np.array([np.pi / 4.0, np.e / 3.0, np.euler_gamma])
             calc_parameters['qss'] = {'x': sum_vec[0], 'y': sum_vec[1], 'z': sum_vec[2]}
+            calc_parameters['soc'] = {'theta': 0.7, 'phi': 0.7}
             input_scf.calc_parameters = Dict(dict=calc_parameters)
         return input_scf
 
@@ -291,35 +292,17 @@ class FleurDMIWorkChain(WorkChain):
         # copy inpchanges from wf parameters
         fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
         # create forceTheorem tags
-        fchanges.extend([('create_tag', {
-            'xpath': '/fleurInput',
-            'newelement': 'forceTheorem'
-        }), ('create_tag', {
-            'xpath': '/fleurInput/forceTheorem',
-            'newelement': 'DMI'
-        }), ('create_tag', {
-            'xpath': '/fleurInput/forceTheorem/DMI',
-            'newelement': 'qVectors'
-        }),
-                         ('xml_set_attribv_occ', {
-                             'xpathn': '/fleurInput/forceTheorem/DMI',
-                             'attributename': 'theta',
-                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_theta')))
-                         }),
-                         ('xml_set_attribv_occ', {
-                             'xpathn': '/fleurInput/forceTheorem/DMI',
-                             'attributename': 'phi',
-                             'attribv': ' '.join(six.moves.map(str, self.ctx.wf_dict.get('sqas_phi')))
-                         })])
-
-        for i, vectors in enumerate(self.ctx.wf_dict['q_vectors']):
-            fchanges.append(('create_tag', {'xpath': '/fleurInput/forceTheorem/DMI/qVectors', 'newelement': 'q'}))
-            fchanges.append(('xml_set_text_occ', {
-                'xpathn': '/fleurInput/forceTheorem/DMI/qVectors/q',
-                'text': ' '.join(six.moves.map(str, vectors)),
-                'create': False,
-                'occ': i
-            }))
+        fchanges.append(('set_complex_tag', {
+            'tag_name': 'DMI',
+            'create': True,
+            'changes': {
+                'qVectors': {
+                    'q': self.ctx.wf_dict['q_vectors']
+                },
+                'theta': self.ctx.wf_dict['sqas_theta'],
+                'phi': self.ctx.wf_dict['sqas_phi']
+            }
+        }))
 
         changes_dict = {
             'itmax': 1,
@@ -331,64 +314,68 @@ class FleurDMIWorkChain(WorkChain):
         }
         fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
 
+        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+            kmesh = KpointsData()
+            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+            kmesh.store()
+            fchanges.append(('set_kpointsdata', {
+                'kpointsdata_uuid': kmesh.uuid,
+                'switch': True,
+                'kpoint_type': 'mesh'
+            }))
+
         # change beta parameter
-        for key, val in six.iteritems(self.ctx.wf_dict.get('beta')):
-            fchanges.append(('set_atomgr_att_label', {
+        for label, beta in self.ctx.wf_dict['beta'].items():
+            fchanges.append(('set_atomgroup_label', {
                 'attributedict': {
                     'nocoParams': {
-                        'beta': val
+                        'beta': beta
                     }
                 },
-                'atom_label': key
+                'atom_label': label
             }))
 
         # switch off SOC on an atom specie
         for atom_label in self.ctx.wf_dict['soc_off']:
             fchanges.append(('set_species_label', {
-                'at_label': atom_label,
+                'atom_label': atom_label,
                 'attributedict': {
                     'special': {
                         'socscale': 0.0
                     }
                 },
-                'create': True
             }))
 
         if fchanges:  # change inp.xml file
             fleurmode = FleurinpModifier(fleurin)
-            avail_ac_dict = fleurmode.get_avail_actions()
-
-            # apply further user dependend changes
-            for change in fchanges:
-                function = change[0]
-                para = change[1]
-                method = avail_ac_dict.get(function, None)
-                if not method:
-                    error = ("ERROR: Input 'inpxml_changes', function {} "
-                             'is not known to fleurinpmodifier class, '
-                             'please check/test your input. I abort...'
-                             ''.format(function))
-                    self.control_end_wc(error)
-                    return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-                else:  # apply change
-                    method(**para)
+            try:
+                fleurmode.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # validate?
             try:
                 fleurmode.show(display=False, validate=True)
             except etree.DocumentInvalid:
                 error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                self.control_end_wc(error)
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            except ValueError as exc:
+                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                         f'The following error was raised {exc}')
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
             # apply
             out = fleurmode.freeze()
             self.ctx.fleurinp = out
-            return
         else:  # otherwise do not change the inp.xml
             self.ctx.fleurinp = fleurin
-            return
+
+        return
 
     def force_after_scf(self):
         '''
@@ -500,18 +487,15 @@ class FleurDMIWorkChain(WorkChain):
         """
         Generates results of the workchain.
         """
-        t_energydict = []
         mae_thetas = []
         mae_phis = []
         num_ang = 0
-        num_q_vectors = 0
         q_vectors = []
 
         try:
             calculation = self.ctx.f_t
             if not calculation.is_finished_ok:
-                message = ('ERROR: Force theorem Fleur calculation failed somehow it has '
-                           'exit status {}'.format(calculation.exit_status))
+                message = f'ERROR: Force theorem Fleur calculation failed somehow it has exit status {calculation.exit_status}'
                 self.control_end_wc(message)
                 return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
         except AttributeError:
@@ -521,29 +505,27 @@ class FleurDMIWorkChain(WorkChain):
 
         try:
             out_dict = calculation.outputs.output_parameters.dict
-            t_energydict = out_dict.dmi_force_evsum
+            h_so = out_dict.dmi_force_so_h_so
             mae_thetas = out_dict.dmi_force_theta
             mae_phis = out_dict.dmi_force_phi
             num_ang = out_dict.dmi_force_angles
-            num_q_vectors = out_dict.dmi_force_qs
-            q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_q]
+            q_vectors = [self.ctx.wf_dict['q_vectors'][x - 1] for x in out_dict.dmi_force_so_q]
             e_u = out_dict.dmi_force_units
-
-            for i in six.moves.range((num_q_vectors - 1) * (num_ang), -1, -num_ang):
-                ref_enrg = t_energydict.pop(i)
-                q_vectors.pop(i)
-                for k in six.moves.range(i, i + num_ang - 1, 1):
-                    t_energydict[k] -= ref_enrg
-
-            if e_u in ['Htr', 'htr']:
-                for labels, energies in t_energydict.items():
-                    t_energydict[labels] = energies * HTR_TO_EV
         except AttributeError:
             message = ('Did not manage to read evSum or energy units after FT calculation.')
             self.control_end_wc(message)
             return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
 
-        self.ctx.t_energydict = t_energydict
+        if not isinstance(h_so, list):
+            message = ('Did not manage to read evSum or energy units after FT calculation.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_FORCE_THEOREM_FAILED
+
+        if e_u in ['htr', 'Htr']:
+            h_so = np.array(h_so) * HTR_TO_EV
+            h_so = h_so.tolist()
+
+        self.ctx.h_so = h_so
         self.ctx.q_vectors = q_vectors
         self.ctx.mae_thetas = mae_thetas
         self.ctx.mae_phis = mae_phis
@@ -557,7 +539,8 @@ class FleurDMIWorkChain(WorkChain):
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
             # 'initial_structure': self.inputs.structure.uuid,
-            'energies': self.ctx.t_energydict,
+            'is_it_force_theorem': True,
+            'soc_energies': self.ctx.h_so,
             'q_vectors': self.ctx.q_vectors,
             'theta': self.ctx.mae_thetas,
             'phi': self.ctx.mae_phis,

@@ -1,5 +1,5 @@
 {
-    "version": "1.2.1",
+    "version": "1.3.0",
     "name": "aiida-fleur",
     "url": "https://github.com/JuDFTteam/aiida-fleur",
     "license": "MIT License, see LICENSE.txt file.",
@@ -12,10 +12,10 @@
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Environment :: Plugins",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Physics",
@@ -23,31 +23,33 @@
     ],
     "keywords": "fleur aiida inpgen workflows flapw juelich dft all-electron",
     "include_package_data": true,
-    "python_requires": ">=3.6",
+    "python_requires": ">=3.7",
     "setup_requires": [
         "reentry"
     ],
     "reentry_register": true,
     "install_requires": [
         "aiida-core[atomic_tools]>=1.3.0,<2.0.0",
-        "lxml>=3.6.4",
+        "lxml~=4.8",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools >= 0.6.2",
+        "masci-tools ~= 0.9.0,>=0.9.1",
         "future",
         "pyhull",
         "more_itertools",
-        "sqlalchemy<1.4"
+        "sqlalchemy<1.4",
+        "MarkupSafe<2.1.0"
     ],
     "extras_require": {
         "graphs ": [
-            "matplotlib"
+            "matplotlib",
+            "masci-tools[bokeh-plots]"
         ],
         "docs": [
-            "Sphinx",
-            "docutils",
+            "sphinx~=4.0",
             "sphinx_rtd_theme",
-            "sphinx-click"
+            "sphinx-click",
+            "myst-parser~=0.15.2"
         ],
         "pre-commit": [
             "pre-commit>=2.6.0",
@@ -82,7 +84,8 @@
             "fleur.banddos = aiida_fleur.workflows.banddos:FleurBandDosWorkChain",
             "fleur.orbcontrol = aiida_fleur.workflows.orbcontrol:FleurOrbControlWorkChain",
             "fleur.strain = aiida_fleur.workflows.strain:FleurStrainWorkChain",
-            "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
+	        "fleur.eos = aiida_fleur.workflows.eos:FleurEosWorkChain",
+            "fleur.cfcoeff = aiida_fleur.workflows.cfcoeff:FleurCFCoeffWorkChain",
             "fleur.init_cls = aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain",
             "fleur.corehole = aiida_fleur.workflows.corehole:FleurCoreholeWorkChain",
             "fleur.mae = aiida_fleur.workflows.mae:FleurMaeWorkChain",

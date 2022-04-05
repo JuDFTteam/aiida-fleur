@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 This small dirty scripts helps to migrate aiida exports files produced by tests
 prob works only under linux. cleans data_dir, workflows/caches
@@ -17,5 +16,5 @@ for dirs in data_dirs:
         infile_old = 'old_' + infile
         shutil.move(dirs + infile, dirs + infile_old)
         #subprocess.run(["", "])
-        os.system('verdi export migrate {} {}'.format(dirs + infile_old, dirs + infile))
+        os.system(f'verdi export migrate {dirs + infile_old} {dirs + infile}')
         #os.system("ls {} {}".format(dirs+infile_old, dirs+infile))

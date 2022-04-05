@@ -1,0 +1,13 @@
+      Welcome to FLEUR - inpgen   (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Processing k-point string: grid=1,1,1                              
+ Generating a k-point grid:           1           1           1
+ Processing k-point string: band=240                                
+ Generating a k-point set for bandstructures with          240  k-points
+ Stored k-point lists:
+ 
+                NAME           TYPE      NKPT   COMMENT
+ ================================================================================
+           default-1           MESH         1   1 x 1 x 1
+              path-2           PATH       240   g - M - K - g - A - L - H - A
+ ================================================================================

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -19,18 +18,15 @@ input manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 # TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
-# TODO: get rid of duplicate code for parsing the inp.xml to an etree
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import io
 import re
-import six
+
 from lxml import etree
 import warnings
 
-from aiida.orm import Data, Node, load_node, CalcJobNode
+from aiida.orm import Data, Node, load_node, CalcJobNode, Bool
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -87,14 +83,14 @@ class FleurinpData(Data):
 
     It stores the files in the repository and stores the input parameters of the
     ``inp.xml`` file of FLEUR in the database as a python dictionary (as internal attributes).
-    When an ``inp.xml`` (name important!) file is added to files, FleurinpData searches
-    for a corresponding xml schema file in the PYTHONPATH environment variable.
-    Therefore, it is recommend to have the plug-in source code directory in the python environment.
-    If no corresponding schema file is found an error is raised.
+    When an ``inp.xml`` (name important!) file is added to files, parsed into a XML tree
+    and validated against the XML schema file for the given file version. These XML schemas
+    are provided by the `masci-tools` library
+
 
     FleurinpData also provides the user with
-    methods to extract AiiDA StructureData and
-    KpointsData nodes.
+    methods to extract AiiDA StructureData, KpointsData nodes
+    and Dict nodes with LAPW parameters.
 
     Remember that most attributes of AiiDA nodes can not be changed after they
     have been stored in the database! Therefore, you have to use the FleurinpModifier class and its
@@ -102,17 +98,7 @@ class FleurinpData(Data):
     FleurinpData that way and start a new calculation from it.
     """
 
-    # search in current folder and search in aiida source code
-    # we want to search in the Aiida source directory, get it from python path,
-    # maybe better from somewhere else.
-    # TODO: don not walk the whole python path, test if dir below is aiida?
-    # needs to be improved, schema file is often after new installation not found...
-    # installation with pip should always lead to a schema file in the python path, or even specific place
-
     __version__ = '0.5.0'
-
-    # ignore machine dependent attributes in hash
-    _hash_ignored_attributes = []  #'_schema_file_path', '_search_paths']
 
     def __init__(self, **kwargs):
         """
@@ -265,7 +251,7 @@ class FleurinpData(Data):
             with node.open(file1, mode='rb') as file2:
                 file1 = io.BytesIO(file2.read())
 
-        elif isinstance(file1, six.string_types):
+        elif isinstance(file1, str):
             is_filelike = False
 
             if not os.path.isabs(file1):
@@ -273,7 +259,7 @@ class FleurinpData(Data):
                 #raise ValueError("Pass an absolute path for file1: {}".format(file1))
 
             if not os.path.isfile(file1):
-                raise ValueError('file1 must exist and must be a single file: {}'.format(file1))
+                raise ValueError(f'file1 must exist and must be a single file: {file1}')
 
             if dst_filename is None:
                 final_filename = os.path.split(file1)[1]
@@ -411,37 +397,38 @@ class FleurinpData(Data):
         Tries to insert all .xml, which are not inp.xml file into the etree since they are
         not naturally available for the parser (open vs self.open)
 
-        Creates a NamedTemporaryFile for each one and replaces the name in the etree_string
-        Then it is reparsed into a ElementTree and teh xi:include tags are executed
+        Creates a NamedTemporaryFile for each one with their content
+        and replaces the name in the `href` attributes of the `xi:include` tags.
+        Then these are expanded with `xmltree.xinclude()`
         """
-        from masci_tools.util.xml.common_functions import clear_xml
+        from masci_tools.util.xml.common_functions import clear_xml, eval_xpath
         import tempfile
-
-        xmltree_string = etree.tostring(xmltree)
 
         temp_files = []
         for file in self.files:
-            if file.endswith('.xml') and file != 'inp.xml':
+            #Check if the filename appears in a xi:include tag
+            nodes = eval_xpath(xmltree,
+                               '//xi:include[@href=$filename]',
+                               namespaces={'xi': 'http://www.w3.org/2001/XInclude'},
+                               filename=file,
+                               list_return=True)
+            if not nodes:
+                continue
 
-                #Get file content from node
-                include_content = ''
-                with self.open(path=file, mode='r') as include_file:
-                    include_content = include_file.read()
+            #Get file content from node
+            include_content = self.get_content(file)
 
-                #Write content into temporary file
-                with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
-                    fo.write(include_content)
-                    temp_files.append(fo.name)
-                    #If the include tag for the given file is not present nothing is replaced
-                    xmltree_string = xmltree_string.replace(bytes(file, 'utf-8'), bytes(fo.name, 'utf-8'))
-
-        #Regenerate the tree with tempfile names
-        xmltree_with_includes = etree.fromstring(xmltree_string).getroottree()
+            #Write content into temporary file
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as fo:
+                fo.write(include_content)
+                temp_files.append(fo.name)
+                for node in nodes:
+                    node.set('href', fo.name)
 
         #Performs the inclusions and remove comments
-        cleared_tree, included_tags = clear_xml(xmltree_with_includes)
+        cleared_tree, included_tags = clear_xml(xmltree)
 
-        #Remove temporary files
+        #Remove created temporary files
         for file in temp_files:
             os.remove(file)
 
@@ -508,7 +495,7 @@ class FleurinpData(Data):
 
         return get_nkpts(xmltree, schema_dict)
 
-    def get_structuredata_ncf(self):
+    def get_structuredata_ncf(self, normalize_kind_name=True):
         """
         This routine returns an AiiDA Structure Data type produced from the ``inp.xml``
         file. not a calcfunction
@@ -521,7 +508,10 @@ class FleurinpData(Data):
 
         xmltree, schema_dict = self.load_inpxml()
 
-        atoms, cell, pbc = get_structure_data(xmltree, schema_dict, site_namedtuple=True)
+        atoms, cell, pbc = get_structure_data(xmltree,
+                                              schema_dict,
+                                              site_namedtuple=True,
+                                              normalize_kind_name=normalize_kind_name)
 
         struc = StructureData(cell=cell, pbc=pbc)
 
@@ -535,7 +525,7 @@ class FleurinpData(Data):
         return struc
 
     @cf
-    def get_structuredata(self):
+    def get_structuredata(self, normalize_kind_name=None):
         """
         This routine return an AiiDA Structure Data type produced from the ``inp.xml``
         file. If this was done before, it returns the existing structure data node.
@@ -544,7 +534,9 @@ class FleurinpData(Data):
         :param fleurinp: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node
         """
-        return self.get_structuredata_ncf()
+        if normalize_kind_name is None:
+            normalize_kind_name = Bool(True)
+        return self.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
 
     def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
         """
@@ -587,8 +579,14 @@ class FleurinpData(Data):
                 kps.pbc = pbc
                 kps.set_kpoints(kpoints_set, cartesian=False, weights=weights_set)
                 #kpoints_data.add_link_from(self, label='fleurinp.kpts', link_type=LinkType.CREATE)
-                kps.label = 'fleurinp.kpts'
-                kpoints_data[label] = kps
+                pattern = re.compile(r'\W', re.UNICODE)
+                kpoint_identifier = re.sub(pattern, '', label.replace('-', '_'))
+                if kpoint_identifier != label.replace('-', '_'):
+                    warnings.warn(
+                        f'Normed the name of the kpoint set {label} to {kpoint_identifier}'
+                        ' to be able to use it as a link label', UserWarning)
+                kps.label = f'fleurinp.kpts.{kpoint_identifier}'
+                kpoints_data[kpoint_identifier] = kps
         else:
             kpoints_data = KpointsData()
             kpoints_data.set_cell(cell)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -24,7 +23,7 @@ from pymatgen.core.surface import SlabGenerator
 import numpy as np
 
 from aiida.plugins import DataFactory
-from aiida.orm import load_node
+from aiida.orm import load_node, Bool
 from aiida.orm.nodes.data.structure import Site, Kind
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -108,7 +107,7 @@ def rescale_nowf(inp_structure, scale):
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
     rescaled_structure = DataFactory('structure')(ase=new_ase)
-    rescaled_structure.label = '{}  rescaled'.format(scale)  #, structure.uuid)
+    rescaled_structure.label = f'{scale}  rescaled'  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
 
@@ -203,8 +202,8 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
             new_structure.append_site(Site(kind_name=kn, position=pos))
 
     formula = inp_structure.get_formula()
-    new_structure.label = 'supercell of {}'.format(formula)
-    new_structure.description = '{}x{}x{} supercell of {}'.format(n_a1, n_a2, n_a3, formula)
+    new_structure.label = f'supercell of {formula}'
+    new_structure.description = f'{n_a1}x{n_a2}x{n_a3} supercell of {formula}'
     return new_structure
 
 
@@ -447,7 +446,7 @@ def break_symmetry(structure,
                 newkindname = symbol_new_kinds_names[symbol_count[symbol] - 1]
                 kind_name_id_mapping[newkindname] = symbol_count[symbol] - 1
             else:
-                newkindname = '{}{}'.format(symbol, symbol_count[symbol])
+                newkindname = f'{symbol}{symbol_count[symbol]}'
                 kind_name_id_mapping[newkindname] = symbol_count[symbol]
             new_kind = Kind(name=newkindname, symbols=symbol)
             new_structure.append_kind(new_kind)
@@ -505,7 +504,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
             atom_lists.append(val)
             if add_atom_base_lists:
                 if not 'id' in val:
-                    atomlistname = 'atom{}'.format(j)
+                    atomlistname = f'atom{j}'
                     param_new_dict[atomlistname] = val
                     j = j + 1
         else:
@@ -526,14 +525,14 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
             should_id = None
             continue
 
-        should_id = '{}.{}'.format(atomic_number, kind_namet)
+        should_id = f'{atomic_number}.{kind_namet}'
         # check if atom list with id was given if yes use that one
         found_kind = False
         for atomlst in atom_lists:
             if atomlst.get('id', None) == should_id:
                 #if atomlst.get('element', None) != symbol or atomlst.get('z', None) != atomic_number:
                 #    continue # None id, but wrong element
-                atomlistname = 'atom{}'.format(j)
+                atomlistname = f'atom{j}'
                 param_new_dict[atomlistname] = atomlst
                 j = j + 1
                 found_kind = True
@@ -549,7 +548,7 @@ def adjust_calc_para_to_structure(parameter, structure, add_atom_base_lists=True
                 new_alst['id'] = should_id
                 if write_new_kind_names:
                     new_alst['name'] = kind_name
-                atomlistname = 'atom{}'.format(j)
+                atomlistname = f'atom{j}'
                 param_new_dict[atomlistname] = new_alst
                 j = j + 1
 
@@ -589,7 +588,7 @@ def check_structure_para_consistent(parameter, structure, verbose=True):
             #print('Warning: Kind name {} will be ignored by a FleurinputgenCalculation and not set a charge number. id'.
             #      format(kind_name))
         else:
-            atomic_number_name = '{}.{}'.format(kind_charges[i], kind_namet)
+            atomic_number_name = f'{kind_charges[i]}.{kind_namet}'
             possible_ids.append(atomic_number_name)
         # Id can also be integer number only?
 
@@ -600,17 +599,17 @@ def check_structure_para_consistent(parameter, structure, verbose=True):
                 if val['z'] not in kind_charges:
                     consistent = False
                     if not verbose:
-                        print('Charge z in atomlist {} is not consistent with structure.'.format(key))
+                        print(f'Charge z in atomlist {key} is not consistent with structure.')
             if 'element' in val:
                 if val['element'] not in kind_symbols:
                     consistent = False
                     if not verbose:
-                        print('Element in atomlist {} is not consistent with structure.'.format(key))
+                        print(f'Element in atomlist {key} is not consistent with structure.')
             if 'id' in val:
                 if str(val['id']) not in possible_ids:
                     consistent = False
                     if not verbose:
-                        print('Id in atomlist {} is not consistent with kinds in structure.'.format(key))
+                        print(f'Id in atomlist {key} is not consistent with kinds in structure.')
 
     return consistent
 
@@ -1183,7 +1182,7 @@ def create_manual_slab_ase(lattice='fcc',
         from ase.lattice.cubic import BodyCenteredCubic
         structure_factory = BodyCenteredCubic
     else:
-        raise ValueError('The given lattice {} is not supported'.format(lattice))
+        raise ValueError(f'The given lattice {lattice} is not supported')
 
     structure = structure_factory(miller=miller,
                                   directions=directions,
@@ -1197,7 +1196,7 @@ def create_manual_slab_ase(lattice='fcc',
     positions = structure.positions
 
     zipped = zip(positions, current_symbols)
-    zipped = sorted(zipped, key=lambda x: x[0][2])
+    zipped = sorted(zipped, key=lambda x: np.around(x[0][2], decimals=decimals))
 
     positions = [x[0] for x in zipped]
     current_symbols = [x[1] for x in zipped]
@@ -1209,7 +1208,7 @@ def create_manual_slab_ase(lattice='fcc',
 
     if replacements is not None and len(replacements) > 0:
         keys = list(replacements.keys())
-        if max((abs(int(x)) for x in keys)) >= len(layer_occupancies):
+        if max(abs(int(x)) for x in keys) >= len(layer_occupancies):
             raise ValueError('"replacements" has to contain numbers less than number of layers:'
                              ' {}'.format(len(layer_occupancies)))
     else:
@@ -1243,7 +1242,8 @@ def magnetic_slab_from_relaxed(relaxed_structure,
                                orig_structure,
                                total_number_layers,
                                num_relaxed_layers,
-                               z_coordinate_window=3):
+                               z_coordinate_window=3,
+                               shift=(0, 0)):
     """
     Transforms a structure that was used for interlayer distance relaxation to
     a structure that can be further used for magnetic calculations.
@@ -1318,7 +1318,10 @@ def magnetic_slab_from_relaxed(relaxed_structure,
         if done_layers < num_relaxed_layers:
             layer = get_layers(sorted_struc, z_coordinate_window=z_coordinate_window)[0]
             for atom in layer[done_layers]:
-                a = Site(kind_name=atom[1], position=atom[0])
+                orig_pos = atom[0]
+                pos_x = atom[0][0] + shift[0] * magn_structure.cell[0][0] + shift[1] * magn_structure.cell[1][0]
+                pos_y = atom[0][1] + shift[0] * magn_structure.cell[0][1] + shift[1] * magn_structure.cell[1][1]
+                a = Site(kind_name=atom[1], position=(pos_x, pos_y, atom[0][2]))
                 magn_structure.append_site(a)
             done_layers = done_layers + 1
         elif done_layers < total_number_layers:
@@ -1623,7 +1626,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         layer_copy = deepcopy(layer)
-        prev_layer_z = max([x.position[2] for x in rebuilt_structure.sites])
+        prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
             atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
@@ -1788,9 +1791,112 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
             distance = distance / partition_function
         bond_data[sym1][sym2] = distance
         bond_data[sym2][sym1] = distance
-        print('Request completed for {} {} pair'.format(sym1, sym2))
+        print(f'Request completed for {sym1} {sym2} pair')
 
     return Dict(dict=bond_data)
+
+
+@cf
+def replace_element(inp_structure, replace_dict, replace_all=None):
+    """
+    Replaces the given element with the element_replacement, but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    Keeps the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: Dict with new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+
+    Example usage:
+        This example replaces all Neodymium atoms with Yttrium
+        replace_element(structure,Dict(dict={'Nd':'Y'}),replace_all=Bool(True))
+    """
+
+    return replace_elementf(inp_structure, replace_dict, replace_all)
+
+
+def replace_elementf(inp_structure, replace_dict, replace_all):
+    """
+    Replaces the site according to replace_dict (symbols), but keeps the structure the same.
+    If there are more than one site they are either all replaced or a list with one replacement
+    at a time is returned.
+    DOES NOT keep the provenance in the database.
+
+    :param inp_structure: a StructureData node (pk, or uuid)
+    :param replace_dict: Dict of elements to replace. Replacement is done according to the symbols
+    :param replace_all: bool determines wether to replace all occurrences of the element at once
+                        Otherwise a list, with one occurence replaced at a time
+
+    :return: New StructureData node or list of new StructureData nodes with replaced elements,
+             which is/are linked to input Structure
+             and None if inp_structure was not a StructureData
+    """
+
+    if replace_all is None:
+        replace_all = Bool(True)
+
+    # test if structure:
+    structure = is_structure(inp_structure)
+    if not structure:
+        # TODO: log something
+        return None
+
+    StructureData = DataFactory('structure')
+
+    replace_dict = replace_dict.get_dict()
+
+    new_structures = {}
+
+    ase_struc = structure.get_ase()
+    if replace_all:
+        for replace_symbol, new_symbol in replace_dict.items():
+            ase_struc.symbols[ase_struc.symbols == replace_symbol] = new_symbol
+        new_structures['replaced_all'] = StructureData(ase=ase_struc)
+    else:
+        for replace_symbol, new_symbol in replace_dict.items():
+            for index, symbol in enumerate(ase_struc.symbols):
+                if symbol == replace_symbol:
+                    struc = ase_struc.copy()
+                    struc.symbols[index] = new_symbol
+                    label = f'replaced_{replace_symbol}_{new_symbol}_site_{index}'
+                    new_structures[label] = StructureData(ase=struc)
+
+    for name, structure in new_structures.items():
+        structure.label = name
+        structure.description = f"Structure with {'all' if 'all' in name else ''} {replace_symbol} atoms replaced with {new_symbol}"
+
+    return new_structures
+
+
+def mark_atoms(structure, condition, kind_id='99999'):
+    '''
+    Marks atom where sites fullfill the given condition with a given id
+    The resulting kind name for these atoms is element-kind_id
+
+    condition is a callable taking the site and kind as arguments
+    '''
+    from aiida.orm import StructureData
+
+    new_structure = StructureData(cell=structure.cell)
+    new_structure.pbc = structure.pbc
+
+    for site in structure.sites:
+        kind = structure.get_kind(site.kind_name)
+        element = kind.symbols[0]
+        if condition(site, kind):
+            new_structure.append_atom(position=site.position, symbols=element, name=f'{element}-{kind_id}')
+        else:
+            if site.kind_name not in {kind.name for kind in new_structure.kinds}:
+                new_structure.append_kind(kind)
+            new_structure.append_site(site)
+
+    return new_structure
 
 
 def simplify_kind_name(kind_name):
@@ -1913,7 +2019,7 @@ def define_AFM_structures(structure,
                                                               directions=directions,
                                                               host_symbol=host_symbol,
                                                               latticeconstant=latticeconstant,
-                                                              size=(1, 1, 1),
+                                                              size=(1, 1, size_z),
                                                               replacements=replacements,
                                                               decimals=decimals,
                                                               pop_last_layers=pop_last_layers)
@@ -2088,7 +2194,8 @@ def define_AFM_structures(structure,
     output_layers = get_layers(output_structure)[0]
 
     if len(init_layers) != len(output_layers):
-        raise ValueError('input and output structure have different number of layers')
+        raise ValueError('input and output structure have different number of layers {} {}'.format(
+            len(init_layers), len(output_layers)))
 
     for i, layer in enumerate(get_layers(output_structure)[0]):
         for atom in layer:
@@ -2104,6 +2211,34 @@ def define_AFM_structures(structure,
                                           name=atom[1] + addition)
 
     return rebuilt_structure, substrate
+
+
+def get_atomtype_site_symmetry(struc):
+    """
+    Get the local site symmetry symbols for each atomtype
+
+    Uses pymatgen SpaceGroupAnalyzer
+
+    :param struc: StructureData to analyse
+
+    :returns: list of the site symmetry symbols for each atomtype
+              (In the order they appear in the StructureData)
+    """
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    from more_itertools import unique_everseen
+
+    pym_struc = struc.get_pymatgen()
+
+    symmetry_analyzer = SpacegroupAnalyzer(pym_struc)
+    sym_data = symmetry_analyzer.get_symmetry_dataset()
+
+    site_symmetries = sym_data['site_symmetry_symbols']
+    equivalent_atoms = sym_data['equivalent_atoms']
+
+    #Get the representative atom for each atomtype
+    representative_atoms = unique_everseen(equivalent_atoms)
+
+    return [site_symmetries[repr_atom] for repr_atom in representative_atoms]
 
 
 '''

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -15,14 +14,14 @@
 """
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import Dict, load_node, Code, CalcJobNode, RemoteData
+from aiida.orm import Dict, Code, StructureData, RemoteData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
-from aiida.engine import CalcJob
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 
+from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
@@ -64,11 +63,18 @@ def generate_density_matrix_configurations(occupations=None, configurations=None
                 config_dict[ind] = []
 
                 if not isinstance(fixed_occ, list):
-                    fixed_occ = [fixed_occ]
+                    spin_occupation = fixed_occ // 2
+                    if fixed_occ % 2 == 0:
+                        fixed_occ = [spin_occupation, spin_occupation]
+                    else:
+                        fixed_occ = [spin_occupation + 1, spin_occupation]  #not ideal but for fine for now
 
-                for spin, occ in enumerate(fixed_occ):
+                if any(x > 2 * l + 1 for x in fixed_occ):
+                    raise ValueError(f'Invalid occupation {species} {orbital}: {fixed_occ}')
+
+                for occ in fixed_occ:
                     spin_configs = []
-                    start = [0 for x in range(2 * l + 1)]
+                    start = [0 for _ in range(2 * l + 1)]
                     #Fill up the occupations until it matches the wanted one
                     i = 0
                     while sum(start) < occ:
@@ -123,16 +129,16 @@ class FleurOrbControlWorkChain(WorkChain):
     :param scf_no_ldau: (Dict), Inputs to a FleurScfWorkChain providing the initial system
                                 either converged or staring from a structure
     :param scf_with_ldau: (Dict), Inputs to a FleurScfWorkChain. Only the wf_parameters are valid
+    :param fleurinp: (FleurinpData) FleurinpData to start from if no SCF should be done
+    :param remote: (RemoteData) RemoteData to start from if no SCF should be done
+    :param structure: (StructureData) Structure to start from if no SCF should be done
     :param calc_parameters: (Dict), Inpgen Parameters
     :param settings: (Dict), additional settings for e.g retrieving files
     :param options: (Dict), Options for the submission of the jobs
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.1.0'
-
-    _NMMPMAT_FILE_NAME = 'n_mmp_mat'
-    _NMMPMAT_HDF5_FILE_NAME = 'n_mmp_mat_out'
+    _workflowversion = '0.3.3'
 
     _default_options = {
         'resources': {
@@ -152,6 +158,7 @@ class FleurOrbControlWorkChain(WorkChain):
         'use_orbital_occupation': False,
         'fixed_occupations': None,
         'fixed_configurations': None,
+        'inpxml_changes': []
     }
 
     @classmethod
@@ -160,30 +167,36 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
-                               'populate_defaults': False
+                               'populate_defaults': False,
+                               'help': 'Inputs for SCF Workchain before adding LDA+U'
                            },
                            namespace='scf_no_ldau')
         spec.input('remote', valid_type=RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
+        spec.input('structure', valid_type=StructureData, required=False)
+        spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.expose_inputs(FleurScfWorkChain,
                            namespace_options={
                                'required': False,
-                               'populate_defaults': False
+                               'populate_defaults': False,
+                               'help': 'Inputs for SCF Workchain after the LDA+U matrix was fixed'
                            },
                            exclude=('structure', 'fleurinp', 'remote_data'),
                            namespace='scf_with_ldau')
         spec.input('fleur', valid_type=Code, required=True)
+        spec.input('inpgen', valid_type=Code, required=False)
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('options', valid_type=Dict, required=False)
+        spec.input('options_inpgen', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
+        spec.input('settings_inpgen', valid_type=Dict, required=False)
 
         spec.outline(cls.start, cls.validate_input,
-                     if_(cls.scf_no_ldau_needed)(cls.converge_scf_no_ldau), cls.create_configurations,
-                     cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
+                     if_(cls.scf_no_ldau_needed)(cls.converge_scf_no_ldau).elif_(cls.inpgen_needed)(cls.run_inpgen),
+                     cls.create_configurations, cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
 
         spec.output('output_orbcontrol_wc_para', valid_type=Dict)
-        spec.output('output_orbcontrol_wc_gs_scf', valid_type=Dict)
-        spec.output('output_orbcontrol_wc_gs_fleurinp', valid_type=FleurinpData)
+        spec.expose_outputs(FleurScfWorkChain, namespace='groundstate_scf')
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -198,24 +211,28 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.exit_code(343,
                        'ERROR_ALL_CONFIGS_FAILED',
                        message='Convergence LDA+U calculation failed for all Initial configurations.')
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation failed.')
         spec.exit_code(450, 'ERROR_SCF_NOLDAU_FAILED', message='Convergence workflow without LDA+U failed.')
 
     def start(self):
         """
         init context and some parameters
         """
-        self.report('INFO: started orbital occupation control workflow version {}' ''.format(self._workflowversion))
+        self.report(f'INFO: started orbital occupation control workflow version {self._workflowversion}')
 
         ####### init    #######
 
         # internal para /control para
         self.ctx.scf_no_ldau = None
         self.ctx.scf_no_ldau_needed = False
+        self.ctx.inpgen_needed = False
         self.ctx.fixed_configurations = []
         self.ctx.successful = True
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+        self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_orbcontrol_wc|'
+        self.ctx.label_wf = self.inputs.get('label', 'fleur_orbcontrol_wc')
 
         wf_default = self._wf_default
         if 'wf_parameters' in self.inputs:
@@ -244,11 +261,11 @@ class FleurOrbControlWorkChain(WorkChain):
         validate input
         """
         extra_keys = []
-        for key in self.ctx.wf_dict.keys():
-            if key not in self._wf_default.keys():
+        for key in self.ctx.wf_dict:
+            if key not in self._wf_default:
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Orbcontrol contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Orbcontrol contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -358,6 +375,13 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
+        if 'inpgen' in inputs:
+            try:
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+            except ValueError:
+                error = ('The code you provided for INPGEN does not use the plugin fleur.inpgen')
+                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+
         fleurinp = None
         remote = None
         if 'scf_no_ldau' in inputs:
@@ -375,12 +399,43 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'ERROR: you gave SCF input + fleurinp for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs:
-            error = 'ERROR: you gave neither SCF input nor remote'
+            if 'structure' in inputs:
+                error = 'ERROR: you gave SCF input + structure for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: you gave SCF input + calc_parameters for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'inpgen' in inputs:
+                error = 'ERROR: you gave SCF input + inpgen for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'structure' in inputs:
+            self.ctx.inpgen_needed = True
+            if 'inpgen' not in inputs:
+                error = 'ERROR: you gave structure input but no inpgen code Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'remote' not in inputs and 'fleurinp' not in inputs:
+            error = 'ERROR: you gave neither SCF input nor remote or fleurinp'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
-            remote = inputs.remote
+            if 'calc_parameters' in inputs:
+                error = 'ERROR: you gave remote/fleurinp input + calc_parameters for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'structure' in inputs:
+                error = 'ERROR: you gave remote/fleurinp input + structure for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'inpgen' in inputs:
+                error = 'ERROR: you gave remote/fleurinp input + inpgen for the Orbcontrol calculation'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'remote' in inputs:
+                remote = inputs.remote
             if 'fleurinp' in inputs:
                 fleurinp = inputs.fleurinp
 
@@ -392,13 +447,9 @@ class FleurOrbControlWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         if remote is not None:
-            parent_calcs = remote.get_incoming(node_class=CalcJob).all()
-            parent_calc = parent_calcs[0].node
-
-            retrieved_filenames = [x.name for x in parent_calc.outputs.retrieved.list_objects()]
-
-            if self._NMMPMAT_FILE_NAME in retrieved_filenames or \
-               self._NMMPMAT_HDF5_FILE_NAME in retrieved_filenames:
+            retrieved_filenames = remote.creator.outputs.retrieved.list_object_names()
+            if FleurCalculation._NMMPMAT_FILE_NAME in retrieved_filenames or \
+               FleurCalculation._NMMPMAT_HDF5_FILE_NAME in retrieved_filenames:
                 error = f"ERROR: Wrong input: remote_data {'in scf_no_ldau' if 'scf_no_ldau' in inputs else ''} already contains LDA+U"
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -417,6 +468,8 @@ class FleurOrbControlWorkChain(WorkChain):
 
         self.report('Info: Run SCF without LDA+U')
         future = self.submit(FleurScfWorkChain, **inputs)
+        future.label = 'scf_no_ldau'
+        future.description = 'SCF Calculation for orbital occupation control before adding DFT+U'
         return ToContext(scf_no_ldau=future)
 
     def get_inputs_scf_no_ldau(self):
@@ -431,7 +484,61 @@ class FleurOrbControlWorkChain(WorkChain):
         if 'options' not in input_scf:
             input_scf.options = self.inputs.options
 
+        input_scf.metadata.call_link_label = 'scf_no_ldau'
         return input_scf
+
+    def inpgen_needed(self):
+        """
+        Returns whether the inpgen should be run directly by this workchain
+        """
+        return self.ctx.inpgen_needed
+
+    def run_inpgen(self):
+        """
+        Run the input generator
+        """
+        ## prepare inputs for inpgen
+        structure = self.inputs.structure
+        self.ctx.formula = structure.get_formula()
+        label = 'scf: inpgen'
+        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
+
+        inpgencode = self.inputs.inpgen
+
+        if 'calc_parameters' in self.inputs:
+            params = self.inputs.calc_parameters
+        else:
+            params = None
+
+        if 'settings_inpgen' in self.inputs:
+            settings = self.inputs.settings_inpgen
+        else:
+            settings = None
+
+        if 'options_inpgen' in self.inputs:
+            options = self.inputs.options_inpgen
+        else:
+            #Only take the parts that could be relevant (resources is overwritten anyway)
+            options = {'queue_name': self.inputs.options.get_dict().get('queue_name', '')}
+            if 'max_wallclock_seconds' in options:
+                options['max_wallclock_seconds'] = int(self.inputs.options['max_wallclock_seconds'])
+
+        inputs_build = get_inputs_inpgen(structure,
+                                         inpgencode,
+                                         options,
+                                         label,
+                                         description,
+                                         settings=settings,
+                                         params=params)
+
+        inputs_build.metadata.call_link_label = 'inpgen'
+        # Launch inpgen
+        self.report('INFO: run inpgen')
+        future = self.submit(inputs_build)
+        future.label = 'inpgen'
+        future.description = 'Inpgen calculation for Orbital occupation control workflow'
+
+        return ToContext(inpgen=future)
 
     def create_configurations(self):
         """
@@ -463,7 +570,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
             try:
                 self.ctx.scf_no_ldau.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = ('ERROR: SCF workflow without LDA+U failed, no scf output node')
                 self.ctx.errors.append(message)
                 return self.exit_codes.ERROR_SCF_NOLDAU_FAILED
@@ -475,9 +582,13 @@ class FleurOrbControlWorkChain(WorkChain):
             inputs, status = self.get_inputs_fixed_configurations(index, config)
             if status:
                 return status
+            label = f'Fixed_{index}'
 
+            inputs.setdefault('metadata', {})['call_link_label'] = label
             res = self.submit(FleurBaseWorkChain, **inputs)
-            self.to_context(**{f'Fixed_{index}': res})
+            res.label = label
+            res.description = f'DFT+U calculation with fixed configuration number {index}'
+            self.to_context(**{label: res})
 
     def get_inputs_fixed_configurations(self, index, config):
         """
@@ -488,17 +599,27 @@ class FleurOrbControlWorkChain(WorkChain):
         if self.ctx.scf_no_ldau_needed:
             try:
                 fleurinp = self.ctx.scf_no_ldau.outputs.fleurinp
-                remote_data = load_node(
-                    self.ctx.scf_no_ldau.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+                remote_data = self.ctx.scf_no_ldau.outputs.last_calc.remote_folder
             except NotExistent:
                 error = 'Fleurinp generated in the SCF calculation is not found.'
                 self.control_end_wc(error)
                 return {}, self.exit_codes.ERROR_SCF_NOLDAU_FAILED
+        elif self.ctx.inpgen_needed:
+            if not self.ctx.inpgen.is_finished_ok:
+                error = 'Inpgen calculation failed'
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
+            try:
+                fleurinp = self.ctx.inpgen.outputs.fleurinpData
+            except (AttributeError, NotExistent):
+                return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
         else:
-            remote_data = self.inputs.remote
+            if 'remote' in self.inputs:
+                remote_data = self.inputs.remote
             if 'fleurinp' not in self.inputs:
                 fleurinp = get_fleurinp_from_remote_data(remote_data, store=True)
-                self.report(f'INFO: generated FleurinpData from {fleurinp.files}')
+                self.report(
+                    f'INFO: generated FleurinpData from {fleurinp.files} from remote folder pk={remote_data.pk}')
             else:
                 fleurinp = self.inputs.fleurinp
 
@@ -511,13 +632,11 @@ class FleurOrbControlWorkChain(WorkChain):
             settings = {}
         else:
             settings = inputs.settings.get_dict()
-
-        if 'remove_from_remotecopy_list' not in settings:
-            settings['remove_from_remotecopy_list'] = []
-        settings['remove_from_remotecopy_list'].append('mixing_history*')
+        settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
         self.report(f'INFO: create fleurinp for config {index}')
         fm = FleurinpModifier(fleurinp)
+        modes = fleurinp.get_fleur_modes()
 
         fm.set_inpchanges({'itmax': self.ctx.wf_dict['iterations_fixed'], 'l_linMix': True, 'mixParam': 0.0})
 
@@ -527,6 +646,12 @@ class FleurOrbControlWorkChain(WorkChain):
         for config_index, config_species in config.items():
             orbital = config_index.split('-')[-1]
             atom_species = '-'.join(config_index.split('-')[:-1])
+
+            if len(config_species) == 2 and modes['jspin'] == 1:
+                self.report(f'Configuration for species {atom_species} is given spin-polarized, '
+                            'but the calculation is non-spinpolarized. Summing up configurations.')
+                config_species = [sum(np.array(config) for config in config_species).tolist()]
+
             for spin, config_spin in enumerate(config_species):
                 if self.ctx.wf_dict['use_orbital_occupation']:
                     fm.set_nmmpmat(species_name=atom_species,
@@ -539,16 +664,26 @@ class FleurOrbControlWorkChain(WorkChain):
                                    spin=spin + 1,
                                    state_occupations=config_spin)
 
+        fchanges = self.ctx.wf_dict['inpxml_changes']
+        if fchanges:
+            try:
+                fm.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
         try:
             fm.show(display=False, validate=True)
         except etree.DocumentInvalid:
-            error = ('ERROR: input, inp.xml changes did not validate')
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_FILE
+            self.control_end_wc('ERROR: input, inp.xml changes did not validate')
+            return {}, self.exit_codes.ERROR_INVALID_INPUT_FILE
         except ValueError as exc:
-            error = ('ERROR: input, inp.xml changes could not be applied.' f'The following error was raised {exc}')
+            error = ('ERROR: input, inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
             self.control_end_wc(error)
-            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+            return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         fleurinp_fixed = fm.freeze()
 
@@ -573,30 +708,36 @@ class FleurOrbControlWorkChain(WorkChain):
             fixed_calc = self.ctx[f'Fixed_{index}']
 
             if not fixed_calc.is_finished_ok:
-                message = ('One Base workflow (fixed nmmpmat) failed: {}'.format(index))
+                message = f'One Base workflow (fixed nmmpmat) failed: {index}'
                 self.ctx.warnings.append(message)
                 continue
 
             try:
                 fixed_calc.outputs.output_parameters
-            except KeyError:
-                message = ('One Base workflow (fixed nmmpmat) failed, no output node: {}.'
-                           ' I skip this one.'.format(index))
+            except NotExistent:
+                message = f'One Base workflow (fixed nmmpmat) failed, no output node: {index}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue
 
             inputs.fleurinp = fixed_calc.inputs.fleurinpdata
             inputs.remote_data = fixed_calc.outputs.remote_folder
 
+            label = f'Relaxed_{index}'
+            inputs.setdefault('metadata', {})['call_link_label'] = label
             res = self.submit(FleurScfWorkChain, **inputs)
-            self.to_context(**{f'Relaxed_{index}': res})
+            res.label = label
+            res.description = f'DFT+U calculation for configuration number {index} converging the density matrix'
+            self.to_context(**{label: res})
 
     def get_inputs_scf(self):
         """
         Get the input for the scf workchain after the fixed density matrix calculations
         to relax the density matrix
         """
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_with_ldau'))
+        if 'scf_with_ldau' in self.inputs:
+            input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf_with_ldau'))
+        else:
+            input_scf = AttributeDict({})
 
         if 'fleur' not in input_scf:
             input_scf.fleur = self.inputs.fleur
@@ -608,20 +749,14 @@ class FleurOrbControlWorkChain(WorkChain):
             settings = {}
         else:
             settings = input_scf.settings.get_dict()
-
-        if 'remove_from_remotecopy_list' not in settings:
-            settings['remove_from_remotecopy_list'] = []
-        settings['remove_from_remotecopy_list'].append('mixing_history*')
+        settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
-        scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {
+        scf_wf_dict.setdefault('inpxml_changes', []).append(('set_inpchanges', {
             'change_dict': {
                 'l_linMix': False,
             }
@@ -642,49 +777,53 @@ class FleurOrbControlWorkChain(WorkChain):
         non_converged_configs = []
         configs_list = []
         outnodedict = {}
-
         e_u = 'htr'
         dis_u = 'me/bohr^3'
         for index, config in enumerate(self.ctx.fixed_configurations):
             if f'Relaxed_{index}' in self.ctx:
                 calc = self.ctx[f'Relaxed_{index}']
             else:
-                message = (
-                    'One SCF workflow was not run because the fixed calculation failed: {}'.format(f'Relaxed_{index}'))
+                message = (f'One SCF workflow was not run because the fixed calculation failed: Relaxed_{index}')
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(f'Relaxed_{index}'))
+                message = f'One SCF workflow was not successful: Relaxed_{index}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 #We dont skip simply non-converged calculations
                 #because we want to try to exctract the total_energy
                 if calc.exit_status not in FleurScfWorkChain.get_exit_statuses(['ERROR_DID_NOT_CONVERGE']):
                     failed_configs.append(index)
+                    t_energylist.append(None)
+                    distancelist.append(None)
                     continue
                 non_converged_configs.append(index)
 
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
-            except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.'
-                           ' I skip this one.'.format(f'Relaxed_{index}'))
+            except NotExistent:
+                message = f'One SCF workflow failed, no scf output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             try:
                 fleurinp_scf = calc.outputs.fleurinp
-            except KeyError:
-                message = ('One SCF workflow failed, no fleurinp output node: {}.'
-                           ' I skip this one.'.format(f'Relaxed_{index}'))
+            except NotExistent:
+                message = f'One SCF workflow failed, no fleurinp output node: Relaxed_{index}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
                 continue
 
             # we loose the connection of the failed scf here.
@@ -696,9 +835,9 @@ class FleurOrbControlWorkChain(WorkChain):
 
             outpara = outputnode_scf.get_dict()
 
-            t_e = outpara.get('total_energy', float('nan'))
+            t_e = outpara.get('total_energy', None)
             e_u = outpara.get('total_energy_units', 'htr')
-            dis = outpara.get('distance_charge', float('nan'))
+            dis = outpara.get('distance_charge', None)
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             t_energylist.append(t_e)
             distancelist.append(dis)
@@ -715,6 +854,7 @@ class FleurOrbControlWorkChain(WorkChain):
             'successful_configs': configs_list,
             'non_converged_configs': non_converged_configs,
             'failed_configs': failed_configs,
+            'groundstate_configuration': None,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
             'errors': self.ctx.errors
@@ -729,18 +869,27 @@ class FleurOrbControlWorkChain(WorkChain):
             self.report('Done, but something went wrong.... All Calculations failed. Probably something is'
                         ' wrong in your setup')
 
+        #Find the minimal total energy in the list
+        if len(t_energylist) != 0:
+            groundstate_index = np.nanargmin(np.array(t_energylist, dtype=np.float))
+            out['groundstate_configuration'] = groundstate_index
+
+            if f'Relaxed_{groundstate_index}' in self.ctx:
+                groundstate_scf = self.ctx[f'Relaxed_{groundstate_index}']
+                self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
+
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...
         outputnode_dict = create_orbcontrol_result_node(**outnodedict)
+
         outputnode = outputnode_dict.get('output_orbcontrol_wc_para')
         outputnode.label = 'output_orbcontrol_wc_para'
         outputnode.description = (
             'Contains orbital occupation control results and information of an FleurOrbControlWorkChain run.')
 
-        returndict = {}
-        returndict['output_orbcontrol_wc_para'] = outputnode
+        self.out('output_orbcontrol_wc_para', outputnode)
 
         outputscf = outputnode_dict.get('output_orbcontrol_wc_gs_scf', None)
         if outputscf:
@@ -748,21 +897,7 @@ class FleurOrbControlWorkChain(WorkChain):
             outputscf.description = ('SCF output from the run with the lowest total '
                                      'energy extracted from FleurOrbControlWorkChain')
 
-            returndict['output_orbcontrol_wc_gs_scf'] = outputscf
-
-        outputfleurinp = outputnode_dict.get('output_orbcontrol_wc_gs_fleurinp', None)
-        if outputscf:
-            outputscf.label = 'output_orbcontrol_wc_gs_fleurinp'
-            outputscf.description = ('Fleurinp from the scf run with the lowest total '
-                                     'energy extracted from FleurOrbControlWorkChain')
-
-            returndict['output_orbcontrol_wc_gs_fleurinp'] = outputfleurinp
-
-        # create link to workchain node
-        for link_name, node in returndict.items():
-            self.out(link_name, node)
-
-        if len(t_energylist) == 0:
+        if all(e is None for e in t_energylist):
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
         elif not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_CONFIGS_FAILED
@@ -795,14 +930,13 @@ def create_orbcontrol_result_node(**kwargs):
     # copy, because we rather produce the same node twice
     # then have a circle in the database for now...
     outputdict = outpara.get_dict()
-    e_list = outputdict.get('total_energy', [])
-    if len(e_list) != 0:
-        gs_nmmpmat = np.array(e_list).argmin()
-        gs_scf = kwargs.get(f'configuration_{gs_nmmpmat}', {})
-        gs_fleurinp = kwargs.get(f'fleurinp_{gs_nmmpmat}', {})
-        if not isinstance(gs_scf, dict):
-            outdict['output_orbcontrol_wc_gs_scf'] = gs_scf.clone()
-        if not isinstance(gs_fleurinp, dict):
-            outdict['output_orbcontrol_wc_gs_fleurinp'] = gs_fleurinp.clone()
+    groundstate_index = outputdict.get('groundstate_configuration')
+    if groundstate_index is None:
+        return outdict
+
+    if f'configuration_{groundstate_index}' in kwargs:
+        outdict['output_orbcontrol_wc_gs_scf'] = kwargs[f'configuration_{groundstate_index}'].clone()
+    if f'fleurinp_{groundstate_index}' in kwargs:
+        outdict['output_orbcontrol_wc_gs_fleurinp'] = kwargs[f'fleurinp_{groundstate_index}'].clone()
 
     return outdict

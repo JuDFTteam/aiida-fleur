@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -10,7 +9,6 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for various functions in common_fleur_wf_util.py'''
-from __future__ import absolute_import
 import pytest
 import numpy as np
 
@@ -165,9 +163,9 @@ def test_check_eos_energies():
     energylist = [-1, -2, -3, -2, -2, -3, -2, -1]
     abnormality, abnormalityindexlist = check_eos_energies(energylist)
     assert not abnormality
-    assert abnormalityindexlist == []
+    assert len(abnormalityindexlist) == 0
 
     energylist = [-1, -2, -3, -4, -5, -3, -2, -1]
     abnormality, abnormalityindexlist = check_eos_energies(energylist)
     assert not abnormality
-    assert abnormalityindexlist == []
+    assert len(abnormalityindexlist) == 0

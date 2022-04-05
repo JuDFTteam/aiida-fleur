@@ -1,0 +1,482 @@
+roots:
+  references:
+  - type: AllLabels
+  - type: AllLabels
+  - type: AllLabels
+  - type: AllLabels
+  - type: BasicTickFormatter
+  - type: BasicTickFormatter
+  - type: BasicTicker
+  - type: BasicTicker
+  - attributes:
+      bottom_units: screen
+      fill_alpha: 0.5
+      fill_color: lightgrey
+      left_units: screen
+      level: overlay
+      line_alpha: 1.0
+      line_color: black
+      line_dash:
+      - 4
+      - 4
+      line_width: 2
+      right_units: screen
+      syncable: false
+      top_units: screen
+    type: BoxAnnotation
+  - attributes:
+      bottom_units: screen
+      fill_alpha: 0.5
+      fill_color: lightgrey
+      left_units: screen
+      level: overlay
+      line_alpha: 1.0
+      line_color: black
+      line_dash:
+      - 4
+      - 4
+      line_width: 2
+      right_units: screen
+      syncable: false
+      top_units: screen
+    type: BoxAnnotation
+  - type: BoxZoomTool
+  - type: BoxZoomTool
+  - type: CDSView
+  - type: CDSView
+  - type: CDSView
+  - type: CDSView
+  - type: Column
+  - attributes:
+      data:
+        distance_0:
+        - 61.1110641131
+        - 43.7556515683
+        - 43.7556515683
+        energy_0:
+        - -38166.542950054
+        - -38166.345602746
+        - -38166.345602746
+        energy_diff_0:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_0:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_0:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_0:
+        - 61.1110641131
+        - 43.7556515683
+        - 43.7556515683
+        energy_0:
+        - -38166.542950054
+        - -38166.345602746
+        - -38166.345602746
+        energy_diff_0:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_0:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_0:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_0:
+        - 61.1110641131
+        - 43.7556515683
+        - 43.7556515683
+        energy_0:
+        - -38166.542950054
+        - -38166.345602746
+        - -38166.345602746
+        energy_diff_0:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_0:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_0:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_0:
+        - 61.1110641131
+        - 43.7556515683
+        - 43.7556515683
+        energy_0:
+        - -38166.542950054
+        - -38166.345602746
+        - -38166.345602746
+        energy_diff_0:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_0:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_0:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - type: CrosshairTool
+  - type: CrosshairTool
+  - type: DataRange1d
+  - type: DataRange1d
+  - type: DataRange1d
+  - type: DataRange1d
+  - attributes:
+      name: distance_0
+    type: GlyphRenderer
+  - attributes:
+      name: distance_0
+    type: GlyphRenderer
+  - attributes:
+      name: energy_diff_0
+    type: GlyphRenderer
+  - attributes:
+      name: energy_diff_0
+    type: GlyphRenderer
+  - type: Grid
+  - type: Grid
+  - attributes:
+      dimension: 1
+    type: Grid
+  - attributes:
+      dimension: 1
+    type: Grid
+  - attributes:
+      children:
+      - - {}
+        - 0
+        - 0
+      - - {}
+        - 1
+        - 0
+    type: GridBox
+  - attributes:
+      toggleable: false
+      tooltips:
+      - - Calculation id
+        - $name
+      - - Iteration
+        - '@iteration_0'
+      - - Charge distance
+        - '@distance_0'
+    type: HoverTool
+  - attributes:
+      toggleable: false
+      tooltips:
+      - - Calculation id
+        - $name
+      - - Iteration
+        - '@iteration_energy_0'
+      - - Total energy difference
+        - '@energy_diff_0'
+    type: HoverTool
+  - attributes:
+      click_policy: hide
+      label_text_font_size: 14pt
+    type: Legend
+  - attributes:
+      click_policy: hide
+      label_text_font_size: 14pt
+    type: Legend
+  - attributes:
+      label:
+        value: delta total energy
+    type: LegendItem
+  - attributes:
+      label:
+        value: distance
+    type: LegendItem
+  - attributes:
+      line_width: 2.0
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Line
+  - attributes:
+      line_alpha: 0.1
+      line_width: 2.0
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Line
+  - attributes:
+      line_alpha: 0.2
+      line_width: 2.0
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Line
+  - attributes:
+      line_width: 2.0
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Line
+  - attributes:
+      line_alpha: 0.1
+      line_width: 2.0
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Line
+  - attributes:
+      line_alpha: 0.2
+      line_width: 2.0
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Line
+  - attributes:
+      axis_label: Iteration
+      axis_label_text_font_size: 18pt
+      axis_line_width: 2
+      major_label_text_font_size: 16pt
+    type: LinearAxis
+  - attributes:
+      axis_label: Iteration
+      axis_label_text_font_size: 18pt
+      axis_line_width: 2
+      major_label_text_font_size: 16pt
+    type: LinearAxis
+  - type: LinearScale
+  - type: LinearScale
+  - attributes:
+      axis_label: Distance [me/bohr^3]
+      axis_label_text_font_size: 18pt
+      axis_line_width: 2
+      major_label_text_font_size: 16pt
+    type: LogAxis
+  - attributes:
+      axis_label: Total energy difference [Htr]
+      axis_label_text_font_size: 18pt
+      axis_line_width: 2
+      major_label_text_font_size: 16pt
+    type: LogAxis
+  - type: LogScale
+  - type: LogScale
+  - type: LogTickFormatter
+  - type: LogTickFormatter
+  - attributes:
+      num_minor_ticks: 10
+    type: LogTicker
+  - attributes:
+      num_minor_ticks: 10
+    type: LogTicker
+  - type: PanTool
+  - type: PanTool
+  - attributes:
+      height: 450
+      width: 800
+    subtype: Figure
+    type: Plot
+  - attributes:
+      height: 450
+      width: 800
+    subtype: Figure
+    type: Plot
+  - attributes:
+      fill_alpha: 0.5
+      fill_color: lightgrey
+      level: overlay
+      line_alpha: 1.0
+      line_color: black
+      line_dash:
+      - 4
+      - 4
+      line_width: 2
+      syncable: false
+      xs_units: screen
+      ys_units: screen
+    type: PolyAnnotation
+  - attributes:
+      fill_alpha: 0.5
+      fill_color: lightgrey
+      level: overlay
+      line_alpha: 1.0
+      line_color: black
+      line_dash:
+      - 4
+      - 4
+      line_width: 2
+      syncable: false
+      xs_units: screen
+      ys_units: screen
+    type: PolyAnnotation
+  - type: PolySelectTool
+  - type: PolySelectTool
+  - type: ProxyToolbar
+  - type: RedoTool
+  - type: RedoTool
+  - type: ResetTool
+  - type: ResetTool
+  - type: SaveTool
+  - type: SaveTool
+  - attributes:
+      fill_alpha:
+        value: 0.1
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.1
+      line_alpha:
+        value: 0.1
+      size:
+        value: 6
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Scatter
+  - attributes:
+      fill_alpha:
+        value: 0.2
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.2
+      line_alpha:
+        value: 0.2
+      size:
+        value: 6
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: black
+      size:
+        value: 6
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Scatter
+  - attributes:
+      fill_alpha:
+        value: 0.1
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.1
+      line_alpha:
+        value: 0.1
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - attributes:
+      fill_alpha:
+        value: 0.2
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.2
+      line_alpha:
+        value: 0.2
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: black
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: Selection
+  - type: TapTool
+  - type: TapTool
+  - attributes:
+      text: Convergence (log)
+    type: Title
+  - attributes:
+      text: Total energy difference over scf-Iterations
+    type: Title
+  - type: Toolbar
+  - type: Toolbar
+  - attributes:
+      toolbar_location: above
+    type: ToolbarBox
+  - type: UndoTool
+  - type: UndoTool
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: UnionRenderers
+  - type: WheelZoomTool
+  - type: WheelZoomTool
+  - type: ZoomInTool
+  - type: ZoomInTool
+  - type: ZoomOutTool
+  - type: ZoomOutTool
+title: Bokeh Application
+version: 2.4.2

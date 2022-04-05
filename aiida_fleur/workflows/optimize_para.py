@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -15,8 +14,6 @@ working/(in the future, optiomal) flapw parameters for a given Structure
 """
 
 #import numpy as np
-from __future__ import absolute_import
-import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
@@ -82,7 +79,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         check parameters, what condictions? complete?
         check input nodes
         """
-        self.report('started fleur_optimize_parameter workflow version {}'.format(self._workflowversion))
+        self.report(f'started fleur_optimize_parameter workflow version {self._workflowversion}')
         self.report('Workchain node identifiers: ')  #{}".format(ProcessRegistry().current_calc_node))
 
         ### input check ###
@@ -131,7 +128,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
         label = 'scf: inpgen'
-        description = '{} inpgen on {}'.format(self.ctx.description_wf, self.ctx.formula)
+        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
 
         inpgencode = self.inputs.inpgen
         if 'calc_parameters' in self.inputs:
@@ -204,7 +201,7 @@ class fleur_optimize_parameters_wc(WorkChain):
             self.report('Done, but something failed in fleur_optimize_parameter_wc.')
 
         # create link to workchain node
-        for link_name, node in six.iteritems(returndict):
+        for link_name, node in returndict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):

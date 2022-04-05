@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -14,11 +13,7 @@ In this module you find the workflow 'FleurStrainWorkChain' for the calculation 
 of deformation potential
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
-
-import six
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
@@ -54,7 +49,7 @@ class FleurStrainWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.3.5'
+    _workflowversion = '0.3.6'
 
     _default_options = {
         'resources': {
@@ -70,7 +65,6 @@ class FleurStrainWorkChain(WorkChain):
     _wf_default = {
         'fleur_runmax': 4,
         'density_converged': 0.02,
-        'serial': False,
         'itmax_per_run': 30,
         'inpxml_changes': [],
         'points': 3,
@@ -78,11 +72,11 @@ class FleurStrainWorkChain(WorkChain):
         'guess': 1.00
     }
 
-    _scf_keys = ['fleur_runmax', 'density_converged', 'serial', 'itmax_per_run', 'inpxml_changes']
+    _scf_keys = ['fleur_runmax', 'density_converged', 'itmax_per_run', 'inpxml_changes']
 
     @classmethod
     def define(cls, spec):
-        super(FleurStrainWorkChain, cls).define(spec)
+        super().define(spec)
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=True)
         spec.input('calc_parameters', valid_type=Dict, required=False)
@@ -105,7 +99,7 @@ class FleurStrainWorkChain(WorkChain):
         check parameters, what conditions? complete?
         check input nodes
         """
-        self.report('Started strain workflow version {}'.format(self._workflowversion))
+        self.report(f'Started strain workflow version {self._workflowversion}')
 
         self.ctx.last_calc2 = None
         self.ctx.calcs = []
@@ -132,14 +126,13 @@ class FleurStrainWorkChain(WorkChain):
             wf_dict = wf_default
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
         self.ctx.points = wf_dict.get('points', 3)
         self.ctx.step = wf_dict.get('step', 0.02)
         self.ctx.guess = wf_dict.get('guess', 1.00)
-        self.ctx.serial = wf_dict.get('serial', False)  # True
         self.ctx.max_number_runs = wf_dict.get('fleur_runmax', 4)
 
         # initialize the dictionary using defaults if no options are given
@@ -150,7 +143,7 @@ class FleurStrainWorkChain(WorkChain):
             options = defaultoptions
 
         # extend options given by user using defaults
-        for key, val in six.iteritems(defaultoptions):
+        for key, val in defaultoptions.items():
             options[key] = options.get(key, val)
         self.ctx.options = options
 
@@ -184,7 +177,7 @@ class FleurStrainWorkChain(WorkChain):
         for point in range(points):
             self.ctx.scalelist.append(startscale + point * step)
 
-        self.report('scaling factors which will be calculated:{}'.format(self.ctx.scalelist))
+        self.report(f'scaling factors which will be calculated:{self.ctx.scalelist}')
         self.ctx.org_volume = self.inputs.structure.get_cell_volume()
         self.ctx.structurs = strain_structures(self.inputs.structure, self.ctx.scalelist)
 
@@ -200,7 +193,7 @@ class FleurStrainWorkChain(WorkChain):
             natoms = len(struc.sites)
             label = str(self.ctx.scalelist[i])
             label_c = '|strain| fleur_scf_wc'
-            description = '|FleurStrainWorkChain|fleur_scf_wc|scale {}, {}'.format(label, i)
+            description = f'|FleurStrainWorkChain|fleur_scf_wc|scale {label}, {i}'
             # inputs['label'] = label_c
             # inputs['description'] = description
 
@@ -260,7 +253,7 @@ class FleurStrainWorkChain(WorkChain):
             calc = self.ctx[label]
 
             if not calc.is_finished_ok:
-                message = ('One SCF workflow was not successful: {}'.format(label))
+                message = f'One SCF workflow was not successful: {label}'
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 continue
@@ -268,7 +261,7 @@ class FleurStrainWorkChain(WorkChain):
             try:
                 _ = calc.outputs.output_scf_wc_para
             except KeyError:
-                message = ('One SCF workflow failed, no scf output node: {}.' ' I skip this one.'.format(label))
+                message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
                 continue
@@ -302,7 +295,7 @@ class FleurStrainWorkChain(WorkChain):
             gs_scale = volume * natoms / self.ctx.org_volume
             if (volume * natoms < volumes[0]) or (volume * natoms > volumes[-1]):
                 warn = ('Groundstate volume was not in the scaling range.')
-                hint = ('Consider rerunning around point {}'.format(gs_scale))
+                hint = f'Consider rerunning around point {gs_scale}'
                 self.ctx.info.append(hint)
                 self.ctx.warnings.append(warn)
         else:
@@ -361,7 +354,7 @@ class FleurStrainWorkChain(WorkChain):
         outdict = create_strain_result_node(outpara=outputnode_t)
 
         # create link to work-chain node
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
     def control_end_wc(self, errormsg):
@@ -382,7 +375,7 @@ def create_strain_result_node(**kwargs):
     This work function will create the output node in the database.
     It also connects the output_node to all nodes the information comes from.
     """
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'outpara':
             outpara = val
     outdict = {}

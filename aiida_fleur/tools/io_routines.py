@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -13,6 +12,7 @@
 Here we collect IO routines and their utility, for writting certain things to files, or post process files.
 For example collection of data or database evaluations, for other people.
 """
+import warnings
 
 
 def write_results_to_file(headerstring, data, destination='./outputfile', seperator='  ', transpose=True):
@@ -35,9 +35,9 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
             itemstring = ''
             for value in item:
                 if isinstance(value, str):
-                    itemstring = itemstring + '{}{}'.format(value, seperator)
+                    itemstring = itemstring + f'{value}{seperator}'
                 else:
-                    itemstring = itemstring + '{0:0.8f}{1:s}'.format(float(value), seperator)
+                    itemstring = itemstring + f'{float(value):0.8f}{seperator:s}'
             datastring = datastring + itemstring.strip() + '\n'
         thefile.write(datastring)
     #thefile.close()
@@ -82,12 +82,11 @@ def write_xps_spectra_datafile(nodes,
     tempst1 = ''
     for label in xdatalabel:
         tempst1 = tempst1 + ' | ' + label
-    tempst2 = (
-        '#####################  Data  ######################\n# Energy [eV] | Total intensity {}\n'.format(tempst1))
+    tempst2 = (f'#####################  Data  ######################\n# Energy [eV] | Total intensity {tempst1}\n')
 
     headstring = headstring + tempst + tempst2
 
-    print(('Writting theoretical XPS data to file: {}'.format(destination)))
+    print(f'Writting theoretical XPS data to file: {destination}')
     write_results_to_file(headstring, data, destination=destination, seperator='  ')
 
 
@@ -120,70 +119,51 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
      outxmlsrc = '/Users/broeder/test/FePt_out.xml'
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=14)
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=-1)
-
-
     """
-    from masci_tools.util.xml.common_functions import eval_xpath
-    from masci_tools.util.xml.xml_setters_basic import xml_delete_tag
+    from masci_tools.util.xml.xml_setters_names import delete_tag
+    from masci_tools.util.schema_dict_util import get_number_of_nodes
+    from masci_tools.util.schema_dict_util import eval_simple_xpath
+    from masci_tools.io.io_fleurxml import load_outxml
     from lxml import etree
 
-    xpath_eig = '/fleurOutput/scfLoop/iteration/eigenvalues'
-    xpath_iter = '/fleurOutput/scfLoop/iteration'
-    tree = None
-    parser = etree.XMLParser(recover=False)
-    outfile_broken = False
-    try:
-        tree = etree.parse(outxmlfilepath, parser)
-    except etree.XMLSyntaxError:
-        outfile_broken = True
-        print('broken')
-
-    if outfile_broken:
-        # repair xmlfile and try to parse what is possible.
-        parser = etree.XMLParser(recover=True)
-        try:
-            tree = etree.parse(outxmlfilepath, parser)
-        except etree.XMLSyntaxError:
-            parse_xml = False
-            successful = False
-            print('failed to parse broken file, I abort.')
-            return
-
-    if tree is None:
-        print('xml tree is None, should not happen, ...')
-        return
+    xmltree, schema_dict = load_outxml(outxmlfilepath)
+    xpath_iteration = schema_dict.tag_xpath('iteration')
 
     # delete eigenvalues (all)
     if delete_eig:
-        new_etree = xml_delete_tag(tree, xpath_eig)
+        iteration_nodes = eval_simple_xpath(xmltree, schema_dict, 'iteration', list_return=True)
+        for iteration in iteration_nodes:
+            #The explicit conversion is done since delete_tag expects a ElementTree in masci-tools <= 0.6.2
+            delete_tag(etree.ElementTree(iteration), schema_dict, 'eigenvalues')
 
     # delete certain iterations
     if iterations_to_keep is not None:
-        root = new_etree.getroot()
-        iteration_nodes = eval_xpath(root, xpath_iter, list_return=True)
-        n_iters = len(iteration_nodes)
-        print(n_iters)
+        root = xmltree.getroot()
+        n_iters = get_number_of_nodes(root, schema_dict, 'iteration')
+        print(f'Found {n_iters} iterations')
         if iterations_to_keep < 0:
             # the first element has 1 (not 0) in xpath expresions
             position_keep = n_iters + iterations_to_keep + 1
-            delete_xpath = xpath_iter + '[position()<{}]'.format(int(position_keep))
+            delete_xpath = f'{xpath_iteration}[position()<{int(position_keep)}]'
         else:
-            delete_xpath = xpath_iter + '[position()>{}]'.format(int(iterations_to_keep))
+            delete_xpath = f'{xpath_iteration}[position()>{int(iterations_to_keep)}]'
 
         if abs(iterations_to_keep) > n_iters:
-            print('Warning: iterations_to_keep is larger then the number of iterations'
-                  ' in the given out.xml file, I keep all.')
+            warnings.warn(
+                'iterations_to_keep is larger then the number of iterations'
+                ' in the given out.xml file, I keep all.', UserWarning)
         else:
-            print(delete_xpath)
-            new_etree = xml_delete_tag(new_etree, delete_xpath)
+            print(f'Deleting iterations under the xpath: {delete_xpath}')
+            xmltree = delete_tag(xmltree, schema_dict, 'iteration', complex_xpath=delete_xpath)
+
+    etree.indent(xmltree)  #Make sure the print looks nice
 
     if dest_file_path is None:
         dest_file_path = outxmlfilepath  # overwrite file
-    if new_etree.getroot() is not None:  #otherwise write fails
-        new_etree.write(dest_file_path)
+    if xmltree.getroot() is not None:  #otherwise write fails
+        xmltree.write(dest_file_path, encoding='utf-8', pretty_print=True)
     else:
-        print('new_etree has no root..., I cannot write to proper xml, skipping this now')
-    return
+        raise ValueError('xmltree has no root..., I cannot write to proper xml')
 
 
 # usage example

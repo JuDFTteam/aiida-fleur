@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -47,7 +46,7 @@ class FleurinputgenCalculation(CalcJob):
 
     _settings_keys = [
         'additional_retrieve_list', 'remove_from_retrieve_list', 'cmdline', 'significant_figures_cell',
-        'significant_figures_positions'
+        'significant_figures_positions', 'profile'
     ]
     # TODO switch all these to init_internal_params?
     _OUTPUT_SUBFOLDER = './fleur_inp_out/'
@@ -81,6 +80,8 @@ class FleurinputgenCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurinpgenparser')
 
         # declaration of outputs of the calclation
+        #TODO: Should this be renamed? FleurinpData inputs/outputs are called fleurinp everywhere
+        #else
         spec.output('fleurinpData', valid_type=FleurinpData, required=True)
 
         # exit codes
@@ -98,6 +99,9 @@ class FleurinputgenCalculation(CalcJob):
                        'ERROR_FLEURINPDATA_INPUT_NOT_VALID',
                        message=('During parsing: FleurinpData could not be initialized, see log. '))
         spec.exit_code(309, 'ERROR_FLEURINPDATA_NOT_VALID', message='During parsing: FleurinpData failed validation.')
+        spec.exit_code(310,
+                       'ERROR_UNKNOWN_PROFILE',
+                       message='The profile {profile} is not known to the used inpgen code')
 
     def prepare_for_submission(self, folder):
         """
@@ -146,6 +150,19 @@ class FleurinputgenCalculation(CalcJob):
                 # TODO warning
                 self.logger.info('settings dict key %s for Fleur calculation'
                                  'not recognized, only %s are allowed.', key, str(self._settings_keys))
+
+        #Check that if a inpgen profile is given no additional parameters are provided
+        #since this will overwrite the effects of the inpgen profile (For now we just issue a warning)
+        if 'profile' in settings_dict:
+            lapw_parameters_given = any('atom' in key for key in parameters_dict)
+            comp = parameters_dict.get('comp', {})
+            lapw_parameters_given = lapw_parameters_given or \
+                                    'kmax' in comp or \
+                                    'gmax' in comp or \
+                                    'gmaxxc' in comp
+            if lapw_parameters_given:
+                self.logger.warning('Inpgen profile specified but atom/LAPW basis specific '
+                                    'parameters are provided. These will conflict/override each other')
 
         #######################################
         #### WRITE ALL CARDS IN INPUT FILE ####
@@ -198,8 +215,12 @@ class FleurinputgenCalculation(CalcJob):
         if int(code_version) < 32:
             # run old inpgen
             cmdline_params = ['-explicit']
+            codeinfo.stdin_name = self._INPUT_FILE_NAME
         else:
-            cmdline_params = ['-explicit', '-inc', '+all', '-f', '{}'.format(self._INPUT_FILE_NAME)]
+            cmdline_params = ['-explicit', '-inc', '+all', '-f', f'{self._INPUT_FILE_NAME}']
+
+        if 'profile' in settings_dict:
+            cmdline_params.extend(['-profile', settings_dict['profile']])
 
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
@@ -207,10 +228,8 @@ class FleurinputgenCalculation(CalcJob):
         codeinfo.cmdline_params = (list(cmdline_params))
 
         codeinfo.code_uuid = code.uuid
-        codeinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._SHELLOUT_FILE_NAME  # shell output will be piped in file
         codeinfo.stderr_name = self._ERROR_FILE_NAME  # std error too
-
         calcinfo.codes_info = [codeinfo]
 
         return calcinfo
@@ -226,7 +245,7 @@ def _lowercase_dict(dic, dict_name):
     from collections import Counter
 
     if isinstance(dic, dict):
-        new_dict = dict((str(k).lower(), val) for k, val in dic.items())
+        new_dict = {str(k).lower(): val for k, val in dic.items()}
         if len(new_dict) != len(dic):
             num_items = Counter(str(k).lower() for k in dic.keys())
             double_keys = ','.join([k for k, val in num_items if val > 1])
@@ -250,6 +269,9 @@ def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=
 
     for site in structure.sites:
         atoms_dict_list.append(site.get_raw())
+
+    if settings is None:
+        settings = {}
 
     write_settings = {}
     if 'significant_figures_cell' in settings:

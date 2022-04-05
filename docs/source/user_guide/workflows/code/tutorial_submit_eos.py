@@ -15,7 +15,6 @@ wf_para = Dict(dict={'points': 9,
 wf_para_scf = Dict(dict={'fleur_runmax': 2,
                         'itmax_per_run': 120,
                         'density_converged': 0.2,
-                        'serial': False,
                         'mode': 'density'
                })
 

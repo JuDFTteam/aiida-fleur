@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 ''' Contains tests for the fleur parser and its routines. '''
 
-from __future__ import absolute_import
 import os
 import pytest
 import math
@@ -16,42 +14,17 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 TEST_INP_XML_PATH1 = os.path.join(aiida_path, '../tests/parsers/fixtures/fleur/relax/inp.xml')
 
 
-def test_fleurparse_relax_file():
+def test_fleurparse_relax_file(test_file):
     """Test if parsing of a given relax.xml file is successfull"""
     from aiida_fleur.parsers.fleur import parse_relax_file
-    from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
+    from masci_tools.io.parsers.fleur_schema import InputSchemaDict
     from aiida.orm import Dict
 
     schema_dict = InputSchemaDict.fromVersion('0.34')
-    filename = os.path.abspath('./files/relaxxml/Fe_relax.xml')
-    with open(filename, 'r') as relaxfile:
+    with open(test_file('relaxxml/Fe_relax.xml')) as relaxfile:
         result = parse_relax_file(relaxfile, schema_dict)
     assert isinstance(result, Dict)
     assert result.get_dict() != {}
-
-
-# parse_dos_file, test for different dos files with spin and without
-@pytest.mark.skip(reason='Test is not implemented')
-def test_parse_dos_file():
-    """
-    test for the fleur dos file parser. test if right output, datastructures are produced without error
-    """
-    from aiida_fleur.parsers.fleur import parse_dos_file
-    # test if array data is prodcued without error
-    assert False
-
-
-# parse_bands_file
-@pytest.mark.skip(reason='Test is not implemented')
-def test_parse_bands_file():
-    """
-    test for band file parse routine.
-    """
-
-    from aiida_fleur.parsers.fleur import parse_bands_file
-
-    # test if a bandsdata object is produced
-    assert False
 
 
 # test the full parser itself. on all kinds of different output files.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests if all available CLI commands can print help."""
 from click import Context, Group
 from aiida_fleur.cmdline import cmd_root

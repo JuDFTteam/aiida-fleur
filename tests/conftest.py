@@ -1,34 +1,71 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Initialise a text database and profile for pytest.
 This part of code is copied from aiida-quantumespresso"""
-from __future__ import absolute_import
 
 import io
 import os
-import collections
+from collections.abc import Mapping
 import pytest
 import sys
 from aiida.orm import Node, Code, Dict, RemoteData, CalcJobNode
+from pathlib import Path
+
+CONFTEST_LOCATION = Path(__file__).parent.resolve()
 
 # aiida_testing.mock_codes in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
 
-run_regression_tests = True  # We set this false for the CI, as long they do not work, enable per hand
+RUN_REGRESSION_TESTS = True
 try:
     import aiida_testing
     from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
-    run_regression_tests = False
+    RUN_REGRESSION_TESTS = False
 
-if run_regression_tests:
+if RUN_REGRESSION_TESTS:
     pytest_plugins = [
         'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
         'masci_tools.testing.bokeh'
     ]  # pylint: disable=invalid-name
 else:
     pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
+
+
+def pytest_addoption(parser):
+    parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
+
+
+def pytest_configure(config):
+    """
+    Here you can add things by a pytest config, could be also part of a separate file
+    So far we add some markers here to be able to execute a certain group of tests
+    We make them all lowercaps as convention
+    """
+    config.addinivalue_line('markers',
+                            'regression_test: test using the aiida-testing plugin for workflow regression tests')
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """After test collection modify collection.
+
+    Skip regression test if aiida-tesing is not there
+    """
+    import aiida
+
+    skip_regression = pytest.mark.skip(
+        reason='Workflow regression test is skipped, because aiida-testing is not available')
+    aiida_version_skip = pytest.mark.skipif(
+        aiida.get_version().startswith('2.'),
+        reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+
+    regression_items = [item for item in items if 'regression_test' in item.keywords]
+    if not RUN_REGRESSION_TESTS:
+        for item in regression_items:
+            item.add_marker(skip_regression)
+
+    for item in regression_items:
+        item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
@@ -56,6 +93,20 @@ def fixture_code(fixture_localhost):
         return Code(input_plugin_name=entry_point_name, remote_computer_exec=[fixture_localhost, '/bin/ls'])
 
     return _fixture_code
+
+
+@pytest.fixture(name='test_file')
+def test_file_fixture():
+    """Test file fixture"""
+
+    def _test_file(relative_path):
+        """
+        Return path to file in the tests/files folder
+        Returns filesystem path
+        """
+        return os.fspath(CONFTEST_LOCATION / 'files' / Path(relative_path))
+
+    return _test_file
 
 
 @pytest.fixture
@@ -93,7 +144,7 @@ def generate_calc_job_node(fixture_localhost):
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
         for key, value in inputs.items():
-            if isinstance(value, collections.Mapping):
+            if isinstance(value, Mapping):
                 flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
             else:
                 flat_inputs.append((prefix + key, value))
@@ -183,6 +234,56 @@ def generate_structure():
 
 
 @pytest.fixture
+def generate_smco5_structure():
+    """Return a `StructureData` representing SmCo5"""
+
+    def _generate_structure():
+        """Return a `StructureData` representing SmCo5"""
+        from aiida.orm import StructureData
+        import numpy as np
+
+        a = 4.9679
+        c = 3.9629
+        cell = np.array([[a, 0.0, 0.0], [a * np.cos(2 * np.pi / 3), a * np.sin(2 * np.pi / 3), 0.0], [0.0, 0.0, c]])
+        structure = StructureData(cell=cell)
+        structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
+        structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([2 / 3, 1 / 3, 0.0]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.0, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.5, 0.0, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.5, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+
+        return structure
+
+    return _generate_structure
+
+
+@pytest.fixture
+def generate_retrieved_data():
+    """
+    Generate orm.FolderData for retrieved output
+    """
+
+    def _generate_retrieved_data(node, name, calc_type='fleur'):
+        """
+        Generate FolderData for the retrieved output of the given node
+        """
+        from aiida import orm
+        from aiida.common import LinkType
+
+        basepath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(basepath, 'parsers', 'fixtures', calc_type, name)
+
+        retrieved = orm.FolderData()
+        retrieved.put_object_from_tree(filepath)
+        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.store()
+        return retrieved
+
+    return _generate_retrieved_data
+
+
+@pytest.fixture
 def generate_kpoints_mesh():
     """Return a `KpointsData` node."""
 
@@ -263,8 +364,8 @@ def inpxml_etree():
 
     def _get_etree(path, return_schema=False):
         from lxml import etree
-        from masci_tools.io.parsers.fleur.fleur_schema import InputSchemaDict
-        with open(path, 'r') as inpxmlfile:
+        from masci_tools.io.parsers.fleur_schema import InputSchemaDict
+        with open(path) as inpxmlfile:
             tree = etree.parse(inpxmlfile)
             version = tree.getroot().attrib['fleurInputVersion']
             schema_dict = InputSchemaDict.fromVersion(version)
@@ -332,7 +433,7 @@ def generate_workchain_base(generate_workchain, generate_inputs_base, generate_c
             node.set_exit_status(exit_code.status)
 
             process.ctx.iteration = 1
-            process.ctx.calculations = [node]
+            process.ctx.children = [node]
 
         return process
 
@@ -370,7 +471,7 @@ def generate_work_chain_node():
         """Flatten inputs recursively like :meth:`aiida.engine.processes.process::Process._flatten_inputs`."""
         flat_inputs = []
         for key, value in inputs.items():
-            if isinstance(value, collections.Mapping):
+            if isinstance(value, Mapping):
                 flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
             else:
                 flat_inputs.append((prefix + key, value))
@@ -481,7 +582,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath, 'r') as jfile:
+        with open(jsonfilepath) as jfile:
             node_dict = json.load(jfile)
 
         return node_dict
@@ -567,80 +668,48 @@ def generate_structure_cif():
 
 
 @pytest.fixture(scope='function')
-def create_or_fake_local_code(aiida_local_code_factory):
-    """
-    Create or fake a local code.
-    This is old consider using mock-code_factory of aiida-testing instead
-    """
-
-    def _get_code(executable, exec_relpath, entrypoint):
-        from aiida.tools.importexport import import_data, export
-        from aiida.orm import load_node
-
-        _exe_path = os.path.abspath(exec_relpath)
-
-        # if path is non existent, we create a dummy executable
-        # if all caches are there, it should run, like on a CI server
-        if not os.path.exists(_exe_path):
-            open(_exe_path, 'a').close()  #pylint: disable=consider-using-with
-
-        # make sure code is found in PATH
-        os.environ['PATH'] += ':' + _exe_path
-
-        # get code using aiida_local_code_factory fixture
-        code = aiida_local_code_factory(entrypoint, executable)
-
-        return code
-
-    return _get_code
-
-
-@pytest.fixture(scope='function')
-def inpgen_local_code(create_or_fake_local_code):
+def inpgen_local_code(mock_code_factory, request):
     """
     Create, inpgen code
     """
-    executable = 'inpgen'  # name of the inpgen executable
-    exec_rel_path = 'local_exe/'  # location where it is found
-    entrypoint = 'fleur.inpgen'  # entrypoint
-    # prepend text to be added before execution
-    inpgen_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
-    return inpgen_code
+    #Adapted from shared_datadir of pytest-datadir to not use paths
+    #in the tmp copies created by pytest
+    data_dir = Path(os.path.join(request.fspath.dirname, 'calculations'))
+    if not data_dir.is_dir():
+        data_dir.mkdir()
+
+    InpgenCode = mock_code_factory(label='inpgen',
+                                   data_dir_abspath=data_dir,
+                                   entry_point='fleur.inpgen',
+                                   ignore_files=[
+                                       '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
+                                       '*.econfig', 'struct.xsf'
+                                   ])
+
+    return InpgenCode
 
 
 @pytest.fixture(scope='function')
-def fleur_local_code(create_or_fake_local_code):
+def fleur_local_code(mock_code_factory, pytestconfig, request):
     """
     Create or load Fleur code
     """
-    executable = 'fleur'  # name of the KKRhost executable
-    exec_rel_path = 'local_exe/'  # location where it is found
-    entrypoint = 'fleur.fleur'  # entrypoint
-    fleur_code = create_or_fake_local_code(executable, exec_rel_path, entrypoint)
+    #Adapted from shared_datadir of pytest-datadir to not use paths
+    #in the tmp copies created by pytest
+    data_dir = Path(os.path.join(request.fspath.dirname, 'calculations'))
+    if not data_dir.is_dir():
+        data_dir.mkdir()
 
-    return fleur_code
+    FleurCode = mock_code_factory(label='fleur',
+                                  data_dir_abspath=data_dir,
+                                  entry_point='fleur.fleur',
+                                  ignore_files=[
+                                      '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
+                                      'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history.*', 'juDFT_times.json',
+                                      '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'
+                                  ])
 
+    if pytestconfig.getoption('--local-exe-hdf5'):
+        FleurCode.description = 'Local executable with HDF5'
 
-@pytest.fixture(scope='function')
-def clear_spec():
-    """Ficture to delete the spec of workchains"""
-    from aiida_fleur.workflows.scf import FleurScfWorkChain
-    from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-    from aiida_fleur.workflows.eos import FleurEosWorkChain
-
-    def clear_sp():
-        # I do not fully comprehend why do we require this for a clean environment
-        if hasattr(FleurScfWorkChain, '_spec'):
-            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-            # otherwise we will run into DbNode matching query does not exist
-            del FleurScfWorkChain._spec
-        if hasattr(FleurBaseWorkChain, '_spec'):
-            # we require this as long we have mutable types as defaults, see aiidateam/aiida-core#3143
-            # otherwise we will run into DbNode matching query does not exist
-            del FleurBaseWorkChain._spec
-        if hasattr(FleurEosWorkChain, '_spec'):
-            del FleurEosWorkChain._spec
-
-    clear_sp()
-    yield  # test runs
-    clear_sp()
+    return FleurCode

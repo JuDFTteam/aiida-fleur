@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -40,6 +39,7 @@ def create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=N
     force_parity = cf_dict.get('force_parity', False)
     force_odd = cf_dict.get('force_odd', False)
     force_even = cf_dict.get('force_even', False)
+    include_gamma = cf_dict.get('include_gamma', False)
     # we could also parse directly the dict to the function with ** but this way we ignore
     # wrong or additional keys.
     new_calc_para = create_kpoints_from_distance_parameter_ncf(structure,
@@ -47,12 +47,13 @@ def create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=N
                                                                force_parity=force_parity,
                                                                force_odd=force_odd,
                                                                force_even=force_even,
+                                                               include_gamma=include_gamma,
                                                                calc_parameters=calc_parameters)
     return new_calc_para
 
 
 def create_kpoints_from_distance_parameter_ncf(structure, distance, force_parity, force_odd=False, \
-                                               force_even=False, calc_parameters=None):
+                                               force_even=False,include_gamma=False, calc_parameters=None):
     """
     Generate a uniformly spaced kpoint mesh for a given structure
     and merge it into a given calc_parameter node or create a new one.
@@ -104,8 +105,11 @@ def create_kpoints_from_distance_parameter_ncf(structure, distance, force_parity
         nkpoints = max(kpointsmesh)
         kpointsmesh = [nkpoints, nkpoints, nkpoints]
 
-    new_calc_para = Dict(dict={'kpt': {'div1': kpointsmesh[0], 'div2': kpointsmesh[1], 'div3': kpointsmesh[2]}})
+    mesh_spec = {'kpt': {'div1': kpointsmesh[0], 'div2': kpointsmesh[1], 'div3': kpointsmesh[2]}}
+    if include_gamma:
+        mesh_spec['kpt']['gamma'] = True
 
+    new_calc_para = Dict(dict=mesh_spec)
     if calc_parameters is not None:
         # Override false, since we want to keep other kpts keys in calc_parameters
         new_calc_para = merge_parameter(new_calc_para, calc_parameters, overwrite=False, merge=True)
