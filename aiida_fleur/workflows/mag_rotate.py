@@ -2,6 +2,7 @@ import copy
 
 from aiida.engine import WorkChain, ToContext, if_, while_
 from aiida.engine import calcfunction as cf
+from aiida.engine import ExitCode
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 
@@ -97,7 +98,7 @@ class FleurMagRotateWorkChain(WorkChain):
             if not last_scf.is_finished_ok:
                 message = f'The Configuration {self.ctx.current_configuration} was not successful.'
                 self.report(message)
-                return self.exit_codes.ERRO_SUBPROCESS_FAILED
+                return self.exit_codes.ERROR_SUBPROCESS_FAILED
 
             inputs_scf.remote_data = last_scf.outputs.last_calc.remote_folder
             if 'fleurinp' in inputs_scf:
@@ -153,7 +154,10 @@ class FleurMagRotateWorkChain(WorkChain):
 
     def submit_next_calculation(self):
 
-        label, inputs = self.generate_next_configuration()
+        res = self.generate_next_configuration()
+        if isinstance(res, ExitCode):
+            return res
+        label, inputs = res
         calc = self.submit(FleurScfWorkChain, **inputs)
 
         return ToContext(**{label: calc})
