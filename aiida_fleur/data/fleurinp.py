@@ -98,7 +98,7 @@ class FleurinpData(Data):
     FleurinpData that way and start a new calculation from it.
     """
 
-    __version__ = '0.6.0'
+    __version__ = '0.5.0'
 
     def __init__(self, **kwargs):
         """
