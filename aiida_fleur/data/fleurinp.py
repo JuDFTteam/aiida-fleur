@@ -661,6 +661,10 @@ class FleurinpData(Data):
         """
         Convert the fleurinp data node to a different inp.xml version
         and return a clone of the node
+
+        .. note::
+            If the Fleurinp contains included xml trees the resulting
+            FleurinpData will contain only the combined inp.xml
         """
         return self.convert_inpxml_ncf(to_version.value)
 
@@ -668,6 +672,10 @@ class FleurinpData(Data):
         """
         Convert the fleurinp data node to a different inp.xml version
         and return a clone of the node
+
+        .. note::
+            If the Fleurinp contains included xml trees the resulting
+            FleurinpData will contain only the combined inp.xml
         """
         from masci_tools.tools.fleur_inpxml_converter import convert_inpxml
         import tempfile

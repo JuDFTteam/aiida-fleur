@@ -175,6 +175,23 @@ def test_get_tag(create_fleurinp, inpxmlfilepath):
     assert tag != []
 
 
+def test_fleurinp_convert_inpxml(create_fleurinp):
+    """
+    Test that the convert_inpxml method works correctly
+    """
+    inpxmlfilepath = os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/FePt/31/inp.xml'))
+
+    fleurinp = create_fleurinp(inpxmlfilepath)
+
+    fleurinp_converted = fleurinp.convert_inpxml_ncf('0.34')
+
+    assert fleurinp_converted.files == ['inp.xml']
+    assert fleurinp_converted.inp_version == '0.34'
+
+    #Random check that the bzintegration tag has moved
+    assert 'bzIntegration' in fleurinp_converted.inp_dict['cell']
+
+
 folderlist = [
     os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/Fe_1l_SOCXML/files')),
     os.path.abspath(os.path.join(inpxmlfilefolder, '../files/inpxml/FePt')),
