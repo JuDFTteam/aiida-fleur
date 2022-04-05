@@ -33,7 +33,7 @@
         "lxml~=4.8",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools ~= 0.9.0",
+        "masci-tools ~= 0.9.0,>=0.9.1",
         "future",
         "pyhull",
         "more_itertools",
