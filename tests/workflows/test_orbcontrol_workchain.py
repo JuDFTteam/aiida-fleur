@@ -22,8 +22,8 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code,
-                                                generate_smco5_structure, clear_database, aiida_caplog):
+def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code, generate_smco5_structure,
+                                    clear_database, aiida_caplog):
     """
     Full example using the OrbControl workchain with just a structure as input.
     """
@@ -109,24 +109,22 @@ def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_
     assert n['successful_configs'] == [0, 1, 2, 3, 4, 5, 6]
     assert n['non_converged_configs'] == []
     assert n['groundstate_configuration'] == 3
-    assert pytest.approx(n['total_energy']) == [-17383.131898459,
-                  -17383.106547481,
-                  -17383.105996931,
-                  -17383.141450442,
-                  -17383.105996931,
-                  -17383.106547481,
-                  -17383.131898459]
-    assert n['configurations'] == [{'all-Sm-3': [[0, 1, 1, 1, 1, 1, 1],
-                                                 [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 0, 1, 1, 1, 1, 1],
-                                                [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 1, 0, 1, 1, 1, 1],
-                                                [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 1, 1, 0, 1, 1, 1],
-                                                [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 1, 1, 1, 0, 1, 1],
-                                                [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 1, 1, 1, 1, 0, 1],
-                                                [0, 0, 0, 0, 0, 0, 0]]},
-                                    {'all-Sm-3': [[1, 1, 1, 1, 1, 1, 0],
-                                                [0, 0, 0, 0, 0, 0, 0]]}]
+    assert pytest.approx(n['total_energy']) == [
+        -17383.131898459, -17383.106547481, -17383.105996931, -17383.141450442, -17383.105996931, -17383.106547481,
+        -17383.131898459
+    ]
+    assert n['configurations'] == [{
+        'all-Sm-3': [[0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 0, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 1, 0, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 1, 1, 0, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 1, 1, 1, 0, 1, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 1, 1, 1, 1, 0, 1], [0, 0, 0, 0, 0, 0, 0]]
+    }, {
+        'all-Sm-3': [[1, 1, 1, 1, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0]]
+    }]

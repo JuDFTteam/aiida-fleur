@@ -705,7 +705,7 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
                                   entry_point='fleur.fleur',
                                   ignore_files=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
-                                      'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history.*', 'juDFT_times.json',
+                                      'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'
                                   ])
 
