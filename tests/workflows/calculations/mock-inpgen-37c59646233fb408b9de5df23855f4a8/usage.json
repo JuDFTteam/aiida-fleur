@@ -1,0 +1,15 @@
+{
+   "url":"www.flapw.de/collect.pl",
+   "calculation-id":"06323B094B6DE780",
+   "data": {
+        "cpu_model":"49",
+        "cpu_modelname":"AMD EPYC 7502P 32-Core Processor",
+        "VmPeak":60252,
+        "VmSize":59616,
+        "VmHWM":8804,
+        "VmData":1232,
+        "VmStk":252,
+        "VmExe":9724,
+        "VmSwap":0
+      }
+}

@@ -683,7 +683,7 @@ def inpgen_local_code(mock_code_factory, request):
                                    entry_point='fleur.inpgen',
                                    ignore_files=[
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
-                                       '*.econfig', 'struct.xsf', 'out'
+                                       '*.econfig', 'struct.xsf'
                                    ])
 
     return InpgenCode
