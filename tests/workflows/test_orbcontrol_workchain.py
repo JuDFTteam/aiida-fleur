@@ -22,7 +22,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_orbcontrol_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
+def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code,
                                                 generate_smco5_structure, clear_database, aiida_caplog):
     """
     Full example using the OrbControl workchain with just a structure as input.
