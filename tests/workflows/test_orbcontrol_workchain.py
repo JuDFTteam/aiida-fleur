@@ -109,5 +109,24 @@ def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_
     assert n['successful_configs'] == [0, 1, 2, 3, 4, 5, 6]
     assert n['non_converged_configs'] == []
     assert n['groundstate_configuration'] == 3
-    assert n['total_energy'] == []
-    assert n['configurations'] == []
+    assert pytest.approx(n['total_energy']) == [-17383.131898459,
+                  -17383.106547481,
+                  -17383.105996931,
+                  -17383.141450442,
+                  -17383.105996931,
+                  -17383.106547481,
+                  -17383.131898459]
+    assert n['configurations'] == [{'all-Sm-3': [[0, 1, 1, 1, 1, 1, 1],
+                                                 [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 0, 1, 1, 1, 1, 1],
+                                                [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 1, 0, 1, 1, 1, 1],
+                                                [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 1, 1, 0, 1, 1, 1],
+                                                [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 1, 1, 1, 0, 1, 1],
+                                                [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 1, 1, 1, 1, 0, 1],
+                                                [0, 0, 0, 0, 0, 0, 0]]},
+                                    {'all-Sm-3': [[1, 1, 1, 1, 1, 1, 0],
+                                                [0, 0, 0, 0, 0, 0, 0]]}]
