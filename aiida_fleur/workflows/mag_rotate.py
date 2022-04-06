@@ -29,6 +29,7 @@ class FleurMagRotateWorkChain(WorkChain):
     def define(cls, spec):
         super().define(spec)
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
+        spec.input('wf_parameters_first_scf', valid_type=orm.Dict, required=False)
         spec.input('wf_parameters', valid_type=orm.Dict)
 
         spec.outline(
@@ -107,6 +108,8 @@ class FleurMagRotateWorkChain(WorkChain):
         wf_parameters = {}
         if 'wf_parameters' in inputs_scf:
             wf_parameters = inputs_scf.wf_parameters.get_dict()
+        if self.ctx.current_configuration == 0 and 'wf_parameters_first_scf' in self.inputs:
+            wf_parameters = self.inputs.wf_parameters_first_scf.get_dict()
 
         theta, phi = self.ctx.wf_dict['angles'][self.ctx.current_configuration]
         if self.ctx.wf_dict['noco']:
