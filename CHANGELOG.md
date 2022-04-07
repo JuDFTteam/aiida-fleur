@@ -1,5 +1,11 @@
 # Changelog
 
+## v.1.3.1
+### release compatible with AiiDA-core 1.3.0+
+- Fix for masci-tools dependency constraint. The constraint would previously reject the next minor version of masci-tools (i.e `0.10.0`)
+- Small fixes in zenodo metadata
+- Added `convert_inpxml` method to `FleurinpData` to convert to different file versions
+
 ## v.1.3.0
 ### release compatible with AiiDA-core 1.3.0+
 - Guraranteed support for Fleur versions up to Max6
