@@ -7,7 +7,7 @@
 [![Build status](https://github.com/JuDFTteam/aiida-fleur/workflows/aiida-fleur/badge.svg?branch=develop&event=push)](https://github.com/JuDFTteam/aiida-fleur/actions)
 [![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](https://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
 [![codecov](https://codecov.io/gh/JuDFTteam/aiida-fleur/branch/develop/graph/badge.svg)](https://codecov.io/gh/JuDFTteam/aiida-fleur)
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5531549.svg)](https://doi.org/10.5281/zenodo.5531549)
 
 This software contains a plugin that enables the usage of the all-electron
 DFT [FLEUR code](http://www.flapw.de) with the [AiiDA framework](http://www.aiida.net).
