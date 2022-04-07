@@ -34,7 +34,7 @@ class FleurMagRotateWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            if_(cls.run_all)(cls.generate_all_configurations, cls.submit_calculations).else_(
+            if_(cls.run_all)(cls.submit_calculations).else_(
                 while_(cls.configurations_left)(cls.submit_next_calculation)), cls.return_results)
 
         spec.output('output_mag_rotate_wc_para', valid_type=orm.Dict, required=True)
@@ -165,11 +165,17 @@ class FleurMagRotateWorkChain(WorkChain):
 
         return ToContext(**{label: calc})
 
-    def generate_all_configurations(self):
-        pass
-
     def submit_calculations(self):
-        pass
+
+        calcs = {}
+        while self.configurations_left():
+            res = self.generate_next_configuration()
+            if isinstance(res, ExitCode):
+                return res
+            label, inputs = res
+            calcs[label] = self.submit(FleurScfWorkChain, **inputs)
+
+        return ToContext(**calcs)
 
     def return_results(self):
 
