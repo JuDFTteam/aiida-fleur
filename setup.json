@@ -1,5 +1,5 @@
 {
-    "version": "1.3.0",
+    "version": "1.3.1",
     "name": "aiida-fleur",
     "url": "https://github.com/JuDFTteam/aiida-fleur",
     "license": "MIT License, see LICENSE.txt file.",
@@ -33,7 +33,7 @@
         "lxml~=4.8",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools ~= 0.9.0,>=0.9.1",
+        "masci-tools~=0.9,>=0.9.1",
         "future",
         "pyhull",
         "more_itertools",
