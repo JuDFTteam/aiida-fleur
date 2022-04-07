@@ -185,7 +185,12 @@ class FleurinpData(Data):
         if key is not None:
             path = key
 
-        return super().open(path, mode=mode)
+        try:
+            handle = super().open(path, mode=mode)
+        except AttributeError:
+            handle = self.base.repository.open(path, mode=mode)
+
+        return handle
 
     def get_content(self, filename='inp.xml'):
         """
