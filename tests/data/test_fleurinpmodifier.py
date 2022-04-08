@@ -280,3 +280,35 @@ def test_fleurinpmodifier_error_messages(create_fleurinp):
         fm.freeze()
 
     fm = FleurinpModifier(fleurinp_tmp)
+
+
+def test_fleurinpmodifier_element_serialization(create_fleurinp):
+    """Tests of fleurinpmodifier registration methods accepting etree.Elements as arguments
+    If any of these don't serialize the elements correctly you will see an error that etree.fromstring
+    is passed an empty list (This is a weird side effect for etree._Element of the automatic serialization done in aiida-core)
+    """
+    from lxml import etree
+    fleurinp_tmp = create_fleurinp(inpxmlfilefolder)
+
+    fm = FleurinpModifier(fleurinp_tmp)
+    fm.create_tag(etree.Element('expertModes'))
+    fm.delete_tag('expertModes')
+    fm.create_tag(tag=etree.Element('expertModes'))
+    fm.delete_tag('expertModes')
+    fm.create_tag(etree.Element('expertModes'), '/fleurInput/calculationSetup')
+    fm.delete_tag('expertModes')
+    fm.xml_create_tag('/fleurInput/calculationSetup', etree.Element('expertModes'))
+    fm.delete_tag('expertModes')
+    fm.xml_create_tag('/fleurInput/calculationSetup', element=etree.Element('expertModes'))
+    fm.delete_tag('expertModes')
+    fm.xml_create_tag('/fleurInput/calculationSetup', etree.Element('expertModes'), 0)
+
+    fm.replace_tag('expertModes', etree.Element('expertModes'))
+    fm.replace_tag('expertModes', element=etree.Element('expertModes'))
+    fm.replace_tag('expertModes', etree.Element('expertModes'), '/fleurInput/calculationSetup/expertModes')
+    fm.xml_replace_tag('/fleurInput/calculationSetup/expertModes', etree.Element('expertModes'))
+    fm.xml_replace_tag('/fleurInput/calculationSetup/expertModes', element=etree.Element('expertModes'))
+    fm.xml_replace_tag('/fleurInput/calculationSetup/expertModes', etree.Element('expertModes'), 0)
+
+    fm.show()
+    fm.freeze()
