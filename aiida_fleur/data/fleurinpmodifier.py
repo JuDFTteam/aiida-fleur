@@ -327,7 +327,7 @@ class FleurinpModifier(FleurXMLModifier):
                     args = args[0], element, *args[2:]
                 else:
                     args = args[0], element
-        print(args, kwargs)
+
         super().xml_create_tag(*args, **kwargs)
 
     def create_tag(self, *args, **kwargs):
@@ -386,7 +386,7 @@ class FleurinpModifier(FleurXMLModifier):
                     args = tag, *args[1:]
                 else:
                     args = (tag,)
-            print(args, kwargs)
+
             super().create_tag(*args, **kwargs)
 
     def delete_tag(self, *args, **kwargs):
