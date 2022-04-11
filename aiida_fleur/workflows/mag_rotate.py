@@ -112,42 +112,47 @@ class FleurMagRotateWorkChain(WorkChain):
             wf_parameters = self.inputs.wf_parameters_first_scf.get_dict()
 
         theta, phi = self.ctx.wf_dict['angles'][self.ctx.current_configuration]
+
         if self.ctx.wf_dict['noco']:
-            wf_parameters.setdefault('inpxml_changes', []).extend([('set_inpchanges', {
+            fchanges = [('set_inpchanges', {
                 'changes': {
                     'l_noco': True,
                     'ctail': False
                 }
             }),
-                                                                   ('set_atomgroup', {
-                                                                       'species': self.ctx.wf_dict['noco_species_name'],
-                                                                       'changes': {
-                                                                           'nocoparams': {
-                                                                               'alpha': phi,
-                                                                               'beta': theta
-                                                                           }
-                                                                       }
-                                                                   })])
+                        ('set_atomgroup', {
+                            'species': self.ctx.wf_dict['noco_species_name'],
+                            'changes': {
+                                'nocoparams': {
+                                    'alpha': phi,
+                                    'beta': theta
+                                }
+                            }
+                        })]
         else:
-            wf_parameters.setdefault('inpxml_changes', []).extend([('set_inpchanges', {
+            fchanges = [('set_inpchanges', {
                 'changes': {
                     'l_soc': True
                 }
             }),
-                                                                   ('set_inpchanges', {
-                                                                       'changes': {
-                                                                           'phi': phi,
-                                                                           'theta': theta
-                                                                       },
-                                                                       'path_spec': {
-                                                                           'phi': {
-                                                                               'contains': 'soc'
-                                                                           },
-                                                                           'theta': {
-                                                                               'contains': 'soc'
-                                                                           }
-                                                                       }
-                                                                   })])
+                        ('set_inpchanges', {
+                            'changes': {
+                                'phi': phi,
+                                'theta': theta
+                            },
+                            'path_spec': {
+                                'phi': {
+                                    'contains': 'soc'
+                                },
+                                'theta': {
+                                    'contains': 'soc'
+                                }
+                            }
+                        })]
+
+        fchanges.extend(inputs_scf.wf_parameters.setdefault('inpxml_changes', []))
+        inputs_scf.wf_parameters['inpxml_changes'] = fchanges
+
         inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
         inputs_scf.metadata.call_link_label = label
