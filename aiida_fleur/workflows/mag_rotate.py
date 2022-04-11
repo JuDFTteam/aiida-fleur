@@ -150,8 +150,8 @@ class FleurMagRotateWorkChain(WorkChain):
                             }
                         })]
 
-        fchanges.extend(inputs_scf.wf_parameters.setdefault('inpxml_changes', []))
-        inputs_scf.wf_parameters['inpxml_changes'] = fchanges
+        fchanges.extend(wf_parameters.setdefault('inpxml_changes', []))
+        wf_parameters['inpxml_changes'] = fchanges
 
         inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
