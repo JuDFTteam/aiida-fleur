@@ -862,7 +862,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if self.ctx.successful:
             self.report('Done, Orbital occupation control calculation complete')
-        elif len(t_energylist) != 0:
+        elif any(e is not None for e in t_energylist):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
         else:
@@ -870,7 +870,7 @@ class FleurOrbControlWorkChain(WorkChain):
                         ' wrong in your setup')
 
         #Find the minimal total energy in the list
-        if len(t_energylist) != 0:
+        if any(e is not None for e in t_energylist):
             groundstate_index = np.nanargmin(np.array(t_energylist, dtype=np.float))
             out['groundstate_configuration'] = groundstate_index
 
