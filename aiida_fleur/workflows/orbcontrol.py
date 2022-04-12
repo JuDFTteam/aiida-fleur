@@ -158,7 +158,12 @@ class FleurOrbControlWorkChain(WorkChain):
         'use_orbital_occupation': False,
         'fixed_occupations': None,
         'fixed_configurations': None,
-        'inpxml_changes': []
+        'inpxml_changes': [],
+        'add_comp_para': {
+            'only_even_MPI': False,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        },
     }
 
     @classmethod
@@ -693,7 +698,8 @@ class FleurOrbControlWorkChain(WorkChain):
                                        self.ctx.options,
                                        label,
                                        description,
-                                       settings=settings)
+                                       settings=settings,
+                                       add_comp_para=self.ctx.wf_dict['add_comp_para'])
 
         return input_fixed, None
 
