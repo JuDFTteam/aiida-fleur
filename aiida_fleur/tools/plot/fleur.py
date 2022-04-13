@@ -494,7 +494,8 @@ def plot_fleur_orbcontrol_wc(nodes,
     converged_energy = []
     non_converged_configs = []
     non_converged_energy = []
-    size_data = []
+    converged_size_data = []
+    non_converged_size_data = []
     for node in nodes:
         outputs = node.get_dict()
 
@@ -512,7 +513,13 @@ def plot_fleur_orbcontrol_wc(nodes,
         if size_func is not None:
             #The size_func operates on the original workchain node (to make introspection easier)
             wc_node = node.get_incoming(link_type=LinkType.RETURN).one().node
-            size_data.append(size_func(wc_node))
+            size = size_func(wc_node)
+            if not isinstance(size, list) or len(size) != len(total_energy):
+                raise ValueError(f'Wrong length of size data. Expected {len(total_energy)} entries: '
+                                 f'Got {len(size) if isinstance(size, list) else size}')
+
+            converged_size_data.extend(size[i] for i in converged)
+            non_converged_size_data.extend(size[i] for i in non_converged)
 
         offset += max(chain(converged, non_converged, outputs['failed_configs'])) + 1
         lines.append(offset - 0.5)
@@ -539,8 +546,8 @@ def plot_fleur_orbcontrol_wc(nodes,
     kwargs.setdefault('legend', True)
     if len(lines) > 1:
         kwargs.setdefault('lines', {'vertical': lines[:-1]})
-    if size_data:
-        kwargs.setdefault('size_data', size_data)
+    if size_func is not None:
+        kwargs.setdefault('size_data', [converged_size_data, non_converged_size_data])
 
     p1 = scatter([converged_configs, non_converged_configs], [converged_energy, non_converged_energy],
                  color=['darkblue', 'darkred'],
