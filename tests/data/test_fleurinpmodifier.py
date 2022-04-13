@@ -13,7 +13,8 @@
 import os
 import copy
 import pytest
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
+from aiida import orm
 
 # Collect the input files
 file_path1 = '../files/inpxml/FePt/inp.xml'
@@ -320,3 +321,183 @@ def test_fleurinpmodifier_element_serialization(create_fleurinp):
 
     fm.show()
     fm.freeze()
+
+
+def test_inpxml_changes():
+    """
+    Test of the inpxml_changes contextmanager
+    """
+    from aiida_fleur.workflows.banddos import FleurBandDosWorkChain
+    d = {}
+    with inpxml_changes(d) as fm:
+        fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+        fm.shift_value({'Kmax': 0.1}, 'rel')
+        fm.shift_value_species_label('                 222', 'radius', 3, mode='abs')
+        fm.set_species('all', {'mtSphere': {'radius': 3.333}})
+        fm.set_file('test', dst_filename='/test/path')
+
+    assert d == {
+        'inpxml_changes': [('set_inpchanges', {
+            'changes': {
+                'Kmax': 3.9,
+                'dos': True
+            }
+        }), ('shift_value', {
+            'changes': {
+                'Kmax': 0.1
+            },
+            'mode': 'rel'
+        }),
+                           ('shift_value_species_label', {
+                               'atom_label': '                 222',
+                               'attribute_name': 'radius',
+                               'mode': 'abs',
+                               'number_to_add': 3
+                           }), ('set_species', {
+                               'changes': {
+                                   'mtSphere': {
+                                       'radius': 3.333
+                                   }
+                               },
+                               'species_name': 'all'
+                           }), ('set_file', {
+                               'dst_filename': '/test/path',
+                               'filename': 'test',
+                               'node': None
+                           })]
+    }
+
+    d['test'] = 'A'
+    d = orm.Dict(dict=d)
+    with inpxml_changes(d, append=False) as fm:
+        fm.delete_tag('symmetryOperations')
+        fm.create_tag('symmetryOperations')
+
+    assert d.get_dict() == {
+        'test':
+        'A',
+        'inpxml_changes': [('delete_tag', {
+            'tag_name': 'symmetryOperations'
+        }), ('create_tag', {
+            'tag': 'symmetryOperations'
+        }), ('set_inpchanges', {
+            'changes': {
+                'Kmax': 3.9,
+                'dos': True
+            }
+        }), ('shift_value', {
+            'changes': {
+                'Kmax': 0.1
+            },
+            'mode': 'rel'
+        }),
+                           ('shift_value_species_label', {
+                               'atom_label': '                 222',
+                               'attribute_name': 'radius',
+                               'mode': 'abs',
+                               'number_to_add': 3
+                           }), ('set_species', {
+                               'changes': {
+                                   'mtSphere': {
+                                       'radius': 3.333
+                                   }
+                               },
+                               'species_name': 'all'
+                           }), ('set_file', {
+                               'dst_filename': '/test/path',
+                               'filename': 'test',
+                               'node': None
+                           })]
+    }
+
+    d = FleurBandDosWorkChain.get_builder()
+    with inpxml_changes(d) as fm:
+        fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+        fm.shift_value({'Kmax': 0.1}, 'rel')
+        fm.shift_value_species_label('                 222', 'radius', 3, mode='abs')
+        fm.set_species('all', {'mtSphere': {'radius': 3.333}})
+
+    with inpxml_changes(d.scf) as fm:
+        fm.delete_tag('symmetryOperations')
+        fm.create_tag('symmetryOperations')
+
+    assert d.wf_parameters.get_dict() == {
+        'inpxml_changes': [('set_inpchanges', {
+            'changes': {
+                'Kmax': 3.9,
+                'dos': True
+            }
+        }), ('shift_value', {
+            'changes': {
+                'Kmax': 0.1
+            },
+            'mode': 'rel'
+        }),
+                           ('shift_value_species_label', {
+                               'atom_label': '                 222',
+                               'attribute_name': 'radius',
+                               'mode': 'abs',
+                               'number_to_add': 3
+                           }), ('set_species', {
+                               'changes': {
+                                   'mtSphere': {
+                                       'radius': 3.333
+                                   }
+                               },
+                               'species_name': 'all'
+                           })]
+    }
+    assert d.scf.wf_parameters.get_dict() == {
+        'inpxml_changes': [('delete_tag', {
+            'tag_name': 'symmetryOperations'
+        }), ('create_tag', {
+            'tag': 'symmetryOperations'
+        })]
+    }
+
+    d = FleurBandDosWorkChain.get_builder()
+    d.wf_parameters = orm.Dict(
+        dict={
+            'test':
+            'A',
+            'inpxml_changes': [('delete_tag', {
+                'tag_name': 'symmetryOperations'
+            }), ('create_tag', {
+                'tag': 'symmetryOperations'
+            })]
+        }).store()
+    with pytest.raises(ValueError):
+        with inpxml_changes(d, builder_replace_stored=False) as fm:
+            fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+
+    with inpxml_changes(d) as fm:
+        fm.set_inpchanges({'dos': True, 'Kmax': 3.9})
+
+    assert d.wf_parameters.get_dict() == {
+        'inpxml_changes': [['delete_tag', {
+            'tag_name': 'symmetryOperations'
+        }], ['create_tag', {
+            'tag': 'symmetryOperations'
+        }], ('set_inpchanges', {
+            'changes': {
+                'Kmax': 3.9,
+                'dos': True
+            }
+        })],
+        'test':
+        'A'
+    }
+
+    d = orm.Dict(dict={}).store()
+    with pytest.raises(ValueError):
+        with inpxml_changes(d) as fm:
+            pass
+
+    d = orm.Dict(dict={})
+    with inpxml_changes(d) as fm:
+        with pytest.raises(ValueError):
+            fm.show()
+        with pytest.raises(ValueError):
+            fm.validate()
+        with pytest.raises(ValueError):
+            fm.freeze()

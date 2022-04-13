@@ -28,6 +28,12 @@ from aiida.orm import Data, Node, load_node, CalcJobNode
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
+__all__ = (
+    'FleurinpData',
+    'get_fleurinp_from_folder_data',
+    'get_fleurinp_from_remote_data',
+)
+
 
 def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=None):
     """

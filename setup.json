@@ -71,8 +71,7 @@
             "fleur.inpgen = aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation"
         ],
         "aiida.data": [
-            "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData",
-            "fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier"
+            "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData"
         ],
         "aiida.parsers": [
             "fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser",

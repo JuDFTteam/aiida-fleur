@@ -187,6 +187,7 @@ py:class aiida.orm.utils.links.LinkQuadruple
 py:class aiida.tools.importexport.dbexport.ExportReport
 py:class aiida.tools.importexport.dbexport.ArchiveData
 py:class aiida.tools.groups.paths.WalkNodeResult
+py:class orm.Dict
 
 py:class Backend
 py:class BackendEntity
@@ -205,6 +206,7 @@ py:class Parser
 py:class PersistenceError
 py:class Process
 py:class ProcessBuilder
+py:class ProcessBuilderNamespace
 py:class ProcessNode
 py:class ProcessSpec
 py:class Port
