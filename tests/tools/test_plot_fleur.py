@@ -20,6 +20,8 @@ from aiida_fleur.tools.plot import plot_fleur
 import aiida_fleur
 import matplotlib.pyplot as plt
 import matplotlib
+import aiida
+from packaging import version
 
 matplotlib.use('Agg')
 
@@ -190,3 +192,26 @@ def test_plot_fleur_mulitple_invalid_node(read_dict_from_file, test_file):
     fleur_outputnode = orm.Dict(dict=read_dict_from_file(out_node_path), label='output_para')
     with pytest.warns(UserWarning, match=r'Sorry, I do not know how to visualize'):
         plot_fleur([fleur_outputnode, fleur_outputnode], show=False)
+
+
+@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
+                    reason='archive import and migration works only with aiida-core > 1.5.0')
+@pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
+def test_plot_fleur_single_orbcontrol_wc_matplotlib(import_with_migrate):
+    """
+    Test of visualization of single Orbcontrol workchain with matplotlib
+    """
+
+    file_path = '../workflows/caches/fleur_orbcontrol_structure.tar.gz'
+    thisfilefolder = os.path.dirname(os.path.abspath(__file__))
+    EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
+
+    # import an an aiida export, this does not migrate
+    import_with_migrate(EXPORTFILE_FILE)
+    node = orm.load_node('59680531-c7c6-4125-a272-ef2c53324c72')
+
+    plt.gcf().clear()
+    p_orbcontrol = plot_fleur(node, show=False)
+    assert isinstance(p_orbcontrol, list)
+
+    return plt.gcf()
