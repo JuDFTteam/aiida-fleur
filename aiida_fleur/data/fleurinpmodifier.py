@@ -62,7 +62,7 @@ class FleurinpModifier(FleurXMLModifier):
         fleurinp_mod_functions = {'set_file': new_fleurinp.set_file, 'del_file': new_fleurinp.del_file}
 
         warn = False
-        for task in modification_tasks:
+        for task in modification_tasks.copy():
             if task.name in fleurinp_mod_functions:
                 modification_tasks.remove(task)
                 action = fleurinp_mod_functions[task.name]
