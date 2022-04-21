@@ -359,8 +359,7 @@ class FleurinpData(Data):
 
         Keyword arguments are passed on to the parser
         """
-        from masci_tools.io.io_fleurxml import load_inpxml
-        from masci_tools.util.xml.common_functions import validate_xml
+        from masci_tools.io.fleur_xml import load_inpxml
 
         self._validate()
 
@@ -381,10 +380,8 @@ class FleurinpData(Data):
 
         if validate_xml_schema and not develop_version:
             try:
-                validate_xml(xmltree,
-                             schema_dict.xmlschema,
-                             error_header='Input file is not validated against the schema')
-            except etree.DocumentInvalid as err:
+                schema_dict.validate(xmltree)
+            except ValueError as err:
                 raise InputValidationError(err) from err
         elif develop_version:
             self.logger.warning(f'You are using a Fleur input file with file version {self.inp_version}.\n'
@@ -513,10 +510,7 @@ class FleurinpData(Data):
 
         xmltree, schema_dict = self.load_inpxml()
 
-        atoms, cell, pbc = get_structure_data(xmltree,
-                                              schema_dict,
-                                              site_namedtuple=True,
-                                              normalize_kind_name=normalize_kind_name)
+        atoms, cell, pbc = get_structure_data(xmltree, schema_dict, normalize_kind_name=normalize_kind_name)
 
         struc = StructureData(cell=cell, pbc=pbc)
 
