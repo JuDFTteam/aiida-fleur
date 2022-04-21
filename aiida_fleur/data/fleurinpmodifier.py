@@ -312,16 +312,21 @@ class FleurinpModifier(FleurXMLModifier):
         :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
                             By default all nodes are used.
         """
-        self._validate_signature('xml_create_tag', *args, **kwargs)
+        self._validate_arguments('xml_create_tag', args, kwargs)
 
-        if 'element' in kwargs:
-            element = kwargs
-        else:
+        element = kwargs.get('element')
+        if element is None:
             element = args[1]
 
         if etree.iselement(element):
-            warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
-                          'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+            element = etree.tostring(element, encoding='unicode', pretty_print=True)
+            if 'element' in kwargs:
+                kwargs['element'] = element
+            else:
+                if len(args) > 2:
+                    args = args[0], element, *args[2:]
+                else:
+                    args = args[0], element
 
         super().xml_create_tag(*args, **kwargs)
 
@@ -368,13 +373,19 @@ class FleurinpModifier(FleurXMLModifier):
 
             self.xml_create_tag(xpath, element, *args, **kwargs)
         else:
+            self._validate_arguments('create_tag', args, kwargs)
             tag = kwargs.get('tag')
             if tag is None:
                 tag = args[0]
 
             if etree.iselement(tag):
-                warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
-                              'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+                tag = etree.tostring(tag, encoding='unicode', pretty_print=True)
+                if 'tag' in kwargs:
+                    kwargs['tag'] = tag
+                elif len(args) > 1:
+                    args = tag, *args[1:]
+                else:
+                    args = (tag,)
 
             super().create_tag(*args, **kwargs)
 
@@ -463,14 +474,25 @@ class FleurinpModifier(FleurXMLModifier):
         the list of tasks that will be done on the xmltree.
 
         :param xpath: a path to the tag to be replaced
-        :param newelement: a new tag
+        :param element: a new tag
         :param occurrences: int or list of int. Which occurence of the parent nodes to create a tag.
                             By default all nodes are used.
         """
-        self._validate_signature('xml_replace_tag', *args, **kwargs)
+        self._validate_arguments('xml_replace_tag', args, kwargs)
 
-        warnings.warn('Creating a tag from a given etree Element is only supported via the show()'
-                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
+        element = kwargs.get('element')
+        if element is None:
+            element = args[1]
+
+        if etree.iselement(element):
+            element = etree.tostring(element, encoding='unicode', pretty_print=True)
+            if 'element' in kwargs:
+                kwargs['element'] = element
+            else:
+                if len(args) > 2:
+                    args = args[0], element, *args[2:]
+                else:
+                    args = args[0], element
 
         super().xml_replace_tag(*args, **kwargs)
 
@@ -493,9 +515,6 @@ class FleurinpModifier(FleurXMLModifier):
             :param not_contains: str, this string has to NOT be in the final path
         """
 
-        warnings.warn('Replacing a tag with a given etree Element is only supported via the show()'
-                      'and validate() methods on the Fleurinpmodifier and cannot be used with freeze()')
-
         old_interface = 'xpath' in kwargs
         if args:
             old_interface = old_interface or '/' in args[0]
@@ -514,6 +533,20 @@ class FleurinpModifier(FleurXMLModifier):
 
             self.xml_replace_tag(xpath, *args, **kwargs)
         else:
+            self._validate_arguments('replace_tag', args, kwargs)
+            element = kwargs.get('element')
+            if element is None:
+                element = args[1]
+
+            if etree.iselement(element):
+                element = etree.tostring(element, encoding='unicode', pretty_print=True)
+                if 'element' in kwargs:
+                    kwargs['element'] = element
+                elif len(args) > 2:
+                    args = args[0], element, *args[2:]
+                else:
+                    args = args[0], element
+
             super().replace_tag(*args, **kwargs)
 
     def add_num_to_att(self, *args, **kwargs):
