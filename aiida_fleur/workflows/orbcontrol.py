@@ -12,7 +12,8 @@
     In this module you find the workflow 'FleurOrbControlWorkChain' for finding the groundstate
     in a DFT+U calculation.
 """
-from aiida.engine import WorkChain, ToContext, if_
+from aiida import orm
+from aiida.engine import WorkChain, ToContext, if_, ExitCode
 from aiida.engine import calcfunction as cf
 from aiida.orm import Dict, Code, StructureData, RemoteData
 from aiida.common import AttributeDict
@@ -138,7 +139,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.3.3'
+    _workflowversion = '0.4.0'
 
     _default_options = {
         'resources': {
@@ -201,6 +202,7 @@ class FleurOrbControlWorkChain(WorkChain):
                      cls.create_configurations, cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
 
         spec.output('output_orbcontrol_wc_para', valid_type=Dict)
+        spec.output('groundstate_denmat', valid_type=orm.SinglefileData, required=False)
         spec.expose_outputs(FleurScfWorkChain, namespace='groundstate_scf')
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -884,6 +886,14 @@ class FleurOrbControlWorkChain(WorkChain):
                 groundstate_scf = self.ctx[f'Relaxed_{groundstate_index}']
                 self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
 
+                #Retrieve the nmmpmat file and provide it as an singlefiledata output
+                retrieved = groundstate_scf.outputs.last_calc.retrieved
+                nmmp_node = extract_nmmp_file(retrieved)
+                if not isinstance(nmmp_node, ExitCode):
+                    self.out('groundstate_denmat', nmmp_node)
+                else:
+                    self.report('Something went wrong. The groundstate SCF calculation contains no density matrix file')
+
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
 
@@ -946,3 +956,29 @@ def create_orbcontrol_result_node(**kwargs):
         outdict['output_orbcontrol_wc_gs_fleurinp'] = kwargs[f'fleurinp_{groundstate_index}'].clone()
 
     return outdict
+
+
+@cf
+def extract_nmmp_file(folder):
+    """
+    Extract the density matrix file from the given folder data
+
+    :raises: ExitCode 300, No density matrix file found
+    """
+    filenames = folder.list_object_names()
+
+    nmmp_filename = None
+    if FleurCalculation._NMMPMAT_FILE_NAME in filenames:
+        nmmp_filename = FleurCalculation._NMMPMAT_FILE_NAME
+    elif FleurCalculation._NMMPMAT_HDF5_FILE_NAME in filenames:
+        nmmp_filename = FleurCalculation._NMMPMAT_HDF5_FILE_NAME
+
+    if nmmp_filename is None:
+        return ExitCode(300, message='FolderData has no density matrix file')
+
+    with folder.open(nmmp_filename, 'rb') as nmmp_file:
+        nmmp_node = orm.SinglefileData(nmmp_file)
+
+    nmmp_node.label = 'groundstate_denmat'
+    nmmp_node.description = 'Converged density matrix file calculated in the orbcontrol workchain'
+    return nmmp_node
