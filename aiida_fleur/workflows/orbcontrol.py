@@ -977,7 +977,7 @@ def extract_nmmp_file(folder):
         return ExitCode(300, message='FolderData has no density matrix file')
 
     with folder.open(nmmp_filename, 'rb') as nmmp_file:
-        nmmp_node = orm.SinglefileData(nmmp_file)
+        nmmp_node = orm.SinglefileData(nmmp_file, filename=FleurCalculation._NMMPMAT_FILE_NAME)
 
     nmmp_node.label = 'groundstate_denmat'
     nmmp_node.description = 'Converged density matrix file calculated in the orbcontrol workchain'
