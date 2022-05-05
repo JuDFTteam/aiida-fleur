@@ -639,7 +639,8 @@ class FleurinpModifier(FleurXMLModifier):
         """
 
         new_fleurinp = self._original.clone()
-        self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+        tasks = self._tasks.copy()
+        self.apply_fleurinp_modifications(new_fleurinp, tasks)
 
         xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
         develop_version = new_fleurinp.inp_version != schema_dict['inp_version']
@@ -651,7 +652,7 @@ class FleurinpModifier(FleurXMLModifier):
             nmmplines = None
 
         try:
-            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks)
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, tasks)
         except etree.DocumentInvalid as exc:
             if not develop_version:
                 raise
@@ -676,7 +677,9 @@ class FleurinpModifier(FleurXMLModifier):
             xmltree = self.validate()
         else:
             new_fleurinp = self._original.clone()
-            self.apply_fleurinp_modifications(new_fleurinp, self._tasks)
+            tasks = self._tasks.copy()
+
+            self.apply_fleurinp_modifications(new_fleurinp, tasks)
 
             xmltree, schema_dict = new_fleurinp.load_inpxml(remove_blank_text=True)
             try:
@@ -685,7 +688,7 @@ class FleurinpModifier(FleurXMLModifier):
             except FileNotFoundError:
                 nmmplines = None
 
-            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, self._tasks, validate_changes=False)
+            xmltree, nmmp = super().apply_modifications(xmltree, nmmplines, tasks, validate_changes=False)
 
         if display:
             xmltreestring = etree.tostring(xmltree, encoding='unicode', pretty_print=True)

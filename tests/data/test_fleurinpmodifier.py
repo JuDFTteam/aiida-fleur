@@ -11,6 +11,7 @@
 ''' Contains tests for modifing FleurinpData with Fleurinpmodifier '''
 
 import os
+import copy
 import pytest
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
@@ -200,6 +201,13 @@ def test_fleurinp_modifier_instance_modifications(create_fleurinp):
 
     fm = FleurinpModifier(fleurinp_tmp)
     fm.set_file(n_mmp_mat_file, dst_filename='n_mmp_mat')
+
+    tasks_before = copy.deepcopy(fm._tasks)
+    fm.show()
+    assert fm._tasks == tasks_before
+
+    fm.validate()
+    assert fm._tasks == tasks_before
 
     new_fleurinp = fm.freeze()
     assert 'n_mmp_mat' in new_fleurinp.files
