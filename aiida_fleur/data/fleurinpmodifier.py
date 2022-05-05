@@ -606,6 +606,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         node_uuid = None
         if node is not None:
+            node_uuid = node
             if isinstance(node, Data):
                 node_uuid = node.uuid
             num_nodes = sum('folder' in label for label in self._other_nodes) + 1

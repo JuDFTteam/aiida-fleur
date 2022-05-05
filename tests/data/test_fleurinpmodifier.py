@@ -234,7 +234,7 @@ def test_fleurinp_modifier_instance_modifications_node(create_fleurinp):
 
     fm = FleurinpModifier(new_fleurinp)
     fm.del_file('n_mmp_mat')
-    fm.set_file('n_mmp_mat_GaAsMultiForceXML', dst_filename='n_mmp_mat', node=n_mmp_mat_folder)
+    fm.set_file('n_mmp_mat_GaAsMultiForceXML', dst_filename='n_mmp_mat', node=n_mmp_mat_folder.uuid)
     new_fleurinp = fm.freeze()
     assert 'n_mmp_mat' in new_fleurinp.files
 
