@@ -83,7 +83,7 @@ jobs:
             allowed-to-fail: true
         exclude:
           - python-version: 3.7
-            aiida-version: {version: 'aiida-core==2.0.1', name: '2.0.1'}
+            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
             allowed-to-fail: false
 
       fail-fast: false
