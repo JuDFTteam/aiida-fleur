@@ -75,21 +75,20 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
-        aiida-version: ['aiida-core']
-        aiida-name: ['stable']
+        aiida: [{version: 'aiida-core==1.6.8', name: '1.6.8'}, {version: 'aiida-core==2.0.1', name: '2.0.1'}]
         allowed-to-fail: [false]
         include:
-          - python-version: 3.8
-            aiida-version: 'git+https://github.com/aiidateam/aiida-core.git@develop'
-            aiida-name: 'develop'
-            allowed-to-fail: true
           - python-version: 3.9
-            aiida-version: 'aiida-core==2.0.0b1'
-            aiida-name: '2.0.0b1'
+            aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'latest'}
+            allowed-to-fail: true
+        exclude:
+          - python-version: 3.7
+            aiida-version: {version: 'aiida-core==2.0.1', name: '2.0.1'}
             allowed-to-fail: false
+
       fail-fast: false
 
-    name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
+    name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida.name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
@@ -114,9 +113,9 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests-${{ hashFiles('**/setup.json') }}
+        key: pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests-${{ hashFiles('**/setup.json') }}
         restore-keys: |
-          pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests
+          pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -133,7 +132,7 @@ jobs:
         pip install --upgrade wheel setuptools
         pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
         pip install .[testing,graphs]
-        pip install ${{ matrix.aiida-version }}
+        pip install ${{ matrix.aiida.version }}
         pip install reentry
         reentry scan
 
