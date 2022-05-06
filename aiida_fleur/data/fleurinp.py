@@ -21,12 +21,10 @@ input manipulation plus methods for extration of AiiDA data structures.
 import os
 import io
 import re
-
-from lxml import etree
 import warnings
 
 from aiida import orm
-from aiida.orm import Data, Node, load_node, CalcJobNode, Bool
+from aiida.orm import Data, Node, load_node, CalcJobNode
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
@@ -98,7 +96,7 @@ class FleurinpData(Data):
     FleurinpData that way and start a new calculation from it.
     """
 
-    __version__ = '0.6.0'
+    __version__ = '0.6.1'
 
     def __init__(self, **kwargs):
         """
@@ -534,7 +532,7 @@ class FleurinpData(Data):
         :returns: StructureData node
         """
         if normalize_kind_name is None:
-            normalize_kind_name = Bool(True)
+            normalize_kind_name = orm.Bool(True)
         return self.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
 
     def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
@@ -597,7 +595,7 @@ class FleurinpData(Data):
         return kpoints_data
 
     @cf
-    def get_kpointsdata(self, name=None, index=None):
+    def get_kpointsdata(self, name=None, index=None, only_used=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
         ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
@@ -605,7 +603,9 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
-        return self.get_kpointsdata_ncf(name=name, index=index)
+        if only_used is None:
+            only_used = orm.Bool(False)
+        return self.get_kpointsdata_ncf(name=name, index=index, only_used=only_used)
 
     def get_parameterdata_ncf(self, inpgen_ready=True, write_ids=True):
         """
@@ -625,7 +625,7 @@ class FleurinpData(Data):
         return Dict(dict=parameter_data)
 
     @cf
-    def get_parameterdata(self):
+    def get_parameterdata(self, inpgen_ready=None, write_ids=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
         file. The returned node can be used for inpgen as `calc_parameters`.
@@ -633,8 +633,13 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.Dict` node
         """
+        if inpgen_ready is None:
+            inpgen_ready = orm.Bool(True)
 
-        return self.get_parameterdata_ncf()
+        if write_ids is None:
+            write_ids = orm.Bool(True)
+
+        return self.get_parameterdata_ncf(inpgen_ready=inpgen_ready, write_ids=write_ids)
 
     def get_tag(self, xpath):
         """
