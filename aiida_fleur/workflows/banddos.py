@@ -19,12 +19,13 @@ from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, CalcJobNode, FolderData, BandsData, XyData
-from aiida.engine import WorkChain, ToContext, if_
+from aiida.orm import FolderData, BandsData, XyData
+from aiida.engine import WorkChain, ToContext, if_, while_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 from aiida.common import AttributeDict
 from aiida.tools.data.array.kpoints import get_explicit_kpoints_path
+from aiida.engine import ExitCode
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -32,6 +33,8 @@ from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+
+from masci_tools.util.schema_dict_util import evaluate_attribute
 
 
 class FleurBandDosWorkChain(WorkChain):
@@ -44,8 +47,10 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.5.2'
+    _workflowversion = '0.6.0'
 
+    #These are the files that are expected for a BandDOS calculation
+    _BANDFILES = ['banddos.hdf', 'bands.1', 'bands.2', 'Local.1', 'Local.2']
     _default_options = {
         'resources': {
             'num_machines': 1,
@@ -65,6 +70,10 @@ class FleurBandDosWorkChain(WorkChain):
         'kpoints_distance': None,
         'kpoints_explicit': None,  #dictionary containing a list of kpoints, weights
         #and additional arguments to pass to set_kpointlist
+        'bands_energy_above_fermi': None,  #Up to which energy the bands should be calculated
+        #If the workflow can adjust numBands it will do so
+        #until the minimum of the highest band is above this
+        #parameter (in Htr)
         'sigma': 0.005,
         'emin': -0.50,
         'emax': 0.90,
@@ -95,10 +104,9 @@ class FleurBandDosWorkChain(WorkChain):
         spec.outline(cls.start,
                      if_(cls.scf_needed)(
                          cls.converge_scf,
-                         cls.banddos_after_scf,
-                     ).else_(
-                         cls.banddos_wo_scf,
-                     ), cls.return_results)
+                         cls.inspect_scf,
+                     ),
+                     while_(cls.not_enough_bands)(cls.run_banddos, cls.inspect_banddos), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
         spec.output('last_calc_retrieved', valid_type=FolderData)
@@ -114,6 +122,10 @@ class FleurBandDosWorkChain(WorkChain):
         spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
         spec.exit_code(334, 'ERROR_SCF_CALCULATION_FAILED', message='SCF calculation failed.')
         spec.exit_code(335, 'ERROR_SCF_CALCULATION_NOREMOTE', message='Found no SCF calculation remote repository.')
+        spec.exit_code(344, 'ERROR_BANDDOS_CALCULATION_FAILED', message='BandDOS calculation failed.')
+        spec.exit_code(345,
+                       'ERROR_BANDDOS_NOT_ENOUGH_BANDS',
+                       message='BandDOS calculation failed. Requested bands energy maximum cannot be reached')
 
     def start(self):
         '''
@@ -134,6 +146,11 @@ class FleurBandDosWorkChain(WorkChain):
         self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
+
+        self.ctx.banddos_code_hdf5 = False
+        self.ctx.numbands_input = None
+        self.ctx.numbands_bands = None
+        self.ctx.highest_band_minimum = 0
 
         inputs = self.inputs
 
@@ -332,6 +349,11 @@ class FleurBandDosWorkChain(WorkChain):
             change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         fleurmode.set_inpchanges(change_dict)
 
+        if self.ctx.numbands_bands is not None and self.ctx.numbands_input != 'all':
+            #Here we already ran the Band calculation and did not have enough
+            #bands. For now we just double the bands to calculate
+            fleurmode.set_inpchanges({'numbands': 2 * self.ctx.numbands_bands})
+
         try:
             fleurmode.show(display=False, validate=True)
         except etree.DocumentInvalid:
@@ -353,6 +375,14 @@ class FleurBandDosWorkChain(WorkChain):
         """
         return self.ctx.scf_needed
 
+    def get_inputs_scf(self):
+        """
+        Initialize inputs for scf workflow:
+        wf_param, options, calculation parameters, codes, structure
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        return input_scf
+
     def converge_scf(self):
         """
         Converge charge density.
@@ -361,12 +391,11 @@ class FleurBandDosWorkChain(WorkChain):
         res = self.submit(FleurScfWorkChain, **inputs)
         return ToContext(scf=res)
 
-    def banddos_after_scf(self):
+    def inspect_scf(self):
         """
-        This method submits the BandDOS calculation after the initial SCF calculation
+        Make sure the SCF calculation succeeded
         """
         calc = self.ctx.scf
-
         if not calc.is_finished_ok:
             message = ('The SCF calculation was not successful.')
             self.control_end_wc(message)
@@ -386,6 +415,11 @@ class FleurBandDosWorkChain(WorkChain):
             self.control_end_wc(message)
             return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
 
+    def run_banddos(self):
+        """
+        This method submits the BandDOS FleurCalculation
+        """
+
         self.report('INFO: run BandDOS calculation')
 
         status = self.change_fleurinp()
@@ -401,84 +435,98 @@ class FleurBandDosWorkChain(WorkChain):
         # Do not copy mixing_history* files from the parent
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
 
-        # Retrieve remote folder of the reference calculation
-        pk_last = 0
-        scf_ref_node = load_node(calc.pk)
-        for i in scf_ref_node.called:
-            if i.node_type == 'process.workflow.workchain.WorkChainNode.':
-                if i.process_class is FleurBaseWorkChain:
-                    if pk_last < i.pk:
-                        pk_last = i.pk
-        try:
-            remote = load_node(pk_last).outputs.remote_folder
-        except AttributeError:
-            message = ('Found no remote folder of the reference scf calculation.')
+        if self.ctx.scf_needed:
+            try:
+                remote = self.ctx.scf.outputs.last_calc.remote_folder
+            except (NotExistent, AttributeError):
+                message = ('Found no remote folder of the reference scf calculation.')
+                self.control_end_wc(message)
+                return self.exit_codes.ERROR_SCF_CALCULATION_NOREMOTE
+        else:
+            remote = self.inputs.remote
+
+        label = 'banddos_calculation'
+        description = 'Bandstructure or DOS is calculated for the given structure'
+
+        code = self.inputs.fleur
+        options = self.ctx.options.copy()
+
+        self.ctx.banddos_code_hdf5 = code.description is not None and 'hdf5' in code.description.lower()
+        xmltree, schema_dict = fleurin.load_inpxml()
+        self.ctx.numbands_input = evaluate_attribute(xmltree, schema_dict, 'numbands')
+
+        inputs_builder = get_inputs_fleur(code,
+                                          remote,
+                                          fleurin,
+                                          options,
+                                          label,
+                                          description,
+                                          settings,
+                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
+        future = self.submit(FleurBaseWorkChain, **inputs_builder)
+        return ToContext(banddos_calc=future)
+
+    def not_enough_bands(self):
+        """
+        Return whether the band calculation produced enough
+        bands for the requested energy window
+        """
+        # Is this the first run?
+        if not self.ctx.banddos_calc:
+            return True
+
+        wf_dict = self.ctx.wf_dict
+        #For non-hdf5 codes we do not adjust the bands
+        if not self.ctx.banddos_code_hdf5:
+            if wf_dict['bands_above_fermi_energy'] is not None:
+                self.report('The number of bands is only adjusted if the Fleur code '
+                            'for the BandDOS calculation is compiled with HDF5')
+            return False
+
+        return wf_dict['mode'] == 'band' \
+               and wf_dict['bands_energy_above_fermi'] is not None \
+               and self.ctx.numbands_input != 'all' \
+               and self.ctx.highest_band_minimum < wf_dict['bands_above_fermi_energy']
+
+    def inspect_bands(self):
+        """
+        Inspect the results of the BandDOS calculation
+        """
+        calc = self.ctx.banddos_calc
+        if not calc.is_finished_ok:
+            message = ('The BandDOS calculation was not successful.')
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_SCF_CALCULATION_NOREMOTE
+            return self.exit_codes.ERROR_BANDDOS_CALCULATION_FAILED
 
-        label = 'bansddos_calculation'
-        description = 'Bandstructure or DOS is calculated for the given structure'
+        try:
+            outpara_node = calc.outputs.output_parameters
+        except NotExistent:
+            message = ('The BandDOS calculation failed, no output node.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_BANDDOS_CALCULATION_FAILED
 
-        code = self.inputs.fleur
-        options = self.ctx.options.copy()
+        retrieved = calc.outputs.retrieved
 
-        inputs_builder = get_inputs_fleur(code,
-                                          remote,
-                                          fleurin,
-                                          options,
-                                          label,
-                                          description,
-                                          settings,
-                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
-        future = self.submit(FleurBaseWorkChain, **inputs_builder)
-        return ToContext(banddos_calc=future)
+        if not any(file in retrieved.list_object_names() for file in self._BANDFILES):
+            message = ('The BandDOS calculation failed, no band/DOS files were produced.')
+            self.control_end_wc(message)
+            return self.exit_codes.ERROR_BANDDOS_CALCULATION_FAILED
 
-    def banddos_wo_scf(self):
-        """
-        This method submits the BandDOS calculation without a previous SCF calculation
-        """
-        self.report('INFO: run BandDOS calculation')
-
-        status = self.change_fleurinp()
-        if status:
-            return status
-
-        fleurin = self.ctx.fleurinp_banddos
-        if fleurin is None:
-            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-        # Do not copy mixing_history* files from the parent
-        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
-
-        # Retrieve remote folder from the inputs
-        remote = self.inputs.remote
-
-        label = 'bansddos_calculation'
-        description = 'Bandstructure or DOS is calculated for the given structure'
-
-        code = self.inputs.fleur
-        options = self.ctx.options.copy()
-
-        inputs_builder = get_inputs_fleur(code,
-                                          remote,
-                                          fleurin,
-                                          options,
-                                          label,
-                                          description,
-                                          settings,
-                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
-        future = self.submit(FleurBaseWorkChain, **inputs_builder)
-        return ToContext(banddos_calc=future)
-
-    def get_inputs_scf(self):
-        """
-        Initialize inputs for scf workflow:
-        wf_param, options, calculation parameters, codes, structure
-        """
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        return input_scf
+        if self.ctx.banddos_code_hdf5 and self.ctx.wf_dict['bands_energy_above_fermi'] is not None:
+            res = get_highest_band_minimum(retrieved)
+            if isinstance(res, ExitCode):
+                message = ('Failed to retrieve band information from banddos.hdf')
+                self.control_end_wc(message)
+                return self.exit_codes.ERROR_BANDDOS_CALCULATION_FAILED
+            nbands, self.ctx.highest_band_minimum = res
+            if nbands == self.ctx.numbands_bands:
+                #We doubled the number of bands but got no more bands
+                #this means the energy given is unreasonable and we cannot
+                #Get more bands
+                message = ('Requested energy window cannot be calculated. Cannot retrieve more bands')
+                self.control_end_wc(message)
+                return self.exit_codes.ERROR_BANDDOS_NOT_ENOUGH_BANDS
+            self.ctx.numbands_bands = nbands
 
     def return_results(self):
         '''
@@ -514,13 +562,11 @@ class FleurBandDosWorkChain(WorkChain):
 
         #check if band file exists: if not succesful = False
         #TODO be careful with general bands.X
-        bandfiles = ['bands.1', 'bands.2', 'banddos.hdf', 'Local.1', 'Local.2']
-
         bandfile_res = []
         if retrieved:
             bandfile_res = retrieved.list_object_names()
 
-        for name in bandfiles:
+        for name in self._BANDFILES:
             if name in bandfile_res:
                 self.ctx.successful = True
         if not self.ctx.successful:
@@ -641,7 +687,7 @@ def create_aiida_bands_data(fleurinp, retrieved):
     """
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
-    from aiida.engine import ExitCode
+    from aiida.engine import ExitCode  #pylint: disable=reimported,redefined-outer-name
 
     try:
         kpoints = fleurinp.get_kpointsdata_ncf(only_used=True)
@@ -690,7 +736,7 @@ def create_aiida_dos_data(retrieved):
     """
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
-    from aiida.engine import ExitCode
+    from aiida.engine import ExitCode  #pylint: disable=reimported,redefined-outer-name
 
     if 'banddos.hdf' in retrieved.list_object_names():
         try:
@@ -715,3 +761,39 @@ def create_aiida_dos_data(retrieved):
         'Contains XyData for the density of states calculation with total, interstitial, atom and orbital weights')
 
     return dos
+
+
+def get_highest_band_minimum(retrieved):
+    """
+    Gets the number of bands calculated and the highest band minimum
+    of the calculated bands
+
+    :param retrieved: :py:class:`aiida.orm.FolderData` for the bandstructure calculation
+
+    :returns: number of bands and the band minimum of the highest band
+
+    :raises: ExitCode 300, banddos.hdf file is missing
+    :raises: ExitCode 310, banddos.hdf reading failed
+    """
+    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
+    from aiida.engine import ExitCode  #pylint: disable=reimported,redefined-outer-name
+
+    if 'banddos.hdf' in retrieved.list_object_names():
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, attributes = reader.read(recipe=FleurSimpleBands)
+        except (HDF5TransformationError, ValueError) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
+    else:
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    nkpts, nbands = attributes['nkpts'], attributes['nbands']
+    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
+    highest_band_minimum = np.nanmin(eigenvalues[:, -1])
+    if 'eigenvalues_down' in data:
+        eigenvalues = data['eigenvalues_down'].reshape((nkpts, nbands))
+        highest_band_minimum = min(np.nanmin(eigenvalues[:, -1]), highest_band_minimum)
+
+    return nbands, highest_band_minimum
