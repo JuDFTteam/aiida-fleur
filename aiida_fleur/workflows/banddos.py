@@ -488,7 +488,7 @@ class FleurBandDosWorkChain(WorkChain):
                and self.ctx.numbands_input != 'all' \
                and self.ctx.highest_band_minimum < wf_dict['bands_above_fermi_energy']
 
-    def inspect_bands(self):
+    def inspect_banddos(self):
         """
         Inspect the results of the BandDOS calculation
         """
