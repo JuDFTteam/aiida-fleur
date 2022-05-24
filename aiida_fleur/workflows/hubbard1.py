@@ -266,7 +266,7 @@ class FleurHubbard1WorkChain(WorkChain):
                     'ldahia': ldahia_dict
                 }
             }))
-        scf_wf_para.extend(self.ctx.wf_dict.get('inpxml_changes', []))
+        scf_wf_para['inpxml_changes'].extend(self.ctx.wf_dict.get('inpxml_changes', []))
 
         inputs_hubbard1.wf_parameters = orm.Dict(dict=scf_wf_para)
 
