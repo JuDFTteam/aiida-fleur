@@ -182,10 +182,7 @@ class FleurHubbard1WorkChain(WorkChain):
         else:
             scf_wf_para = {}
 
-        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
-        scf_wf_para.setdefault('inpxml_changes', []).extend(fchanges)
-
-        scf_wf_para['inpxml_changes'].append(('set_inpchanges', {
+        scf_wf_para.setdefault('inpxml_changes', []).append(('set_inpchanges', {
             'change_dict': {
                 'minoccdistance': self.ctx.wf_dict['occupation_converged'],
                 'minmatdistance': self.ctx.wf_dict['matrix_elements_converged'],
@@ -269,6 +266,7 @@ class FleurHubbard1WorkChain(WorkChain):
                     'ldahia': ldahia_dict
                 }
             }))
+        scf_wf_para.extend(self.ctx.wf_dict.get('inpxml_changes', []))
 
         inputs_hubbard1.wf_parameters = orm.Dict(dict=scf_wf_para)
 
