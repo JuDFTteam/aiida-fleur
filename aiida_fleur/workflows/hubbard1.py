@@ -290,6 +290,7 @@ class FleurHubbard1WorkChain(WorkChain):
             error = ('ERROR: Hubbard1 SCF workflow was not successful')
             self.ctx.successful = False
             self.control_end_wc(error)
+            return self.exit_codes.ERROR_HUBBARD1_CALCULATION_FAILED
 
         try:
             self.ctx.hubbard1.outputs.output_scf_wc_para
@@ -297,6 +298,7 @@ class FleurHubbard1WorkChain(WorkChain):
             error = ('ERROR: Hubbard1 SCF workflow failed, no output node')
             self.ctx.successful = False
             self.control_end_wc(error)
+            return self.exit_codes.ERROR_HUBBARD1_CALCULATION_FAILED
 
     def return_results(self):
         """
