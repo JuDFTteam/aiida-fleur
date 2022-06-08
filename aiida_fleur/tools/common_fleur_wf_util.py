@@ -535,7 +535,7 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
         for a1, a2 in zip(N[0::2], N[0::2]):
             g = gcd(g, a2)
         N = [int(i / g) for i in N]
-        pM = lambda c: str(c) + '*'  # if c!=1 else ''
+        pM = lambda c: str(c) + '*'  # if c!=1 else '' #pylint: disable=unnecessary-lambda-assignment
         res = '->'.join('+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->'))
         return res
     else:

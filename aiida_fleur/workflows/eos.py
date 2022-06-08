@@ -18,6 +18,7 @@ of an equation of state
 # one can start with 18 iterations, and if thats not enough run again 9 or something)
 import numpy as np
 
+from aiida import orm
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict, List
 from aiida.engine import WorkChain, ToContext
@@ -182,7 +183,7 @@ class FleurEosWorkChain(WorkChain):
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
         fleurinp = first_scf.outputs.fleurinp
-        self.ctx.first_calc_parameters = fleurinp.get_parameterdata()
+        self.ctx.first_calc_parameters = fleurinp.get_parameterdata(write_ids=orm.Bool(False))
 
     def converge_scf(self):
         """
