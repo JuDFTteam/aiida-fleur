@@ -647,6 +647,16 @@ class FleurOrbControlWorkChain(WorkChain):
 
         fm.set_inpchanges({'itmax': self.ctx.wf_dict['iterations_fixed'], 'l_linMix': True, 'mixParam': 0.0})
 
+        fchanges = self.ctx.wf_dict['inpxml_changes']
+        if fchanges:
+            try:
+                fm.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
         for atom_species, ldau_dict in self.ctx.wf_dict['ldau_dict'].items():
             fm.set_species(species_name=atom_species, attributedict={'ldaU': ldau_dict})
 
@@ -670,16 +680,6 @@ class FleurOrbControlWorkChain(WorkChain):
                                    orbital=int(orbital),
                                    spin=spin + 1,
                                    state_occupations=config_spin)
-
-        fchanges = self.ctx.wf_dict['inpxml_changes']
-        if fchanges:
-            try:
-                fm.add_task_list(fchanges)
-            except (ValueError, TypeError) as exc:
-                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                         f', which failed with {exc}. I abort, good luck next time!')
-                self.control_end_wc(error)
-                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         try:
             fm.show(display=False, validate=True)
