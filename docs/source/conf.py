@@ -53,7 +53,7 @@ extensions = ['myst_parser',
 todo_include_todos = True
 
 intersphinx_mapping = {
-    'aiida': ('https://aiida-core.readthedocs.io/en/latest/', None),
+    'aiida': ('https://aiida-core.readthedocs.io/en/v1.6.8/', None),
     'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
     'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
