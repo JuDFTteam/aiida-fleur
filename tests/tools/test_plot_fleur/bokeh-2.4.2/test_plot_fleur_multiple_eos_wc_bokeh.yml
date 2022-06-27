@@ -29,31 +29,18 @@ roots:
   - type: CDSView
   - attributes:
       data:
-        energy_1:
+        energy_0:
           __ndarray__: AAAAAAAAAADk9zb92Y90P9rmxvSEJU4/vqQxWkdVYz8=
           dtype: float64
           order: little
           shape:
           - 4
-        scaling_1:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
-    type: ColumnDataSource
-  - attributes:
-      data:
-        energy_1:
-          __ndarray__: AAAAAAAAAADk9zb92Y90P9rmxvSEJU4/vqQxWkdVYz8=
+        scaling_0:
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
           dtype: float64
           order: little
           shape:
           - 4
-        scaling_1:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
     type: ColumnDataSource
   - attributes:
       data:
@@ -64,24 +51,41 @@ roots:
           shape:
           - 4
         scaling_0:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
     type: ColumnDataSource
   - attributes:
       data:
-        energy_0:
+        energy_1:
           __ndarray__: AAAAAAAAAADk9zb92Y90P9rmxvSEJU4/vqQxWkdVYz8=
           dtype: float64
           order: little
           shape:
           - 4
-        scaling_0:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
+        scaling_1:
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
+    type: ColumnDataSource
+  - attributes:
+      data:
+        energy_1:
+          __ndarray__: AAAAAAAAAADk9zb92Y90P9rmxvSEJU4/vqQxWkdVYz8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
+        scaling_1:
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
     type: ColumnDataSource
   - type: CrosshairTool
   - type: DataRange1d
@@ -131,14 +135,6 @@ roots:
         value: 'gs_vol: 16.3 A^3, gs_scale 1.0, data 1'
     type: LegendItem
   - attributes:
-      line_color: '#1f77b4'
-      line_width: 2.0
-      x:
-        field: scaling_0
-      y:
-        field: energy_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_color: '#1f77b4'
       line_width: 2.0
@@ -157,14 +153,6 @@ roots:
         field: energy_0
     type: Line
   - attributes:
-      line_color: '#ff7f0e'
-      line_width: 2.0
-      x:
-        field: scaling_1
-      y:
-        field: energy_1
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_color: '#ff7f0e'
       line_width: 2.0
@@ -175,6 +163,22 @@ roots:
     type: Line
   - attributes:
       line_alpha: 0.2
+      line_color: '#ff7f0e'
+      line_width: 2.0
+      x:
+        field: scaling_1
+      y:
+        field: energy_1
+    type: Line
+  - attributes:
+      line_color: '#1f77b4'
+      line_width: 2.0
+      x:
+        field: scaling_0
+      y:
+        field: energy_0
+    type: Line
+  - attributes:
       line_color: '#ff7f0e'
       line_width: 2.0
       x:
@@ -218,20 +222,6 @@ roots:
   - type: ResetTool
   - type: SaveTool
   - attributes:
-      fill_color:
-        value: '#1f77b4'
-      hatch_color:
-        value: '#1f77b4'
-      line_color:
-        value: '#1f77b4'
-      size:
-        value: 6
-      x:
-        field: scaling_0
-      y:
-        field: energy_0
-    type: Scatter
-  - attributes:
       fill_alpha:
         value: 0.1
       fill_color:
@@ -270,20 +260,6 @@ roots:
         field: scaling_0
       y:
         field: energy_0
-    type: Scatter
-  - attributes:
-      fill_color:
-        value: '#ff7f0e'
-      hatch_color:
-        value: '#ff7f0e'
-      line_color:
-        value: '#ff7f0e'
-      size:
-        value: 6
-      x:
-        field: scaling_1
-      y:
-        field: energy_1
     type: Scatter
   - attributes:
       fill_alpha:
@@ -316,6 +292,34 @@ roots:
         value: '#ff7f0e'
       line_alpha:
         value: 0.2
+      line_color:
+        value: '#ff7f0e'
+      size:
+        value: 6
+      x:
+        field: scaling_1
+      y:
+        field: energy_1
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#1f77b4'
+      hatch_color:
+        value: '#1f77b4'
+      line_color:
+        value: '#1f77b4'
+      size:
+        value: 6
+      x:
+        field: scaling_0
+      y:
+        field: energy_0
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#ff7f0e'
+      hatch_color:
+        value: '#ff7f0e'
       line_color:
         value: '#ff7f0e'
       size:
@@ -343,4 +347,3 @@ roots:
   - type: ZoomInTool
   - type: ZoomOutTool
 title: Bokeh Application
-version: 2.4.2

@@ -22,6 +22,7 @@ from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
+from masci_tools.util.xml.common_functions import serialize_xml_objects
 
 
 class FleurinpModifier(FleurXMLModifier):
@@ -313,21 +314,7 @@ class FleurinpModifier(FleurXMLModifier):
                             By default all nodes are used.
         """
         self._validate_arguments('xml_create_tag', args, kwargs)
-
-        element = kwargs.get('element')
-        if element is None:
-            element = args[1]
-
-        if etree.iselement(element):
-            element = etree.tostring(element, encoding='unicode', pretty_print=True)
-            if 'element' in kwargs:
-                kwargs['element'] = element
-            else:
-                if len(args) > 2:
-                    args = args[0], element, *args[2:]
-                else:
-                    args = args[0], element
-
+        args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_create_tag(*args, **kwargs)
 
     def create_tag(self, *args, **kwargs):
@@ -374,19 +361,7 @@ class FleurinpModifier(FleurXMLModifier):
             self.xml_create_tag(xpath, element, *args, **kwargs)
         else:
             self._validate_arguments('create_tag', args, kwargs)
-            tag = kwargs.get('tag')
-            if tag is None:
-                tag = args[0]
-
-            if etree.iselement(tag):
-                tag = etree.tostring(tag, encoding='unicode', pretty_print=True)
-                if 'tag' in kwargs:
-                    kwargs['tag'] = tag
-                elif len(args) > 1:
-                    args = tag, *args[1:]
-                else:
-                    args = (tag,)
-
+            args, kwargs = serialize_xml_objects(args, kwargs)
             super().create_tag(*args, **kwargs)
 
     def delete_tag(self, *args, **kwargs):
@@ -479,21 +454,7 @@ class FleurinpModifier(FleurXMLModifier):
                             By default all nodes are used.
         """
         self._validate_arguments('xml_replace_tag', args, kwargs)
-
-        element = kwargs.get('element')
-        if element is None:
-            element = args[1]
-
-        if etree.iselement(element):
-            element = etree.tostring(element, encoding='unicode', pretty_print=True)
-            if 'element' in kwargs:
-                kwargs['element'] = element
-            else:
-                if len(args) > 2:
-                    args = args[0], element, *args[2:]
-                else:
-                    args = args[0], element
-
+        args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_replace_tag(*args, **kwargs)
 
     def replace_tag(self, *args, **kwargs):
@@ -534,19 +495,7 @@ class FleurinpModifier(FleurXMLModifier):
             self.xml_replace_tag(xpath, *args, **kwargs)
         else:
             self._validate_arguments('replace_tag', args, kwargs)
-            element = kwargs.get('element')
-            if element is None:
-                element = args[1]
-
-            if etree.iselement(element):
-                element = etree.tostring(element, encoding='unicode', pretty_print=True)
-                if 'element' in kwargs:
-                    kwargs['element'] = element
-                elif len(args) > 2:
-                    args = args[0], element, *args[2:]
-                else:
-                    args = args[0], element
-
+            args, kwargs = serialize_xml_objects(args, kwargs)
             super().replace_tag(*args, **kwargs)
 
     def add_num_to_att(self, *args, **kwargs):

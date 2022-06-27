@@ -19,7 +19,7 @@ from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, CalcJobNode, FolderData, BandsData, XyData
+from aiida.orm import load_node, FolderData, BandsData, XyData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent

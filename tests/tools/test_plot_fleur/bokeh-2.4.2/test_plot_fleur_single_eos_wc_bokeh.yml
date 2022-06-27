@@ -28,28 +28,32 @@ roots:
   - attributes:
       data:
         energy_0:
-        - -439902.565469453
-        - -439902.560450163
-        - -439902.564547518
-        - -439902.563105211
+          __ndarray__: U5EKQ3rZGsHUmuY9etkawSxlGUJ62RrBaOifQHrZGsE=
+          dtype: float64
+          order: little
+          shape:
+          - 4
         scaling_0:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
     type: ColumnDataSource
   - attributes:
       data:
         energy_0:
-        - -439902.565469453
-        - -439902.560450163
-        - -439902.564547518
-        - -439902.563105211
+          __ndarray__: U5EKQ3rZGsHUmuY9etkawSxlGUJ62RrBaOifQHrZGsE=
+          dtype: float64
+          order: little
+          shape:
+          - 4
         scaling_0:
-        - 0.998
-        - 1.0
-        - 1.002
-        - 1.004
+          __ndarray__: Vg4tsp3v7z8AAAAAAADwP9V46SYxCPA/qvHSTWIQ8D8=
+          dtype: float64
+          order: little
+          shape:
+          - 4
     type: ColumnDataSource
   - type: CrosshairTool
   - type: DataRange1d
@@ -81,13 +85,6 @@ roots:
         value: 'gs_vol: 16.3 A^3, gs_scale 1.0, data 0'
     type: LegendItem
   - attributes:
-      line_width: 2.0
-      x:
-        field: scaling_0
-      y:
-        field: energy_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_width: 2.0
       x:
@@ -97,6 +94,13 @@ roots:
     type: Line
   - attributes:
       line_alpha: 0.2
+      line_width: 2.0
+      x:
+        field: scaling_0
+      y:
+        field: energy_0
+    type: Line
+  - attributes:
       line_width: 2.0
       x:
         field: scaling_0
@@ -194,4 +198,3 @@ roots:
   - type: ZoomInTool
   - type: ZoomOutTool
 title: Bokeh Application
-version: 2.4.2

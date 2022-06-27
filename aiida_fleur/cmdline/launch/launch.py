@@ -16,7 +16,7 @@ Module with CLI commands to launch for calcjob and workflows of aiida-fleur.
 import click
 from ..util import options, utils, defaults
 from aiida_fleur.tools.dict_util import clean_nones
-from aiida.orm import Code, load_node, Dict
+from aiida.orm import Dict
 from aiida.plugins import WorkflowFactory
 from aiida.plugins import CalculationFactory
 

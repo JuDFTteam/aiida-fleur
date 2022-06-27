@@ -53,130 +53,18 @@ roots:
   - type: Column
   - attributes:
       data:
-        distance_1:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
-        energy_1:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
-        energy_diff_1:
-          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-        iteration_1:
-          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
-          dtype: int64
-          order: little
-          shape:
-          - 3
-        iteration_energy_1:
-          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-    type: ColumnDataSource
-  - attributes:
-      data:
-        distance_1:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
-        energy_1:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
-        energy_diff_1:
-          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-        iteration_1:
-          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
-          dtype: int64
-          order: little
-          shape:
-          - 3
-        iteration_energy_1:
-          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-    type: ColumnDataSource
-  - attributes:
-      data:
-        distance_1:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
-        energy_1:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
-        energy_diff_1:
-          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-        iteration_1:
-          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
-          dtype: int64
-          order: little
-          shape:
-          - 3
-        iteration_energy_1:
-          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-    type: ColumnDataSource
-  - attributes:
-      data:
-        distance_1:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
-        energy_1:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
-        energy_diff_1:
-          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-        iteration_1:
-          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
-          dtype: int64
-          order: little
-          shape:
-          - 3
-        iteration_energy_1:
-          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
-          dtype: float64
-          order: little
-          shape:
-          - 3
-    type: ColumnDataSource
-  - attributes:
-      data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -199,13 +87,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -228,13 +120,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -257,13 +153,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -277,6 +177,138 @@ roots:
           shape:
           - 3
         iteration_energy_0:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_1:
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_1:
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_diff_1:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_1:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_1:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_1:
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_1:
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_diff_1:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_1:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_1:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_1:
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_1:
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_diff_1:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_1:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_1:
+          __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+    type: ColumnDataSource
+  - attributes:
+      data:
+        distance_1:
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_1:
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        energy_diff_1:
+          __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
+          dtype: float64
+          order: little
+          shape:
+          - 3
+        iteration_1:
+          __ndarray__: FQAAAAAAAAAWAAAAAAAAABcAAAAAAAAA
+          dtype: int64
+          order: little
+          shape:
+          - 3
+        iteration_energy_1:
           __ndarray__: AAAAAAAANkAAAAAAAAA3QAAAAAAAAPh/
           dtype: float64
           order: little
@@ -395,14 +427,6 @@ roots:
         value: distance 1
     type: LegendItem
   - attributes:
-      line_color: '#1f77b4'
-      line_width: 2.0
-      x:
-        field: iteration_0
-      y:
-        field: distance_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_color: '#1f77b4'
       line_width: 2.0
@@ -419,14 +443,6 @@ roots:
         field: iteration_0
       y:
         field: distance_0
-    type: Line
-  - attributes:
-      line_color: '#ff7f0e'
-      line_width: 2.0
-      x:
-        field: iteration_1
-      y:
-        field: distance_1
     type: Line
   - attributes:
       line_alpha: 0.1
@@ -447,14 +463,6 @@ roots:
         field: distance_1
     type: Line
   - attributes:
-      line_color: '#1f77b4'
-      line_width: 2.0
-      x:
-        field: iteration_energy_0
-      y:
-        field: energy_diff_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_color: '#1f77b4'
       line_width: 2.0
@@ -471,14 +479,6 @@ roots:
         field: iteration_energy_0
       y:
         field: energy_diff_0
-    type: Line
-  - attributes:
-      line_color: '#ff7f0e'
-      line_width: 2.0
-      x:
-        field: iteration_energy_1
-      y:
-        field: energy_diff_1
     type: Line
   - attributes:
       line_alpha: 0.1
@@ -491,6 +491,38 @@ roots:
     type: Line
   - attributes:
       line_alpha: 0.2
+      line_color: '#ff7f0e'
+      line_width: 2.0
+      x:
+        field: iteration_energy_1
+      y:
+        field: energy_diff_1
+    type: Line
+  - attributes:
+      line_color: '#1f77b4'
+      line_width: 2.0
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Line
+  - attributes:
+      line_color: '#ff7f0e'
+      line_width: 2.0
+      x:
+        field: iteration_1
+      y:
+        field: distance_1
+    type: Line
+  - attributes:
+      line_color: '#1f77b4'
+      line_width: 2.0
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Line
+  - attributes:
       line_color: '#ff7f0e'
       line_width: 2.0
       x:
@@ -584,20 +616,6 @@ roots:
   - type: SaveTool
   - type: SaveTool
   - attributes:
-      fill_color:
-        value: '#1f77b4'
-      hatch_color:
-        value: '#1f77b4'
-      line_color:
-        value: '#1f77b4'
-      size:
-        value: 6
-      x:
-        field: iteration_0
-      y:
-        field: distance_0
-    type: Scatter
-  - attributes:
       fill_alpha:
         value: 0.1
       fill_color:
@@ -636,20 +654,6 @@ roots:
         field: iteration_0
       y:
         field: distance_0
-    type: Scatter
-  - attributes:
-      fill_color:
-        value: '#ff7f0e'
-      hatch_color:
-        value: '#ff7f0e'
-      line_color:
-        value: '#ff7f0e'
-      size:
-        value: 6
-      x:
-        field: iteration_1
-      y:
-        field: distance_1
     type: Scatter
   - attributes:
       fill_alpha:
@@ -692,20 +696,6 @@ roots:
         field: distance_1
     type: Scatter
   - attributes:
-      fill_color:
-        value: '#1f77b4'
-      hatch_color:
-        value: '#1f77b4'
-      line_color:
-        value: '#1f77b4'
-      size:
-        value: 6
-      x:
-        field: iteration_energy_0
-      y:
-        field: energy_diff_0
-    type: Scatter
-  - attributes:
       fill_alpha:
         value: 0.1
       fill_color:
@@ -744,20 +734,6 @@ roots:
         field: iteration_energy_0
       y:
         field: energy_diff_0
-    type: Scatter
-  - attributes:
-      fill_color:
-        value: '#ff7f0e'
-      hatch_color:
-        value: '#ff7f0e'
-      line_color:
-        value: '#ff7f0e'
-      size:
-        value: 6
-      x:
-        field: iteration_energy_1
-      y:
-        field: energy_diff_1
     type: Scatter
   - attributes:
       fill_alpha:
@@ -790,6 +766,62 @@ roots:
         value: '#ff7f0e'
       line_alpha:
         value: 0.2
+      line_color:
+        value: '#ff7f0e'
+      size:
+        value: 6
+      x:
+        field: iteration_energy_1
+      y:
+        field: energy_diff_1
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#1f77b4'
+      hatch_color:
+        value: '#1f77b4'
+      line_color:
+        value: '#1f77b4'
+      size:
+        value: 6
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#ff7f0e'
+      hatch_color:
+        value: '#ff7f0e'
+      line_color:
+        value: '#ff7f0e'
+      size:
+        value: 6
+      x:
+        field: iteration_1
+      y:
+        field: distance_1
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#1f77b4'
+      hatch_color:
+        value: '#1f77b4'
+      line_color:
+        value: '#1f77b4'
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - attributes:
+      fill_color:
+        value: '#ff7f0e'
+      hatch_color:
+        value: '#ff7f0e'
       line_color:
         value: '#ff7f0e'
       size:
@@ -837,4 +869,3 @@ roots:
   - type: ZoomOutTool
   - type: ZoomOutTool
 title: Bokeh Application
-version: 2.4.2
