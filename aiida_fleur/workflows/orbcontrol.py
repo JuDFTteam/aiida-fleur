@@ -315,22 +315,21 @@ class FleurOrbControlWorkChain(WorkChain):
                         error = f'ERROR: Invalid input: {species} defined in fixed_occupations but not in ldau_dict'
                         self.report(error)
                         return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                    missing = False
+                    if isinstance(ldau_dict[species], dict):
+                        if int(orbital) != ldau_dict[species]['l']:
+                            missing = True
                     else:
-                        missing = False
-                        if isinstance(ldau_dict[species], dict):
-                            if int(orbital) != ldau_dict[species]['l']:
+                        for index, current_dict in enumerate(ldau_dict[species]):
+                            if int(orbital) == current_dict['l']:
+                                break
+                            if index == len(ldau_dict) - 1:
                                 missing = True
-                        else:
-                            for index, current_dict in enumerate(ldau_dict[species]):
-                                if int(orbital) == current_dict['l']:
-                                    break
-                                if index == len(ldau_dict) - 1:
-                                    missing = True
-                        if missing:
-                            error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_occupations for {species}, ' \
-                                     ' but it is not defined in ldau_dict'
-                            self.report(error)
-                            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                    if missing:
+                        error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_occupations for {species}, ' \
+                                    ' but it is not defined in ldau_dict'
+                        self.report(error)
+                        return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
                     if not isinstance(occ, list):
                         error = f'ERROR: Invalid input: {species} defined in fixed_occupations invalid type'
@@ -347,22 +346,22 @@ class FleurOrbControlWorkChain(WorkChain):
                             error = f'ERROR: Invalid input: {species} defined in fixed_configurations but not in ldau_dict'
                             self.report(error)
                             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+                        missing = False
+                        if isinstance(ldau_dict[species], dict):
+                            if int(orbital) != ldau_dict[species]['l']:
+                                missing = True
                         else:
-                            missing = False
-                            if isinstance(ldau_dict[species], dict):
-                                if int(orbital) != ldau_dict[species]['l']:
+                            for index, current_dict in enumerate(ldau_dict[species]):
+                                if int(orbital) == current_dict['l']:
+                                    break
+                                if index == len(ldau_dict) - 1:
                                     missing = True
-                            else:
-                                for index, current_dict in enumerate(ldau_dict[species]):
-                                    if int(orbital) == current_dict['l']:
-                                        break
-                                    if index == len(ldau_dict) - 1:
-                                        missing = True
-                            if missing:
-                                error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_configurations for {species}, ' \
-                                         ' but it is not defined in ldau_dict'
-                                self.report(error)
-                                return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                        if missing:
+                            error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_configurations for {species}, ' \
+                                        ' but it is not defined in ldau_dict'
+                            self.report(error)
+                            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
                         if not isinstance(occ, list):
                             error = f'ERROR: Invalid input: {species} defined in fixed_configurations invalid type'
@@ -377,7 +376,7 @@ class FleurOrbControlWorkChain(WorkChain):
         inputs = self.inputs
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
                 self.report(error)
@@ -385,7 +384,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
                 error = 'The code you provided for INPGEN does not use the plugin fleur.inpgen'
                 self.report(error)
@@ -931,7 +930,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if all(e is None for e in t_energylist):
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
-        elif not self.ctx.successful:
+        if not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_CONFIGS_FAILED
 
     def control_end_wc(self, errormsg):

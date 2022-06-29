@@ -62,7 +62,7 @@ def test_export_extras(temp_dir):
     extra_filename = os.path.join(temp_dir, 'node_extras.txt')
     export_extras(test_pk, extra_filename)
 
-    with open(extra_filename) as json_file:
+    with open(extra_filename, encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     test_extras = [x['test_extra'] for x in data.values()]
@@ -82,7 +82,7 @@ def test_import_extras(temp_dir, capsys):
     extra_filename = os.path.join(temp_dir, 'node_extras.txt')
     export_extras([test_dict.pk], extra_filename)
 
-    with open(extra_filename) as json_file:
+    with open(extra_filename, encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     existent_uuid = list(data.keys())[0]
@@ -90,7 +90,7 @@ def test_import_extras(temp_dir, capsys):
     data['not_existent_uuid'] = {}
     data['not_existent_uuid']['test_extra'] = 'data to be not written'
 
-    with open(extra_filename, 'w') as json_file:
+    with open(extra_filename, 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file)
 
     import_extras(extra_filename)
@@ -101,7 +101,7 @@ def test_import_extras(temp_dir, capsys):
     assert captured.out == 'node with uuid not_existent_uuid does not exist in DB\n'
 
     empty_file = os.path.join(temp_dir, 'empty_file')
-    open(empty_file, 'w').close()  #pylint: disable=consider-using-with
+    open(empty_file, 'w', encoding='utf-8').close()  #pylint: disable=consider-using-with
     import_extras(empty_file)
 
     captured = capsys.readouterr()

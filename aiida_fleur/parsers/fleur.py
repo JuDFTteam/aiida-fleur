@@ -171,15 +171,15 @@ class FleurParser(Parser):
                     if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
                             'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
-                    elif 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
+                    if 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
                         return self.exit_codes.ERROR_TIME_LIMIT
-                    elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
+                    if 'Atom spills out into vacuum during relaxation' in error_file_lines:
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                    elif 'Error checking M.T. radii' in error_file_lines:
+                    if 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
-                    elif 'No solver linked for Hubbard 1' in error_file_lines:
+                    if 'No solver linked for Hubbard 1' in error_file_lines:
                         return self.exit_codes.ERROR_MISSING_DEPENDENCY.format(name='edsolver')
-                    elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
+                    if 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+', error_file_lines)[0].split()
                         with output_folder.open('relax.xml', 'r') as rlx:
                             schema_dict = InputSchemaDict.fromVersion('0.34')
@@ -197,13 +197,14 @@ class FleurParser(Parser):
                         error_params = Dict(dict=error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
-                    elif 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
+                    if 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
                         if 'fleurinpdata' in calc.inputs:
                             if 'relax.xml' in calc.inputs.fleurinpdata.files:
                                 return self.exit_codes.ERROR_DROP_CDN
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
-                    else:
-                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+
+                    #Catch all exit code for an unknown failure
+                    return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
         # if a relax.xml was retrieved
         if FleurCalculation._RELAX_FILE_NAME in list_of_files:
@@ -232,7 +233,8 @@ class FleurParser(Parser):
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
             return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
-        elif out_dict:
+
+        if out_dict:
             outxml_params = Dict(dict={**out_dict, **parser_info})
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)

@@ -106,7 +106,7 @@ class fleur_optimize_parameters_wc(WorkChain):
         # codes
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
                 error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
                 self.control_end_wc(error)
@@ -114,7 +114,7 @@ class fleur_optimize_parameters_wc(WorkChain):
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 self.control_end_wc(error)

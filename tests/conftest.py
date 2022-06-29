@@ -362,17 +362,11 @@ def create_fleurinp():
 def inpxml_etree():
     """Returns the etree generator"""
 
-    def _get_etree(path, return_schema=False):
+    def _get_etree(path):
         from lxml import etree
-        from masci_tools.io.parsers.fleur_schema import InputSchemaDict
-        with open(path) as inpxmlfile:
+        with open(path, encoding='utf-8') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
-            version = tree.getroot().attrib['fleurInputVersion']
-            schema_dict = InputSchemaDict.fromVersion(version)
-        if return_schema:
-            return tree, schema_dict
-        else:
-            return tree
+        return tree
 
     return _get_etree
 
@@ -582,7 +576,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath) as jfile:
+        with open(jsonfilepath, encoding='utf-8') as jfile:
             node_dict = json.load(jfile)
 
         return node_dict
