@@ -1028,7 +1028,7 @@ def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
     """
     CRYSTAL_FIELD_FILE = FleurCalculation._CFDATA_HDF5_FILE_NAME
 
-    cfcalc = CFCalculation(quiet=True)
+    cfcalc = CFCalculation()
     #Reading in the HDF files
     if CRYSTAL_FIELD_FILE in cf_cdn_folder.list_object_names():
         try:

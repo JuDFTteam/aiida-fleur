@@ -881,7 +881,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         #Find the minimal total energy in the list
         if any(e is not None for e in t_energylist):
-            energy = np.array(t_energylist, dtype=np.float)
+            energy = np.array(t_energylist, dtype=float)
 
             converged_mask = np.ones(energy.size, dtype=bool)
             converged_mask[non_converged_configs] = False
