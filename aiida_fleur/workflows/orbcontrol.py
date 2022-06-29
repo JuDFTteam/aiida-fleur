@@ -139,7 +139,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.0'
 
     _default_options = {
         'resources': {
@@ -379,14 +379,16 @@ class FleurOrbControlWorkChain(WorkChain):
             try:
                 test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
+                error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'inpgen' in inputs:
             try:
                 test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
             except ValueError:
-                error = ('The code you provided for INPGEN does not use the plugin fleur.inpgen')
+                error = 'The code you provided for INPGEN does not use the plugin fleur.inpgen'
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         fleurinp = None
@@ -879,7 +881,22 @@ class FleurOrbControlWorkChain(WorkChain):
 
         #Find the minimal total energy in the list
         if any(e is not None for e in t_energylist):
-            groundstate_index = np.nanargmin(np.array(t_energylist, dtype=np.float))
+            energy = np.array(t_energylist, dtype=np.float)
+
+            converged_mask = np.ones(energy.size, dtype=bool)
+            converged_mask[non_converged_configs] = False
+
+            converged_minimum_energy = np.nanmin(energy[converged_mask])
+            non_converged_minimum_energy = np.nanmin(energy[~converged_mask])
+
+            if non_converged_minimum_energy < converged_minimum_energy:
+                lower_non_converged = np.array(non_converged_configs)[
+                    energy[~converged_mask] < converged_minimum_energy]
+                out['warnings'].extend(f"Configuration 'Relaxed_{index}' did not converge "
+                                       'but is lower in energy than the lowest converged configuration'
+                                       for index in lower_non_converged)
+
+            groundstate_index = np.nanargmin(energy[converged_mask])
             out['groundstate_configuration'] = groundstate_index
 
             if f'Relaxed_{groundstate_index}' in self.ctx:
