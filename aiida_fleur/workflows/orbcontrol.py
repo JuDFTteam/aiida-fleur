@@ -139,7 +139,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.5.1'
 
     _default_options = {
         'resources': {
@@ -851,6 +851,7 @@ class FleurOrbControlWorkChain(WorkChain):
             t_energylist.append(t_e)
             distancelist.append(dis)
             configs_list.append(index)
+        converged_configs = [index for index in configs_list if index not in non_converged_configs]
 
         out = {
             'workflow_name': self.__class__.__name__,
@@ -861,6 +862,7 @@ class FleurOrbControlWorkChain(WorkChain):
             'distance_charge': distancelist,
             'distance_charge_units': dis_u,
             'successful_configs': configs_list,
+            'converged_configs': converged_configs,
             'non_converged_configs': non_converged_configs,
             'failed_configs': failed_configs,
             'groundstate_configuration': None,
@@ -894,7 +896,11 @@ class FleurOrbControlWorkChain(WorkChain):
                                            'but is lower in energy than the lowest converged configuration'
                                            for index in lower_non_converged)
 
-            groundstate_index = np.nanargmin(energy[converged_mask])
+            #Replace the non-converged calculations with NaN
+            #If we were to simply do np.nanargmin(energy[converged_mask])
+            #The index will no longer match up with the complete list
+            energy[~converged_mask] = np.nan
+            groundstate_index = np.nanargmin(energy)
             out['groundstate_configuration'] = groundstate_index
 
             if f'Relaxed_{groundstate_index}' in self.ctx:
