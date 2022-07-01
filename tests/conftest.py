@@ -591,22 +591,7 @@ def generate_structure2():
     def _generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-
-        def rel_to_abs(vector, cell):
-            """
-            converts interal coordinates to absolut coordinates in Angstroem.
-            """
-            if len(vector) == 3:
-                postionR = vector
-                row1 = cell[0]
-                row2 = cell[1]
-                row3 = cell[2]
-                new_abs_pos = [
-                    postionR[0] * row1[0] + postionR[1] * row2[0] + postionR[2] * row3[0],
-                    postionR[0] * row1[1] + postionR[1] * row2[1] + postionR[2] * row3[1],
-                    postionR[0] * row1[2] + postionR[1] * row2[2] + postionR[2] * row3[2]
-                ]
-                return new_abs_pos
+        from masci_tools.io.common_functions import rel_to_abs
 
         bohr_a_0 = 0.52917721092  # A
         a = 5.167355275190 * bohr_a_0
