@@ -269,12 +269,13 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.check_kpts()
 
         if 'settings' not in self.ctx.inputs:
-            self.ctx.inputs.settings = {}
+            settings = {}
         else:
-            self.ctx.inputs.settings = self.ctx.inputs.settings.get_dict()
-        self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
-        if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
-            self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
+            settings = self.ctx.inputs.settings.get_dict()
+        settings.setdefault('remove_from_remotecopy_list', [])
+        if 'mixing_history*' not in settings['remove_from_remotecopy_list']:
+            settings['remove_from_remotecopy_list'].append('mixing_history*')
+        self.ctx.inputs.settings = orm.Dict(dict=settings)
         return ProcessHandlerReport(True)
 
     @process_handler(priority=47, exit_codes=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
