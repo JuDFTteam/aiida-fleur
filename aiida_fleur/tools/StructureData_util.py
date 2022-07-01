@@ -806,7 +806,12 @@ def find_equi_atoms(structure):  # , sitenumber=0, position=None):
     k_symbols = {}
 
     s_ase = structure.get_ase()
-    sym = spglib.get_symmetry(s_ase, symprec=1e-5)
+
+    lattice = s_ase.get_cell()
+    positions = s_ase.get_scaled_positions()
+    numbers = s_ase.get_atomic_numbers()
+
+    sym = spglib.get_symmetry((lattice, positions, numbers), symprec=1e-5)
     equi = sym['equivalent_atoms']
     unique = np.unique(equi)
 
@@ -835,7 +840,10 @@ def get_spacegroup(structure):
     """
     import spglib
     s_ase = structure.get_ase()
-    spacegroup = spglib.get_spacegroup(s_ase, symprec=1e-5)
+    lattice = s_ase.get_cell()
+    positions = s_ase.get_scaled_positions()
+    numbers = s_ase.get_atomic_numbers()
+    spacegroup = spglib.get_spacegroup((lattice, positions, numbers), symprec=1e-5)
     return spacegroup
 
 
@@ -903,7 +911,10 @@ def find_primitive_cell(structure):
     symprec = 1e-7
     # print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
-    lattice, scaled_positions, numbers = find_primitive(ase_structure, symprec=symprec)
+    lattice = ase_structure.get_cell()
+    positions = ase_structure.get_scaled_positions()
+    numbers = ase_structure.get_atomic_numbers()
+    lattice, scaled_positions, numbers = find_primitive((lattice, positions, numbers), symprec=symprec)
     new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
     # print('new {}'.format(len(new_structure.sites)))
