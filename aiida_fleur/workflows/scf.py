@@ -707,6 +707,10 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.last_nmmp_distance = max(self.ctx.nmmp_distance[-1])
             else:
                 self.ctx.last_nmmp_distance = self.ctx.nmmp_distance[-1]
+            if self.last_nmmp_distance is None:
+                self.report('No LDA+U distance found but only one iteration performed\n'
+                            'Assuming that the calculatin should be continued')
+                self.last_nmmp_distance = self.ctx.wf_dict.get('nmmp_converged') + 1
 
     def condition(self):
         """
