@@ -730,6 +730,10 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.last_hubbard1_occ_distance = self.ctx.hubbard1_occ_distance[-1]
             self.ctx.last_hubbard1_elem_distance = self.ctx.hubbard1_elem_distance[-1]
 
+        if self.ctx.hubbard1_occ_distance:
+            self.ctx.last_hubbard1_occ_distance = self.ctx.hubbard1_occ_distance[-1]
+            self.ctx.last_hubbard1_elem_distance = self.ctx.hubbard1_elem_distance[-1]
+
     def condition(self):
         """
         check convergence condition
