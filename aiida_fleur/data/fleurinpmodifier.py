@@ -13,16 +13,104 @@
 In this module is the FleurinpModifier class, which is used to manipulate
 FleurinpData objects in a way which keeps the provernance.
 """
+from __future__ import annotations
+from contextlib import contextmanager
+
 import os
 from lxml import etree
 import warnings
 
-from aiida.engine.processes.functions import calcfunction as cf
+from aiida.engine import calcfunction as cf
+from aiida.engine import ProcessBuilderNamespace
+from aiida.common import AttributeDict
+from aiida import orm
+
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 from masci_tools.util.xml.common_functions import serialize_xml_objects
+from typing import Any, Generator
+
+__all__ = ('FleurinpModifier', 'inpxml_changes', 'modify_fleurinpdata')
+
+
+@contextmanager
+def inpxml_changes(wf_parameters: dict | orm.Dict | ProcessBuilderNamespace,
+                   append: bool = True,
+                   builder_entry: str = 'wf_parameters',
+                   builder_replace_stored: bool = True) -> Generator[FleurinpModifier, None, None]:
+    """
+    Contextmanager to construct an `inpxml_changes` entry in the given dictionary
+
+    Usage::
+
+        with inpxml_changes(parameters) as fm: #parameters is a dict, which can also already contain an inpxml_changes entry
+            fm.set_inpchanges({'l_noco': True, 'ctail': False})
+            fm.set_species('all-Nd', {'electronConfig': {'flipspins': True}})
+
+        print(parameters) #The parameters now also contains the tasks defined in the with block
+
+    Example for usage with a Builder::
+
+        from aiida import plugins
+
+        FleurBandDOS = plugins.WorkflowFactory('fleur.banddos')
+        inputs = FleurBandDOS.get_builder()
+
+        with inpxml_changes(inputs) as fm:
+            fm.set_inpchanges({'l_noco': True, 'ctail': False})
+            fm.set_species('all-Nd', {'electronConfig': {'flipspins': True}})
+
+        #The wf_parameters in the root level namespace are now set
+        print(inputs.wf_parameters['inpxml_changes'])
+
+        with inpxml_changes(inputs.scf) as fm:
+            fm.switch_kpointset('my-awesome-kpoints')
+
+        #The wf_parameters in the scf namespace are now set
+        print(inputs.scf.wf_parameters['inpxml_changes'])
+
+    :param wf_parameters: dict or aiida Dict (no stored) into which to enter the changes
+    :param append: bool if True the tasks are appended behind any evtl. already defined. For False the tasks are added in front
+    :param builder_entry: name of the entry for the inp.xml changes inside the parameters dictionary
+    :param builder_replace_stored: if True and a ProcessBuilder is given and the wf_parameters input is given and
+                                   already stored the produced changes will replace the node
+    """
+
+    _INPXML_CHANGES_KEY = 'inpxml_changes'
+
+    if isinstance(wf_parameters, orm.Dict) and wf_parameters.is_stored:
+        raise ValueError('Cannot modify already stored wf_parameters')
+
+    #Make sure that a AiiDA node in a ProcessBuilder is not already stored
+    if not builder_replace_stored \
+       and isinstance(wf_parameters,(ProcessBuilderNamespace, AttributeDict)) \
+       and wf_parameters.get(builder_entry, orm.Dict()).is_stored:
+        raise ValueError('Cannot modify already stored wf_parameters')
+
+    fm = FleurinpModifier()  #Since no original is provided this will crash if validate/show or freeze are called on it
+    try:
+        yield fm
+    finally:
+        builder = None
+        if isinstance(wf_parameters, (ProcessBuilderNamespace, AttributeDict)):
+            builder = wf_parameters
+            wf_parameters = wf_parameters.setdefault(builder_entry, orm.Dict())
+
+        if isinstance(wf_parameters, orm.Dict):
+            wf_parameters = wf_parameters.get_dict()
+
+        changes = wf_parameters.get(_INPXML_CHANGES_KEY, [])
+        if append:
+            changes.extend(fm.task_list)
+        else:
+            for change in reversed(fm.task_list):
+                changes.insert(0, change)
+
+        wf_parameters[_INPXML_CHANGES_KEY] = changes
+        if builder is not None and builder_replace_stored:
+            builder[builder_entry] = orm.Dict(dict=wf_parameters)
 
 
 class FleurinpModifier(FleurXMLModifier):
@@ -32,16 +120,46 @@ class FleurinpModifier(FleurXMLModifier):
 
     _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
-    def __init__(self, original):
+    def __init__(self, original=None):
         """
         Initiation of FleurinpModifier.
+
+        .. note::
+            The original argument can be `None`. However in this case the methods :py:meth:`show()`,
+            :py:meth:`validate()` and :py:meth:`freeze()` can no longer be used. Only the task_list
+            property is accessible in this case
+
+        :param original: FleurinpData to modify
         """
-        assert isinstance(original, FleurinpData), 'Wrong AiiDA data type'
+
+        if original is not None:
+            if not isinstance(original, FleurinpData):
+                raise TypeError(
+                    f'Wrong Type for {self.__class__.__name__}. Expected {FleurinpData.__name__}. Got: {original.__class__.__name__}'
+                )
 
         self._original = original
         self._other_nodes = {}
 
         super().__init__()
+
+    def _get_setter_func_kwargs(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Map the given args and kwargs to just kwargs for the setter function with the given name
+
+        :param name: name of the setter function
+        :param args: positional arguments to the setter function
+        :param kwargs: keyword arguments to the setter function
+        """
+        from inspect import signature
+
+        if name not in ('set_file', 'del_file'):
+            return super()._get_setter_func_kwargs(name, args, kwargs)
+
+        #The fleurinp file modifying function signatures are taken from teh FleruinpModifier directly
+        sig = signature(getattr(self, name))
+        bound = sig.bind(*args, **kwargs)
+        return dict(bound.arguments)
 
     @classmethod
     def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
@@ -586,6 +704,9 @@ class FleurinpModifier(FleurXMLModifier):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
+        if self._original is None:
+            raise ValueError('The validate() method can only be used if a original FleurinpData'
+                             ' was given on initialization')
 
         new_fleurinp = self._original.clone()
         tasks = self._tasks.copy()
@@ -620,6 +741,9 @@ class FleurinpModifier(FleurXMLModifier):
 
         :return: a lxml tree representing inp.xml with applied changes
         """
+        if self._original is None:
+            raise ValueError('The show() method can only be used if a original FleurinpData'
+                             ' was given on initialization')
 
         if validate:
             xmltree = self.validate()
@@ -650,6 +774,9 @@ class FleurinpModifier(FleurXMLModifier):
 
         :return: stored :class:`~aiida_fleur.data.fleurinp.FleurinpData` with applied changes
         """
+        if self._original is None:
+            raise ValueError('The freeze() method can only be used if a original FleurinpData'
+                             ' was given on initialization')
         from aiida.orm import Dict
         modifications = Dict(dict={'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'

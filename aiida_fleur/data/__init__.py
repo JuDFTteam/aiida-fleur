@@ -8,6 +8,10 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-'''
-FLEUR plug-in
-'''
+"""
+Subpackage containing the Data related functionality of aiida-fleur
+"""
+from .fleurinp import FleurinpData
+from .fleurinpmodifier import FleurinpModifier, inpxml_changes
+
+__all__ = ('FleurinpData', 'FleurinpModifier', 'inpxml_changes')
