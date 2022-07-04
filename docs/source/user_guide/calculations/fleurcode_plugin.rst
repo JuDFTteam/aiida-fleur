@@ -161,6 +161,42 @@ Each exit code has it's own reason:
 | 316       | Calculation failed due to time limits.                       |
 +-----------+--------------------------------------------------------------+
 
+.. _fleur_parallelization:
+
+Parallelization options
+''''''''''''''''''''''''
+
+For parallel FLEUR calculations the input under ``metadata.options`` can be used.
+In higher level workchains this input might be present as a plain ``options`` input,
+but it is completely equivalent to the ``metadata.options`` input.
+
+.. code-block:: python
+
+    inputs.metadata.options = {
+      'resources': {
+        'num_machines': 2, #Number of computing nodes
+        'num_mpiprocs_per_machine': 4, #Number of MPI processes per node
+        'num_cpus_per_mpiproc': 12, #Number of OMP threads per MPI process
+      },
+      'withmpi': True, #This flag makes sure that the process is submitted using MPI
+      'max_wallclock_seconds': 3600, #Maximum wallclock time in seconds
+    }
+
+This will result in setting the following slurm Parallelization variables in the submit script.
+
+.. code-block:: bash
+
+  #SBATCH --nodes=1
+  #SBATCH --ntasks-per-node=6
+  #SBATCH --cpus-per-task=8
+  #SBATCH --time=01:00:00
+  #... Further configuration options unrelated to parallelization...
+
+  'srun' '/path/to/fleur/' '<further FLEUR cmdline flags, e.g. -last_extra>'
+
+Note, that the ``srun`` command is computer specific and is configured in ``verdi computer setup``
+with the ``Mpirun command`` option.
+
 .. _Fleur_settings:
 
 Additional advanced features
