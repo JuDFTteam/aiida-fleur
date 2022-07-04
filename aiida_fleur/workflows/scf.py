@@ -717,6 +717,10 @@ class FleurScfWorkChain(WorkChain):
                             'Assuming that the calculatin should be continued')
                 self.ctx.last_nmmp_distance = self.ctx.wf_dict['nmmp_converged'] + 1
 
+        if self.ctx.hubbard1_occ_distance:
+            self.ctx.last_hubbard1_occ_distance = self.ctx.hubbard1_occ_distance[-1]
+            self.ctx.last_hubbard1_elem_distance = self.ctx.hubbard1_elem_distance[-1]
+
     def condition(self):
         """
         check convergence condition
