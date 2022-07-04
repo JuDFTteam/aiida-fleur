@@ -98,6 +98,7 @@ Workchain parameters and its defaults
       code always converges density before forces.
 
   * ``options``: :py:class:`~aiida.orm.Dict` - AiiDA options (computational resources).
+    Also see :ref:`fleur_parallelization` section.
     Example:
 
     .. code-block:: python
