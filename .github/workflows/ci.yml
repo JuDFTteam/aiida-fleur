@@ -130,16 +130,21 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida.version }}
         pip install reentry
         reentry scan
 
+    - name: Migrate AiiDA workflow caches
+      run: |
+        cd ./tests/
+        python migrate_exports.py
+
     - name: Run pytest
       run: |
-       # create fake codes for tests to work on ci
        cd ./tests/
+       # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
        # At the moment the aiida-testing config cannot be used with relative paths
