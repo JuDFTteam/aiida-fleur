@@ -55,17 +55,17 @@ def pytest_collection_modifyitems(session, config, items):
 
     skip_regression = pytest.mark.skip(
         reason='Workflow regression test is skipped, because aiida-testing is not available')
-    aiida_version_skip = pytest.mark.skipif(
-        aiida.get_version().startswith('2.'),
-        reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+    # aiida_version_skip = pytest.mark.skipif(
+    #     aiida.get_version().startswith('2.'),
+    #     reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
 
     regression_items = [item for item in items if 'regression_test' in item.keywords]
     if not RUN_REGRESSION_TESTS:
         for item in regression_items:
             item.add_marker(skip_regression)
 
-    for item in regression_items:
-        item.add_marker(aiida_version_skip)
+    # for item in regression_items:
+    #     item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
