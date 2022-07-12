@@ -288,9 +288,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         # if previous calculation failed for the same reason, do not restart
         try:
             prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
-            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].node.exit_status
+            prev_calculation_status = prev_calculation_remote.creator.exit_status
             if prev_calculation_status in FleurCalculation.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
+                self.results()
                 return ProcessHandlerReport(True)
         except NotExistent:
             pass
@@ -337,6 +338,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             )):
                 self.report(
                     'FleurCalculation failed due to time limits and no charge density file is available. Aborting!')
+                self.results()
                 return ProcessHandlerReport(True, self.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION)
 
         return ProcessHandlerReport(True)
