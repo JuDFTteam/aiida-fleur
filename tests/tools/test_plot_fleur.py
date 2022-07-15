@@ -15,7 +15,7 @@ All test are executed with show false, if some plot opens, something is not righ
 #TODO: Tests for banddos and orbcontrol workchain
 import pytest
 import os
-from aiida import orm
+from aiida import orm, plugins
 from aiida_fleur.tools.plot import plot_fleur
 import aiida_fleur
 import matplotlib.pyplot as plt
@@ -197,7 +197,7 @@ def test_plot_fleur_mulitple_invalid_node(read_dict_from_file, test_file):
 @pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
                     reason='archive import and migration works only with aiida-core > 1.5.0')
 @pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
-def test_plot_fleur_single_orbcontrol_wc_matplotlib(import_with_migrate):
+def test_plot_fleur_single_orbcontrol_wc_matplotlib(import_with_migrate, clear_database):
     """
     Test of visualization of single Orbcontrol workchain with matplotlib
     """
@@ -205,10 +205,13 @@ def test_plot_fleur_single_orbcontrol_wc_matplotlib(import_with_migrate):
     file_path = '../workflows/caches/fleur_orbcontrol_structure.tar.gz'
     thisfilefolder = os.path.dirname(os.path.abspath(__file__))
     EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
+    if not os.path.isfile(EXPORTFILE_FILE):
+        pytest.skip('Workflow regression files are being regenerated. Skipping plot test'
+                    '(Based on results of workflow test)')
 
     # import an an aiida export, this does not migrate
     import_with_migrate(EXPORTFILE_FILE)
-    node = orm.load_node('59680531-c7c6-4125-a272-ef2c53324c72')
+    node = orm.QueryBuilder().append(plugins.WorkflowFactory('fleur.orbcontrol')).one()[0]
 
     plt.gcf().clear()
     p_orbcontrol = plot_fleur(node, show=False)
