@@ -155,9 +155,6 @@ jobs:
        # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
-       # At the moment the aiida-testing config cannot be used with relative paths
-       # here we replace the dot in the path to make it absolute
-       sed -i "s/\./${GITHUB_WORKSPACE//\//\\/}\/tests/g" .aiida-testing-config.yml
        ./run_all_cov.sh --local-exe-hdf5
 
     - name: Upload report to Codecov
