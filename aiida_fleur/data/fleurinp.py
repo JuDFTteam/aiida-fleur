@@ -620,7 +620,6 @@ class FleurinpData(Data):
 
         return Dict(dict=parameter_data)
 
-    @cf
     def get_parameterdata(self, inpgen_ready=None, write_ids=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
