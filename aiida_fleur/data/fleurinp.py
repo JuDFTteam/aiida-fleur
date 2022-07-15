@@ -28,11 +28,8 @@ from aiida.orm import Data, Node, load_node, CalcJobNode
 from aiida.common.exceptions import InputValidationError, ValidationError
 from aiida.engine.processes.functions import calcfunction as cf
 
-__all__ = (
-    'FleurinpData',
-    'get_fleurinp_from_folder_data',
-    'get_fleurinp_from_remote_data',
-)
+__all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_remote_data', 'get_structuredata',
+           'get_kpointsdata', 'get_parameterdata', 'convert_inpxml')
 
 
 def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=None):
@@ -526,7 +523,6 @@ class FleurinpData(Data):
         # return {label : struc}
         return struc
 
-    @cf
     def get_structuredata(self, normalize_kind_name=None):
         """
         This routine return an AiiDA Structure Data type produced from the ``inp.xml``
@@ -536,9 +532,7 @@ class FleurinpData(Data):
         :param fleurinp: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node
         """
-        if normalize_kind_name is None:
-            normalize_kind_name = orm.Bool(True)
-        return self.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
+        return get_structuredata(self, normalize_kind_name=normalize_kind_name)
 
     def get_kpointsdata_ncf(self, name=None, index=None, only_used=False):
         """
@@ -599,7 +593,6 @@ class FleurinpData(Data):
 
         return kpoints_data
 
-    @cf
     def get_kpointsdata(self, name=None, index=None, only_used=None):
         """
         This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
@@ -608,9 +601,7 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
-        if only_used is None:
-            only_used = orm.Bool(False)
-        return self.get_kpointsdata_ncf(name=name, index=index, only_used=only_used)
+        return get_kpointsdata(self, name=name, index=index, only_used=only_used)
 
     def get_parameterdata_ncf(self, inpgen_ready=True, write_ids=True):
         """
@@ -638,13 +629,7 @@ class FleurinpData(Data):
 
         :returns: :class:`~aiida.orm.Dict` node
         """
-        if inpgen_ready is None:
-            inpgen_ready = orm.Bool(True)
-
-        if write_ids is None:
-            write_ids = orm.Bool(True)
-
-        return self.get_parameterdata_ncf(inpgen_ready=inpgen_ready, write_ids=write_ids)
+        return get_parameterdata(self, inpgen_ready=inpgen_ready, write_ids=write_ids)
 
     def get_tag(self, xpath):
         """
@@ -665,7 +650,6 @@ class FleurinpData(Data):
 
         return eval_xpath(root, xpath)
 
-    @cf
     def convert_inpxml(self, to_version: orm.Str) -> 'FleurinpData':
         """
         Convert the fleurinp data node to a different inp.xml version
@@ -675,7 +659,7 @@ class FleurinpData(Data):
             If the Fleurinp contains included xml trees the resulting
             FleurinpData will contain only the combined inp.xml
         """
-        return self.convert_inpxml_ncf(to_version.value)
+        return convert_inpxml(self, to_version.value)
 
     def convert_inpxml_ncf(self, to_version: str) -> 'FleurinpData':
         """
@@ -686,13 +670,13 @@ class FleurinpData(Data):
             If the Fleurinp contains included xml trees the resulting
             FleurinpData will contain only the combined inp.xml
         """
-        from masci_tools.tools.fleur_inpxml_converter import convert_inpxml
+        from masci_tools.tools.fleur_inpxml_converter import convert_inpxml as convert_inpxml_actual
         import tempfile
         clone = self.clone()
 
         xmltree, schema_dict = clone.load_inpxml(remove_blank_text=True)
         try:
-            converted_tree = convert_inpxml(xmltree, schema_dict, to_version)
+            converted_tree = convert_inpxml_actual(xmltree, schema_dict, to_version)
         except FileNotFoundError as exc:
             raise ValueError(
                 f"No conversion available from version {schema_dict['inp_version']} to {to_version}\n"
@@ -710,3 +694,63 @@ class FleurinpData(Data):
         clone.description = f"Fleurinpdata converted from version {schema_dict['inp_version']} to {to_version}"
 
         return clone
+
+
+@cf
+def get_kpointsdata(fleurinp, name=None, index=None, only_used=None):
+    """
+    This routine returns an AiiDA :class:`~aiida.orm.KpointsData` type produced from the
+    ``inp.xml`` file. This only works if the kpoints are listed in the in inpxml.
+    This is a calcfunction and keeps the provenance!
+
+    :returns: :class:`~aiida.orm.KpointsData` node or dict of :class:`~aiida.orm.KpointsData`
+    """
+    if only_used is None:
+        only_used = orm.Bool(False)
+    return fleurinp.get_kpointsdata_ncf(name=name, index=index, only_used=only_used)
+
+
+@cf
+def get_structuredata(fleurinp, normalize_kind_name=None):
+    """
+    This routine return an AiiDA Structure Data type produced from the ``inp.xml``
+    file. If this was done before, it returns the existing structure data node.
+    This is a calcfunction and therefore keeps the provenance.
+
+    :param fleurinp: a FleurinpData instance to be parsed into a StructureData
+    :returns: StructureData node
+    """
+    if normalize_kind_name is None:
+        normalize_kind_name = orm.Bool(True)
+    return fleurinp.get_structuredata_ncf(normalize_kind_name=normalize_kind_name)
+
+
+@cf
+def get_parameterdata(fleurinp, inpgen_ready=None, write_ids=None):
+    """
+    This routine returns an AiiDA :class:`~aiida.orm.Dict` type produced from the ``inp.xml``
+    file. The returned node can be used for inpgen as `calc_parameters`.
+    This is a calcfunction and keeps the provenance!
+
+    :returns: :class:`~aiida.orm.Dict` node
+    """
+    if inpgen_ready is None:
+        inpgen_ready = orm.Bool(True)
+
+    if write_ids is None:
+        write_ids = orm.Bool(True)
+
+    return fleurinp.get_parameterdata_ncf(inpgen_ready=inpgen_ready, write_ids=write_ids)
+
+
+@cf
+def convert_inpxml(fleurinp: 'FleurinpData', to_version: orm.Str) -> 'FleurinpData':
+    """
+    Convert the fleurinp data node to a different inp.xml version
+    and return a clone of the node
+
+    .. note::
+        If the Fleurinp contains included xml trees the resulting
+        FleurinpData will contain only the combined inp.xml
+    """
+    return fleurinp.convert_inpxml_ncf(to_version.value)
