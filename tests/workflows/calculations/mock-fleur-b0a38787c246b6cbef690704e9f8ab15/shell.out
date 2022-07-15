@@ -1,0 +1,160 @@
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Now copying inp_dump.xml
+ 
+ ========== k-point set info ==========
+ Selected k-point list: default-1
+ k-point list type: mesh
+ 1 x 1 x 1
+ Number of k points: 1
+ 
+ --------------------------------------------------------
+ Number of OMP-threads:           2
+ --------------------------------------------------------
+ Iteration:           1  Distance:   19.614981315342856     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           2  Distance:   32.292848164046745     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           3  Distance:   31.787135650419156     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           4  Distance:   34.469585638701069     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           5  Distance:   35.496386395134664     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           6  Distance:   31.284077650955929     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           7  Distance:   42.073092027087064     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           8  Distance:   35.929603395142919     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:           9  Distance:   31.782217450877976     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          10  Distance:   33.145998049813393     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          11  Distance:   28.609200090602943     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          12  Distance:   18.869452264664041     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          13  Distance:   17.012979061302524     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          14  Distance:   15.225190575352485     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          15  Distance:   29.718209452436263     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          16  Distance:   17.550521741684822     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           2
+ Time per iter (min):           1
+ Iteration:          17  Distance:   10.529601291700915     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          18  Distance:   9.2312485326539484     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          19  Distance:   28.943043304963368     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          20  Distance:   27.428006318602979     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          21  Distance:   29.142839596899094     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          22  Distance:   25.888427195625283     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          23  Distance:   26.108430704523105     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          24  Distance:   26.008632337249971     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           3
+ Time per iter (min):           1
+ Iteration:          25  Distance:   16.715645940320812     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           4
+ Time per iter (min):           1
+ Iteration:          26  Distance:   26.640284801342219     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           4
+ Time per iter (min):           1
+ Iteration:          27  Distance:   15.670038771460309     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           4
+ Time per iter (min):           1
+ Iteration:          28  Distance:   8.7485355299924983     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           4
+ Time per iter (min):           1
+ Iteration:          29  Distance:   5.0929091033773570     
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           4
+ Time per iter (min):           1
+ Iteration:          30  Distance:   23.726530735870487     
+ As requested by command line option usage data was not send, please send usage.json manually
