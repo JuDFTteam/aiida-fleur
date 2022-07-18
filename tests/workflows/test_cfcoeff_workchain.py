@@ -16,7 +16,6 @@ from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 
 
-
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
