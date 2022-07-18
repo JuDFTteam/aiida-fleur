@@ -53,10 +53,7 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     builder.scf.fleur = FleurCode
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_relax_fleurinp_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_relax_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
