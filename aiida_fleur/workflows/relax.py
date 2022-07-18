@@ -343,7 +343,7 @@ class FleurRelaxWorkChain(WorkChain):
         # get force mixing (straight or BFGS) setting
         # defaults to stright mixing if not set in scf.wf_parameters
         if 'wf_parameters' in self.inputs.scf:
-            force_dict = self.inputs.scf.wf_parameters.get_dict().get('force_dict',{})
+            force_dict = self.inputs.scf.wf_parameters.get_dict().get('force_dict', {})
             force_strmix = force_dict.get('forcemix', 'straight') == 'straight'
         else:
             force_strmix = True
