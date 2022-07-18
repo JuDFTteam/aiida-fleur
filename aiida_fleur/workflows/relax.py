@@ -342,10 +342,11 @@ class FleurRelaxWorkChain(WorkChain):
 
         # get force mixing (straight or BFGS) setting
         # defaults to stright mixing if not set in scf.wf_parameters
-        if 'wf_parameters' in self.inputs.scf.wf_parameters:
-            force_strmix = self.inputs.scf.wf_parameters['force_dict']['forcemix'] == 'straight'
+        if 'wf_parameters' in self.inputs.scf:
+            force_dict = self.inputs.scf.wf_parameters.get_dict().get('force_dict',{})
+            force_strmix = force_dict.get('forcemix', 'straight') == 'straight'
         else:
-            force_strmix = False
+            force_strmix = True
 
         if largest_now < self.ctx.wf_dict['force_criterion']:
             self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
