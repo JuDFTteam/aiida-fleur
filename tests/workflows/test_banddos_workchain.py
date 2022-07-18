@@ -64,10 +64,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_band_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -141,8 +138,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 
     # now run calculation
     #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_dos_fleurinp_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_dos_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -216,10 +212,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_seek.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_band_fleurinp_Si_seek.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -292,10 +285,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_band_fleurinp_Si_ase.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_band_fleurinp_Si_ase.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)

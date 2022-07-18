@@ -11,13 +11,10 @@
 ''' Various tests for the FleurDMIWorkChain, different groupping '''
 # Here we test if the interfaces of the workflows are still the same
 import pytest
-import aiida_fleur
 import os
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.dmi import FleurDMIWorkChain
-
-aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.regression_test
@@ -31,8 +28,7 @@ def test_fleur_dmi_FePt_film(
     full example using mae workflow with FePt film structure as input.
     """
     pytest.importorskip('masci_tools', minversion='0.7.3')
-    from aiida.orm import Code, load_node, Dict, StructureData
-    from aiida.manage.caching import enable_caching
+    from aiida.orm import Dict, StructureData
 
     options = Dict(
         dict={
@@ -110,12 +106,7 @@ def test_fleur_dmi_FePt_film(
         'options': options
     }
 
-    # now run calculation
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_dmi_FePt.tar.gz')
-
-    #out, node = run_with_cache(inputs, process_class=FleurDMIWorkChain)
-    #with enable_caching():
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_dmi_FePt.tar.gz'):
         out, node = run_get_node(FleurDMIWorkChain, **inputs)
     print(out)
     print(node)

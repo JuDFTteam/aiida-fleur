@@ -660,7 +660,7 @@ def inpgen_local_code(mock_code_factory, request):
     InpgenCode = mock_code_factory(label='inpgen',
                                    data_dir_abspath=data_dir,
                                    entry_point='fleur.inpgen',
-                                   ignore_files=[
+                                   ignore_paths=[
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
                                        '*.econfig', 'struct.xsf'
                                    ])
@@ -682,7 +682,7 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
     FleurCode = mock_code_factory(label='fleur',
                                   data_dir_abspath=data_dir,
                                   entry_point='fleur.fleur',
-                                  ignore_files=[
+                                  ignore_paths=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
                                       'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'

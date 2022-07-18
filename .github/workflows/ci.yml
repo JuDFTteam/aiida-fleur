@@ -137,17 +137,12 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache
+        pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache_config
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida.version }}
         pip install ${{ matrix.masci-tools.version }}
         pip install reentry
         reentry scan
-
-    - name: Migrate AiiDA workflow caches
-      run: |
-        cd ./tests/
-        python migrate_exports.py
 
     - name: Run pytest
       run: |
@@ -155,7 +150,7 @@ jobs:
        # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
-       ./run_all_cov.sh --local-exe-hdf5
+       ./run_all_cov.sh --local-exe-hdf5 --export-cache-allow-migration
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1

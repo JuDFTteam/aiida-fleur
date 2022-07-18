@@ -12,13 +12,9 @@
 # Here we test if the interfaces of the workflows are still the same
 
 import pytest
-import aiida_fleur
-import os
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
-
-aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.regression_test
@@ -31,8 +27,7 @@ def test_fleur_ssdisp_FePt_film(
     """
     full example using mae workflow with FePt film structure as input.
     """
-    from aiida.orm import Code, load_node, Dict, StructureData
-    from aiida.manage.caching import enable_caching
+    from aiida.orm import Dict, StructureData
 
     options = Dict(
         dict={
@@ -107,12 +102,7 @@ def test_fleur_ssdisp_FePt_film(
         'options': options
     }
 
-    # now run calculation
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_ssdisp_FePt.tar.gz')
-
-    #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
-    #with enable_caching():
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_ssdisp_FePt.tar.gz'):
         out, node = run_get_node(FleurSSDispWorkChain, **inputs)
     print(out)
     print(node)
