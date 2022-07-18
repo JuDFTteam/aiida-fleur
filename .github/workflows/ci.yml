@@ -76,26 +76,26 @@ jobs:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
         aiida: [{version: 'aiida-core==1.6.8', name: '1.6.8'}, {version: 'aiida-core==2.0.1', name: '2.0.1'}]
-        masci-tools: [{version: 'masci-tools', name: ''}]
+        masci-tools: [{version: 'masci-tools', name: 'stable'}]
         allowed-to-fail: [false]
         include:
           - python-version: 3.9
             aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'latest'}
-            masci-tools: {version: 'masci-tools', name: ''}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
             allowed-to-fail: true
           - python-version: 3.9
             aiida: {version: 'aiida-core==1.6.8', name: '1.6.8'}
-            masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: '-masci-develop'}
+            masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: 'develop'}
             allowed-to-fail: true
         exclude:
           - python-version: 3.7
             aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
-            masci-tools: {version: 'masci-tools', name: ''}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
             allowed-to-fail: false
 
       fail-fast: false
 
-    name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida.name }}${{ matrix.masci-tools.name }}
+    name: tests-python-${{ matrix.python-version }}-aiida-${{ matrix.aiida.name }}-masci-${{ matrix.masci-tools.name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
@@ -141,8 +141,7 @@ jobs:
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida.version }}
         pip install ${{ matrix.masci-tools.version }}
-        pip install reentry
-        reentry scan
+        reentry scan || true
 
     - name: Run pytest
       run: |
