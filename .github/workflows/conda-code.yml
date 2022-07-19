@@ -83,6 +83,8 @@ jobs:
         mamba install fleur=${{ matrix.fleur.version }}
         fleur_MPI -h
         inpgen -h
+        which fleur_MPI
+        which inpgen
 
     - name: Remove workflow caches
       run: |
