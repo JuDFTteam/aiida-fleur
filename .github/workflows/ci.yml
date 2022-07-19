@@ -28,7 +28,7 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install -e .[docs]
-        reentry scan
+        reentry scan || true
 
     - name: Build documentation
       env:
@@ -139,8 +139,7 @@ jobs:
         pip install --upgrade wheel setuptools
         pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache_config
         pip install .[testing,graphs]
-        pip install ${{ matrix.aiida.version }}
-        pip install ${{ matrix.masci-tools.version }}
+        pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
         reentry scan || true
 
     - name: Run pytest
