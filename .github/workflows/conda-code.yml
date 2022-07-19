@@ -67,11 +67,11 @@ jobs:
         reentry scan || true
 
     - name: Setup Conda
-        uses: s-weigand/setup-conda@v1
-        with:
-          conda-channels: conda-forge
-          update-conda: true
-          python-version: ${{ matrix.python-version }}
+      uses: s-weigand/setup-conda@v1
+      with:
+        conda-channels: conda-forge
+        update-conda: true
+        python-version: ${{ matrix.python-version }}
 
     - name: Install mamba
       run: |
