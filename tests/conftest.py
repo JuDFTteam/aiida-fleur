@@ -664,7 +664,7 @@ def inpgen_local_code(mock_code_factory, request):
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
                                        '*.econfig', 'struct.xsf'
                                    ],
-                                   executable='inpgen')
+                                   executable_name='inpgen')
 
     return InpgenCode
 
