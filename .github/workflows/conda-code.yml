@@ -96,7 +96,8 @@ jobs:
     - name: Run pytest
       run: |
        cd ./tests/
-       ./run_all_cov.sh --local-exe-hdf5
+       cat .aiida-testing/config.yml
+       ./run_all_cov.sh --local-exe-hdf5 --local-exe-mpi
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1
