@@ -94,10 +94,16 @@ jobs:
     - name: Run pytest
       run: |
        cd ./tests/
-       ./run_all_cov.sh --local-exe-hdf5 --export-cache-allow-migration
+       ./run_all_cov.sh --local-exe-hdf5
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1
       with:
         file: ./tests/coverage.xml
         fail_ci_if_error: False
+    
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: workflow-caches-${{ matrix.python-version }}-fleur-${{ matrix.fleur.name }}-aiida-${{ matrix.aiida.name }}
+        path: tests/workflows/caches
