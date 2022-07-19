@@ -34,7 +34,7 @@ else:
 
 def pytest_addoption(parser):
     parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
-
+    parser.addoption('--local-exe-mpi', action='store_true', help='Is the local executable compiled with MPI')
 
 def pytest_configure(config):
     """
@@ -663,7 +663,8 @@ def inpgen_local_code(mock_code_factory, request):
                                    ignore_paths=[
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
                                        '*.econfig', 'struct.xsf'
-                                   ])
+                                   ],
+                                   executable='inpgen')
 
     return InpgenCode
 
@@ -679,6 +680,12 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
     if not data_dir.is_dir():
         data_dir.mkdir()
 
+    if pytestconfig.getoption('--local-exe-mpi'):
+        executable_name = 'fleur_MPI'
+    else:
+        executable_name = 'fleur'
+
+
     FleurCode = mock_code_factory(label='fleur',
                                   data_dir_abspath=data_dir,
                                   entry_point='fleur.fleur',
@@ -686,7 +693,8 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
                                       'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'
-                                  ])
+                                  ],
+                                  executable_name=executable_name)
 
     if pytestconfig.getoption('--local-exe-hdf5'):
         FleurCode.description = 'Local executable with HDF5'
