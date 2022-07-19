@@ -14,11 +14,11 @@ jobs:
         python-version: ["3.8", "3.10"]
         aiida: [{version: 'aiida-core==1.6.8', name: '1.6.8'}, {version: 'aiida-core==2.0.1', name: '2.0.1'}]
         masci-tools: [{version: 'masci-tools', name: 'stable'}]
-        fleur-version: [{version: "6.0", name: 'MaX-R6'}]
+        fleur: [{version: "6.0", name: 'MaX-R6'}]
         allowed-to-fail: [false]
       fail-fast: false
 
-    name: conda-tests-python-${{ matrix.python-version }}-fleur-${{ matrix.fleur.version }}-aiida-${{ matrix.aiida.name }}-masci-${{ matrix.masci-tools.name }}
+    name: conda-tests-python-${{ matrix.python-version }}-fleur-${{ matrix.fleur.name }}-aiida-${{ matrix.aiida.name }}-masci-${{ matrix.masci-tools.name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
