@@ -1,0 +1,6 @@
+mock_code: 
+    inpgen: inpgen
+    fleur: fleur_MPI
+export_cache:
+    calcjob_ignored_attributes: 
+        - environment_variables_double_quotes
