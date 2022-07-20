@@ -97,7 +97,7 @@ jobs:
       run: |
        cd ./tests/
        cat .aiida-testing-config.yml
-       ./run_all_cov.sh --local-exe-mpi -x
+       ./run_all_cov.sh --local-exe-hdf5 --local-exe-mpi -x
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1
