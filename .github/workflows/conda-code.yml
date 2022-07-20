@@ -7,7 +7,7 @@ jobs:
   tests:
 
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     strategy:
       matrix:
@@ -97,7 +97,7 @@ jobs:
       run: |
        cd ./tests/
        cat .aiida-testing-config.yml
-       ./run_all_cov.sh --local-exe-hdf5 --local-exe-mpi
+       ./run_all_cov.sh --local-exe-hdf5 --local-exe-mpi -x
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1

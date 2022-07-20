@@ -194,21 +194,20 @@ def test_plot_fleur_mulitple_invalid_node(read_dict_from_file, test_file):
         plot_fleur([fleur_outputnode, fleur_outputnode], show=False)
 
 
+file_path = '../workflows/caches/fleur_orbcontrol_structure.tar.gz'
+thisfilefolder = os.path.dirname(os.path.abspath(__file__))
+EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
+
 @pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
                     reason='archive import and migration works only with aiida-core > 1.5.0')
+@pytest.mark.skipif(not os.path.isfile(EXPORTFILE_FILE),
+                    reason='Workflow regression files are being regenerated. Skipping plot test'
+                    '(Based on results of workflow test)')
 @pytest.mark.mpl_image_compare(baseline_dir='test_plot_fleur')
 def test_plot_fleur_single_orbcontrol_wc_matplotlib(import_with_migrate, clear_database):
     """
     Test of visualization of single Orbcontrol workchain with matplotlib
     """
-
-    file_path = '../workflows/caches/fleur_orbcontrol_structure.tar.gz'
-    thisfilefolder = os.path.dirname(os.path.abspath(__file__))
-    EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
-    if not os.path.isfile(EXPORTFILE_FILE):
-        pytest.skip('Workflow regression files are being regenerated. Skipping plot test'
-                    '(Based on results of workflow test)')
-
     # import an an aiida export, this does not migrate
     import_with_migrate(EXPORTFILE_FILE)
     node = orm.QueryBuilder().append(plugins.WorkflowFactory('fleur.orbcontrol')).one()[0]
