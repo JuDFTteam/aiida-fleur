@@ -94,7 +94,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog, override_logging):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence

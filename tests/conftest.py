@@ -763,3 +763,49 @@ def import_with_migrate(temp_dir):
                     raise
 
     return _import_with_migrate
+
+@pytest.fixture
+def isolated_config(monkeypatch):
+    """Return a copy of the currently loaded config and set that as the loaded config.
+
+    This allows a test to change the config during the test, and after the test the original config will be restored
+    making the changes of the test fully temporary. In addition, the ``Config._backup`` method is monkeypatched to be a
+    no-op in order to prevent that backup files are written to disk when the config is stored. Storing the config after
+    changing it in tests maybe necessary if a command is invoked that will be reading the config from disk in another
+    Python process and so doesn't have access to the loaded config in memory in the process that is running the test.
+    """
+    import copy
+
+    from aiida.manage import configuration
+
+    monkeypatch.setattr(configuration.Config, '_backup', lambda *args, **kwargs: None)
+
+    current_config = configuration.CONFIG
+    configuration.CONFIG = copy.deepcopy(current_config)
+    configuration.CONFIG.set_default_profile(configuration.get_profile().name, overwrite=True)
+
+    try:
+        yield configuration.CONFIG
+    finally:
+        configuration.CONFIG = current_config
+        configuration.CONFIG.store()
+
+
+@pytest.fixture(scope='function')
+def override_logging(isolated_config):
+    """Temporarily override the log level for the AiiDA logger and the database log handler to ``DEBUG``.
+
+    The changes are made by changing the configuration options ``logging.aiida_loglevel`` and ``logging.db_loglevel``.
+    To ensure the changes are temporary, the are made on an isolated temporary configuration.
+    """
+    from aiida.common.log import configure_logging
+
+    try:
+        isolated_config.set_option('logging.aiida_loglevel', 'DEBUG')
+        isolated_config.set_option('logging.db_loglevel', 'DEBUG')
+        configure_logging(with_orm=True)
+        yield
+    finally:
+        isolated_config.unset_option('logging.aiida_loglevel')
+        isolated_config.unset_option('logging.db_loglevel')
+        configure_logging(with_orm=True)
