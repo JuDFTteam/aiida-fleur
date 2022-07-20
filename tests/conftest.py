@@ -36,6 +36,7 @@ def pytest_addoption(parser):
     parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
     parser.addoption('--local-exe-mpi', action='store_true', help='Is the local executable compiled with MPI')
 
+
 def pytest_configure(config):
     """
     Here you can add things by a pytest config, could be also part of a separate file
@@ -684,7 +685,6 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
         executable_name = 'fleur_MPI'
     else:
         executable_name = 'fleur'
-
 
     FleurCode = mock_code_factory(label='fleur',
                                   data_dir_abspath=data_dir,

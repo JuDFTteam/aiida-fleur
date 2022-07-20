@@ -85,6 +85,14 @@ jobs:
         inpgen -h
         which fleur_MPI
         which inpgen
+    
+    - name: Test Fleur Code
+      run: |
+        mkdir -p tmp/
+        cd tmp
+        cp ../tests/files/inpxml/Si/inp.xml .
+        fleur_MPI
+        ls -la
 
     - name: Remove workflow caches
       run: |
