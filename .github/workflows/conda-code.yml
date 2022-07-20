@@ -104,6 +104,7 @@ jobs:
     - name: Run pytest
       run: |
        cd ./tests/
+       ulimit -s unlimited
        cat .aiida-testing-config.yml
        ./run_all_cov.sh --local-exe-hdf5 --local-exe-mpi --mock-regenerate-test-data -x
 
