@@ -59,7 +59,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.5.2'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -71,7 +71,7 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_force_false': False,
         'kpoints_force_gamma': False,
         'nmmp_converged': 0.002,
-        'mode': 'density',  # 'density', 'energy' or 'force'
+        'mode': 'density',  # 'density', 'energy', 'force' or 'gw'
         'add_comp_para': {
             'only_even_MPI': False,
             'max_queue_nodes': 20,
@@ -162,7 +162,10 @@ class FleurScfWorkChain(WorkChain):
             wf_dict = wf_default
 
         for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
+            if isinstance(val, dict):
+                wf_dict[key] = {**val, **wf_dict.get(key, {})}
+            else:
+                wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
         fleur = self.inputs.fleur
@@ -198,11 +201,11 @@ class FleurScfWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        self.ctx.max_number_runs = self.ctx.wf_dict.get('fleur_runmax', 4)
+        self.ctx.max_number_runs = self.ctx.wf_dict['fleur_runmax']
         self.ctx.description_wf = self.inputs.get('description', '') + '|fleur_scf_wc|'
         self.ctx.label_wf = self.inputs.get('label', 'fleur_scf_wc')
-        self.ctx.default_itmax = self.ctx.wf_dict.get('itmax_per_run', 30)
-        self.ctx.straight_mixing_iters = self.ctx.wf_dict.get('straight_iterations')
+        self.ctx.default_itmax = self.ctx.wf_dict['itmax_per_run']
+        self.ctx.straight_mixing_iters = self.ctx.wf_dict['straight_iterations']
         if self.ctx.straight_mixing_iters is None:
             self.ctx.straight_mixing_iters = self.ctx.default_itmax
 
@@ -296,26 +299,26 @@ class FleurScfWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         # check the mode in wf_dict
-        mode = self.ctx.wf_dict.get('mode')
+        mode = self.ctx.wf_dict['mode']
         if mode not in ['force', 'density', 'energy', 'gw']:
             error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        max_iters = self.ctx.wf_dict.get('itmax_per_run')
+        max_iters = self.ctx.wf_dict['itmax_per_run']
         if max_iters <= 1:
             error = "ERROR: 'itmax_per_run' should be equal at least 2"
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        straight_iterations = self.ctx.wf_dict.get('straight_iterations')
+        straight_iterations = self.ctx.wf_dict['straight_iterations']
         if straight_iterations is not None and straight_iterations <= 1:
             error = "ERROR: 'straight_iterations' should be atleast 2 if given"
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-        self.ctx.run_straight_mixing = self.ctx.wf_dict.get('initial_straight_mixing') or \
-                                       self.ctx.wf_dict.get('initial_ldau_straight_mixing')
+        self.ctx.run_straight_mixing = self.ctx.wf_dict['initial_straight_mixing'] or \
+                                       self.ctx.wf_dict['initial_ldau_straight_mixing']
 
         if straight_iterations is not None:
             if not self.ctx.run_straight_mixing:
@@ -324,7 +327,7 @@ class FleurScfWorkChain(WorkChain):
                 return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # check format of inpxml_changes
-        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
+        fchanges = self.ctx.wf_dict['inpxml_changes']
         if fchanges:
             for change in fchanges:
                 # somehow the tuple type gets destroyed on the way and becomes a list
@@ -365,15 +368,15 @@ class FleurScfWorkChain(WorkChain):
             settings = None
 
         # If given kpt_dist has prio over given calc_parameters
-        kpt_dist = self.ctx.wf_dict.get('kpoints_distance', None)
+        kpt_dist = self.ctx.wf_dict['kpoints_distance']
         if kpt_dist is not None:
             cf_para_kpt = Dict(
                 dict={
                     'distance': kpt_dist,
-                    'force_parity': self.ctx.wf_dict.get('kpoints_force_parity', False),
-                    'force_even': self.ctx.wf_dict.get('kpoints_force_even', False),
-                    'force_odd': self.ctx.wf_dict.get('kpoints_force_odd', False),
-                    'include_gamma': self.ctx.wf_dict.get('kpoints_force_gamma', False)
+                    'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
+                    'force_even': self.ctx.wf_dict['kpoints_force_even'],
+                    'force_odd': self.ctx.wf_dict['kpoints_force_odd'],
+                    'include_gamma': self.ctx.wf_dict['kpoints_force_gamma']
                 })
             inputs = {
                 'structure': structure,
@@ -418,9 +421,9 @@ class FleurScfWorkChain(WorkChain):
 
         fleurmode.set_inpchanges({'itmax': self.ctx.default_itmax})
         #Take out straight mixing
-        if wf_dict.get('initial_straight_mixing'):
+        if wf_dict['initial_straight_mixing']:
             fleurmode.set_inpchanges({'imix': 'Anderson'})  #TODO: should take the actual value from before
-        if wf_dict.get('initial_ldau_straight_mixing'):
+        if wf_dict['initial_ldau_straight_mixing']:
             fleurmode.set_inpchanges({'l_linmix': False})
 
         # validate?
@@ -471,9 +474,9 @@ class FleurScfWorkChain(WorkChain):
             )
 
         wf_dict = self.ctx.wf_dict
-        force_dict = wf_dict.get('force_dict')
-        converge_mode = wf_dict.get('mode')
-        fchanges = wf_dict.get('inpxml_changes', [])
+        force_dict = wf_dict['force_dict']
+        converge_mode = wf_dict['mode']
+        fchanges = wf_dict['inpxml_changes']
 
         fleurmode = FleurinpModifier(fleurin)
 
@@ -482,37 +485,29 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.loop_count == 0:
                 #Set up straight mixing
                 itmax = self.ctx.straight_mixing_iters  #Is set further below
-                if wf_dict.get('initial_straight_mixing'):
+                if wf_dict['initial_straight_mixing']:
                     fleurmode.set_inpchanges({'imix': 'straight'})
-                if wf_dict.get('initial_ldau_straight_mixing'):
-                    fleurmode.set_inpchanges({
-                        'l_linmix': True,
-                        'mixParam': wf_dict.get('initial_ldau_straight_mix_param')
-                    })
+                if wf_dict['initial_ldau_straight_mixing']:
+                    fleurmode.set_inpchanges({'l_linmix': True, 'mixParam': wf_dict['initial_ldau_straight_mix_param']})
 
         # set proper convergence parameters in inp.xml
         if converge_mode == 'density':
-            dist = wf_dict.get('density_converged')
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist})
+            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': wf_dict['density_converged']})
         elif converge_mode == 'force':
-            force_converged = wf_dict.get('force_converged')
-            dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges({
                 'itmax': itmax,
-                'minDistance': dist,
-                'force_converged': force_converged,
+                'minDistance': wf_dict['density_converged'],
+                'force_converged': wf_dict['force_converged'],
                 'l_f': True,
-                'qfix': force_dict.get('qfix'),
-                'forcealpha': force_dict.get('forcealpha'),
-                'forcemix': force_dict.get('forcemix')
+                'qfix': force_dict['qfix'],
+                'forcealpha': force_dict['forcealpha'],
+                'forcemix': force_dict['forcemix']
             })
         elif converge_mode == 'energy':
-            dist = 0.0
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist})
+            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0})
 
         elif converge_mode == 'gw':
-            dist = 0.0
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist, 'gw': 1})
+            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
             if 'settings' in self.inputs:
                 self.inputs.settings.append({'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore']})
                 self.inputs.settings.append({'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']})
@@ -539,7 +534,7 @@ class FleurScfWorkChain(WorkChain):
             error = ('ERROR: input, user wanted inp.xml changes did not validate')
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except ValueError as exc:
+        except (ValueError, TypeError) as exc:
             error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
                      f'The following error was raised {exc}')
             self.control_end_wc(error)
@@ -710,14 +705,14 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.last_nmmp_distance is None:
                 self.report('No LDA+U distance found but only one iteration performed\n'
                             'Assuming that the calculatin should be continued')
-                self.ctx.last_nmmp_distance = self.ctx.wf_dict.get('nmmp_converged') + 1
+                self.ctx.last_nmmp_distance = self.ctx.wf_dict['nmmp_converged'] + 1
 
     def condition(self):
         """
         check convergence condition
         """
         self.report('INFO: checking condition FLEUR')
-        mode = self.ctx.wf_dict.get('mode')
+        mode = self.ctx.wf_dict['mode']
         ldau_notconverged = False
 
         energy = self.ctx.total_energy
@@ -733,15 +728,15 @@ class FleurScfWorkChain(WorkChain):
             self.ctx.forcediff = 'can not be determined'
 
         if self.ctx.last_nmmp_distance > 0.0 and \
-           self.ctx.last_nmmp_distance >= self.ctx.wf_dict.get('nmmp_converged'):
+           self.ctx.last_nmmp_distance >= self.ctx.wf_dict['nmmp_converged']:
             ldau_notconverged = True
 
         if mode == 'density':
-            if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
+            if self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
                 if not ldau_notconverged:
                     return False
         elif mode in ('energy', 'gw'):
-            if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
+            if self.ctx.wf_dict['energy_converged'] >= self.ctx.energydiff:
                 if not ldau_notconverged:
                     return False
         elif mode == 'force':
@@ -754,7 +749,7 @@ class FleurScfWorkChain(WorkChain):
                     if not ldau_notconverged:
                         return False
 
-            elif self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
+            elif self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
                 try:
                     _ = self.ctx.last_base_wc.outputs.relax_parameters
                 except NotExistent:
@@ -800,7 +795,7 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
         outputnode_dict['material'] = self.ctx.formula
-        outputnode_dict['conv_mode'] = self.ctx.wf_dict.get('mode')
+        outputnode_dict['conv_mode'] = self.ctx.wf_dict['mode']
         outputnode_dict['loop_count'] = self.ctx.loop_count
         outputnode_dict['iterations_total'] = last_calc_out_dict.get('number_of_iterations_total', None)
         outputnode_dict['distance_charge'] = self.ctx.last_charge_density
