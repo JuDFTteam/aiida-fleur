@@ -499,7 +499,7 @@ def generate_work_chain_node():
 
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
-            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):],
+            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('fleur.'):],
                                     test_name)
 
             retrieved = orm.FolderData()
@@ -558,13 +558,25 @@ def generate_sym_film_structure():
     return _generate_film_structure
 
 
-@pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
-    """Clear the database before each test.
-    """
-    #aiida_profile.reset_db()
-    #yield
-    #aiida_profile.reset_db()
+@pytest.fixture
+def get_remote_data_si(import_with_migrate):
+    """Return the remote folder output node of a SCF workchain for Si bulk"""
+
+    def _get_remote_data_si():
+        """Return the remote folder output node of a SCF workchain for Si bulk"""
+        from aiida import orm
+
+        SCF_NODE_UUID = 'f44623bf-d8a3-41f0-b4ee-6562b5f9b027'
+        basepath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(basepath, 'files', 'exports', 'fleur_scf_fleurinp_Si.tar.gz')
+
+        import_with_migrate(filepath)
+
+        scf_node = orm.load_node(SCF_NODE_UUID)
+
+        return scf_node.outputs.last_calc.remote_folder
+
+    return _get_remote_data_si
 
 
 @pytest.fixture
@@ -755,3 +767,36 @@ def import_with_migrate(temp_dir):
                     raise
 
     return _import_with_migrate
+
+@pytest.fixture(scope='function', autouse=True)
+def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
+    """Clear the database after each test.
+    """
+
+@pytest.fixture
+def show_workchain_summary():
+
+    def _show_workchain_summary(calc_node):
+
+        from aiida.cmdline.utils.ascii_vis import format_call_graph, calc_info
+        from aiida.cmdline.utils import echo
+        from aiida.cmdline.utils.common import get_workchain_report
+
+        def calc_and_caching_info(node):
+
+            calc_info_string = calc_info(node)
+
+            cache_source = node.get_cache_source()
+            if cache_source is None:
+                caching_string = 'Not Cached'
+            else:
+                caching_string = f'Cached (Source: <{cache_source}>)'
+            
+            return f'{calc_info_string} | {caching_string}'
+        
+        echo.echo("Call Graph:")
+        echo.echo(format_call_graph(calc_node, calc_and_caching_info))
+        echo.echo("Workchain report:")
+        echo.echo(get_workchain_report(calc_node, 'REPORT'))
+
+    return _show_workchain_summary

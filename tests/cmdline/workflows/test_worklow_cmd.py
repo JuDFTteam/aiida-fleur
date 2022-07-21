@@ -28,12 +28,12 @@ def test_workchain_res(run_cli_command, import_with_migrate):
     """Test invoking the workchain res command in all variants."""
     from aiida_fleur.cmdline.workflows import workchain_res
 
-    EXPECTED1 = '"total_energy": -580.0719889044,'
-    EXPECTED2 = '"energy_core_electrons": -316.8117066016,'
+    EXPECTED1 = '"total_energy": -580.0719869963,'
+    EXPECTED2 = '"energy_core_electrons": -316.7867593796,'
     # import an an aiida export, this does not migrate
     #import_data(EXPORTFILE_FILE, group=None)
     import_with_migrate(EXPORTFILE_FILE)
-    process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
+    process_uuid = 'f44623bf-d8a3-41f0-b4ee-6562b5f9b027'
 
     options = [process_uuid]
     result = run_cli_command(workchain_res, options=options)
@@ -62,7 +62,7 @@ def test_workchain_inputdict(run_cli_command, import_with_migrate):
     import_with_migrate(EXPORTFILE_FILE)
     EXPECTED = '"max_wallclock_seconds": 300,'
     EXPECTED2 = '"num_machines": 1,'
-    process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
+    process_uuid = 'f44623bf-d8a3-41f0-b4ee-6562b5f9b027'
 
     options = [process_uuid]
     result = run_cli_command(workchain_inputdict, options=options)

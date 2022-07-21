@@ -295,7 +295,7 @@ class FleurEosWorkChain(WorkChain):
 
             # something went wrong with the fit
             for i in volume, bulk_modulus, bulk_deriv, residuals:
-                if issubclass(type(i), np.complex):
+                if isinstance(i, complex):
                     write_defaults_fit = True
 
             if all(i is not None for i in (volume, bulk_modulus, bulk_deriv, residuals)):

@@ -967,13 +967,10 @@ def extract_results(calcs):
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
-            outxml = calc.outputs.retrieved.open('out.xml')
-            #print outxml
-            try:
+
+            with calc.outputs.retrieved.open('out.xml', 'rb') as outxml:
                 corelevels, atomtypes = extract_corelevels(outxml)
-            finally:
-                outxml.close()
+
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))

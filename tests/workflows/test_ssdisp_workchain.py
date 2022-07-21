@@ -15,6 +15,7 @@ import pytest
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.ssdisp import FleurSSDispWorkChain
+from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
 
 
 @pytest.mark.regression_test
@@ -23,7 +24,8 @@ def test_fleur_ssdisp_FePt_film(
         clear_database,
         with_export_cache,  #run_with_cache,
         fleur_local_code,
-        inpgen_local_code):
+        inpgen_local_code,
+        show_workchain_summary):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -104,16 +106,16 @@ def test_fleur_ssdisp_FePt_film(
 
     with with_export_cache('fleur_ssdisp_FePt.tar.gz'):
         out, node = run_get_node(FleurSSDispWorkChain, **inputs)
-    print(out)
-    print(node)
-    print(get_workchain_report(node, 'REPORT'))
 
+    if not node.is_finished_ok:
+        show_workchain_summary(node)
     assert node.is_finished_ok
 
     outpara = out.get('out', None)
     assert outpara is not None
     outpara = outpara.get_dict()
-    print(outpara)
+    from pprint import pprint
+    pprint(outpara)
 
     # check output
     assert outpara.get('warnings') == []
@@ -171,3 +173,120 @@ def test_fleur_ssdisp_validation_wrong_inputs(fleur_local_code, inpgen_local_cod
     assert node.is_finished
     assert not node.is_finished_ok
     assert node.exit_status == 230
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(3000, method='thread')
+def test_fleur_ssdisp_conv_FePt_film(
+        clear_database,
+        with_export_cache,  #run_with_cache,
+        fleur_local_code,
+        inpgen_local_code,
+        show_workchain_summary):
+    """
+    full example using mae workflow with FePt film structure as input.
+    """
+    from aiida.orm import Dict, StructureData
+
+    options = Dict(
+        dict={
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': '',
+            'withmpi': False,
+        })
+
+    wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
+
+    wf_para_scf = Dict(dict=wf_para_scf)
+
+    wf_para = Dict(
+        dict={
+            'beta': {
+                'all': 1.57079
+            },
+            'q_vectors': {
+                'z': [0.0, 0.0, 0.0],
+                'label-1': [0.125, 0.0, 0.0],
+                'label-2': [0.250, 0.0, 0.0],
+                'label-3': [0.375, 0.0, 0.0]
+            },
+        })
+
+    bohr_a_0 = 0.52917721092  # A
+    a = 7.497 * bohr_a_0
+    cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
+    structure = StructureData(cell=cell)
+    structure.append_atom(position=(0.0, 0.0, -1.99285 * bohr_a_0), symbols='Fe', name='Fe123')
+    structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+    structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
+    structure.pbc = (True, True, False)
+
+    parameters = Dict(
+        dict={
+            'atom': {
+                'element': 'Pt',
+                'lmax': 6
+            },
+            'atom2': {
+                'element': 'Fe',
+                'lmax': 6,
+            },
+            'comp': {
+                'kmax': 3.2,
+            },
+            'kpt': {
+                'div1': 8,  #20,
+                'div2': 12,  #24,
+                'div3': 1
+            }
+        })
+
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    inputs = {
+        'scf': {
+            'wf_parameters': wf_para_scf,
+            'structure': structure,
+            'calc_parameters': parameters,
+            'options': options,
+            'inpgen': InpgenCode,
+            'fleur': FleurCode
+        },
+        'wf_parameters': wf_para,
+    }
+
+    with with_export_cache('fleur_ssdisp_conv_FePt.tar.gz'):
+        out, node = run_get_node(FleurSSDispConvWorkChain, **inputs)
+
+    if not node.is_finished_ok:
+        show_workchain_summary(node)
+    assert node.is_finished_ok
+
+    outpara = out.get('out', None)
+    assert outpara is not None
+    outpara = outpara.get_dict()
+    from pprint import pprint
+    pprint(outpara)
+
+    # check output
+    assert outpara.get('warnings') == []
+    assert outpara.get('q_vectors') == {
+        'label-1': [0.125, 0.0, 0.0],
+        'label-2': [0.25, 0.0, 0.0],
+        'label-3': [0.375, 0.0, 0.0],
+        'z': [0.0, 0.0, 0.0]
+    }
+    #assert outpara.get('is_it_force_theorem')
+    assert outpara.get('energies') == {
+        'label-1': 0.089644019841217,
+        'label-2': 0.034646951593459,
+        'label-3': 0.096886575338431,
+        'z': 0.0
+    }
+    #SSDISP FT: [0.0, 0.088007065396813, 0.032308078890001, 0.096042587755383]

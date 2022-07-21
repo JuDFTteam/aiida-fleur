@@ -17,7 +17,7 @@ aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_CIF = os.path.join(aiida_path, '../tests/files/cif/AlB.cif')
 
 
-def test_extract_structure_info(clear_database_aiida_fleur, generate_structure, generate_work_chain_node,
+def test_extract_structure_info(clear_database, generate_structure, generate_work_chain_node,
                                 fixture_localhost):
     """
     I do not test 'extras' here due to some kind of bug

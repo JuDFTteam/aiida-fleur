@@ -15,6 +15,7 @@ import pytest
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report
 from aiida_fleur.workflows.mae import FleurMaeWorkChain
+from aiida_fleur.workflows.mae_conv import FleurMaeConvWorkChain
 
 
 @pytest.mark.regression_test
@@ -174,3 +175,111 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
     assert node.is_finished
     assert not node.is_finished_ok
     assert node.exit_status == 230
+
+
+@pytest.mark.regression_test
+@pytest.mark.timeout(3000, method='thread')
+def test_fleur_mae_conv_FePt_film(
+        clear_database,
+        with_export_cache,  #run_with_cache,
+        fleur_local_code,
+        inpgen_local_code,
+        show_workchain_summary):
+    """
+    full example using mae workflow with FePt film structure as input.
+    """
+    from aiida.orm import Dict, StructureData
+
+    options = Dict(
+        dict={
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 60 * 60,
+            'queue_name': '',
+            'custom_scheduler_commands': '',
+            'withmpi': False,
+        })
+
+    wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
+
+    wf_para_scf = Dict(dict=wf_para_scf)
+
+    wf_para = Dict(dict={'sqas': {
+        'z': (0, 0),
+        'label-1': (1.57079, 0),
+        'label-2': (1.57079, 1.57079),
+    }})
+
+    bohr_a_0 = 0.52917721092  # A
+    a = 7.497 * bohr_a_0
+    cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
+    structure = StructureData(cell=cell)
+    structure.append_atom(position=(0.0, 0.0, -1.99285 * bohr_a_0), symbols='Fe', name='Fe123')
+    structure.append_atom(position=(0.5 * 0.7071068 * a, 0.5 * a, 0.0), symbols='Pt')
+    structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
+    structure.pbc = (True, True, False)
+
+    parameters = Dict(
+        dict={
+            'atom': {
+                'element': 'Pt',
+                'lmax': 6
+            },
+            'atom2': {
+                'element': 'Fe',
+                'lmax': 6,
+            },
+            'comp': {
+                'kmax': 3.2,
+            },
+            'kpt': {
+                'div1': 8,  #20,
+                'div2': 12,  #24,
+                'div3': 1
+            }
+        })
+
+    FleurCode = fleur_local_code
+    InpgenCode = inpgen_local_code
+
+    inputs = {
+        'scf': {
+            'wf_parameters': wf_para_scf,
+            'structure': structure,
+            'calc_parameters': parameters,
+            'options': options,
+            'inpgen': InpgenCode,
+            'fleur': FleurCode
+        },
+        'wf_parameters': wf_para,
+    }
+
+    #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
+    #with enable_caching():
+    with with_export_cache('fleur_mae_conv_FePt.tar.gz'):
+        out, node = run_get_node(FleurMaeConvWorkChain, **inputs)
+
+    if not node.is_finished_ok:
+        show_workchain_summary(node)
+    assert node.is_finished_ok
+
+    outpara = out.get('out', None)
+    assert outpara is not None
+    outpara = outpara.get_dict()
+    from pprint import pprint
+    pprint(outpara)
+
+    # check output
+    assert outpara.get('warnings') == []
+    assert outpara.get('sqa') == {'label-1': [1.57079, 0], 'label-2': [1.57079, 1.57079], 'z': [0, 0]}
+    #assert outpara.get('is_it_force_theorem')
+    assert outpara.get('mae') == {
+        'z': 0.0046532556880265,
+        'label-1': 0.0024269290734082,
+        'label-2': 0.0,
+    }
+
+    #MAE FT [0.0036191143706664, 0.0022422182265768, 0.0]
+    #assert outpara.get('maes') == [0.0039456509729923, 0.0026014085035566, 0.0] #TODO; check if this result is actually right
