@@ -31,7 +31,7 @@ class Test_FleurCreateMagneticWorkChain:
     """
 
     @pytest.mark.regression_test
-    @pytest.mark.timeout(7200, method='thread')
+    @pytest.mark.timeout(9000, method='thread')
     def test_fleur_create_mag_FePt(self, with_export_cache, fleur_local_code, inpgen_local_code,
                                    show_workchain_summary):
         """
@@ -56,7 +56,7 @@ class Test_FleurCreateMagneticWorkChain:
                 1: 'Fe',
                 -1: 'Fe'
             },
-            'decimals': 10,
+            'decimals': 5,
             'pop_last_layers': 1,
             'total_number_layers': 8,
             'num_relaxed_layers': 3
