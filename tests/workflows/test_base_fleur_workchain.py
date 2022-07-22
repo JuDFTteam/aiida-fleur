@@ -138,12 +138,22 @@ def test_handle_not_enough_memory_no_solution(generate_workchain_base):
     assert result == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
 
-def test_handle_not_enough_memory(generate_workchain_base):
+def test_handle_not_enough_memory(generate_workchain_base, generate_remote_data, generate_retrieved_data):
     """Test `FleurBaseWorkChain._handle_not_enough_memory`."""
+    from aiida.common import LinkType
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_NOT_ENOUGH_MEMORY)
     process.setup()
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    code = process.ctx.inputs.code
+
+    #Add outgoing remote folder
+    process.ctx.children[-1].store()
+    remote = generate_remote_data(code.computer, '/tmp')
+    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'default')
 
     result = process._handle_not_enough_memory(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
@@ -162,6 +172,9 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert abs(process.ctx.suggest_mpi_omp_ratio - 0.25) < 1e-12
     assert 'settings' in process.ctx.inputs
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
+    assert 'parent_folder' in process.ctx.inputs
+    assert process.ctx.inputs.parent_folder.uuid == remote.uuid
+    assert 'fleurinpdata' not in process.ctx.inputs
 
 
 def test_handle_time_limits(generate_workchain_base, generate_remote_data, generate_retrieved_data):
@@ -201,7 +214,8 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
 
 
 def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_remote_data, generate_retrieved_data):
-    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    """Test `FleurBaseWorkChain._handle_time_limits` with remote folder without charge density.
+       Expected result continue without charge density and doulbed resources"""
     from aiida.common import LinkType
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
@@ -220,10 +234,20 @@ def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
-    assert result.exit_code.status == 388
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.num_machines == 2
+    assert 'parent_folder' not in process.ctx.inputs
+    assert 'fleurinpdata' in process.ctx.inputs
 
+    process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
+    process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_process()
-    assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
+    assert result.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
+    assert process.ctx.num_machines == 20
+    assert 'parent_folder' not in process.ctx.inputs
+    assert 'fleurinpdata' in process.ctx.inputs
 
 
 def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, generate_retrieved_data,

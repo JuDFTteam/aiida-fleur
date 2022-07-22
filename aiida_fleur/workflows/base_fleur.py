@@ -23,6 +23,7 @@ from aiida.engine.processes.workchains.utils import process_handler, ProcessHand
 
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
 
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
@@ -139,7 +140,10 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         If suggested number of num_mpiprocs_per_machine is 60% smaller than
         requested, it throws an exit code and calculation stop withour submission.
         """
-        fleurinp = self.ctx.inputs.fleurinpdata
+        if 'fleurinpdata' in self.ctx.inputs:
+            fleurinp = self.ctx.inputs.fleurinpdata
+        else:
+            fleurinp = get_fleurinp_from_remote_data(self.ctx.inputs.parent_folder)
         machines = self.ctx.num_machines
         mpi_proc = self.ctx.num_mpiprocs_per_machine
         omp_per_mpi = self.ctx.num_cores_per_mpiproc
@@ -276,6 +280,15 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         if 'mixing_history*' not in settings['remove_from_remotecopy_list']:
             settings['remove_from_remotecopy_list'].append('mixing_history*')
         self.ctx.inputs.settings = orm.Dict(dict=settings)
+
+        #check if the cdn.hdf can be reused
+        #Out of memory can also occur after a couple of iterations if the mixing_history gets too large
+        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+        if _is_remote_reusable(self.ctx.inputs, calculation):
+            if 'fleurinpdata' in self.ctx.inputs:
+                del self.ctx.inputs.fleurinpdata
+            self.ctx.inputs.parent_folder = remote
+
         return ProcessHandlerReport(True)
 
     @process_handler(priority=47, exit_codes=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
@@ -314,31 +327,35 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
-        check_remote = False
-
-        if 'fleurinpdata' in self.ctx.inputs:
-            modes = self.ctx.inputs.fleurinpdata.get_fleur_modes()
-            if not (modes['force_theorem'] or modes['dos'] or modes['band']):
-                # in modes listed above it makes no sense copying cdn.hdf
-                self.ctx.inputs.parent_folder = remote
+        if _is_remote_reusable(self.ctx.inputs, calculation):
+            if 'fleurinpdata' in self.ctx.inputs:
                 del self.ctx.inputs.fleurinpdata
-                check_remote = True
-        else:
-            # it is harder to extract modes in this case - simply try to reuse cdn.hdf and hope it works
             self.ctx.inputs.parent_folder = remote
-            check_remote = True
-
-        if check_remote:
-            #If no charge density file is available to restart from the calculation will except
-            #with a not nice error message. So we try to catch these cases to produce a nice error message
-            retrieved_filenames = calculation.get_outgoing().get_node_by_label('retrieved').list_object_names()
-            if all(file not in retrieved_filenames for file in (
-                    'cdn_last.hdf',
-                    'cdn1',
-            )):
-                self.report(
-                    'FleurCalculation failed due to time limits and no charge density file is available. Aborting!')
-                self.results()
-                return ProcessHandlerReport(True, self.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION)
 
         return ProcessHandlerReport(True)
+
+
+def _is_remote_reusable(inputs, calculation):
+    """
+    Check whether the remote folder of the given calculation
+    can be resubmitted
+    """
+    can_use_remote = False
+    #If no charge density file is available to restart from the calculation will except
+    #with a not nice error message. So we can only reuse the charge density if these files are available
+    retrieved_filenames = calculation.get_outgoing().get_node_by_label('retrieved').list_object_names()
+    if any(file in retrieved_filenames for file in (
+            'cdn_last.hdf',
+            'cdn1',
+    )):
+        can_use_remote = True
+
+    if 'fleurinpdata' in inputs:
+        modes = inputs.fleurinpdata.get_fleur_modes()
+        if modes['force_theorem'] or modes['dos'] or modes['band']:
+            # in modes listed above it makes no sense copying cdn.hdf
+            can_use_remote = False
+    # without fleurinp it is harder to extract modes in this case
+    # - simply try to reuse cdn.hdf and hope it works
+
+    return can_use_remote
