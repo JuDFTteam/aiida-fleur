@@ -68,7 +68,7 @@ class FleurScfWorkChain(WorkChain):
         'kpoints_distance': None,  # in 1/A, usually 0.1
         'kpoints_force_parity': False,
         'kpoints_force_odd': False,
-        'kpoints_force_false': False,
+        'kpoints_force_even': False,
         'kpoints_force_gamma': False,
         'nmmp_converged': 0.002,
         'mode': 'density',  # 'density', 'energy', 'force' or 'gw'
