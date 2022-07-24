@@ -179,6 +179,8 @@ class FleurParser(Parser):
                         return self.exit_codes.ERROR_MT_RADII
                     if 'No solver linked for Hubbard 1' in error_file_lines:
                         return self.exit_codes.ERROR_MISSING_DEPENDENCY.format(name='edsolver')
+                    if 'FLEUR is not linked against libxc' in error_file_lines:
+                        return self.exit_codes.ERROR_MISSING_DEPENDENCY.format(name='libxc')
                     if 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+', error_file_lines)[0].split()
                         with output_folder.open('relax.xml', 'r') as rlx:
