@@ -26,6 +26,8 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
+from masci_tools.util.constants import HTR_TO_EV
+
 # pylint: disable=invalid-name
 FleurInpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
@@ -247,7 +249,6 @@ class FleurStrainWorkChain(WorkChain):
         calc_uuids = []
         vol_peratom_success = []
         natoms = len(self.inputs.structure.sites)
-        htr_to_ev = 27.21138602
 
         for label in self.ctx.labels:
             calc = self.ctx[label]
@@ -271,7 +272,7 @@ class FleurStrainWorkChain(WorkChain):
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u in ('Htr', 'htr'):
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)

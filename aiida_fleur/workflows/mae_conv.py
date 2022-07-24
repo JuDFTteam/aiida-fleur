@@ -21,7 +21,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.common.constants import HTR_TO_EV
+from masci_tools.util.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):

@@ -522,7 +522,7 @@ def generate_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -543,7 +543,7 @@ def generate_sym_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -603,9 +603,9 @@ def generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
         from masci_tools.io.common_functions import rel_to_abs
+        from masci_tools.util.constants import BOHR_A
 
-        bohr_a_0 = 0.52917721092  # A
-        a = 5.167355275190 * bohr_a_0
+        a = 5.167355275190 * BOHR_A
         cell = [[0.0, a, a], [a, 0.0, a], [a, a, 0.0]]
         structure = StructureData(cell=cell)
         pos1 = rel_to_abs((1. / 8., 1. / 8., 1. / 8.), cell)
@@ -625,10 +625,11 @@ def generate_structure_W():
     def _generate_structure_W():
         """Return a `StructureData` representing bulk tungsten."""
         from aiida.orm import StructureData
+        from masci_tools.util.constants import BOHR_A
 
         # W bcc structure
-        bohr_a_0 = 0.52917721092  # A
-        a = 3.013812049196 * bohr_a_0
+        a = 3.013812049196 * BOHR_A
+
         cell = [[-a, a, a], [a, -a, a], [a, a, -a]]
         structure = StructureData(cell=cell)
         structure.append_atom(position=(0., 0., 0.), symbols='W', name='W')

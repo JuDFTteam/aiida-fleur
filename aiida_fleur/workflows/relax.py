@@ -24,7 +24,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
-from aiida_fleur.common.constants import BOHR_A
+from masci_tools.util.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
