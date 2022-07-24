@@ -30,6 +30,8 @@ class Test_FleurCreateMagneticWorkChain:
     Regression tests for the FleurCreateMagneticWorkChain
     """
 
+    @pytest.mark.skip(reason="Caching does not work. After the EOS workchain finishes the structure"
+                             "(probably) has a different hash due to numerical differences")
     @pytest.mark.regression_test
     @pytest.mark.timeout(9000, method='thread')
     def test_fleur_create_mag_FePt(self, with_export_cache, fleur_local_code, inpgen_local_code,
