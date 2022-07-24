@@ -203,7 +203,7 @@ class Test_FleurCreateMagneticWorkChain:
             # now run calculation
             out, node = run_get_node(FleurCreateMagneticWorkChain, **inputs)
 
-        show_workchain_summary(node)
+        show_workchain_summary(node, verbose=True)
         assert node.is_finished_ok
 
         print(out)

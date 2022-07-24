@@ -776,7 +776,7 @@ def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-out
 @pytest.fixture
 def show_workchain_summary():
 
-    def _show_workchain_summary(calc_node):
+    def _show_workchain_summary(calc_node, verbose=False):
 
         from aiida.cmdline.utils.ascii_vis import format_call_graph, calc_info
         from aiida.cmdline.utils import echo
@@ -789,6 +789,8 @@ def show_workchain_summary():
             cache_source = node.get_cache_source()
             if cache_source is None:
                 caching_string = 'Not Cached'
+                if verbose:
+                    caching_string = f'Not Cached {node._get_objects_to_hash()}'
             else:
                 caching_string = f'Cached (Source: <{cache_source}>)'
             
