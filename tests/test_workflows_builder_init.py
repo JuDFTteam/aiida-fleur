@@ -77,13 +77,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurRelaxWorkChain.get_builder()
 
-    def test_fleur_optimize_para_wc_init(self):
-        """
-        Test the interface of the optimize_para_ workchain
-        """
-        from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
-
-        builder = fleur_optimize_parameters_wc.get_builder()
 
     def test_fleur_mae_wc_init(self):
         """
