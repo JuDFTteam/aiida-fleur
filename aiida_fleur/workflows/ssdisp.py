@@ -218,11 +218,10 @@ class FleurSSDispWorkChain(WorkChain):
 
         with inpxml_changes(scf_wf_dict) as fm:
 
-            fm.set_inpchanges({'qss': self.ctx.wf_dict['ref_qss']})
             if [x for x in self.ctx.wf_dict['ref_qss'] if x != 0]:
-                fm.set_inpchanges({'l_noco': True, 'ctail': False, 'l_ss': True})
+                fm.set_inpchanges({'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True})
             else:
-                fm.set_inpchanges({'l_noco': False, 'ctail': True, 'l_ss': False})
+                fm.set_inpchanges({'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False})
 
             # change beta parameter
             for key, val in self.ctx.wf_dict['beta'].items():
