@@ -21,6 +21,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 
 from masci_tools.util.constants import HTR_TO_EV
 
@@ -107,9 +108,9 @@ class FleurSSDispConvWorkChain(WorkChain):
             inputs[key] = self.get_inputs_scf()
             if self.ctx.wf_dict['suppress_symmetries']:
                 inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
-                changes_dict = {'qss': ' '.join(map(str, q_vector))}
                 wf_para = inputs[key].wf_parameters.get_dict()
-                wf_para['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
+                with inpxml_changes(wf_para) as fm:
+                    fm.set_inpchanges({'qss': q_vector})
                 inputs[key].wf_parameters = Dict(dict=wf_para)
             else:
                 inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
@@ -125,26 +126,9 @@ class FleurSSDispConvWorkChain(WorkChain):
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
-        # change beta parameter
-        for key, val in self.ctx.wf_dict.get('beta').items():
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-                'attributedict': {
-                    'nocoParams': {
-                        'beta': val
-                    }
-                },
-                'atom_label': key
-            }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        with inpxml_changes(input_scf) as fm:
+            for key, val in self.ctx.wf_dict[beta].items():
+                fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
 
         if 'calc_parameters' in input_scf:
             calc_parameters = input_scf.calc_parameters.get_dict()
