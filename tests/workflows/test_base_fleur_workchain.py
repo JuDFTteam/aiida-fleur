@@ -19,7 +19,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
+TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 
 
@@ -384,15 +384,14 @@ class Test_FleurBaseWorkChain():
     Regression tests for the FleurBaseWorkChain
     """
 
-    @pytest.mark.skip(reason='Test is not implemented')
+    @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
+    def test_fleur_base_fleurinp_Si(self, with_export_cache, fleur_local_code, create_fleurinp):
         """
         full example using FleurBaseWorkChain with just a fleurinp data as input.
         Several fleur runs needed till convergence
         """
-        from aiida.orm import Code, load_node, StructureData
-        from numpy import array
+        from aiida.engine import run_get_node
 
         options = {
             'resources': {
@@ -403,21 +402,17 @@ class Test_FleurBaseWorkChain():
             'custom_scheduler_commands': ''
         }
 
-        FleurCode = mock_code = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
         # create process builder to set parameters
         builder = FleurBaseWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
-        builder.metadata.label = 'FleurSCF_test_Si_bulk'
-        builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
+        builder.metadata.label = 'FleurBase_test_Si_bulk'
+        builder.fleurinpdata = create_fleurinp(TEST_INP_XML_PATH)
         builder.options = Dict(dict=options)
-        builder.fleur = FleurCode
+        builder.code = fleur_local_code
 
         # now run calculation
-        out, node = run_with_cache(builder)
+        with with_export_cache('fleur_base_fleurinp_Si.tar.gz'):
+            out, node = run_get_node(builder)
 
         # check output
 
@@ -425,7 +420,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_structure_Si(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_structure_Si(self, run_with_cache, fleur_local_code):
         """
         Full regression test of FleurBaseWorkChain starting with a crystal structure and parameters
         """
@@ -433,7 +428,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_continue_from_x(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_continue_from_x(self, run_with_cache, fleur_local_code):
         """
         Full regression test of FleurBaseWorkChain while encountering x, handling it and restart
         """
@@ -441,7 +436,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_validation_wrong_inputs(self, run_with_cache, fleur_local_code):
         """
         Test the validation behavior of FleurBaseWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash

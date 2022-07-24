@@ -1,0 +1,44 @@
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Now copying inp_dump.xml
+ 
+ ========== k-point set info ==========
+ Selected k-point list: default-1
+ k-point list type: mesh
+ 8 x 8 x 8
+ Number of k points: 60
+ 
+ --------------------------------------------------------
+ Number of OMP-threads:           2
+ --------------------------------------------------------
+ Makedos:           1
+ Local                          1           7
+ Local                          2           7
+ Local                          3           7
+ Local                          4           7
+ Local                          5           7
+ Local                          6           7
+ Local                          7           7
+ Smooth:           1
+ WriteDos:           1
+ writedos:           1           7
+ Local               Total               
+ writedos:           2           7
+ Local               INT                 
+ writedos:           3           7
+ Local               Sym                 
+ writedos:           4           7
+ Local               MT:1s               
+ writedos:           5           7
+ Local               MT:1p               
+ writedos:           6           7
+ Local               MT:1d               
+ writedos:           7           7
+ Local               MT:1f               
+Local.1               Total                INT                  Sym                  MT:1s                MT:1p                MT:1d                MT:1f               
+ done:Local.1                                                                                             
+ 
+ Note: DOS data (together with different weights) is also stored in the banddos.hdf file.
+       A convenient way of extracting and plotting the data from that file is by making use of the
+       masci-tools (https://pypi.org/project/masci-tools/).
+ As requested by command line option usage data was not send, please send usage.json manually

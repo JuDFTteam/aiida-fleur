@@ -168,7 +168,7 @@ class FleurInitialCLSWorkChain(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
-        self.ctx.add_comp_para = wf_dict.get('add_para_calc', default.get('add_para_calc'))
+        self.ctx.add_comp_para = wf_dict.get('add_comp_para', default.get('add_comp_para'))
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
@@ -967,13 +967,10 @@ def extract_results(calcs):
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
-            outxml = calc.outputs.retrieved.open('out.xml')
-            #print outxml
-            try:
+
+            with calc.outputs.retrieved.open('out.xml', 'rb') as outxml:
                 corelevels, atomtypes = extract_corelevels(outxml)
-            finally:
-                outxml.close()
+
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))

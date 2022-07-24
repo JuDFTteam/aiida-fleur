@@ -1,0 +1,63 @@
+   10.440151190126626        5.2200755950633129        5.2200755950633129      -0.33333333333333337      -0.33333333333333337      -0.33333333333333337     
+ A-face centered monoclinic  
+
+
+ Point group of the Bravais lattice has  4 operations
+
+
+ Point group of the Bravais lattice has  4 operations
+
+
+ Atomic positions:
+ -----------------
+ atom types =    2
+      total =    2
+
+       lattice coordinates               (scaled) Cartesian coordinates   atom
+  0.000000  0.000000  0.000000            0.000000  0.000000  0.000000      1
+  0.500000  0.000000  0.000000           -3.013812  3.013812  3.013812      2
+   10.440151190126626        5.2200755950633129        5.2200755950633129      -0.33333333333333337      -0.33333333333333337      -0.33333333333333337     
+ A-face centered monoclinic  
+ values accepted unchanged
+    4    8    8           nmop(i),i=1,3
+ orientation of boundary faces
+    1    -1  -0.4145393          ifac,iside,orient for xvec
+    2    -1  -0.5707542          ifac,iside,orient for xvec
+    3    -1  -0.7242717          ifac,iside,orient for xvec
+    4    -1  -0.3225477          ifac,iside,orient for xvec
+    5    -1  -0.0868826          ifac,iside,orient for xvec
+    6    -1  -0.0128152          ifac,iside,orient for xvec
+Bravais lattice vectors
+                                              -6.027624    6.027624    6.027624
+                                               3.013812   -3.013812    3.013812
+                                               3.013812    3.013812   -3.013812
+reciprocal lattice vectors
+                                               0.000000    1.042398    1.042398
+                                               0.521199    0.000000    1.042398
+                                               0.521199    1.042398    0.000000
+    4    8    8           Monkhorst-Pack-parameters
+ Monkhorst-Pack-fractions
+    0          nbound; no k-points  on boundary of BZ
+        1     idim
+          -0.3750000
+          -0.1250000
+           0.1250000
+           0.3750000
+        2     idim
+          -0.4375000
+          -0.3125000
+          -0.1875000
+          -0.0625000
+           0.0625000
+           0.1875000
+           0.3125000
+           0.4375000
+        3     idim
+          -0.4375000
+          -0.3125000
+          -0.1875000
+          -0.0625000
+           0.0625000
+           0.1875000
+           0.3125000
+           0.4375000

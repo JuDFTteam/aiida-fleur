@@ -124,6 +124,9 @@ def extract_corelevels(outxmlfile, options=None):
     valenceconfig_xpath = 'electronConfig/valenceConfig/text()'
     state_occ_xpath = 'electronConfig/stateOccupation'
 
+    new_species_xpath = '/fleurOutput/fleurInput/atomSpecies'
+    new_atomgroup_xpath = '/fleurOutput/fleurInput/atomGroups'
+
     relcoreStates_xpath = 'coreStates'
     relpos_xpath = 'relPos'
     abspos_xpath = 'absPos'
@@ -162,6 +165,8 @@ def extract_corelevels(outxmlfile, options=None):
     # get element, name, coreStates
     # TODO why can this not be eval_xpath2?
     species_nodes = eval_xpath(root, species_xpath)
+    if not species_nodes:
+        species_nodes = eval_xpath(root, new_species_xpath)
     species_atts = {}
     species_names = []
     for species in species_nodes:
@@ -199,6 +204,8 @@ def extract_corelevels(outxmlfile, options=None):
     #3. get number of atom types and their species from input
     atomtypes = []
     atomgroup_nodes = eval_xpath(root, atomgroup_xpath)  #/fleurinp/
+    if not atomgroup_nodes:
+        atomgroup_nodes = eval_xpath(root, new_atomgroup_xpath)
     # always a list?
     for atomgroup in atomgroup_nodes:
         types_dict = {}

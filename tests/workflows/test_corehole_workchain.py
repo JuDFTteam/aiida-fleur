@@ -26,13 +26,10 @@ class Test_FleurCoreholeWorkChain():
     Regression tests for the FleurCoreholeWorkChain
     """
 
-    @pytest.mark.skip(reason='aiida-testing buggy, todo check, aiida-fleur fixture')
+    @pytest.mark.regression_test
     @pytest.mark.timeout(5000, method='thread')
-    def test_fleur_corehole_W(
-            self,  #run_with_cache,
-            inpgen_local_code,
-            fleur_local_code,
-            generate_structure_W):
+    def test_fleur_corehole_W(self, with_export_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+                              show_workchain_summary):
         """
         full example using FleurCoreholeWorkChain on W.
         Several fleur runs needed, calculation of all only certain coreholes
@@ -45,7 +42,8 @@ class Test_FleurCoreholeWorkChain():
                     'num_mpiprocs_per_machine': 1
                 },
                 'max_wallclock_seconds': 60 * 60,
-                'queue_name': ''
+                'queue_name': '',
+                'withmpi': False,
             })
         #'withmpi': False, 'custom_scheduler_commands': ''}
         options.store()
@@ -107,9 +105,12 @@ class Test_FleurCoreholeWorkChain():
 
         # now run calculation
         #out, node = run_with_cache(inputs, process_class=FleurCoreholeWorkChain)
-        out, node = run_get_node(FleurCoreholeWorkChain, **inputs)
+        with with_export_cache('fleur_corehole_W.tar.gz'):
+            out, node = run_get_node(FleurCoreholeWorkChain, **inputs)
 
         # check general run
+        if not node.is_finished_ok:
+            show_workchain_summary(node)
         assert node.is_finished_ok
 
         # check output
@@ -117,15 +118,20 @@ class Test_FleurCoreholeWorkChain():
         outn = out.get('output_corehole_wc_para', None)
         assert outn is not None
         outd = outn.get_dict()
+        from pprint import pprint
+        pprint(outd)
 
         assert outd.get('successful')
         assert outd.get('warnings') == []
 
+        #Note Henning: The values were replaced when updating to MaX6 previous
+        #[470.54883993999, 402.52235778002, 32.112260220107, 29.829247920075]
         assert outd.get('weighted_binding_energy') == [
-            470.54883993999, 402.52235778002, 32.112260220107, 29.829247920075
+            470.54492447991, 402.51844969997, 32.108438199852, 29.825437580002
         ]
 
-        assert outd.get('binding_energy') == [235.27441997, 201.26117889001, 16.056130110053, 14.914623960038]
+        #previous: [235.27441997, 201.26117889001, 16.056130110053, 14.914623960038]
+        assert outd.get('binding_energy') == [235.27246223995, 201.25922484999, 16.054219099926, 14.912718790001]
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')

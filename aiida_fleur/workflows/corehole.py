@@ -218,7 +218,18 @@ class FleurCoreholeWorkChain(WorkChain):
         else:
             self.ctx.ref_para = None
 
-        wf_dict = inputs.wf_parameters.get_dict()
+        wf_default = self._default_wf_para
+        if 'wf_parameters' in self.inputs:
+            wf_dict = self.inputs.wf_parameters.get_dict()
+        else:
+            wf_dict = wf_default
+
+        for key, val in wf_default.items():
+            if isinstance(val, dict):
+                wf_dict[key] = {**val, **wf_dict.get(key, {})}
+            else:
+                wf_dict[key] = wf_dict.get(key, val)
+
         self.ctx.method = wf_dict.get('method', 'valence')
         self.ctx.joblimit = wf_dict.get('joblimit')
         self.ctx.add_comp_para = wf_dict['add_comp_para']
@@ -1163,13 +1174,9 @@ def extract_results_corehole(calcs):
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
-            outxml = calc.outputs.retrieved.open('out.xml')
-            #print outxml
-            try:
+            with calc.outputs.retrieved.open('out.xml', 'rb') as outxml:
                 corelevels, atomtypes = extract_corelevels(outxml)
-            finally:
-                outxml.close()
+
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))
