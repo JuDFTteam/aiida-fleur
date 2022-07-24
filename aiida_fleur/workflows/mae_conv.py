@@ -21,6 +21,8 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
+
 from masci_tools.util.constants import HTR_TO_EV
 
 
@@ -118,27 +120,9 @@ class FleurMaeConvWorkChain(WorkChain):
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
-        # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_species_label', {
-                'at_label': atom_label,
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                },
-                'create': True
-            }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        with inpxml_changes(input_scf) as fm:
+            for atom_label in self.ctx.wf_dict['soc_off']:
+                fm.set_species_label(atom_label, {'special': {'socscale': 0}})
 
         if 'calc_parameters' in input_scf:
             calc_parameters = input_scf.calc_parameters.get_dict()
