@@ -1,0 +1,10 @@
+I/O warning : failed to load external entity "relax.xml"
+rm: cannot remove 'cdn_last.hdf': No such file or directory
+STOP OK
+
+ *****************************************
+ Run finished successfully
+ Stop message:
+   all done
+ *****************************************
+Rank:0 used    0.172   0.055 GB/	  220188 kB

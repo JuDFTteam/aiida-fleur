@@ -1,0 +1,19 @@
+A Fleur input generator calculation with aiida
+&input  cartesian=F /
+      -6.027624100        6.027624100        6.027624100
+       3.013812050       -3.013812050        3.013812050
+       3.013812050        3.013812050       -3.013812050
+      1.0000000000
+       1.000000000        1.000000000        1.000000000
+
+      2
+       74.1       0.0000000000       0.0000000000       0.0000000000 1
+         74       0.4999999986       0.0000000000       0.0000000000
+&atom
+  dx=0.015   econfig="1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5 5s2 4d10 4f14 | 5p6 6s2 5d5"   element="W"   id=74.1   jri=833   lmax=8   lo="5p"   name="W_corehole1"   rmt=2.3 /
+&atom
+  dx=0.015   econfig="[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2"   element="W"   jri=833   lmax=8   lo="5p"   rmt=2.3 /
+&comp
+  kmax=3.0 /
+&kpt
+  nkpt=100 /

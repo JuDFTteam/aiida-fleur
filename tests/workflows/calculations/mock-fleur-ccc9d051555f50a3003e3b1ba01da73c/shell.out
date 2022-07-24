@@ -1,0 +1,25 @@
+      Welcome to FLEUR        (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Now copying inp_dump.xml
+ 
+ ========== k-point set info ==========
+ Selected k-point list: default-1
+ k-point list type: mesh
+ 10 x 10 x 10
+ Number of k points: 110
+ 
+ --------------------------------------------------------
+ Number of OMP-threads:           2
+ --------------------------------------------------------
+ Iteration:           1  Distance:   6.7929923034761757E-004
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           2  Distance:   6.4278834102030156E-004
+ Test for time of next iteration:
+ Time provided (min):   5.0000000000000000     
+ Time used     (min):           1
+ Time per iter (min):           1
+ Iteration:           3  Distance:   1.7556371633058404E-004
+ As requested by command line option usage data was not send, please send usage.json manually

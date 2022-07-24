@@ -1,0 +1,23 @@
+      Welcome to FLEUR - inpgen   (www.flapw.de)   
+      MaX-Release 6.0          (www.max-centre.eu)
+ Film calculation but no reasonable dVac provided
+ Setting default for dVac
+ Note:
+ Default k point paths for film band structures
+ are experimental. If the generated k point path
+ is not correct please specify it directly.
+ Processing k-point string: grid=8,12,1                             
+ Generating a k-point grid:           8          12           1
+ Processing k-point string: band=240                                
+ Generating a k-point set for bandstructures with          240  k-points
+ Note:
+ Default k point paths for film band structures
+ are experimental. If the generated k point path
+ is not correct please specify it directly.
+ Stored k-point lists:
+ 
+                NAME           TYPE      NKPT   COMMENT
+ ================================================================================
+           default-1           MESH        48   8 x 12 x 1
+              path-2           PATH       240   g - X - S - Y - g
+ ================================================================================
