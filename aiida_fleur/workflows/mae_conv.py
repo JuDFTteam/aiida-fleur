@@ -98,23 +98,7 @@ class FleurMaeConvWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-    def converge_scf(self):
-        """
-        Converge charge density with or without SOC.
-        Depending on a branch of MAE calculation, submit a single Fleur calculation to obtain
-        a reference for further force theorem calculations or
-        submit a set of Fleur calculations to converge charge density for all given SQAs.
-        """
-        inputs = {}
-        for key, soc in self.ctx.wf_dict['sqas'].items():
-            inputs[key] = self.get_inputs_scf()
-            inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
-            inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
-            res = self.submit(FleurScfWorkChain, **inputs[key])
-            res.label = key
-            self.to_context(**{key: res})
-
-    def get_inputs_scf(self):
+    def get_inputs_scf(self, sqa):
         """
         Initialize inputs for scf workflow
         """
@@ -128,9 +112,25 @@ class FleurMaeConvWorkChain(WorkChain):
             calc_parameters = input_scf.calc_parameters.get_dict()
         else:
             calc_parameters = {}
-        input_scf.calc_parameters = calc_parameters
+        calc_parameters['soc'] = {'theta': sqa[0], 'phi': sqa[1]}
+
+        input_scf.calc_parameters = Dict(dict=calc_parameters)
 
         return input_scf
+
+    def converge_scf(self):
+        """
+        Converge charge density with or without SOC.
+        Depending on a branch of MAE calculation, submit a single Fleur calculation to obtain
+        a reference for further force theorem calculations or
+        submit a set of Fleur calculations to converge charge density for all given SQAs.
+        """
+        inputs = {}
+        for key, soc in self.ctx.wf_dict['sqas'].items():
+            inputs[key] = self.get_inputs_scf(sqa=soc)
+            res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
+            self.to_context(**{key: res})
 
     def get_results(self):
         """

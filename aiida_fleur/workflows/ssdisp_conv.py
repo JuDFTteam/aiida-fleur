@@ -96,30 +96,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-    def converge_scf(self):
-        """
-        Converge charge density with or without SOC.
-        Depending on a branch of Spiral calculation, submit a single Fleur calculation to obtain
-        a reference for further force theorem calculations or
-        submit a set of Fleur calculations to converge charge density for all given SQAs.
-        """
-        inputs = {}
-        for key, q_vector in self.ctx.wf_dict['q_vectors'].items():
-            inputs[key] = self.get_inputs_scf()
-            if self.ctx.wf_dict['suppress_symmetries']:
-                inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
-                wf_para = inputs[key].wf_parameters.get_dict()
-                with inpxml_changes(wf_para) as fm:
-                    fm.set_inpchanges({'qss': q_vector})
-                inputs[key].wf_parameters = Dict(dict=wf_para)
-            else:
-                inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
-            inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
-            res = self.submit(FleurScfWorkChain, **inputs[key])
-            res.label = key
-            self.to_context(**{key: res})
-
-    def get_inputs_scf(self):
+    def get_inputs_scf(self, qss):
         """
         Initialize inputs for scf workflow:
         wf_param, options, calculation parameters, codes, structure
@@ -129,14 +106,34 @@ class FleurSSDispConvWorkChain(WorkChain):
         with inpxml_changes(input_scf) as fm:
             for key, val in self.ctx.wf_dict['beta'].items():
                 fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
+            if self.ctx.wf_dict['suppress_symmetries']:
+                fm.set_inpchanges({'qss': qss})
 
         if 'calc_parameters' in input_scf:
             calc_parameters = input_scf.calc_parameters.get_dict()
         else:
             calc_parameters = {}
-        input_scf.calc_parameters = calc_parameters
+        if self.ctx.wf_dict['suppress_symmetries']:
+            calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
+        else:
+            calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
+        input_scf.calc_parameters = Dict(dict=calc_parameters)
 
         return input_scf
+
+    def converge_scf(self):
+        """
+        Converge charge density with or without SOC.
+        Depending on a branch of Spiral calculation, submit a single Fleur calculation to obtain
+        a reference for further force theorem calculations or
+        submit a set of Fleur calculations to converge charge density for all given SQAs.
+        """
+        inputs = {}
+        for key, q_vector in self.ctx.wf_dict['q_vectors'].items():
+            inputs[key] = self.get_inputs_scf(q_vector)
+            res = self.submit(FleurScfWorkChain, **inputs[key])
+            res.label = key
+            self.to_context(**{key: res})
 
     def get_results(self):
         """
