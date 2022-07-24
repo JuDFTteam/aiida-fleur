@@ -522,7 +522,7 @@ def generate_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -543,7 +543,7 @@ def generate_sym_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)

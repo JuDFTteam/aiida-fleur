@@ -25,12 +25,13 @@ from aiida.orm import RemoteData, Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
+from masci_tools.util.constants import HTR_TO_EV
+
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida_fleur.common.constants import HTR_TO_EV
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 

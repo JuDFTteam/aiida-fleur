@@ -798,7 +798,7 @@ def test_center_film_wf(generate_film_structure, generate_structure):
 
 def test_get_layers(generate_film_structure):
     from aiida_fleur.tools.StructureData_util import get_layers
-    from aiida_fleur.common.constants import BOHR_A
+    from masci_tools.util.constants import BOHR_A
     structure = generate_film_structure()
 
     assert get_layers(structure) == ([[([0.0, 0.0, -1.05457080454278], 'Fe')],

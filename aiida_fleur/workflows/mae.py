@@ -30,7 +30,7 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
-from aiida_fleur.common.constants import HTR_TO_EV
+from masci_tools.util.constants import HTR_TO_EV
 
 
 class FleurMaeWorkChain(WorkChain):
