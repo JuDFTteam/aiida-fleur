@@ -127,7 +127,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
         with inpxml_changes(input_scf) as fm:
-            for key, val in self.ctx.wf_dict[beta].items():
+            for key, val in self.ctx.wf_dict['beta'].items():
                 fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
 
         if 'calc_parameters' in input_scf:
