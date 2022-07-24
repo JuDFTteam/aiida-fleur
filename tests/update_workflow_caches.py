@@ -14,15 +14,14 @@ path = Path(sys.argv[1])
 if not path.exists():
     raise FileNotFoundError(path)
 
-print("Removing previous results:")
+print('Removing previous results:')
 shutil.rmtree(os.fspath(file_path / 'workflows' / 'caches'))
 shutil.rmtree(os.fspath(file_path / 'workflows' / 'calculations'))
 
-print("Copying new results")
-shutil.copytree(os.fspath(path / 'tests' / 'workflows' / 'caches'),
-                os.fspath(file_path / 'workflows' / 'caches'))
+print('Copying new results')
+shutil.copytree(os.fspath(path / 'tests' / 'workflows' / 'caches'), os.fspath(file_path / 'workflows' / 'caches'))
 
 shutil.copytree(os.fspath(path / 'tests' / 'workflows' / 'calculations'),
                 os.fspath(file_path / 'workflows' / 'calculations'))
 
-subprocess.run(["pre-commit", "run", "--all-files"], check=False)
+subprocess.run(['pre-commit', 'run', '--all-files'], check=False)

@@ -198,6 +198,7 @@ file_path = '../workflows/caches/fleur_orbcontrol_structure.tar.gz'
 thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
+
 @pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
                     reason='archive import and migration works only with aiida-core > 1.5.0')
 @pytest.mark.skipif(not os.path.isfile(EXPORTFILE_FILE),

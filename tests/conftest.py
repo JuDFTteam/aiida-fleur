@@ -499,8 +499,7 @@ def generate_work_chain_node():
 
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
-            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('fleur.'):],
-                                    test_name)
+            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('fleur.'):], test_name)
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
@@ -768,10 +767,12 @@ def import_with_migrate(temp_dir):
 
     return _import_with_migrate
 
+
 @pytest.fixture(scope='function', autouse=True)
 def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
     """Clear the database after each test.
     """
+
 
 @pytest.fixture
 def show_workchain_summary():
@@ -793,12 +794,12 @@ def show_workchain_summary():
                     caching_string = f'Not Cached {node._get_objects_to_hash()}'
             else:
                 caching_string = f'Cached (Source: <{cache_source}>)'
-            
+
             return f'{calc_info_string} | {caching_string}'
-        
-        echo.echo("Call Graph:")
+
+        echo.echo('Call Graph:')
         echo.echo(format_call_graph(calc_node, calc_and_caching_info))
-        echo.echo("Workchain report:")
+        echo.echo('Workchain report:')
         echo.echo(get_workchain_report(calc_node, 'REPORT'))
 
     return _show_workchain_summary
