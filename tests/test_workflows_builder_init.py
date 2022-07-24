@@ -77,7 +77,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurRelaxWorkChain.get_builder()
 
-
     def test_fleur_mae_wc_init(self):
         """
         Test the interface of the dmi workchain
