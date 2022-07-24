@@ -16,7 +16,6 @@ import numpy as np
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import load_node
 from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -24,7 +23,6 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
-from masci_tools.util.constants import BOHR_A
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
