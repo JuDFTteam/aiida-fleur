@@ -472,7 +472,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             fm = FleurinpModifier(fleurinp_scf)
 
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': False,
                 'potential': True
             }},
@@ -539,14 +539,14 @@ class FleurCFCoeffWorkChain(WorkChain):
         element = self.ctx.wf_dict['element']
         if self.ctx.wf_dict['rare_earth_analogue']:
             #Only charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': True,
                 'potential': False
             }},
                              species=f'all-{element}')
         else:
             #Both potential and charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': True,
                 'potential': True,
                 'remove4f': True

@@ -223,7 +223,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
             'forcemix': 'BFGS'
         },
         'inpxml_changes': [('set_inpchanges', {
-            'change_dict': {
+            'changes': {
                 'Kmax': 3.8
             }
         })],

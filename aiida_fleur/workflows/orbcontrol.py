@@ -659,7 +659,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         for atom_species, ldau_dict in self.ctx.wf_dict['ldau_dict'].items():
-            fm.set_species(species_name=atom_species, attributedict={'ldaU': ldau_dict})
+            fm.set_species(atom_species, {'ldaU': ldau_dict})
 
         for config_index, config_species in config.items():
             orbital = config_index.split('-')[-1]
