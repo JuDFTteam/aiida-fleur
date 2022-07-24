@@ -539,11 +539,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         element = self.ctx.wf_dict['element']
         if self.ctx.wf_dict['rare_earth_analogue']:
             #Only charge density
-            fm.set_atomgroup({'cFCoeffs': {
-                'chargeDensity': True,
-                'potential': False
-            }},
-                             species=f'all-{element}')
+            fm.set_atomgroup({'cFCoeffs': {'chargeDensity': True, 'potential': False}}, species=f'all-{element}')
         else:
             #Both potential and charge density
             fm.set_atomgroup({'cFCoeffs': {
