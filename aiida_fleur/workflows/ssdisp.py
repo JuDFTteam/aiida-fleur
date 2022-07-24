@@ -14,6 +14,7 @@
 """
 
 import copy
+from typing import Type
 
 from lxml import etree
 from ase.dft.kpoints import monkhorst_pack
@@ -30,7 +31,7 @@ from masci_tools.util.constants import HTR_TO_EV
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
@@ -215,27 +216,16 @@ class FleurSSDispWorkChain(WorkChain):
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
 
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-        # set up q vector for the reference calculation
-        string_ref_qss = ' '.join(map(str, self.ctx.wf_dict['ref_qss']))
-        if [x for x in self.ctx.wf_dict['ref_qss'] if x != 0]:
-            changes_dict = {'qss': string_ref_qss, 'l_noco': True, 'ctail': False, 'l_ss': True}
-        else:
-            changes_dict = {'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False}
+        with inpxml_changes(scf_wf_dict) as fm:
 
-        scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
+            if [x for x in self.ctx.wf_dict['ref_qss'] if x != 0]:
+                fm.set_inpchanges({'qss': self.ctx.wf_dict['ref_qss'], 'l_noco': True, 'ctail': False, 'l_ss': True})
+            else:
+                fm.set_inpchanges({'qss': ' 0.0 0.0 0.0 ', 'l_noco': False, 'ctail': True, 'l_ss': False})
 
-        # change beta parameter
-        for key, val in self.ctx.wf_dict.get('beta').items():
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-                'attributedict': {
-                    'nocoParams': {
-                        'beta': val
-                    }
-                },
-                'atom_label': key
-            }))
+            # change beta parameter
+            for key, val in self.ctx.wf_dict['beta'].items():
+                fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
@@ -274,70 +264,45 @@ class FleurSSDispWorkChain(WorkChain):
                 fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
 
         # copy inpchanges from wf parameters
-        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
-        # create forceTheorem tags
-        fchanges.append(('set_complex_tag', {
-            'tag_name': 'spinSpiralDispersion',
-            'create': True,
-            'changes': {
-                'q': self.ctx.wf_dict['q_vectors']
-            }
-        }))
+        with inpxml_changes(self.ctx.wf_dict) as fm:
+            fm.set_complex_tag('spinSpiralDispersion', {'q': self.ctx.wf_dict['q_vectors']}, create=True)
+            fm.set_inpchanges({'itmax': 1, 'l_noco': True, 'ctail': False, 'l_ss': True})
 
-        changes_dict = {'itmax': 1, 'l_noco': True, 'ctail': False, 'l_ss': True}
-        fchanges.append(('set_inpchanges', {'change_dict': changes_dict}))
+            if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+                kmesh = KpointsData()
+                kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+                kmesh.store()
+                fm.set_kpointsdata(kmesh.uuis, switch=True, kpoint_type='mesh')
 
-        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
-            kmesh = KpointsData()
-            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
-            kmesh.store()
-            fchanges.append(('set_kpointsdata', {
-                'kpointsdata_uuid': kmesh.uuid,
-                'switch': True,
-                'kpoint_type': 'mesh'
-            }))
+            # change beta parameter
+            for label, beta in self.ctx.wf_dict['beta'].items():
+                fm.set_atomgroup_label(label, {'nocoParams': {'beta': beta}})
 
-        # change beta parameter
-        for label, beta in self.ctx.wf_dict['beta'].items():
-            fchanges.append(('set_atomgroup_label', {
-                'attributedict': {
-                    'nocoParams': {
-                        'beta': beta
-                    }
-                },
-                'atom_label': label
-            }))
+        fleurmode = FleurinpModifier(fleurin)
+        try:
+            fleurmode.add_task_list(self.ctx.wf_dict['inpxml_changes'])
+        except (ValueError, TypeError) as exc:
+            error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                     f', which failed with {exc}. I abort, good luck next time!')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        if fchanges:  # change inp.xml file
-            fleurmode = FleurinpModifier(fleurin)
-            try:
-                fleurmode.add_task_list(fchanges)
-            except (ValueError, TypeError) as exc:
-                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                         f', which failed with {exc}. I abort, good luck next time!')
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+        # validate?
+        try:
+            fleurmode.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, user wanted inp.xml changes did not validate')
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except (ValueError, TypeError) as exc:
+            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-            # validate?
-            try:
-                fleurmode.show(display=False, validate=True)
-            except etree.DocumentInvalid:
-                error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_FILE
-            except ValueError as exc:
-                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                         f'The following error was raised {exc}')
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-            # apply
-            out = fleurmode.freeze()
-            self.ctx.fleurinp = out
-        else:  # otherwise do not change the inp.xml
-            self.ctx.fleurinp = fleurin
-
-        return
+        # apply
+        out = fleurmode.freeze()
+        self.ctx.fleurinp = out
 
     def force_after_scf(self):
         '''

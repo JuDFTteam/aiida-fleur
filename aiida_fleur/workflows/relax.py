@@ -23,6 +23,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
@@ -218,40 +219,16 @@ class FleurRelaxWorkChain(WorkChain):
             scf_wf_dict = {}
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
         scf_wf_dict['mode'] = 'force'
 
-        if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup', {
-                'attributedict': {
-                    'force': {
-                        'relaxXYZ': 'FFT'
-                    }
-                },
-                'species': 'all'
-            }))
+        with inpxml_changes(scf_wf_dict) as fm:
+            if self.ctx.wf_dict['film_distance_relaxation']:
+                fm.set_atomgroup({'force': {'relaxXYZ': 'FFT'}}, species='all')
 
-        for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-                'attributedict': {
-                    'force': {
-                        'relaxXYZ': 'FFF'
-                    }
-                },
-                'atom_label': specie_off
-            }))
+            for specie_off in self.ctx.wf_dict['atoms_off']:
+                fm.set_atomgroup_label(specie_off, {'force': {'relaxXYZ': 'FFF'}})
 
-        scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-            'attributedict': {
-                'force': {
-                    'relaxXYZ': 'FFF'
-                }
-            },
-            'atom_label': '49999'
-        }))
+            fm.set_atomgroup_label('49999', {'force': {'relaxXYZ': 'FFF'}})
 
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 

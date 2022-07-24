@@ -28,7 +28,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode, get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 from masci_tools.util.constants import HTR_TO_EV
 
@@ -143,16 +143,9 @@ class FleurMaeWorkChain(WorkChain):
         self.ctx.wf_dict = wf_dict
 
         # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            self.ctx.wf_dict['inpxml_changes'].append(('set_species_label', {
-                'at_label': atom_label,
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                },
-                'create': True
-            }))
+        with inpxml_changes(self.ctx.wf_dict) as fm:
+            for atom_label in self.ctx.wf_dict['soc_off']:
+                fm.set_species(atom_label, {'special': {'socscale': 0}})
 
         # Check if sqas_theta and sqas_phi have the same length
         if len(self.ctx.wf_dict.get('sqas_theta')) != len(self.ctx.wf_dict.get('sqas_phi')):
@@ -223,32 +216,24 @@ class FleurMaeWorkChain(WorkChain):
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
         soc = self.ctx.wf_dict.get('sqa_ref')
-        if not self.ctx.wf_dict.get('use_soc_ref'):
-            scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {'change_dict': {'l_soc': False}}))
-        else:  # set soc parameters explicitly
-            changes_dict = {'theta': soc[0], 'phi': soc[1], 'l_soc': True}
-            scf_wf_dict['inpxml_changes'].append(('set_inpchanges', {
-                'change_dict': changes_dict,
-                'path_spec': {
-                    'phi': {
-                        'contains': 'soc'
-                    },
-                    'theta': {
-                        'contains': 'soc'
-                    }
-                }
-            }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        with inpxml_changes(input_scf) as fm:
+            if not self.ctx.wf_dict.get('use_soc_ref'):
+                fm.set_inpchanges({'l_soc': False})
+            else:
+                fm.set_inpchanges({
+                    'theta': soc[0],
+                    'phi': soc[1],
+                    'l_soc': True
+                },
+                                  path_spec={
+                                      'phi': {
+                                          'contains': 'soc'
+                                      },
+                                      'theta': {
+                                          'contains': 'soc'
+                                      }
+                                  })
 
         if 'structure' in input_scf:
             if 'calc_parameters' in input_scf:
@@ -282,68 +267,55 @@ class FleurMaeWorkChain(WorkChain):
                 # fleurinp data has to be generated from the remote inp.xml file
                 fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
 
-        # copy default changes
-        fchanges = self.ctx.wf_dict.get('inpxml_changes', [])
-
-        # add forceTheorem tag into inp.xml
-        fchanges.append(('set_complex_tag', {
-            'tag_name': 'MAE',
-            'create': True,
-            'changes': {
+        with inpxml_changes(self.ctx.wf_dict) as fm:
+            # add forceTheorem tag into inp.xml
+            fm.set_complex_tag('MAE', {
                 'theta': self.ctx.wf_dict['sqas_theta'],
                 'phi': self.ctx.wf_dict['sqas_phi']
-            }
-        }))
-        fchanges.append(('set_inpchanges', {'change_dict': {'itmax': 1, 'l_soc': True}}),)
+            },
+                               create=True)
 
-        if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
-            # set k-mesh for the full BZ
-            kmesh = KpointsData()
-            kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
-            kmesh.store()
-            fchanges.append(('set_kpointsdata', {
-                'kpointsdata_uuid': kmesh.uuid,
-                'switch': True,
-                'kpoint_type': 'mesh'
-            }))
+            fm.set_inpchanges({'itmax': 1, 'l_soc': True})
 
-        # if self.ctx.wf_dict['use_symmetries_reference']:
-        #     # remove symmetries from the inp.xml
-        #     fchanges.append(('delete_tag', {
-        #         'tag_name': 'symOp',
-        #         'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
-        #     }))
+            if self.ctx.wf_dict['kmesh_force_theorem'] is not None:
+                # set k-mesh for the full BZ
+                kmesh = KpointsData()
+                kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
+                kmesh.store()
+                fm.set_kpointsdata(kmesh.uuid, switch=True, kpoint_type='mesh')
 
-        if fchanges:  # change inp.xml file
-            fleurmode = FleurinpModifier(fleurin)
-            try:
-                fleurmode.add_task_list(fchanges)
-            except (ValueError, TypeError) as exc:
-                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                         f', which failed with {exc}. I abort, good luck next time!')
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+            # if self.ctx.wf_dict['use_symmetries_reference']:
+            #     # remove symmetries from the inp.xml
+            #     fchanges.append(('delete_tag', {
+            #         'tag_name': 'symOp',
+            #         'occurrences': range(1, len(fleurin.inp_dict['cell']['symmetryOperations']))
+            #     }))
 
-            # validate?
-            try:
-                fleurmode.show(display=False, validate=True)
-            except etree.DocumentInvalid:
-                error = ('ERROR: input, user wanted inp.xml changes did not validate')
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_FILE
-            except ValueError as exc:
-                error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                         f'The following error was raised {exc}')
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+        fleurmode = FleurinpModifier(fleurin)
+        try:
+            fleurmode.add_task_list(self.ctx.wf_dict['inpxml_changes'])
+        except (ValueError, TypeError) as exc:
+            error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                     f', which failed with {exc}. I abort, good luck next time!')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-            # apply
-            out = fleurmode.freeze()
-            self.ctx.fleurinp = out
-        else:  # otherwise do not change the inp.xml
-            self.ctx.fleurinp = fleurin
+        # validate?
+        try:
+            fleurmode.show(display=False, validate=True)
+        except etree.DocumentInvalid:
+            error = ('ERROR: input, user wanted inp.xml changes did not validate')
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_FILE
+        except ValueError as exc:
+            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
+                     f'The following error was raised {exc}')
+            self.control_end_wc(error)
+            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        return
+        # apply
+        out = fleurmode.freeze()
+        self.ctx.fleurinp = out
 
     def force_after_scf(self):
         """

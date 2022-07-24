@@ -21,6 +21,8 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
+
 from masci_tools.util.constants import HTR_TO_EV
 
 
@@ -96,6 +98,26 @@ class FleurMaeConvWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+    def get_inputs_scf(self, sqa):
+        """
+        Initialize inputs for scf workflow
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+
+        with inpxml_changes(input_scf) as fm:
+            for atom_label in self.ctx.wf_dict['soc_off']:
+                fm.set_species_label(atom_label, {'special': {'socscale': 0}})
+
+        if 'calc_parameters' in input_scf:
+            calc_parameters = input_scf.calc_parameters.get_dict()
+        else:
+            calc_parameters = {}
+        calc_parameters['soc'] = {'theta': sqa[0], 'phi': sqa[1]}
+
+        input_scf.calc_parameters = Dict(dict=calc_parameters)
+
+        return input_scf
+
     def converge_scf(self):
         """
         Converge charge density with or without SOC.
@@ -105,48 +127,10 @@ class FleurMaeConvWorkChain(WorkChain):
         """
         inputs = {}
         for key, soc in self.ctx.wf_dict['sqas'].items():
-            inputs[key] = self.get_inputs_scf()
-            inputs[key].calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
-            inputs[key].calc_parameters = Dict(dict=inputs[key].calc_parameters)
+            inputs[key] = self.get_inputs_scf(sqa=soc)
             res = self.submit(FleurScfWorkChain, **inputs[key])
             res.label = key
             self.to_context(**{key: res})
-
-    def get_inputs_scf(self):
-        """
-        Initialize inputs for scf workflow
-        """
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
-        # switch off SOC on an atom specie
-        for atom_label in self.ctx.wf_dict['soc_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_species_label', {
-                'at_label': atom_label,
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                },
-                'create': True
-            }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
-
-        if 'calc_parameters' in input_scf:
-            calc_parameters = input_scf.calc_parameters.get_dict()
-        else:
-            calc_parameters = {}
-        input_scf.calc_parameters = calc_parameters
-
-        return input_scf
 
     def get_results(self):
         """

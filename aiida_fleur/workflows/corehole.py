@@ -44,6 +44,7 @@ from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 
 
 class FleurCoreholeWorkChain(WorkChain):
@@ -560,38 +561,6 @@ class FleurCoreholeWorkChain(WorkChain):
                                                    corehole=cl_dict.get('corelevel')[i],
                                                    valence=cl_dict.get('valence')[i],
                                                    ch_occ=hole_charge)
-                    attributedict = {'electronConfig': {'stateOccupation': state_tag_list}}
-                    #pprint(state_tag_list)
-                    change = ('set_species', {
-                        'species_name': change_kind,
-                        'attributedict': attributedict,
-                        'create': False
-                    })
-                    fleurinp_change.append(change)
-                    if correct_val_charge:  # only needed in certain methods
-                        charge_change = (
-                            'add_number_to_first_attrib',
-                            {
-                                'attributename': 'valenceElectrons',
-                                'add_number': -1.0,  #-hole_charge,  #one electron was added by inpgen, we remove it
-                                'mode': 'abs',
-                            })
-                        fleurinp_change.append(charge_change)
-                    elif hole_charge != 1.0:  # fractional valence hole
-                        charge_change = (
-                            'add_number_to_first_attrib',
-                            {
-                                'attributename': 'valenceElectrons',
-                                'add_number': -1.0 + hole_charge,  # one electron was already added by inpgen
-                                'mode': 'abs',
-                            })
-                        fleurinp_change.append(charge_change)
-                    if self.ctx.magnetic:  # Do a collinear magnetic calculation
-                        charge_change = ('set_inpchanges', {'change_dict': {'jspins': 2}})
-                        fleurinp_change.append(charge_change)
-                    #self.report('{}'.format(fleurinp_change))
-                    # because there might be already some kinds and another number is right...
-                    # repacking of sites, because input to a calcfunction, otherwise not storeable...
                     corehole = {
                         'site': {
                             'kind_name': kind,  #site.kind_name,
@@ -599,8 +568,23 @@ class FleurCoreholeWorkChain(WorkChain):
                         },
                         'econfig': econfig,
                         'kindname': change_kind,
-                        'inpxml_changes': fleurinp_change
                     }
+                    with inpxml_changes(corehole) as fm:
+                        fm.set_species(change_kind, {'electronConfig': {'stateOccupation': state_tag_list}})
+
+                        if correct_val_charge:  # only needed in certain methods
+                            fm.add_number_to_first_attrib('valenceElectrons', -1, mode='abs')
+                        elif hole_charge != 1.0:  # fractional valence hole
+                            # one electron was already added by inpgen
+                            fm.add_number_to_first_attrib('valenceElectrons', -1 + hole_charge, mode='abs')
+
+                        if self.ctx.magnetic:  # Do a collinear magnetic calculation
+                            fm.set_inpchanges({'jspins': 2})
+
+                    #self.report('{}'.format(fleurinp_change))
+                    # because there might be already some kinds and another number is right...
+                    # repacking of sites, because input to a calcfunction, otherwise not storeable...
+
                     corehole_to_create.append(corehole)
 
         #state_tag_list = get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):

@@ -21,6 +21,7 @@ from aiida.orm import Dict
 from aiida.common import AttributeDict
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 
 from masci_tools.util.constants import HTR_TO_EV
 
@@ -95,6 +96,31 @@ class FleurSSDispConvWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
+    def get_inputs_scf(self, qss):
+        """
+        Initialize inputs for scf workflow:
+        wf_param, options, calculation parameters, codes, structure
+        """
+        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+
+        with inpxml_changes(input_scf) as fm:
+            for key, val in self.ctx.wf_dict['beta'].items():
+                fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
+            if self.ctx.wf_dict['suppress_symmetries']:
+                fm.set_inpchanges({'qss': qss})
+
+        if 'calc_parameters' in input_scf:
+            calc_parameters = input_scf.calc_parameters.get_dict()
+        else:
+            calc_parameters = {}
+        if self.ctx.wf_dict['suppress_symmetries']:
+            calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
+        else:
+            calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
+        input_scf.calc_parameters = Dict(dict=calc_parameters)
+
+        return input_scf
+
     def converge_scf(self):
         """
         Converge charge density with or without SOC.
@@ -104,55 +130,10 @@ class FleurSSDispConvWorkChain(WorkChain):
         """
         inputs = {}
         for key, q_vector in self.ctx.wf_dict['q_vectors'].items():
-            inputs[key] = self.get_inputs_scf()
-            if self.ctx.wf_dict['suppress_symmetries']:
-                inputs[key].calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
-                changes_dict = {'qss': ' '.join(map(str, q_vector))}
-                wf_para = inputs[key].wf_parameters.get_dict()
-                wf_para['inpxml_changes'].append(('set_inpchanges', {'change_dict': changes_dict}))
-                inputs[key].wf_parameters = Dict(dict=wf_para)
-            else:
-                inputs[key].calc_parameters['qss'] = {'x': q_vector[0], 'y': q_vector[1], 'z': q_vector[2]}
-            inputs[key].calc_parameters = Dict(dict=inputs[key]['calc_parameters'])
+            inputs[key] = self.get_inputs_scf(q_vector)
             res = self.submit(FleurScfWorkChain, **inputs[key])
             res.label = key
             self.to_context(**{key: res})
-
-    def get_inputs_scf(self):
-        """
-        Initialize inputs for scf workflow:
-        wf_param, options, calculation parameters, codes, structure
-        """
-        input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
-        # change beta parameter
-        for key, val in self.ctx.wf_dict.get('beta').items():
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-                'attributedict': {
-                    'nocoParams': {
-                        'beta': val
-                    }
-                },
-                'atom_label': key
-            }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
-
-        if 'calc_parameters' in input_scf:
-            calc_parameters = input_scf.calc_parameters.get_dict()
-        else:
-            calc_parameters = {}
-        input_scf.calc_parameters = calc_parameters
-
-        return input_scf
 
     def get_results(self):
         """

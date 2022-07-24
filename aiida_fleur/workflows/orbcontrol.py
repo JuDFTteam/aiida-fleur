@@ -25,7 +25,7 @@ from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpge
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 import numpy as np
@@ -659,7 +659,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         for atom_species, ldau_dict in self.ctx.wf_dict['ldau_dict'].items():
-            fm.set_species(species_name=atom_species, attributedict={'ldaU': ldau_dict})
+            fm.set_species(atom_species, {'ldaU': ldau_dict})
 
         for config_index, config_species in config.items():
             orbital = config_index.split('-')[-1]
@@ -760,18 +760,9 @@ class FleurOrbControlWorkChain(WorkChain):
             settings = input_scf.settings.get_dict()
         settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
-        if 'wf_parameters' not in input_scf:
-            scf_wf_dict = {}
-        else:
-            scf_wf_dict = input_scf.wf_parameters.get_dict()
+        with inpxml_changes(input_scf) as fm:
+            fm.set_inpchanges({'l_linmix': False})
 
-        scf_wf_dict.setdefault('inpxml_changes', []).append(('set_inpchanges', {
-            'change_dict': {
-                'l_linMix': False,
-            }
-        }))
-
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
         input_scf.settings = Dict(dict=settings)
 
         return input_scf

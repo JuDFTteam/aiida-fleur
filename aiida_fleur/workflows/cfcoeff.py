@@ -21,7 +21,7 @@ from aiida.common.constants import elements as PeriodicTableElements
 
 from aiida_fleur.tools.StructureData_util import replace_element, mark_atoms, get_atomtype_site_symmetry
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
 from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
@@ -322,15 +322,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 else:
                     scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
-                scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                    'attributedict': {
-                        'special': {
-                            'socscale': 0.0
-                        }
-                    },
-                    'species_name':
-                    f"all-{self.ctx.wf_dict['analogue_element']}"
-                }))
+                with inpxml_changes(scf_wf_dict) as fm:
+                    fm.set_species(f"all-{self.ctx.wf_dict['analogue_element']}", {'special': {'socscale': 0}})
 
             inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
             inputs_analogue.metadata.call_link_label = f'analogue_scf_{index}'
@@ -347,15 +340,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 scf_wf_dict = {}
             else:
                 scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(scf_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_scf.wf_parameters = orm.Dict(dict=scf_wf_dict)
         input_scf.metadata.call_link_label = 'rare_earth_scf'
@@ -372,14 +358,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 scf_wf_dict = input_orbcontrol['scf_no_ldau'].wf_parameters.get_dict()
 
-            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(scf_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_orbcontrol.scf_no_ldau.wf_parameters = orm.Dict(dict=scf_wf_dict)
         elif self.ctx.wf_dict['soc_off']:
@@ -388,14 +368,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 orbcontrol_wf_dict = input_orbcontrol.wf_parameters.get_dict()
 
-            orbcontrol_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(orbcontrol_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_orbcontrol.wf_parameters = orm.Dict(dict=orbcontrol_wf_dict)
         input_orbcontrol.metadata.call_link_label = 'rare_earth_orbcontrol'
@@ -498,7 +472,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             fm = FleurinpModifier(fleurinp_scf)
 
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': False,
                 'potential': True
             }},
@@ -565,14 +539,10 @@ class FleurCFCoeffWorkChain(WorkChain):
         element = self.ctx.wf_dict['element']
         if self.ctx.wf_dict['rare_earth_analogue']:
             #Only charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
-                'chargeDensity': True,
-                'potential': False
-            }},
-                             species=f'all-{element}')
+            fm.set_atomgroup({'cFCoeffs': {'chargeDensity': True, 'potential': False}}, species=f'all-{element}')
         else:
             #Both potential and charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': True,
                 'potential': True,
                 'remove4f': True
