@@ -284,9 +284,9 @@ def test_fleur_ssdisp_conv_FePt_film(
     }
     #assert outpara.get('is_it_force_theorem')
     assert outpara.get('energies') == {
-        'label-1': 0.089644019841217,
-        'label-2': 0.034646951593459,
-        'label-3': 0.096886575338431,
+        'label-1': 0.089644020772539,
+        'label-2': 0.034646951942705,
+        'label-3': 0.096886576153338,
         'z': 0.0
     }
     #SSDISP FT: [0.0, 0.088007065396813, 0.032308078890001, 0.096042587755383]
