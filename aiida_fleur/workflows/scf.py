@@ -59,7 +59,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.5.2'
+    _workflowversion = '0.5.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -300,7 +300,7 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict['mode']
-        if mode not in ['force', 'density', 'energy', 'gw']:
+        if mode not in ['force', 'density', 'energy', 'spex']:
             error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -506,8 +506,8 @@ class FleurScfWorkChain(WorkChain):
         elif converge_mode == 'energy':
             fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0})
 
-        elif converge_mode == 'gw':
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
+        elif converge_mode == 'spex':
+            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
             if 'settings' in self.inputs:
                 self.inputs.settings.append({'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore']})
                 self.inputs.settings.append({'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']})
@@ -735,7 +735,7 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.wf_dict['density_converged'] >= self.ctx.last_charge_density:
                 if not ldau_notconverged:
                     return False
-        elif mode in ('energy', 'gw'):
+        elif mode in ('energy', 'spex'):
             if self.ctx.wf_dict['energy_converged'] >= self.ctx.energydiff:
                 if not ldau_notconverged:
                     return False
